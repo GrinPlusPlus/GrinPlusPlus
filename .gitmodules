@@ -1,0 +1,6 @@
+[submodule "TxHashSet/CRoaring"]
+	path = TxHashSet/CRoaring
+	url = https://github.com/RoaringBitmap/CRoaring.git
+[submodule "Crypto/secp256k1-zkp"]
+	path = Crypto/secp256k1-zkp
+	url = https://github.com/mimblewimble/secp256k1-zkp.git

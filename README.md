@@ -1,7 +1,7 @@
 # Grin++
 ## A Windows-Compatible C++ Implementation of the Grin(MimbleWimble) Protocol
 
-![alt text](https://github.com/GrinPlusPlus/GrinPlusPlus/Logo.png "Grin++")
+![Grin++](https://github.com/GrinPlusPlus/GrinPlusPlus/blob/master/Logo.png "Grin++")
 
 This project is currently in progress. Although expected to be ready before mainnet (January 15th), this will be nowhere near as well tested as the official Grin Linux/MacOSX implementation. **USE AT YOUR OWN RISK.**
 

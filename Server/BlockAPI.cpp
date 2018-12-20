@@ -137,7 +137,7 @@ std::string BlockAPI::BuildHeaderJSON(const BlockHeader& header)
 
 	// Proof Of Work
 	const ProofOfWork& proofOfWork = header.GetProofOfWork();
-	rootNode["Difficulty"] = proofOfWork.GetScalingDifficulty();
+	rootNode["ScalingDifficulty"] = proofOfWork.GetScalingDifficulty();
 	rootNode["TotalDifficulty"] = proofOfWork.GetTotalDifficulty();
 	rootNode["Nonce"] = proofOfWork.GetNonce();
 

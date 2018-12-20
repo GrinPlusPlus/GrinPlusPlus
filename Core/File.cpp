@@ -2,6 +2,20 @@
 
 #include <FileUtil.h>
 #include <fstream>
+#include <Windows.h>
+
+static bool TruncateFile(const std::string& filePath, const uint64_t size)
+{
+	HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	LARGE_INTEGER li;
+	li.QuadPart = size;
+	const bool success = SetFilePointerEx(hFile, li, NULL, FILE_BEGIN) && SetEndOfFile(hFile);
+
+	CloseHandle(hFile);
+
+	return success;
+}
 
 // TODO: Use memory mapped files (For Windows: https://docs.microsoft.com/en-us/windows/desktop/Memory/file-mapping)
 File::File(const std::string& path)
@@ -50,11 +64,11 @@ bool File::Flush()
 	file.close();
 
 	m_fileSize = m_bufferIndex + m_buffer.size();
-
+	
 	m_bufferIndex = m_fileSize;
 	m_buffer.clear();
 
-	return true;
+	return TruncateFile(m_path, m_fileSize);
 }
 
 void File::Append(const std::vector<unsigned char>& data)
@@ -69,16 +83,21 @@ bool File::Rewind(const uint64_t nextPosition)
 		return false;
 	}
 
+	if (nextPosition > m_fileSize)
+	{
+		return false;
+	}
+
 	m_bufferIndex = nextPosition;
-	//if (nextPosition <= m_bufferIndex)
-	//{
-	//	m_buffer.clear();
-	//	m_bufferIndex = nextPosition;
-	//}
-	//else
-	//{
-	//	m_buffer.erase(m_buffer.begin() + nextPosition - m_bufferIndex, m_buffer.end());
-	//}
+	if (nextPosition <= m_bufferIndex)
+	{
+		m_buffer.clear();
+		m_bufferIndex = nextPosition;
+	}
+	else
+	{
+		m_buffer.erase(m_buffer.begin() + nextPosition - m_bufferIndex, m_buffer.end());
+	}
 
 	return true;
 }

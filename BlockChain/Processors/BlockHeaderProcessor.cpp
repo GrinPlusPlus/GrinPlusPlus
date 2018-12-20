@@ -160,8 +160,8 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 	if (addSyncHeadersStatus != EBlockChainStatus::SUCCESS)
 	{
 		LoggerAPI::LogError("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Failed to add sync headers.");
-		headerMMR.Rewind(syncChain.GetTip()->GetHeight() + 1);
-		headerMMR.Commit();
+		headerMMR.Rollback();
+		// TODO: Copy header chain into sync chain
 		return addSyncHeadersStatus;
 	}
 

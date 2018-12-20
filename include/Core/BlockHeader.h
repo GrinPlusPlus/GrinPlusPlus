@@ -75,7 +75,7 @@ public:
 	// Hashing
 	//
 	inline const Hash& GetHash() const { return m_proofOfWork.Hash(); }
-	inline const std::string FormatHash() const { return HexUtil::ConvertHash(Hash()); }
+	inline const std::string FormatHash() const { return HexUtil::ConvertHash(GetHash()); }
 
 private:
 	uint16_t m_version;

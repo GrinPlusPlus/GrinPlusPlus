@@ -15,7 +15,7 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	}
 	else
 	{
-		const Hash& hash = compactBlock.GetBlockHeader().Hash();
+		const Hash& hash = compactBlock.GetBlockHeader().GetHash();
 		const uint64_t nonce = compactBlock.GetNonce();
 		const std::vector<Transaction> transactions = m_transactionPool.RetrieveTransactions(hash, nonce, std::set<ShortId>(shortIds.cbegin(), shortIds.cend()));
 

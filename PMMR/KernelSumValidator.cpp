@@ -16,7 +16,7 @@ bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHea
 	std::unique_ptr<Commitment> pUtxoSum = AddCommitments(txHashSet, overage, blockHeader.GetOutputMMRSize());
 	if (pUtxoSum == nullptr)
 	{
-		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Failed to add commitments for block " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Failed to add commitments for block " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
@@ -32,13 +32,13 @@ bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHea
 	std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, blockHeader.GetTotalKernelOffset(), blockHeader.GetKernelMMRSize());
 	if (pKernelSumPlusOffset == nullptr)
 	{
-		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Failed to add kernel excesses for block " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Failed to add kernel excesses for block " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
 	if (*pUtxoSum != *pKernelSumPlusOffset)
 	{
-		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Kernel sum with offset not matching utxo sum for block " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Kernel sum with offset not matching utxo sum for block " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 

@@ -66,7 +66,7 @@ bool BlockSyncer::RequestBlocks()
 	std::unique_ptr<BlockHeader> pNextHeader = m_blockChainServer.GetBlockHeaderByHeight(chainHeight + 1, EChainType::CANDIDATE);
 	if (pNextHeader != nullptr)
 	{
-		const GetBlockMessage getBlockMessage(pNextHeader->Hash());
+		const GetBlockMessage getBlockMessage(pNextHeader->GetHash());
 		m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(getBlockMessage);
 
 		if (m_connectionId != 0)

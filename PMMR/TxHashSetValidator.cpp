@@ -9,6 +9,7 @@
 #include <HexUtil.h>
 #include <Infrastructure/Logger.h>
 #include <BlockChainServer.h>
+#include <async++.h>
 
 TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer)
 	: m_blockChainServer(blockChainServer)
@@ -24,13 +25,22 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	const RangeProofPMMR& rangeProofPMMR = *txHashSet.GetRangeProofPMMR();
 
 	// Validate size of each MMR matches blockHeader
-	if (!ValidateSizes(txHashSet, blockHeader))
-	{
-		return TxHashSetValidationResult::Fail();
-	}
+	//if (!ValidateSizes(txHashSet, blockHeader))
+	//{
+	//	return TxHashSetValidationResult::Fail();
+	//}
 
-	// Validate MMR hashes
-	if (!ValidateMMRHashes(kernelMMR) || !ValidateMMRHashes(outputPMMR) || !ValidateMMRHashes(rangeProofPMMR))
+	// Validate MMR hashes in parallel
+	async::task<bool> kernelTask = async::spawn([this, kernelMMR] { return this->ValidateMMRHashes(kernelMMR); });
+	async::task<bool> outputTask = async::spawn([this, outputPMMR] { return this->ValidateMMRHashes(outputPMMR); });
+	async::task<bool> rangeProofTask = async::spawn([this, rangeProofPMMR] { return this->ValidateMMRHashes(rangeProofPMMR); });
+
+	const bool mmrHashesValidated = async::when_all(kernelTask, outputTask, rangeProofTask).then(
+		[](std::tuple<async::task<bool>, async::task<bool>, async::task<bool>> results) -> bool {
+		return std::get<0>(results).get() && std::get<1>(results).get() && std::get<2>(results).get();
+	}).get();
+	
+	if (!mmrHashesValidated)
 	{
 		return TxHashSetValidationResult::Fail();
 	}
@@ -73,19 +83,19 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 {
 	if (txHashSet.GetKernelMMR()->GetSize() != blockHeader.GetKernelMMRSize())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - Kernel size not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - Kernel size not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
 	if (txHashSet.GetOutputPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - Output size not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - Output size not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
 	if (txHashSet.GetRangeProofPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - RangeProof size not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateSizes - RangeProof size not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
@@ -129,19 +139,19 @@ bool TxHashSetValidator::ValidateRoots(TxHashSet& txHashSet, const BlockHeader& 
 {
 	if (txHashSet.GetKernelMMR()->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Kernel root not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Kernel root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
 	if (txHashSet.GetOutputPMMR()->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetOutputRoot())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Output root not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Output root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 
 	if (txHashSet.GetRangeProofPMMR()->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetRangeProofRoot())
 	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - RangeProof root not matching for header " + HexUtil::ConvertHash(blockHeader.Hash()));
+		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - RangeProof root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
 		return false;
 	}
 

@@ -19,7 +19,7 @@ void BlockStore::LoadHeaders(const std::vector<Hash>& hashes)
 	std::vector<BlockHeader*> blockHeaders = m_blockDB.LoadBlockHeaders(hashes);
 	for (BlockHeader* pBlockHeader : blockHeaders)
 	{
-		const Hash& hash = pBlockHeader->Hash();
+		const Hash& hash = pBlockHeader->GetHash();
 		m_blockHeadersByHash.insert({ hash, pBlockHeader });
 	}
 }
@@ -37,7 +37,7 @@ std::unique_ptr<BlockHeader> BlockStore::GetBlockHeaderByHash(const Hash& hash)
 
 bool BlockStore::AddHeader(const BlockHeader& blockHeader)
 {
-	const Hash& hash = blockHeader.Hash();
+	const Hash& hash = blockHeader.GetHash();
 
 	auto iter = m_blockHeadersByHash.find(hash);
 	if (iter == m_blockHeadersByHash.cend())
@@ -58,7 +58,7 @@ void BlockStore::AddHeaders(const std::vector<BlockHeader>& blockHeaders)
 
 	for (const BlockHeader& blockHeader : blockHeaders)
 	{
-		const Hash& hash = blockHeader.Hash();
+		const Hash& hash = blockHeader.GetHash();
 
 		auto iter = m_blockHeadersByHash.find(hash);
 		if (iter == m_blockHeadersByHash.cend())

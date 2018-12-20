@@ -21,7 +21,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 
 	// Check if header already processed
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
-	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.Hash())
+	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
@@ -50,7 +50,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	lockedState.m_headerMMR.AddHeader(header);
 	lockedState.m_headerMMR.Commit();
 
-	BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.Hash(), header.GetHeight(), pLastIndex);
+	BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.GetHash(), header.GetHeight(), pLastIndex);
 	lockedState.m_chainStore.GetSyncChain().AddBlock(pBlockIndex);
 	candidateChain.AddBlock(pBlockIndex);
 
@@ -114,7 +114,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 	{
 		const BlockHeader& header = headers[i];
 		BlockIndex* pSyncHeader = syncChain.GetByHeight(header.GetHeight());
-		if (pSyncHeader == nullptr || header.Hash() != pSyncHeader->GetHash())
+		if (pSyncHeader == nullptr || header.GetHash() != pSyncHeader->GetHash())
 		{
 			newHeaders.push_back(header);
 		}
@@ -203,7 +203,7 @@ EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(LockedChainState& lockedS
 	for (auto& header : headers)
 	{
 		// Add to chain
-		BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.Hash(), header.GetHeight(), pPrevious);
+		BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.GetHash(), header.GetHeight(), pPrevious);
 		syncChain.AddBlock(pBlockIndex);
 		pPrevious = pBlockIndex;
 	}

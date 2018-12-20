@@ -61,14 +61,14 @@ bool BlockValidator::IsBlockValid(const FullBlock& block) const
 
 	// TODO: Finish this
 
-	m_chainState.BlockValidated(block.GetBlockHeader().Hash());
+	m_chainState.BlockValidated(block.GetBlockHeader().GetHash());
 
 	return true;
 }
 
 bool BlockValidator::IsAlreadyValidated(const FullBlock& block) const
 {
-	if (m_chainState.HasBlockBeenValidated(block.GetBlockHeader().Hash()))
+	if (m_chainState.HasBlockBeenValidated(block.GetBlockHeader().GetHash()))
 	{
 		return true;
 	}

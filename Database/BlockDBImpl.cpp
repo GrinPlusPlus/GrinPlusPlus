@@ -94,7 +94,7 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 {
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
-	const std::vector<unsigned char>& hash = blockHeader.Hash().GetData();
+	const std::vector<unsigned char>& hash = blockHeader.GetHash().GetData();
 
 	Serializer serializer;
 	blockHeader.Serialize(serializer);
@@ -111,7 +111,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 
 	for (const BlockHeader* pBlockHeader : blockHeaders)
 	{
-		const std::vector<unsigned char>& hash = pBlockHeader->Hash().GetData();
+		const std::vector<unsigned char>& hash = pBlockHeader->GetHash().GetData();
 
 		Serializer serializer;
 		pBlockHeader->Serialize(serializer);

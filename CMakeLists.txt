@@ -59,5 +59,3 @@ add_subdirectory(Database)
 add_subdirectory(BlockChain)
 add_subdirectory(P2P)
 add_subdirectory(Server)
-
-add_subdirectory(PMMR/Tests)

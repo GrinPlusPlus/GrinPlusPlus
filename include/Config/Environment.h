@@ -12,7 +12,7 @@ public:
 	}
 
 	inline const FullBlock& GetGenesisBlock() const { return m_block; }
-	inline const Hash& GetGenesisHash() const { return m_block.GetBlockHeader().Hash(); }
+	inline const Hash& GetGenesisHash() const { return m_block.GetBlockHeader().GetHash(); }
 
 private:
 	FullBlock m_block;

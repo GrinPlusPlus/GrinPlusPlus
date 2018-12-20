@@ -54,7 +54,7 @@ public:
 	//
 	// Hashing
 	//
-	inline const Hash& Hash() const { return m_blockHeader.Hash(); }
+	inline const Hash& GetHash() const { return m_blockHeader.GetHash(); }
 
 private:
 	BlockHeader m_blockHeader;

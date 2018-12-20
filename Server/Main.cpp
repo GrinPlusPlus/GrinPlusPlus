@@ -10,6 +10,18 @@
 #include <TxHashSet.h>
 #include <Config/ConfigManager.h>
 
+void TestTxHashSet()
+{
+	Config config = ConfigManager::LoadConfig();
+	IDatabase* pDatabase = DatabaseAPI::OpenDatabase(config);
+	IBlockChainServer* pBlockChainServer = BlockChainAPI::StartBlockChainServer(config, *pDatabase);
+	std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHeight(82172, EChainType::CANDIDATE);
+	ITxHashSet* pTxHashSet = TxHashSetAPI::Open(config, pDatabase->GetBlockDB());
+	Commitment outputSum(CBigInteger<33>::ValueOf(0));
+	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
+	pTxHashSet->Validate(*pHeader, *pBlockChainServer, outputSum, kernelSum);
+}
+
 void TestTxHashSetZip()
 {
 	Config config = ConfigManager::LoadConfig();
@@ -25,7 +37,7 @@ void TestTxHashSetZip()
 	//	pTxHashSet->Validate(*pHeader, *pBlockChainServer, outputSum, kernelSum);
 	//}
 
-	pBlockChainServer->ProcessTransactionHashSet(pHeader->Hash(), config.GetDataDirectory() + "txhashset_020bb57c.zip");
+	pBlockChainServer->ProcessTransactionHashSet(pHeader->GetHash(), config.GetDataDirectory() + "txhashset_020bb57c.zip");
 
 	BlockChainAPI::ShutdownBlockChainServer(pBlockChainServer);
 	DatabaseAPI::CloseDatabase(pDatabase);
@@ -61,12 +73,13 @@ bool TestMMR()
 int main(int argc, char* argv[])
 {
 	std::cout << "INITIALIZING...\n";
+
+	//TestTxHashSet();
 	//TestMMR();
 	//TestTxHashSetZip();
 
 	Server server;
 	server.Run();
-	//server.Shutdown();
 
 	return 0;
 }

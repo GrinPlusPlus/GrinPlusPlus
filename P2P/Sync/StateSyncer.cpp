@@ -71,7 +71,7 @@ bool StateSyncer::RequestState()
 {
 	const uint64_t headerHeight = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
 	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
-	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->Hash();
+	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 
 	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
 	const bool requested = m_connectionManager.SendMessageToMostWorkPeer(txHashSetRequestMessage);

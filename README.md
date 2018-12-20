@@ -20,7 +20,7 @@ Although CMake was chosen for future portability, the focus so far has been on W
 5. Choose x64-Debug or x64-Release from build configurations drop-down
 6. Generate CMake Cache and Build All from the CMake menu
 
-Replace <CONFIG> with `Debug` or `Release`
+Replace `<CONFIG>` with `Debug` or `Release`
 **Command Line**:
 1. ```Open "Developer Command Prompt for Visual Studio 2017"```
 2. ```cd C:/Choose/A/Path```

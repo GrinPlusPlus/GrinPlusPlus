@@ -54,13 +54,6 @@ public:
 	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) = 0;
 
 	//
-	// Validates and adds the given full blocks to the block chain.
-	// All blocks that are successfully validated will be saved out to the database.
-	// NOTE: For now, the blocks must be supplied in ascending order.
-	//
-	//virtual bool AddBlocks(const std::vector<FullBlock>& blocks) = 0;
-
-	//
 	// Returns the block header at the given height.
 	// This will be null if no matching block header is found.
 	//
@@ -70,12 +63,18 @@ public:
 	// Returns the block header matching the given hash.
 	// This will be null if no matching block header is found.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const CBigInteger<32>& blockHeaderHash) const = 0;
+	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& blockHeaderHash) const = 0;
+
+	//
+	// Returns the block header containing the output commitment.
+	// This will be null if the output commitment is not found.
+	//
+	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Hash& outputCommitment) const = 0;
 
 	//
 	// Returns the block headers matching the given hashes.
 	//
-	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& blockHeaderHashes) const = 0;
+	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
 };
 
 namespace BlockChainAPI

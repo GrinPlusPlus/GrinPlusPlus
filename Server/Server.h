@@ -6,6 +6,7 @@
 class IDatabase;
 class IBlockChainServer;
 class IP2PServer;
+class RestServer;
 
 class Server
 {
@@ -19,4 +20,6 @@ private:
 	IDatabase* m_pDatabase;
 	IBlockChainServer* m_pBlockChainServer;
 	IP2PServer* m_pP2PServer;
+
+	RestServer* m_pRestServer;
 };

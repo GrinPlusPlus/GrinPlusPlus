@@ -1,4 +1,5 @@
 set(TARGET_NAME PMMR)
+set(TEST_TARGET_NAME PMMR_TESTS)
 
 if(MSVC)
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -8,6 +9,15 @@ if(MSVC)
     endif()
 endif()
 
+hunter_add_package(minizip)
+hunter_add_package(ZLIB)
+hunter_add_package(Async++)
+
+find_package(minizip CONFIG REQUIRED)
+find_package(ZLIB CONFIG REQUIRED)
+find_package(Async++ CONFIG REQUIRED)
+
+# PMMR
 file(GLOB PMMR_SRC
     "*.cpp"
 	"Common/*.cpp"
@@ -15,14 +25,17 @@ file(GLOB PMMR_SRC
 	"Zip/*.cpp"
 )
 
-hunter_add_package(minizip)
-hunter_add_package(ZLIB)
-
 add_library(${TARGET_NAME} SHARED ${PMMR_SRC})
-
-find_package(minizip CONFIG REQUIRED)
-find_package(ZLIB CONFIG REQUIRED)
-
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
 add_dependencies(${TARGET_NAME} Infrastructure Crypto Core)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core minizip::minizip ZLIB::zlib)
+target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core minizip::minizip ZLIB::zlib Async++::Async++)
+
+# Tests
+file(GLOB PMMR_TESTS_SRC
+	"Tests/*.cpp"
+)
+
+add_executable(${TEST_TARGET_NAME} ${PMMR_SRC} ${PMMR_TESTS_SRC})
+target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_PMMR)
+add_dependencies(${TEST_TARGET_NAME} Infrastructure Crypto Core)
+target_link_libraries(${TEST_TARGET_NAME} Infrastructure Crypto Core minizip::minizip ZLIB::zlib Async++::Async++)

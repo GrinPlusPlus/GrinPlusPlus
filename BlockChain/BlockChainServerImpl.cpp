@@ -24,7 +24,7 @@ BlockChainServer::~BlockChainServer()
 void BlockChainServer::Initialize()
 {
 	const FullBlock& genesisBlock = m_config.GetEnvironment().GetGenesisBlock();
-	BlockIndex* pGenesisIndex = new BlockIndex(genesisBlock.Hash(), 0, nullptr);
+	BlockIndex* pGenesisIndex = new BlockIndex(genesisBlock.GetHash(), 0, nullptr);
 
 	m_pChainStore = new ChainStore(m_config, pGenesisIndex);
 	m_pChainStore->Load();
@@ -92,7 +92,7 @@ EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
 {
-	const CBigInteger<32>& hash = compactBlock.Hash();
+	const CBigInteger<32>& hash = compactBlock.GetHash();
 
 	if (m_pChainState->HasBlockBeenValidated(hash))
 	{
@@ -172,6 +172,12 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByHeight(const uint
 std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByHash(const CBigInteger<32>& hash) const
 {
 	return m_pChainState->GetBlockHeaderByHash(hash);
+}
+
+std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const Hash& outputCommitment) const
+{
+	// TODO: Implement this
+	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
 namespace BlockChainAPI

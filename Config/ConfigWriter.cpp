@@ -55,7 +55,7 @@ void ConfigWriter::WriteEnvironment(Json::Value& root, const Environment& enviro
 
 	// MAINNET: Check mainnet hash. Also check for permanent testnet.
 	const Hash& genesisHash = environment.GetGenesisHash();
-	if (genesisHash == Genesis::TESTNET4_GENESIS.Hash())
+	if (genesisHash == Genesis::TESTNET4_GENESIS.GetHash())
 	{
 		environmentValue = "TESTNET4";
 	}

@@ -32,7 +32,7 @@ ITxHashSet* TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const st
 
 	// 3. Add BlockSums to DB
 	const BlockSums blockSums(std::move(outputSum), std::move(kernelSum));
-	m_blockDB.AddBlockSums(pHeader->Hash(), blockSums);
+	m_blockDB.AddBlockSums(pHeader->GetHash(), blockSums);
 
 	// 4. Add Output positions to DB
 	pTxHashSet->SaveOutputPositions();
@@ -56,7 +56,7 @@ bool TxHashSetProcessor::UpdateConfirmedChain(const BlockHeader& blockHeader)
 	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	
 	BlockIndex* pBlockIndex = candidateChain.GetByHeight(blockHeader.GetHeight());
-	if (pBlockIndex->GetHash() != blockHeader.Hash())
+	if (pBlockIndex->GetHash() != blockHeader.GetHash())
 	{
 		return false;
 	}

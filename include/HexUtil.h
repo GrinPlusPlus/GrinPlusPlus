@@ -9,6 +9,18 @@
 
 namespace HexUtil
 {
+	static bool IsValidHex(const std::string& data)
+	{
+		if (data.compare(0, 2, "0x") == 0 && data.size() > 2)
+		{
+			return data.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
+		}
+		else
+		{
+			return data.find_first_not_of("0123456789abcdefABCDEF") == std::string::npos;
+		}
+	}
+
 	static std::string ConvertToHex(const std::vector<unsigned char>& data, const bool upperCase, const bool includePrefix)
 	{
 		std::ostringstream stream;

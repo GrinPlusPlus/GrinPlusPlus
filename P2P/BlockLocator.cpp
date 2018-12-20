@@ -22,7 +22,7 @@ std::vector<CBigInteger<32>> BlockLocator::GetLocators() const
 		std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHeight(locatorHeight, EChainType::SYNC);
 		if (pHeader != nullptr)
 		{
-			locators.push_back(pHeader->Hash());
+			locators.push_back(pHeader->GetHash());
 		}
 	}
 

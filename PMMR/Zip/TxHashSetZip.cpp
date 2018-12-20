@@ -99,7 +99,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 		return false;
 	}
 
-	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + HexUtil::ConvertHash(header.Hash()) };
+	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + HexUtil::ConvertHash(header.GetHash()) };
 	for (const std::string& file : outputFiles)
 	{
 		const EZipFileStatus extractStatus = zipFile.ExtractFile("output/" + file, outputDir + "/" + file);
@@ -110,7 +110,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 		}
 	}
 
-	FileUtil::RenameFile(outputDir + "/pmmr_leaf.bin." + HexUtil::ConvertHash(header.Hash()), outputDir + "/pmmr_leaf.bin");
+	FileUtil::RenameFile(outputDir + "/pmmr_leaf.bin." + HexUtil::ConvertHash(header.GetHash()), outputDir + "/pmmr_leaf.bin");
 
 	return true;
 }
@@ -134,7 +134,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 		return false;
 	}
 
-	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + HexUtil::ConvertHash(header.Hash()) };
+	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + HexUtil::ConvertHash(header.GetHash()) };
 	for (const std::string& file : rangeProofFiles)
 	{
 		const EZipFileStatus extractStatus = zipFile.ExtractFile("rangeproof/" + file, rangeProofDir + "/" + file);
@@ -145,7 +145,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 		}
 	}
 
-	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + HexUtil::ConvertHash(header.Hash()), rangeProofDir + "/pmmr_leaf.bin");
+	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + HexUtil::ConvertHash(header.GetHash()), rangeProofDir + "/pmmr_leaf.bin");
 
 	return true;
 }

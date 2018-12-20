@@ -42,6 +42,7 @@ public:
 
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;
+	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Hash& outputCommitment) const override final;
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
 
 private:

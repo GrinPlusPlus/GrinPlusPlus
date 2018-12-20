@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "RestServer.h"
 
 #include <P2PServer.h>
 #include <Config/Config.h>
@@ -23,33 +24,10 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 {
 	switch (fdwCtrlType)
 	{
-		// Handle the CTRL-C signal. 
 	case CTRL_C_EVENT:
-		printf("Ctrl-C event\n\n");
+		printf("\n\nCtrl-C Pressed\n\n");
 		SHUTDOWN = true;
 		return TRUE;
-
-	//	// CTRL-CLOSE: confirm that the user wants to exit. 
-	//case CTRL_CLOSE_EVENT:
-	//	Beep(600, 200);
-	//	printf("Ctrl-Close event\n\n");
-	//	return TRUE;
-
-	//	// Pass other signals to the next handler. 
-	//case CTRL_BREAK_EVENT:
-	//	Beep(900, 200);
-	//	printf("Ctrl-Break event\n\n");
-	//	return TRUE;
-
-	//case CTRL_LOGOFF_EVENT:
-	//	Beep(1000, 200);
-	//	printf("Ctrl-Logoff event\n\n");
-	//	return FALSE;
-
-	//case CTRL_SHUTDOWN_EVENT:
-	//	Beep(750, 500);
-	//	printf("Ctrl-Shutdown event\n\n");
-	//	return FALSE;
 
 	default:
 		return FALSE;
@@ -73,9 +51,9 @@ void Server::Run()
 	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase);
 	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase);
 
-	//int numSeconds;
-	//std::cin >> numSeconds;
-	//for (int i = 0; i < numSeconds; i++)
+	RestServer restServer(m_config, m_pDatabase, m_pBlockChainServer, m_pP2PServer);
+	restServer.Start();
+
 	int secondsRunning = 0;
 	while(true)
 	{
@@ -94,12 +72,15 @@ void Server::Run()
 		std::cout << "\nHeader Difficulty: " << syncStatus.GetHeaderDifficulty();
 		std::cout << "\nBlock Height: " << syncStatus.GetBlockHeight();
 		std::cout << "\nBlock Difficulty: " << syncStatus.GetBlockDifficulty();
+		std::cout << "\n\nPress Ctrl-C to exit...";
 		std::cout << std::flush;
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
 	std::cout << "\nSHUTTING DOWN...";
+
+	restServer.Shutdown();
 
 	P2PAPI::ShutdownP2PServer(m_pP2PServer);
 	BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);

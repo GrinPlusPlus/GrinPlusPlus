@@ -44,7 +44,7 @@ bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
 
 bool TxHashSet::Validate(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut)
 {
-	LoggerAPI::LogInfo("TxHashSet::Validate - Validating TxHashSet for block " + HexUtil::ConvertHash(header.Hash()));
+	LoggerAPI::LogInfo("TxHashSet::Validate - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
 	const TxHashSetValidationResult result = TxHashSetValidator(blockChainServer).Validate(*this, header, outputSumOut, kernelSumOut);
 	if (result.Successful())
 	{
@@ -96,8 +96,11 @@ namespace TxHashSetAPI
 {
 	TXHASHSET_API ITxHashSet* Open(const Config& config, IBlockDB& blockDB)
 	{
-		TxHashSet* pTxHashSet = nullptr; // TODO: Implement
-		return pTxHashSet;
+		KernelMMR* pKernelMMR = KernelMMR::Load(config);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config);
+		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config);
+
+		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR);
 	}
 
 	TXHASHSET_API ITxHashSet* LoadFromZip(const Config& config, IBlockDB& blockDB, const std::string& zipFilePath, const BlockHeader& header)

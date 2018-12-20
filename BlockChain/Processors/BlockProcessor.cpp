@@ -48,14 +48,14 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 	// 1. Check if already part of confirmed chain
 	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
-	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.Hash())
+	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.GetHash())
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already part of confirmed chain.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
 	// 2. Check if already processed as an orphan
-	if (lockedState.m_orphanPool.IsOrphan(header.Hash()))
+	if (lockedState.m_orphanPool.IsOrphan(header.GetHash()))
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
@@ -101,7 +101,7 @@ bool BlockProcessor::ShouldOrphan(const FullBlock& block, Chain& candidateChain)
 
 	// Orphan if header not a part of candidate chain.
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
-	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.Hash())
+	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate header mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
 

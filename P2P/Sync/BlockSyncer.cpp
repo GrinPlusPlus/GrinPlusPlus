@@ -19,7 +19,7 @@ bool BlockSyncer::SyncBlocks()
 	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
 	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
 
-	if (height > 0 && highestHeight >= (height + 5))
+	if (highestHeight >= (height + 5))
 	{
 		if (IsBlockSyncDue())
 		{
@@ -34,10 +34,10 @@ bool BlockSyncer::SyncBlocks()
 
 bool BlockSyncer::IsBlockSyncDue() const
 {
-	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
+	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
 	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
 
-	if (height > 0 && highestHeight >= (height + 5))
+	if (highestHeight >= (height + 5))
 	{
 		// Check if block download timed out.
 		if (m_timeout < std::chrono::system_clock::now())

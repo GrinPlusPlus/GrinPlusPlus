@@ -74,9 +74,13 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 {
 	// TODO: Remove from orphanPool (if there) and check for orphans to process
 
-	Chain& confirmedChain = lockedState.m_chainStore.GetCandidateChain();
-
+	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	confirmedChain.Rewind(block.GetBlockHeader().GetHeight() - 1);
+
+	// TODO: Validate and add to kernel, output, and rangeproof mmrs
+
+	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+	confirmedChain.AddBlock(candidateChain.GetByHeight(block.GetBlockHeader().GetHeight()));
 
 	return EBlockChainStatus::SUCCESS;
 }

@@ -69,3 +69,27 @@ bool KernelMMR::Flush()
 
 	return hashFlush && dataFlush && leafSetFlush;
 }
+
+bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
+{
+	uint64_t nextMMRIndex = m_hashFile.GetSize();
+	Hash hash = HashWithIndex(kernel, nextMMRIndex++);
+
+	const uint64_t newMMRSize = MMRUtil::GetNumNodes(nextMMRIndex);
+	while (nextMMRIndex < newMMRSize)
+	{
+		const uint64_t leftSibling = MMRUtil::GetSiblingIndex(nextMMRIndex - 1);
+		hash = MMRUtil::HashParentWithIndex(m_hashFile.GetHashAt(leftSibling), hash, nextMMRIndex++);
+		m_hashFile.AddHash(hash);
+	}
+
+	return true;
+}
+
+Hash KernelMMR::HashWithIndex(const TransactionKernel& kernel, const uint64_t index) const
+{
+	Serializer serializer;
+	serializer.Append<uint64_t>(index);
+	kernel.Serialize(serializer);
+	return Crypto::Blake2b(serializer.GetBytes());
+}

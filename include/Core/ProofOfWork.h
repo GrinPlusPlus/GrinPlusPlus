@@ -40,7 +40,7 @@ public:
 	////////////////////////////////////////
 	// HASHING
 	////////////////////////////////////////
-	const Hash& Hash() const;
+	const Hash& GetHash() const;
 	void SerializeProofNonces(Serializer& serializer) const; // TODO: Should be private
 
 private:

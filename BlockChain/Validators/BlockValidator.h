@@ -1,24 +1,21 @@
 #pragma once
 
-#include "../ChainState.h"
-
 #include <Core/FullBlock.h>
 
 // Forward Declarations
 class BlindingFactor;
+class ITxHashSet;
 
 class BlockValidator
 {
 public:
-	BlockValidator(ChainState& chainState);
+	BlockValidator(ITxHashSet* pTxHashSet);
 
-	bool IsBlockValid(const FullBlock& block) const;
+	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset) const;
 
 private:
-	bool IsAlreadyValidated(const FullBlock& block) const;
-	bool IsSelfConsistent(const FullBlock& block, const BlindingFactor& previousKernelOffset) const;
 	bool VerifyKernelLockHeights(const FullBlock& block) const;
 	bool VerifyCoinbase(const FullBlock& block) const;
 
-	ChainState& m_chainState;
+	ITxHashSet* m_pTxHashSet;
 };

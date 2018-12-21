@@ -18,6 +18,8 @@ public:
 	bool AddHeader(const BlockHeader& blockHeader);
 	void AddHeaders(const std::vector<BlockHeader>& blockHeaders);
 
+	inline IBlockDB& GetBlockDB() { return m_blockDB; }
+
 private:
 	const Config& m_config;
 	IBlockDB& m_blockDB;

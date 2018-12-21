@@ -14,12 +14,15 @@
 #include <map>
 #include <set>
 #include <atomic>
+#include <memory>
 
-// TODO: Rename BlockChainManager?
+// Forward Declarations
+class ITxHashSet;
+
 class ChainState
 {
 public:
-	ChainState(ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR);
+	ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR);
 	~ChainState();
 
 	void Initialize(const BlockHeader& genesisHeader);
@@ -41,11 +44,12 @@ private:
 
 	mutable std::shared_mutex m_headersMutex;
 
+	const Config& m_config;
 	ChainStore& m_chainStore;
 	BlockStore& m_blockStore;
 	OrphanPool m_orphanPool;
-
 	IHeaderMMR& m_headerMMR;
+	std::shared_ptr<ITxHashSet> m_pTxHashSet;
 
 	// TODO: Figure out best approach to storing orphans. Probably could just store them by hash, and iterate over them daily (weekly?) and get rid of anything beyond horizon.
 	std::set<Hash> m_validatedBlocks;

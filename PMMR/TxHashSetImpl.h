@@ -21,6 +21,8 @@ public:
 
 	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;
+	virtual bool Commit() override final;
+	virtual bool Discard() override final;
 	virtual bool Compact() override final;
 
 	KernelMMR* GetKernelMMR() { return m_pKernelMMR; }

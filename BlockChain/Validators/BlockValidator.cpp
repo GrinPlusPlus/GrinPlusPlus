@@ -5,80 +5,17 @@
 
 #include <Crypto.h>
 #include <Consensus/Common.h>
+#include <TxHashSet.h>
 
-BlockValidator::BlockValidator(ChainState& chainState)
-	: m_chainState(chainState)
+BlockValidator::BlockValidator(ITxHashSet* pTxHashSet)
+	: m_pTxHashSet(pTxHashSet)
 {
 
-}
-
-// See: https://github.com/mimblewimble/docs/wiki/Validation-logic
-bool BlockValidator::IsBlockValid(const FullBlock& block) const
-{
-	// 1. Check if already validated
-	if (IsAlreadyValidated(block))
-	{
-		return false;
-	}
-
-	// 2. Validate header if it hasn't been validated already
-	//if (m_chainState.GetBlockHeaderByHash(block.GetBlockHeader().Hash()) == nullptr)
-	//{
-	//	if (!BlockHeaderProcessor(m_chainState).ProcessSingleHeader(block.GetBlockHeader()))
-	//	{
-	//		return false;
-	//	}
-	//}
-
-	// 3. Check if orphan
-	//// Check if are processing the "next" block relative to the current chain head.
-	//let head = ctx.batch.head() ? ;
-	//if is_next_block(&b.header, &head) {
-	//	// If this is the "next" block then either -
-	//	//   * common case where we process blocks sequentially.
-	//	//   * special case where this is the first fast sync full block
-	//	// Either way we can proceed (and we know the block is new and unprocessed).
-	//}
-	//else {
-	//	// At this point it looks like this is a new block that we have not yet processed.
-	//	// Check we have the *previous* block in the store.
-	//	// If we do not then treat this block as an orphan.
-	//	check_prev_store(&b.header, &mut ctx.batch) ? ;
-	//}
-
-	std::unique_ptr<BlockHeader> pPreviousHeader = m_chainState.GetBlockHeaderByHash(block.GetBlockHeader().GetPreviousBlockHash());
-	if (pPreviousHeader == nullptr)
-	{
-		// TODO: Treat as orphan.
-		return false;
-	}
-
-	// 4. Validate that block is self-consistent
-	if (!IsSelfConsistent(block, pPreviousHeader->GetTotalKernelOffset()))
-	{
-		return false;
-	}
-
-	// TODO: Finish this
-
-	m_chainState.BlockValidated(block.GetBlockHeader().GetHash());
-
-	return true;
-}
-
-bool BlockValidator::IsAlreadyValidated(const FullBlock& block) const
-{
-	if (m_chainState.HasBlockBeenValidated(block.GetBlockHeader().GetHash()))
-	{
-		return true;
-	}
-
-	return false;
 }
 
 // Validates all the elements in a block that can be checked without additional data. 
 // Includes commitment sums and kernels, Merkle trees, reward, etc.
-bool BlockValidator::IsSelfConsistent(const FullBlock& block, const BlindingFactor& previousKernelOffset) const
+bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset) const
 {
 	if (!TransactionBodyValidator().ValidateTransactionBody(block.GetTransactionBody(), true))
 	{
@@ -103,7 +40,15 @@ bool BlockValidator::IsSelfConsistent(const FullBlock& block, const BlindingFact
 		blockKernelOffset = CommitmentUtil::AddKernelOffsets(std::vector<BlindingFactor>({ block.GetBlockHeader().GetTotalKernelOffset() }), std::vector<BlindingFactor>({ previousKernelOffset }));
 	}
 
-	return CommitmentUtil::VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);
+	const bool kernelSumsValid = CommitmentUtil::VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);
+	if (!kernelSumsValid)
+	{
+		return false;
+	}
+
+	// TODO: Validate MMRs
+
+	return true;
 }
 
 // check we have no kernels with lock_heights greater than current height

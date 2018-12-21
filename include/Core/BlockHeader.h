@@ -74,7 +74,7 @@ public:
 	//
 	// Hashing
 	//
-	inline const Hash& GetHash() const { return m_proofOfWork.Hash(); }
+	inline const Hash& GetHash() const { return m_proofOfWork.GetHash(); }
 	inline const std::string FormatHash() const { return HexUtil::ConvertHash(GetHash()); }
 
 private:

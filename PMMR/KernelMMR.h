@@ -27,8 +27,12 @@ public:
 	virtual bool Flush() override final;
 	//virtual bool Discard() override final;
 
+	bool ApplyKernel(const TransactionKernel& kernel);
+
 private:
 	KernelMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>&& dataFile);
+
+	Hash KernelMMR::HashWithIndex(const TransactionKernel& kernel, const uint64_t index) const;
 
 	const Config& m_config;
 	HashFile m_hashFile;

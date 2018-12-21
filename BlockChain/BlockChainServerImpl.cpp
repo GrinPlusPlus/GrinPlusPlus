@@ -33,10 +33,9 @@ void BlockChainServer::Initialize()
 	m_pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(m_config);
 
 	m_pBlockStore = new BlockStore(m_config, m_database.GetBlockDB());
-	m_pChainState = new ChainState(*m_pChainStore, *m_pBlockStore, *m_pHeaderMMR);
+	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
 	m_pTransactionPool = new TransactionPool();
-	m_pTxHashSet = TxHashSetAPI::Open(m_config, m_database.GetBlockDB());
 
 	m_initialized = true;
 }
@@ -106,19 +105,25 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path)
 {
-	ITxHashSet* pExistingTxHashSet = m_pTxHashSet;
-	m_pTxHashSet = nullptr;
-
-	TxHashSetAPI::Close(pExistingTxHashSet);
-
-	m_pTxHashSet = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
-	if (m_pTxHashSet != nullptr)
 	{
+		LockedChainState lockedState = m_pChainState->GetLocked();
+		ITxHashSet* pExistingTxHashSet = lockedState.GetTxHashSet();
+		lockedState.UpdateTxHashSet(nullptr);
+
+		TxHashSetAPI::Close(pExistingTxHashSet);
+	}
+
+	ITxHashSet* pNewTxHashSet = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
+
+	LockedChainState lockedState = m_pChainState->GetLocked();
+	if (pNewTxHashSet != nullptr)
+	{
+		lockedState.UpdateTxHashSet(pNewTxHashSet);
 		return EBlockChainStatus::SUCCESS;
 	}
 	else
 	{
-		m_pTxHashSet = TxHashSetAPI::Open(m_config, m_database.GetBlockDB());
+		lockedState.UpdateTxHashSet(nullptr);
 		return EBlockChainStatus::INVALID;
 	}
 }

@@ -28,6 +28,8 @@ public:
 
 	virtual bool Snapshot(const BlockHeader& header) = 0;
 	virtual bool Rewind(const BlockHeader& header) = 0;
+	virtual bool Commit() = 0;
+	virtual bool Discard() = 0;
 	virtual bool Compact() = 0;
 };
 

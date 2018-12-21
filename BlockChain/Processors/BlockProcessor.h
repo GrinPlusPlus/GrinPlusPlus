@@ -17,7 +17,7 @@ private:
 	EBlockChainStatus ProcessNextBlock(const FullBlock& block, LockedChainState& lockedState);
 	EBlockChainStatus ProcessOrphanBlock(const FullBlock& block, LockedChainState& lockedState);
 
-	bool ShouldOrphan(const FullBlock& block, Chain& candidateChain);
+	bool ShouldOrphan(const FullBlock& block, LockedChainState& lockedState);
 
 	ChainState& m_chainState;
 };

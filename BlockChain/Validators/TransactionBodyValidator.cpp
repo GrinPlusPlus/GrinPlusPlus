@@ -55,24 +55,39 @@ bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transaction
 
 bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody) const
 {
-	for (auto iter = transactionBody.GetInputs().cbegin(); iter != transactionBody.GetInputs().cend() - 1; iter++)
+	for (auto iter = transactionBody.GetInputs().cbegin(); iter != transactionBody.GetInputs().cend(); iter++)
 	{
+		if (iter + 1 == transactionBody.GetInputs().cend())
+		{
+			break;
+		}
+
 		if (iter->Hash() > (iter + 1)->Hash())
 		{
 			return false;
 		}
 	}
 
-	for (auto iter = transactionBody.GetOutputs().cbegin(); iter != transactionBody.GetOutputs().cend() - 1; iter++)
+	for (auto iter = transactionBody.GetOutputs().cbegin(); iter != transactionBody.GetOutputs().cend(); iter++)
 	{
+		if (iter + 1 == transactionBody.GetOutputs().cend())
+		{
+			break;
+		}
+
 		if (iter->Hash() > (iter + 1)->Hash())
 		{
 			return false;
 		}
 	}
 
-	for (auto iter = transactionBody.GetKernels().cbegin(); iter != transactionBody.GetKernels().cend() - 1; iter++)
+	for (auto iter = transactionBody.GetKernels().cbegin(); iter != transactionBody.GetKernels().cend(); iter++)
 	{
+		if (iter + 1 == transactionBody.GetKernels().cend())
+		{
+			break;
+		}
+
 		if (iter->Hash() > (iter + 1)->Hash())
 		{
 			return false;

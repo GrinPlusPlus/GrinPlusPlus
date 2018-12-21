@@ -59,7 +59,7 @@ uint64_t PoWValidator::GetMaximumDifficulty(const ProofOfWork& proofOfWork) cons
 
 	std::vector<unsigned char> temp;
 	temp.resize(sizeof(uint64_t));
-	std::reverse_copy(proofOfWork.Hash().GetData().cbegin(), proofOfWork.Hash().GetData().cbegin() + sizeof(uint64_t), temp.begin());
+	std::reverse_copy(proofOfWork.GetHash().GetData().cbegin(), proofOfWork.GetHash().GetData().cbegin() + sizeof(uint64_t), temp.begin());
 
 	uint64_t hash64;
 	memcpy(&hash64, &temp[0], sizeof(uint64_t));

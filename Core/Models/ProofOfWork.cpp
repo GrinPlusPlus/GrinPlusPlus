@@ -78,7 +78,7 @@ std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(ByteBuffer& byteBuffer
 	return proofNonces;
 }
 
-const CBigInteger<32>& ProofOfWork::Hash() const
+const CBigInteger<32>& ProofOfWork::GetHash() const
 {
 	if (m_hash == CBigInteger<32>())
 	{

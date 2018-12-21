@@ -12,9 +12,6 @@
 #include <map>
 #include <mutex>
 
-// Forward Declarations
-class ITxHashSet;
-
 class BlockChainServer : public IBlockChainServer
 {
 public:
@@ -51,7 +48,6 @@ private:
 	ChainState* m_pChainState;
 	ChainStore* m_pChainStore;
 	IHeaderMMR* m_pHeaderMMR;
-	ITxHashSet* m_pTxHashSet;
 	TransactionPool* m_pTransactionPool;
 	const Config& m_config;
 

@@ -62,7 +62,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	}
 
 	// 3. Orphan if block should be processed as an orphan
-	if (ShouldOrphan(block, lockedState.m_chainStore.GetCandidateChain()))
+	if (ShouldOrphan(block, lockedState))
 	{
 		return ProcessOrphanBlock(block, lockedState);
 	}
@@ -77,7 +77,23 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	confirmedChain.Rewind(block.GetBlockHeader().GetHeight() - 1);
 
-	// TODO: Validate and add to kernel, output, and rangeproof mmrs
+	std::unique_ptr<BlockHeader> pPreviousHeader = lockedState.m_blockStore.GetBlockHeaderByHash(block.GetBlockHeader().GetPreviousBlockHash());
+	if (pPreviousHeader == nullptr)
+	{
+		return EBlockChainStatus::STORE_ERROR;
+	}
+
+	ITxHashSet* pTxHashSet = lockedState.GetTxHashSet();
+	pTxHashSet->Rewind(*pPreviousHeader);
+
+	pTxHashSet->ApplyBlock(block);
+	if (!BlockValidator(lockedState.GetTxHashSet()).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
+	{
+		pTxHashSet->Discard();
+		return EBlockChainStatus::INVALID;
+	}
+
+	pTxHashSet->Commit();
 
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 	confirmedChain.AddBlock(candidateChain.GetByHeight(block.GetBlockHeader().GetHeight()));
@@ -91,23 +107,45 @@ EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, Loc
 	return EBlockChainStatus::ORPHANED;
 }
 
-bool BlockProcessor::ShouldOrphan(const FullBlock& block, Chain& candidateChain)
+bool BlockProcessor::ShouldOrphan(const FullBlock& block, LockedChainState& lockedState)
 {
-	// Orphan if previous header not a part of candidate chain.
+	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+
+	// Orphan if previous block not a part of candidate chain.
 	const BlockHeader& header = block.GetBlockHeader();
-	BlockIndex* pPreviousIndex = candidateChain.GetByHeight(header.GetHeight() - 1);
-	if (pPreviousIndex == nullptr || pPreviousIndex->GetHash() != header.GetPreviousBlockHash())
+	BlockIndex* pPreviousCandidateIndex = candidateChain.GetByHeight(header.GetHeight() - 1);
+	if (pPreviousCandidateIndex == nullptr || pPreviousCandidateIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Previous header missing. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Previous block header missing. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}
 
-	// Orphan if header not a part of candidate chain.
+	// Orphan if block not a part of candidate chain.
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate header mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+
+		return true;
+	}
+
+	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
+
+	// Orphan if previous block not a part of confirmed chain.
+	BlockIndex* pPreviousConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight() - 1);
+	if (pPreviousConfirmedIndex == nullptr || pPreviousConfirmedIndex->GetHash() != header.GetPreviousBlockHash())
+	{
+		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Previous confirmed block missing. Treating %s as orphan.", header.FormatHash().c_str()));
+
+		return true;
+	}
+
+	// Orphan if different block a part of confirmed chain.
+	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
+	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
+	{
+		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Confirmed block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}

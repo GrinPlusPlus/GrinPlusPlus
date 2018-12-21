@@ -42,7 +42,6 @@ The following is a non-comprehensive list of items that still need addressing:
 * Finish TxHashSet Validation & Block/Tx Validation
 * REST and/or RPC endpoints not implemented
 * Compaction not yet implemented
-* Need to memory map files for significant performance improvement
 * Accept incoming connections
 * Robust error handling. Crashing when peers send bad data seems like a less than stellar plan :grinning:
 * Overhaul peer management (Peer database, preferred peers, request peers when low etc.)

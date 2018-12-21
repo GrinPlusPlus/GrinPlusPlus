@@ -59,6 +59,21 @@ bool TxHashSet::Validate(const BlockHeader& header, const IBlockChainServer& blo
 
 bool TxHashSet::ApplyBlock(const FullBlock& block)
 {
+	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+	{
+
+	}
+
+	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
+	{
+		
+	}
+
+	for (const TransactionKernel& kernels : block.GetTransactionBody().GetKernels())
+	{
+
+	}
+
 	return true;
 }
 
@@ -84,6 +99,25 @@ bool TxHashSet::Snapshot(const BlockHeader& header)
 
 bool TxHashSet::Rewind(const BlockHeader& header)
 {
+	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
+	m_pOutputPMMR->Rewind(header.GetOutputMMRSize());
+	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize());
+	return true;
+}
+
+bool TxHashSet::Commit()
+{
+	m_pKernelMMR->Flush();
+	m_pOutputPMMR->Flush();
+	m_pRangeProofPMMR->Flush();
+	return true;
+}
+
+bool TxHashSet::Discard()
+{
+	//m_pKernelMMR->Discard();
+	//m_pOutputPMMR->Discard();
+	//m_pRangeProofPMMR->Discard();
 	return true;
 }
 

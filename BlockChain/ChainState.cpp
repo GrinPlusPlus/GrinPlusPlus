@@ -2,9 +2,10 @@
 
 #include <Consensus/BlockTime.h>
 #include <Database/BlockDb.h>
+#include <TxHashSet.h>
 
-ChainState::ChainState(ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR)
-	: m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR)
+ChainState::ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR)
+	: m_config(config), m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR)
 {
 
 }
@@ -37,6 +38,8 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 
 		m_blockStore.LoadHeaders(hashesToLoad);
 	}
+
+	m_pTxHashSet = std::shared_ptr<ITxHashSet>(TxHashSetAPI::Open(m_config, m_blockStore.GetBlockDB()));
 }
 
 uint64_t ChainState::GetHeight(const EChainType chainType)
@@ -114,5 +117,5 @@ bool ChainState::HasBlockBeenValidated(const Hash& hash) const
 
 LockedChainState ChainState::GetLocked()
 {
-	return LockedChainState(m_headersMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool);
+	return LockedChainState(m_headersMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_pTxHashSet);
 }

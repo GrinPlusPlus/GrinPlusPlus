@@ -6,7 +6,6 @@
 #include <memory>
 #include <optional>
 
-// TODO: Handle DB Transactions (commits and rollbacks)
 class IBlockDB
 {
 public:

@@ -57,7 +57,6 @@ void Connection::Disconnect()
 
 	if (m_connectionThread.joinable())
 	{
-		// TODO: Using locks for debugging shutdown hang
 		m_connectionThread.join();
 	}
 }

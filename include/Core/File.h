@@ -1,5 +1,13 @@
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable:4244)
+#pragma warning(disable:4267)
+#pragma warning(disable:4334)
+#pragma warning(disable:4018)
+#include <mio/mmap.hpp>
+#pragma warning(pop)
+
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -14,7 +22,7 @@ public:
 
 	void Append(const std::vector<unsigned char>& data);
 
-	bool Rewind(const uint64_t nextPosition); // TODO: Is this lastPosition or nextPosition?
+	bool Rewind(const uint64_t nextPosition);
 	bool Discard();
 
 	uint64_t GetSize() const;
@@ -25,4 +33,5 @@ private:
 	uint64_t m_bufferIndex;
 	uint64_t m_fileSize;
 	std::vector<unsigned char> m_buffer;
+	mio::mmap_source m_mmap;
 };

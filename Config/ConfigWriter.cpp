@@ -51,7 +51,7 @@ void ConfigWriter::WriteClientMode(Json::Value& root, const EClientMode clientMo
 
 void ConfigWriter::WriteEnvironment(Json::Value& root, const Environment& environment) const
 {
-	Json::Value environmentValue = "TESTNET4";
+	Json::Value environmentValue = "FLOONET";
 
 	// MAINNET: Check mainnet hash. Also check for permanent testnet.
 	const Hash& genesisHash = environment.GetGenesisHash();
@@ -59,8 +59,12 @@ void ConfigWriter::WriteEnvironment(Json::Value& root, const Environment& enviro
 	{
 		environmentValue = "TESTNET4";
 	}
+	else if (genesisHash == Genesis::FLOONET_GENESIS.GetHash())
+	{
+		environmentValue = "FLOONET";
+	}
 
-	const std::string environmentComment = "/* Supported: MAINNET, TESTNET, TESTNET4 */";
+	const std::string environmentComment = "/* Supported: MAINNET, FLOONET, TESTNET4 */";
 	environmentValue.setComment(environmentComment, Json::commentBefore);
 	root[ConfigProps::ENVIRONMENT] = environmentValue;
 }

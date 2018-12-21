@@ -31,9 +31,9 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	//}
 
 	// Validate MMR hashes in parallel
-	async::task<bool> kernelTask = async::spawn([this, kernelMMR] { return this->ValidateMMRHashes(kernelMMR); });
-	async::task<bool> outputTask = async::spawn([this, outputPMMR] { return this->ValidateMMRHashes(outputPMMR); });
-	async::task<bool> rangeProofTask = async::spawn([this, rangeProofPMMR] { return this->ValidateMMRHashes(rangeProofPMMR); });
+	async::task<bool> kernelTask = async::spawn([this, &kernelMMR] { return this->ValidateMMRHashes(kernelMMR); });
+	async::task<bool> outputTask = async::spawn([this, &outputPMMR] { return this->ValidateMMRHashes(outputPMMR); });
+	async::task<bool> rangeProofTask = async::spawn([this, &rangeProofPMMR] { return this->ValidateMMRHashes(rangeProofPMMR); });
 
 	const bool mmrHashesValidated = async::when_all(kernelTask, outputTask, rangeProofTask).then(
 		[](std::tuple<async::task<bool>, async::task<bool>, async::task<bool>> results) -> bool {

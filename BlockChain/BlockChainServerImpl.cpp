@@ -5,6 +5,7 @@
 #include "Validators/TransactionValidator.h"
 #include "Processors/BlockHeaderProcessor.h"
 #include "Processors/TxHashSetProcessor.h"
+#include "Processors/BlockProcessor.h"
 
 #include <Config/Config.h>
 #include <Crypto.h>
@@ -49,6 +50,7 @@ void BlockChainServer::Shutdown()
 		// This is required to make sure the chain state isn't currently locked.
 		// If it is locked, something is still processing, and we should wait for it to finish.
 		m_pChainState->GetLocked();
+
 		m_pHeaderMMR->Commit();
 		m_pChainStore->Flush();
 
@@ -81,14 +83,7 @@ uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 {
-	const bool validBlock =  BlockValidator(*m_pChainState).IsBlockValid(block);
-	if (validBlock)
-	{
-		// TODO: Implement
-		return EBlockChainStatus::SUCCESS;
-	}
-
-	return EBlockChainStatus::INVALID;
+	return BlockProcessor(*m_pChainState).ProcessBlock(block);
 }
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)

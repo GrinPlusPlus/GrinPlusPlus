@@ -38,6 +38,12 @@ bool File::Load()
 	m_bufferIndex = m_fileSize;
 	file.close();
 
+	if (m_fileSize > 0)
+	{
+		std::error_code error;
+		m_mmap = mio::make_mmap_source(m_path, error);
+	}
+
 	return true;
 }
 
@@ -68,7 +74,15 @@ bool File::Flush()
 	m_bufferIndex = m_fileSize;
 	m_buffer.clear();
 
-	return TruncateFile(m_path, m_fileSize);
+	TruncateFile(m_path, m_fileSize);
+
+	if (m_fileSize > 0)
+	{
+		std::error_code error;
+		m_mmap = mio::make_mmap_source(m_path, error);
+	}
+
+	return true;
 }
 
 void File::Append(const std::vector<unsigned char>& data)
@@ -115,22 +129,23 @@ uint64_t File::GetSize() const
 	return m_bufferIndex + m_buffer.size();
 }
 
-// TODO: Change implementation to handle reading from end of file and then onto buffer
 bool File::Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const
 {
 	if (position < m_bufferIndex)
 	{
-		std::ifstream file(m_path, std::ios::in | std::ios::binary | std::ios::ate);
-		if (!file.is_open())
-		{
-			return false;
-		}
+		data = std::vector<unsigned char>(m_mmap.cbegin() + position, m_mmap.cbegin() + position + numBytes);
 
-		data.resize((size_t)numBytes);
+		//std::ifstream file(m_path, std::ios::in | std::ios::binary | std::ios::ate);
+		//if (!file.is_open())
+		//{
+		//	return false;
+		//}
 
-		file.seekg(position, std::ios::beg);
-		file.read((char*)&data[0], numBytes);
-		file.close();
+		//data.resize((size_t)numBytes);
+
+		//file.seekg(position, std::ios::beg);
+		//file.read((char*)&data[0], numBytes);
+		//file.close();
 	}
 	else
 	{

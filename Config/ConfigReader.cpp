@@ -53,10 +53,14 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 {
 	if (root.isMember(ConfigProps::ENVIRONMENT))
 	{
-		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "TESTNET4").asString();
+		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "FLOONET").asString();
 		if (environment == "MAINNET")
 		{
 			// MAINNET: Return mainnet Environment. Also check for permanent testnet.
+		}
+		else if (environment == "FLOONET")
+		{
+			return Environment(Genesis::FLOONET_GENESIS);
 		}
 		else if (environment == "TESTNET4")
 		{
@@ -65,7 +69,7 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 	}
 
 
-	return Environment(Genesis::TESTNET4_GENESIS);
+	return Environment(Genesis::FLOONET_GENESIS);
 }
 
 std::string ConfigReader::ReadDataPath(const Json::Value& root) const

@@ -4,3 +4,6 @@
 [submodule "Crypto/secp256k1-zkp"]
 	path = Crypto/secp256k1-zkp
 	url = https://github.com/mimblewimble/secp256k1-zkp.git
+[submodule "include/thirdparty/mio"]
+	path = include/thirdparty/mio
+	url = https://github.com/mandreyel/mio.git

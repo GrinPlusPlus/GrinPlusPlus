@@ -17,7 +17,6 @@ bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) c
 	ZipFile zipFile(path);
 	zipFile.Open();
 
-	// TODO: Validate all expected files exist before deleting existing TxHashSet
 	std::vector<std::string> files;
 	zipFile.ListFiles(files);
 

@@ -15,6 +15,9 @@ public:
 		: m_clientMode(clientMode), m_environment(environment), m_dataPath(dataPath), m_dandelionConfig(dandelionConfig), m_p2pConfig(p2pConfig)
 	{
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath);
+		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "kernel/");
+		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "output/");
+		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "rangeproof/");
 		std::filesystem::create_directories(m_dataPath + m_chainPath);
 		std::filesystem::create_directories(m_dataPath + m_databasePath);
 	}

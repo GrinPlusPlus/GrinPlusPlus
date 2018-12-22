@@ -119,3 +119,15 @@ LockedChainState ChainState::GetLocked()
 {
 	return LockedChainState(m_headersMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_pTxHashSet);
 }
+
+void ChainState::FlushAll()
+{
+	std::unique_lock<std::shared_mutex> writeLock(m_headersMutex);
+
+	m_headerMMR.Commit();
+	m_chainStore.Flush();
+	if (m_pTxHashSet != nullptr)
+	{
+		m_pTxHashSet->Commit();
+	}
+}

@@ -37,6 +37,7 @@ public:
 	bool HasBlockBeenValidated(const Hash& hash) const;
 
 	LockedChainState GetLocked();
+	void FlushAll();
 
 private:
 	std::unique_ptr<BlockHeader> GetHead_Locked(const EChainType chainType);

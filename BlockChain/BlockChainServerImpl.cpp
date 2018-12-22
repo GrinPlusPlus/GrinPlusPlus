@@ -46,12 +46,7 @@ void BlockChainServer::Shutdown()
 	{
 		m_initialized = false;
 
-		// This is required to make sure the chain state isn't currently locked.
-		// If it is locked, something is still processing, and we should wait for it to finish.
-		m_pChainState->GetLocked();
-
-		m_pHeaderMMR->Commit();
-		m_pChainStore->Flush();
+		m_pChainState->FlushAll();
 
 		delete m_pChainState;
 		m_pChainState = nullptr;

@@ -35,6 +35,20 @@ public:
 	static CBigInteger<32> Blake2b(const std::vector<unsigned char>& input);
 
 	//
+	// Uses SHA256 to hash the given input into a 32 byte hash.
+	//
+	static CBigInteger<32> SHA256(const std::vector<unsigned char>& input);
+
+	//
+	// Uses RipeMD160 to hash the given input into a 20 byte hash.
+	//
+	static CBigInteger<20> RipeMD160(const std::vector<unsigned char>& input);
+
+	static CBigInteger<32> HMAC_SHA256(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data);
+
+	static CBigInteger<64> HMAC_SHA512(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data);
+
+	//
 	// Creates a pedersen commitment from a value with a zero blinding factor.
 	//
 	static std::unique_ptr<Commitment> CommitTransparent(const uint64_t value);
@@ -54,16 +68,18 @@ public:
 	//
 	// Encrypts the input with AES256 using the given key.
 	//
-	static std::vector<unsigned char> AES256_Encrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& key);
+	static std::vector<unsigned char> AES256_Encrypt(const std::vector<unsigned char>& input, const CBigInteger<32>& key, const CBigInteger<16>& iv);
 
 	//
 	// Decrypts the input with AES256 using the given key.
 	//
-	static std::vector<unsigned char> AES256_Decrypt(const std::vector<unsigned char>& encrypted, const std::vector<unsigned char>& key);
+	static std::vector<unsigned char> AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const CBigInteger<32>& key, const CBigInteger<16>& iv);
 
 	//
 	// Uses Scrypt to hash the given input (usually the user's password) and salts the hash with the given salt.
 	// The returned hash will be 64 bytes.
 	//
 	static CBigInteger<64> Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt);
+
+	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey);
 };

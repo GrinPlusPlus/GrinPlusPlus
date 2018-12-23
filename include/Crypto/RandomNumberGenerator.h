@@ -6,14 +6,15 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#ifdef MW_CRYPTO
-#define CRYPTO_API __declspec(dllexport)
-#else
-#define CRYPTO_API __declspec(dllimport)
-#endif
-
+#include <ImportExport.h>
 #include <BigInteger.h>
 #include <vector>
+
+#ifdef MW_CRYPTO
+#define CRYPTO_API EXPORT
+#else
+#define CRYPTO_API IMPORT
+#endif
 
 //
 // A wrapper around a third-party CSPRNG random number generator to generate cryptographically-secure random CBigIntegers.

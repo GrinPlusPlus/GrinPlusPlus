@@ -1,7 +1,7 @@
 #include "Secp256k1Wrapper.h"
 
-#include "RandomNumberGenerator.h"
 #include "secp256k1-zkp/include/secp256k1_generator.h"
+#include <Crypto/RandomNumberGenerator.h>
 
 Secp256k1Wrapper& Secp256k1Wrapper::GetInstance()
 {
@@ -17,6 +17,28 @@ Secp256k1Wrapper::Secp256k1Wrapper()
 Secp256k1Wrapper::~Secp256k1Wrapper()
 {
 	secp256k1_context_destroy(m_pContext);
+}
+
+std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBigInteger<32>& privateKey) const
+{
+	const int verifyResult = secp256k1_ec_seckey_verify(m_pContext, privateKey.GetData().data());
+	if (verifyResult == 1)
+	{
+		secp256k1_pubkey pubkey;
+		const int createResult = secp256k1_ec_pubkey_create(m_pContext, &pubkey, privateKey.GetData().data());
+		if (createResult == 1)
+		{
+			size_t length = 33;
+			std::vector<unsigned char> serializedPublicKey(length);
+			const int serializeResult = secp256k1_ec_pubkey_serialize(m_pContext, serializedPublicKey.data(), &length, &pubkey, SECP256K1_EC_COMPRESSED);
+			if (serializeResult == 1)
+			{
+				return std::make_unique<CBigInteger<33>>(CBigInteger<33>(std::move(serializedPublicKey)));
+			}
+		}
+	}
+
+	return std::unique_ptr<CBigInteger<33>>(nullptr);
 }
 
 std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const

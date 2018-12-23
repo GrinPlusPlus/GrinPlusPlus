@@ -12,9 +12,15 @@ if(MSVC)
 endif()
 
 file(GLOB CRYPTO_SRC
-	"AES256.cpp"
+	"aes.cpp"
+	"ctaes/ctaes.c"
     "Blake2b.cpp"
 	"Crypto.cpp"
+	"sha256.cpp"
+	"sha512.cpp"
+	"hmac_sha256.cpp"
+	"hmac_sha512.cpp"
+	"ripemd160.cpp"
 	"Secp256k1Wrapper.cpp"
 	"RandomNumberGenerator.cpp"
 	"scrypt/crypto_scrypt-ref.cpp"
@@ -22,9 +28,9 @@ file(GLOB CRYPTO_SRC
 	"secp256k1-zkp/src/secp256k1.c"
 )
 
-add_library(Crypto SHARED ${CRYPTO_SRC})
+add_library(${TARGET_NAME} SHARED ${CRYPTO_SRC})
 
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
 
 add_dependencies(${TARGET_NAME} Infrastructure)
-target_link_libraries(${TARGET_NAME} Infrastructure)
+target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure)

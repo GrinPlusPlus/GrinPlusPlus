@@ -12,6 +12,7 @@ class Secp256k1Wrapper
 public:
 	static Secp256k1Wrapper& GetInstance();
 
+	std::unique_ptr<CBigInteger<33>> CalculatePublicKey(const CBigInteger<32>& privateKey) const;
 	std::unique_ptr<Commitment> PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
 	std::unique_ptr<Commitment> PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
 

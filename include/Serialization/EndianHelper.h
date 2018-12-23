@@ -7,6 +7,7 @@
 //
 
 #include <stdint.h>
+#include <string>
 
 //
 // A header-only utility for determining and changing endianness of data.
@@ -41,6 +42,15 @@ public:
 			((val >> 24) & 0x000000ff);
 	}
 
+	static uint64_t changeEndianness64(const uint64_t val)
+	{
+		uint64_t x = val;
+		x = (x & 0x00000000FFFFFFFF) << 32 | (x & 0xFFFFFFFF00000000) >> 32;
+		x = (x & 0x0000FFFF0000FFFF) << 16 | (x & 0xFFFF0000FFFF0000) >> 16;
+		x = (x & 0x00FF00FF00FF00FF) << 8 | (x & 0xFF00FF00FF00FF00) >> 8;
+		return x;
+	}
+
 	static uint16_t GetBigEndian16(const uint16_t val)
 	{
 		if (IsBigEndian())
@@ -59,5 +69,83 @@ public:
 		}
 
 		return changeEndianness32(val);
+	}
+
+	static uint64_t GetBigEndian64(const uint64_t val)
+	{
+		if (IsBigEndian())
+		{
+			return val;
+		}
+
+		return changeEndianness64(val);
+	}
+
+	static uint32_t GetLittleEndian32(const uint32_t val)
+	{
+		if (!IsBigEndian())
+		{
+			return val;
+		}
+
+		return changeEndianness32(val);
+	}
+
+	static uint64_t GetLittleEndian64(const uint64_t val)
+	{
+		if (!IsBigEndian())
+		{
+			return val;
+		}
+
+		return changeEndianness64(val);
+	}
+
+	static inline uint32_t ReadBE32(const unsigned char* ptr)
+	{
+		uint32_t x;
+		memcpy((char*)&x, ptr, 4);
+
+		return GetBigEndian32(x);
+	}
+
+	static inline uint64_t ReadBE64(const unsigned char* ptr)
+	{
+		uint64_t x;
+		memcpy((char*)&x, ptr, 8);
+
+		return GetBigEndian64(x);
+	}
+
+	static inline void WriteBE32(unsigned char* ptr, uint32_t x)
+	{
+		uint32_t v = GetBigEndian32(x);
+		memcpy(ptr, (char*)&v, 4);
+	}
+
+	static inline void WriteBE64(unsigned char* ptr, uint64_t x)
+	{
+		uint64_t v = GetBigEndian64(x);
+		memcpy(ptr, (char*)&v, 8);
+	}
+
+	static inline uint32_t ReadLE32(const unsigned char* ptr)
+	{
+		uint32_t x;
+		memcpy((char*)&x, ptr, 4);
+
+		return GetLittleEndian32(x);
+	}
+
+	static inline void WriteLE32(unsigned char* ptr, uint32_t x)
+	{
+		uint32_t v = GetLittleEndian32(x);
+		memcpy(ptr, (char*)&v, 4);
+	}
+
+	static inline void WriteLE64(unsigned char* ptr, uint64_t x)
+	{
+		uint64_t v = GetLittleEndian64(x);
+		memcpy(ptr, (char*)&v, 8);
 	}
 };

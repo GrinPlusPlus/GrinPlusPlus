@@ -13,7 +13,7 @@ public:
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
 private:
-	EBlockChainStatus ProcessBlockInternal(const FullBlock& block);
+	EBlockChainStatus ProcessBlockInternal(const FullBlock& block, LockedChainState& lockedState);
 	EBlockChainStatus ProcessNextBlock(const FullBlock& block, LockedChainState& lockedState);
 	EBlockChainStatus ProcessOrphanBlock(const FullBlock& block, LockedChainState& lockedState);
 

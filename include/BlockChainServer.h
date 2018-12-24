@@ -75,6 +75,11 @@ public:
 	// Returns the block headers matching the given hashes.
 	//
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
+
+	//
+	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.
+	//
+	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const = 0;
 };
 
 namespace BlockChainAPI

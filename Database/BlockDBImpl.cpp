@@ -169,7 +169,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash)
 void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex)
 {
 	const std::string outputHex = HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData(), false, false);
-	LoggerAPI::LogInfo(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%lld) for output (%s).", mmrIndex, outputHex.c_str()));
+	LoggerAPI::LogInfo(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) for output (%s).", mmrIndex, outputHex.c_str()));
 
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 

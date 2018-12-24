@@ -3,6 +3,7 @@
 
 #include <Config/Environment.h>
 #include <Config/Genesis.h>
+#include <BitUtil.h>
 #include <filesystem>
 
 Config ConfigReader::ReadConfig(const Json::Value& root) const
@@ -51,6 +52,8 @@ EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
 
 Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 {
+	const uint32_t floonetPrivateVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
+	const uint32_t floonetPublicVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	if (root.isMember(ConfigProps::ENVIRONMENT))
 	{
 		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "FLOONET").asString();
@@ -60,16 +63,17 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 		}
 		else if (environment == "FLOONET")
 		{
-			return Environment(Genesis::FLOONET_GENESIS);
+			
+			return Environment(Genesis::FLOONET_GENESIS, floonetPrivateVersion, floonetPublicVersion);
 		}
 		else if (environment == "TESTNET4")
 		{
-			return Environment(Genesis::TESTNET4_GENESIS);
+			//return Environment(Genesis::TESTNET4_GENESIS);
 		}
 	}
 
 
-	return Environment(Genesis::FLOONET_GENESIS);
+	return Environment(Genesis::FLOONET_GENESIS, floonetPrivateVersion, floonetPublicVersion);
 }
 
 std::string ConfigReader::ReadDataPath(const Json::Value& root) const

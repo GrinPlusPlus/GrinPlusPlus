@@ -39,10 +39,11 @@ public:
 			std::filesystem::remove(destinationPath);
 		}
 
+		std::error_code error;
 		const std::filesystem::path sourcePath(source);
-		std::filesystem::rename(sourcePath, destinationPath);
+		std::filesystem::rename(sourcePath, destinationPath, error);
 
-		return true;
+		return !error;
 	}
 
 	static bool SafeWriteToFile(const std::string& filePath, const std::vector<unsigned char>& data)

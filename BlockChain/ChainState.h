@@ -4,7 +4,7 @@
 #include "ChainStore.h"
 #include "BlockStore.h"
 #include "LockedChainState.h"
-#include "OrphanPool.h"
+#include "OrphanPool/OrphanPool.h"
 
 #include <Core/BlockHeader.h>
 #include <Core/ChainType.h>
@@ -33,8 +33,7 @@ public:
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
 
-	void BlockValidated(const Hash& hash);
-	bool HasBlockBeenValidated(const Hash& hash) const;
+	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
 	LockedChainState GetLocked();
 	void FlushAll();
@@ -51,7 +50,4 @@ private:
 	OrphanPool m_orphanPool;
 	IHeaderMMR& m_headerMMR;
 	std::shared_ptr<ITxHashSet> m_pTxHashSet;
-
-	// TODO: Figure out best approach to storing orphans. Probably could just store them by hash, and iterate over them daily (weekly?) and get rid of anything beyond horizon.
-	std::set<Hash> m_validatedBlocks;
 };

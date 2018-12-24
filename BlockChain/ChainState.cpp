@@ -89,6 +89,31 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t h
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
+std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_t maxNumBlocks) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded;
+	blocksNeeded.reserve(maxNumBlocks);
+
+	Chain& candidateChain = m_chainStore.GetCandidateChain();
+	const uint64_t candidateHeight = candidateChain.GetTip()->GetHeight();
+
+	uint64_t nextHeight = m_chainStore.GetConfirmedChain().GetTip()->GetHeight() + 1;
+	while (nextHeight <= candidateHeight)
+	{
+		const BlockIndex* pIndex = candidateChain.GetByHeight(nextHeight);
+		blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight++, pIndex->GetHash()));
+
+		if (blocksNeeded.size() == maxNumBlocks)
+		{
+			break;
+		}
+	}
+
+	return blocksNeeded;
+}
+
 std::unique_ptr<BlockHeader> ChainState::GetHead_Locked(const EChainType chainType)
 {
 	const Hash& headHash = GetHeadHash_Locked(chainType);
@@ -99,20 +124,6 @@ std::unique_ptr<BlockHeader> ChainState::GetHead_Locked(const EChainType chainTy
 const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType)
 {
 	return m_chainStore.GetChain(chainType).GetTip()->GetHash();
-}
-
-void ChainState::BlockValidated(const Hash& hash)
-{
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
-
-	m_validatedBlocks.insert(hash);
-}
-
-bool ChainState::HasBlockBeenValidated(const Hash& hash) const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
-
-	return m_validatedBlocks.find(hash) != m_validatedBlocks.cend();
 }
 
 LockedChainState ChainState::GetLocked()

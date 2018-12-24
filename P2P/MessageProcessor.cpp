@@ -114,7 +114,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					socketAddresses.push_back(peer.GetSocketAddress());
 				}
 
-				LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %lld addresses to %s.", socketAddresses.size(), formattedIPAddress.c_str()));
+				LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu addresses to %s.", socketAddresses.size(), formattedIPAddress.c_str()));
 				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
 
 				return MessageSender().Send(connectedPeer, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -125,7 +125,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const PeerAddressesMessage peerAddressesMessage = PeerAddressesMessage::Deserialize(byteBuffer);
 				const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
 
-				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Received %lld addresses from %s.", peerAddresses.size(), formattedIPAddress.c_str()));
+				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Received %llu addresses from %s.", peerAddresses.size(), formattedIPAddress.c_str()));
 				m_peerManager.AddPeerAddresses(peerAddresses);
 
 				return EStatus::SUCCESS;
@@ -139,7 +139,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				std::vector<BlockHeader> blockHeaders = BlockLocator(m_blockChainServer).LocateHeaders(hashes);
 				const HeadersMessage headersMessage(std::move(blockHeaders));
 
-				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %lld headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
+				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 				return MessageSender().Send(connectedPeer, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:

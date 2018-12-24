@@ -84,7 +84,8 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 {
 	const CBigInteger<32>& hash = compactBlock.GetHash();
 
-	if (m_pChainState->HasBlockBeenValidated(hash))
+	std::unique_ptr<BlockHeader> pConfirmedHeader = m_pChainState->GetBlockHeaderByHeight(compactBlock.GetBlockHeader().GetHeight(), EChainType::CONFIRMED);
+	if (pConfirmedHeader != nullptr && pConfirmedHeader->GetHash() == hash)
 	{
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
@@ -174,6 +175,11 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const 
 {
 	// TODO: Implement this
 	return std::unique_ptr<BlockHeader>(nullptr);
+}
+
+std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const uint64_t maxNumBlocks) const
+{
+	return m_pChainState->GetBlocksNeeded(maxNumBlocks);
 }
 
 namespace BlockChainAPI

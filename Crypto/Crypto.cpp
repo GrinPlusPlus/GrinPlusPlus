@@ -15,8 +15,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-#include <openssl/hmac.h>
-
 CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
 {
 	std::vector<unsigned char> tmp(32, 0);
@@ -44,7 +42,6 @@ CBigInteger<20> Crypto::RipeMD160(const std::vector<unsigned char>& input)
 	return CBigInteger<20>(ripemd);
 }
 
-// TODO: Find better HMAC_SHA and get rid of OpenSSL
 CBigInteger<32> Crypto::HMAC_SHA256(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data)
 {
 	std::vector<unsigned char> result(32);

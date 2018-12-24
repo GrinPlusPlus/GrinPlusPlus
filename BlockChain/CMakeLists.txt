@@ -5,6 +5,7 @@ file(GLOB BLOCK_CHAIN_SRC
 	"uint128/*.cpp"
 	"Processors/*.cpp"
 	"Validators/*.cpp"
+	"OrphanPool/OrphanPool.cpp"
 )
 
 add_library(${TARGET_NAME} SHARED ${BLOCK_CHAIN_SRC})

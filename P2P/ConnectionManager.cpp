@@ -51,6 +51,28 @@ size_t ConnectionManager::GetNumberOfActiveConnections() const
 	return m_connections.size();
 }
 
+std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	std::vector<uint64_t> mostWorkPeers;
+
+	Connection* pMostWorkPeer = GetMostWorkPeer();
+	if (pMostWorkPeer != nullptr)
+	{
+		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
+		for (Connection* pConnection : m_connections)
+		{
+			if (pConnection->GetTotalDifficulty() >= totalDifficulty)
+			{
+				mostWorkPeers.push_back(pConnection->GetId());
+			}
+		}
+	}
+
+	return mostWorkPeers;
+}
+
 uint64_t ConnectionManager::GetMostWork() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
@@ -89,6 +111,20 @@ uint64_t ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 	}
 
 	return 0;
+}
+
+bool ConnectionManager::SendMessageToPeer(const IMessage& message, const uint64_t connectionId)
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	Connection* pConnection = GetConnectionById(connectionId);
+	if (pConnection != nullptr)
+	{
+		pConnection->Send(message);
+		return true;
+	}
+
+	return false;
 }
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
@@ -161,6 +197,19 @@ Connection* ConnectionManager::GetMostWorkPeer() const
 	const int index = std::rand() % mostWorkPeers.size();
 
 	return mostWorkPeers[index];
+}
+
+Connection* ConnectionManager::GetConnectionById(const uint64_t connectionId) const
+{
+	for (Connection* pConnection : m_connections)
+	{
+		if (pConnection->GetId() == connectionId)
+		{
+			return pConnection;
+		}
+	}
+
+	return nullptr;
 }
 
 void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)

@@ -120,7 +120,7 @@ bool OutputPMMR::Rewind(const uint64_t lastMMRIndex)
 
 bool OutputPMMR::Flush()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%lld)", GetSize()));
+	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%llu)", GetSize()));
 	const bool hashFlush = m_hashFile.Flush();
 	const bool dataFlush = m_dataFile.Flush();
 	const bool leafSetFlush = m_leafSet.Flush();

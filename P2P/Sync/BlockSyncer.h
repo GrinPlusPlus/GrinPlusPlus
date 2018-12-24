@@ -14,7 +14,7 @@ public:
 	bool SyncBlocks();
 
 private:
-	bool IsBlockSyncDue() const;
+	bool IsBlockSyncDue();
 	bool RequestBlocks();
 
 	ConnectionManager & m_connectionManager;
@@ -22,5 +22,5 @@ private:
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;
-	uint64_t m_connectionId;
+	uint64_t m_highestRequested;
 };

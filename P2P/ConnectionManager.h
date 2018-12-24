@@ -24,10 +24,12 @@ public:
 
 	inline const SyncStatus& GetSyncStatus() const { return m_syncer.GetSyncStatus(); }
 	size_t GetNumberOfActiveConnections() const;
+	std::vector<uint64_t> GetMostWorkPeers() const;
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 
 	uint64_t SendMessageToMostWorkPeer(const IMessage& message);
+	bool SendMessageToPeer(const IMessage& message, const uint64_t connectionId);
 	void BroadcastMessage(const IMessage& message, const uint64_t sourceId);
 
 	void PruneConnections(const bool bInactiveOnly);
@@ -37,6 +39,7 @@ public:
 
 private:
 	Connection* GetMostWorkPeer() const;
+	Connection* GetConnectionById(const uint64_t connectionId) const;
 	static void Thread_Broadcast(ConnectionManager& connectionManager);
 
 	mutable std::shared_mutex m_connectionsMutex;

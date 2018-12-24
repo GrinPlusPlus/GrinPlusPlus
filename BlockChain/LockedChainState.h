@@ -2,7 +2,7 @@
 
 #include "BlockStore.h"
 #include "ChainStore.h"
-#include "OrphanPool.h"
+#include "OrphanPool/OrphanPool.h"
 
 #include <HeaderMMR.h>
 #include <Core/BlockHeader.h>

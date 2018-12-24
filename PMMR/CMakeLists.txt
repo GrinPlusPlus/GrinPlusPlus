@@ -19,7 +19,14 @@ find_package(Async++ CONFIG REQUIRED)
 
 # PMMR
 file(GLOB PMMR_SRC
-    "*.cpp"
+    "HeaderMMRImpl.cpp"
+    "KernelMMR.cpp"
+    "KernelSignatureValidator.cpp"
+    "KernelSumValidator.cpp"
+    "OutputPMMR.cpp"
+    "RangeProofPMMR.cpp"
+    "TxHashSetImpl.cpp"
+    "TxHashSetValidator.cpp"
 	"Common/*.cpp"
 	"Common/CRoaring/*.c"
 	"Zip/*.cpp"

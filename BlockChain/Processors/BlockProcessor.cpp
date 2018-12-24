@@ -21,7 +21,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	const uint64_t horizonHeight = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
 
 	const BlockHeader& header = block.GetBlockHeader();
-	const uint64_t height = header.GetHeight();
+	uint64_t height = header.GetHeight();
 	if (height <= horizonHeight)
 	{
 		LoggerAPI::LogError("BlockProcessor::ProcessBlock - Can't process blocks beyond horizon.");
@@ -34,15 +34,41 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
-		LockedChainState lockedState = m_chainState.GetLocked();
-		return ProcessBlockInternal(block, lockedState);
+		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
+		if (returnStatus == EBlockChainStatus::SUCCESS)
+		{
+			LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed. Checking for orphans now.", header.FormatHash().c_str()));
+		}
+
+		// 4. Check for subsequent orphans
+		EBlockChainStatus status = returnStatus;
+		while (status == EBlockChainStatus::SUCCESS)
+		{
+			std::unique_ptr<BlockHeader> pOrphanHeader = m_chainState.GetBlockHeaderByHeight(++height, EChainType::CANDIDATE);
+			if (pOrphanHeader == nullptr)
+			{
+				break;
+			}
+
+			std::unique_ptr<FullBlock> pOrphanBlock = m_chainState.GetOrphanBlock(pOrphanHeader->GetHash());
+			if (pOrphanBlock == nullptr)
+			{
+				break;
+			}
+
+			LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Orphan block %s found. Processing now.", pOrphanHeader->FormatHash().c_str()));
+			status = ProcessBlockInternal(*pOrphanBlock);
+		}
+
+		return returnStatus;
 	}
 
 	return headerStatus;
 }
 
-EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block, LockedChainState& lockedState)
+EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 {
+	LockedChainState lockedState = m_chainState.GetLocked();
 	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	const BlockHeader& header = block.GetBlockHeader();
 
@@ -61,26 +87,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block, L
 	}
 
 	// 3. Fully process block
-	const EBlockChainStatus status = ProcessNextBlock(block, lockedState);
-
-	// 4. Check for subsequent orphans
-	if (status == EBlockChainStatus::SUCCESS)
-	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed. Checking for orphans now.", header.FormatHash().c_str()));
-
-		BlockIndex* pNextCandidateIndex = lockedState.m_chainStore.GetCandidateChain().GetByHeight(header.GetHeight() + 1);
-		if (pNextCandidateIndex != nullptr)
-		{
-			std::unique_ptr<FullBlock> pOrphan = lockedState.m_orphanPool.GetOrphanBlock(pNextCandidateIndex->GetHash());
-			if (pOrphan != nullptr)
-			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Orphan block %s found. Processing now.", pOrphan->GetBlockHeader().FormatHash().c_str()));
-				ProcessBlockInternal(*pOrphan, lockedState);
-			}
-		}
-	}
-
-	return status;
+	return ProcessNextBlock(block, lockedState);
 }
 
 EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, LockedChainState& lockedState)
@@ -106,7 +113,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 		return EBlockChainStatus::INVALID;
 	}
 
-	// TODO: lockedState.m_blockStore.AddBlock(block);
+	lockedState.m_blockStore.AddBlock(block);
 
 	pTxHashSet->Commit();
 

@@ -13,10 +13,13 @@ public:
 	~BlockStore();
 
 	void LoadHeaders(const std::vector<Hash>& hashes);
-	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
+	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash) const;
 
 	bool AddHeader(const BlockHeader& blockHeader);
 	void AddHeaders(const std::vector<BlockHeader>& blockHeaders);
+
+	bool AddBlock(const FullBlock& block);
+	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash) const;
 
 	inline IBlockDB& GetBlockDB() { return m_blockDB; }
 

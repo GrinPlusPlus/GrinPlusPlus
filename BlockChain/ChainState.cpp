@@ -44,7 +44,7 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 
 uint64_t ChainState::GetHeight(const EChainType chainType)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	std::unique_ptr<BlockHeader> pHead = GetHead_Locked(chainType);
 	if (pHead != nullptr)
@@ -57,7 +57,7 @@ uint64_t ChainState::GetHeight(const EChainType chainType)
 
 uint64_t ChainState::GetTotalDifficulty(const EChainType chainType)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	std::unique_ptr<BlockHeader> pHead = GetHead_Locked(chainType);
 	if (pHead != nullptr)
@@ -70,14 +70,14 @@ uint64_t ChainState::GetTotalDifficulty(const EChainType chainType)
 
 std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	return m_blockStore.GetBlockHeaderByHash(hash);
 }
 
 std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	Chain& chain = m_chainStore.GetChain(chainType);
 	const BlockIndex* pBlockIndex = chain.GetByHeight(height);
@@ -89,9 +89,16 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t h
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
+std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const Hash& hash) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	return m_orphanPool.GetOrphanBlock(hash);
+}
+
 std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_headersMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	std::vector<std::pair<uint64_t, Hash>> blocksNeeded;
 	blocksNeeded.reserve(maxNumBlocks);
@@ -128,12 +135,12 @@ const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType)
 
 LockedChainState ChainState::GetLocked()
 {
-	return LockedChainState(m_headersMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_pTxHashSet);
+	return LockedChainState(m_chainMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_pTxHashSet);
 }
 
 void ChainState::FlushAll()
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_headersMutex);
+	std::unique_lock<std::shared_mutex> writeLock(m_chainMutex);
 
 	m_headerMMR.Commit();
 	m_chainStore.Flush();

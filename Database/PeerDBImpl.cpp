@@ -15,7 +15,7 @@ PeerDB::PeerDB(const Config& config)
 
 PeerDB::~PeerDB()
 {
-	CloseDB();
+
 }
 
 void PeerDB::OpenDB()

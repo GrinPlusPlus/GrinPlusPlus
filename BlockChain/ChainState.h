@@ -32,6 +32,7 @@ public:
 
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
+	std::unique_ptr<FullBlock> GetOrphanBlock(const Hash& hash) const;
 
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
@@ -42,7 +43,7 @@ private:
 	std::unique_ptr<BlockHeader> GetHead_Locked(const EChainType chainType);
 	const Hash& GetHeadHash_Locked(const EChainType chainType);
 
-	mutable std::shared_mutex m_headersMutex;
+	mutable std::shared_mutex m_chainMutex;
 
 	const Config& m_config;
 	ChainStore& m_chainStore;

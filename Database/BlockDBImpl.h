@@ -6,7 +6,6 @@
 
 #include <Database/BlockDb.h>
 #include <Config/Config.h>
-#include <Core/BlockHeader.h>
 #include <mutex>
 #include <set>
 
@@ -21,23 +20,32 @@ public:
 	void OpenDB();
 	void CloseDB();
 
-	virtual std::vector<BlockHeader*> LoadBlockHeaders(const std::vector<Hash>& hashes) override final;
-	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) override final;
+	virtual std::vector<BlockHeader*> LoadBlockHeaders(const std::vector<Hash>& hashes) const override final;
+	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const override final;
 
 	virtual void AddBlockHeader(const BlockHeader& blockHeader) override final;
 	virtual void AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders) override final;
 
+	virtual void AddBlock(const FullBlock& block) override final;
+	virtual std::unique_ptr<FullBlock> GetBlock(const Hash& hash) const override final;
+
 	virtual void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) override final;
-	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) override final;
+	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const override final;
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex) override final;
-	virtual std::optional<uint64_t> GetOutputPosition(const Commitment& outputCommitment) override final;
+	virtual std::optional<uint64_t> GetOutputPosition(const Commitment& outputCommitment) const override final;
 
 private:
 	std::string GetHeadKey(const EChainType chainType) const;
 
 	const Config& m_config;
 
+	mutable std::mutex m_mutex;
 	DB* m_pDatabase;
-	std::mutex m_mutex;
+
+	ColumnFamilyHandle* m_pDefaultHandle;
+	ColumnFamilyHandle* m_pBlockHandle;
+	ColumnFamilyHandle* m_pHeaderHandle;
+	ColumnFamilyHandle* m_pBlockSumsHandle;
+	ColumnFamilyHandle* m_pOutputPosHandle;
 };

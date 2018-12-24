@@ -7,8 +7,10 @@
 #include <string>
 #include <filesystem>
 
-const std::string BLOCK_SUMS_KEY = "SUMS_";
-const std::string OUTPUT_POS_KEY = "OUT_";
+static ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+static ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+static ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+static ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 std::string kDBPath = "/tmp/rocksdb_simple_example";
 
@@ -20,7 +22,7 @@ BlockDB::BlockDB(const Config& config)
 
 BlockDB::~BlockDB()
 {
-	CloseDB();
+
 }
 
 void BlockDB::OpenDB()
@@ -34,18 +36,49 @@ void BlockDB::OpenDB()
 	options.compression = kNoCompression;
 
 	// open DB
-	const std::string dbPath = m_config.GetDatabaseDirectory() + "BLOCKS/";
+	const std::string dbPath = m_config.GetDatabaseDirectory() + "CHAIN/";
 	std::filesystem::create_directories(dbPath);
-	Status s = DB::Open(options, dbPath, &m_pDatabase);
+
+
+	std::vector<std::string> columnFamilies;
+	DB::ListColumnFamilies(options, dbPath, &columnFamilies);
+
+	if (columnFamilies.size() <= 1)
+	{
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor() });
+		std::vector<ColumnFamilyHandle*> columnHandles;
+		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
+
+		m_pDefaultHandle = columnHandles[0];
+		m_pDatabase->CreateColumnFamily(BLOCK_COLUMN.options, BLOCK_COLUMN.name, &m_pBlockHandle);
+		m_pDatabase->CreateColumnFamily(HEADER_COLUMN.options, HEADER_COLUMN.name, &m_pHeaderHandle);
+		m_pDatabase->CreateColumnFamily(BLOCK_SUMS_COLUMN.options, BLOCK_SUMS_COLUMN.name, &m_pBlockSumsHandle);
+		m_pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &m_pOutputPosHandle);
+	}
+	else
+	{
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN });
+		std::vector<ColumnFamilyHandle*> columnHandles;
+		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
+		m_pDefaultHandle = columnHandles[0];
+		m_pBlockHandle = columnHandles[1];
+		m_pHeaderHandle = columnHandles[2];
+		m_pBlockSumsHandle = columnHandles[3];
+		m_pOutputPosHandle = columnHandles[4];
+	}
 }
 
 void BlockDB::CloseDB()
 {
-	m_pDatabase->Close();
-	//delete m_pDatabase;
+	delete m_pDefaultHandle;
+	delete m_pBlockHandle;
+	delete m_pHeaderHandle;
+	delete m_pBlockSumsHandle;
+	delete m_pOutputPosHandle;
+	delete m_pDatabase;
 }
 
-std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& hashes)
+std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& hashes) const
 {
 	LoggerAPI::LogInfo("BlockDB::LoadBlockHeaders - Loading headers - " + std::to_string(hashes.size()));
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
@@ -57,7 +90,7 @@ std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& has
 	{
 		const Slice key((const char*)&hash[0], hash.GetData().size());
 		std::string value;
-		Status s = m_pDatabase->Get(ReadOptions(), key, &value);
+		Status s = m_pDatabase->Get(ReadOptions(), m_pHeaderHandle, key, &value);
 		if (s.ok())
 		{
 			std::vector<unsigned char> data(value.data(), value.data() + value.size());
@@ -71,7 +104,7 @@ std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& has
 	return blockHeaders;
 }
 
-std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash)
+std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 {
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
@@ -79,7 +112,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash)
 
 	Slice key((const char*)&hash[0], 32);
 	std::string value;
-	Status s = m_pDatabase->Get(ReadOptions(), HexUtil::ConvertToHex(hash.GetData(), false, false), &value);
+	Status s = m_pDatabase->Get(ReadOptions(), m_pHeaderHandle, HexUtil::ConvertToHex(hash.GetData(), false, false), &value);
 	if (s.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
@@ -101,7 +134,7 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 
 	Slice key((const char*)&hash[0], hash.size());
 	Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
-	m_pDatabase->Put(WriteOptions(), Slice(key), value);
+	m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, Slice(key), value);
 }
 
 void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
@@ -118,10 +151,43 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 
 		Slice key((const char*)&hash[0], hash.size());
 		Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
-		m_pDatabase->Put(WriteOptions(), key, value);
+		m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, key, value);
 	}
 
 	LoggerAPI::LogInfo("BlockDB::AddBlockHeaders - Finished adding headers.");
+}
+
+void BlockDB::AddBlock(const FullBlock& block)
+{
+	std::lock_guard<std::mutex> lockGuard(m_mutex);
+
+	const std::vector<unsigned char>& hash = block.GetHash().GetData();
+
+	Serializer serializer;
+	block.Serialize(serializer);
+
+	Slice key((const char*)&hash[0], hash.size());
+	Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
+	m_pDatabase->Put(WriteOptions(), m_pBlockHandle, Slice(key), value);
+}
+
+std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
+{
+	std::lock_guard<std::mutex> lockGuard(m_mutex);
+
+	std::unique_ptr<FullBlock> pBlock = std::unique_ptr<FullBlock>(nullptr);
+
+	Slice key((const char*)&hash[0], 32);
+	std::string value;
+	Status s = m_pDatabase->Get(ReadOptions(), m_pBlockHandle, HexUtil::ConvertToHex(hash.GetData(), false, false), &value);
+	if (s.ok())
+	{
+		std::vector<unsigned char> data(value.data(), value.data() + value.size());
+		ByteBuffer byteBuffer(data);
+		pBlock = std::make_unique<FullBlock>(FullBlock::Deserialize(byteBuffer));
+	}
+
+	return pBlock;
 }
 
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
@@ -129,9 +195,7 @@ void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 	LoggerAPI::LogInfo("BlockDB::AddBlockSums - Adding BlockSums for block " + HexUtil::ConvertHash(blockHash));
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
-	// Calculate Key Value ("SUMS_" + <Hash_In_Hex_>)
-	const std::string key = BLOCK_SUMS_KEY + HexUtil::ConvertToHex(blockHash.GetData(), false, false);
-	const Slice keyValue((const char*)&key[0], key.size());
+	Slice key((const char*)&blockHash[0], 32);
 
 	// Serializes the BlockSums object
 	Serializer serializer;
@@ -139,21 +203,18 @@ void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 	Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
 
 	// Insert BlockSums object
-	m_pDatabase->Put(WriteOptions(), keyValue, value);
+	m_pDatabase->Put(WriteOptions(), m_pBlockSumsHandle, key, value);
 }
 
-std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash)
+std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 {
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 	std::unique_ptr<BlockSums> pBlockSums = std::unique_ptr<BlockSums>(nullptr);
 
-	// Calculate Key Value ("SUMS_" + <Hash_In_Hex_>)
-	const std::string key = BLOCK_SUMS_KEY + HexUtil::ConvertToHex(blockHash.GetData(), false, false);
-	Slice keyValue((const char*)&key[0], key.size());
-
 	// Read from DB
+	Slice key((const char*)&blockHash[0], 32);
 	std::string value;
-	const Status s = m_pDatabase->Get(ReadOptions(), keyValue, &value);
+	const Status s = m_pDatabase->Get(ReadOptions(), m_pBlockSumsHandle, key, &value);
 	if (s.ok())
 	{
 		// Deserialize result
@@ -173,9 +234,7 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64
 
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
-	// Calculate Key Value ("OUT_POS_" + <Commitment_In_Hex_>)
-	const std::string key = OUTPUT_POS_KEY + outputHex;
-	const Slice keyValue(&key[0], key.size());
+	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 
 	// Serializes the output position
 	Serializer serializer;
@@ -183,21 +242,19 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64
 	Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
 
 	// Insert the output position
-	m_pDatabase->Put(WriteOptions(), keyValue, value);
+	m_pDatabase->Put(WriteOptions(), m_pOutputPosHandle, key, value);
 }
 
-std::optional<uint64_t> BlockDB::GetOutputPosition(const Commitment& outputCommitment)
+std::optional<uint64_t> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
 {
 	std::lock_guard<std::mutex> lockGuard(m_mutex);
 	std::optional<uint64_t> outputPosition = std::nullopt;
 
-	// Calculate Key Value ("OUT_POS_" + <Commitment_In_Hex_>)
-	const std::string key = OUTPUT_POS_KEY + HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData(), false, false);
-	Slice keyValue((const char*)&key[0], key.size());
+	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 
 	// Read from DB
 	std::string value;
-	const Status s = m_pDatabase->Get(ReadOptions(), keyValue, &value);
+	const Status s = m_pDatabase->Get(ReadOptions(), m_pOutputPosHandle, key, &value);
 	if (s.ok())
 	{
 		// Deserialize result

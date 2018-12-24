@@ -17,7 +17,9 @@ TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutp
 
 TxHashSet::~TxHashSet()
 {
+	delete m_pKernelMMR;
 	delete m_pOutputPMMR;
+	delete m_pRangeProofPMMR;
 }
 
 bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
@@ -69,9 +71,9 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		
 	}
 
-	for (const TransactionKernel& kernels : block.GetTransactionBody().GetKernels())
+	for (const TransactionKernel& kernel : block.GetTransactionBody().GetKernels())
 	{
-
+		// TODO: m_pKernelMMR->ApplyKernel(kernel);
 	}
 
 	return true;

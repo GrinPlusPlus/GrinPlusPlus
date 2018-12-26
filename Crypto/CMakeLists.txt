@@ -11,6 +11,8 @@ if(MSVC)
     endif()
 endif()
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsecp256k1-config.h ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1-zkp/src/libsecp256k1-config.h COPYONLY)
+
 file(GLOB CRYPTO_SRC
 	"aes.cpp"
 	"ctaes/ctaes.c"

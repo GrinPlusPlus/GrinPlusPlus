@@ -20,11 +20,6 @@ BlockDB::BlockDB(const Config& config)
 
 }
 
-BlockDB::~BlockDB()
-{
-
-}
-
 void BlockDB::OpenDB()
 {
 	Options options;
@@ -81,7 +76,6 @@ void BlockDB::CloseDB()
 std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& hashes) const
 {
 	LoggerAPI::LogInfo("BlockDB::LoadBlockHeaders - Loading headers - " + std::to_string(hashes.size()));
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
 	std::vector<BlockHeader*> blockHeaders;
 	blockHeaders.reserve(hashes.size());
@@ -106,8 +100,6 @@ std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& has
 
 std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-
 	std::unique_ptr<BlockHeader> pHeader = std::unique_ptr<BlockHeader>(nullptr);
 
 	Slice key((const char*)&hash[0], 32);
@@ -125,8 +117,6 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 
 void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-
 	const std::vector<unsigned char>& hash = blockHeader.GetHash().GetData();
 
 	Serializer serializer;
@@ -140,7 +130,6 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 {
 	LoggerAPI::LogInfo("BlockDB::AddBlockHeaders - Adding headers - " + std::to_string(blockHeaders.size()));
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
 	for (const BlockHeader* pBlockHeader : blockHeaders)
 	{
@@ -159,8 +148,6 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 
 void BlockDB::AddBlock(const FullBlock& block)
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-
 	const std::vector<unsigned char>& hash = block.GetHash().GetData();
 
 	Serializer serializer;
@@ -173,8 +160,6 @@ void BlockDB::AddBlock(const FullBlock& block)
 
 std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-
 	std::unique_ptr<FullBlock> pBlock = std::unique_ptr<FullBlock>(nullptr);
 
 	Slice key((const char*)&hash[0], 32);
@@ -193,7 +178,6 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 {
 	LoggerAPI::LogInfo("BlockDB::AddBlockSums - Adding BlockSums for block " + HexUtil::ConvertHash(blockHash));
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 
 	Slice key((const char*)&blockHash[0], 32);
 
@@ -208,7 +192,6 @@ void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 
 std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 	std::unique_ptr<BlockSums> pBlockSums = std::unique_ptr<BlockSums>(nullptr);
 
 	// Read from DB
@@ -232,8 +215,6 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64
 	const std::string outputHex = HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData(), false, false);
 	LoggerAPI::LogInfo(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) for output (%s).", mmrIndex, outputHex.c_str()));
 
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 
 	// Serializes the output position
@@ -247,7 +228,6 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64
 
 std::optional<uint64_t> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 	std::optional<uint64_t> outputPosition = std::nullopt;
 
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);

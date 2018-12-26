@@ -15,7 +15,7 @@ class BlockDB : public IBlockDB
 {
 public:
 	BlockDB(const Config& config);
-	~BlockDB();
+	~BlockDB() = default;
 
 	void OpenDB();
 	void CloseDB();
@@ -40,7 +40,6 @@ private:
 
 	const Config& m_config;
 
-	mutable std::mutex m_mutex;
 	DB* m_pDatabase;
 
 	ColumnFamilyHandle* m_pDefaultHandle;

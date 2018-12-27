@@ -99,7 +99,7 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 
 bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
 {
-	// TODO: Implement
+	// TODO: Implement (See: verify_bullet_proof_multi)
 	return true;
 }
 

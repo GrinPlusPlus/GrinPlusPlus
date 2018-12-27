@@ -1,4 +1,5 @@
 set(TARGET_NAME Crypto)
+set(TEST_TARGET_NAME Crypto_Tests)
 
 add_definitions(-DHAVE_CONFIG_H -DHAVE_SCRYPT_CONFIG_H)
 include_directories(${PROJECT_SOURCE_DIR}/Crypto/secp256k1-zkp)
@@ -36,3 +37,13 @@ target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
 
 add_dependencies(${TARGET_NAME} Infrastructure)
 target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure)
+
+# Tests
+file(GLOB CRYPTO_TESTS_SRC
+	"Tests/*.cpp"
+)
+
+add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})
+target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO)
+add_dependencies(${TEST_TARGET_NAME} Infrastructure)
+target_link_libraries(${TEST_TARGET_NAME} Infrastructure)

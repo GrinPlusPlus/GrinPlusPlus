@@ -17,7 +17,6 @@ static bool TruncateFile(const std::string& filePath, const uint64_t size)
 	return success;
 }
 
-// TODO: Use memory mapped files (For Windows: https://docs.microsoft.com/en-us/windows/desktop/Memory/file-mapping)
 File::File(const std::string& path)
 	: m_path(path),
 	m_bufferIndex(0),
@@ -134,18 +133,6 @@ bool File::Read(const uint64_t position, const uint64_t numBytes, std::vector<un
 	if (position < m_bufferIndex)
 	{
 		data = std::vector<unsigned char>(m_mmap.cbegin() + position, m_mmap.cbegin() + position + numBytes);
-
-		//std::ifstream file(m_path, std::ios::in | std::ios::binary | std::ios::ate);
-		//if (!file.is_open())
-		//{
-		//	return false;
-		//}
-
-		//data.resize((size_t)numBytes);
-
-		//file.seekg(position, std::ios::beg);
-		//file.read((char*)&data[0], numBytes);
-		//file.close();
 	}
 	else
 	{

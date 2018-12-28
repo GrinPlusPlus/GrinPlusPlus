@@ -1,9 +1,14 @@
 #pragma once
 
+#include <rocksdb/db.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/options.h>
 
 #include <Database/PeerDB.h>
 #include <Config/Config.h>
 #include <mutex>
+
+using namespace rocksdb;
 
 class PeerDB : public IPeerDB 
 {
@@ -22,8 +27,5 @@ public:
 private:
 	const Config& m_config;
 
-	//lmdb::env m_dbEnv;
-	//lmdb::dbi m_dbi;
-
-	std::mutex m_mutex;
+	DB* m_pDatabase;
 };

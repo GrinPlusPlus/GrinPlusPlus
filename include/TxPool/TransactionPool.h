@@ -25,9 +25,9 @@
 class ITransactionPool
 {
 public:
-	virtual std::vector<Transaction> RetrieveTransactions(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const = 0;
+	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const = 0;
 	virtual bool AddTransaction(const Transaction& transaction, const EPoolType poolType) = 0;
-	virtual std::vector<Transaction> FindMatchingTransactions(const std::set<TransactionKernel>& kernels) const = 0;
+	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
 	virtual void RemoveTransactions(const std::vector<Transaction>& transactions, const EPoolType poolType) = 0;
 	virtual void ReconcileBlock(const FullBlock& block) = 0;
 

@@ -36,8 +36,6 @@ public:
 	virtual std::optional<uint64_t> GetOutputPosition(const Commitment& outputCommitment) const override final;
 
 private:
-	std::string GetHeadKey(const EChainType chainType) const;
-
 	const Config& m_config;
 
 	DB* m_pDatabase;

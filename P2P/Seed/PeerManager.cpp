@@ -9,6 +9,17 @@ PeerManager::PeerManager(const Config& config, IPeerDB& peerDB)
 
 }
 
+void PeerManager::Initialize()
+{
+	std::unique_lock<std::shared_mutex> readLock(m_peersMutex);
+
+	const std::vector<Peer> peers = m_peerDB.LoadAllPeers();
+	for (const Peer& peer : peers)
+	{
+		m_peersByAddress.emplace(peer.GetIPAddress(), peer);
+	}
+}
+
 bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const
 {
 	// TODO: Implement

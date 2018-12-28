@@ -50,6 +50,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
 
 	LoggerAPI::LogInfo("Seeder::Thread_Seed() - BEGIN");
+	seeder.m_peerManager.Initialize();
 
 	const int minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();

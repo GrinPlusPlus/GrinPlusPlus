@@ -17,6 +17,8 @@ class PeerManager
 public:
 	PeerManager(const Config& config, IPeerDB& peerDB);
 	
+	void Initialize();
+
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
 	std::unique_ptr<Peer> GetNewPeer(const Capabilities::ECapability& preferredCapability) const;
 	std::vector<Peer> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;

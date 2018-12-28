@@ -20,42 +20,45 @@ PeerDB::~PeerDB()
 
 void PeerDB::OpenDB()
 {
-	//m_dbEnv = lmdb::env::create();
+	Options options;
+	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
+	options.IncreaseParallelism();
+	//options.OptimizeLevelStyleCompaction();
+	// create the DB if it's not already present
+	options.create_if_missing = true;
+	options.compression = kNoCompression;
 
-	//// The current windows implementation allocates the whole object at once, so we don't want this too large.
-	//// 10 MB should be more than enough to store all the recent peers.
-	//m_dbEnv.set_mapsize((size_t)10 * ((size_t)1024UL * 1024UL));
+	// open DB
+	const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
+	std::filesystem::create_directories(dbPath);
 
-	//// Open "PEERS" environment (lmdb file)
-	//const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
-	//std::filesystem::create_directories(dbPath);
-	//m_dbEnv.open(dbPath.c_str(), 0, 0664);
-
-	//// Open the default database. Create it if it doesn't yet exist.
-	//auto rtxn = lmdb::txn::begin(m_dbEnv);
-	//m_dbi = lmdb::dbi::open(rtxn, nullptr, MDB_CREATE);
-	//rtxn.commit();
+	Status s = DB::Open(options, dbPath, &m_pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
 }
 
 void PeerDB::CloseDB()
 {
-	//m_dbEnv.close();
+	//delete m_pDatabase;
 }
 
 std::vector<Peer> PeerDB::LoadAllPeers()
 {
 	LoggerAPI::LogInfo("PeerDB::LoadAllPeers - Loading all peers.");
 
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
+	std::vector<Peer> peers;
 
-	// TODO: Implement
+	rocksdb::Iterator* it = m_pDatabase->NewIterator(rocksdb::ReadOptions());
+	for (it->SeekToFirst(); it->Valid(); it->Next())
+	{
+		std::vector<unsigned char> data(it->value().data(), it->value().data() + it->value().size());
+		ByteBuffer byteBuffer(data);
+		peers.emplace_back(Peer::Deserialize(byteBuffer));
+	}
 
-	return std::vector<Peer>();
+	return peers;
 }
 
 std::unique_ptr<Peer> PeerDB::GetPeer(const IPAddress& address)
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
 	// TODO: Implement
 
 	return std::unique_ptr<Peer>(nullptr);
@@ -63,6 +66,20 @@ std::unique_ptr<Peer> PeerDB::GetPeer(const IPAddress& address)
 
 void PeerDB::AddPeers(const std::vector<Peer>& peers)
 {
-	std::lock_guard<std::mutex> lockGuard(m_mutex);
-	// TODO: Implement
+	LoggerAPI::LogInfo("PeerDB::AddPeers - Adding peers - " + std::to_string(peers.size()));
+
+	for (const Peer& peer : peers)
+	{
+		const IPAddress& address = peer.GetIPAddress();
+
+		Serializer addressSerializer;
+		address.Serialize(addressSerializer);
+		Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+
+		Serializer peerSerializer;
+		peer.Serialize(peerSerializer);
+		Slice value((const char*)peerSerializer.GetBytes().data(), peerSerializer.GetBytes().size());
+
+		m_pDatabase->Put(WriteOptions(), key, value);
+	}
 }

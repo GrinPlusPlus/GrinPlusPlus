@@ -4,7 +4,7 @@
 
 // Query the tx pool for all known txs based on kernel short_ids from the provided compact_block.
 // Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
-std::vector<Transaction> TransactionPool::RetrieveTransactions(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
+std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
 	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
 
@@ -47,7 +47,7 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	return false;
 }
 
-std::vector<Transaction> TransactionPool::FindMatchingTransactions(const std::set<TransactionKernel>& kernels) const
+std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
 {
 	// TODO: Implement
 	return std::vector<Transaction>();

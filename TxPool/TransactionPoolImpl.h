@@ -11,9 +11,9 @@
 class TransactionPool : public ITransactionPool
 {
 public:
-	virtual std::vector<Transaction> RetrieveTransactions(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
+	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
 	virtual bool AddTransaction(const Transaction& transaction, const EPoolType poolType) override final;
-	virtual std::vector<Transaction> FindMatchingTransactions(const std::set<TransactionKernel>& kernels) const override final;
+	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
 	virtual void RemoveTransactions(const std::vector<Transaction>& transactions, const EPoolType poolType) override final;
 	virtual void ReconcileBlock(const FullBlock& block) override final;
 

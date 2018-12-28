@@ -100,22 +100,17 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path)
 {
-	{
-		LockedChainState lockedState = m_pChainState->GetLocked();
-		lockedState.UpdateTxHashSet(nullptr);
-	}
+	m_pChainState->GetLocked().UpdateTxHashSet(nullptr);
 
 	ITxHashSet* pNewTxHashSet = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
 
-	LockedChainState lockedState = m_pChainState->GetLocked();
+	m_pChainState->GetLocked().UpdateTxHashSet(pNewTxHashSet);
 	if (pNewTxHashSet != nullptr)
 	{
-		lockedState.UpdateTxHashSet(pNewTxHashSet);
 		return EBlockChainStatus::SUCCESS;
 	}
 	else
 	{
-		lockedState.UpdateTxHashSet(nullptr);
 		return EBlockChainStatus::INVALID;
 	}
 }

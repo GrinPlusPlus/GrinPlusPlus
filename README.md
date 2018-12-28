@@ -34,32 +34,7 @@ Once your code is built, you can just open Server.exe from your bin folder.
 
 ### Project Status
 #### Node
-The following is a non-comprehensive list of items that still need addressing:
-
-**MUST HAVE:**
-* TxPool not implemented, & Dandelion not yet supported
-* RangeProof & ProofOfWork Validation
-* Finish TxHashSet Validation & Block/Tx Validation
-* REST and/or RPC endpoints not implemented
-* Compaction not yet implemented
-* Accept incoming connections
-* Robust error handling. Crashing when peers send bad data seems like a less than stellar plan :grinning:
-* Overhaul peer management (Peer database, preferred peers, request peers when low etc.)
-* Better logging
-* Document errything
-* Tweak thread sleeps, socket options, timeouts, rocksdb options, etc.
-* Functional tests for MMRs
-
-**NICE TO HAVE:**
-* CMake project setup not following best practices
-* PMMR could still benefit from additional refactoring
-* Batch DB commits not really implemented
-* Large re-orgs not yet handled
-* Track peer stats
-* Support IPv6
-* Determine appropriate peer banning guidelines
-* Current lock situation not ideal - Distinguishing between read and write locks would be a huge performance gain. Clearly identify critical sections in the code.
-* Logging - Use macros to skip building log string when log level lower than setting.
+Although the node is fully syncing, and implements much (most?) of the protocol, there's still a ton of work to do before mainnet. See the issues list for a non-comprehensive list of what still needs done.
 
 #### Wallet - Not Implemented Yet
 This will be implemented. Not yet sure which features & communication methods will be supported initially. Hoping to have a nice UI for this, as well.

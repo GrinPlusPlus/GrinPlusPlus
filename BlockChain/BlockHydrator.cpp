@@ -1,6 +1,6 @@
 #include "BlockHydrator.h"
 
-BlockHydrator::BlockHydrator(const ChainState& chainState, const TransactionPool& transactionPool)
+BlockHydrator::BlockHydrator(const ChainState& chainState, const ITransactionPool& transactionPool)
 	: m_chainState(chainState), m_transactionPool(transactionPool)
 {
 

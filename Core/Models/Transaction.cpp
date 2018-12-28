@@ -1,5 +1,6 @@
 #include <Core/Transaction.h>
 
+#include <Crypto.h>
 #include <Serialization/Serializer.h>
 
 Transaction::Transaction(const BlindingFactor&& offset, const TransactionBody&& transactionBody)
@@ -27,4 +28,17 @@ Transaction Transaction::Deserialize(ByteBuffer& byteBuffer)
 	const TransactionBody transactionBody = TransactionBody::Deserialize(byteBuffer);
 
 	return Transaction(std::move(offset), std::move(transactionBody));
+}
+
+const Hash& Transaction::GetHash() const
+{
+	if (m_hash == Hash())
+	{
+		Serializer serializer;
+		Serialize(serializer);
+
+		m_hash = Crypto::Blake2b(serializer.GetBytes());
+	}
+
+	return m_hash;
 }

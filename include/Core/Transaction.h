@@ -7,6 +7,7 @@
 //
 
 #include <vector>
+#include <Hash.h>
 #include <BigInteger.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
@@ -50,10 +51,17 @@ public:
 	void Serialize(Serializer& serializer) const;
 	static Transaction Deserialize(ByteBuffer& byteBuffer);
 
+	//
+	// Hashing
+	//
+	const Hash& GetHash() const;
+
 private:
 	// The kernel "offset" k2 excess is k1G after splitting the key k = k1 + k2.
 	const BlindingFactor m_offset;
 
 	// The transaction body.
 	const TransactionBody m_transactionBody;
+
+	mutable Hash m_hash;
 };

@@ -2,7 +2,6 @@
 #include "BlockHydrator.h"
 #include "Validators/BlockHeaderValidator.h"
 #include "Validators/BlockValidator.h"
-#include "Validators/TransactionValidator.h"
 #include "Processors/BlockHeaderProcessor.h"
 #include "Processors/TxHashSetProcessor.h"
 #include "Processors/BlockProcessor.h"
@@ -33,9 +32,9 @@ void BlockChainServer::Initialize()
 	m_pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(m_config);
 
 	m_pBlockStore = new BlockStore(m_config, m_database.GetBlockDB());
-	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR);
+	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config);
+	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
-	m_pTransactionPool = new TransactionPool();
 
 	m_initialized = true;
 }
@@ -57,10 +56,10 @@ void BlockChainServer::Shutdown()
 		delete m_pChainStore;
 		m_pChainStore = nullptr;
 
-		delete m_pHeaderMMR;
+		HeaderMMRAPI::CloseHeaderMMR(m_pHeaderMMR);
 		m_pHeaderMMR = nullptr;
 
-		delete m_pTransactionPool;
+		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
 		m_pTransactionPool = nullptr;
 	}
 }
@@ -126,10 +125,8 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 
 EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction)
 {
-	if (TransactionValidator().ValidateTransaction(transaction))
+	if (m_pTransactionPool->AddTransaction(transaction, EPoolType::TX))
 	{
-		m_pTransactionPool->AddTransaction(transaction);
-
 		return EBlockChainStatus::SUCCESS;
 	}
 

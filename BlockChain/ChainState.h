@@ -11,18 +11,16 @@
 #include <HeaderMMR.h>
 #include <Hash.h>
 #include <shared_mutex>
-#include <map>
-#include <set>
-#include <atomic>
 #include <memory>
 
 // Forward Declarations
+class ITransactionPool;
 class ITxHashSet;
 
 class ChainState
 {
 public:
-	ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR);
+	ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR, ITransactionPool& transactionPool);
 	~ChainState();
 
 	void Initialize(const BlockHeader& genesisHeader);
@@ -50,5 +48,6 @@ private:
 	BlockStore& m_blockStore;
 	OrphanPool m_orphanPool;
 	IHeaderMMR& m_headerMMR;
+	ITransactionPool& m_transactionPool;
 	std::shared_ptr<ITxHashSet> m_pTxHashSet;
 };

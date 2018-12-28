@@ -62,7 +62,7 @@ bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBo
 			break;
 		}
 
-		if (iter->Hash() > (iter + 1)->Hash())
+		if (iter->GetHash() > (iter + 1)->GetHash())
 		{
 			return false;
 		}
@@ -75,7 +75,7 @@ bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBo
 			break;
 		}
 
-		if (iter->Hash() > (iter + 1)->Hash())
+		if (iter->GetHash() > (iter + 1)->GetHash())
 		{
 			return false;
 		}
@@ -88,7 +88,7 @@ bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBo
 			break;
 		}
 
-		if (iter->Hash() > (iter + 1)->Hash())
+		if (iter->GetHash() > (iter + 1)->GetHash())
 		{
 			return false;
 		}

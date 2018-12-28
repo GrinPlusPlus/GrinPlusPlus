@@ -51,5 +51,5 @@ private:
 	uint64_t m_nonce;
 	uint8_t m_edgeBits;
 	std::vector<uint64_t> m_proofNonces;
-	mutable CBigInteger<32> m_hash;
+	mutable Hash m_hash;
 };

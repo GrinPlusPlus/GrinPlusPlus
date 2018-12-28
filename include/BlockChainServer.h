@@ -23,9 +23,9 @@ class Config;
 class IDatabase;
 
 #ifdef MW_BLOCK_CHAIN
-#define BLOCK_CHAIN_API __declspec(dllexport)
+#define BLOCK_CHAIN_API EXPORT
 #else
-#define BLOCK_CHAIN_API __declspec(dllimport)
+#define BLOCK_CHAIN_API IMPORT
 #endif
 
 //

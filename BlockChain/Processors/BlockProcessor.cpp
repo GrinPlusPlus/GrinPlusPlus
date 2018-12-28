@@ -107,7 +107,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 	pTxHashSet->Rewind(*pPreviousHeader);
 
 	pTxHashSet->ApplyBlock(block);
-	if (!BlockValidator(lockedState.GetTxHashSet()).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
+	if (!BlockValidator(lockedState.m_transactionPool, lockedState.GetTxHashSet()).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
 	{
 		pTxHashSet->Discard();
 		return EBlockChainStatus::INVALID;

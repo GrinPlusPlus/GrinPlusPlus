@@ -1,14 +1,14 @@
 #include "BlockValidator.h"
-#include "TransactionBodyValidator.h"
 #include "../Processors/BlockHeaderProcessor.h"
 #include "../CommitmentUtil.h"
 
 #include <Crypto.h>
 #include <Consensus/Common.h>
 #include <TxHashSet.h>
+#include <TxPool/TransactionPool.h>
 
-BlockValidator::BlockValidator(ITxHashSet* pTxHashSet)
-	: m_pTxHashSet(pTxHashSet)
+BlockValidator::BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pTxHashSet)
+	: m_transactionPool(transactionPool), m_pTxHashSet(pTxHashSet)
 {
 
 }
@@ -17,7 +17,7 @@ BlockValidator::BlockValidator(ITxHashSet* pTxHashSet)
 // Includes commitment sums and kernels, Merkle trees, reward, etc.
 bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset) const
 {
-	if (!TransactionBodyValidator().ValidateTransactionBody(block.GetTransactionBody(), true))
+	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
 	{
 		return false;
 	}

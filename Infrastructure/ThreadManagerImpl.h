@@ -2,7 +2,7 @@
 
 #include <string>
 #include <thread>
-#include <map>
+#include <unordered_map>
 #include <shared_mutex>
 
 class ThreadManager
@@ -17,5 +17,5 @@ public:
 
 private:
 	mutable std::shared_mutex m_threadNamesMutex;
-	std::map<std::thread::id, std::string> m_threadNamesById;
+	std::unordered_map<std::thread::id, std::string> m_threadNamesById;
 };

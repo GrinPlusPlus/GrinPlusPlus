@@ -6,6 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
+#include <Hash.h>
 #include <Core/Features.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/Signature.h>
@@ -36,9 +37,9 @@ public:
 	//
 	TransactionKernel& operator=(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel& operator=(TransactionKernel&& transactionKernel) noexcept = default;
-	inline bool operator<(const TransactionKernel& transactionKernel) const { return Hash() < transactionKernel.Hash(); }
-	inline bool operator==(const TransactionKernel& transactionKernel) const { return Hash() == transactionKernel.Hash(); }
-	inline bool operator!=(const TransactionKernel& transactionKernel) const { return Hash() != transactionKernel.Hash(); }
+	inline bool operator<(const TransactionKernel& transactionKernel) const { return GetHash() < transactionKernel.GetHash(); }
+	inline bool operator==(const TransactionKernel& transactionKernel) const { return GetHash() == transactionKernel.GetHash(); }
+	inline bool operator!=(const TransactionKernel& transactionKernel) const { return GetHash() != transactionKernel.GetHash(); }
 
 	//
 	// Getters
@@ -58,7 +59,7 @@ public:
 	//
 	// Hashing
 	//
-	const CBigInteger<32>& Hash() const;
+	const Hash& GetHash() const;
 
 private:
 	// Options for a kernel's structure or use
@@ -78,5 +79,5 @@ private:
 	// The signature proving the excess is a valid public key, which signs the transaction fee.
 	Signature m_excessSignature;
 
-	mutable CBigInteger<32> m_hash;
+	mutable Hash m_hash;
 };

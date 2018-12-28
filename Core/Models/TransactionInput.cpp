@@ -29,7 +29,7 @@ TransactionInput TransactionInput::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionInput((EOutputFeatures)features, std::move(commitment));
 }
 
-const CBigInteger<32>& TransactionInput::Hash() const
+const Hash& TransactionInput::GetHash() const
 {
 	if (m_hash == CBigInteger<32>())
 	{

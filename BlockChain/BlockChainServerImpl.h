@@ -3,13 +3,12 @@
 #include "BlockStore.h"
 #include "ChainState.h"
 #include "ChainStore.h"
-#include "TransactionPool.h"
 
+#include <TxPool/TransactionPool.h>
 #include <BlockChainServer.h>
 #include <HeaderMMR.h>
 #include <Database.h>
 #include <stdint.h>
-#include <map>
 #include <mutex>
 
 class BlockChainServer : public IBlockChainServer
@@ -50,7 +49,7 @@ private:
 	ChainState* m_pChainState;
 	ChainStore* m_pChainStore;
 	IHeaderMMR* m_pHeaderMMR;
-	TransactionPool* m_pTransactionPool;
+	ITransactionPool* m_pTransactionPool;
 	const Config& m_config;
 
 	IDatabase& m_database;

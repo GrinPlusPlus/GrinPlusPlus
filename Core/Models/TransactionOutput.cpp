@@ -33,9 +33,9 @@ TransactionOutput TransactionOutput::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionOutput((EOutputFeatures)features, std::move(commitment), std::move(rangeProof));
 }
 
-const CBigInteger<32>& TransactionOutput::Hash() const
+const Hash& TransactionOutput::GetHash() const
 {
-	if (m_hash == CBigInteger<32>())
+	if (m_hash == Hash())
 	{
 		Serializer serializer;
 		

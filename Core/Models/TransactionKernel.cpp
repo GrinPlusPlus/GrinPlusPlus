@@ -49,7 +49,7 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionKernel((EKernelFeatures)features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }
 
-const CBigInteger<32>& TransactionKernel::Hash() const
+const Hash& TransactionKernel::GetHash() const
 {
 	if (m_hash == CBigInteger<32>())
 	{

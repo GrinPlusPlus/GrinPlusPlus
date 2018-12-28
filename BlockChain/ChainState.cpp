@@ -3,9 +3,10 @@
 #include <Consensus/BlockTime.h>
 #include <Database/BlockDb.h>
 #include <TxHashSet.h>
+#include <TxPool/TransactionPool.h>
 
-ChainState::ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR)
-	: m_config(config), m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR), m_pTxHashSet(nullptr)
+ChainState::ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR, ITransactionPool& transactionPool)
+	: m_config(config), m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR), m_transactionPool(transactionPool), m_pTxHashSet(nullptr)
 {
 
 }
@@ -135,7 +136,7 @@ const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType)
 
 LockedChainState ChainState::GetLocked()
 {
-	return LockedChainState(m_chainMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_pTxHashSet);
+	return LockedChainState(m_chainMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_transactionPool, m_pTxHashSet);
 }
 
 void ChainState::FlushAll()

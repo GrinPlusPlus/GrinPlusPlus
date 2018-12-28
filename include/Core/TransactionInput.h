@@ -6,6 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
+#include <Hash.h>
 #include <Core/Features.h>
 #include <Crypto/Commitment.h>
 #include <Serialization/ByteBuffer.h>
@@ -35,8 +36,8 @@ public:
 	//
 	TransactionInput& operator=(const TransactionInput& transactionInput) = default;
 	TransactionInput& operator=(TransactionInput&& transactionInput) noexcept = default;
-	inline bool operator<(const TransactionInput& transactionInput) const { return Hash() < transactionInput.Hash(); }
-	inline bool operator==(const TransactionInput& transactionInput) const { return Hash() == transactionInput.Hash(); }
+	inline bool operator<(const TransactionInput& transactionInput) const { return GetHash() < transactionInput.GetHash(); }
+	inline bool operator==(const TransactionInput& transactionInput) const { return GetHash() == transactionInput.GetHash(); }
 
 	//
 	// Getters
@@ -53,7 +54,7 @@ public:
 	//
 	// Hashing
 	//
-	const CBigInteger<32>& Hash() const;
+	const Hash& GetHash() const;
 
 private:
 	// The features of the output being spent. 
@@ -63,5 +64,5 @@ private:
 	// The commit referencing the output being spent.
 	Commitment m_commitment;
 
-	mutable CBigInteger<32> m_hash;
+	mutable Hash m_hash;
 };

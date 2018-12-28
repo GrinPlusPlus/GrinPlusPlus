@@ -6,6 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
+#include <Hash.h>
 #include <Core/Features.h>
 #include <Core/OutputIdentifier.h>
 #include <Crypto/Commitment.h>
@@ -37,8 +38,8 @@ public:
 	//
 	TransactionOutput& operator=(const TransactionOutput& transactionOutput) = default;
 	TransactionOutput& operator=(TransactionOutput&& transactionOutput) noexcept = default;
-	inline bool operator<(const TransactionOutput& transactionOutput) const { return Hash() < transactionOutput.Hash(); }
-	inline bool operator==(const TransactionOutput& transactionOutput) const { return Hash() == transactionOutput.Hash(); }
+	inline bool operator<(const TransactionOutput& transactionOutput) const { return GetHash() < transactionOutput.GetHash(); }
+	inline bool operator==(const TransactionOutput& transactionOutput) const { return GetHash() == transactionOutput.GetHash(); }
 
 	//
 	// Getters
@@ -56,7 +57,7 @@ public:
 	//
 	// Hashing
 	//
-	const CBigInteger<32>& Hash() const;
+	const Hash& GetHash() const;
 
 private:
 	// Options for an output's structure or use
@@ -68,5 +69,5 @@ private:
 	// A proof that the commitment is in the right range
 	RangeProof m_rangeProof;
 
-	mutable CBigInteger<32> m_hash;
+	mutable Hash m_hash;
 };

@@ -25,10 +25,10 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	const RangeProofPMMR& rangeProofPMMR = *txHashSet.GetRangeProofPMMR();
 
 	// Validate size of each MMR matches blockHeader
-	//if (!ValidateSizes(txHashSet, blockHeader))
-	//{
-	//	return TxHashSetValidationResult::Fail();
-	//}
+	if (!ValidateSizes(txHashSet, blockHeader))
+	{
+		return TxHashSetValidationResult::Fail();
+	}
 
 	// Validate MMR hashes in parallel
 	async::task<bool> kernelTask = async::spawn([this, &kernelMMR] { return this->ValidateMMRHashes(kernelMMR); });

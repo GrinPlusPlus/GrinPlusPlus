@@ -102,10 +102,7 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 {
 	{
 		LockedChainState lockedState = m_pChainState->GetLocked();
-		ITxHashSet* pExistingTxHashSet = lockedState.GetTxHashSet();
 		lockedState.UpdateTxHashSet(nullptr);
-
-		TxHashSetAPI::Close(pExistingTxHashSet);
 	}
 
 	ITxHashSet* pNewTxHashSet = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);

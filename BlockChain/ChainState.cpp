@@ -40,7 +40,7 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 		m_blockStore.LoadHeaders(hashesToLoad);
 	}
 
-	m_pTxHashSet = std::shared_ptr<ITxHashSet>(TxHashSetAPI::Open(m_config, m_blockStore.GetBlockDB()));
+	m_pTxHashSet.reset(TxHashSetAPI::Open(m_config, m_blockStore.GetBlockDB()));
 }
 
 uint64_t ChainState::GetHeight(const EChainType chainType)

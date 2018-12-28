@@ -66,5 +66,5 @@ public:
 	ITransactionPool& m_transactionPool;
 	
 private:
-	std::shared_ptr<ITxHashSet> m_pTxHashSet;
+	std::shared_ptr<ITxHashSet>& m_pTxHashSet;
 };

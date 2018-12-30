@@ -137,7 +137,6 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 	// Rewind MMR
 	IHeaderMMR& headerMMR = lockedState.m_headerMMR;
 
-	// TODO: If previous sync header != previous candidate header, we'll have to rewind further and apply sync headers.
 	headerMMR.Rewind(newHeaders.front().GetHeight());
 
 	// Validate the headers.

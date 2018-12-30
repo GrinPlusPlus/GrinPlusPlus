@@ -34,12 +34,14 @@ public:
 	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) override final;
 
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) override final;
-	virtual EBlockChainStatus AddTransaction(const Transaction& transaction) override final;
+	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) override final;
 
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Hash& outputCommitment) const override final;
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
+
+	virtual std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const override final;
 
 	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const override final;
 

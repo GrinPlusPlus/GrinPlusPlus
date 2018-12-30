@@ -1,6 +1,11 @@
 #include "TransactionValidator.h"
 #include "TransactionBodyValidator.h"
 
+#include <Crypto.h>
+#include <HexUtil.h>
+#include <Infrastructure/Logger.h>
+#include <Common/FunctionalUtil.h>
+
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic
 bool TransactionValidator::ValidateTransaction(const Transaction& transaction) const
 {
@@ -10,7 +15,7 @@ bool TransactionValidator::ValidateTransaction(const Transaction& transaction) c
 		return false;
 	}
 
-	// Verify no output or kernel include invalid features (coinbase)
+	// Verify no output or kernel includes invalid features (coinbase)
 	if (!ValidateFeatures(transaction.GetBody()))
 	{
 		return false;
@@ -58,17 +63,43 @@ bool TransactionValidator::ValidateKernelSums(const Transaction& transaction) co
 		overage += kernel.GetFee();
 	}
 
-	// TODO: Implement
+	// gather the commitments
+	auto getInputCommitments = [](TransactionInput& input) -> Commitment { return input.GetCommitment(); };
+	std::vector<Commitment> inputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetInputs(), getInputCommitments);
+
+	auto getOutputCommitments = [](TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
+	std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetOutputs(), getOutputCommitments);
+
+	// Add the overage as output commitment
+	if (overage != 0)
+	{
+		std::unique_ptr<Commitment> pOverCommitment = Crypto::CommitTransparent(overage);
+		if (nullptr != pOverCommitment)
+		{
+			outputCommitments.push_back(*pOverCommitment);
+		}
+	}
+
 	// Sum all input|output|overage commitments.
-	//let utxo_sum = self.sum_commitments(overage) ? ;
+	std::unique_ptr<Commitment> pUTXOSum = Crypto::AddCommitments(outputCommitments, inputCommitments);
 
-	//// Sum the kernel excesses accounting for the kernel offset.
-	//let(kernel_sum, kernel_sum_plus_offset) = self.sum_kernel_excesses(&kernel_offset) ? ;
+	// Sum the kernel excesses accounting for the kernel offset.
+	auto getKernelCommitments = [](TransactionKernel& kernel) -> Commitment { return kernel.GetExcessCommitment(); };
+	std::vector<Commitment> kernelCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetKernels(), getKernelCommitments);
 
-	//if utxo_sum != kernel_sum_plus_offset{
-	//	return Err(Error::KernelSumMismatch);
-	//}
+	if (transaction.GetOffset() != BlindingFactor(CBigInteger<32>::ValueOf(0)))
+	{
+		std::unique_ptr<Commitment> pOffsetCommitment = Crypto::CommitBlinded((uint64_t)0, transaction.GetOffset());
+		kernelCommitments.push_back(*pOffsetCommitment);
+	}
 
+	std::unique_ptr<Commitment> pKernelSumPlusOffset = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());
+
+	if (*pUTXOSum != *pKernelSumPlusOffset)
+	{
+		LoggerAPI::LogError("TransactionValidator::ValidateKernelSums - Failed to validate kernel sums for transaction " + HexUtil::ConvertHash(transaction.GetHash()));
+		return false;
+	}
 
 	return true;
 }

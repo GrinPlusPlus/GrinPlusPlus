@@ -115,9 +115,9 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 	}
 }
 
-EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction)
+EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction, const EPoolType poolType)
 {
-	if (m_pTransactionPool->AddTransaction(transaction, EPoolType::TX))
+	if (m_pTransactionPool->AddTransaction(transaction, poolType))
 	{
 		return EBlockChainStatus::SUCCESS;
 	}
@@ -165,6 +165,12 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const 
 	// TODO: Implement this
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
+
+std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHash(const CBigInteger<32>& hash) const
+{
+	return m_pChainState->GetBlockByHash(hash);
+}
+
 
 std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {

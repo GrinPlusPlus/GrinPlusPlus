@@ -14,7 +14,6 @@ P2PServer::P2PServer(const Config& config, IBlockChainServer& blockChainServer, 
 
 void P2PServer::StartServer()
 {
-	// Start ConnectionManager
 	m_connectionManager.Start();
 }
 

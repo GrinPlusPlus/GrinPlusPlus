@@ -8,6 +8,7 @@
 
 #include <ImportExport.h>
 #include <BlockChainStatus.h>
+#include <TxPool/PoolType.h>
 #include "Core/ChainType.h"
 #include "Core/BlockHeader.h"
 #include "Core/FullBlock.h"
@@ -42,7 +43,7 @@ public:
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& compactBlock) = 0;
 
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) = 0;
-	virtual EBlockChainStatus AddTransaction(const Transaction& transaction) = 0;
+	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) = 0;
 
 	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) = 0;
 
@@ -75,6 +76,12 @@ public:
 	// Returns the block headers matching the given hashes.
 	//
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
+
+	//
+	// Returns the block matching the given hash.
+	// This will be null if no matching block is found.
+	//
+	virtual std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const = 0;
 
 	//
 	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.

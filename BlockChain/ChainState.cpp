@@ -90,6 +90,13 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t h
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
+std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash)
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	return m_blockStore.GetBlockByHash(hash);
+}
+
 std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const Hash& hash) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);

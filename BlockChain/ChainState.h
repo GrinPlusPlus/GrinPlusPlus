@@ -30,6 +30,7 @@ public:
 
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
+	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash);
 	std::unique_ptr<FullBlock> GetOrphanBlock(const Hash& hash) const;
 
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;

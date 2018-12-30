@@ -18,10 +18,12 @@
 #include "Messages/HeaderMessage.h"
 #include "Messages/HeadersMessage.h"
 #include "Messages/BlockMessage.h"
+#include "Messages/GetBlockMessage.h"
 #include "Messages/CompactBlockMessage.h"
 
-// Transaction Message
+// Transaction Messages
 #include "Messages/TransactionMessage.h"
+#include "Messages/StemTransactionMessage.h"
 #include "Messages/TxHashSetRequestMessage.h"
 #include "Messages/TxHashSetArchiveMessage.h"
 
@@ -177,7 +179,16 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case GetBlock:
 			{
-				return EStatus::SUCCESS;
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
+				std::unique_ptr<FullBlock> pBlock = m_blockChainServer.GetBlockByHash(getBlockMessage.GetHash());
+				if (pBlock != nullptr)
+				{
+					BlockMessage blockMessage(std::move(*pBlock));
+					return MessageSender().Send(connectedPeer, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
+
+				return EStatus::UNKNOWN_ERROR;
 			}
 			case Block:
 			{
@@ -213,6 +224,17 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case StemTransaction:
 			{
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
+				const Transaction& transaction = transactionMessage.GetTransaction();
+
+				// TODO: Check Sync status first
+				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
+				if (added == EBlockChainStatus::SUCCESS)
+				{
+					m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
+				}
+
 				return EStatus::SUCCESS;
 			}
 			case TransactionMsg:
@@ -221,7 +243,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction);
+				// TODO: Check Sync status first
+				//const SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
+				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL);
 				if (added == EBlockChainStatus::SUCCESS)
 				{
 					m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
@@ -241,6 +265,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
+				// TODO: Ban if not syncing
 				return ReceiveTxHashSet(connectionId, connectedPeer, txHashSetArchiveMessage);
 			}
 			default:

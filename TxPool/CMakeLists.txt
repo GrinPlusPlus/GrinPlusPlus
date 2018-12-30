@@ -5,6 +5,7 @@ file(GLOB TX_POOL_SRC
     "TransactionBodyValidator.cpp"
 	"TransactionPoolImpl.cpp"
 	"TransactionValidator.cpp"
+	"Pool.cpp"
 )
 
 add_library(${TARGET_NAME} SHARED ${TX_POOL_SRC})

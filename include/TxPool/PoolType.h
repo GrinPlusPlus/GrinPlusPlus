@@ -2,6 +2,6 @@
 
 enum class EPoolType
 {
-	STEM,
-	TX
+	STEMPOOL,
+	MEMPOOL
 };

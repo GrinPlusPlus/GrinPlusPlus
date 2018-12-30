@@ -38,6 +38,9 @@ public:
 	//
 	Transaction& operator=(const Transaction& transaction) = default;
 	Transaction& operator=(Transaction&& transaction) noexcept = default;
+	inline bool operator<(const Transaction& transaction) const { return GetHash() < transaction.GetHash(); }
+	inline bool operator==(const Transaction& transaction) const { return GetHash() == transaction.GetHash(); }
+	inline bool operator!=(const Transaction& transaction) const { return GetHash() != transaction.GetHash(); }
 
 	//
 	// Getters
@@ -58,10 +61,10 @@ public:
 
 private:
 	// The kernel "offset" k2 excess is k1G after splitting the key k = k1 + k2.
-	const BlindingFactor m_offset;
+	BlindingFactor m_offset;
 
 	// The transaction body.
-	const TransactionBody m_transactionBody;
+	TransactionBody m_transactionBody;
 
 	mutable Hash m_hash;
 };

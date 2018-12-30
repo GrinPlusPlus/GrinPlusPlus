@@ -6,42 +6,18 @@
 // Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
 std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
-
-	std::vector<Transaction> transactionsFound;
-
-	for (const auto& transactionByKernelHash : m_transactionsByKernelHash)
-	{
-		const Hash& kernelHash = transactionByKernelHash.first;
-		const ShortId shortId = ShortId::Create(kernelHash, hash, nonce);
-		if (missingShortIds.find(shortId) != missingShortIds.cend())
-		{
-			transactionsFound.push_back(transactionByKernelHash.second);
-
-			if (transactionsFound.size() == missingShortIds.size())
-			{
-				return transactionsFound;
-			}
-		}
-	}
-
-	return transactionsFound;
+	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
 bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType)
 {
-	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
-
-	if (ValidateTransaction(transaction))
+	if (poolType == EPoolType::MEMPOOL)
 	{
-		for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
-		{
-			m_transactionsByKernelHash.insert({ kernel.GetHash(), transaction });
-		}
-
-		m_transactionsByTxHash.insert({ transaction.GetHash(), transaction });
-
-		return true;
+		return m_memPool.AddTransaction(transaction);
+	}
+	else if (poolType == EPoolType::STEMPOOL)
+	{
+		return m_stemPool.AddTransaction(transaction);
 	}
 
 	return false;
@@ -49,28 +25,32 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 
 std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
 {
-	// TODO: Implement
-	return std::vector<Transaction>();
+	return m_memPool.FindTransactionsByKernel(kernels);
 }
 
 void TransactionPool::RemoveTransactions(const std::vector<Transaction>& transactions, const EPoolType poolType)
 {
-	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
-
-	for (const Transaction& transaction : transactions)
+	if (poolType == EPoolType::MEMPOOL)
 	{
-		for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
-		{
-			m_transactionsByKernelHash.erase(kernel.GetHash());
-		}
-
-		m_transactionsByTxHash.erase(transaction.GetHash());
+		m_memPool.RemoveTransactions(transactions);
+	}
+	else if (poolType == EPoolType::STEMPOOL)
+	{
+		m_stemPool.RemoveTransactions(transactions);
 	}
 }
 
 void TransactionPool::ReconcileBlock(const FullBlock& block)
 {
-	// TODO: Implement
+	// TODO: Finish implementing
+	// First reconcile the txpool.
+	m_memPool.ReconcileBlock(block);
+	//self.txpool.reconcile(None, &block.header) ? ;
+
+	// Now reconcile our stempool, accounting for the updated txpool txs.
+	m_stemPool.ReconcileBlock(block);
+	//let txpool_tx = self.txpool.aggregate_transaction() ? ;
+	//self.stempool.reconcile(txpool_tx, &block.header) ? ;
 }
 
 bool TransactionPool::ValidateTransaction(const Transaction& transaction) const

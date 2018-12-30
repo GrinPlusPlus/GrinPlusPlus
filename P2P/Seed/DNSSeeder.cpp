@@ -18,10 +18,7 @@ bool DNSSeeder::GetPeersFromDNS(std::vector<SocketAddress>& addresses) const
 		
 		// MAINNET: Support mainnet seeds
 		dnsSeeds.emplace_back("floonet.seed.grin-tech.org"); // igno.peverell@protonmail.com
-
-		//dnsSeeds.emplace_back("t3.seed.grin-tech.org"); // igno.peverell@protonmail.com
-		//dnsSeeds.emplace_back("seed.grin.lesceller.com"); // q.lesceller@gmail.com
-		//dnsSeeds.emplace_back("t3.grin-seed.prokapi.com"); // info@prokapi.com
+		dnsSeeds.emplace_back("floonet.seed.grin.icu"); // gary.peverell@protonmail.com
 
 		for (auto seed : dnsSeeds)
 		{

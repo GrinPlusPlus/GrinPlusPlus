@@ -3,10 +3,26 @@
 #include <Infrastructure/Logger.h>
 #include <HexUtil.h>
 
-bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message)
+MessageSender::MessageSender(const Config& config)
+	: m_config(config)
+{
+
+}
+
+bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) const
 {
 	Serializer serializer;
-	message.Serialize(serializer);
+	serializer.AppendByteVector(m_config.GetEnvironment().GetMagicBytes());
+	serializer.Append<uint8_t>((uint8_t)message.GetMessageType());
+
+	Serializer bodySerializer;
+	message.SerializeBody(bodySerializer);
+
+	const uint64_t messageLength = bodySerializer.GetBytes().size();
+	serializer.Append<uint64_t>(messageLength);
+
+	serializer.AppendByteVector(bodySerializer.GetBytes());
+
 	const std::vector<unsigned char>& serializedMessage = serializer.GetBytes();
 
 	const std::string hexMessage = HexUtil::ConvertToHex(serializedMessage, true, true);

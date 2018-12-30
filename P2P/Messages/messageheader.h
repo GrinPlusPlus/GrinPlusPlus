@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <Config/Config.h>
 #include <Serialization/ByteBuffer.h>
 
 class MessageHeader
@@ -42,9 +43,9 @@ public:
 	//
 	// Validation
 	//
-	inline const bool IsValid() const
+	inline const bool IsValid(const Config& config) const
 	{
-		if (m_magicBytes[0] == P2P::MAGIC_BYTES[0] && m_magicBytes[1] == P2P::MAGIC_BYTES[1])
+		if (m_magicBytes[0] == config.GetEnvironment().GetMagicBytes()[0] && m_magicBytes[1] == config.GetEnvironment().GetMagicBytes()[1])
 		{
 			// TODO: Check max length.
 			return true;

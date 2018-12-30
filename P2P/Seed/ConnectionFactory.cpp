@@ -48,7 +48,7 @@ Connection* ConnectionFactory::PerformHandshake(SOCKET connection, Peer& peer) c
 	if (bHandMessageSent)
 	{
 		// Get Shake Message
-		std::unique_ptr<RawMessage> receivedShakeMessage = BaseMessageRetriever().RetrieveMessage(connectedPeer, BaseMessageRetriever::BLOCKING);
+		std::unique_ptr<RawMessage> receivedShakeMessage = BaseMessageRetriever(m_config).RetrieveMessage(connectedPeer, BaseMessageRetriever::BLOCKING);
 
 		if (receivedShakeMessage.get() != nullptr && receivedShakeMessage->GetMessageHeader().GetMessageType() == MessageTypes::Shake)
 		{
@@ -87,5 +87,5 @@ bool ConnectionFactory::TransmitHandMessage(ConnectedPeer& connectedPeer) const
 	const std::string& userAgent = P2P::USER_AGENT;
 	const HandMessage handMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);
 
-	return MessageSender::Send(connectedPeer, handMessage);
+	return MessageSender(m_config).Send(connectedPeer, handMessage);
 }

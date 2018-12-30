@@ -65,7 +65,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 {
 	const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
-	if (header.IsValid())
+	if (header.IsValid(m_config))
 	{
 		switch (header.GetMessageType())
 		{
@@ -93,7 +93,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				const PongMessage pongMessage(m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED), m_blockChainServer.GetHeight(EChainType::CONFIRMED));
 
-				return MessageSender().Send(connectedPeer, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(connectedPeer, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Pong:
 			{
@@ -119,7 +119,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu addresses to %s.", socketAddresses.size(), formattedIPAddress.c_str()));
 				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
 
-				return MessageSender().Send(connectedPeer, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(connectedPeer, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case PeerAddrs:
 			{
@@ -142,7 +142,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const HeadersMessage headersMessage(std::move(blockHeaders));
 
 				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
-				return MessageSender().Send(connectedPeer, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(connectedPeer, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:
 			{
@@ -185,7 +185,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (pBlock != nullptr)
 				{
 					BlockMessage blockMessage(std::move(*pBlock));
-					return MessageSender().Send(connectedPeer, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(connectedPeer, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::UNKNOWN_ERROR;

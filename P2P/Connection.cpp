@@ -96,7 +96,7 @@ Capabilities Connection::GetCapabilities() const
 void Connection::Thread_ProcessConnection(Connection& connection)
 {
 	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
-	const BaseMessageRetriever messageRetriever;
+	const BaseMessageRetriever messageRetriever(connection.m_config);
 
 	while (!connection.m_terminate)
 	{
@@ -116,7 +116,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			std::unique_ptr<IMessage> pMessageToSend(connection.m_sendQueue.front());
 			connection.m_sendQueue.pop();
 
-			MessageSender::Send(connection.m_connectedPeer, *pMessageToSend);
+			MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
 		}
 
 		// TODO: If no message sent or received in last ~15 seconds, send ping.

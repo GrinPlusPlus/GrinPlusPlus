@@ -52,6 +52,7 @@ EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
 
 Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 {
+	const std::vector<unsigned char> FLOONET_MAGIC = { 83, 59 };
 	const uint32_t floonetPrivateVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
 	const uint32_t floonetPublicVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	if (root.isMember(ConfigProps::ENVIRONMENT))
@@ -60,20 +61,16 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 		if (environment == "MAINNET")
 		{
 			// MAINNET: Return mainnet Environment. Also check for permanent testnet.
+			//const MAINNET_MAGIC : [u8; 2] = [97, 61];
 		}
 		else if (environment == "FLOONET")
 		{
-			
-			return Environment(Genesis::FLOONET_GENESIS, floonetPrivateVersion, floonetPublicVersion);
-		}
-		else if (environment == "TESTNET4")
-		{
-			//return Environment(Genesis::TESTNET4_GENESIS);
+			return Environment(Genesis::FLOONET_GENESIS, FLOONET_MAGIC, floonetPrivateVersion, floonetPublicVersion);
 		}
 	}
 
 
-	return Environment(Genesis::FLOONET_GENESIS, floonetPrivateVersion, floonetPublicVersion);
+	return Environment(Genesis::FLOONET_GENESIS, FLOONET_MAGIC, floonetPrivateVersion, floonetPublicVersion);
 }
 
 std::string ConfigReader::ReadDataPath(const Json::Value& root) const
@@ -89,8 +86,8 @@ std::string ConfigReader::ReadDataPath(const Json::Value& root) const
 
 P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 {
-	int maxPeers = 15;
-	int minPeers = 8;
+	int maxPeers = 30;
+	int minPeers = 15;
 
 	if (root.isMember(ConfigProps::P2P::P2P))
 	{
@@ -98,12 +95,12 @@ P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 
 		if (p2pRoot.isMember(ConfigProps::P2P::MAX_PEERS))
 		{
-			maxPeers = p2pRoot.get(ConfigProps::P2P::MAX_PEERS, 15).asInt();
+			maxPeers = p2pRoot.get(ConfigProps::P2P::MAX_PEERS, 30).asInt();
 		}
 
 		if (p2pRoot.isMember(ConfigProps::P2P::MIN_PEERS))
 		{
-			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 8).asInt();
+			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 15).asInt();
 		}
 	}
 

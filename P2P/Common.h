@@ -14,9 +14,6 @@ namespace P2P
 	// Grin's user agent with current version
 	static const std::string USER_AGENT = "MW/C++ 0.0.1";
 
-	// Magic number expected in the header of every message
-	static const std::vector<unsigned char> MAGIC_BYTES = { 0x53, 0x35 };
-
 	// Size in bytes of a message header
 	static const uint64_t HEADER_LENGTH = 11;
 

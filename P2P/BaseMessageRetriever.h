@@ -2,6 +2,7 @@
 
 #include "Messages/RawMessage.h"
 
+#include <Config/Config.h>
 #include <memory>
 #include <vector>
 #include <WinSock2.h>
@@ -13,6 +14,8 @@ class ConnectedPeer;
 class BaseMessageRetriever
 {
 public:
+	BaseMessageRetriever(const Config& config);
+
 	enum ERetrievalMode
 	{
 		BLOCKING,
@@ -26,4 +29,6 @@ private:
 	bool HasMessageBeenReceived(const SOCKET socket) const;
 
 	void LogError() const;
+
+	const Config& m_config;
 };

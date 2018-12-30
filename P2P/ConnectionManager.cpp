@@ -171,6 +171,13 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	}
 }
 
+void ConnectionManager::BanConnection(const uint64_t connectionId)
+{
+	std::unique_lock<std::shared_mutex> writeLock(m_connectionsMutex);
+
+	m_peersToBan.insert(connectionId);
+}
+
 Connection* ConnectionManager::GetMostWorkPeer() const
 {
 	std::vector<Connection*> mostWorkPeers;

@@ -8,6 +8,12 @@
 #include <Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
 
+BaseMessageRetriever::BaseMessageRetriever(const Config& config)
+	: m_config(config)
+{
+
+}
+
 std::unique_ptr<RawMessage> BaseMessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
 {
 	SOCKET socket = connectedPeer.GetConnection();
@@ -24,7 +30,7 @@ std::unique_ptr<RawMessage> BaseMessageRetriever::RetrieveMessage(const Connecte
 			ByteBuffer byteBuffer(headerBuffer);
 			MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
 
-			if (!messageHeader.IsValid())
+			if (!messageHeader.IsValid(m_config))
 			{
 				LoggerAPI::LogError(connectedPeer.GetPeer().GetIPAddress().Format() + "> FAILURE");
 			}

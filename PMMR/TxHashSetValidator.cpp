@@ -64,10 +64,10 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
 	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, genesisHasReward, outputSum, kernelSum))
 	{
-		// TODO: return TxHashSetValidationResult::Fail();
+		return TxHashSetValidationResult::Fail();
 	}
 
-	// Validate the rangeproof associated with each unspent output.
+	// TODO: Validate the rangeproof associated with each unspent output.
 
 	// Validate kernel signatures
 	if (!KernelSignatureValidator().ValidateKernelSignatures(*txHashSet.GetKernelMMR()))

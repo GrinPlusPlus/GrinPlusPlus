@@ -32,6 +32,7 @@
 #include <FileUtil.h>
 #include <BlockChainServer.h>
 #include <Infrastructure/Logger.h>
+#include <async++.h>
 #include <fstream>
 #include <filesystem>
 
@@ -166,16 +167,18 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case Headers:
 			{
-				ByteBuffer byteBuffer(rawMessage.GetPayload());
-				const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
-				const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
+				async::spawn([this, rawMessage, formattedIPAddress] {
+					ByteBuffer byteBuffer(rawMessage.GetPayload());
+					const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
+					const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
 
-				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
+					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
-				const bool added = m_blockChainServer.AddBlockHeaders(blockHeaders) == EBlockChainStatus::SUCCESS;
-				LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
+					const bool added = this->m_blockChainServer.AddBlockHeaders(blockHeaders) == EBlockChainStatus::SUCCESS;
+					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
+				});
 
-				return added ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return EStatus::SUCCESS;//added ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case GetBlock:
 			{
@@ -192,15 +195,13 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case Block:
 			{
-				ByteBuffer byteBuffer(rawMessage.GetPayload());
-				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
-				const FullBlock& block = blockMessage.GetBlock();
+				async::spawn([this, rawMessage, formattedIPAddress] {
+					ByteBuffer byteBuffer(rawMessage.GetPayload());
+					const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
+					const FullBlock& block = blockMessage.GetBlock();
 
-				const EBlockChainStatus added = m_blockChainServer.AddBlock(block);
-				if (added == EBlockChainStatus::SUCCESS)
-				{
-					m_connectionManager.BroadcastMessage(blockMessage, connectionId);
-				}
+					m_blockChainServer.AddBlock(block);
+				});
 
 				return EStatus::SUCCESS;
 			}

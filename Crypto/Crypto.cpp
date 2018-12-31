@@ -105,8 +105,7 @@ bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const
 
 bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
 {
-	// TODO: Implement
-	return true;
+	return Secp256k1Wrapper::GetInstance().VerifySingleAggSig(signature, publicKey, message);
 }
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)

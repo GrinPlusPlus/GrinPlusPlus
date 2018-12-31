@@ -1,6 +1,8 @@
 #include "Secp256k1Wrapper.h"
 
 #include "secp256k1-zkp/include/secp256k1_generator.h"
+#include "secp256k1-zkp/include/secp256k1_aggsig.h"
+#include "secp256k1-zkp/include/secp256k1_commitment.h"
 #include <Crypto/RandomNumberGenerator.h>
 
 Secp256k1Wrapper& Secp256k1Wrapper::GetInstance()
@@ -17,6 +19,27 @@ Secp256k1Wrapper::Secp256k1Wrapper()
 Secp256k1Wrapper::~Secp256k1Wrapper()
 {
 	secp256k1_context_destroy(m_pContext);
+}
+
+bool Secp256k1Wrapper::VerifySingleAggSig(const Signature& signature, const Commitment& publicKey, const Hash& message) const
+{
+	secp256k1_pedersen_commitment commitment;
+	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &commitment, publicKey.GetCommitmentBytes().GetData().data());
+	if (commitmentResult == 1)
+	{
+		secp256k1_pubkey pubkey;
+		const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubkey, &commitment);
+		if (pubkeyResult == 1)
+		{
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().GetData().data(), message.GetData().data(), nullptr, &pubkey, &pubkey, nullptr, false);
+			if (verifyResult == 1)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBigInteger<32>& privateKey) const

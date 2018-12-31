@@ -49,6 +49,26 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionKernel((EKernelFeatures)features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }
 
+Hash TransactionKernel::GetSignatureMessage() const
+{
+	Serializer serializer;
+	serializer.Append<uint8_t>((uint8_t)GetFeatures());
+
+	if (GetFeatures() != EKernelFeatures::COINBASE_KERNEL)
+	{
+		serializer.Append<uint64_t>(GetFee());
+	}
+
+	if (GetFeatures() == EKernelFeatures::HEIGHT_LOCKED)
+	{
+		serializer.Append<uint64_t>(GetLockHeight());
+	}
+
+	const std::vector<unsigned char>& message = serializer.GetBytes();
+
+	return Crypto::Blake2b(message);
+}
+
 const Hash& TransactionKernel::GetHash() const
 {
 	if (m_hash == CBigInteger<32>())

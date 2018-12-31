@@ -3,6 +3,8 @@
 
 #include <Core/TransactionKernel.h>
 #include <Serialization/Serializer.h>
+#include <Infrastructure/Logger.h>
+#include <HexUtil.h>
 #include <Crypto.h>
 
 bool KernelSignatureValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR) const
@@ -15,33 +17,30 @@ bool KernelSignatureValidator::ValidateKernelSignatures(const KernelMMR& kernelM
 		std::unique_ptr<TransactionKernel> pKernel = kernelMMR.GetKernelAt(i);
 		if (pKernel != nullptr)
 		{
-			if (!ValidateKernelSignature(*pKernel))
+
+			// TODO: Verify the following:
+			//let valid_features = match features{
+			//KernelFeatures::COINBASE = > fee == 0 && lock_height == 0,
+			//KernelFeatures::PLAIN = > lock_height == 0,
+			//KernelFeatures::HEIGHT_LOCKED = > true,
+			//_ = > false,
+			//};
+			//if !valid_features{
+			//	return Err(Error::InvalidKernelFeatures);
+			//}
+
+			const Commitment& publicKey = pKernel->GetExcessCommitment();
+			const Signature& signature = pKernel->GetExcessSignature();
+			const Hash signatureMessage = pKernel->GetSignatureMessage();
+
+			if (!Crypto::VerifyKernelSignature(signature, publicKey, signatureMessage))
 			{
+				LoggerAPI::LogError("KernelSignatureValidator::ValidateKernelSignatures - Failed to verify kernel " + HexUtil::ConvertHash(pKernel->GetHash()));
 				return false;
 			}
 
 			++validatedKernels;
 		}
-	}
-
-	return true;
-}
-
-bool KernelSignatureValidator::ValidateKernelSignature(const TransactionKernel& kernel) const
-{
-	const Commitment& publicKey = kernel.GetExcessCommitment();
-	const Signature& signature = kernel.GetExcessSignature();
-
-	// Build message
-	Serializer serializer(32);
-	serializer.AppendBigInteger<16>(CBigInteger<16>::ValueOf(0));
-	serializer.Append<uint64_t>(kernel.GetFee());
-	serializer.Append<uint64_t>(kernel.GetLockHeight());
-	const std::vector<unsigned char>& message = serializer.GetBytes();
-
-	if (!Crypto::VerifyKernelSignature(signature, publicKey, message))
-	{
-		return false;
 	}
 
 	return true;

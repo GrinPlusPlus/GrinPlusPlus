@@ -1,6 +1,8 @@
 #include "TransactionBodyValidator.h"
 
 #include <Consensus/BlockWeight.h>
+#include <Infrastructure/Logger.h>
+#include <HexUtil.h>
 #include <Crypto.h>
 #include <set>
 
@@ -139,21 +141,15 @@ bool TransactionBodyValidator::VerifyKernels(const std::vector<TransactionKernel
 	// Verify the transaction proof validity. Entails handling the commitment as a public key and checking the signature verifies with the fee as message.
 	for (auto kernel : kernels)
 	{
-		// TODO: Verify Kernel
-		//let msg = Message::from_slice(&kernel_sig_msg(self.fee, self.lock_height)) ? ;
-		//let sig = &self.excess_sig;
-		//// Verify aggsig directly in libsecp
-		//let pubkey = &self.excess.to_pubkey(&secp) ? ;
-		//if !secp::aggsig::verify_single(
-		//	&secp,
-		//	&sig,
-		//	&msg,
-		//	None,
-		//	&pubkey,
-		//	Some(&pubkey),
-		//	None,
-		//	false,
-		//	)
+		const Commitment& publicKey = kernel.GetExcessCommitment();
+		const Signature& signature = kernel.GetExcessSignature();
+		const Hash signatureMessage = kernel.GetSignatureMessage();
+
+		if (!Crypto::VerifyKernelSignature(signature, publicKey, signatureMessage))
+		{
+			LoggerAPI::LogError("TransactionBodyValidator::VerifyKernels - Failed to verify kernel " + HexUtil::ConvertHash(kernel.GetHash()));
+			return false;
+		}
 	}
 
 	return true;

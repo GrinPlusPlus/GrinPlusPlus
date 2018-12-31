@@ -25,5 +25,8 @@ enum EKernelFeatures
 	DEFAULT_KERNEL = 0,
 
 	// Kernel matching a coinbase output
-	COINBASE_KERNEL = 1
+	COINBASE_KERNEL = 1,
+
+	// Absolute height locked kernel; has fee and lock_height
+	HEIGHT_LOCKED = 2
 };

@@ -49,6 +49,7 @@ public:
 	inline const uint64_t GetLockHeight() const { return m_lockHeight; }
 	inline const Commitment& GetExcessCommitment() const { return m_excessCommitment; }
 	inline const Signature& GetExcessSignature() const { return m_excessSignature; }
+	Hash GetSignatureMessage() const;
 
 	//
 	// Serialization/Deserialization

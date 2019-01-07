@@ -7,6 +7,7 @@
 #include <P2P/capabilities.h>
 #include <P2P/SocketAddress.h>
 #include <BlockChainServer.h>
+#include <StringUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 
@@ -21,40 +22,63 @@ Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerM
 
 void Seeder::Start()
 {
-	m_terminate = false;
+	m_terminate = true;
 
-	if (m_seedThread.joinable())
+	for (std::thread& thread : m_seedThreads)
 	{
-		m_seedThread.join();
+		if (thread.joinable())
+		{
+			thread.join();
+		}
 	}
 
-	m_seedThread = std::thread(Thread_Seed, std::ref(*this));
+	if (m_listenerThread.joinable())
+	{
+		m_listenerThread.join();
+	}
+
+	m_seedThreads.clear();
+	m_terminate = false;
+
+	m_peerManager.Initialize();
+
+	const uint8_t minConnections = (uint8_t)m_config.GetP2PConfig().GetPreferredMinConnections();
+	for (uint8_t i = 0; i < minConnections; i++)
+	{
+		m_seedThreads.emplace_back(std::thread(Thread_Seed, std::ref(*this), i));
+	}
 }
 
 void Seeder::Stop()
 {
 	m_terminate = true;
 
-	if (m_seedThread.joinable())
+	if (m_listenerThread.joinable())
 	{
-		m_seedThread.join();
+		m_listenerThread.join();
 	}
+
+	for (std::thread& thread : m_seedThreads)
+	{
+		if (thread.joinable())
+		{
+			thread.join();
+		}
+	}
+
+	m_seedThreads.clear();
 }
 
 //
 // Continuously checks the number of connected peers, and connects to additional peers when the number of connections drops below the minimum.
 // This function operates in its own thread.
 //
-void Seeder::Thread_Seed(Seeder& seeder)
+void Seeder::Thread_Seed(Seeder& seeder, const uint8_t threadNumber)
 {
-	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
-
-	LoggerAPI::LogInfo("Seeder::Thread_Seed() - BEGIN");
-	seeder.m_peerManager.Initialize();
+	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD" + std::to_string(threadNumber));
+	LoggerAPI::LogDebug("Seeder::Thread_Seed() - BEGIN");
 
 	const int minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
-	const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
-
 	while (!seeder.m_terminate)
 	{
 		bool connectionAdded = false;
@@ -67,9 +91,11 @@ void Seeder::Thread_Seed(Seeder& seeder)
 			connectionAdded |= seeder.SeedNewConnection();
 		}
 
-		if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
+		// We use multiple threads for initial seeding, but only 1 to maintain connection count.
+		if (connectionAdded && threadNumber > 0)
 		{
-			connectionAdded |= seeder.ListenForConnections();
+			LoggerAPI::LogDebug(StringUtil::Format("Seeder::Thread_Seed() - Terminating seed thread %u since it's no longer needed.", threadNumber));
+			return;
 		}
 		
 		if (!connectionAdded)
@@ -78,7 +104,35 @@ void Seeder::Thread_Seed(Seeder& seeder)
 		}
 	}
 
-	LoggerAPI::LogInfo("Seeder::Thread_Seed() - END");
+	LoggerAPI::LogDebug("Seeder::Thread_Seed() - END");
+}
+
+//
+// Continuously listens for new connections, and drops them if node already has maximum number of connections
+// This function operates in its own thread.
+//
+void Seeder::Thread_Listener(Seeder& seeder)
+{
+	ThreadManagerAPI::SetCurrentThreadName("LISTENER_THREAD");
+	LoggerAPI::LogDebug("Seeder::Thread_Listener() - BEGIN");
+
+	const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
+	while (!seeder.m_terminate)
+	{
+		bool connectionAdded = false;
+
+		if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
+		{
+			connectionAdded |= seeder.ListenForConnections();
+		}
+
+		if (!connectionAdded)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		}
+	}
+
+	LoggerAPI::LogDebug("Seeder::Thread_Listener() - END");
 }
 
 bool Seeder::SeedNewConnection()
@@ -100,15 +154,16 @@ bool Seeder::SeedNewConnection()
 			return true;
 		}
 	}
-	else if (!m_usedDNS)
+	else if (!m_usedDNS.exchange(true))
 	{
 		std::vector<SocketAddress> peerAddresses;
 		peerAddresses.emplace_back(IPAddress(EAddressFamily::IPv4, { 10, 0, 0, 7 }), P2P::DEFAULT_PORT);
 		DNSSeeder().GetPeersFromDNS(peerAddresses);
-		m_usedDNS = true;
 
 		m_peerManager.AddPeerAddresses(peerAddresses);
 	}
+
+	// TODO: Request new peers
 
 	return false;
 }
@@ -116,5 +171,6 @@ bool Seeder::SeedNewConnection()
 bool Seeder::ListenForConnections()
 {
 	// TODO: Listen for new connections. Don't forget to check nonces.
+
 	return false;
 }

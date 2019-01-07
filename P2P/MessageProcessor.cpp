@@ -20,6 +20,7 @@
 #include "Messages/BlockMessage.h"
 #include "Messages/GetBlockMessage.h"
 #include "Messages/CompactBlockMessage.h"
+#include "Messages/GetCompactBlockMessage.h"
 
 // Transaction Messages
 #include "Messages/TransactionMessage.h"
@@ -154,9 +155,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const EBlockChainStatus status = m_blockChainServer.AddBlockHeader(blockHeader);
 				if (status == EBlockChainStatus::SUCCESS)
 				{
-					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s.", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
+					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
 
-					m_connectionManager.BroadcastMessage(headerMessage, connectionId);
+					const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
+
+					return MessageSender(m_config).Send(connectedPeer, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 				else
 				{
@@ -174,11 +177,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
-					const bool added = this->m_blockChainServer.AddBlockHeaders(blockHeaders) == EBlockChainStatus::SUCCESS;
+					this->m_blockChainServer.AddBlockHeaders(blockHeaders);
 					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
 
-				return EStatus::SUCCESS;//added ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return EStatus::SUCCESS;
 			}
 			case GetBlock:
 			{
@@ -207,6 +210,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case GetCompactBlock:
 			{
+				// TODO: Implement
 				return EStatus::SUCCESS;
 			}
 			case CompactBlockMsg:
@@ -218,10 +222,21 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const EBlockChainStatus added = m_blockChainServer.AddCompactBlock(compactBlock);
 				if (added == EBlockChainStatus::SUCCESS)
 				{
-					m_connectionManager.BroadcastMessage(compactBlockMessage, connectionId);
+					const HeaderMessage headerMessage(compactBlock.GetBlockHeader());
+					m_connectionManager.BroadcastMessage(headerMessage, connectionId);
+					return EStatus::SUCCESS;
+				}
+				else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
+				{
+					const GetBlockMessage getBlockMessage(compactBlock.GetHash());
+					return MessageSender(m_config).Send(connectedPeer, getBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
+				else if (added == EBlockChainStatus::INVALID)
+				{
+					return EStatus::BAN_PEER;
 				}
 
-				return EStatus::SUCCESS;
+				return EStatus::UNKNOWN_ERROR;
 			}
 			case StemTransaction:
 			{
@@ -231,12 +246,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				// TODO: Check Sync status first
 				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
-				if (added == EBlockChainStatus::SUCCESS)
-				{
-					m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
-				}
 
-				return EStatus::SUCCESS;
+				return added == EBlockChainStatus::SUCCESS ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TransactionMsg:
 			{

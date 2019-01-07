@@ -18,4 +18,18 @@ namespace VectorUtil
 		std::advance(it, pos);
 		vec.erase(it);
 	}
+
+	template<typename T>
+	static bool Contains(const std::vector<T>& vec, const T& value)
+	{
+		for (T& t : vec)
+		{
+			if (t == value)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

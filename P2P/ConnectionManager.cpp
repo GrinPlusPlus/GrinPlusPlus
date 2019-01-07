@@ -129,7 +129,7 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, const uint64_
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
 {
-	std::unique_lock<std::mutex> readLock(m_broadcastMutex);
+	std::unique_lock<std::mutex> writeLock(m_broadcastMutex);
 	m_sendQueue.emplace(MessageToBroadcast(sourceId, message.Clone()));
 }
 

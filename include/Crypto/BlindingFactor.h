@@ -21,6 +21,11 @@ public:
 	{
 
 	}
+	BlindingFactor(const CBigInteger<32>& blindingFactorBytes)
+		: m_blindingFactorBytes(blindingFactorBytes)
+	{
+
+	}
 	BlindingFactor(const BlindingFactor& other) = default;
 	BlindingFactor(BlindingFactor&& other) noexcept = default;
 

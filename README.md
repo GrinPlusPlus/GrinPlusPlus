@@ -37,7 +37,7 @@ Once your code is built, you can just open Server.exe from your bin folder.
 Although the node is fully syncing, and implements much (most?) of the protocol, there's still a ton of work to do before mainnet. See the issues list for a non-comprehensive list of what still needs done.
 
 #### Wallet - Not Implemented Yet
-This will be implemented. Not yet sure which features & communication methods will be supported initially. Hoping to have a nice UI for this, as well.
+This will be implemented in the future, but will not be ready for mainnet.
 
-#### Miner - Not Implemented Yet
-I'm willing to try integrating an existing miner. Who wants to send me a 1080ti so I can actually test my own code? :grinning:
+#### Miner - In Progress
+Stratum will be implemented for mainnet, allowing existing miners to connect to a Grin++ node. 

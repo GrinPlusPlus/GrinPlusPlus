@@ -15,6 +15,11 @@ public:
 	{
 
 	}
+	HeaderMessage(const BlockHeader& header)
+		: m_header(std::move(header))
+	{
+
+	}
 	HeaderMessage(const HeaderMessage& other) = default;
 	HeaderMessage(HeaderMessage&& other) noexcept = default;
 

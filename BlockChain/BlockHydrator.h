@@ -17,6 +17,7 @@ public:
 
 private:
 	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock, const std::vector<Transaction>& transactions) const;
+	void PerformCutThrough(std::vector<TransactionInput>& inputs, std::vector<TransactionOutput>& outputs) const;
 
 	const ChainState& m_chainState;
 	const ITransactionPool& m_transactionPool;

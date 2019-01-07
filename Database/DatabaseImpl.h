@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Database.h>
+#include <Database/Database.h>
 
 #include "BlockDBImpl.h"
 #include "PeerDBImpl.h"

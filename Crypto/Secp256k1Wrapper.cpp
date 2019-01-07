@@ -116,6 +116,34 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommitSum(const std::vecto
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
+std::unique_ptr<BlindingFactor> Secp256k1Wrapper::PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const
+{
+	const CBigInteger<32> randomSeed = RandomNumberGenerator().GeneratePseudoRandomNumber(CBigInteger<32>::ValueOf(0), CBigInteger<32>::GetMaximumValue());
+	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+
+	std::vector<const unsigned char*> blindingFactors;
+	for (const BlindingFactor& positiveFactor : positive)
+	{
+		blindingFactors.push_back(positiveFactor.GetBlindingFactorBytes().GetData().data());
+	}
+
+	for (const BlindingFactor& negativeFactor : negative)
+	{
+		blindingFactors.push_back(negativeFactor.GetBlindingFactorBytes().GetData().data());
+	}
+
+	CBigInteger<32> blindingFactorBytes;
+	const int result = secp256k1_pedersen_blind_sum(m_pContext, &blindingFactorBytes[0], blindingFactors.data(), blindingFactors.size(), positive.size());
+
+	if (result == 1)
+	{
+		return std::make_unique<BlindingFactor>(BlindingFactor(std::move(blindingFactorBytes)));
+	}
+
+	// TODO: Log failue
+	return std::unique_ptr<BlindingFactor>(nullptr);
+}
+
 std::vector<secp256k1_pedersen_commitment*> Secp256k1Wrapper::ConvertCommitments(const std::vector<Commitment>& commitments) const
 {
 	std::vector<secp256k1_pedersen_commitment*> convertedCommitments(commitments.size(), NULL);

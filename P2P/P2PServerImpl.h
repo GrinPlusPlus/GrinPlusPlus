@@ -4,7 +4,7 @@
 #include "Seed/PeerManager.h"
 
 #include <P2PServer.h>
-#include <Database.h>
+#include <Database/Database.h>
 #include <Config/Config.h>
 
 class P2PServer : public IP2PServer

@@ -166,6 +166,11 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const 
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
+std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
+{
+	return m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(chainType), chainType);
+}
+
 std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHash(const CBigInteger<32>& hash) const
 {
 	return m_pChainState->GetBlockByHash(hash);

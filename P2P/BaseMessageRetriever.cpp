@@ -94,9 +94,11 @@ bool BaseMessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
 
 void BaseMessageRetriever::LogError() const
 {
+	const int lastError = WSAGetLastError();
+
 	TCHAR* s = NULL;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, WSAGetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
+		NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
 
 	const std::string errorMessage = s;
 	LoggerAPI::LogError(errorMessage);

@@ -27,7 +27,7 @@ public:
 		m_pTxHashSet(pTxHashSet)
 	{
 		m_mutex.lock();
-		LoggerAPI::LogInfo("LockedChainState - Mutex Locked.");
+		LoggerAPI::LogTrace("LockedChainState - Mutex Locked.");
 	}
 
 	~LockedChainState()
@@ -35,7 +35,7 @@ public:
 		if (--(*m_pReferences) == 0)
 		{
 			m_mutex.unlock();
-			LoggerAPI::LogInfo("LockedChainState - Mutex Unlocked.");
+			LoggerAPI::LogTrace("LockedChainState - Mutex Unlocked.");
 			delete m_pReferences;
 		}
 	}

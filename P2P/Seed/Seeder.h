@@ -20,7 +20,8 @@ public:
 	void Stop();
 
 private:
-	static void Thread_Seed(Seeder& seeder);
+	static void Thread_Seed(Seeder& seeder, const uint8_t threadNumber);
+	static void Thread_Listener(Seeder& seeder);
 
 	bool SeedNewConnection();
 	bool ListenForConnections();
@@ -31,6 +32,8 @@ private:
 	ConnectionFactory m_connectionFactory;
 
 	std::atomic<bool> m_terminate = true;
-	std::thread m_seedThread;
-	mutable bool m_usedDNS = false;
+
+	std::vector<std::thread> m_seedThreads;
+	std::thread m_listenerThread;
+	mutable std::atomic_bool m_usedDNS = false;
 };

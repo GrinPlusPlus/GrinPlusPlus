@@ -44,8 +44,14 @@ public:
 	//
 	static CBigInteger<20> RipeMD160(const std::vector<unsigned char>& input);
 
+	//
+	//
+	//
 	static CBigInteger<32> HMAC_SHA256(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data);
 
+	//
+	//
+	//
 	static CBigInteger<64> HMAC_SHA512(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data);
 
 	//
@@ -58,11 +64,29 @@ public:
 	//
 	static std::unique_ptr<Commitment> CommitBlinded(const uint64_t value, const BlindingFactor& blindingFactor);
 
+	//
+	// Adds the homomorphic pedersen commitments together.
+	//
 	static std::unique_ptr<Commitment> AddCommitments(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative);
 
+	//
+	// Takes a vector of blinding factors and calculates an additional blinding value that adds to zero.
+	//
+	static std::unique_ptr<BlindingFactor> AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
+
+	//
+	//
+	//
 	static bool VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs);
+
+	//
+	//
+	//
 	static bool VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message);
 
+	//
+	//
+	//
 	static uint64_t SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data);
 
 	//
@@ -81,5 +105,8 @@ public:
 	//
 	static CBigInteger<64> Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt);
 
+	//
+	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
+	//
 	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey);
 };

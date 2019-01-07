@@ -5,7 +5,6 @@
 #include <Core/BlockHeader.h>
 #include <map>
 
-// TODO: Move to Database
 class BlockStore
 {
 public:

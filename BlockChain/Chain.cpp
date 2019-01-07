@@ -50,7 +50,6 @@ bool Chain::Rewind(const uint64_t lastHeight)
 			pBlockIndex->RemoveChainType(m_chainType);
 			if (pBlockIndex->IsSafeToDelete())
 			{
-				// TODO: Return hashes of all deleted indices, so they can be removed from the database?
 				delete pBlockIndex;
 			}
 		}

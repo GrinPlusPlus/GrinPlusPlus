@@ -23,7 +23,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
+		LoggerAPI::LogDebug(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -31,7 +31,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	BlockIndex* pLastIndex = candidateChain.GetTip();
 	if (pLastIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Processing header %s as an orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogDebug(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Processing header %s as an orphan.", header.FormatHash().c_str()));
 		// TODO: Process as an orphan
 		return EBlockChainStatus::ORPHANED;
 	}
@@ -42,7 +42,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
 	if (!BlockHeaderValidator(lockedState.m_headerMMR).IsValidHeader(header, *pPreviousHeaderPtr))
 	{
-		LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessSingleHeader - Header failed to validate.");
+		LoggerAPI::LogError("BlockHeaderProcessor::ProcessSingleHeader - Header failed to validate.");
 		return EBlockChainStatus::INVALID;
 	}
 

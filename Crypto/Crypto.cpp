@@ -97,6 +97,11 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 	return Secp256k1Wrapper::GetInstance().PedersenCommitSum(sanitizedPositive, sanitizedNegative);
 }
 
+std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
+{
+	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(positive, negative);
+}
+
 bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
 {
 	// TODO: Implement (See: verify_bullet_proof_multi)

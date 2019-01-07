@@ -7,7 +7,7 @@
 #include <BlockChainServer.h>
 #include <Crypto.h>
 #include <Consensus/BlockDifficulty.h>
-#include <Database.h>
+#include <Database/Database.h>
 #include <Infrastructure/Logger.h>
 #include <Infrastructure/ThreadManager.h>
 

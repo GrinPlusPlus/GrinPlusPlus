@@ -23,7 +23,7 @@ public:
 	//
 	// Constructors
 	//
-	Transaction(const BlindingFactor&& offset, const TransactionBody&& transactionBody);
+	Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody);
 	Transaction(const Transaction& transaction) = default;
 	Transaction(Transaction&& transaction) noexcept = default;
 	Transaction() = default;

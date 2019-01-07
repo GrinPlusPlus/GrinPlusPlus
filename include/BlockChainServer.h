@@ -73,6 +73,11 @@ public:
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Hash& outputCommitment) const = 0;
 
 	//
+	// Returns the block header at the tip of the specified chain type.
+	//
+	virtual std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const = 0;
+
+	//
 	// Returns the block headers matching the given hashes.
 	//
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;

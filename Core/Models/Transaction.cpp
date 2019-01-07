@@ -3,7 +3,7 @@
 #include <Crypto.h>
 #include <Serialization/Serializer.h>
 
-Transaction::Transaction(const BlindingFactor&& offset, const TransactionBody&& transactionBody)
+Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
 	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody))
 {
 
@@ -22,10 +22,10 @@ void Transaction::Serialize(Serializer& serializer) const
 Transaction Transaction::Deserialize(ByteBuffer& byteBuffer)
 {
 	// Read BlindingFactor/Offset (32 bytes)
-	const BlindingFactor offset = BlindingFactor::Deserialize(byteBuffer);
+	BlindingFactor offset = BlindingFactor::Deserialize(byteBuffer);
 
 	// Read Transaction Body (variable size)
-	const TransactionBody transactionBody = TransactionBody::Deserialize(byteBuffer);
+	TransactionBody transactionBody = TransactionBody::Deserialize(byteBuffer);
 
 	return Transaction(std::move(offset), std::move(transactionBody));
 }

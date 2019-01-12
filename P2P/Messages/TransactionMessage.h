@@ -15,6 +15,11 @@ public:
 	{
 
 	}
+	TransactionMessage(const Transaction& transaction)
+		: m_transaction(transaction)
+	{
+
+	}
 	TransactionMessage(const TransactionMessage& other) = default;
 	TransactionMessage(TransactionMessage&& other) noexcept = default;
 

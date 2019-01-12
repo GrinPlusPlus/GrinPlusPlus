@@ -1,6 +1,5 @@
 #include "TxHashSetImpl.h"
 #include "TxHashSetValidator.h"
-#include "Zip/TxHashSetZip.h"
 
 #include <HexUtil.h>
 #include <FileUtil.h>
@@ -42,6 +41,12 @@ bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
 	}
 
 	return false;
+}
+
+bool TxHashSet::IsValid(const Transaction& transaction) const
+{
+	// TODO: Implement
+	return true;
 }
 
 bool TxHashSet::Validate(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut)
@@ -126,50 +131,4 @@ bool TxHashSet::Discard()
 bool TxHashSet::Compact()
 {
 	return true;
-}
-
-namespace TxHashSetAPI
-{
-	TXHASHSET_API ITxHashSet* Open(const Config& config, IBlockDB& blockDB)
-	{
-		KernelMMR* pKernelMMR = KernelMMR::Load(config);
-		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config);
-		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config);
-
-		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR);
-	}
-
-	TXHASHSET_API ITxHashSet* LoadFromZip(const Config& config, IBlockDB& blockDB, const std::string& zipFilePath, const BlockHeader& header)
-	{
-		const TxHashSetZip zip(config);
-		if (zip.Extract(zipFilePath, header))
-		{
-			LoggerAPI::LogInfo(StringUtil::Format("TxHashSetAPI::LoadFromZip - %s extracted successfully.", zipFilePath.c_str()));
-			FileUtil::RemoveFile(zipFilePath);
-
-			KernelMMR* pKernelMMR = KernelMMR::Load(config);
-			pKernelMMR->Rewind(header.GetKernelMMRSize());
-			pKernelMMR->Flush();
-
-			OutputPMMR* pOutputPMMR = OutputPMMR::Load(config);
-			pOutputPMMR->Rewind(header.GetOutputMMRSize());
-			pOutputPMMR->Flush();
-
-			RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config);
-			pRangeProofPMMR->Rewind(header.GetOutputMMRSize());
-			pRangeProofPMMR->Flush();
-
-			return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR); // TODO: Just call Rewind(BlockHeader) on TxHashSet instead of each MMR
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	TXHASHSET_API void Close(ITxHashSet* pITxHashSet)
-	{
-		TxHashSet* pTxHashSet = (TxHashSet*)pITxHashSet;
-		delete pITxHashSet;
-	}
 }

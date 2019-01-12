@@ -30,6 +30,15 @@ CBigInteger<32> RandomNumberGenerator::GeneratePseudoRandomNumber(const CBigInte
 	return randomNumber;
 }
 
+uint64_t RandomNumberGenerator::GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum)
+{
+	std::random_device seeder;
+	std::mt19937 engine(seeder());
+	std::uniform_int_distribution<uint64_t> dist(minimum, maximum);
+
+	return dist(engine);
+}
+
 uint8_t RandomNumberGenerator::DetermineNumberOfRandomBytesNeeded(const CBigInteger<32>& differenceBetweenMaximumAndMinimum)
 {
 	uint8_t numRandomBytes = 32;

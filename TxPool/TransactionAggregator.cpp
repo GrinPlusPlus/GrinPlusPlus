@@ -2,6 +2,7 @@
 
 #include <Crypto.h>
 #include <Common/FunctionalUtil.h>
+#include <set>
 
 // Aggregate a vector of transactions into a multi-kernel transaction with cut_through.
 std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<Transaction>& transactions)
@@ -60,10 +61,10 @@ std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<
 	//   * cut-through outputs
 	//   * full set of tx kernels
 	//   * sum of all kernel offsets
-	return std::make_unique<Transaction>(Transaction(BlindingFactor(*pTotalKernelOffset), TransactionBody(inputs, outputs, kernels)));
+	return std::make_unique<Transaction>(Transaction(BlindingFactor(*pTotalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels))));
 }
 
-void TransactionAggregator::PerformCutThrough(std::vector<TransactionInput>& inputs, std::vector<TransactionOutput>& outputs) const
+void TransactionAggregator::PerformCutThrough(std::vector<TransactionInput>& inputs, std::vector<TransactionOutput>& outputs)
 {
 	std::set<Commitment> inputCommitments;
 	for (const TransactionInput& input : inputs)

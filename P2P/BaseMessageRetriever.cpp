@@ -101,7 +101,7 @@ void BaseMessageRetriever::LogError() const
 		NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
 
 	const std::string errorMessage = s;
-	LoggerAPI::LogError(errorMessage);
+	LoggerAPI::LogTrace(errorMessage);
 
 	LocalFree(s);
 }

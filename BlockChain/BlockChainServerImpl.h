@@ -8,6 +8,7 @@
 #include <BlockChainServer.h>
 #include <HeaderMMR.h>
 #include <Database/Database.h>
+#include <PMMR/TxHashSetManager.h>
 #include <stdint.h>
 #include <mutex>
 
@@ -53,6 +54,7 @@ private:
 	ChainStore* m_pChainStore;
 	IHeaderMMR* m_pHeaderMMR;
 	ITransactionPool* m_pTransactionPool;
+	TxHashSetManager* m_pTxHashSetManager;
 	const Config& m_config;
 
 	IDatabase& m_database;

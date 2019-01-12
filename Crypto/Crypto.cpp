@@ -99,13 +99,37 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 
 std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
 {
-	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(positive, negative);
+	const BlindingFactor zeroBlindingFactor(ZERO_HASH);
+
+	std::vector<BlindingFactor> sanitizedPositive;
+	for (const BlindingFactor& positiveBlindingFactor : positive)
+	{
+		if (positiveBlindingFactor != zeroBlindingFactor)
+		{
+			sanitizedPositive.push_back(positiveBlindingFactor);
+		}
+	}
+
+	std::vector<BlindingFactor> sanitizedNegative;
+	for (const BlindingFactor& negativeBlindingFactor : negative)
+	{
+		if (negativeBlindingFactor != zeroBlindingFactor)
+		{
+			sanitizedNegative.push_back(negativeBlindingFactor);
+		}
+	}
+
+	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
 }
 
 bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
 {
-	// TODO: Implement (See: verify_bullet_proof_multi)
-	return true;
+	if (commitments.size() != rangeProofs.size())
+	{
+		return false;
+	}
+
+	return Secp256k1Wrapper::GetInstance().VerifyBulletproofs(commitments, rangeProofs);
 }
 
 bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)

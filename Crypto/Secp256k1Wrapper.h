@@ -5,9 +5,13 @@
 #include <Crypto/Commitment.h>
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Signature.h>
+#include <Crypto/RangeProof.h>
 #include <Hash.h>
 #include <vector>
 #include <memory>
+
+// Forward Declarations
+struct secp256k1_bulletproof_generators;
 
 class Secp256k1Wrapper
 {
@@ -15,6 +19,7 @@ public:
 	static Secp256k1Wrapper& GetInstance();
 
 	bool VerifySingleAggSig(const Signature& signature, const Commitment& publicKey, const Hash& message) const;
+	bool VerifyBulletproofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs) const;
 	std::unique_ptr<CBigInteger<33>> CalculatePublicKey(const CBigInteger<32>& privateKey) const;
 	std::unique_ptr<Commitment> PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
 	std::unique_ptr<Commitment> PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
@@ -28,4 +33,5 @@ private:
 	void CleanupCommitments(std::vector<secp256k1_pedersen_commitment*>& commitments) const;
 
 	secp256k1_context* m_pContext;
+	secp256k1_bulletproof_generators* m_pGenerators;
 };

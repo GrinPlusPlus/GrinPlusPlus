@@ -244,7 +244,6 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				// TODO: Check Sync status first
 				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
 
 				return added == EBlockChainStatus::SUCCESS ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;

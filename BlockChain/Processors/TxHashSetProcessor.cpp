@@ -13,51 +13,57 @@ TxHashSetProcessor::TxHashSetProcessor(const Config& config, IBlockChainServer& 
 
 }
 
-ITxHashSet* TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path)
+bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path)
 {
 	std::unique_ptr<BlockHeader> pHeader = m_chainState.GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Header not found for hash %s.", HexUtil::ConvertHash(blockHash)));
-		return nullptr;
+		return false;
 	}
 
-	// 1. Load and Extract TxHashSet Zip
-	ITxHashSet* pTxHashSet = TxHashSetAPI::LoadFromZip(m_config, m_blockDB, path, *pHeader);
+	// 1. Close Existing TxHashSet
+	m_chainState.GetLocked().m_txHashSetManager.Close();
+
+	// 2. Load and Extract TxHashSet Zip
+	ITxHashSet* pTxHashSet = TxHashSetManager::LoadFromZip(m_config, m_blockDB, path, *pHeader);
 	if (pTxHashSet == nullptr)
 	{
 		LoggerAPI::LogError("TxHashSetProcessor::ProcessTxHashSet - Failed to load " + path);
-		return nullptr;
+		return false;
 	}
 
-	// 2. Validate entire TxHashSet
+	// 3. Validate entire TxHashSet
 	Commitment outputSum(CBigInteger<33>::ValueOf(0));
 	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
 	if (!pTxHashSet->Validate(*pHeader, m_blockChainServer, outputSum, kernelSum))
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Validation of %s failed.", path.c_str()));
-		TxHashSetAPI::Close(pTxHashSet);
-		return nullptr;
+		TxHashSetManager::DestroyTxHashSet(pTxHashSet);
+		return false;
 	}
 
-	// 3. Add BlockSums to DB
+	// 4. Add BlockSums to DB
 	const BlockSums blockSums(std::move(outputSum), std::move(kernelSum));
 	m_blockDB.AddBlockSums(pHeader->GetHash(), blockSums);
 
-	// 4. Add Output positions to DB
+	// 5. Add Output positions to DB
 	pTxHashSet->SaveOutputPositions();
 
-	// 5. Update confirmed chain
+	// 6. Store TxHashSet
+	m_chainState.GetLocked().m_txHashSetManager.SetTxHashSet(pTxHashSet);
+
+	// 6. Update confirmed chain
 	if (!UpdateConfirmedChain(*pHeader))
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Failed to update confirmed chain for %s.", path.c_str()));
-		TxHashSetAPI::Close(pTxHashSet);
-		return nullptr;
+		m_chainState.GetLocked().m_txHashSetManager.Close();
+		return false;
 	}
 
-	// TODO: 6. Check for orphans
+	// TODO: 7. Check for orphans
 
-	return pTxHashSet;
+	return true;
 }
 
 bool TxHashSetProcessor::UpdateConfirmedChain(const BlockHeader& blockHeader)

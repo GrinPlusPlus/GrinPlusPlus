@@ -26,6 +26,7 @@ file(GLOB PMMR_SRC
     "OutputPMMR.cpp"
     "RangeProofPMMR.cpp"
     "TxHashSetImpl.cpp"
+	"TxHashSetManager.cpp"
     "TxHashSetValidator.cpp"
 	"Common/*.cpp"
 	"Common/CRoaring/*.c"

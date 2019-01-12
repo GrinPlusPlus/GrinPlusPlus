@@ -8,7 +8,7 @@
 
 #include <Config/Config.h>
 #include <Crypto.h>
-#include <TxHashSet.h>
+#include <PMMR/TxHashSet.h>
 
 BlockChainServer::BlockChainServer(const Config& config, IDatabase& database)
 	: m_config(config), m_database(database)
@@ -32,8 +32,9 @@ void BlockChainServer::Initialize()
 	m_pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(m_config);
 
 	m_pBlockStore = new BlockStore(m_config, m_database.GetBlockDB());
-	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config);
-	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool);
+	m_pTxHashSetManager = new TxHashSetManager(m_config, m_database.GetBlockDB());
+	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, *m_pTxHashSetManager, m_database.GetBlockDB());
+	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool, *m_pTxHashSetManager);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
 
 	m_initialized = true;
@@ -61,6 +62,9 @@ void BlockChainServer::Shutdown()
 
 		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
 		m_pTransactionPool = nullptr;
+
+		delete m_pTxHashSetManager;
+		m_pTxHashSetManager = nullptr;
 	}
 }
 
@@ -100,26 +104,20 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path)
 {
-	m_pChainState->GetLocked().UpdateTxHashSet(nullptr);
+	const bool success = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
 
-	ITxHashSet* pNewTxHashSet = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
-
-	m_pChainState->GetLocked().UpdateTxHashSet(pNewTxHashSet);
-	if (pNewTxHashSet != nullptr)
-	{
-		return EBlockChainStatus::SUCCESS;
-	}
-	else
-	{
-		return EBlockChainStatus::INVALID;
-	}
+	return success ? EBlockChainStatus::SUCCESS : EBlockChainStatus::INVALID;
 }
 
 EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction, const EPoolType poolType)
 {
-	if (m_pTransactionPool->AddTransaction(transaction, poolType))
+	std::unique_ptr<BlockHeader> pLastConfimedHeader = m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(EChainType::CONFIRMED), EChainType::CONFIRMED);
+	if (pLastConfimedHeader != nullptr)
 	{
-		return EBlockChainStatus::SUCCESS;
+		if (m_pTransactionPool->AddTransaction(transaction, poolType, *pLastConfimedHeader))
+		{
+			return EBlockChainStatus::SUCCESS;
+		}
 	}
 
 	return EBlockChainStatus::INVALID;

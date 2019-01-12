@@ -2,11 +2,12 @@
 
 #include <Consensus/BlockTime.h>
 #include <Database/BlockDb.h>
-#include <TxHashSet.h>
+#include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
+#include <PMMR/TxHashSetManager.h>
 
-ChainState::ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR, ITransactionPool& transactionPool)
-	: m_config(config), m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR), m_transactionPool(transactionPool), m_pTxHashSet(nullptr)
+ChainState::ChainState(const Config& config, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR, ITransactionPool& transactionPool, TxHashSetManager& txHashSetManager)
+	: m_config(config), m_chainStore(chainStore), m_blockStore(blockStore), m_headerMMR(headerMMR), m_transactionPool(transactionPool), m_txHashSetManager(txHashSetManager)
 {
 
 }
@@ -40,7 +41,7 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 		m_blockStore.LoadHeaders(hashesToLoad);
 	}
 
-	m_pTxHashSet.reset(TxHashSetAPI::Open(m_config, m_blockStore.GetBlockDB()));
+	m_txHashSetManager.Open();
 }
 
 uint64_t ChainState::GetHeight(const EChainType chainType)
@@ -143,7 +144,7 @@ const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType)
 
 LockedChainState ChainState::GetLocked()
 {
-	return LockedChainState(m_chainMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_transactionPool, m_pTxHashSet);
+	return LockedChainState(m_chainMutex, m_chainStore, m_blockStore, m_headerMMR, m_orphanPool, m_transactionPool, m_txHashSetManager);
 }
 
 void ChainState::FlushAll()
@@ -152,8 +153,5 @@ void ChainState::FlushAll()
 
 	m_headerMMR.Commit();
 	m_chainStore.Flush();
-	if (m_pTxHashSet != nullptr)
-	{
-		m_pTxHashSet->Commit();
-	}
+	m_txHashSetManager.Flush();
 }

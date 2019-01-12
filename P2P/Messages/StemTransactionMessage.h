@@ -15,6 +15,11 @@ public:
 	{
 
 	}
+	StemTransactionMessage(const Transaction& transaction)
+		: m_transaction(transaction)
+	{
+
+	}
 	StemTransactionMessage(const StemTransactionMessage& other) = default;
 	StemTransactionMessage(StemTransactionMessage&& other) noexcept = default;
 

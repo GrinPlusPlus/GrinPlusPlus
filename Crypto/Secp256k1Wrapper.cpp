@@ -3,7 +3,12 @@
 #include "secp256k1-zkp/include/secp256k1_generator.h"
 #include "secp256k1-zkp/include/secp256k1_aggsig.h"
 #include "secp256k1-zkp/include/secp256k1_commitment.h"
+#include "secp256k1-zkp/include/secp256k1_bulletproofs.h"
 #include <Crypto/RandomNumberGenerator.h>
+
+const uint64_t MAX_WIDTH = 1 << 20;
+const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
+const size_t MAX_GENERATORS = 256;
 
 Secp256k1Wrapper& Secp256k1Wrapper::GetInstance()
 {
@@ -14,10 +19,12 @@ Secp256k1Wrapper& Secp256k1Wrapper::GetInstance()
 Secp256k1Wrapper::Secp256k1Wrapper()
 {
 	m_pContext = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+	m_pGenerators = secp256k1_bulletproof_generators_create(m_pContext, &secp256k1_generator_const_g, MAX_GENERATORS);
 }
 
 Secp256k1Wrapper::~Secp256k1Wrapper()
 {
+	secp256k1_bulletproof_generators_destroy(m_pContext, m_pGenerators);
 	secp256k1_context_destroy(m_pContext);
 }
 
@@ -40,6 +47,38 @@ bool Secp256k1Wrapper::VerifySingleAggSig(const Signature& signature, const Comm
 	}
 
 	return false;
+}
+
+bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs) const
+{
+	const size_t numBits = 64;
+
+	const size_t proofLength = rangeProofs.front().GetProofBytes().size();
+
+	// array of generator multiplied by value in pedersen commitments (cannot be NULL)
+	std::vector<secp256k1_generator> valueGenerators;
+	for (size_t i = 0; i < rangeProofs.size(); i++)
+	{
+		valueGenerators.push_back(secp256k1_generator_const_h);
+	}
+
+
+	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = ConvertCommitments(commitments);
+	std::vector<const unsigned char*> bulletproofPointers;
+	for (const RangeProof& rangeProof : rangeProofs)
+	{
+		bulletproofPointers.push_back(rangeProof.GetProofBytes().data());
+	}
+
+	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
+
+	const int result = secp256k1_bulletproof_rangeproof_verify_multi(m_pContext, pScratchSpace, m_pGenerators, bulletproofPointers.data(), rangeProofs.size(), proofLength, NULL, commitmentPointers.data(), 1, numBits, valueGenerators.data(), NULL, NULL);
+
+	secp256k1_scratch_space_destroy(pScratchSpace);
+
+	CleanupCommitments(commitmentPointers);
+
+	return result == 1;
 }
 
 std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBigInteger<32>& privateKey) const

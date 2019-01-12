@@ -28,6 +28,8 @@ public:
 	//
 	static CBigInteger<32> GeneratePseudoRandomNumber(const CBigInteger<32>& minimum, const CBigInteger<32>& maximum);
 
+	static uint64_t GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum);
+
 private:
 	static uint8_t DetermineNumberOfRandomBytesNeeded(const CBigInteger<32>& differenceBetweenMaximumAndMinimum);
 	static std::vector<unsigned char> GeneratePseudoRandomBytes(const uint8_t numBytes);

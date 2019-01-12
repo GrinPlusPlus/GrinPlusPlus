@@ -9,5 +9,4 @@ class CommitmentUtil
 {
 public:
 	static bool VerifyKernelSums(const FullBlock& block, const int64_t overage, const BlindingFactor& kernelOffset);
-	static BlindingFactor AddKernelOffsets(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
 };

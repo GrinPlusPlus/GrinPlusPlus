@@ -4,7 +4,7 @@
 
 #include <Crypto.h>
 #include <Consensus/Common.h>
-#include <TxHashSet.h>
+#include <PMMR/TxHashSet.h>
 #include <TxPool/TransactionPool.h>
 
 BlockValidator::BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pTxHashSet)
@@ -37,7 +37,13 @@ bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& 
 	// take the kernel offset for this block (block offset minus previous) and verify.body.outputs and kernel sums
 	if (block.GetBlockHeader().GetTotalKernelOffset() == previousKernelOffset)
 	{
-		blockKernelOffset = CommitmentUtil::AddKernelOffsets(std::vector<BlindingFactor>({ block.GetBlockHeader().GetTotalKernelOffset() }), std::vector<BlindingFactor>({ previousKernelOffset }));
+		std::unique_ptr<BlindingFactor> pBlockKernelOffset = Crypto::AddBlindingFactors(std::vector<BlindingFactor>({ block.GetBlockHeader().GetTotalKernelOffset() }), std::vector<BlindingFactor>({ previousKernelOffset }));
+		if (pBlockKernelOffset == nullptr)
+		{
+			return false;
+		}
+
+		blockKernelOffset = *pBlockKernelOffset;
 	}
 
 	const bool kernelSumsValid = CommitmentUtil::VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);

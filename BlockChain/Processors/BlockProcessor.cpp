@@ -103,11 +103,11 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 		return EBlockChainStatus::STORE_ERROR;
 	}
 
-	ITxHashSet* pTxHashSet = lockedState.GetTxHashSet();
+	ITxHashSet* pTxHashSet = lockedState.m_txHashSetManager.GetTxHashSet();
 	pTxHashSet->Rewind(*pPreviousHeader);
 
 	pTxHashSet->ApplyBlock(block);
-	if (!BlockValidator(lockedState.m_transactionPool, lockedState.GetTxHashSet()).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
+	if (!BlockValidator(lockedState.m_transactionPool, pTxHashSet).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
 	{
 		pTxHashSet->Discard();
 		return EBlockChainStatus::INVALID;
@@ -115,7 +115,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 
 	lockedState.m_blockStore.AddBlock(block);
 
-	pTxHashSet->Commit();
+	//pTxHashSet->Commit();
 
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 	confirmedChain.AddBlock(candidateChain.GetByHeight(block.GetBlockHeader().GetHeight()));

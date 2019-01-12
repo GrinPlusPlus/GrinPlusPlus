@@ -28,6 +28,9 @@ public:
 		BlindingFactor&& totalKernelOffset,
 		const uint64_t outputMMRSize,
 		const uint64_t kernelMMRSize,
+		const uint64_t totalDifficulty,
+		const uint32_t scalingDifficulty,
+		const uint64_t nonce,
 		ProofOfWork&& proofOfWork
 	);
 	BlockHeader(const BlockHeader& other) = default;
@@ -52,6 +55,9 @@ public:
 	inline const Hash& GetPreviousBlockHash() const { return m_previousBlockHash; }
 	inline const Hash& GetPreviousRoot() const { return m_previousRoot; }
 	inline int64_t GetTimestamp() const { return m_timestamp; }
+	inline uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
+	inline uint32_t GetScalingDifficulty() const { return m_scalingDifficulty; }
+	inline uint64_t GetNonce() const { return m_nonce; }
 	inline const ProofOfWork& GetProofOfWork() const { return m_proofOfWork; }
 
 	// Merklish roots
@@ -70,6 +76,7 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static BlockHeader Deserialize(ByteBuffer& byteBuffer);
+	std::vector<unsigned char> GetPreProofOfWork() const;
 
 	//
 	// Hashing
@@ -89,5 +96,8 @@ private:
 	BlindingFactor m_totalKernelOffset;
 	uint64_t m_outputMMRSize;
 	uint64_t m_kernelMMRSize;
+	uint64_t m_totalDifficulty;
+	uint32_t m_scalingDifficulty;
+	uint64_t m_nonce;
 	ProofOfWork m_proofOfWork;
 };

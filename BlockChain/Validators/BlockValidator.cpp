@@ -1,6 +1,5 @@
 #include "BlockValidator.h"
 #include "../Processors/BlockHeaderProcessor.h"
-#include "../CommitmentUtil.h"
 
 #include <Crypto.h>
 #include <Consensus/Common.h>
@@ -46,7 +45,7 @@ bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& 
 		blockKernelOffset = *pBlockKernelOffset;
 	}
 
-	const bool kernelSumsValid = CommitmentUtil::VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);
+	const bool kernelSumsValid = VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);
 	if (!kernelSumsValid)
 	{
 		return false;
@@ -119,4 +118,10 @@ bool BlockValidator::VerifyCoinbase(const FullBlock& block) const
 	}
 
 	return *pKernelSum == *pOutputAdjustedSum;
+}
+
+bool BlockValidator::VerifyKernelSums(const FullBlock& block, int64_t overage, const BlindingFactor& kernelOffset) const
+{
+	// TODO: Implement
+	return true;
 }

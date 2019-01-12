@@ -7,3 +7,6 @@
 [submodule "include/thirdparty/mio"]
 	path = include/thirdparty/mio
 	url = https://github.com/mandreyel/mio.git
+[submodule "PoW/cuckoo"]
+	path = PoW/cuckoo
+	url = https://github.com/GrinPlusPlus/cuckoo

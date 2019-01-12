@@ -135,11 +135,9 @@ std::string BlockAPI::BuildHeaderJSON(const BlockHeader& header)
 	rootNode["OutputMMRSIze"] = header.GetOutputMMRSize();
 	rootNode["RangeProofMMRRoot"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData(), false, false);
 
-	// Proof Of Work
-	const ProofOfWork& proofOfWork = header.GetProofOfWork();
-	rootNode["ScalingDifficulty"] = proofOfWork.GetScalingDifficulty();
-	rootNode["TotalDifficulty"] = proofOfWork.GetTotalDifficulty();
-	rootNode["Nonce"] = proofOfWork.GetNonce();
+	rootNode["ScalingDifficulty"] = header.GetScalingDifficulty();
+	rootNode["TotalDifficulty"] = header.GetTotalDifficulty();
+	rootNode["Nonce"] = header.GetNonce();
 
 	return rootNode.toStyledString();
 }

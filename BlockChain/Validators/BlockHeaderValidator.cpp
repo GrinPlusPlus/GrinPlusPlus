@@ -1,17 +1,16 @@
 #include "BlockHeaderValidator.h"
-#include "PoWValidator.h"
-#include "../uint128/uint128_t.h"
 
 #include <HexUtil.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>
 #include <Infrastructure/Logger.h>
+#include <PoW/PoWManager.h>
 #include <HeaderMMR.h>
 #include <chrono>
 
-BlockHeaderValidator::BlockHeaderValidator(const IHeaderMMR& headerMMR)
-	: m_headerMMR(headerMMR)
+BlockHeaderValidator::BlockHeaderValidator(const Config& config, const IHeaderMMR& headerMMR)
+	: m_config(config), m_headerMMR(headerMMR)
 {
 
 }
@@ -51,7 +50,7 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	}
 
 	// Validate Proof Of Work
-	const bool validPoW = PoWValidator().IsPoWValid(header, previousHeader);
+	const bool validPoW = PoWManager(m_config).IsPoWValid(header, previousHeader);
 	if (!validPoW)
 	{
 		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid Proof of Work for header " + HexUtil::ConvertHash(header.GetHash()));

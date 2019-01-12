@@ -13,7 +13,7 @@ public:
 	// CONSTRUCTION/DESTRUCTION
 	////////////////////////////////////////
 
-	ProofOfWork(const uint64_t totalDifficulty, const uint32_t scalingDifficulty, const uint64_t nonce, const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces);
+	ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces);
 	ProofOfWork(const ProofOfWork& other) = default;
 	ProofOfWork(ProofOfWork&& other) noexcept = default;
 
@@ -24,9 +24,6 @@ public:
 	// STANDARD POW ATTRIBUTES
 	////////////////////////////////////////
 
-	inline uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline uint32_t GetScalingDifficulty() const { return m_scalingDifficulty; }
-	inline uint64_t GetNonce() const { return m_nonce; }
 	inline uint8_t GetEdgeBits() const { return m_edgeBits; }
 	inline const std::vector<uint64_t>& GetProofNonces() const { return m_proofNonces; }
 
@@ -40,15 +37,12 @@ public:
 	////////////////////////////////////////
 	// HASHING
 	////////////////////////////////////////
-	const Hash& GetHash() const;
+	const Hash& GetHash() const; // TODO: Rename "GetCycleHash"
 	void SerializeProofNonces(Serializer& serializer) const; // TODO: Should be private
 
 private:
 	static std::vector<uint64_t> DeserializeProofNonces(ByteBuffer& byteBuffer, const uint8_t edgeBits);
 
-	uint64_t m_totalDifficulty;
-	uint32_t m_scalingDifficulty;
-	uint64_t m_nonce;
 	uint8_t m_edgeBits;
 	std::vector<uint64_t> m_proofNonces;
 	mutable Hash m_hash;

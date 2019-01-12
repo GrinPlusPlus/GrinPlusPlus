@@ -80,7 +80,7 @@ uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(*m_pChainState).ProcessBlock(block);
+	return BlockProcessor(m_config, *m_pChainState).ProcessBlock(block);
 }
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
@@ -125,12 +125,12 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 
 EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeader)
 {
-	return BlockHeaderProcessor(*m_pChainState).ProcessSingleHeader(blockHeader);
+	return BlockHeaderProcessor(m_config, *m_pChainState).ProcessSingleHeader(blockHeader);
 }
 
 EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 {
-	return BlockHeaderProcessor(*m_pChainState).ProcessSyncHeaders(blockHeaders);
+	return BlockHeaderProcessor(m_config, *m_pChainState).ProcessSyncHeaders(blockHeaders);
 }
 
 std::vector<BlockHeader> BlockChainServer::GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const

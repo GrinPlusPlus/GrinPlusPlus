@@ -2,13 +2,14 @@
 
 #include "../ChainState.h"
 
+#include <Config/Config.h>
 #include <Core/FullBlock.h>
 #include <BlockChainStatus.h>
 
 class BlockProcessor
 {
 public:
-	BlockProcessor(ChainState& chainState);
+	BlockProcessor(const Config& config, ChainState& chainState);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
@@ -19,5 +20,6 @@ private:
 
 	bool ShouldOrphan(const FullBlock& block, LockedChainState& lockedState);
 
+	const Config& m_config;
 	ChainState& m_chainState;
 };

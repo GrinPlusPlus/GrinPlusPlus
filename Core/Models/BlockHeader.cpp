@@ -14,6 +14,9 @@ BlockHeader::BlockHeader
 	BlindingFactor&& totalKernelOffset,
 	const uint64_t outputMMRSize,
 	const uint64_t kernelMMRSize,
+	const uint64_t totalDifficulty,
+	const uint32_t scalingDifficulty,
+	const uint64_t nonce,
 	ProofOfWork&& proofOfWork
 )
 	: m_version(version),
@@ -27,6 +30,9 @@ BlockHeader::BlockHeader
 	m_totalKernelOffset(std::move(totalKernelOffset)),
 	m_outputMMRSize(outputMMRSize),
 	m_kernelMMRSize(kernelMMRSize),
+	m_totalDifficulty(totalDifficulty),
+	m_scalingDifficulty(scalingDifficulty),
+	m_nonce(nonce),
 	m_proofOfWork(std::move(proofOfWork))
 {
 
@@ -45,6 +51,9 @@ void BlockHeader::Serialize(Serializer& serializer) const
 	m_totalKernelOffset.Serialize(serializer);
 	serializer.Append<uint64_t>(m_outputMMRSize);
 	serializer.Append<uint64_t>(m_kernelMMRSize);
+	serializer.Append<uint64_t>(m_totalDifficulty);
+	serializer.Append<uint32_t>(m_scalingDifficulty);
+	serializer.Append<uint64_t>(m_nonce);
 	m_proofOfWork.Serialize(serializer);
 }
 
@@ -64,7 +73,48 @@ BlockHeader BlockHeader::Deserialize(ByteBuffer& byteBuffer)
 	const uint64_t outputMMRSize = byteBuffer.ReadU64();
 	const uint64_t kernelMMRSize = byteBuffer.ReadU64();
 
+	const uint64_t totalDifficulty = byteBuffer.ReadU64();
+	const uint32_t scalingDifficulty = byteBuffer.ReadU32();
+	const uint64_t nonce = byteBuffer.ReadU64();
+
 	ProofOfWork proofOfWork = ProofOfWork::Deserialize(byteBuffer);
 
-	return BlockHeader(version, height, timestamp, std::move(previousBlockHash), std::move(previousRoot), std::move(outputRoot), std::move(rangeProofRoot), std::move(kernelRoot), std::move(totalKernelOffset), outputMMRSize, kernelMMRSize, std::move(proofOfWork));
+	return BlockHeader(
+		version, 
+		height, 
+		timestamp,
+		std::move(previousBlockHash), 
+		std::move(previousRoot), 
+		std::move(outputRoot), 
+		std::move(rangeProofRoot), 
+		std::move(kernelRoot), 
+		std::move(totalKernelOffset), 
+		outputMMRSize, 
+		kernelMMRSize,
+		totalDifficulty,
+		scalingDifficulty,
+		nonce,
+		std::move(proofOfWork)
+	);
+}
+
+std::vector<unsigned char> BlockHeader::GetPreProofOfWork() const
+{
+	Serializer serializer;
+	serializer.Append<uint16_t>(m_version);
+	serializer.Append<uint64_t>(m_height);
+	serializer.Append<int64_t>(m_timestamp);
+	serializer.AppendBigInteger<32>(m_previousBlockHash);
+	serializer.AppendBigInteger<32>(m_previousRoot);
+	serializer.AppendBigInteger<32>(m_outputRoot);
+	serializer.AppendBigInteger<32>(m_rangeProofRoot);
+	serializer.AppendBigInteger<32>(m_kernelRoot);
+	m_totalKernelOffset.Serialize(serializer);
+	serializer.Append<uint64_t>(m_outputMMRSize);
+	serializer.Append<uint64_t>(m_kernelMMRSize);
+	serializer.Append<uint64_t>(m_totalDifficulty);
+	serializer.Append<uint32_t>(m_scalingDifficulty);
+	serializer.Append<uint64_t>(m_nonce);
+
+	return serializer.GetBytes();
 }

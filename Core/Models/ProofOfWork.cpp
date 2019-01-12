@@ -2,11 +2,8 @@
 #include <Consensus/BlockDifficulty.h>
 #include <Crypto.h>
 
-ProofOfWork::ProofOfWork(const uint64_t totalDifficulty, const uint32_t scalingDifficulty, const uint64_t nonce, const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces)
-	: m_totalDifficulty(totalDifficulty),
-	m_scalingDifficulty(scalingDifficulty),
-	m_nonce(nonce),
-	m_edgeBits(edgeBits),
+ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces)
+	: m_edgeBits(edgeBits),
 	m_proofNonces(std::move(proofNonces))
 {
 
@@ -14,13 +11,11 @@ ProofOfWork::ProofOfWork(const uint64_t totalDifficulty, const uint32_t scalingD
 
 void ProofOfWork::Serialize(Serializer& serializer) const
 {
-	serializer.Append<uint64_t>(m_totalDifficulty);
-	serializer.Append<uint32_t>(m_scalingDifficulty);
-	serializer.Append<uint64_t>(m_nonce);
 	serializer.Append<uint8_t>(m_edgeBits);
 	SerializeProofNonces(serializer);
 }
 
+// TODO: Rename "SerializeCycle"
 void ProofOfWork::SerializeProofNonces(Serializer& serializer) const
 {
 	const int bytes_len = ((m_edgeBits * Consensus::PROOFSIZE) + 7) / 8;
@@ -44,13 +39,10 @@ void ProofOfWork::SerializeProofNonces(Serializer& serializer) const
 
 ProofOfWork ProofOfWork::Deserialize(ByteBuffer& byteBuffer)
 {
-	const uint64_t totalDifficulty = byteBuffer.ReadU64();
-	const uint32_t scalingDifficulty = byteBuffer.ReadU32();
-	const uint64_t nonce = byteBuffer.ReadU64();
 	const uint8_t edgeBits = byteBuffer.ReadU8();
 	std::vector<uint64_t> proofNonces = DeserializeProofNonces(byteBuffer, edgeBits);
 
-	return ProofOfWork(totalDifficulty, scalingDifficulty, nonce, edgeBits, std::move(proofNonces));
+	return ProofOfWork(edgeBits, std::move(proofNonces));
 }
 
 std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(ByteBuffer& byteBuffer, const uint8_t edgeBits)

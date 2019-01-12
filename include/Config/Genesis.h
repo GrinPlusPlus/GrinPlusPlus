@@ -20,11 +20,11 @@ namespace Genesis
 			CBigInteger<32>(std::vector<unsigned char>(32, (unsigned char)0x00)) /*totalKernelOffset*/,
 			0/*outputMMRSize*/,
 			0/*kernelMMRSize*/,
+			1856000 /*totalDifficulty*/,
+			1856 /*scalingDifficulty*/,
+			8612241555342799290 /*nonce*/,
 			ProofOfWork
 			(
-				1856000 /*totalDifficulty*/,
-				1856 /*scalingDifficulty*/,
-				8612241555342799290,
 				29,
 				std::vector<uint64_t>
 				({
@@ -180,11 +180,11 @@ namespace Genesis
 			CBigInteger<32>(std::vector<unsigned char>(32, (unsigned char)0x00)) /*totalKernelOffset*/,
 			1/*outputMMRSize*/,
 			1/*kernelMMRSize*/,
+			100000 /*totalDifficulty*/,
+			1856 /*scalingDifficulty*/,
+			23 /*nonce*/,
 			ProofOfWork
 			(
-				100000 /*totalDifficulty*/,
-				1856 /*scalingDifficulty*/,
-				23, /*nonce*/
 				29, /*edgeBits*/
 				std::vector<uint64_t>
 				({

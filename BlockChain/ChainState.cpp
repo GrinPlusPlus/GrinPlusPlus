@@ -26,20 +26,20 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 		m_blockStore.AddHeader(genesisHeader);
 		m_headerMMR.AddHeader(genesisHeader);
 	}
-	else
-	{
-		const uint64_t horizon = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - (uint64_t)Consensus::CUT_THROUGH_HORIZON;
+	//else
+	//{
+	//	const uint64_t horizon = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - (uint64_t)Consensus::CUT_THROUGH_HORIZON;
 
-		std::vector<Hash> hashesToLoad;
+	//	std::vector<Hash> hashesToLoad;
 
-		for (size_t i = horizon; i <= candidateHeight; i++)
-		{
-			const Hash& hash = candidateChain.GetByHeight(i)->GetHash();
-			hashesToLoad.emplace_back(hash);
-		}
+	//	for (size_t i = horizon; i <= candidateHeight; i++)
+	//	{
+	//		const Hash& hash = candidateChain.GetByHeight(i)->GetHash();
+	//		hashesToLoad.emplace_back(hash);
+	//	}
 
-		m_blockStore.LoadHeaders(hashesToLoad);
-	}
+	//	m_blockStore.LoadHeaders(hashesToLoad);
+	//}
 
 	m_txHashSetManager.Open();
 }
@@ -64,7 +64,7 @@ uint64_t ChainState::GetTotalDifficulty(const EChainType chainType)
 	std::unique_ptr<BlockHeader> pHead = GetHead_Locked(chainType);
 	if (pHead != nullptr)
 	{
-		return pHead->GetProofOfWork().GetTotalDifficulty();
+		return pHead->GetTotalDifficulty();
 	}
 
 	return 0;

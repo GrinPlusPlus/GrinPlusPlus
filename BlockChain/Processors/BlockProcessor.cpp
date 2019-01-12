@@ -9,8 +9,8 @@
 #include <StringUtil.h>
 #include <algorithm>
 
-BlockProcessor::BlockProcessor(ChainState& chainState)
-	: m_chainState(chainState)
+BlockProcessor::BlockProcessor(const Config& config, ChainState& chainState)
+	: m_config(config), m_chainState(chainState)
 {
 
 }
@@ -29,7 +29,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	}
 
 	// Make sure header is processed and valid before processing block.
-	const EBlockChainStatus headerStatus = BlockHeaderProcessor(m_chainState).ProcessSingleHeader(header);
+	const EBlockChainStatus headerStatus = BlockHeaderProcessor(m_config, m_chainState).ProcessSingleHeader(header);
 	if (headerStatus == EBlockChainStatus::SUCCESS
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)

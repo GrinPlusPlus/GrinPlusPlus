@@ -104,7 +104,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 
 	Slice key((const char*)&hash[0], 32);
 	std::string value;
-	Status s = m_pDatabase->Get(ReadOptions(), m_pHeaderHandle, HexUtil::ConvertToHex(hash.GetData(), false, false), &value);
+	Status s = m_pDatabase->Get(ReadOptions(), m_pHeaderHandle, key, &value);
 	if (s.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
@@ -164,7 +164,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 
 	Slice key((const char*)&hash[0], 32);
 	std::string value;
-	Status s = m_pDatabase->Get(ReadOptions(), m_pBlockHandle, HexUtil::ConvertToHex(hash.GetData(), false, false), &value);
+	Status s = m_pDatabase->Get(ReadOptions(), m_pBlockHandle, key, &value);
 	if (s.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());

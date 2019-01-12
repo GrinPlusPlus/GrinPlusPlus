@@ -17,6 +17,7 @@ public:
 private:
 	bool VerifyKernelLockHeights(const FullBlock& block) const;
 	bool VerifyCoinbase(const FullBlock& block) const;
+	bool VerifyKernelSums(const FullBlock& block, int64_t overage, const BlindingFactor& kernelOffset) const;
 
 	ITransactionPool& m_transactionPool;
 	ITxHashSet* m_pTxHashSet;

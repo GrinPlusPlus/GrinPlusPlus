@@ -39,15 +39,14 @@ bool PruneList::Flush()
 		std::vector<unsigned char> buffer(size);
 		m_prunedRoots.write((char*)&buffer[0]);
 
-		if (FileUtil::SafeWriteToFile(m_filePath, buffer))
-		{
-			// Rebuild our "shift caches" here as we are flushing changes to disk
-			// and the contents of our prune_list has likely changed.
-			BuildPrunedCache();
-			BuildShiftCaches();
+		const bool flushed = FileUtil::SafeWriteToFile(m_filePath, buffer);
 
-			return true;
-		}
+		// Rebuild our "shift caches" here as we are flushing changes to disk
+		// and the contents of our prune_list has likely changed.
+		BuildPrunedCache();
+		BuildShiftCaches();
+		
+		return flushed;
 	}
 
 	return false;
@@ -104,6 +103,11 @@ uint64_t PruneList::GetShift(const uint64_t position) const
 		return 0;
 	}
 
+	if (m_shiftCache.empty())
+	{
+		return 0;
+	}
+
 	if (index > m_shiftCache.size())
 	{
 		return m_shiftCache.back();
@@ -123,6 +127,11 @@ uint64_t PruneList::GetLeafShift(const uint64_t position) const
 
 	const uint64_t index = m_prunedRoots.rank(position + 1);
 	if (index == 0)
+	{
+		return 0;
+	}
+
+	if (m_leafShiftCache.empty())
 	{
 		return 0;
 	}

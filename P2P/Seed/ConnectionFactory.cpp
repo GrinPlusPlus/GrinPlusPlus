@@ -75,14 +75,14 @@ bool ConnectionFactory::TransmitHandMessage(ConnectedPeer& connectedPeer) const
 	const IPAddress localHostIP(EAddressFamily::IPv4, address);
 
 	std::optional<uint16_t> portOptional = SocketHelper::GetPort(connectedPeer.GetConnection());
-	const uint16_t portNumber = portOptional.has_value() ? portOptional.value() : P2P::DEFAULT_PORT;
+	const uint16_t portNumber = portOptional.has_value() ? portOptional.value() : m_config.GetEnvironment().GetP2PPort();
 
 	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
 	const uint64_t nonce = rand();
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
 	const uint64_t totalDifficulty = m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED);
-	SocketAddress senderAddress(localHostIP, portNumber);
+	SocketAddress senderAddress(localHostIP, m_config.GetEnvironment().GetP2PPort());
 	SocketAddress receiverAddress(localHostIP, portNumber);
 	const std::string& userAgent = P2P::USER_AGENT;
 	const HandMessage handMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);

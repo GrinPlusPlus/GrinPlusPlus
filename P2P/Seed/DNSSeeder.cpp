@@ -10,15 +10,38 @@
 #include <iostream>
 #include <Infrastructure/Logger.h>
 
+DNSSeeder::DNSSeeder(const Config& config)
+	: m_config(config)
+{
+
+}
+
 bool DNSSeeder::GetPeersFromDNS(std::vector<SocketAddress>& addresses) const
 {
 	if (InitializeWinsock())
 	{
 		std::vector<std::string> dnsSeeds;
-		
-		// MAINNET: Support mainnet seeds
-		dnsSeeds.emplace_back("floonet.seed.grin-tech.org"); // igno.peverell@protonmail.com
-		dnsSeeds.emplace_back("floonet.seed.grin.icu"); // gary.peverell@protonmail.com
+		if (m_config.GetEnvironment().IsMainnet())
+		{
+			dnsSeeds = {
+				"mainnet.seed.grin-tech.org",		// igno.peverell@protonmail.com
+				"mainnet.seed.grin.icu",			// gary.peverell@protonmail.com
+				"mainnet.seed.713.mw",				// jasper@713.mw
+				"mainnet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
+				"mainnet.seed.grin.prokapi.com",	// hendi@prokapi.com
+				"grinseed.yeastplume.org",			// yeastplume@protonmail.com
+			};
+		}
+		else
+		{
+			dnsSeeds = {
+				"floonet.seed.grin-tech.org",		// igno.peverell@protonmail.com
+				"floonet.seed.grin.icu",			// gary.peverell@protonmail.com
+				"floonet.seed.713.mw",				// jasper@713.mw
+				"floonet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
+				"floonet.seed.grin.prokapi.com",	// hendi@prokapi.com
+			};
+		}
 
 		for (auto seed : dnsSeeds)
 		{
@@ -70,7 +93,7 @@ bool DNSSeeder::GetAddressesFromDNSSeed(const std::string& dnsSeed, std::vector<
 		{
 			const sockaddr_in* pSockAddrIn = (sockaddr_in*)aiTrav->ai_addr;
 			const IPAddress address = IPAddressUtil::ParseIPAddress(pSockAddrIn->sin_addr);
-			addresses.emplace_back(std::move(address), P2P::DEFAULT_PORT);
+			addresses.emplace_back(std::move(address), m_config.GetEnvironment().GetP2PPort());
 
 			hostsFound = true;
 		}

@@ -1,89 +1,80 @@
 #include "BlockAPI.h"
+#include "RestUtil.h"
+#include "JSONFactory.h"
 
-#include <json/json.h>
-#include <BlockChainServer.h>
-#include <Infrastructure/Logger.h>
 #include <StringUtil.h>
-#include <HexUtil.h>
-#include <TimeUtil.h>
-#include <string>
+#include <Infrastructure/Logger.h>
 
 //
-// Handles requests to retrieve a single header by hash, height, or output commitment.
+// Handles requests to retrieve a single block by hash, height, or output commitment.
 //
 // APIs:
-// GET /v1/headers/<hash>
-// GET /v1/headers/<height>
-// GET /v1/headers/<output commit>
+// GET /v1/blocks/<hash>
+// GET /v1/blocks/<height>
+// GET /v1/blocks/<output commit>
 //
-int BlockAPI::GetHeader_Handler(struct mg_connection* conn, void* pBlockChainServer)
+// Return results as "compact blocks" by passing "?compact" query
+// GET /v1/blocks/<hash>?compact
+int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pBlockChainServer)
 {
-	const struct mg_request_info* req_info = mg_get_request_info(conn);
-	
-	const std::string requestURI(req_info->request_uri);
-	const std::string requestedHeader = requestURI.substr(12, requestURI.size() - 12);
-	std::unique_ptr<BlockHeader> pBlockHeader = GetHeader(requestedHeader, (IBlockChainServer*)pBlockChainServer);
+	const std::string requestedBlock = RestUtil::GetURIParam(conn, "/v1/blocks/");
+	const std::string queryString = RestUtil::GetQueryString(conn);
 
-	if (nullptr != pBlockHeader)
+	if (queryString == "compact")
 	{
-		const std::string msg = BuildHeaderJSON(*pBlockHeader);
-		unsigned long len = (unsigned long)msg.size();
+		const std::string response = "NOT IMPLEMENTED";
+		return RestUtil::BuildBadRequestResponse(conn, response);
 
-		mg_printf(conn,
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Length: %lu\r\n"
-			"Content-Type: application/json\r\n"
-			"Connection: close\r\n\r\n",
-			len);
+		// TODO: Implement
+		//std::unique_ptr<CompactBlock> pCompactBlock = GetCompactBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
 
-		mg_write(conn, msg.c_str(), len);
-
-		return 200;
+		//if (nullptr != pCompactBlock)
+		//{
+		//	const std::string response = BuildCompactBlockJSON(*pCompactBlock);
+		//	return RestUtil::BuildSuccessResponse(conn, response);
+		//}
 	}
 	else
 	{
-		const std::string msg = "HEADER NOT FOUND";
-		unsigned long len = (unsigned long)msg.size();
+		std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
 
-		mg_printf(conn,
-			"HTTP/1.1 400 Bad Request\r\n"
-			"Content-Length: %lu\r\n"
-			"Content-Type: text/plain\r\n"
-			"Connection: close\r\n\r\n",
-			len);
-
-		mg_write(conn, msg.c_str(), len);
-
-		return 400;
+		if (nullptr != pFullBlock)
+		{
+			const Json::Value blockJSON = JSONFactory::BuildBlockJSON(*pFullBlock);
+			return RestUtil::BuildSuccessResponse(conn, blockJSON.toStyledString());
+		}
 	}
+
+	const std::string response = "BLOCK NOT FOUND";
+	return RestUtil::BuildBadRequestResponse(conn, response);
 }
 
-std::unique_ptr<BlockHeader> BlockAPI::GetHeader(const std::string& requestedHeader, IBlockChainServer* pBlockChainServer)
+std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer)
 {
-	if (requestedHeader.length() == 64 && HexUtil::IsValidHex(requestedHeader))
+	if (requestedBlock.length() == 64 && HexUtil::IsValidHex(requestedBlock))
 	{
 		try
 		{
-			const Hash hash = Hash::FromHex(requestedHeader);
-			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
-			if (pHeader != nullptr)
+			const Hash hash = Hash::FromHex(requestedBlock);
+			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHash(hash);
+			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with hash %s.", requestedHeader.c_str()));
-				return pHeader;
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block with hash %s.", requestedBlock.c_str()));
+				return pBlock;
 			}
 
-			pHeader = pBlockChainServer->GetBlockHeaderByCommitment(hash);
-			if (pHeader != nullptr)
+			pBlock = pBlockChainServer->GetBlockByCommitment(hash);
+			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with output commitment %s.", requestedHeader.c_str()));
-				return pHeader;
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block with output commitment %s.", requestedBlock.c_str()));
+				return pBlock;
 			}
 
-			LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with hash or commitment %s.", requestedHeader.c_str()));
+			LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with hash or commitment %s.", requestedBlock.c_str()));
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Hash.", requestedHeader.c_str()));
+			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to a Hash.", requestedBlock.c_str()));
 		}
 	}
 	else
@@ -91,53 +82,24 @@ std::unique_ptr<BlockHeader> BlockAPI::GetHeader(const std::string& requestedHea
 		try
 		{
 			std::string::size_type sz = 0;
-			const uint64_t height = std::stoull(requestedHeader, &sz, 0);
+			const uint64_t height = std::stoull(requestedBlock, &sz, 0);
 
-			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
-			if (pHeader != nullptr)
+			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHeight(height);
+			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header at height %s.", requestedHeader.c_str()));
-				return pHeader;
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block at height %s.", requestedBlock.c_str()));
+				return pBlock;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found at height %s.", requestedHeader.c_str()));
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found at height %s.", requestedBlock.c_str()));
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to height.", requestedHeader.c_str()));
+			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to height.", requestedBlock.c_str()));
 		}
 	}
 
-	return std::unique_ptr<BlockHeader>(nullptr);
-}
-
-std::string BlockAPI::BuildHeaderJSON(const BlockHeader& header)
-{
-	Json::Value rootNode;
-	rootNode["Height"] = header.GetHeight();
-	rootNode["Hash"] = HexUtil::ConvertToHex(header.GetHash().GetData(), false, false);
-	rootNode["Version"] = header.GetVersion();
-
-	rootNode["TimestampRaw"] = header.GetTimestamp();
-	rootNode["TimestampLocal"] = TimeUtil::FormatLocal(header.GetTimestamp());
-	rootNode["TimestampUTC"] = TimeUtil::FormatUTC(header.GetTimestamp());
-
-	rootNode["PreviousHash"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData(), false, false);
-	rootNode["PreviousMMRRoot"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData(), false, false);
-
-	rootNode["KernelMMRRoot"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData(), false, false);
-	rootNode["KernelMMRSize"] = header.GetKernelMMRSize();
-	rootNode["TotalKernelOffset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData(), false, false);
-
-	rootNode["OutputMMRRoot"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData(), false, false);
-	rootNode["OutputMMRSIze"] = header.GetOutputMMRSize();
-	rootNode["RangeProofMMRRoot"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData(), false, false);
-
-	rootNode["ScalingDifficulty"] = header.GetScalingDifficulty();
-	rootNode["TotalDifficulty"] = header.GetTotalDifficulty();
-	rootNode["Nonce"] = header.GetNonce();
-
-	return rootNode.toStyledString();
+	return std::unique_ptr<FullBlock>(nullptr);
 }

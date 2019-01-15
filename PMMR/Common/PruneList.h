@@ -6,7 +6,6 @@
 #include <vector>
 #include <stdint.h>
 
-// TODO: Document this.
 class PruneList
 {
 public:
@@ -14,8 +13,14 @@ public:
 
 	bool Flush();
 
+	// Adds the node to the prune list.
+	// Compacts if pruning the node means a parent can get pruned as well.
 	void Add(const uint64_t mmrIndex);
+
+	// Indicates whether the position is pruned.
 	bool IsPruned(const uint64_t mmrIndex) const;
+
+	// Indicates whether the position is the root of a pruned subtree.
 	bool IsPrunedRoot(const uint64_t mmrIndex) const;
 
 	uint64_t GetTotalShift() const;

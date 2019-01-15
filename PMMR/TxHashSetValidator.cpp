@@ -27,6 +27,7 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	// Validate size of each MMR matches blockHeader
 	if (!ValidateSizes(txHashSet, blockHeader))
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR size.");
 		return TxHashSetValidationResult::Fail();
 	}
 
@@ -42,18 +43,21 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	
 	if (!mmrHashesValidated)
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR hashes.");
 		return TxHashSetValidationResult::Fail();
 	}
 
 	// Validate root for each MMR matches blockHeader
 	if (!ValidateRoots(txHashSet, blockHeader))
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR roots.");
 		return TxHashSetValidationResult::Fail();
 	}
 
 	// Validate the full kernel history (kernel MMR root for every block header).
 	if (!ValidateKernelHistory(*txHashSet.GetKernelMMR(), blockHeader))
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel history.");
 		return TxHashSetValidationResult::Fail();
 	}
 
@@ -64,14 +68,21 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
 	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, genesisHasReward, outputSum, kernelSum))
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel sums.");
 		return TxHashSetValidationResult::Fail();
 	}
 
 	// TODO: Validate the rangeproof associated with each unspent output.
+	if (!ValidateRangeProofs(txHashSet, blockHeader))
+	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid range proof.");
+		return TxHashSetValidationResult::Fail();
+	}
 
 	// Validate kernel signatures
 	if (!KernelSignatureValidator().ValidateKernelSignatures(*txHashSet.GetKernelMMR()))
 	{
+		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel signatures.");
 		return TxHashSetValidationResult::Fail();
 	}
 
@@ -176,5 +187,11 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 		}
 	}
 
+	return true;
+}
+
+bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
+{
+	// TODO: Implement
 	return true;
 }

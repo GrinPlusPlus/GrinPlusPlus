@@ -26,20 +26,6 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 		m_blockStore.AddHeader(genesisHeader);
 		m_headerMMR.AddHeader(genesisHeader);
 	}
-	//else
-	//{
-	//	const uint64_t horizon = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - (uint64_t)Consensus::CUT_THROUGH_HORIZON;
-
-	//	std::vector<Hash> hashesToLoad;
-
-	//	for (size_t i = horizon; i <= candidateHeight; i++)
-	//	{
-	//		const Hash& hash = candidateChain.GetByHeight(i)->GetHash();
-	//		hashesToLoad.emplace_back(hash);
-	//	}
-
-	//	m_blockStore.LoadHeaders(hashesToLoad);
-	//}
 
 	m_txHashSetManager.Open();
 }

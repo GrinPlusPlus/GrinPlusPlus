@@ -43,7 +43,9 @@ public:
 	virtual std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const override final;
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
 
+	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Hash& blockHash) const override final;
 	virtual std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const override final;
+	virtual std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const override final;
 
 	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const override final;
 

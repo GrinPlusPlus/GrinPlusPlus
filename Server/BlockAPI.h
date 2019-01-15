@@ -8,9 +8,12 @@
 class BlockAPI
 {
 public:
-	static int GetHeader_Handler(struct mg_connection* conn, void* pBlockChainServer);
+	static int GetBlock_Handler(struct mg_connection* conn, void* pBlockChainServer);
 
 private:
-	static std::unique_ptr<BlockHeader> GetHeader(const std::string& requestedHeader, IBlockChainServer* pBlockChainServer);
-	static std::string BuildHeaderJSON(const BlockHeader& header);
+	static std::unique_ptr<FullBlock> GetBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer);
+	static std::string BuildBlockJSON(const FullBlock& block);
+
+	static std::unique_ptr<CompactBlock> GetCompactBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer);
+	static std::string BuildCompactBlockJSON(const CompactBlock& block);
 };

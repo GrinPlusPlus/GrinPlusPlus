@@ -40,8 +40,8 @@ namespace HexUtil
 	static std::string ConvertHash(const Hash& hash)
 	{
 		const std::vector<unsigned char>& bytes = hash.GetData();
-		const std::vector<unsigned char> firstFourBytes = std::vector<unsigned char>(bytes.cbegin(), bytes.cbegin() + 4);
+		const std::vector<unsigned char> firstSixBytes = std::vector<unsigned char>(bytes.cbegin(), bytes.cbegin() + 6);
 		
-		return ConvertToHex(firstFourBytes, false, false);
+		return ConvertToHex(firstSixBytes, false, false);
 	}
 }

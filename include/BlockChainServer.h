@@ -83,10 +83,22 @@ public:
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
 
 	//
+	// Returns the block at the given height.
+	// This will be null if no matching block is found.
+	//
+	virtual std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const = 0;
+
+	//
 	// Returns the block matching the given hash.
 	// This will be null if no matching block is found.
 	//
 	virtual std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const = 0;
+
+	//
+	// Returns the block containing the output commitment.
+	// This will be null if the output commitment is not found or the block doesn't exist in the DB.
+	//
+	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Hash& outputCommitment) const = 0;
 
 	//
 	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.

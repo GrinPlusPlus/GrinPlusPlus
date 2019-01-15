@@ -169,11 +169,27 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainTyp
 	return m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(chainType), chainType);
 }
 
-std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHash(const CBigInteger<32>& hash) const
+std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Hash& outputCommitment) const
+{
+	// TODO: Implement this
+	return std::unique_ptr<FullBlock>(nullptr);
+}
+
+std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHash(const Hash& hash) const
 {
 	return m_pChainState->GetBlockByHash(hash);
 }
 
+std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHeight(const uint64_t height) const
+{
+	std::unique_ptr<BlockHeader> pHeader = m_pChainState->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);
+	if (pHeader != nullptr)
+	{
+		return m_pChainState->GetBlockByHash(pHeader->GetHash());
+	}
+
+	return std::unique_ptr<FullBlock>(nullptr);
+}
 
 std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {

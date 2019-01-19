@@ -6,6 +6,7 @@
 #include "LockedChainState.h"
 #include "OrphanPool/OrphanPool.h"
 
+#include <P2P/SyncStatus.h>
 #include <Core/BlockHeader.h>
 #include <Core/ChainType.h>
 #include <HeaderMMR.h>
@@ -24,13 +25,14 @@ public:
 
 	void Initialize(const BlockHeader& genesisHeader);
 
+	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 	uint64_t GetHeight(const EChainType chainType);
 	uint64_t GetTotalDifficulty(const EChainType chainType);
 
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
 	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash);
-	std::unique_ptr<FullBlock> GetOrphanBlock(const Hash& hash) const;
+	std::unique_ptr<FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
 
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
@@ -39,7 +41,7 @@ public:
 
 private:
 	std::unique_ptr<BlockHeader> GetHead_Locked(const EChainType chainType);
-	const Hash& GetHeadHash_Locked(const EChainType chainType);
+	const Hash& GetHeadHash_Locked(const EChainType chainType) const;
 
 	mutable std::shared_mutex m_chainMutex;
 

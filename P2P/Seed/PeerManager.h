@@ -7,8 +7,8 @@
 #include <Database/PeerDB.h>
 #include <Config/Config.h>
 
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <shared_mutex>
 
@@ -33,7 +33,18 @@ private:
 	const Config& m_config;
 	IPeerDB& m_peerDB;
 
+	struct PeerEntry
+	{
+		PeerEntry(const Peer& peer)
+			: m_peer(peer), m_peerServed(false)
+		{
+
+		}
+		bool m_peerServed;
+		Peer m_peer;
+	};
+
 	mutable std::shared_mutex m_peersMutex;
-	mutable std::set<IPAddress> m_peersServed;
-	mutable std::map<IPAddress, Peer> m_peersByAddress;
+	mutable std::unordered_set<IPAddress> m_peersServed;
+	mutable std::unordered_map<IPAddress, PeerEntry> m_peersByAddress;
 };

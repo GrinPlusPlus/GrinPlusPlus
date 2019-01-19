@@ -1,17 +1,20 @@
 #include "RestServer.h"
 #include "civetweb/include/civetweb.h"
 
-#include "HeaderAPI.h"
-#include "BlockAPI.h"
+#include "API/HeaderAPI.h"
+#include "API/BlockAPI.h"
+#include "API/ServerAPI.h"
 
 #include <P2PServer.h>
 #include <BlockChainServer.h>
 #include <Database/Database.h>
 
-RestServer::RestServer(const Config& config, IDatabase* pDatabase, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer)
-	: m_config(config), m_pDatabase(pDatabase), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer)
+RestServer::RestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer)
+	: m_config(config), m_pDatabase(pDatabase), m_pTxHashSetManager(pTxHashSetManager), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer)
 {
-
+	m_serverContainer.m_pBlockChainServer = m_pBlockChainServer;
+	m_serverContainer.m_pP2PServer = m_pP2PServer;
+	m_serverContainer.m_pTxHashSetManager = m_pTxHashSetManager;
 }
 
 bool RestServer::Start()
@@ -28,6 +31,7 @@ bool RestServer::Start()
 	/* Add handlers */
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
+	mg_set_request_handler(ctx, "/v1/", ServerAPI::GetServer_Handler, &m_serverContainer);
 
 	return true;
 }

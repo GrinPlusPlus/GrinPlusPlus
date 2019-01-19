@@ -3,6 +3,7 @@
 #include "Connection.h"
 #include "Sync/Syncer.h"
 #include "Seed/Seeder.h"
+#include "Pipeline.h"
 
 #include <Config/Config.h>
 #include <BlockChainServer.h>
@@ -22,6 +23,7 @@ public:
 	void Start();
 	void Stop();
 
+	inline Pipeline& GetPipeline() { return m_pipeline; }
 	inline const SyncStatus& GetSyncStatus() const { return m_syncer.GetSyncStatus(); }
 	size_t GetNumberOfActiveConnections() const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
@@ -67,4 +69,5 @@ private:
 	IBlockChainServer& m_blockChainServer;
 	Syncer m_syncer;
 	Seeder m_seeder;
+	Pipeline m_pipeline;
 };

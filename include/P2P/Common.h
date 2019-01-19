@@ -40,7 +40,4 @@ namespace P2P
 
 	// min preferred peer count
 	static const uint8_t PEER_MIN_PREFERRED_COUNT = 8;
-
-	// Default port number
-	static const uint16_t DEFAULT_PORT = 13414;
 }

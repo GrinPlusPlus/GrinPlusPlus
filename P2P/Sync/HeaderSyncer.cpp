@@ -16,54 +16,58 @@ HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServ
 }
 
 // TODO: Choose 1 peer to sync all headers from
-bool HeaderSyncer::SyncHeaders()
+bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus)
 {
-	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
+	const uint64_t height = syncStatus.GetHeaderHeight();
 	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
+
+	// This solves an issue that occurs due to the handshake not containing height.
+	if (highestHeight == 0)
+	{
+		return true;
+	}
 
 	if (highestHeight >= (height + 5))
 	{
-		if (IsHeaderSyncDue())
+		if (IsHeaderSyncDue(syncStatus))
 		{
-			RequestHeaders();
+			RequestHeaders(syncStatus);
 		}
 
 		return true;
 	}
 
+	LoggerAPI::LogError(std::to_string(height) + "  " + std::to_string(highestHeight));
+
 	m_consecutiveTimeouts = 0;
 	return false;
 }
 
-bool HeaderSyncer::IsHeaderSyncDue()
+bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 {
-	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
-	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
+	const uint64_t height = syncStatus.GetHeaderHeight();
 
-	if (highestHeight >= (height + 5))
+	// Check if header download timed out.
+	if (m_timeout < std::chrono::system_clock::now())
 	{
-		// Check if header download timed out.
-		if (m_timeout < std::chrono::system_clock::now())
-		{
-			LoggerAPI::LogWarning("HeaderSyncer::IsHeaderSyncDue() - Timed out. Requesting again.");
-			++m_consecutiveTimeouts;
-			// TODO: Choose new sync peer
-			return true;
-		}
+		LoggerAPI::LogWarning("HeaderSyncer::IsHeaderSyncDue() - Timed out. Requesting again.");
+		++m_consecutiveTimeouts;
+		// TODO: Choose new sync peer
+		return true;
+	}
 
-		// Check if headers were received, and we're ready to request next batch.
-		if (height >= (m_lastHeight + P2P::MAX_BLOCK_HEADERS - 1))
-		{
-			LoggerAPI::LogInfo("HeaderSyncer::IsHeaderSyncDue() - Headers received. Requesting next batch.");
-			m_consecutiveTimeouts = 0;
-			return true;
-		}
+	// Check if headers were received, and we're ready to request next batch.
+	if (height >= (m_lastHeight + P2P::MAX_BLOCK_HEADERS - 1))
+	{
+		LoggerAPI::LogInfo("HeaderSyncer::IsHeaderSyncDue() - Headers received. Requesting next batch.");
+		m_consecutiveTimeouts = 0;
+		return true;
 	}
 
 	return false;
 }
 
-bool HeaderSyncer::RequestHeaders()
+bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
 	LoggerAPI::LogInfo("HeaderSyncer::RequestHeaders - Requesting headers.");
 
@@ -82,7 +86,7 @@ bool HeaderSyncer::RequestHeaders()
 	const BlockLocator locator(m_blockChainServer);
 	std::vector<CBigInteger<32>> locators = locator.GetLocators();
 
-	const uint64_t chainHeight = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
+	const uint64_t chainHeight = syncStatus.GetHeaderHeight();
 	const GetHeadersMessage getHeadersMessage(std::move(locators));
 	m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(getHeadersMessage);
 	

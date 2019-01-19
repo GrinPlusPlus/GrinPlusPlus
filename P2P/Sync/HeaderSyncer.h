@@ -5,17 +5,18 @@
 // Forward Declarations
 class ConnectionManager;
 class IBlockChainServer;
+class SyncStatus;
 
 class HeaderSyncer
 {
 public:
 	HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
 
-	bool SyncHeaders();
+	bool SyncHeaders(const SyncStatus& syncStatus);
 
 private:
-	bool IsHeaderSyncDue();
-	bool RequestHeaders();
+	bool IsHeaderSyncDue(const SyncStatus& syncStatus);
+	bool RequestHeaders(const SyncStatus& syncStatus);
 
 	ConnectionManager & m_connectionManager;
 	IBlockChainServer& m_blockChainServer;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <P2P/Common.h>
 
 #include <string>
 

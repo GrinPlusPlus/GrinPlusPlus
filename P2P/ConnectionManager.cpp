@@ -10,7 +10,12 @@
 #include <StringUtil.h>
 
 ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer)
-	: m_config(config), m_peerManager(peerManager), m_blockChainServer(blockChainServer), m_syncer(*this, blockChainServer), m_seeder(config, *this, peerManager, blockChainServer)
+	: m_config(config), 
+	m_peerManager(peerManager), 
+	m_blockChainServer(blockChainServer),
+	m_syncer(*this, blockChainServer), 
+	m_seeder(config, *this, peerManager, blockChainServer),
+	m_pipeline(config, *this, blockChainServer)
 {
 
 }
@@ -19,6 +24,7 @@ void ConnectionManager::Start()
 {
 	m_seeder.Start();
 	m_syncer.Start();
+	m_pipeline.Start();
 
 	m_terminate = false;
 
@@ -34,6 +40,7 @@ void ConnectionManager::Stop()
 {
 	m_seeder.Stop();
 	m_syncer.Stop();
+	m_pipeline.Stop();
 
 	m_terminate = true;
 

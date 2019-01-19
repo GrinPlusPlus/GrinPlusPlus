@@ -27,8 +27,8 @@ public:
 
 	inline const SOCKET GetConnection() const { return m_connection; }
 	inline const Peer& GetPeer() const { return m_peer; }
-	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline const uint64_t GetHeight() const { return m_height; }
+	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty.load(); }
+	inline const uint64_t GetHeight() const { return m_height.load(); }
 
 private:
 	const SOCKET m_connection;

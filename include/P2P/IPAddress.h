@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <BitUtil.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 
@@ -44,9 +45,18 @@ public:
 	IPAddress& operator=(IPAddress&& other) noexcept = default;
 
 	inline bool operator< (const IPAddress& rhs) const {
-		// std::tuple's lexicographic ordering does all the actual work for you
-		// and using std::tie means no actual copies are made
-		return std::tie(m_address) < std::tie(rhs.m_address);
+		for (size_t i = 0; i < 4; i++)
+		{
+			if (m_address[i] != rhs.m_address[i])
+			{
+				return m_address[i] < rhs.m_address[i];
+			}
+		}
+
+		return false;
+		//// std::tuple's lexicographic ordering does all the actual work for you
+		//// and using std::tie means no actual copies are made
+		//return std::tie(m_address) < std::tie(rhs.m_address);
 	}
 
 	inline bool operator==(const IPAddress& rhs) const
@@ -115,3 +125,25 @@ private:
 	EAddressFamily m_family;
 	std::vector<unsigned char> m_address; // Will contain 4 bytes for IPv4, and 16 bytes for IPv6 (in big-endian order).
 };
+
+namespace std
+{
+	template<>
+	struct hash<IPAddress>
+	{
+		size_t operator()(const IPAddress& address) const
+		{
+			const std::vector<unsigned char>& bytes = address.GetAddress();
+
+			if (address.GetFamily() == EAddressFamily::IPv4)
+			{
+				return BitUtil::ConvertToU32(bytes[0], bytes[1], bytes[2], bytes[3]);
+			}
+			else
+			{
+				// TODO: Implement
+				return 0;
+			}
+		}
+	};
+}

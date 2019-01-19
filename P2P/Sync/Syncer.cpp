@@ -54,44 +54,36 @@ void Syncer::Thread_Sync(Syncer& syncer)
 		if (syncer.m_connectionManager.GetNumberOfActiveConnections() > 2)
 		{
 			// Sync Headers
-			if (headerSyncer.SyncHeaders())
+			if (headerSyncer.SyncHeaders(syncer.m_syncStatus))
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				continue;
 			}
 
 			// Sync State (TxHashSet)
-			if (stateSyncer.SyncState())
+			if (stateSyncer.SyncState(syncer.m_syncStatus))
 			{
 				std::this_thread::sleep_for(std::chrono::seconds(1));
 				continue;
 			}
 
 			// Sync Blocks
-			if (blockSyncer.SyncBlocks())
+			if (blockSyncer.SyncBlocks(syncer.m_syncStatus))
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				continue;
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::seconds(5));
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
 	LoggerAPI::LogInfo("Syncer::Thread_Sync() - END");
 }
 
-// TODO: This is not the best way to handle this.
 void Syncer::UpdateSyncStatus()
 {
-	const uint64_t headerHeight = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
-	const uint64_t headerDifficulty = m_blockChainServer.GetTotalDifficulty(EChainType::CANDIDATE);
-	m_syncStatus.UpdateHeaderStatus(headerHeight, headerDifficulty);
-
-	const uint64_t blockHeight = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
-	const uint64_t blockDifficulty = m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED);
-	m_syncStatus.UpdateBlockStatus(blockHeight, blockDifficulty);
-
+	m_blockChainServer.UpdateSyncStatus(m_syncStatus);
 	m_syncStatus.UpdateDownloaded(0);
 	m_syncStatus.UpdateDownloadSize(0);
 }

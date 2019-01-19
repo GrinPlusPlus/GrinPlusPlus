@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <sstream>
 
 #pragma warning(disable: 4505)
 
@@ -64,6 +65,7 @@ public:
 	static CBigInteger<NUM_BYTES> GetMaximumValue();
 
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
+	std::string ToHex() const;
 
 	CBigInteger<NUM_BYTES>& ReverseByteOrder();
 
@@ -92,16 +94,20 @@ public:
 
 	inline bool operator<(const CBigInteger& rhs) const
 	{
-		for (size_t i = 0; i < NUM_BYTES; i++)
+		if (this == &rhs)
 		{
-			if (this->m_data[i] < rhs.m_data[i])
+			return false;
+		}
+
+		auto rhsIter = rhs.m_data.cbegin();
+		for (auto iter = this->m_data.cbegin(); iter != this->m_data.cend(); iter++)
+		{
+			if (*rhsIter != *iter)
 			{
-				return true;
+				return *iter < *rhsIter;
 			}
-			else if (this->m_data[i] > rhs.m_data[i])
-			{
-				return false;
-			}
+
+			rhsIter++;
 		}
 
 		return false;
@@ -114,6 +120,11 @@ public:
 
 	inline bool operator==(const CBigInteger& rhs) const
 	{
+		if (this == &rhs)
+		{
+			return true;
+		}
+
 		for (size_t i = 0; i < NUM_BYTES; i++)
 		{
 			if (this->m_data[i] != rhs.m_data[i])
@@ -229,6 +240,18 @@ static unsigned char FromHexChar(const char value)
 	}
 
 	return (unsigned char)(10 + value - 'A');
+}
+
+template<size_t NUM_BYTES>
+std::string CBigInteger<NUM_BYTES>::ToHex() const
+{
+	std::ostringstream stream;
+	for (const unsigned char byte : m_data)
+	{
+		stream << std::hex << std::setfill('0') << std::setw(2) << std::nouppercase << (int)byte;
+	}
+
+	return stream.str();
 }
 
 template<size_t NUM_BYTES>

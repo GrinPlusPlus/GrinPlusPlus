@@ -5,17 +5,18 @@
 // Forward Declarations
 class ConnectionManager;
 class IBlockChainServer;
+class SyncStatus;
 
 class StateSyncer
 {
 public:
 	StateSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
 
-	bool SyncState();
+	bool SyncState(const SyncStatus& syncStatus);
 
 private:
-	bool IsStateSyncDue() const;
-	bool RequestState();
+	bool IsStateSyncDue(const SyncStatus& syncStatus) const;
+	bool RequestState(const SyncStatus& syncStatus);
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_requestedHeight;

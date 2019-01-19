@@ -27,6 +27,7 @@ public:
 
 	}
 
+	// TODO: Add network height and network difficulty
 	inline uint64_t GetHeaderHeight() const { return m_headerHeight; }
 	inline uint64_t GetHeaderDifficulty() const { return m_headerDifficulty; }
 	inline uint64_t GetBlockHeight() const { return m_blockHeight; }

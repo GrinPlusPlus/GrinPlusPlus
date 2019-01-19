@@ -3,7 +3,7 @@
 #include <Config/Config.h>
 #include <Database/BlockDb.h>
 #include <Core/BlockHeader.h>
-#include <map>
+#include <unordered_map>
 
 class BlockStore
 {
@@ -26,5 +26,5 @@ private:
 	const Config& m_config;
 	IBlockDB& m_blockDB;
 
-	std::map<Hash, BlockHeader*> m_blockHeadersByHash;
+	std::unordered_map<Hash, BlockHeader*> m_blockHeadersByHash;
 };

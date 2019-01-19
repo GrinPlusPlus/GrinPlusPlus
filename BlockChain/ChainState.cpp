@@ -19,6 +19,8 @@ ChainState::~ChainState()
 
 void ChainState::Initialize(const BlockHeader& genesisHeader)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_chainMutex);
+
 	Chain& candidateChain = m_chainStore.GetCandidateChain();
 	const uint64_t candidateHeight = candidateChain.GetTip()->GetHeight();
 	if (candidateHeight == 0)
@@ -28,6 +30,25 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 	}
 
 	m_txHashSetManager.Open();
+}
+
+void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	const Hash& candidateHeadHash = GetHeadHash_Locked(EChainType::CANDIDATE);
+	std::unique_ptr<BlockHeader> pCandidateHead = m_blockStore.GetBlockHeaderByHash(candidateHeadHash);
+	if (pCandidateHead != nullptr)
+	{
+		syncStatus.UpdateHeaderStatus(pCandidateHead->GetHeight(), pCandidateHead->GetTotalDifficulty());
+	}
+
+	const Hash& confirmedHeadHash = GetHeadHash_Locked(EChainType::CONFIRMED);
+	std::unique_ptr<BlockHeader> pConfirmedHead = m_blockStore.GetBlockHeaderByHash(confirmedHeadHash);
+	if (pConfirmedHead != nullptr)
+	{
+		syncStatus.UpdateBlockStatus(pConfirmedHead->GetHeight(), pConfirmedHead->GetTotalDifficulty());
+	}
 }
 
 uint64_t ChainState::GetHeight(const EChainType chainType)
@@ -84,11 +105,11 @@ std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash)
 	return m_blockStore.GetBlockByHash(hash);
 }
 
-std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const Hash& hash) const
+std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const uint64_t height, const Hash& hash) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
-	return m_orphanPool.GetOrphanBlock(hash);
+	return m_orphanPool.GetOrphanBlock(height, hash);
 }
 
 std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_t maxNumBlocks) const
@@ -105,12 +126,17 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 	while (nextHeight <= candidateHeight)
 	{
 		const BlockIndex* pIndex = candidateChain.GetByHeight(nextHeight);
-		blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight++, pIndex->GetHash()));
-
-		if (blocksNeeded.size() == maxNumBlocks)
+		if (!m_orphanPool.IsOrphan(nextHeight, pIndex->GetHash()))
 		{
-			break;
+			blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight, pIndex->GetHash()));
+
+			if (blocksNeeded.size() == maxNumBlocks)
+			{
+				break;
+			}
 		}
+
+		++nextHeight;
 	}
 
 	return blocksNeeded;
@@ -123,7 +149,7 @@ std::unique_ptr<BlockHeader> ChainState::GetHead_Locked(const EChainType chainTy
 	return m_blockStore.GetBlockHeaderByHash(headHash);
 }
 
-const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType)
+const Hash& ChainState::GetHeadHash_Locked(const EChainType chainType) const
 {
 	return m_chainStore.GetChain(chainType).GetTip()->GetHash();
 }

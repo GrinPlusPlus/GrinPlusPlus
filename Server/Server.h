@@ -7,6 +7,7 @@ class IDatabase;
 class IBlockChainServer;
 class IP2PServer;
 class RestServer;
+class TxHashSetManager;
 
 class Server
 {
@@ -18,6 +19,7 @@ public:
 private:
 	Config m_config;
 	IDatabase* m_pDatabase;
+	TxHashSetManager* m_pTxHashSetManager;
 	IBlockChainServer* m_pBlockChainServer;
 	IP2PServer* m_pP2PServer;
 

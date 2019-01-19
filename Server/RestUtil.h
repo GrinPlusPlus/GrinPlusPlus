@@ -59,4 +59,20 @@ public:
 
 		return 400;
 	}
+
+	static int BuildInternalErrorResponse(struct mg_connection* conn, const std::string& response)
+	{
+		unsigned long len = (unsigned long)response.size();
+
+		mg_printf(conn,
+			"HTTP/1.1 500 Internal Server Error\r\n"
+			"Content-Length: %lu\r\n"
+			"Content-Type: text/plain\r\n"
+			"Connection: close\r\n\r\n",
+			len);
+
+		mg_write(conn, response.c_str(), len);
+
+		return 400;
+	}
 };

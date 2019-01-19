@@ -10,8 +10,8 @@
 #include <Crypto.h>
 #include <PMMR/TxHashSet.h>
 
-BlockChainServer::BlockChainServer(const Config& config, IDatabase& database)
-	: m_config(config), m_database(database)
+BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager)
+	: m_config(config), m_database(database), m_txHashSetManager(txHashSetManager)
 {
 
 }
@@ -32,9 +32,8 @@ void BlockChainServer::Initialize()
 	m_pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(m_config);
 
 	m_pBlockStore = new BlockStore(m_config, m_database.GetBlockDB());
-	m_pTxHashSetManager = new TxHashSetManager(m_config, m_database.GetBlockDB());
-	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, *m_pTxHashSetManager, m_database.GetBlockDB());
-	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool, *m_pTxHashSetManager);
+	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, m_txHashSetManager, m_database.GetBlockDB());
+	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool, m_txHashSetManager);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
 
 	m_initialized = true;
@@ -62,10 +61,12 @@ void BlockChainServer::Shutdown()
 
 		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
 		m_pTransactionPool = nullptr;
-
-		delete m_pTxHashSetManager;
-		m_pTxHashSetManager = nullptr;
 	}
+}
+
+void BlockChainServer::UpdateSyncStatus(SyncStatus& syncStatus) const
+{
+	m_pChainState->UpdateSyncStatus(syncStatus);
 }
 
 uint64_t BlockChainServer::GetHeight(const EChainType chainType) const
@@ -196,11 +197,30 @@ std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const u
 	return m_pChainState->GetBlocksNeeded(maxNumBlocks);
 }
 
+bool BlockChainServer::ProcessNextOrphanBlock()
+{
+	std::unique_ptr<BlockHeader> pNextHeader = m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(EChainType::CONFIRMED) + 1, EChainType::CANDIDATE);
+	if (pNextHeader == nullptr)
+	{
+		return false;
+	}
+
+	std::unique_ptr<FullBlock> pOrphanBlock = m_pChainState->GetOrphanBlock(pNextHeader->GetHeight(), pNextHeader->GetHash());
+	if (pOrphanBlock == nullptr)
+	{
+		return false;
+	}
+
+	AddBlock(*pOrphanBlock);
+
+	return true;
+}
+
 namespace BlockChainAPI
 {
-	EXPORT IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database)
+	EXPORT IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager)
 	{
-		BlockChainServer* pServer = new BlockChainServer(config, database);
+		BlockChainServer* pServer = new BlockChainServer(config, database, txHashSetManager);
 		pServer->Initialize();
 
 		return pServer;

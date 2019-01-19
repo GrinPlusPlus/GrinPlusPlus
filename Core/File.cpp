@@ -59,6 +59,11 @@ bool File::Flush()
 		return false;
 	}
 
+	if (m_fileSize < m_bufferIndex)
+	{
+		return false;
+	}
+
 	file.seekp(m_bufferIndex, std::ios::beg);
 
 	if (!m_buffer.empty())

@@ -1,6 +1,6 @@
 #include "DNSSeeder.h"
 #include "../IPAddressUtil.h"
-#include "../Common.h"
+#include <P2P/Common.h>
 
 #include <VectorUtil.h>
 #pragma comment(lib , "ws2_32.lib")
@@ -46,10 +46,6 @@ bool DNSSeeder::GetPeersFromDNS(std::vector<SocketAddress>& addresses) const
 		for (auto seed : dnsSeeds)
 		{
 			GetAddressesFromDNSSeed(seed, addresses);
-			//if (GetAddressesFromDNSSeed(seed, addresses))
-			//{
-			//	return true;
-			//}
 		}
 
 		return true;
@@ -84,10 +80,8 @@ bool DNSSeeder::GetAddressesFromDNSSeed(const std::string& dnsSeed, std::vector<
 		return false;
 	}
 
-	int nMaxSolutions = 100;
-
 	struct addrinfo *aiTrav = aiRes;
-	while (aiTrav != nullptr && (nMaxSolutions == 0 || addresses.size() < nMaxSolutions))
+	while (aiTrav != nullptr)
 	{
 		if (aiTrav->ai_family == AF_INET)
 		{

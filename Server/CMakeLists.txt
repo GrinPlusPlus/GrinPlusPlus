@@ -6,8 +6,10 @@ file(GLOB SERVER_SRC
 	"Main.cpp"
 	"Server.cpp"
 	"RestServer.cpp"
-	"BlockAPI.cpp"
-	"HeaderAPI.cpp"
+	"API/BlockAPI.cpp"
+	"API/HeaderAPI.cpp"
+	"API/ServerAPI.cpp"
+	"API/TxHashSetAPI.cpp"
 	"JSONFactory.cpp"
 )
 

@@ -1,6 +1,6 @@
 #include "BlockAPI.h"
-#include "RestUtil.h"
-#include "JSONFactory.h"
+#include "../RestUtil.h"
+#include "../JSONFactory.h"
 
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>

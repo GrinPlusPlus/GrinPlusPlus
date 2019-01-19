@@ -157,7 +157,7 @@ bool Seeder::SeedNewConnection()
 	else if (!m_usedDNS.exchange(true))
 	{
 		std::vector<SocketAddress> peerAddresses;
-		peerAddresses.emplace_back(IPAddress(EAddressFamily::IPv4, { 10, 0, 0, 7 }), P2P::DEFAULT_PORT);
+		peerAddresses.emplace_back(IPAddress(EAddressFamily::IPv4, { 10, 0, 0, 7 }), m_config.GetEnvironment().GetP2PPort());
 		DNSSeeder(m_config).GetPeersFromDNS(peerAddresses);
 
 		m_peerManager.AddPeerAddresses(peerAddresses);

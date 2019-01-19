@@ -99,7 +99,7 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 
 std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
 {
-	const BlindingFactor zeroBlindingFactor(ZERO_HASH);
+	BlindingFactor zeroBlindingFactor(ZERO_HASH);
 
 	std::vector<BlindingFactor> sanitizedPositive;
 	for (const BlindingFactor& positiveBlindingFactor : positive)
@@ -117,6 +117,11 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 		{
 			sanitizedNegative.push_back(negativeBlindingFactor);
 		}
+	}
+
+	if (sanitizedPositive.empty() && sanitizedNegative.empty())
+	{
+		return std::make_unique<BlindingFactor>(zeroBlindingFactor);
 	}
 
 	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);

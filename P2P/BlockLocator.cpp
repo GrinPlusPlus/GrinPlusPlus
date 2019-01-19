@@ -1,6 +1,6 @@
 #include "BlockLocator.h"
-#include "Common.h"
 
+#include <P2P/Common.h>
 #include <cmath>
 
 // TODO: Evaluate whether we should be using SYNC or CANDIDATE in this class.

@@ -9,6 +9,7 @@
 #include <ImportExport.h>
 #include <BlockChainStatus.h>
 #include <TxPool/PoolType.h>
+#include <P2P/SyncStatus.h>
 #include "Core/ChainType.h"
 #include "Core/BlockHeader.h"
 #include "Core/FullBlock.h"
@@ -22,6 +23,7 @@
 // Forward Declarations
 class Config;
 class IDatabase;
+class TxHashSetManager;
 
 #ifdef MW_BLOCK_CHAIN
 #define BLOCK_CHAIN_API EXPORT
@@ -36,6 +38,7 @@ class IDatabase;
 class IBlockChainServer
 {
 public:
+	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const = 0;
 	virtual uint64_t GetHeight(const EChainType chainType) const = 0;
 	virtual uint64_t GetTotalDifficulty(const EChainType chainType) const = 0;
 
@@ -104,6 +107,8 @@ public:
 	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.
 	//
 	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const = 0;
+
+	virtual bool ProcessNextOrphanBlock() = 0;
 };
 
 namespace BlockChainAPI
@@ -111,7 +116,7 @@ namespace BlockChainAPI
 	//
 	// Creates a new instance of the BlockChain server.
 	//
-	BLOCK_CHAIN_API IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database);
+	BLOCK_CHAIN_API IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager);
 
 	//
 	// Stops the BlockChain server and clears up its memory usage.

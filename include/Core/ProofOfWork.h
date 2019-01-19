@@ -14,6 +14,7 @@ public:
 	////////////////////////////////////////
 
 	ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces);
+	ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces, Hash&& hash);
 	ProofOfWork(const ProofOfWork& other) = default;
 	ProofOfWork(ProofOfWork&& other) noexcept = default;
 
@@ -41,7 +42,7 @@ public:
 	void SerializeProofNonces(Serializer& serializer) const; // TODO: Should be private
 
 private:
-	static std::vector<uint64_t> DeserializeProofNonces(ByteBuffer& byteBuffer, const uint8_t edgeBits);
+	static std::vector<uint64_t> DeserializeProofNonces(const std::vector<unsigned char>& bits, const uint8_t edgeBits);
 
 	uint8_t m_edgeBits;
 	std::vector<uint64_t> m_proofNonces;

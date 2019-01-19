@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common.h"
 #include "MessageTypes.h"
 
+#include <P2P/Common.h>
 #include <Config/Config.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>

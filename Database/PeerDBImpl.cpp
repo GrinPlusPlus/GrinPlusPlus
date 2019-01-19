@@ -42,7 +42,7 @@ void PeerDB::CloseDB()
 
 std::vector<Peer> PeerDB::LoadAllPeers()
 {
-	LoggerAPI::LogInfo("PeerDB::LoadAllPeers - Loading all peers.");
+	LoggerAPI::LogTrace("PeerDB::LoadAllPeers - Loading all peers.");
 
 	std::vector<Peer> peers;
 
@@ -66,7 +66,7 @@ std::unique_ptr<Peer> PeerDB::GetPeer(const IPAddress& address)
 
 void PeerDB::AddPeers(const std::vector<Peer>& peers)
 {
-	LoggerAPI::LogInfo("PeerDB::AddPeers - Adding peers - " + std::to_string(peers.size()));
+	LoggerAPI::LogTrace("PeerDB::AddPeers - Adding peers - " + std::to_string(peers.size()));
 
 	for (const Peer& peer : peers)
 	{

@@ -14,18 +14,18 @@ BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer
 	m_highestRequested = 0;
 }
 
-bool BlockSyncer::SyncBlocks()
+bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus)
 {
-	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
+	const uint64_t height = syncStatus.GetBlockHeight();
 	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
 
 	if (highestHeight >= (height + 5))
 	{
-		if (IsBlockSyncDue())
+		if (IsBlockSyncDue(syncStatus))
 		{
 			RequestBlocks();
 
-			m_lastHeight = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
+			m_lastHeight = syncStatus.GetBlockHeight();
 			m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
 		}
 
@@ -35,34 +35,58 @@ bool BlockSyncer::SyncBlocks()
 	return false;
 }
 
-bool BlockSyncer::IsBlockSyncDue()
+bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 {
-	const uint64_t height = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
-	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
+	const uint64_t chainHeight = syncStatus.GetBlockHeight();
 
-	if (highestHeight >= (height + 5))
+	const uint64_t blocksDownloaded = (chainHeight - m_lastHeight);
+	if (blocksDownloaded > 0)
 	{
-		// Check if block download timed out.
-		if (m_timeout < std::chrono::system_clock::now())
+		LoggerAPI::LogDebug(StringUtil::Format("BlockSyncer::IsBlockSyncDue() - %llu blocks received since last check.", blocksDownloaded));
+	}
+
+	// Remove downloaded blocks from queue.
+	for (size_t i = m_lastHeight; i <= chainHeight; i++)
+	{
+		m_requestedBlocks.erase(i);
+	}
+
+	m_lastHeight = chainHeight;
+
+	// Check if blocks were received, and we're ready to request next batch.
+	if (m_requestedBlocks.size() < 15)
+	{
+		LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Requesting next batch.");
+		return true;
+	}
+
+	// Make sure we have valid requests for the first 15 blocks.
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(15);
+	uint64_t index = 0;
+	for (auto iter = blocksNeeded.cbegin(); iter != blocksNeeded.cend(); iter++)
+	{
+		auto requestedBlocksIter = m_requestedBlocks.find(iter->first);
+		if (requestedBlocksIter == m_requestedBlocks.end())
 		{
-			LoggerAPI::LogWarning("BlockSyncer::IsBlockSyncDue() - Timed out. Requesting again.");
+			LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Block not requested yet. Requesting now.");
 			return true;
 		}
 
-		// Check if blocks were received, and we're ready to request next batch.
-		if ((height + 15) > m_highestRequested)
+		if (m_slowPeers.count(requestedBlocksIter->second.PEER_ID) > 0)
 		{
-			LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Blocks received. Requesting next batch.");
+			LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Waiting on block from banned peer. Requesting from valid peer now.");
 			return true;
 		}
 
-		// If progress was made, reset timeout.
-		if (height >= (m_lastHeight + 5))
+		if (requestedBlocksIter->second.TIMEOUT < std::chrono::system_clock::now())
 		{
-			LoggerAPI::LogDebug("BlockSyncer::IsBlockSyncDue() - Blocks received. Requesting next batch.");
-			m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
-			m_lastHeight = height;
-			return false;
+			if (m_connectionManager.GetPipeline().IsProcessingBlock(iter->second))
+			{
+				break;
+			}
+
+			LoggerAPI::LogWarning("BlockSyncer::IsBlockSyncDue() - Block request timed out. Requesting again.");
+			return true;
 		}
 	}
 
@@ -80,59 +104,70 @@ bool BlockSyncer::RequestBlocks()
 		return false;
 	}
 
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(10 * mostWorkPeers.size());
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(15 * mostWorkPeers.size());
 	if (blocksNeeded.empty())
 	{
 		LoggerAPI::LogWarning("BlockSyncer::RequestBlocks - No blocks needed.");
 		return false;
 	}
 
+	size_t blockIndex = 0;
 	size_t blocksRequested = 0;
 
-	// If timed out, request full batch
-	if (m_timeout < std::chrono::system_clock::now())
+	size_t nextPeer = std::rand() % mostWorkPeers.size();
+	while (blockIndex < blocksNeeded.size())
 	{
-		size_t nextPeer = 0;
-		while (blocksRequested < blocksNeeded.size())
+		if (m_connectionManager.GetPipeline().IsProcessingBlock(blocksNeeded[blockIndex].second))
 		{
-			const GetBlockMessage getBlockMessage(blocksNeeded[blocksRequested].second);
-			if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
-			{
-				++blocksRequested;
-			}
-
-			nextPeer = (nextPeer + 1) % mostWorkPeers.size();
+			++blockIndex;
+			continue;
 		}
 
-		m_highestRequested = blocksNeeded.back().first;
-	}
-	else
-	{
-		size_t nextPeer = 0;
-		size_t blockIndex = 0;
-		while (blockIndex < blocksNeeded.size())
+		bool blockRequested = false;
+		auto iter = m_requestedBlocks.find(blocksNeeded[blockIndex].first);
+		if (iter != m_requestedBlocks.end())
 		{
-			auto& blockNeeded = blocksNeeded[blockIndex];
-			if (blockNeeded.first <= m_highestRequested)
+			if (m_slowPeers.count(iter->second.PEER_ID) > 0 || iter->second.TIMEOUT < std::chrono::system_clock::now())
 			{
-				++blockIndex;
-				continue;
-			}
+				m_connectionManager.BanConnection(iter->second.PEER_ID);
+				m_slowPeers.insert(iter->second.PEER_ID);
 
-			const GetBlockMessage getBlockMessage(blockNeeded.second);
-			if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
-			{
-				++blockIndex;
-				++blocksRequested;
+				const GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
+				if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
+				{
+					iter->second.PEER_ID = nextPeer;
+					iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
+					blockRequested = true;
+					++blocksRequested;
+					nextPeer = (nextPeer + 1) % mostWorkPeers.size();
+					break;
+				}
 			}
-
-			nextPeer = (nextPeer + 1) % mostWorkPeers.size();
 		}
 
-		m_highestRequested = blocksNeeded.back().first;
+		if (!blockRequested)
+		{
+			const GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
+			if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
+			{
+				RequestedBlock blockRequested;
+				blockRequested.BLOCK_HEIGHT = blocksNeeded[blockIndex].first;
+				blockRequested.PEER_ID = nextPeer;
+				blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
+				nextPeer = (nextPeer + 1) % mostWorkPeers.size();
+
+				++blocksRequested;
+				m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);
+			}
+		}
+
+		++blockIndex;
 	}
 
-	LoggerAPI::LogInfo(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksRequested, mostWorkPeers.size()));
+	if (blocksRequested > 0)
+	{
+		LoggerAPI::LogInfo(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksRequested, mostWorkPeers.size()));
+	}
 
 	return true;
 }

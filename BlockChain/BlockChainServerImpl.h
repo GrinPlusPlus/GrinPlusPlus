@@ -15,7 +15,7 @@
 class BlockChainServer : public IBlockChainServer
 {
 public:
-	BlockChainServer(const Config& config, IDatabase& database);
+	BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager);
 	~BlockChainServer();
 
 	//
@@ -25,6 +25,7 @@ public:
 	void Initialize();
 	void Shutdown();
 
+	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const override final;
 	virtual uint64_t GetHeight(const EChainType chainType) const override final;
 	virtual uint64_t GetTotalDifficulty(const EChainType chainType) const override final;
 
@@ -49,6 +50,8 @@ public:
 
 	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const override final;
 
+	virtual bool ProcessNextOrphanBlock() override final;
+
 private:
 	bool m_initialized = { false };
 	BlockStore* m_pBlockStore;
@@ -56,8 +59,8 @@ private:
 	ChainStore* m_pChainStore;
 	IHeaderMMR* m_pHeaderMMR;
 	ITransactionPool* m_pTransactionPool;
-	TxHashSetManager* m_pTxHashSetManager;
-	const Config& m_config;
 
+	const Config& m_config;
 	IDatabase& m_database;
+	TxHashSetManager& m_txHashSetManager;
 };

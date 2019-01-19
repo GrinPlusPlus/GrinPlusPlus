@@ -13,17 +13,17 @@ StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServer
 	m_requestedHeight = 0;
 }
 
-bool StateSyncer::SyncState()
+bool StateSyncer::SyncState(const SyncStatus& syncStatus)
 {
-	if (IsStateSyncDue())
+	if (IsStateSyncDue(syncStatus))
 	{
-		RequestState();
+		RequestState(syncStatus);
 
 		return true;
 	}
 
 	// If state sync is still in progress, return true to delay block sync.
-	if (m_blockChainServer.GetHeight(EChainType::CONFIRMED) < m_requestedHeight)
+	if (syncStatus.GetBlockHeight() < m_requestedHeight)
 	{
 		return true;
 	}
@@ -32,10 +32,10 @@ bool StateSyncer::SyncState()
 }
 
 // NOTE: This doesn't handle re-orgs beyond the horizon.
-bool StateSyncer::IsStateSyncDue() const
+bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 {
-	const uint64_t headerHeight = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
-	const uint64_t blockHeight = m_blockChainServer.GetHeight(EChainType::CONFIRMED);
+	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
+	const uint64_t blockHeight = syncStatus.GetBlockHeight();
 
 	// For the first week, there's no reason to request TxHashSet, since we can just download full blocks.
 	if (headerHeight < Consensus::CUT_THROUGH_HORIZON)
@@ -67,9 +67,9 @@ bool StateSyncer::IsStateSyncDue() const
 	return true;
 }
 
-bool StateSyncer::RequestState()
+bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
-	const uint64_t headerHeight = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
+	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
 	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 

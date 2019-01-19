@@ -17,19 +17,24 @@ class File
 public:
 	File(const std::string& path);
 
+	File(const File& file) = delete;
+	File(File&& file) = default;
+	File& operator=(const File&) = delete;
+
 	bool Load();
 	bool Flush();
 
 	void Append(const std::vector<unsigned char>& data);
 
 	bool Rewind(const uint64_t nextPosition);
+	// TODO: bool Commit(); - Should eliminate a rewind-point, but not actually flush to disk.
 	bool Discard();
 
 	uint64_t GetSize() const;
 	bool Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const;
 
 private:
-	const std::string m_path;
+	std::string m_path;
 	uint64_t m_bufferIndex;
 	uint64_t m_fileSize;
 	std::vector<unsigned char> m_buffer;

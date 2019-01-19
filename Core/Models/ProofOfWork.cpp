@@ -9,6 +9,14 @@ ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNo
 
 }
 
+ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces, Hash&& hash)
+	: m_edgeBits(edgeBits),
+	m_proofNonces(std::move(proofNonces)),
+	m_hash(hash)
+{
+
+}
+
 void ProofOfWork::Serialize(Serializer& serializer) const
 {
 	serializer.Append<uint8_t>(m_edgeBits);
@@ -40,17 +48,19 @@ void ProofOfWork::SerializeProofNonces(Serializer& serializer) const
 ProofOfWork ProofOfWork::Deserialize(ByteBuffer& byteBuffer)
 {
 	const uint8_t edgeBits = byteBuffer.ReadU8();
-	std::vector<uint64_t> proofNonces = DeserializeProofNonces(byteBuffer, edgeBits);
 
-	return ProofOfWork(edgeBits, std::move(proofNonces));
+	const int bytes_len = ((edgeBits * Consensus::PROOFSIZE) + 7) / 8;
+	const std::vector<unsigned char> bits = byteBuffer.ReadVector(bytes_len);
+	Hash hash = Crypto::Blake2b(bits);
+
+	std::vector<uint64_t> proofNonces = DeserializeProofNonces(bits, edgeBits);
+
+	return ProofOfWork(edgeBits, std::move(proofNonces), std::move(hash));
 }
 
-std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(ByteBuffer& byteBuffer, const uint8_t edgeBits)
+std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(const std::vector<unsigned char>& bits, const uint8_t edgeBits)
 {
 	std::vector<uint64_t> proofNonces;
-	const int bytes_len = ((edgeBits * Consensus::PROOFSIZE) + 7) / 8;
-
-	const std::vector<unsigned char> bits = byteBuffer.ReadVector(bytes_len);
 	for (int n = 0; n < Consensus::PROOFSIZE; n++)
 	{
 		uint64_t proofNonce = 0;

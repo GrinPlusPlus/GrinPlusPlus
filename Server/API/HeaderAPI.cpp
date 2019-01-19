@@ -1,6 +1,6 @@
 #include "HeaderAPI.h"
-#include "RestUtil.h"
-#include "JSONFactory.h"
+#include "../RestUtil.h"
+#include "../JSONFactory.h"
 
 #include <BlockChainServer.h>
 #include <Infrastructure/Logger.h>

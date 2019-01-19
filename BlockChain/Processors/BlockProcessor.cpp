@@ -37,27 +37,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed. Checking for orphans now.", header.FormatHash().c_str()));
-		}
-
-		// 4. Check for subsequent orphans
-		EBlockChainStatus status = returnStatus;
-		while (status == EBlockChainStatus::SUCCESS)
-		{
-			std::unique_ptr<BlockHeader> pOrphanHeader = m_chainState.GetBlockHeaderByHeight(++height, EChainType::CANDIDATE);
-			if (pOrphanHeader == nullptr)
-			{
-				break;
-			}
-
-			std::unique_ptr<FullBlock> pOrphanBlock = m_chainState.GetOrphanBlock(pOrphanHeader->GetHash());
-			if (pOrphanBlock == nullptr)
-			{
-				break;
-			}
-
-			LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Orphan block %s found. Processing now.", pOrphanHeader->FormatHash().c_str()));
-			status = ProcessBlockInternal(*pOrphanBlock);
+			LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
 		}
 
 		return returnStatus;
@@ -92,7 +72,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, LockedChainState& lockedState)
 {
-	lockedState.m_orphanPool.RemoveOrphan(block.GetHash());
+	lockedState.m_orphanPool.RemoveOrphan(block.GetBlockHeader().GetHeight(), block.GetHash());
 
 	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	confirmedChain.Rewind(block.GetBlockHeader().GetHeight() - 1);
@@ -126,7 +106,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, LockedChainState& lockedState)
 {
 	// Check if already processed as an orphan
-	if (lockedState.m_orphanPool.IsOrphan(block.GetHash()))
+	if (lockedState.m_orphanPool.IsOrphan(block.GetBlockHeader().GetHeight(), block.GetHash()))
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;

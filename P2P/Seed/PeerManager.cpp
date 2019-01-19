@@ -1,6 +1,6 @@
 #include "PeerManager.h"
-#include "../Common.h"
 
+#include <P2P/Common.h>
 #include <Config/Config.h>
 
 PeerManager::PeerManager(const Config& config, IPeerDB& peerDB)
@@ -92,7 +92,7 @@ bool PeerManager::AddPeer(const Peer& peer)
 	const IPAddress& address = peer.GetIPAddress();
 	if (m_peersByAddress.find(address) == m_peersByAddress.cend())
 	{
-		m_peersByAddress.emplace(address, peer);
+		m_peersByAddress.emplace(address, PeerEntry(peer));
 		m_peerDB.AddPeers(std::vector<Peer>({ peer }));
 
 		return true;
@@ -105,16 +105,17 @@ std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapab
 {
 	std::vector<Peer> peersFound;
 
-	for (auto iter = m_peersByAddress.cbegin(); iter != m_peersByAddress.cend(); iter++)
+	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
 	{
-		const Peer& peer = iter->second;
+		PeerEntry& peerEntry = iter->second;
+		const Peer& peer = peerEntry.m_peer;
 
 		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
 		if (hasCapability)
 		{
-			if (m_peersServed.find(peer.GetIPAddress()) == m_peersServed.cend())
+			if (!peerEntry.m_peerServed)
 			{
-				m_peersServed.insert(peer.GetIPAddress());
+				peerEntry.m_peerServed = true;
 
 				peersFound.push_back(peer);
 				if (peersFound.size() == maxPeers)

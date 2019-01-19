@@ -10,6 +10,7 @@
 #include <Database/Database.h>
 #include <Infrastructure/Logger.h>
 #include <Infrastructure/ThreadManager.h>
+#include <PMMR/TxHashSetManager.h>
 
 #include <iostream>
 #include <thread>
@@ -48,10 +49,11 @@ void Server::Run()
 
 	m_config = ConfigManager::LoadConfig();
 	m_pDatabase = DatabaseAPI::OpenDatabase(m_config);
-	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase);
+	m_pTxHashSetManager = new TxHashSetManager(m_config, m_pDatabase->GetBlockDB());
+	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager);
 	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase);
 
-	RestServer restServer(m_config, m_pDatabase, m_pBlockChainServer, m_pP2PServer);
+	RestServer restServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
 	restServer.Start();
 
 	int secondsRunning = 0;
@@ -84,6 +86,7 @@ void Server::Run()
 
 	P2PAPI::ShutdownP2PServer(m_pP2PServer);
 	BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
+	delete m_pTxHashSetManager;
 	DatabaseAPI::CloseDatabase(m_pDatabase);
 	LoggerAPI::Flush();
 }

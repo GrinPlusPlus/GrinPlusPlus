@@ -3,7 +3,6 @@
 #include "Seed/PeerManager.h"
 #include "BlockLocator.h"
 #include "ConnectionManager.h"
-#include "Common.h"
 
 // Network Messages
 #include "Messages/ErrorMessage.h"
@@ -28,6 +27,7 @@
 #include "Messages/TxHashSetRequestMessage.h"
 #include "Messages/TxHashSetArchiveMessage.h"
 
+#include <P2P/Common.h>
 #include <HexUtil.h>
 #include <StringUtil.h>
 #include <FileUtil.h>
@@ -198,13 +198,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case Block:
 			{
-				async::spawn([this, rawMessage, formattedIPAddress] {
-					ByteBuffer byteBuffer(rawMessage.GetPayload());
-					const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
-					const FullBlock& block = blockMessage.GetBlock();
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
+				const FullBlock& block = blockMessage.GetBlock();
 
-					m_blockChainServer.AddBlock(block);
-				});
+				m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
 
 				return EStatus::SUCCESS;
 			}
@@ -244,9 +242,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
+				m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL);
+				//const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
 
-				return added == EBlockChainStatus::SUCCESS ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				//return added == EBlockChainStatus::SUCCESS ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return EStatus::SUCCESS;
 			}
 			case TransactionMsg:
 			{
@@ -256,11 +256,12 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				// TODO: Check Sync status first
 				//const SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
-				const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL);
-				if (added == EBlockChainStatus::SUCCESS)
-				{
-					m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
-				}
+				m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL);
+				//const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL);
+				//if (added == EBlockChainStatus::SUCCESS)
+				//{
+				//	m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
+				//}
 
 				return EStatus::SUCCESS;
 			}

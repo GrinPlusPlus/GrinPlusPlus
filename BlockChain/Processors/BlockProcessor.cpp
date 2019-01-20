@@ -9,8 +9,8 @@
 #include <StringUtil.h>
 #include <algorithm>
 
-BlockProcessor::BlockProcessor(const Config& config, ChainState& chainState)
-	: m_config(config), m_chainState(chainState)
+BlockProcessor::BlockProcessor(const Config& config, ChainState& chainState, const ITransactionPool& transactionPool)
+	: m_config(config), m_chainState(chainState), m_transactionPool(transactionPool)
 {
 
 }
@@ -34,6 +34,13 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
+		// Verify block is self-consistent before locking
+		// TODO: Need a verifier cache to make sure we don't validate the same block multiple times.
+		if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+		{
+			return EBlockChainStatus::INVALID;
+		}
+
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
@@ -87,7 +94,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 	pTxHashSet->Rewind(*pPreviousHeader);
 
 	pTxHashSet->ApplyBlock(block);
-	if (!BlockValidator(lockedState.m_transactionPool, pTxHashSet).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset()))
+	if (!BlockValidator(lockedState.m_transactionPool, pTxHashSet).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset(), false))
 	{
 		pTxHashSet->Discard();
 		return EBlockChainStatus::INVALID;

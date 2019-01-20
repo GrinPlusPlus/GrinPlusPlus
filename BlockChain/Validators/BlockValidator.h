@@ -12,7 +12,7 @@ class BlockValidator
 public:
 	BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pTxHashSet);
 
-	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset) const;
+	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateTransactionBody) const;
 
 private:
 	bool VerifyKernelLockHeights(const FullBlock& block) const;

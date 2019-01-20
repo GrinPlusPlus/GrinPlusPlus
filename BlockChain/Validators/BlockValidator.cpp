@@ -14,11 +14,14 @@ BlockValidator::BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pT
 
 // Validates all the elements in a block that can be checked without additional data. 
 // Includes commitment sums and kernels, Merkle trees, reward, etc.
-bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset) const
+bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateTransactionBody) const
 {
-	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+	if (validateTransactionBody)
 	{
-		return false;
+		if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+		{
+			return false;
+		}
 	}
 
 	if (!VerifyKernelLockHeights(block))

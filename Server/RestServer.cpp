@@ -4,6 +4,7 @@
 #include "API/HeaderAPI.h"
 #include "API/BlockAPI.h"
 #include "API/ServerAPI.h"
+#include "API/ChainAPI.h"
 
 #include <P2PServer.h>
 #include <BlockChainServer.h>
@@ -31,7 +32,8 @@ bool RestServer::Start()
 	/* Add handlers */
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
-	mg_set_request_handler(ctx, "/v1/", ServerAPI::GetServer_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetServer_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
 
 	return true;
 }

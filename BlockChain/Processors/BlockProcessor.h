@@ -5,11 +5,12 @@
 #include <Config/Config.h>
 #include <Core/FullBlock.h>
 #include <BlockChainStatus.h>
+#include <TxPool/TransactionPool.h>
 
 class BlockProcessor
 {
 public:
-	BlockProcessor(const Config& config, ChainState& chainState);
+	BlockProcessor(const Config& config, ChainState& chainState, const ITransactionPool& transactionPool);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
@@ -22,4 +23,5 @@ private:
 
 	const Config& m_config;
 	ChainState& m_chainState;
+	const ITransactionPool& m_transactionPool;
 };

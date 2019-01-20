@@ -11,9 +11,9 @@ BlockLocator::BlockLocator(IBlockChainServer& blockChainServer)
 
 }
 
-std::vector<CBigInteger<32>> BlockLocator::GetLocators() const
+std::vector<CBigInteger<32>> BlockLocator::GetLocators(const SyncStatus& syncStatus) const
 {
-	const std::vector<uint64_t> locatorHeights = GetLocatorHeights();
+	const std::vector<uint64_t> locatorHeights = GetLocatorHeights(syncStatus);
 
 	std::vector<CBigInteger<32>> locators;
 	locators.reserve(locatorHeights.size());
@@ -30,9 +30,9 @@ std::vector<CBigInteger<32>> BlockLocator::GetLocators() const
 }
 
 // current height back to 0 decreasing in powers of 2
-std::vector<uint64_t> BlockLocator::GetLocatorHeights() const
+std::vector<uint64_t> BlockLocator::GetLocatorHeights(const SyncStatus& syncStatus) const
 {
-	uint64_t current = m_blockChainServer.GetHeight(EChainType::CANDIDATE);
+	uint64_t current = syncStatus.GetHeaderHeight();
 	
 	std::vector<uint64_t> heights;
 	while (current > 0)

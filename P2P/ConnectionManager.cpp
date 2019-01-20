@@ -54,7 +54,6 @@ void ConnectionManager::Stop()
 
 size_t ConnectionManager::GetNumberOfActiveConnections() const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 	return m_connections.size();
 }
 

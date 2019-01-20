@@ -10,6 +10,7 @@ endif()
 
 hunter_add_package(Async++)
 find_package(Async++ CONFIG REQUIRED)
+set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 file(GLOB P2P_SRC
     "*.cpp"

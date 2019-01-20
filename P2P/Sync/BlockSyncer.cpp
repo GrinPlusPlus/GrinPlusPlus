@@ -98,13 +98,15 @@ bool BlockSyncer::RequestBlocks()
 	LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - Requesting blocks.");
 
 	std::vector<uint64_t> mostWorkPeers = m_connectionManager.GetMostWorkPeers();
+	const uint64_t numPeers = mostWorkPeers.size();
 	if (mostWorkPeers.empty())
 	{
 		LoggerAPI::LogWarning("BlockSyncer::RequestBlocks - No most-work peers found.");
 		return false;
 	}
 
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(15 * mostWorkPeers.size());
+	const uint64_t numBlocksNeeded = 16 * numPeers;
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
 		LoggerAPI::LogWarning("BlockSyncer::RequestBlocks - No blocks needed.");
@@ -112,9 +114,9 @@ bool BlockSyncer::RequestBlocks()
 	}
 
 	size_t blockIndex = 0;
-	size_t blocksRequested = 0;
 
-	size_t nextPeer = std::rand() % mostWorkPeers.size();
+	std::vector<std::pair<uint64_t, Hash>> blocksToRequest;
+
 	while (blockIndex < blocksNeeded.size())
 	{
 		if (m_connectionManager.GetPipeline().IsProcessingBlock(blocksNeeded[blockIndex].second))
@@ -132,41 +134,45 @@ bool BlockSyncer::RequestBlocks()
 				m_connectionManager.BanConnection(iter->second.PEER_ID);
 				m_slowPeers.insert(iter->second.PEER_ID);
 
-				const GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
-				if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
-				{
-					iter->second.PEER_ID = nextPeer;
-					iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
-					blockRequested = true;
-					++blocksRequested;
-					nextPeer = (nextPeer + 1) % mostWorkPeers.size();
-					break;
-				}
+				blocksToRequest.emplace_back(blocksNeeded[blockIndex]);
 			}
 		}
-
-		if (!blockRequested)
+		else
 		{
-			const GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
-			if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
-			{
-				RequestedBlock blockRequested;
-				blockRequested.BLOCK_HEIGHT = blocksNeeded[blockIndex].first;
-				blockRequested.PEER_ID = nextPeer;
-				blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
-				nextPeer = (nextPeer + 1) % mostWorkPeers.size();
+			blocksToRequest.emplace_back(blocksNeeded[blockIndex]);
+		}
 
-				++blocksRequested;
-				m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);
-			}
+		if (blocksToRequest.size() >= numBlocksNeeded)
+		{
+			break;
 		}
 
 		++blockIndex;
 	}
 
-	if (blocksRequested > 0)
+	size_t nextPeer = std::rand() % mostWorkPeers.size();
+	for (size_t i = 0; i < blocksToRequest.size(); i++)
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksRequested, mostWorkPeers.size()));
+		const GetBlockMessage getBlockMessage(blocksToRequest[i].second);
+		if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
+		{
+			RequestedBlock blockRequested;
+			blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
+			blockRequested.PEER_ID = mostWorkPeers[nextPeer];
+			blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
+
+			m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);
+		}
+
+		if ((i + 1) % 16 == 0)
+		{
+			nextPeer = (nextPeer + 1) % mostWorkPeers.size();
+		}
+	}
+
+	if (!blocksToRequest.empty())
+	{
+		LoggerAPI::LogDebug(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers));
 	}
 
 	return true;

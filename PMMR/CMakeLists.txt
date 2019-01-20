@@ -15,7 +15,9 @@ hunter_add_package(Async++)
 
 find_package(minizip CONFIG REQUIRED)
 find_package(ZLIB CONFIG REQUIRED)
+
 find_package(Async++ CONFIG REQUIRED)
+set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 # PMMR
 file(GLOB PMMR_SRC

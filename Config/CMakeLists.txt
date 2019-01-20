@@ -8,6 +8,7 @@ file(GLOB CONFIG_SRC
 
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
+set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 add_library(${TARGET_NAME} SHARED ${CONFIG_SRC})
 

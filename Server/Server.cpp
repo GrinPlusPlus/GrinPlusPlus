@@ -64,12 +64,11 @@ void Server::Run()
 			break;
 		}
 
-		const size_t numConnections = m_pP2PServer->GetNumberOfConnectedPeers();
 		const SyncStatus& syncStatus = m_pP2PServer->GetSyncStatus();
 
 		system("CLS");
 		std::cout << "Time Running: " << secondsRunning++ << "s";
-		std::cout << "\nNumConnections: " << numConnections ;
+		std::cout << "\nNumConnections: " << syncStatus.GetNumActiveConnections();
 		std::cout << "\nHeader Height: " << syncStatus.GetHeaderHeight();
 		std::cout << "\nHeader Difficulty: " << syncStatus.GetHeaderDifficulty();
 		std::cout << "\nBlock Height: " << syncStatus.GetBlockHeight();

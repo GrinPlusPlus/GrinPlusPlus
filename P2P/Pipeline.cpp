@@ -47,18 +47,18 @@ void Pipeline::Stop()
 void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 {
 	ThreadManagerAPI::SetCurrentThreadName("BLOCK_PIPE_THREAD");
-	LoggerAPI::LogInfo("Pipeline::Thread_ProcessBlocks() - BEGIN");
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - BEGIN");
 
 	while (!pipeline.m_terminate)
 	{
 		if (pipeline.m_blocksToProcess.size() > 0)
 		{
-			const FullBlock& block = pipeline.m_blocksToProcess.front();
+			const BlockEntry& blockEntry = pipeline.m_blocksToProcess.front();
 			
-			const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(block);
+			const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
 			if (status == EBlockChainStatus::INVALID)
 			{
-				// TODO: pipeline.m_connectionManager.BanConnection(connectionId);
+				pipeline.m_connectionManager.BanConnection(blockEntry.connectionId);
 			}
 
 			std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);
@@ -70,7 +70,7 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 		}
 	}
 
-	LoggerAPI::LogInfo("Pipeline::Thread_ProcessBlocks() - END");
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - END");
 }
 
 bool Pipeline::AddBlockToProcess(const uint64_t connectionId, const FullBlock& block)
@@ -78,7 +78,7 @@ bool Pipeline::AddBlockToProcess(const uint64_t connectionId, const FullBlock& b
 	if (!IsProcessingBlock(block.GetHash()))
 	{
 		std::unique_lock<std::shared_mutex> writeLock(m_blockMutex);
-		m_blocksToProcess.push_back(block);
+		m_blocksToProcess.emplace_back(BlockEntry(connectionId, block));
 		return true;
 	}
 
@@ -91,7 +91,7 @@ bool Pipeline::IsProcessingBlock(const Hash& hash) const
 
 	for (auto iter = m_blocksToProcess.cbegin(); iter != m_blocksToProcess.cend(); iter++)
 	{
-		if (iter->GetHash() == hash)
+		if (iter->block.GetHash() == hash)
 		{
 			return true;
 		}
@@ -103,7 +103,7 @@ bool Pipeline::IsProcessingBlock(const Hash& hash) const
 void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 {
 	ThreadManagerAPI::SetCurrentThreadName("TXN_PIPE_THREAD");
-	LoggerAPI::LogInfo("Pipeline::Thread_ProcessTransactions() - BEGIN");
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTransactions() - BEGIN");
 
 	while (!pipeline.m_terminate)
 	{
@@ -126,7 +126,7 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		}
 	}
 
-	LoggerAPI::LogInfo("Pipeline::Thread_ProcessTransactions() - END");
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTransactions() - END");
 }
 
 bool Pipeline::AddTransactionToProcess(const uint64_t connectionId, const Transaction& transaction, const EPoolType poolType)

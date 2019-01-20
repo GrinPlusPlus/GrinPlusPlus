@@ -36,7 +36,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	{
 		// Verify block is self-consistent before locking
 		// TODO: Need a verifier cache to make sure we don't validate the same block multiple times.
-		if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+		if (!BlockValidator(m_transactionPool, nullptr).IsBlockSelfConsistent(block))
 		{
 			return EBlockChainStatus::INVALID;
 		}

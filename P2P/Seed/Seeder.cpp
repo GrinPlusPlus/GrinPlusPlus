@@ -76,7 +76,7 @@ void Seeder::Stop()
 void Seeder::Thread_Seed(Seeder& seeder, const uint8_t threadNumber)
 {
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD" + std::to_string(threadNumber));
-	LoggerAPI::LogDebug("Seeder::Thread_Seed() - BEGIN");
+	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
 
 	const int minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
@@ -104,7 +104,7 @@ void Seeder::Thread_Seed(Seeder& seeder, const uint8_t threadNumber)
 		}
 	}
 
-	LoggerAPI::LogDebug("Seeder::Thread_Seed() - END");
+	LoggerAPI::LogTrace("Seeder::Thread_Seed() - END");
 }
 
 //
@@ -114,7 +114,7 @@ void Seeder::Thread_Seed(Seeder& seeder, const uint8_t threadNumber)
 void Seeder::Thread_Listener(Seeder& seeder)
 {
 	ThreadManagerAPI::SetCurrentThreadName("LISTENER_THREAD");
-	LoggerAPI::LogDebug("Seeder::Thread_Listener() - BEGIN");
+	LoggerAPI::LogTrace("Seeder::Thread_Listener() - BEGIN");
 
 	const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
 	while (!seeder.m_terminate)
@@ -132,7 +132,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 		}
 	}
 
-	LoggerAPI::LogDebug("Seeder::Thread_Listener() - END");
+	LoggerAPI::LogTrace("Seeder::Thread_Listener() - END");
 }
 
 bool Seeder::SeedNewConnection()

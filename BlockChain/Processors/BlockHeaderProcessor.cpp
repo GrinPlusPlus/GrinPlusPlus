@@ -14,7 +14,7 @@ BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, ChainState& cha
 
 EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& header)
 {
-	LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessSingleHeader - Validating " + header.FormatHash());
+	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessSingleHeader - Validating " + header.FormatHash());
 
 	LockedChainState lockedState = m_chainState.GetLocked();
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
@@ -23,7 +23,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
-		LoggerAPI::LogDebug(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -32,11 +32,10 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	if (pLastIndex->GetHash() != header.GetPreviousBlockHash())
 	{
 		LoggerAPI::LogDebug(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Processing header %s as an orphan.", header.FormatHash().c_str()));
-		// TODO: Process as an orphan
 		return EBlockChainStatus::ORPHANED;
 	}
 
-	LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessSingleHeader - Processing next candidate header " + header.FormatHash());
+	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessSingleHeader - Processing next candidate header " + header.FormatHash());
 
 	// Validate the header.
 	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
@@ -54,7 +53,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	lockedState.m_chainStore.GetSyncChain().AddBlock(pBlockIndex);
 	candidateChain.AddBlock(pBlockIndex);
 
-	LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessSingleHeader - Successfully validated " + header.FormatHash());
+	LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessSingleHeader - Successfully validated " + header.FormatHash());
 
 	return EBlockChainStatus::SUCCESS;
 }
@@ -103,7 +102,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 
 EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vector<BlockHeader>& headers)
 {
-	LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Processing " + std::to_string(headers.size()) + " headers."); // TODO: Log hashes
+	LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Processing " + std::to_string(headers.size()) + " headers.");
 
 	LockedChainState lockedState = m_chainState.GetLocked();
 	Chain& syncChain = lockedState.m_chainStore.GetSyncChain();

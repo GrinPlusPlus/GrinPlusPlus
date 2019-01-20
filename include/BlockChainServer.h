@@ -73,7 +73,7 @@ public:
 	// Returns the block header containing the output commitment.
 	// This will be null if the output commitment is not found.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Hash& outputCommitment) const = 0;
+	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const = 0;
 
 	//
 	// Returns the block header at the tip of the specified chain type.
@@ -101,7 +101,7 @@ public:
 	// Returns the block containing the output commitment.
 	// This will be null if the output commitment is not found or the block doesn't exist in the DB.
 	//
-	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Hash& outputCommitment) const = 0;
+	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& outputCommitment) const = 0;
 
 	//
 	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.

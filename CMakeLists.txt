@@ -65,3 +65,5 @@ add_subdirectory(TxPool)
 add_subdirectory(P2P)
 #add_subdirectory(Wallet)
 add_subdirectory(Server)
+
+add_executable(RunAllTests RunAllTests.cpp)

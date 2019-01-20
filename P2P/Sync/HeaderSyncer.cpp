@@ -16,16 +16,16 @@ HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServ
 
 bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus)
 {
-	const uint64_t height = syncStatus.GetHeaderHeight();
-	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
+	const uint64_t chainHeight = syncStatus.GetHeaderHeight();
+	const uint64_t networkHeight = syncStatus.GetNetworkHeight();
 
 	// This solves an issue that occurs due to the handshake not containing height.
-	if (highestHeight == 0)
+	if (networkHeight == 0)
 	{
 		return true;
 	}
 
-	if (highestHeight >= (height + 5))
+	if (networkHeight >= (chainHeight + 5))
 	{
 		if (IsHeaderSyncDue(syncStatus))
 		{

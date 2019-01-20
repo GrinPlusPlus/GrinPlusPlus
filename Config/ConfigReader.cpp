@@ -52,19 +52,21 @@ EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
 
 Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 {
+	const uint16_t MAINNET_PORT = 3414;
 	const uint16_t FLOONET_PORT = 13414;
+
+	const std::vector<unsigned char> MAINNET_MAGIC = { 97, 61 };
 	const std::vector<unsigned char> FLOONET_MAGIC = { 83, 59 };
 
+	// MAINNET: Figure out private/public Version
 	const uint32_t floonetPrivateVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
 	const uint32_t floonetPublicVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	if (root.isMember(ConfigProps::ENVIRONMENT))
 	{
-		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "FLOONET").asString();
+		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "MAINNET").asString();
 		if (environment == "MAINNET")
 		{
-			const uint16_t MAINNET_PORT = 3414;
-			const std::vector<unsigned char> MAINNET_MAGIC = { 97, 61 };
-			return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT, floonetPrivateVersion, floonetPublicVersion); // MAINNET: Figure out private/public Version
+			return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT, floonetPrivateVersion, floonetPublicVersion);
 		}
 		else if (environment == "FLOONET")
 		{
@@ -72,8 +74,7 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 		}
 	}
 
-
-	return Environment(EEnvironmentType::FLOONET, Genesis::FLOONET_GENESIS, FLOONET_MAGIC, FLOONET_PORT, floonetPrivateVersion, floonetPublicVersion);
+	return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT, floonetPrivateVersion, floonetPublicVersion);
 }
 
 std::string ConfigReader::ReadDataPath(const Json::Value& root) const

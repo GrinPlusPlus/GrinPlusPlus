@@ -46,19 +46,35 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with hash %s.", requestedHeader.c_str()));
 				return pHeader;
 			}
-
-			pHeader = pBlockChainServer->GetBlockHeaderByCommitment(hash);
+			else
+			{
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with hash %s.", requestedHeader.c_str()));
+			}
+		}
+		catch (const std::exception&)
+		{
+			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Hash.", requestedHeader.c_str()));
+		}
+	}
+	else if (requestedHeader.length() == 66 && HexUtil::IsValidHex(requestedHeader))
+	{
+		try
+		{
+			const Commitment outputCommitment(CBigInteger<33>::FromHex(requestedHeader));
+			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
 			if (pHeader != nullptr)
 			{
 				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with output commitment %s.", requestedHeader.c_str()));
 				return pHeader;
 			}
-
-			LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with hash or commitment %s.", requestedHeader.c_str()));
+			else
+			{
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with commitment %s.", requestedHeader.c_str()));
+			}
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Hash.", requestedHeader.c_str()));
+			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Commitment.", requestedHeader.c_str()));
 		}
 	}
 	else

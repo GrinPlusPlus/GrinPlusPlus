@@ -6,32 +6,21 @@
 #include <PMMR/TxHashSet.h>
 #include <TxPool/TransactionPool.h>
 
-BlockValidator::BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pTxHashSet)
+BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const ITxHashSet* pTxHashSet)
 	: m_transactionPool(transactionPool), m_pTxHashSet(pTxHashSet)
 {
 
 }
 
-// Validates all the elements in a block that can be checked without additional data. 
-// Includes commitment sums and kernels, Merkle trees, reward, etc.
-bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateTransactionBody) const
+// Validates a block is self-consistent and validates the state (eg. MMRs).
+bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateSelfConsistent) const
 {
-	if (validateTransactionBody)
+	if (validateSelfConsistent)
 	{
-		if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+		if (!IsBlockSelfConsistent(block))
 		{
 			return false;
 		}
-	}
-
-	if (!VerifyKernelLockHeights(block))
-	{
-		return false;
-	}
-		
-	if (!VerifyCoinbase(block))
-	{
-		return false;
 	}
 
 	BlindingFactor blockKernelOffset(CBigInteger<32>::ValueOf(0));
@@ -55,6 +44,28 @@ bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& 
 	}
 
 	// TODO: Validate MMRs
+
+	return true;
+}
+
+// Validates all the elements in a block that can be checked without additional data. 
+// Includes commitment sums and kernels, reward, etc.
+bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
+{
+	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+	{
+		return false;
+	}
+
+	if (!VerifyKernelLockHeights(block))
+	{
+		return false;
+	}
+
+	if (!VerifyCoinbase(block))
+	{
+		return false;
+	}
 
 	return true;
 }

@@ -10,15 +10,16 @@ class ITxHashSet;
 class BlockValidator
 {
 public:
-	BlockValidator(ITransactionPool& transactionPool, ITxHashSet* pTxHashSet);
+	BlockValidator(const ITransactionPool& transactionPool, const ITxHashSet* pTxHashSet);
 
-	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateTransactionBody) const;
+	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateSelfConsistent) const;
+	bool IsBlockSelfConsistent(const FullBlock& block) const;
 
 private:
 	bool VerifyKernelLockHeights(const FullBlock& block) const;
 	bool VerifyCoinbase(const FullBlock& block) const;
 	bool VerifyKernelSums(const FullBlock& block, int64_t overage, const BlindingFactor& kernelOffset) const;
 
-	ITransactionPool& m_transactionPool;
-	ITxHashSet* m_pTxHashSet;
+	const ITransactionPool& m_transactionPool;
+	const ITxHashSet* m_pTxHashSet;
 };

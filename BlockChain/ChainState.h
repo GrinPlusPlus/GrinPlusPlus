@@ -31,6 +31,7 @@ public:
 
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
+	std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const;
 	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash);
 	std::unique_ptr<FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
 

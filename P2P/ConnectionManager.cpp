@@ -52,6 +52,20 @@ void ConnectionManager::Stop()
 	PruneConnections(false);
 }
 
+void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	const uint64_t numActiveConnections = m_connections.size();
+	Connection* pMostWorkPeer = GetMostWorkPeer();
+	if (pMostWorkPeer != nullptr)
+	{
+		const uint64_t networkHeight = pMostWorkPeer->GetHeight();
+		const uint64_t networkDifficulty = pMostWorkPeer->GetTotalDifficulty();
+		syncStatus.UpdateNetworkStatus(numActiveConnections, networkHeight, networkDifficulty);
+	}
+}
+
 size_t ConnectionManager::GetNumberOfActiveConnections() const
 {
 	return m_connections.size();
@@ -69,7 +83,7 @@ std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
 		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
 		for (Connection* pConnection : m_connections)
 		{
-			if (pConnection->GetTotalDifficulty() >= totalDifficulty)
+			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0)
 			{
 				mostWorkPeers.push_back(pConnection->GetId());
 			}
@@ -190,6 +204,11 @@ Connection* ConnectionManager::GetMostWorkPeer() const
 	uint64_t mostWork = 0;
 	for (Connection* pConnection : m_connections)
 	{
+		if (pConnection->GetHeight() == 0)
+		{
+			continue;
+		}
+
 		if (pConnection->GetTotalDifficulty() > mostWork)
 		{
 			mostWork = pConnection->GetTotalDifficulty();

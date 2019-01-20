@@ -36,9 +36,21 @@ private:
 
 	mutable std::shared_mutex m_blockMutex;
 	std::thread m_blockThread;
-	std::deque<FullBlock> m_blocksToProcess; // TODO: Store connectionId with Block
+	struct BlockEntry
+	{
+		BlockEntry(const uint64_t connId, const FullBlock& fullBlock)
+			: connectionId(connId), block(fullBlock)
+		{
+
+		}
+
+		uint64_t connectionId;
+		FullBlock block;
+	};
+	std::deque<BlockEntry> m_blocksToProcess; // TODO: Store connectionId with Block
 
 	mutable std::shared_mutex m_transactionMutex;
+	std::thread m_transactionThread;
 	struct TxEntry
 	{
 		TxEntry(const uint64_t connId, const Transaction& txn, const EPoolType type)
@@ -51,6 +63,5 @@ private:
 		Transaction transaction;
 		EPoolType poolType;
 	};
-	std::thread m_transactionThread;
 	std::deque<TxEntry> m_transactionsToProcess; // TODO: Store connectionId with Transaction
 };

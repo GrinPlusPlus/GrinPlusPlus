@@ -49,33 +49,34 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 	while (!syncer.m_terminate)
 	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		syncer.UpdateSyncStatus();
 
-		if (syncer.m_connectionManager.GetNumberOfActiveConnections() > 2)
+		if (syncer.m_syncStatus.GetNumActiveConnections() >= 4)
 		{
 			// Sync Headers
 			if (headerSyncer.SyncHeaders(syncer.m_syncStatus))
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_HEADERS);
 				continue;
 			}
 
 			// Sync State (TxHashSet)
 			if (stateSyncer.SyncState(syncer.m_syncStatus))
 			{
-				std::this_thread::sleep_for(std::chrono::seconds(1));
+				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
 				continue;
 			}
 
 			// Sync Blocks
 			if (blockSyncer.SyncBlocks(syncer.m_syncStatus))
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_HEADERS);
 				continue;
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::seconds(2));
+		syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);
 	}
 
 	LoggerAPI::LogInfo("Syncer::Thread_Sync() - END");
@@ -84,6 +85,5 @@ void Syncer::Thread_Sync(Syncer& syncer)
 void Syncer::UpdateSyncStatus()
 {
 	m_blockChainServer.UpdateSyncStatus(m_syncStatus);
-	m_syncStatus.UpdateDownloaded(0);
-	m_syncStatus.UpdateDownloadSize(0);
+	m_connectionManager.UpdateSyncStatus(m_syncStatus);
 }

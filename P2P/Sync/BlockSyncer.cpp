@@ -16,16 +16,16 @@ BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer
 
 bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus)
 {
-	const uint64_t height = syncStatus.GetBlockHeight();
-	const uint64_t highestHeight = m_connectionManager.GetHighestHeight();
+	const uint64_t chainHeight = syncStatus.GetBlockHeight();
+	const uint64_t networkHeight = syncStatus.GetNetworkHeight();
 
-	if (highestHeight >= (height + 5))
+	if (networkHeight >= (chainHeight + 5))
 	{
 		if (IsBlockSyncDue(syncStatus))
 		{
 			RequestBlocks();
 
-			m_lastHeight = syncStatus.GetBlockHeight();
+			m_lastHeight = chainHeight;
 			m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
 		}
 

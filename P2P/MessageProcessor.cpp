@@ -242,11 +242,12 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL);
-				//const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::STEMPOOL);
+				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
+				{
+					return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				}
 
-				//return added == EBlockChainStatus::SUCCESS ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
-				return EStatus::SUCCESS;
+				return EStatus::UNKNOWN_ERROR;
 			}
 			case TransactionMsg:
 			{
@@ -254,16 +255,12 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				// TODO: Check Sync status first
-				//const SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
-				m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL);
-				//const EBlockChainStatus added = m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL);
-				//if (added == EBlockChainStatus::SUCCESS)
-				//{
-				//	m_connectionManager.BroadcastMessage(transactionMessage, connectionId);
-				//}
+				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
+				{
+					return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				}
 
-				return EStatus::SUCCESS;
+				return EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -294,13 +291,17 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 {
 	LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::SendTxHashSet - Sending TxHashSet snapshot to %s.", connectedPeer.GetPeer().GetIPAddress().Format().c_str()));
 
-	// TODO: Implmement
+	// TODO: Implement
 	return EStatus::SUCCESS;
 }
 
 MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
 	LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ReceiveTxHashSet - Downloading TxHashSet from %s.", connectedPeer.GetPeer().GetIPAddress().Format().c_str()));
+
+	SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
+	syncStatus.UpdateDownloaded(0);
+	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
 	const DWORD timeout = 25 * 1000;
 	setsockopt(connectedPeer.GetConnection(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
@@ -316,9 +317,11 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	{
 		const int expectedBytes = min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 		const int newBytesReceived = recv(connectedPeer.GetConnection(), (char*)&buffer[0], expectedBytes, 0);
-		if (newBytesReceived <= 0)
+		if (newBytesReceived <= 0 || m_connectionManager.IsTerminating())
 		{
-			// Ban peer?
+			syncStatus.UpdateDownloaded(0);
+			syncStatus.UpdateDownloadSize(0);
+
 			LoggerAPI::LogError("MessageProcessor::ReceiveTxHashSet - Transmission ended abruptly.");
 			fout.close();
 			FileUtil::RemoveFile(txHashSetPath);
@@ -328,6 +331,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 
 		fout.write((char*)&buffer[0], newBytesReceived);
 		bytesReceived += newBytesReceived;
+
+		syncStatus.UpdateDownloaded(bytesReceived);
 	}
 
 	fout.close();

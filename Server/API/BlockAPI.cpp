@@ -59,22 +59,38 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHash(hash);
 			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block with hash %s.", requestedBlock.c_str()));
+				LoggerAPI::LogDebug(StringUtil::Format("BlockAPI::GetBlock - Found block with hash %s.", requestedBlock.c_str()));
 				return pBlock;
 			}
-
-			pBlock = pBlockChainServer->GetBlockByCommitment(hash);
-			if (pBlock != nullptr)
+			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block with output commitment %s.", requestedBlock.c_str()));
-				return pBlock;
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with hash %s.", requestedBlock.c_str()));
 			}
-
-			LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with hash or commitment %s.", requestedBlock.c_str()));
 		}
 		catch (const std::exception&)
 		{
 			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to a Hash.", requestedBlock.c_str()));
+		}
+	}
+	else if (requestedBlock.length() == 66 && HexUtil::IsValidHex(requestedBlock))
+	{
+		try
+		{
+			const Commitment outputCommitment = Commitment(CBigInteger<33>::FromHex(requestedBlock));
+			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByCommitment(outputCommitment);
+			if (pBlock != nullptr)
+			{
+				LoggerAPI::LogDebug(StringUtil::Format("BlockAPI::GetBlock - Found block with output commitment %s.", requestedBlock.c_str()));
+				return pBlock;
+			}
+			else
+			{
+				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with commitment %s.", requestedBlock.c_str()));
+			}
+		}
+		catch (const std::exception&)
+		{
+			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to a Commitment.", requestedBlock.c_str()));
 		}
 	}
 	else

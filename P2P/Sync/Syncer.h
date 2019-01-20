@@ -17,6 +17,7 @@ public:
 	void Start();
 	void Stop();
 
+	inline SyncStatus& GetSyncStatus() { return m_syncStatus; }
 	inline const SyncStatus& GetSyncStatus() const { return m_syncStatus; }
 
 private:

@@ -24,7 +24,12 @@ public:
 	void Stop();
 
 	inline Pipeline& GetPipeline() { return m_pipeline; }
+	inline bool IsTerminating() const { return m_terminate; }
+
+	inline SyncStatus& GetSyncStatus() { return m_syncer.GetSyncStatus(); }
 	inline const SyncStatus& GetSyncStatus() const { return m_syncer.GetSyncStatus(); }
+	void UpdateSyncStatus(SyncStatus& syncStatus) const;
+
 	size_t GetNumberOfActiveConnections() const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
 	uint64_t GetMostWork() const;

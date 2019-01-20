@@ -86,7 +86,7 @@ EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
 {
-	const CBigInteger<32>& hash = compactBlock.GetHash();
+	const Hash& hash = compactBlock.GetHash();
 
 	std::unique_ptr<BlockHeader> pConfirmedHeader = m_pChainState->GetBlockHeaderByHeight(compactBlock.GetBlockHeader().GetHeight(), EChainType::CONFIRMED);
 	if (pConfirmedHeader != nullptr && pConfirmedHeader->GetHash() == hash)
@@ -159,10 +159,9 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByHash(const CBigIn
 	return m_pChainState->GetBlockHeaderByHash(hash);
 }
 
-std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const Hash& outputCommitment) const
+std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
 {
-	// TODO: Implement this
-	return std::unique_ptr<BlockHeader>(nullptr);
+	return m_pChainState->GetBlockHeaderByCommitment(outputCommitment);
 }
 
 std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
@@ -170,9 +169,14 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainTyp
 	return m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(chainType), chainType);
 }
 
-std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Hash& outputCommitment) const
+std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Commitment& outputCommitment) const
 {
-	// TODO: Implement this
+	std::unique_ptr<BlockHeader> pHeader = m_pChainState->GetBlockHeaderByCommitment(outputCommitment);
+	if (pHeader != nullptr)
+	{
+		return GetBlockByHash(pHeader->GetHash());
+	}
+
 	return std::unique_ptr<FullBlock>(nullptr);
 }
 

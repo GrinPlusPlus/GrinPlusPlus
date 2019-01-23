@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <ctime>
 #include <atomic>
+#include <chrono>
 
 class Peer
 {
@@ -54,7 +55,7 @@ public:
 	//
 	inline void UpdateVersion(const uint32_t version) { m_version = version; }
 	inline void UpdateCapabilities(const Capabilities& capabilities) { m_capabilities = capabilities; }
-	inline void UpdateLastContactTime() const { m_lastContactTime = std::time_t(); }
+	inline void UpdateLastContactTime() const { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 	inline void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
 
 	//

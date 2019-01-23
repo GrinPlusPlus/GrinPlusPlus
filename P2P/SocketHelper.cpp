@@ -1,6 +1,8 @@
 #include "SocketHelper.h"
 
 #include <WS2tcpip.h>
+#include <StringUtil.h>
+#include <Infrastructure/Logger.h>
 
 std::optional<SOCKET> SocketHelper::Connect(const IPAddress& ipAddress, const uint16_t portNumber)
 {
@@ -65,6 +67,110 @@ std::optional<uint16_t> SocketHelper::GetPort(SOCKET socket)
 	return std::nullopt;
 }
 
+std::optional<SocketAddress> SocketHelper::GetSocketAddress(SOCKET socket)
+{
+	// TODO: Handle IPv6
+	struct sockaddr_in sin;
+	int addrlen = sizeof(sin);
+	if (getsockname(socket, (struct sockaddr *)&sin, &addrlen) == 0)
+	{
+		if (sin.sin_family == AF_INET && addrlen == sizeof(sin))
+		{
+			char str[INET_ADDRSTRLEN];
+			inet_ntop(AF_INET, &(sin.sin_addr), str, INET_ADDRSTRLEN);
+
+			IPAddress ipAddress = IPAddress::FromIP(sin.sin_addr.S_un.S_un_b.s_b1, sin.sin_addr.S_un.S_un_b.s_b2, sin.sin_addr.S_un.S_un_b.s_b3, sin.sin_addr.S_un.S_un_b.s_b4);
+			const uint16_t port = ntohs(sin.sin_port);
+
+			return std::make_optional(SocketAddress(std::move(ipAddress), port));
+		}
+	}
+
+	return std::nullopt;
+}
+
+std::optional<SOCKET> SocketHelper::CreateListener(const IPAddress& localHost, const uint16_t portNumber)
+{
+	WSADATA wsadata;
+	int error = WSAStartup(0x0202, &wsadata);
+	if (error)
+	{
+		return std::nullopt;
+	}
+
+	if (localHost.GetFamily() == EAddressFamily::IPv4)
+	{
+		const SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (listenSocket != INVALID_SOCKET)
+		{
+			sockaddr_in service;
+			service.sin_family = AF_INET;
+			service.sin_port = htons(portNumber);
+			const std::vector<unsigned char>& bytes = localHost.GetAddress();
+			service.sin_addr.S_un.S_un_b = { bytes[0], bytes[1], bytes[2], bytes[3] };
+
+			const int bindResult = bind(listenSocket, (SOCKADDR *)&service, sizeof(service));
+			if (bindResult != SOCKET_ERROR)
+			{
+				if (listen(listenSocket, SOMAXCONN) != SOCKET_ERROR)
+				{
+					unsigned long nonblocking = 1;
+					if (ioctlsocket(listenSocket, FIONBIO, &nonblocking) != SOCKET_ERROR)
+					{
+						return std::make_optional(listenSocket);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		const SOCKET listenSocket = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+		if (listenSocket != INVALID_SOCKET)
+		{
+			sockaddr_in6 service;
+			service.sin6_family = AF_INET6;
+			service.sin6_port = htons(portNumber);
+			memcpy(&service.sin6_addr.u.Byte[0], &localHost.GetAddress()[0], 16);
+
+			const int bindResult = bind(listenSocket, (SOCKADDR *)&service, sizeof(service));
+			if (bindResult != SOCKET_ERROR)
+			{
+				if (listen(listenSocket, SOMAXCONN) != SOCKET_ERROR)
+				{
+					unsigned long nonblocking = 1;
+					if (ioctlsocket(listenSocket, FIONBIO, &nonblocking) != SOCKET_ERROR)
+					{
+						return std::make_optional(listenSocket);
+					}
+				}
+			}
+
+			closesocket(listenSocket);
+		}
+	}
+
+	return std::nullopt;
+}
+
+std::optional<SOCKET> SocketHelper::AcceptNewConnection(const SOCKET listeningSocket)
+{
+	const SOCKET acceptedSocket = accept(listeningSocket, nullptr, nullptr);
+	if (acceptedSocket == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() == WSAEWOULDBLOCK)
+		{
+			// TODO: Implement
+		}
+	}
+	else
+	{
+		return std::make_optional(acceptedSocket);
+	}
+
+	return std::nullopt;
+}
+
 bool SocketHelper::Connect(SOCKET socket, SOCKADDR& socketAddress)
 {
 	unsigned long nonblocking = 1;
@@ -91,7 +197,7 @@ bool SocketHelper::Connect(SOCKET socket, SOCKADDR& socketAddress)
 
 		timeval time_out = { 0 };
 		time_out.tv_sec = 0;
-		time_out.tv_usec = 300000;
+		time_out.tv_usec = 500000;
 
 		int ret = select(0, NULL, &setW, &setE, &time_out);
 		if (ret <= 0)

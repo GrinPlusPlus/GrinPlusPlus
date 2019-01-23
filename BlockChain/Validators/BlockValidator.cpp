@@ -54,16 +54,19 @@ bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 {
 	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
 	{
+		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate transaction body for " + HexUtil::ConvertHash(block.GetHash()));
 		return false;
 	}
 
 	if (!VerifyKernelLockHeights(block))
 	{
+		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate kernel lock heights for " + HexUtil::ConvertHash(block.GetHash()));
 		return false;
 	}
 
 	if (!VerifyCoinbase(block))
 	{
+		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate coinbase for " + HexUtil::ConvertHash(block.GetHash()));
 		return false;
 	}
 

@@ -35,6 +35,8 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus)
 		return true;
 	}
 
+	m_connectionId = 0;
+
 	return false;
 }
 
@@ -54,7 +56,11 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 	{
 		LoggerAPI::LogInfo("HeaderSyncer::IsHeaderSyncDue() - Timed out. Banning then requesting from new peer.");
 
-		m_connectionManager.BanConnection(m_connectionId);
+		if (m_connectionId != 0)
+		{
+			m_connectionManager.BanConnection(m_connectionId);
+		}
+
 		m_connectionId = 0;
 
 		return true;

@@ -12,7 +12,7 @@ class BlockProcessor
 public:
 	BlockProcessor(const Config& config, ChainState& chainState, const ITransactionPool& transactionPool);
 
-	EBlockChainStatus ProcessBlock(const FullBlock& block);
+	EBlockChainStatus ProcessBlock(const FullBlock& block, const bool orphan);
 
 private:
 	EBlockChainStatus ProcessBlockInternal(const FullBlock& block);

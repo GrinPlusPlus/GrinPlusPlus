@@ -153,7 +153,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const BlockHeader& blockHeader = headerMessage.GetHeader();
 
 				const EBlockChainStatus status = m_blockChainServer.AddBlockHeader(blockHeader);
-				if (status == EBlockChainStatus::SUCCESS)
+				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS)
 				{
 					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
 

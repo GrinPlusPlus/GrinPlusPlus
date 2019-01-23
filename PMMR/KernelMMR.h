@@ -16,12 +16,13 @@ class KernelMMR : public MMR
 {
 public:
 	static KernelMMR* Load(const Config& config);
+	~KernelMMR();
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
 
 	virtual Hash Root(const uint64_t lastMMRIndex) const override final;
-	virtual uint64_t GetSize() const override final { return m_hashFile.GetSize(); }
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_hashFile.GetHashAt(mmrIndex)); }
+	virtual uint64_t GetSize() const override final { return m_pHashFile->GetSize(); }
+	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_pHashFile->GetHashAt(mmrIndex)); }
 
 	virtual bool Rewind(const uint64_t lastMMRIndex) override final;
 	virtual bool Flush() override final;
@@ -30,12 +31,12 @@ public:
 	bool ApplyKernel(const TransactionKernel& kernel);
 
 private:
-	KernelMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>&& dataFile);
+	KernelMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile);
 
 	Hash KernelMMR::HashWithIndex(const TransactionKernel& kernel, const uint64_t index) const;
 
 	const Config& m_config;
-	HashFile m_hashFile;
+	HashFile* m_pHashFile;
 	LeafSet m_leafSet;
-	DataFile<KERNEL_SIZE> m_dataFile;
+	DataFile<KERNEL_SIZE>* m_pDataFile;
 };

@@ -4,30 +4,39 @@
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-OutputPMMR::OutputPMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>&& dataFile)
+OutputPMMR::OutputPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)
 	: m_config(config),
-	m_hashFile(std::move(hashFile)),
+	m_pHashFile(pHashFile),
 	m_leafSet(std::move(leafSet)),
 	m_pruneList(std::move(pruneList)),
-	m_dataFile(std::move(dataFile))
+	m_pDataFile(pDataFile)
 {
 
 }
 
+OutputPMMR::~OutputPMMR()
+{
+	delete m_pHashFile;
+	m_pHashFile = nullptr;
+
+	delete m_pDataFile;
+	m_pDataFile = nullptr;
+}
+
 OutputPMMR* OutputPMMR::Load(const Config& config)
 {
-	HashFile hashFile(config.GetTxHashSetDirectory() + "output/pmmr_hash.bin");
-	hashFile.Load();
+	HashFile* pHashFile = new HashFile(config.GetTxHashSetDirectory() + "output/pmmr_hash.bin");
+	pHashFile->Load();
 
 	LeafSet leafSet(config.GetTxHashSetDirectory() + "output/pmmr_leaf.bin");
 	leafSet.Load();
 
 	PruneList pruneList(std::move(PruneList::Load(config.GetTxHashSetDirectory() + "output/pmmr_prun.bin")));
 
-	DataFile<OUTPUT_SIZE> dataFile(config.GetTxHashSetDirectory() + "output/pmmr_data.bin");
-	dataFile.Load();
+	DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(config.GetTxHashSetDirectory() + "output/pmmr_data.bin");
+	pDataFile->Load();
 
-	return new OutputPMMR(config, std::move(hashFile), std::move(leafSet), std::move(pruneList), std::move(dataFile));
+	return new OutputPMMR(config, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
 Hash OutputPMMR::Root(const uint64_t size) const
@@ -70,7 +79,7 @@ std::unique_ptr<Hash> OutputPMMR::GetHashAt(const uint64_t mmrIndex) const
 	const uint64_t shift = m_pruneList.GetShift(mmrIndex);
 	const uint64_t shiftedIndex = (mmrIndex - shift);
 
-	return std::make_unique<Hash>(m_hashFile.GetHashAt(shiftedIndex));
+	return std::make_unique<Hash>(m_pHashFile->GetHashAt(shiftedIndex));
 }
 
 std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrIndex) const
@@ -89,7 +98,7 @@ std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrInde
 			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
 
 			std::vector<unsigned char> data;
-			m_dataFile.GetDataAt(shiftedIndex, data);
+			m_pDataFile->GetDataAt(shiftedIndex, data);
 
 			if (data.size() == OUTPUT_SIZE)
 			{
@@ -106,13 +115,13 @@ uint64_t OutputPMMR::GetSize() const
 {
 	const uint64_t totalShift = m_pruneList.GetTotalShift();
 
-	return totalShift + m_hashFile.GetSize();
+	return totalShift + m_pHashFile->GetSize();
 }
 
 bool OutputPMMR::Rewind(const uint64_t lastMMRIndex)
 {
-	const bool hashRewind = m_hashFile.Rewind(lastMMRIndex - m_pruneList.GetShift(lastMMRIndex));
-	const bool dataRewind = m_dataFile.Rewind(MMRUtil::GetNumLeaves(lastMMRIndex) - m_pruneList.GetLeafShift(lastMMRIndex));
+	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex - m_pruneList.GetShift(lastMMRIndex));
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex) - m_pruneList.GetLeafShift(lastMMRIndex));
 	// TODO: Rewind leafset
 
 	return hashRewind && dataRewind;
@@ -121,8 +130,8 @@ bool OutputPMMR::Rewind(const uint64_t lastMMRIndex)
 bool OutputPMMR::Flush()
 {
 	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%llu)", GetSize()));
-	const bool hashFlush = m_hashFile.Flush();
-	const bool dataFlush = m_dataFile.Flush();
+	const bool hashFlush = m_pHashFile->Flush();
+	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
 	const bool pruneFlush = m_pruneList.Flush();
 

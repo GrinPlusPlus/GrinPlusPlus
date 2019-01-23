@@ -62,27 +62,6 @@ std::unique_ptr<FullBlock> OrphanPool::GetOrphanBlock(const uint64_t height, con
 	return std::unique_ptr<FullBlock>(nullptr);
 }
 
-std::vector<FullBlock> OrphanPool::GetOrphanBlocks(const uint64_t height, const Hash& previousHash) const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
-	std::vector<FullBlock> orphanBlocks;
-
-	auto iter = m_orphansByHeight.find(height);
-	if (iter != m_orphansByHeight.cend())
-	{
-		for (const Orphan& orphan : iter->second)
-		{
-			if (orphan.GetBlock().GetBlockHeader().GetPreviousBlockHash() == previousHash)
-			{
-				orphanBlocks.push_back(orphan.GetBlock());
-			}
-		}
-	}
-
-	return orphanBlocks;
-}
-
 void OrphanPool::RemoveOrphan(const uint64_t height, const Hash& hash)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);

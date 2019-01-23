@@ -15,7 +15,7 @@ BlockProcessor::BlockProcessor(const Config& config, ChainState& chainState, con
 
 }
 
-EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
+EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const bool orphan)
 {	
 	const uint64_t candidateHeight = m_chainState.GetHeight(EChainType::CANDIDATE);
 	const uint64_t horizonHeight = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
@@ -34,11 +34,15 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
-		// Verify block is self-consistent before locking
-		// TODO: Need a verifier cache to make sure we don't validate the same block multiple times.
-		if (!BlockValidator(m_transactionPool, nullptr).IsBlockSelfConsistent(block))
+		// Blocks from the orphan pool would've already been validated.
+		if (!orphan)
 		{
-			return EBlockChainStatus::INVALID;
+			// Verify block is self-consistent before locking
+			if (!BlockValidator(m_transactionPool, nullptr).IsBlockSelfConsistent(block))
+			{
+				LoggerAPI::LogError("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
+				return EBlockChainStatus::INVALID;
+			}
 		}
 
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
@@ -100,6 +104,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 		return EBlockChainStatus::INVALID;
 	}
 
+	lockedState.m_transactionPool.ReconcileBlock(block);
 	lockedState.m_blockStore.AddBlock(block);
 
 	//pTxHashSet->Commit();
@@ -118,8 +123,6 @@ EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, Loc
 		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
-
-	// TODO: Finish implementing. Should be able to do some validation.
 
 	lockedState.m_orphanPool.AddOrphanBlock(block);
 

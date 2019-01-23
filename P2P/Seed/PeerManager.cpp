@@ -30,10 +30,10 @@ std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& p
 {
 	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
 
-	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, 1);
+	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, 1, true);
 	if (peers.empty())
 	{
-		peers = GetPeersWithCapability(Capabilities::UNKNOWN, 1);
+		peers = GetPeersWithCapability(Capabilities::UNKNOWN, 1, true);
 	}
 	
 	if (peers.empty())
@@ -48,10 +48,10 @@ std::vector<Peer> PeerManager::GetPeers(const Capabilities::ECapability& preferr
 {
 	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
 
-	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, maxPeers);
+	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, maxPeers, false);
 	if (peers.empty())
 	{
-		peers = GetPeersWithCapability(Capabilities::UNKNOWN, maxPeers);
+		peers = GetPeersWithCapability(Capabilities::UNKNOWN, maxPeers, false);
 	}
 
 	return peers;
@@ -101,7 +101,7 @@ bool PeerManager::AddPeer(const Peer& peer)
 	return false;
 }
 
-std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
+std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
 {
 	std::vector<Peer> peersFound;
 
@@ -113,9 +113,9 @@ std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapab
 		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
 		if (hasCapability)
 		{
-			if (!peerEntry.m_peerServed)
+			if (!connectingToPeer || !peerEntry.m_peerServed)
 			{
-				peerEntry.m_peerServed = true;
+				peerEntry.m_peerServed = connectingToPeer;
 
 				peersFound.push_back(peer);
 				if (peersFound.size() == maxPeers)

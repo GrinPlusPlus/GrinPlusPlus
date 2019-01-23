@@ -8,7 +8,11 @@
 #include <Crypto/RandomNumberGenerator.h>
 
 TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
-	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)
+	: m_config(config), 
+	m_txHashSetManager(txHashSetManager), 
+	m_blockDB(blockDB),
+	m_memPool(config, txHashSetManager, blockDB),
+	m_stemPool(config, txHashSetManager, blockDB)
 {
 
 }
@@ -55,15 +59,12 @@ std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::se
 
 void TransactionPool::ReconcileBlock(const FullBlock& block)
 {
-	// TODO: Finish implementing
 	// First reconcile the txpool.
-	m_memPool.ReconcileBlock(block);
-	//self.txpool.reconcile(None, &block.header) ? ;
+	m_memPool.ReconcileBlock(block, std::unique_ptr<Transaction>(nullptr));
 
 	// Now reconcile our stempool, accounting for the updated txpool txs.
-	m_stemPool.ReconcileBlock(block);
-	//let txpool_tx = self.txpool.aggregate_transaction() ? ;
-	//self.stempool.reconcile(txpool_tx, &block.header) ? ;
+	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
+	m_stemPool.ReconcileBlock(block, pMemPoolAggTx);
 }
 
 std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(const BlockHeader& lastConfirmedBlock)

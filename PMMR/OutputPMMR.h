@@ -17,6 +17,7 @@ class OutputPMMR : public MMR
 {
 public:
 	static OutputPMMR* Load(const Config& config);
+	~OutputPMMR();
 
 	void Compact();
 
@@ -30,15 +31,15 @@ public:
 	std::unique_ptr<OutputIdentifier> GetOutputAt(const uint64_t mmrIndex) const;
 
 private:
-	OutputPMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>&& dataFile);
+	OutputPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
 
 	Roaring DetermineLeavesToRemove(const uint64_t cutoffSize, const Roaring& rewindRmPos) const;
 	Roaring DetermineNodesToRemove(const Roaring& leavesToRemove) const;
 
 	const Config& m_config;
 
-	HashFile m_hashFile;
+	HashFile* m_pHashFile;
 	LeafSet m_leafSet;
 	PruneList m_pruneList;
-	DataFile<OUTPUT_SIZE> m_dataFile;
+	DataFile<OUTPUT_SIZE>* m_pDataFile;
 };

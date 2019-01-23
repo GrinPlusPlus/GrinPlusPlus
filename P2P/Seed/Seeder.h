@@ -10,6 +10,7 @@
 class ConnectionManager;
 class PeerManager;
 class IBlockChainServer;
+typedef UINT_PTR SOCKET;
 
 class Seeder
 {
@@ -20,11 +21,12 @@ public:
 	void Stop();
 
 private:
-	static void Thread_Seed(Seeder& seeder, const uint8_t threadNumber);
+	static void Thread_Seed(Seeder& seeder);
 	static void Thread_Listener(Seeder& seeder);
 
 	bool SeedNewConnection();
-	bool ListenForConnections();
+	bool ListenForConnections(const SOCKET& listenerSocket);
+	bool ConnectToPeer(Peer& peer);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
@@ -33,7 +35,7 @@ private:
 
 	std::atomic<bool> m_terminate = true;
 
-	std::vector<std::thread> m_seedThreads;
+	std::thread m_seedThread;
 	std::thread m_listenerThread;
 	mutable std::atomic_bool m_usedDNS = false;
 };

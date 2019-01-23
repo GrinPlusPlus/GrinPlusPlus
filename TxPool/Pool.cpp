@@ -1,9 +1,16 @@
 #include "Pool.h"
 #include "TransactionValidator.h"
 #include "TransactionAggregator.h"
+#include "ValidTransactionFinder.h"
 
 #include <VectorUtil.h>
 #include <algorithm>
+
+Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
+	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)
+{
+
+}
 
 // Query the tx pool for all known txs based on kernel short_ids from the provided compact_block.
 // Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
@@ -131,25 +138,33 @@ void Pool::RemoveTransactions(const std::vector<Transaction>& transactions)
 
 // Quick reconciliation step - we can evict any txs in the pool where
 // inputs or kernels intersect with the block.
-void Pool::ReconcileBlock(const FullBlock& block)
+void Pool::ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx)
 {
 	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
+
+	std::vector<Transaction> filteredTransactions;
+	std::unordered_map<Hash, TxPoolEntry> filteredEntriesByHash;
 
 	// Filter txs in the pool based on the latest block.
 	// Reject any txs where we see a matching tx kernel in the block.
 	// Also reject any txs where we see a conflicting tx,
 	// where an input is spent in a different tx.
-	auto iter = m_transactions.begin();
-	while (iter != m_transactions.end())
+	for (auto& txPoolEntry : m_transactions)
 	{
-		if (ShouldEvict_Locked(iter->GetTransaction(), block))
+		if (!ShouldEvict_Locked(txPoolEntry.GetTransaction(), block))
 		{
-			m_transactions.erase(iter++);
+			filteredTransactions.push_back(txPoolEntry.GetTransaction());
+			filteredEntriesByHash.insert(std::pair<Hash, TxPoolEntry>(txPoolEntry.GetTransaction().GetHash(), txPoolEntry));
 		}
-		else
-		{
-			++iter;
-		}
+	}
+
+	m_transactions.clear();
+
+	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(filteredTransactions, pMemPoolAggTx, block.GetBlockHeader());
+	for (auto& transaction : validTransactions)
+	{
+		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(transaction.GetHash());
+		m_transactions.push_back(txPoolEntry);
 	}
 }
 

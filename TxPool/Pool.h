@@ -7,6 +7,9 @@
 #include <Core/TransactionKernel.h>
 #include <Core/FullBlock.h>
 #include <Core/ShortId.h>
+#include <Config/Config.h>
+#include <PMMR/TxHashSetManager.h>
+#include <Database/BlockDb.h>
 #include <Hash.h>
 #include <map>
 #include <set>
@@ -15,9 +18,11 @@
 class Pool
 {
 public:
+	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
+
 	bool AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	void RemoveTransactions(const std::vector<Transaction>& transactions);
-	void ReconcileBlock(const FullBlock& block);
+	void ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx);
 
 	std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const;
 	std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;
@@ -28,6 +33,10 @@ public:
 
 private:
 	bool ShouldEvict_Locked(const Transaction& transaction, const FullBlock& block) const;
+
+	const Config& m_config;
+	const TxHashSetManager& m_txHashSetManager;
+	const IBlockDB& m_blockDB;
 
 	mutable std::shared_mutex m_transactionsMutex;
 	std::vector<TxPoolEntry> m_transactions;

@@ -4,32 +4,41 @@
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-KernelMMR::KernelMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>&& dataFile)
+KernelMMR::KernelMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile)
 	: m_config(config),
-	m_hashFile(std::move(hashFile)),
+	m_pHashFile(pHashFile),
 	m_leafSet(std::move(leafSet)),
-	m_dataFile(std::move(dataFile))
+	m_pDataFile(pDataFile)
 {
 
+}
+
+KernelMMR::~KernelMMR()
+{
+	delete m_pHashFile;
+	m_pHashFile = nullptr;
+
+	delete m_pDataFile;
+	m_pDataFile = nullptr;
 }
 
 KernelMMR* KernelMMR::Load(const Config& config)
 {
-	HashFile hashFile(config.GetTxHashSetDirectory() + "kernel/pmmr_hash.bin");
-	hashFile.Load();
+	HashFile* pHashFile = new HashFile(config.GetTxHashSetDirectory() + "kernel/pmmr_hash.bin");
+	pHashFile->Load();
 
 	LeafSet leafSet(config.GetTxHashSetDirectory() + "kernel/pmmr_leaf.bin");
 	leafSet.Load();
 
-	DataFile<KERNEL_SIZE> dataFile(config.GetTxHashSetDirectory() + "kernel/pmmr_data.bin");
-	dataFile.Load();
+	DataFile<KERNEL_SIZE>* pDataFile = new DataFile<KERNEL_SIZE>(config.GetTxHashSetDirectory() + "kernel/pmmr_data.bin");
+	pDataFile->Load();
 
-	return new KernelMMR(config, std::move(hashFile), std::move(leafSet), std::move(dataFile));
+	return new KernelMMR(config, pHashFile, std::move(leafSet), pDataFile);
 }
 
 Hash KernelMMR::Root(const uint64_t mmrIndex) const
 {
-	return m_hashFile.Root(mmrIndex);
+	return m_pHashFile->Root(mmrIndex);
 }
 
 std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrIndex) const
@@ -39,7 +48,7 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 		const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
 
 		std::vector<unsigned char> data;
-		m_dataFile.GetDataAt(numLeaves - 1, data);
+		m_pDataFile->GetDataAt(numLeaves - 1, data);
 
 		if (data.size() == KERNEL_SIZE)
 		{
@@ -53,8 +62,8 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 
 bool KernelMMR::Rewind(const uint64_t lastMMRIndex)
 {
-	const bool hashRewind = m_hashFile.Rewind(lastMMRIndex);
-	const bool dataRewind = m_dataFile.Rewind(MMRUtil::GetNumLeaves(lastMMRIndex));
+	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex);
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex));
 	// TODO: Rewind leafset?
 
 	return hashRewind && dataRewind;
@@ -63,8 +72,8 @@ bool KernelMMR::Rewind(const uint64_t lastMMRIndex)
 bool KernelMMR::Flush()
 {
 	LoggerAPI::LogInfo(StringUtil::Format("KernelMMR::Flush - Flushing with size (%llu)", GetSize()));
-	const bool hashFlush = m_hashFile.Flush();
-	const bool dataFlush = m_dataFile.Flush();
+	const bool hashFlush = m_pHashFile->Flush();
+	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
 
 	return hashFlush && dataFlush && leafSetFlush;
@@ -72,15 +81,15 @@ bool KernelMMR::Flush()
 
 bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
-	uint64_t nextMMRIndex = m_hashFile.GetSize();
+	uint64_t nextMMRIndex = m_pHashFile->GetSize();
 	Hash hash = HashWithIndex(kernel, nextMMRIndex++);
 
 	const uint64_t newMMRSize = MMRUtil::GetNumNodes(nextMMRIndex);
 	while (nextMMRIndex < newMMRSize)
 	{
 		const uint64_t leftSibling = MMRUtil::GetSiblingIndex(nextMMRIndex - 1);
-		hash = MMRUtil::HashParentWithIndex(m_hashFile.GetHashAt(leftSibling), hash, nextMMRIndex++);
-		m_hashFile.AddHash(hash);
+		hash = MMRUtil::HashParentWithIndex(m_pHashFile->GetHashAt(leftSibling), hash, nextMMRIndex++);
+		m_pHashFile->AddHash(hash);
 	}
 
 	return true;

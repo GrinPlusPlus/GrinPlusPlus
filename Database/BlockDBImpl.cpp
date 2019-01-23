@@ -75,7 +75,7 @@ void BlockDB::CloseDB()
 
 std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& hashes) const
 {
-	LoggerAPI::LogInfo("BlockDB::LoadBlockHeaders - Loading headers - " + std::to_string(hashes.size()));
+	LoggerAPI::LogTrace("BlockDB::LoadBlockHeaders - Loading headers - " + std::to_string(hashes.size()));
 
 	std::vector<BlockHeader*> blockHeaders;
 	blockHeaders.reserve(hashes.size());
@@ -94,7 +94,7 @@ std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& has
 		}
 	}
 
-	LoggerAPI::LogInfo("BlockDB::LoadBlockHeaders - Finished loading headers.");
+	LoggerAPI::LogTrace("BlockDB::LoadBlockHeaders - Finished loading headers.");
 	return blockHeaders;
 }
 
@@ -129,7 +129,7 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 
 void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 {
-	LoggerAPI::LogInfo("BlockDB::AddBlockHeaders - Adding headers - " + std::to_string(blockHeaders.size()));
+	LoggerAPI::LogTrace("BlockDB::AddBlockHeaders - Adding headers - " + std::to_string(blockHeaders.size()));
 
 	for (const BlockHeader* pBlockHeader : blockHeaders)
 	{
@@ -143,7 +143,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
 		m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, key, value);
 	}
 
-	LoggerAPI::LogInfo("BlockDB::AddBlockHeaders - Finished adding headers.");
+	LoggerAPI::LogTrace("BlockDB::AddBlockHeaders - Finished adding headers.");
 }
 
 void BlockDB::AddBlock(const FullBlock& block)
@@ -213,7 +213,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex)
 {
 	const std::string outputHex = HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData(), false, false);
-	LoggerAPI::LogInfo(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) for output (%s).", mmrIndex, outputHex.c_str()));
+	LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) for output (%s).", mmrIndex, outputHex.c_str()));
 
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 

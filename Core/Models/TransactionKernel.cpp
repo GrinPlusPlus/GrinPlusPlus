@@ -6,7 +6,9 @@
 TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
 	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(std::move(excessCommitment)), m_excessSignature(std::move(excessSignature))
 {
-
+	Serializer serializer;
+	Serialize(serializer);
+	m_hash = Crypto::Blake2b(serializer.GetBytes());
 }
 
 void TransactionKernel::Serialize(Serializer& serializer) const
@@ -71,12 +73,5 @@ Hash TransactionKernel::GetSignatureMessage() const
 
 const Hash& TransactionKernel::GetHash() const
 {
-	if (m_hash == CBigInteger<32>())
-	{
-		Serializer serializer;
-		Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
-	}
-
 	return m_hash;
 }

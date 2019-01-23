@@ -27,6 +27,8 @@ File::File(const std::string& path)
 
 bool File::Load()
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
 	std::ifstream file(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
 	if (!file.is_open())
 	{
@@ -48,15 +50,16 @@ bool File::Load()
 
 bool File::Flush()
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	return Flush_Locked();
+}
+
+bool File::Flush_Locked()
+{
 	if (m_fileSize == m_bufferIndex && m_buffer.empty())
 	{
 		return true;
-	}
-
-	std::ofstream file(m_path, std::ios::out | std::ios::binary | std::ios::app);
-	if (!file.is_open())
-	{
-		return false;
 	}
 
 	if (m_fileSize < m_bufferIndex)
@@ -64,21 +67,35 @@ bool File::Flush()
 		return false;
 	}
 
-	file.seekp(m_bufferIndex, std::ios::beg);
+	if (m_fileSize > m_bufferIndex)
+	{
+		TruncateFile(m_path, m_fileSize);
+	}
+
+	m_mmap.unmap();
 
 	if (!m_buffer.empty())
 	{
-		file.write((const char*)&m_buffer[0], m_buffer.size());
+		std::ofstream file(m_path, std::ios::out | std::ios::binary | std::ios::app);
+		if (!file.is_open())
+		{
+			return false;
+		}
+
+		file.seekp(m_bufferIndex, std::ios::beg);
+
+		if (!m_buffer.empty())
+		{
+			file.write((const char*)&m_buffer[0], m_buffer.size());
+		}
+
+		file.close();
 	}
-	
-	file.close();
 
 	m_fileSize = m_bufferIndex + m_buffer.size();
 	
 	m_bufferIndex = m_fileSize;
 	m_buffer.clear();
-
-	TruncateFile(m_path, m_fileSize);
 
 	if (m_fileSize > 0)
 	{
@@ -91,12 +108,16 @@ bool File::Flush()
 
 void File::Append(const std::vector<unsigned char>& data)
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
 	m_buffer.insert(m_buffer.end(), data.cbegin(), data.cend());
 }
 
 bool File::Rewind(const uint64_t nextPosition)
 {
-	if (!Flush())
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	if (!Flush_Locked())
 	{
 		return false;
 	}
@@ -122,6 +143,8 @@ bool File::Rewind(const uint64_t nextPosition)
 
 bool File::Discard()
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
 	m_bufferIndex = m_fileSize;
 	m_buffer.clear();
 
@@ -130,11 +153,15 @@ bool File::Discard()
 
 uint64_t File::GetSize() const
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
 	return m_bufferIndex + m_buffer.size();
 }
 
 bool File::Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
 	if (position < m_bufferIndex)
 	{
 		data = std::vector<unsigned char>(m_mmap.cbegin() + position, m_mmap.cbegin() + position + numBytes);
@@ -143,7 +170,7 @@ bool File::Read(const uint64_t position, const uint64_t numBytes, std::vector<un
 	{
 		const uint64_t firstBufferIndex = position - m_bufferIndex;
 
-		data.insert(data.end(), m_buffer.cbegin() + firstBufferIndex, m_buffer.cbegin() + firstBufferIndex + numBytes);
+		data = std::vector<unsigned char>(m_buffer.cbegin() + firstBufferIndex, m_buffer.cbegin() + firstBufferIndex + numBytes);
 	}
 
 	return true;

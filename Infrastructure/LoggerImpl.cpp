@@ -15,7 +15,7 @@ Logger::Logger()
 {
 	const std::filesystem::path currentPath = std::filesystem::current_path();
 
-	const std::string logPath = currentPath.string() + "/MimbleWimble.log"; // TODO: Create if path doesn't exist
+	const std::string logPath = currentPath.string() + "/DATA/MimbleWimble.log"; // TODO: Load from Config
 
 	auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
 	m_logger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(2));

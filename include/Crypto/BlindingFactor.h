@@ -6,7 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <BigInteger.h>
+#include <Hash.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 
@@ -16,12 +16,12 @@ public:
 	//
 	// Constructors
 	//
-	BlindingFactor(CBigInteger<32>&& blindingFactorBytes)
+	BlindingFactor(Hash&& blindingFactorBytes)
 		: m_blindingFactorBytes(std::move(blindingFactorBytes))
 	{
 
 	}
-	BlindingFactor(const CBigInteger<32>& blindingFactorBytes)
+	BlindingFactor(const Hash& blindingFactorBytes)
 		: m_blindingFactorBytes(blindingFactorBytes)
 	{
 
@@ -63,5 +63,5 @@ public:
 
 private:
 	// The 32 byte blinding factor.
-	CBigInteger<32> m_blindingFactorBytes;
+	Hash m_blindingFactorBytes;
 };

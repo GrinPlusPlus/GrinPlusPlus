@@ -9,20 +9,20 @@ class ConnectedPeer
 {
 public:
 	ConnectedPeer(const SOCKET connection, const Peer& peer)
-		: m_connection(connection), m_peer(peer)
+		: m_connection(connection), m_peer(peer), m_height(0), m_totalDifficulty(0)
 	{
 
 	}
 	ConnectedPeer(const ConnectedPeer& peer)
-		: m_connection(peer.m_connection), m_peer(peer.m_peer), m_totalDifficulty(peer.m_totalDifficulty.load())
+		: m_connection(peer.m_connection), m_peer(peer.m_peer), m_height(peer.m_height.load()), m_totalDifficulty(peer.m_totalDifficulty.load())
 	{
 
 	}
 
 	inline void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height)
 	{
-		m_totalDifficulty = totalDifficulty;
-		m_height = height;
+		m_totalDifficulty.exchange(totalDifficulty);
+		m_height.exchange(height);
 	}
 
 	inline const SOCKET GetConnection() const { return m_connection; }

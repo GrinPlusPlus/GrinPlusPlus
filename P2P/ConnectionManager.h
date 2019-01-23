@@ -52,7 +52,7 @@ private:
 	mutable std::shared_mutex m_connectionsMutex;
 	std::vector<Connection*> m_connections;
 	std::set<uint64_t> m_peersToBan;
-
+	std::chrono::system_clock::time_point m_lastPingTime;
 
 	struct MessageToBroadcast
 	{

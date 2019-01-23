@@ -14,7 +14,6 @@ public:
 	bool IsOrphan(const uint64_t height, const Hash& hash) const;
 	void AddOrphanBlock(const FullBlock& block);
 	std::unique_ptr<FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
-	std::vector<FullBlock> GetOrphanBlocks(const uint64_t height, const Hash& previousHash) const;
 	void RemoveOrphan(const uint64_t height, const Hash& hash);
 
 private:

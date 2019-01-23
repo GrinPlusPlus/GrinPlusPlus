@@ -28,7 +28,7 @@ public:
 
 private:
 	bool AddPeer(const Peer& peer);
-	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
+	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
 	const Config& m_config;
 	IPeerDB& m_peerDB;

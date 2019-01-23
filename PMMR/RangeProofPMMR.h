@@ -15,6 +15,7 @@ class RangeProofPMMR : public MMR
 {
 public:
 	static RangeProofPMMR* Load(const Config& config);
+	~RangeProofPMMR();
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
@@ -24,11 +25,11 @@ public:
 	virtual bool Flush() override final;
 
 private:
-	RangeProofPMMR(const Config& config, HashFile&& hashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>&& dataFile);
+	RangeProofPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile);
 
 	const Config& m_config;
-	HashFile m_hashFile;
+	HashFile* m_pHashFile;
 	LeafSet m_leafSet;
 	PruneList m_pruneList;
-	DataFile<RANGE_PROOF_SIZE> m_dataFile;
+	DataFile<RANGE_PROOF_SIZE>* m_pDataFile;
 };

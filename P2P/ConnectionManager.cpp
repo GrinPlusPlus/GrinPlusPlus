@@ -1,6 +1,7 @@
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 #include "Messages/GetPeerAddressesMessage.h"
+#include "Messages/PingMessage.h"
 
 #include <thread>
 #include <chrono>
@@ -163,6 +164,15 @@ void ConnectionManager::AddConnection(Connection* pConnection)
 void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_connectionsMutex);
+
+	bool pingConnections = false;
+	auto now = std::chrono::system_clock::now();
+	if (m_lastPingTime + std::chrono::seconds(10) < now)
+	{
+		m_lastPingTime = now;
+		pingConnections = true;
+	}
+
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
 	{
 		Connection* pConnection = m_connections[i];
@@ -187,6 +197,13 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 			VectorUtil::Remove<Connection*>(m_connections, i);
 			delete pConnection;
+			continue;
+		}
+
+		if (pingConnections)
+		{
+			const SyncStatus& syncStatus = m_syncer.GetSyncStatus();
+			pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
 		}
 	}
 }
@@ -202,6 +219,7 @@ Connection* ConnectionManager::GetMostWorkPeer() const
 {
 	std::vector<Connection*> mostWorkPeers;
 	uint64_t mostWork = 0;
+	uint64_t mostWorkHeight = 0;
 	for (Connection* pConnection : m_connections)
 	{
 		if (pConnection->GetHeight() == 0)
@@ -212,12 +230,22 @@ Connection* ConnectionManager::GetMostWorkPeer() const
 		if (pConnection->GetTotalDifficulty() > mostWork)
 		{
 			mostWork = pConnection->GetTotalDifficulty();
+			mostWorkHeight = pConnection->GetHeight();
 			mostWorkPeers.clear();
 			mostWorkPeers.emplace_back(pConnection);
 		}
 		else if (pConnection->GetTotalDifficulty() == mostWork)
 		{
-			mostWorkPeers.emplace_back(pConnection);
+			if (pConnection->GetHeight() > mostWorkHeight)
+			{
+				mostWorkHeight = pConnection->GetHeight();
+				mostWorkPeers.clear();
+				mostWorkPeers.emplace_back(pConnection);
+			}
+			else if (pConnection->GetHeight() == mostWorkHeight)
+			{
+				mostWorkPeers.emplace_back(pConnection);
+			}
 		}
 	}
 

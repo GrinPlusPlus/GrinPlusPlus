@@ -33,6 +33,11 @@ public:
 	IPAddress(IPAddress&& other) noexcept = default;
 	IPAddress() = default;
 
+	static IPAddress FromIP(const uint8_t byte1, const uint8_t byte2, const uint8_t byte3, const uint8_t byte4)
+	{
+		return IPAddress(EAddressFamily::IPv4, std::vector<unsigned char>({ byte1, byte2, byte3, byte4 }));
+	}
+
 	//
 	// Destructor
 	//

@@ -1,6 +1,7 @@
 #include "BlockHydrator.h"
 
 #include <Common/FunctionalUtil.h>
+#include <unordered_set>
 
 BlockHydrator::BlockHydrator(const ChainState& chainState, const ITransactionPool& transactionPool)
 	: m_chainState(chainState), m_transactionPool(transactionPool)
@@ -32,44 +33,63 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 
 std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlock, const std::vector<Transaction>& transactions) const
 {
-	std::set<TransactionInput> inputsSet;
-	std::set<TransactionOutput> outputsSet;
-	std::set<TransactionKernel> kernelsSet;
+	std::unordered_set<Hash> inputsSet;
+	std::unordered_set<Hash> outputsSet;
+	std::unordered_set<Hash> kernelsSet;
+
+	std::vector<TransactionInput> allInputs;
+	std::vector<TransactionOutput> allOutputs;
+	std::vector<TransactionKernel> allKernels;
 
 	// collect all the inputs, outputs and kernels from the txs
 	for (const Transaction& transaction : transactions)
 	{
 		for (const TransactionInput& input : transaction.GetBody().GetInputs())
 		{
-			inputsSet.insert(input);
+			if (inputsSet.count(input.GetHash()) == 0)
+			{
+				inputsSet.insert(input.GetHash());
+				allInputs.push_back(input);
+			}
 		}
 
 		for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
 		{
-			outputsSet.insert(output);
+			if (outputsSet.count(output.GetHash()) == 0)
+			{
+				outputsSet.insert(output.GetHash());
+				allOutputs.push_back(output);
+			}
 		}
 
 		for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
 		{
-			kernelsSet.insert(kernel);
+			if (kernelsSet.count(kernel.GetHash()) == 0)
+			{
+				kernelsSet.insert(kernel.GetHash());
+				allKernels.push_back(kernel);
+			}
 		}
 	}
 
 	// include the coinbase output(s) and kernel(s) from the compact_block
 	for (const TransactionOutput& output : compactBlock.GetOutputs())
 	{
-		outputsSet.insert(output);
+		if (outputsSet.count(output.GetHash()) == 0)
+		{
+			outputsSet.insert(output.GetHash());
+			allOutputs.push_back(output);
+		}
 	}
 
 	for (const TransactionKernel& kernel : compactBlock.GetKernels())
 	{
-		kernelsSet.insert(kernel);
+		if (kernelsSet.count(kernel.GetHash()) == 0)
+		{
+			kernelsSet.insert(kernel.GetHash());
+			allKernels.push_back(kernel);
+		}
 	}
-
-	// convert the sets to vecs
-	std::vector<TransactionInput> allInputs{ inputsSet.cbegin(), inputsSet.cend() };
-	std::vector<TransactionOutput> allOutputs{ outputsSet.cbegin(), outputsSet.cend() };
-	std::vector<TransactionKernel> allKernels{ kernelsSet.cbegin(), kernelsSet.cend() };
 
 	// Perform cut-through.
 	PerformCutThrough(allInputs, allOutputs);

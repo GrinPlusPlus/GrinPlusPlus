@@ -81,7 +81,7 @@ uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(m_config, *m_pChainState, *m_pTransactionPool).ProcessBlock(block);
+	return BlockProcessor(m_config, *m_pChainState, *m_pTransactionPool).ProcessBlock(block, false);
 }
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
@@ -215,9 +215,7 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 		return false;
 	}
 
-	AddBlock(*pOrphanBlock);
-
-	return true;
+	return BlockProcessor(m_config, *m_pChainState, *m_pTransactionPool).ProcessBlock(*pOrphanBlock, true) == EBlockChainStatus::SUCCESS;
 }
 
 namespace BlockChainAPI

@@ -46,6 +46,7 @@ add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/include/thirdparty/mio/include
+	${PROJECT_SOURCE_DIR}/include/thirdparty/stduuid/include
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -63,7 +64,7 @@ add_subdirectory(Database)
 add_subdirectory(BlockChain)
 add_subdirectory(TxPool)
 add_subdirectory(P2P)
-#add_subdirectory(Wallet)
+add_subdirectory(Wallet)
 add_subdirectory(Server)
 
 add_executable(RunAllTests RunAllTests.cpp)

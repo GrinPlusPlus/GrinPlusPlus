@@ -56,7 +56,7 @@ void Server::Run()
 	RestServer restServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
 	restServer.Start();
 
-	int secondsRunning = 0;
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	while(true)
 	{
 		if (SHUTDOWN)
@@ -67,12 +67,33 @@ void Server::Run()
 		const SyncStatus& syncStatus = m_pP2PServer->GetSyncStatus();
 
 		system("CLS");
-		std::cout << "Time Running: " << secondsRunning++ << "s";
+		std::cout << "Time Running: " << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() - startTime.time_since_epoch()).count() << "s";
+
+		const ESyncStatus status = syncStatus.GetStatus();
+		if (status == ESyncStatus::NOT_SYNCING)
+		{
+			std::cout << "\nStatus: Running";
+		}
+		else if (status == ESyncStatus::SYNCING_HEADERS)
+		{
+			std::cout << "\nStatus: Syncing Headers";
+		}
+		else if (status == ESyncStatus::SYNCING_TXHASHSET)
+		{
+			std::cout << "\nStatus: Syncing TxHashSet " << syncStatus.GetDownloaded() << "/" << syncStatus.GetDownloadSize();
+		}
+		else if (status == ESyncStatus::SYNCING_BLOCKS)
+		{
+			std::cout << "\nStatus: Syncing blocks";
+		}
+
 		std::cout << "\nNumConnections: " << syncStatus.GetNumActiveConnections();
 		std::cout << "\nHeader Height: " << syncStatus.GetHeaderHeight();
 		std::cout << "\nHeader Difficulty: " << syncStatus.GetHeaderDifficulty();
 		std::cout << "\nBlock Height: " << syncStatus.GetBlockHeight();
 		std::cout << "\nBlock Difficulty: " << syncStatus.GetBlockDifficulty();
+		std::cout << "\nNetwork Height: " << syncStatus.GetNetworkHeight();
+		std::cout << "\nNetwork Difficulty: " << syncStatus.GetNetworkDifficulty();
 		std::cout << "\n\nPress Ctrl-C to exit...";
 		std::cout << std::flush;
 

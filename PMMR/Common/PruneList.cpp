@@ -85,6 +85,11 @@ bool PruneList::IsPrunedRoot(const uint64_t position) const
 	return m_prunedRoots.contains(position + 1);
 }
 
+bool PruneList::IsCompacted(const uint64_t position) const
+{
+	return IsPruned(position) && !IsPrunedRoot(position);
+}
+
 uint64_t PruneList::GetTotalShift() const
 {
 	return GetShift(m_prunedRoots.maximum());

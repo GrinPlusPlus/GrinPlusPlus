@@ -20,6 +20,8 @@ public:
 	~OutputPMMR();
 
 	void Compact();
+	bool Append(const OutputIdentifier& output);
+	bool SpendOutput(const uint64_t mmrIndex);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;

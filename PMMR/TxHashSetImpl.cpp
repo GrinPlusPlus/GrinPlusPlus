@@ -68,12 +68,27 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 {
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
+		const Commitment& commitment = input.GetCommitment();
+		std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
+		if (!outputPosOpt.has_value())
+		{
+			return false;
+		}
 
+		if (!m_pOutputPMMR->SpendOutput(outputPosOpt.value()))
+		{
+			return false;
+		}
 	}
 
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
 	{
-		
+		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output)))
+		{
+			return false;
+		}
+
+		// TODO: Append RangeProof
 	}
 
 	for (const TransactionKernel& kernel : block.GetTransactionBody().GetKernels())

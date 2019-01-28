@@ -19,6 +19,7 @@ public:
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
+	std::unique_ptr<RangeProof> GetRangeProofAt(const uint64_t mmrIndex) const;
 	virtual uint64_t GetSize() const override final;
 
 	virtual bool Rewind(const uint64_t lastMMRIndex) override final;

@@ -72,7 +72,7 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 		return TxHashSetValidationResult::Fail();
 	}
 
-	// TODO: Validate the rangeproof associated with each unspent output.
+	// Validate the rangeproof associated with each unspent output.
 	if (!ValidateRangeProofs(txHashSet, blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid range proof.");
@@ -85,7 +85,6 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel signatures.");
 		return TxHashSetValidationResult::Fail();
 	}
-
 
 	return TxHashSetValidationResult(true, std::move(outputSum), std::move(kernelSum));
 }
@@ -192,6 +191,46 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 
 bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
 {
-	// TODO: Implement
+	std::vector<Commitment> commitments;
+	std::vector<RangeProof> rangeProofs;
+
+	for (uint64_t mmrIndex = 0; mmrIndex < txHashSet.GetOutputPMMR()->GetSize(); mmrIndex++)
+	{
+		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetOutputAt(mmrIndex);
+		if (pOutput != nullptr)
+		{
+			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetRangeProofAt(mmrIndex);
+			if (pRangeProof == nullptr)
+			{
+				LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - No rangeproof found at mmr index " + std::to_string(mmrIndex));
+				return false;
+			}
+
+			commitments.push_back(pOutput->GetCommitment());
+			rangeProofs.push_back(*pRangeProof);
+
+			if (commitments.size() >= 1000)
+			{
+				if (!Crypto::VerifyRangeProofs(commitments, rangeProofs))
+				{
+					LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
+					return false;
+				}
+
+				commitments.clear();
+				rangeProofs.clear();
+			}
+		}
+	}
+
+	if (!commitments.empty())
+	{
+		if (!Crypto::VerifyRangeProofs(commitments, rangeProofs))
+		{
+			LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
+			return false;
+		}
+	}
+	
 	return true;
 }

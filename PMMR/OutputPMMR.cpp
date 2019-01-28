@@ -39,6 +39,48 @@ OutputPMMR* OutputPMMR::Load(const Config& config)
 	return new OutputPMMR(config, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
+bool OutputPMMR::Append(const OutputIdentifier& output)
+{
+	const uint64_t shift = m_pruneList.GetTotalShift();
+	const uint64_t position = m_pHashFile->GetSize() + shift;
+	m_leafSet.Add((uint32_t)position);
+
+	Serializer serializer;
+	output.Serialize(serializer);
+	m_pDataFile->AddData(serializer.GetBytes());
+
+	// TODO: Add hashes
+
+	return true;
+}
+
+bool OutputPMMR::SpendOutput(const uint64_t mmrIndex)
+{
+	LoggerAPI::LogTrace("OutputPMMR::SpendOutput - Spending output at index " + std::to_string(mmrIndex));
+
+	if (!MMRUtil::IsLeaf(mmrIndex))
+	{
+		LoggerAPI::LogTrace("OutputPMMR::SpendOutput - Output is not a leaf " + std::to_string(mmrIndex));
+		return false;
+	}
+
+	if (!m_leafSet.Contains(mmrIndex))
+	{
+		LoggerAPI::LogWarning("OutputPMMR::SpendOutput - LeafSet does not contain output " + std::to_string(mmrIndex));
+		return false;
+	}
+
+	if (m_pruneList.IsCompacted(mmrIndex))
+	{
+		LoggerAPI::LogWarning("OutputPMMR::SpendOutput -Output was compacted " + std::to_string(mmrIndex));
+		return false;
+	}
+
+	m_leafSet.Remove((uint64_t)mmrIndex);
+
+	return true;
+}
+
 Hash OutputPMMR::Root(const uint64_t size) const
 {
 	LoggerAPI::LogTrace("OutputPMMR::Root - Calculating root of MMR with size " + std::to_string(size));
@@ -71,7 +113,7 @@ Hash OutputPMMR::Root(const uint64_t size) const
 
 std::unique_ptr<Hash> OutputPMMR::GetHashAt(const uint64_t mmrIndex) const
 {
-	if (m_pruneList.IsPruned(mmrIndex) && !m_pruneList.IsPrunedRoot(mmrIndex))
+	if (m_pruneList.IsCompacted(mmrIndex))
 	{
 		return std::unique_ptr<Hash>(nullptr);
 	}
@@ -88,7 +130,7 @@ std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrInde
 	{
 		if (m_leafSet.Contains(mmrIndex))
 		{
-			if (m_pruneList.IsPruned(mmrIndex) && !m_pruneList.IsPrunedRoot(mmrIndex))
+			if (m_pruneList.IsCompacted(mmrIndex))
 			{
 				return std::unique_ptr<OutputIdentifier>(nullptr);
 			}

@@ -36,6 +36,8 @@ void BlockChainServer::Initialize()
 	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool, m_txHashSetManager);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
 
+	// TODO: Trigger Compaction
+
 	m_initialized = true;
 }
 

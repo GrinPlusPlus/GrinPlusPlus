@@ -9,6 +9,9 @@
 #include <Core/Features.h>
 #include <Crypto/Commitment.h>
 
+// Forward Declarations
+class TransactionOutput;
+
 class OutputIdentifier
 {
 public:
@@ -19,6 +22,8 @@ public:
 	OutputIdentifier(const OutputIdentifier& outputIdentifier) = default;
 	OutputIdentifier(OutputIdentifier&& outputIdentifier) noexcept = default;
 	OutputIdentifier() = default;
+
+	static OutputIdentifier FromOutput(const TransactionOutput& output);
 
 	//
 	// Destructor

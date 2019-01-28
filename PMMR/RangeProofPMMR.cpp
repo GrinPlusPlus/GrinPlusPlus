@@ -82,6 +82,35 @@ std::unique_ptr<Hash> RangeProofPMMR::GetHashAt(const uint64_t mmrIndex) const
 	return std::make_unique<Hash>(m_pHashFile->GetHashAt(shiftedIndex));
 }
 
+std::unique_ptr<RangeProof> RangeProofPMMR::GetRangeProofAt(const uint64_t mmrIndex) const
+{
+	if (MMRUtil::IsLeaf(mmrIndex))
+	{
+		if (m_leafSet.Contains(mmrIndex))
+		{
+			if (m_pruneList.IsCompacted(mmrIndex))
+			{
+				return std::unique_ptr<RangeProof>(nullptr);
+			}
+
+			const uint64_t shift = m_pruneList.GetLeafShift(mmrIndex);
+			const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
+			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
+
+			std::vector<unsigned char> data;
+			m_pDataFile->GetDataAt(shiftedIndex, data);
+
+			if (data.size() == RANGE_PROOF_SIZE)
+			{
+				ByteBuffer byteBuffer(data);
+				return std::make_unique<RangeProof>(RangeProof::Deserialize(byteBuffer));
+			}
+		}
+	}
+
+	return std::unique_ptr<RangeProof>(nullptr);
+}
+
 uint64_t RangeProofPMMR::GetSize() const
 {
 	const uint64_t totalShift = m_pruneList.GetTotalShift();

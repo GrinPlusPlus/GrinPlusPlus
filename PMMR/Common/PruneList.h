@@ -23,6 +23,8 @@ public:
 	// Indicates whether the position is the root of a pruned subtree.
 	bool IsPrunedRoot(const uint64_t mmrIndex) const;
 
+	bool IsCompacted(const uint64_t mmrIndex) const;
+
 	uint64_t GetTotalShift() const;
 	uint64_t GetShift(const uint64_t mmrIndex) const;
 	uint64_t GetLeafShift(const uint64_t mmrIndex) const;

@@ -9,6 +9,8 @@
 #include <Config/Config.h>
 #include <Crypto.h>
 #include <PMMR/TxHashSet.h>
+#include <Consensus/BlockTime.h>
+#include <algorithm>
 
 BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager)
 	: m_config(config), m_database(database), m_txHashSetManager(txHashSetManager)
@@ -117,7 +119,14 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 	std::unique_ptr<BlockHeader> pLastConfimedHeader = m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(EChainType::CONFIRMED), EChainType::CONFIRMED);
 	if (pLastConfimedHeader != nullptr)
 	{
-		if (m_pTransactionPool->AddTransaction(transaction, poolType, *pLastConfimedHeader))
+		const uint64_t maximumBlockHeightForCoinbase = std::max(pLastConfimedHeader->GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+		std::unique_ptr<BlockHeader> pMaximumBlockHeaderForCoinbase = m_pChainState->GetBlockHeaderByHeight(maximumBlockHeightForCoinbase, EChainType::CONFIRMED);
+		if (pMaximumBlockHeaderForCoinbase == nullptr)
+		{
+			return EBlockChainStatus::STORE_ERROR;
+		}
+
+		if (m_pTransactionPool->AddTransaction(transaction, poolType, *pLastConfimedHeader, pMaximumBlockHeaderForCoinbase->GetOutputMMRSize()))
 		{
 			return EBlockChainStatus::SUCCESS;
 		}

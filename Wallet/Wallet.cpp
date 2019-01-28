@@ -29,7 +29,12 @@ bool Wallet::Send(const uint64_t amount, const uint64_t fee, const std::string& 
 	return false;
 }
 
-std::vector<TransactionOutput> Wallet::GetAvailableOutputs(const ESelectionStrategy& strategy, const uint64_t amountWithFee)
+std::vector<WalletCoin> Wallet::GetAvailableCoins(const ESelectionStrategy& strategy, const uint64_t amountWithFee)
 {
-	return std::vector<TransactionOutput>();
+	return std::vector<WalletCoin>();
+}
+
+std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const uint64_t amount)
+{
+	return std::unique_ptr<WalletCoin>(nullptr);
 }

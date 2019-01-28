@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node/NodeClient.h"
+#include "WalletCoin.h"
 
 #include <Common/SecureString.h>
 #include <Config/Config.h>
@@ -18,7 +19,8 @@ public:
 
 	bool Send(const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination); // TODO: Password?
 
-	std::vector<TransactionOutput> GetAvailableOutputs(const ESelectionStrategy& strategy, const uint64_t amountWithFee);
+	std::vector<WalletCoin> GetAvailableCoins(const ESelectionStrategy& strategy, const uint64_t amountWithFee);
+	std::unique_ptr<WalletCoin> CreateBlindedOutput(const uint64_t amount);
 
 private:
 	const Config& m_config;

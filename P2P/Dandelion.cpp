@@ -117,7 +117,7 @@ bool Dandelion::ProcessStemPhase()
 		if (!success)
 		{
 			LoggerAPI::LogWarning("Dandelion::ProcessStemPhase() - Failed to stem. Fluffing instead.");
-			const bool added = m_transactionPool.AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL, *pConfirmedTipHeader);
+			const bool added = m_blockChainServer.AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 			if (added)
 			{
 				const TransactionMessage transactionMessage(*pTransactionToStem);
@@ -136,7 +136,7 @@ bool Dandelion::ProcessFluffPhase()
 	if (pTransactionToFluff != nullptr)
 	{
 		LoggerAPI::LogDebug("Dandelion::ProcessFluffPhase() - Fluffing transaction.");
-		const bool added = m_transactionPool.AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL, *pConfirmedTipHeader);
+		const bool added = m_blockChainServer.AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 		if (added)
 		{
 			const TransactionMessage transactionMessage(*pTransactionToFluff);
@@ -149,14 +149,13 @@ bool Dandelion::ProcessFluffPhase()
 
 bool Dandelion::ProcessExpiredEntries()
 {
-	std::unique_ptr<BlockHeader> pConfirmedTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);
 	const std::vector<Transaction> expiredTransactions = m_transactionPool.GetExpiredTransactions();
 	if (!expiredTransactions.empty())
 	{
 		LoggerAPI::LogInfo(StringUtil::Format("Dandelion::ProcessExpiredEntries() - %ull transactions expired. Fluffing now.", expiredTransactions.size()));
 		for (const Transaction& transaction : expiredTransactions)
 		{
-			if (m_transactionPool.AddTransaction(transaction, EPoolType::MEMPOOL, *pConfirmedTipHeader))
+			if (m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
 			{
 				const TransactionMessage transactionMessage(transaction);
 				m_connectionManager.BroadcastMessage(transactionMessage, 0);

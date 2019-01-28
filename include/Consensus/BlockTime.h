@@ -31,7 +31,7 @@ namespace Consensus
 
 	// Number of blocks before a coinbase matures and can be spent
 	// set to nominal number of block in one day (1440 with 1-minute blocks)
-	static const uint64_t COINBASE_MATURITY = 24 * 60 * 60 / BLOCK_TIME_SEC;
+	static const uint64_t COINBASE_MATURITY = (24 * 60 * 60) / BLOCK_TIME_SEC;
 
 	// Default number of blocks in the past when cross-block cut-through will start
 	// happening. Needs to be long enough to not overlap with a long reorg.

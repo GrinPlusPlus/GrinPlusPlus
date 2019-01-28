@@ -42,6 +42,7 @@ if(MSVC)
 endif()
 
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include

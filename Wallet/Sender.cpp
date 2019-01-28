@@ -1,5 +1,6 @@
 #include "Sender.h"
 
+#include <Common/FunctionalUtil.h>
 #include <uuid.h>
 
 Sender::Sender(const INodeClient& nodeClient)
@@ -37,14 +38,34 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const uint64_t amo
 	const uint64_t lockHeight = m_nodeClient.GetChainHeight() + 1;
 
 	// 3. Select inputs using desired selection strategy.
-	std::vector<TransactionOutput> inputs = wallet.GetAvailableOutputs(strategy, amount + fee);
+	std::vector<WalletCoin> inputs = wallet.GetAvailableCoins(strategy, amount + fee);
 	
 	// 4. Calculate sum inputs blinding factors xI.
+	auto getInputBlindingFactors = [](WalletCoin& input) -> BlindingFactor { return input.GetPrivateKey().GetPrivateKey(); };
+	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getInputBlindingFactors);
+	std::unique_ptr<BlindingFactor> pBlindingFactorSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
 
 	// 5. Create change output.
+	uint64_t inputTotal = 0;
+	for (const WalletCoin& input : inputs)
+	{
+		inputTotal += input.GetAmount();
+	}
+	const uint64_t changeAmount = inputTotal - (amount + fee);
 
 	// 6. Select blinding factor xC for change output.
+	std::unique_ptr<WalletCoin> pChangeOutput = wallet.CreateBlindedOutput(changeAmount);
 
+	// 7. Create lock function **sF** that locks **inputs** and stores **change_output** in wallet
+	// and identifying wallet transaction log entry **TS** linking **inputs + outputs** (Not executed at this point)
+
+
+	// 8. Calculate **tx_weight**: MAX(-1 * **num_inputs** + 4 * (**num_change_outputs** + 1), 1)
+	// (+1 covers a single output on the receiver's side)
+
+	// 9. Calculate **fee**:  **tx_weight** * 1_000_000 nG
+
+	// 10.Calculate total blinding excess sum for all inputs and outputs **xS1** = **xC** - **xI** (private scalar)
 	// TODO: Finish this.
 
 	return std::unique_ptr<Slate>(nullptr);

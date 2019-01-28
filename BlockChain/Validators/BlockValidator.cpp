@@ -70,6 +70,8 @@ bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 		return false;
 	}
 
+	// TODO: Verify Coinbase Maturity
+
 	return true;
 }
 

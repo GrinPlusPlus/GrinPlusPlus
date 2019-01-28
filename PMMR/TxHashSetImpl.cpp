@@ -84,6 +84,7 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	return true;
 }
 
+// TODO: Also store block heights
 bool TxHashSet::SaveOutputPositions()
 {
 	const uint64_t size = m_pOutputPMMR->GetSize();

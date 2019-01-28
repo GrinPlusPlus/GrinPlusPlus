@@ -24,8 +24,31 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
-bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
+bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock, const uint64_t maximumCoinbasePosition)
 {
+	// TODO: Verify fee meets minimum
+	
+	// Verify lock time
+	for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
+	{
+		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
+		{
+			return false;
+		}
+	}
+
+	// Verify coinbase maturity
+	for (const TransactionInput& input : transaction.GetBody().GetInputs())
+	{
+		// TODO: Store output block height in blockDB instead of passing in maximumCoinbasePosition.
+		const std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+		if (!outputPosOpt.has_value() || outputPosOpt.value() < maximumCoinbasePosition)
+		{
+			return false;
+		}
+
+	}
+
 	if (poolType == EPoolType::MEMPOOL)
 	{
 		// TODO: Load BlockSums

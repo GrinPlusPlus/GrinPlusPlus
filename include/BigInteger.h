@@ -11,6 +11,7 @@
 #include <string>
 #include <stdexcept>
 #include <sstream>
+#include <iomanip>
 
 #pragma warning(disable: 4505)
 

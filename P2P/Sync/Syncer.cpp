@@ -71,7 +71,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 			// Sync Blocks
 			if (blockSyncer.SyncBlocks(syncer.m_syncStatus))
 			{
-				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_HEADERS);
+				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
 				continue;
 			}
 		}

@@ -53,7 +53,12 @@ public:
 
 	static RangeProof Deserialize(ByteBuffer& byteBuffer)
 	{
-		const uint64_t proofSize = byteBuffer.ReadU64(); // TODO: Check MAX_PROOF_SIZE
+		const uint64_t proofSize = byteBuffer.ReadU64();
+		if (proofSize > MAX_PROOF_SIZE)
+		{
+			throw DeserializationException();
+		}
+
 		return RangeProof(std::move(byteBuffer.ReadVector(proofSize)));
 	}
 

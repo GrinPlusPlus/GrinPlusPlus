@@ -54,6 +54,7 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const uint64_t amo
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 
 	// 6. Select blinding factor xC for change output.
+	const uint64_t numOutputs = 1;
 	std::unique_ptr<WalletCoin> pChangeOutput = wallet.CreateBlindedOutput(changeAmount);
 
 	// 7. Create lock function **sF** that locks **inputs** and stores **change_output** in wallet
@@ -62,10 +63,25 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const uint64_t amo
 
 	// 8. Calculate **tx_weight**: MAX(-1 * **num_inputs** + 4 * (**num_change_outputs** + 1), 1)
 	// (+1 covers a single output on the receiver's side)
+	const uint64_t txWeight = max(-1 * ((int64_t)inputs.size()) + (int64_t)(4 * (numOutputs + 1)), 1);
 
 	// 9. Calculate **fee**:  **tx_weight** * 1_000_000 nG
+	const uint64_t fee = txWeight * 1000000;
 
-	// 10.Calculate total blinding excess sum for all inputs and outputs **xS1** = **xC** - **xI** (private scalar)
+	// 10. Calculate total blinding excess sum for all inputs and outputs **xS1** = **xC** - **xI** (private scalar)
+	const std::vector<BlindingFactor> positiveBlindingFactors = { pChangeOutput->GetPrivateKey().ToBlindingFactor() };
+	const std::vector<BlindingFactor> negativeBlindingFactors = { *pBlindingFactorSum };
+	std::unique_ptr<BlindingFactor> pTotalBlindingExcessSum = Crypto::AddBlindingFactors(positiveBlindingFactors, negativeBlindingFactors);
+
+	// 11. Select a random nonce **kS** (private scalar)
+
+	// 12. Subtract random kernel offset **oS** from **xS1**. Calculate **xS** = **xS1** - **oS**
+
+	// 13. Multiply **xS** and **kS** by generator G to create public curve points **xSG** and **kSG**
+
+	// 14. Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
+	// **fee, amount, lock_height, kSG, xSG, oS**
+
 	// TODO: Finish this.
 
 	return std::unique_ptr<Slate>(nullptr);

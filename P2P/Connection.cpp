@@ -102,11 +102,14 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 	{
 		std::unique_lock<std::mutex> lockGuard(connection.m_peerMutex);
 
+		bool messageSentOrReceived = false;
+
 		// Check for received messages and if there is a new message, process it.
 		std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, BaseMessageRetriever::NON_BLOCKING);
 		if (pRawMessage.get() != nullptr)
 		{
 			const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
+			messageSentOrReceived = true;
 		}
 
 		// Send the next message in the queue, if one exists.
@@ -117,11 +120,17 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			connection.m_sendQueue.pop();
 
 			MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
+
+			messageSentOrReceived = true;
 		}
 
 		// TODO: If no message sent or received in last ~15 seconds, send ping.
 		sendLockGuard.unlock();
 		lockGuard.unlock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		if (!messageSentOrReceived)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
 	}
 }

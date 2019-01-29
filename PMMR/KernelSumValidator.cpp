@@ -63,7 +63,7 @@ std::unique_ptr<Commitment> KernelSumValidator::AddCommitments(TxHashSet& txHash
 
 	// Determine output commitments
 	OutputPMMR* pOutputPMMR = txHashSet.GetOutputPMMR();
-	std::vector<Commitment> outputCommitments; // TODO: Reserve size
+	std::vector<Commitment> outputCommitments;
 	for (uint64_t i = 0; i < outputMMRSize; i++)
 	{
 		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetOutputAt(i);
@@ -80,7 +80,7 @@ std::unique_ptr<Commitment> KernelSumValidator::AddKernelExcesses(TxHashSet& txH
 {
 	// Determine kernel excess commitments
 	KernelMMR* pKernelMMR = txHashSet.GetKernelMMR();
-	std::vector<Commitment> excessCommitments; // TODO: Reserve size
+	std::vector<Commitment> excessCommitments;
 	for (uint64_t i = 0; i < kernelMMRSize; i++)
 	{
 		std::unique_ptr<TransactionKernel> pKernel = pKernelMMR->GetKernelAt(i);

@@ -2,6 +2,8 @@
 
 #include "ExtendedKey.h"
 
+#include <Crypto/BlindingFactor.h>
+
 class PrivateExtKey : public IExtendedKey
 {
 public:
@@ -29,6 +31,11 @@ public:
 		CBigInteger<32> privateKey(std::move(privateKeyBytes));
 
 		return PrivateExtKey(network, depth, parentFingerprint, childNumber, std::move(chainCode), std::move(keyBytes), std::move(privateKey));
+	}
+
+	BlindingFactor ToBlindingFactor() const
+	{
+		return BlindingFactor(m_privateKey);
 	}
 
 private:

@@ -4,6 +4,8 @@
 #include "secp256k1-zkp/include/secp256k1_aggsig.h"
 #include "secp256k1-zkp/include/secp256k1_commitment.h"
 #include "secp256k1-zkp/include/secp256k1_bulletproofs.h"
+
+#include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
@@ -118,7 +120,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t valu
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	// TODO: Log Failure
+	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommit - Failed to create commitment. Result: " + std::to_string(result) + " Value: " + std::to_string(value) + " Blind: " + blindingFactor.GetBlindingFactorBytes().ToHex());
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -151,7 +153,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommitSum(const std::vecto
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	// TODO: Log failue
+	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommitSum - secp256k1_pedersen_commit_sum returned result: " + std::to_string(result));
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -179,7 +181,7 @@ std::unique_ptr<BlindingFactor> Secp256k1Wrapper::PedersenBlindSum(const std::ve
 		return std::make_unique<BlindingFactor>(BlindingFactor(std::move(blindingFactorBytes)));
 	}
 
-	// TODO: Log failue
+	LoggerAPI::LogError("Secp256k1Wrapper::PedersenBlindSum - secp256k1_pedersen_blind_sum returned result: " + std::to_string(result));
 	return std::unique_ptr<BlindingFactor>(nullptr);
 }
 
@@ -209,7 +211,7 @@ void Secp256k1Wrapper::CleanupCommitments(std::vector<secp256k1_pedersen_commitm
 {
 	for (secp256k1_pedersen_commitment* pCommitment : commitments)
 	{
-		delete pCommitment; // TODO: delete or delete[]?
+		delete pCommitment;
 	}
 
 	commitments.clear();

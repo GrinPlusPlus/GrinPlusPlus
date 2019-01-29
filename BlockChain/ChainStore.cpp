@@ -26,8 +26,6 @@ bool ChainStore::Load()
 
 	const std::string dbPath = m_config.GetChainDirectory();
 
-	// TODO: Use Common Chain (pre-horizon?)
-
 	bool success = true;
 	if (!ReadChain(m_syncChain, dbPath + "sync.chain"))
 	{

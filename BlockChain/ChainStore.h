@@ -4,7 +4,7 @@
 
 #include <Config/Config.h>
 
-// TODO: Move to Database
+// TODO: Use memory-mapped file
 class ChainStore
 {
 public:

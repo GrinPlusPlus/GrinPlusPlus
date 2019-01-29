@@ -32,7 +32,7 @@ std::unique_ptr<BlockHeader> BlockStore::GetBlockHeaderByHash(const Hash& hash) 
 		return std::make_unique<BlockHeader>(*iter->second);
 	}
 
-	return m_blockDB.GetBlockHeader(hash); // TODO: Cache this?
+	return m_blockDB.GetBlockHeader(hash);
 }
 
 bool BlockStore::AddHeader(const BlockHeader& blockHeader)

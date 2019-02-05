@@ -16,6 +16,7 @@
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Signature.h>
 #include <Crypto/ProofMessage.h>
+#include <Crypto/RewoundProof.h>
 #include <Hash.h>
 
 #ifdef MW_CRYPTO
@@ -76,6 +77,8 @@ public:
 	static std::unique_ptr<BlindingFactor> AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
 
 	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage);
+
+	static std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce);
 
 	//
 	//

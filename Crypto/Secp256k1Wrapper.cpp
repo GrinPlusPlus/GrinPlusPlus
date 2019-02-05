@@ -143,6 +143,44 @@ std::unique_ptr<RangeProof> Secp256k1Wrapper::GenerateRangeProof(const uint64_t 
 	return std::unique_ptr<RangeProof>(nullptr);
 }
 
+std::unique_ptr<RewoundProof> Secp256k1Wrapper::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce) const
+{
+	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = ConvertCommitments(std::vector<Commitment>({ commitment }));
+
+	if (!commitmentPointers.empty())
+	{
+		uint64_t value;
+		std::vector<unsigned char> blindingFactorBytes(32);
+		std::vector<unsigned char> message(16);
+
+		secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
+		int result = secp256k1_bulletproof_rangeproof_rewind(
+			m_pContext,
+			m_pGenerators,
+			&value,
+			blindingFactorBytes.data(),
+			rangeProof.GetProofBytes().data(),
+			rangeProof.GetProofBytes().size(),
+			0,
+			commitmentPointers.front(),
+			&secp256k1_generator_const_h,
+			nonce.GetData().data(),
+			NULL,
+			0,
+			message.data()
+		);
+		secp256k1_scratch_space_destroy(pScratchSpace);
+		CleanupCommitments(commitmentPointers);
+
+		if (result == 1)
+		{
+			return std::make_unique<RewoundProof>(RewoundProof(value, BlindingFactor(std::move(blindingFactorBytes)), ProofMessage(std::move(message))));
+		}
+	}
+
+	return std::unique_ptr<RewoundProof>(nullptr);
+}
+
 std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBigInteger<32>& privateKey) const
 {
 	const int verifyResult = secp256k1_ec_seckey_verify(m_pContext, privateKey.GetData().data());

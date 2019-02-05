@@ -7,6 +7,7 @@
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
 #include <Crypto/ProofMessage.h>
+#include <Crypto/RewoundProof.h>
 #include <Hash.h>
 #include <vector>
 #include <memory>
@@ -26,6 +27,7 @@ public:
 	std::unique_ptr<Commitment> PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
 	std::unique_ptr<BlindingFactor> PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;
 	std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage) const;
+	std::unique_ptr<RewoundProof> RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce) const;
 
 private:
 	Secp256k1Wrapper();

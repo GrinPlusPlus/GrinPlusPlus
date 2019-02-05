@@ -132,6 +132,11 @@ std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, co
 	return Secp256k1Wrapper::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
 }
 
+std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce)
+{
+	return Secp256k1Wrapper::GetInstance().RewindProof(commitment, rangeProof, nonce);
+}
+
 bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
 {
 	if (commitments.size() != rangeProofs.size())

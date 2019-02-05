@@ -15,6 +15,7 @@
 #include <Crypto/RangeProof.h>
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Signature.h>
+#include <Crypto/ProofMessage.h>
 #include <Hash.h>
 
 #ifdef MW_CRYPTO
@@ -74,6 +75,8 @@ public:
 	//
 	static std::unique_ptr<BlindingFactor> AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
 
+	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage);
+
 	//
 	//
 	//
@@ -108,5 +111,5 @@ public:
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
 	//
-	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey);
+	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey); // TODO: Take in BlindingFactor
 };

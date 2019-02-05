@@ -127,6 +127,11 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
 }
 
+std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage)
+{
+	return Secp256k1Wrapper::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
+}
+
 bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
 {
 	if (commitments.size() != rangeProofs.size())

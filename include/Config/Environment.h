@@ -6,8 +6,8 @@
 class Environment
 {
 public:
-	Environment(const EEnvironmentType environmentType, const FullBlock& block, const std::vector<uint8_t>& magicBytes, const uint16_t port, const uint32_t publicKeyVersion, const uint32_t privateKeyVersion)
-		: m_environmentType(environmentType), m_block(std::move(block)), m_magicBytes(magicBytes), m_port(port), m_publicKeyVersion(publicKeyVersion), m_privateKeyVersion(privateKeyVersion)
+	Environment(const EEnvironmentType environmentType, const FullBlock& block, const std::vector<uint8_t>& magicBytes, const uint16_t port)
+		: m_environmentType(environmentType), m_block(std::move(block)), m_magicBytes(magicBytes), m_port(port)
 	{
 
 	}
@@ -16,8 +16,7 @@ public:
 	inline const Hash& GetGenesisHash() const { return m_block.GetBlockHeader().GetHash(); }
 	inline const std::vector<uint8_t>& GetMagicBytes() const { return m_magicBytes; }
 	inline uint16_t GetP2PPort() const { return m_port; }
-	inline uint32_t GetPublicKeyVersion() const { return m_publicKeyVersion; }
-	inline uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
+	inline EEnvironmentType GetEnvironmentType() const { return m_environmentType; }
 	inline bool IsMainnet() const { return m_environmentType == EEnvironmentType::MAINNET; }
 
 private:

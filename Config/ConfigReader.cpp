@@ -15,7 +15,7 @@ Config ConfigReader::ReadConfig(const Json::Value& root) const
 	const Environment environment = ReadEnvironment(root);
 
 	// Read Directories
-	const std::string dataPath = ReadDataPath(root);
+	const std::string dataPath = ReadDataPath(root, environment.GetEnvironmentType());
 
 	// Read P2P Config
 	const P2PConfig p2pConfig = ReadP2P(root);
@@ -23,9 +23,11 @@ Config ConfigReader::ReadConfig(const Json::Value& root) const
 	// Read Dandelion Config
 	const DandelionConfig dandelionConfig = ReadDandelion(root);
 
-	// TODO: Mempool, mining, wallet, and logger settings
+	// Read Wallet Config
+	const WalletConfig walletConfig = ReadWalletConfig(root, environment.GetEnvironmentType(), dataPath);
 
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig);
+	// TODO: Mempool, mining, and logger settings
+	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
@@ -58,28 +60,26 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 	const std::vector<unsigned char> MAINNET_MAGIC = { 97, 61 };
 	const std::vector<unsigned char> FLOONET_MAGIC = { 83, 59 };
 
-	// MAINNET: Figure out private/public Version
-	const uint32_t floonetPrivateVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
-	const uint32_t floonetPublicVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	if (root.isMember(ConfigProps::ENVIRONMENT))
 	{
 		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "MAINNET").asString();
 		if (environment == "MAINNET")
 		{
-			return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT, floonetPrivateVersion, floonetPublicVersion);
+			return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT);
 		}
 		else if (environment == "FLOONET")
 		{
-			return Environment(EEnvironmentType::FLOONET, Genesis::FLOONET_GENESIS, FLOONET_MAGIC, FLOONET_PORT, floonetPrivateVersion, floonetPublicVersion);
+			return Environment(EEnvironmentType::FLOONET, Genesis::FLOONET_GENESIS, FLOONET_MAGIC, FLOONET_PORT);
 		}
 	}
 
-	return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT, floonetPrivateVersion, floonetPublicVersion);
+	return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT);
 }
 
-std::string ConfigReader::ReadDataPath(const Json::Value& root) const
+std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironmentType environmentType) const
 {
-	const std::string defaultPath = std::filesystem::current_path().string() + "/DATA/";
+	const std::string dataDirectory = environmentType == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET";
+	const std::string defaultPath = std::filesystem::current_path().string() + "/" + dataDirectory  + "/";
 	if (root.isMember(ConfigProps::DATA_PATH))
 	{
 		return root.get(ConfigProps::DATA_PATH, defaultPath).asString();
@@ -144,4 +144,23 @@ DandelionConfig ConfigReader::ReadDandelion(const Json::Value& root) const
 	}
 
 	return DandelionConfig(relaySeconds, embargoSeconds, patienceSeconds, stemProbability);
+}
+
+WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvironmentType environmentType, const std::string& dataPath) const
+{
+	const std::string walletPath = dataPath + "WALLET/";
+
+	const uint32_t listenPort = 3415; // TODO: Read value
+	const uint32_t ownerPort = 3420; // TODO: Read value
+
+	uint32_t privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
+	uint32_t publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
+	if (environmentType == EEnvironmentType::MAINNET)
+	{
+		// TODO: Figure out mainnet private/public Version
+		privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
+		publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
+	}
+
+	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion);
 }

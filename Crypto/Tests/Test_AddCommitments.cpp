@@ -9,7 +9,7 @@ TEST_CASE("Crypto::AddCommitment")
 {
 	// Test adding blinded commitment with transparent one
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue() / 2);
+		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
 
 		Commitment commit_a = *Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = *Crypto::CommitTransparent(2);
@@ -22,8 +22,8 @@ TEST_CASE("Crypto::AddCommitment")
 
 	// Test adding 2 blinded commitment
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue() / 2);
-		BlindingFactor blind_b = RandomNumberGenerator::GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue() / 2);
+		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
+		BlindingFactor blind_b = RandomNumberGenerator::GenerateRandom32() / 2;
 
 		Commitment commit_a = *Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = *Crypto::CommitBlinded(2, blind_b);
@@ -42,8 +42,8 @@ TEST_CASE("Crypto::AddCommitment")
 
 	// Test adding negative blinded commitment
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue() / 2);
-		BlindingFactor blind_b = RandomNumberGenerator::GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue() / 2);
+		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
+		BlindingFactor blind_b = RandomNumberGenerator::GenerateRandom32() / 2;
 
 		Commitment commit_a = *Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = *Crypto::CommitBlinded(2, blind_b);

@@ -15,7 +15,7 @@
 
 #pragma warning(disable: 4505)
 
-template<size_t NUM_BYTES>
+template<size_t NUM_BYTES, class ALLOC = std::allocator<unsigned char>>
 class CBigInteger
 {
 public:
@@ -27,13 +27,13 @@ public:
 	{
 	}
 
-	CBigInteger(const std::vector<unsigned char>& data)
+	CBigInteger(const std::vector<unsigned char, ALLOC>& data)
 		: m_data(data)
 	{
 
 	}
 
-	CBigInteger(std::vector<unsigned char>&& data)
+	CBigInteger(std::vector<unsigned char, ALLOC>&& data)
 		: m_data(std::move(data))
 	{
 
@@ -56,19 +56,19 @@ public:
 	//
 	~CBigInteger() = default;
 
-	inline const std::vector<unsigned char>& GetData() const
+	inline const std::vector<unsigned char, ALLOC>& GetData() const
 	{
 		return m_data;
 	}
 
-	static CBigInteger<NUM_BYTES> ValueOf(const unsigned char value);
-	static CBigInteger<NUM_BYTES> FromHex(const std::string& hex);
-	static CBigInteger<NUM_BYTES> GetMaximumValue();
+	static CBigInteger<NUM_BYTES, ALLOC> ValueOf(const unsigned char value);
+	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex);
+	static CBigInteger<NUM_BYTES, ALLOC> GetMaximumValue();
 
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
 	std::string ToHex() const;
 
-	CBigInteger<NUM_BYTES>& ReverseByteOrder();
+	CBigInteger<NUM_BYTES, ALLOC>& ReverseByteOrder();
 
 	CBigInteger addMod(const CBigInteger& addend, const CBigInteger& mod) const;
 
@@ -177,31 +177,31 @@ public:
 	}
 
 private:
-	std::vector<unsigned char> m_data;
+	std::vector<unsigned char, ALLOC> m_data;
 };
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::ValueOf(const unsigned char value)
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::ValueOf(const unsigned char value)
 {
-	std::vector<unsigned char> data(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
 	data[NUM_BYTES - 1] = value;
-	return CBigInteger<NUM_BYTES>(&data[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::GetMaximumValue()
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::GetMaximumValue()
 {
-	std::vector<unsigned char> data(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
 	for (int i = 0; i < NUM_BYTES; i++)
 	{
 		data[i] = 0xFF;
 	}
 
-	return CBigInteger<NUM_BYTES>(&data[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::FromHex(const std::string& hex)
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::string& hex)
 {
 	// TODO: Verify input size
 	size_t index = 0;
@@ -219,13 +219,13 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::FromHex(const std::string& hex)
 		}
 	}
 
-	std::vector<unsigned char> data(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
 	for (size_t i = 0; i < hexNoSpaces.length(); i += 2)
 	{
 		data[i / 2] = (FromHexChar(hexNoSpaces[i]) * 16 + FromHexChar(hexNoSpaces[i + 1]));
 	}
 
-	return CBigInteger<NUM_BYTES>(&data[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
 }
 
 static unsigned char FromHexChar(const char value)
@@ -243,8 +243,8 @@ static unsigned char FromHexChar(const char value)
 	return (unsigned char)(10 + value - 'A');
 }
 
-template<size_t NUM_BYTES>
-std::string CBigInteger<NUM_BYTES>::ToHex() const
+template<size_t NUM_BYTES, class ALLOC>
+std::string CBigInteger<NUM_BYTES, ALLOC>::ToHex() const
 {
 	std::ostringstream stream;
 	for (const unsigned char byte : m_data)
@@ -255,19 +255,19 @@ std::string CBigInteger<NUM_BYTES>::ToHex() const
 	return stream.str();
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES>& CBigInteger<NUM_BYTES>::ReverseByteOrder()
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC>& CBigInteger<NUM_BYTES, ALLOC>::ReverseByteOrder()
 {
 	std::reverse(m_data.begin(), m_data.end());
 	return *this;
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::addMod(const CBigInteger<NUM_BYTES>& addend, const CBigInteger<NUM_BYTES>& mod) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::addMod(const CBigInteger<NUM_BYTES, ALLOC>& addend, const CBigInteger<NUM_BYTES, ALLOC>& mod) const
 {
 	return *this + addend; // TODO: Handle mod
-	//std::vector<unsigned char> zeroVector(NUM_BYTES, 0);
-	//std::vector<unsigned char> totalSum(NUM_BYTES);
+	//std::vector<unsigned char, ALLOC> zeroVector(NUM_BYTES, 0);
+	//std::vector<unsigned char, ALLOC> totalSum(NUM_BYTES);
 
 	//int carry = 0;
 
@@ -299,29 +299,29 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::addMod(const CBigInteger<NUM_BYTE
 	//{
 	//	totalSum[0] = 255;
 	//	int remainder = sum - 255;
-	//	CBigInteger<NUM_BYTES> sum(&totalSum[0]);
+	//	CBigInteger<NUM_BYTES, ALLOC> sum(&totalSum[0]);
 
-	//	CBigInteger<NUM_BYTES> mod = sum % mod;
+	//	CBigInteger<NUM_BYTES, ALLOC> mod = sum % mod;
 	//	totalSum = mod.GetData();
 
 	//	sum = totalSum[0] +
 	//}
 
-	//return CBigInteger<NUM_BYTES>(&totalSum[0]);
+	//return CBigInteger<NUM_BYTES, ALLOC>(&totalSum[0]);
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const CBigInteger<NUM_BYTES>& A) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator*(const CBigInteger<NUM_BYTES, ALLOC>& A) const
 {
-	const CBigInteger<NUM_BYTES> ZERO = CBigInteger<NUM_BYTES>::ValueOf(0);
+	const CBigInteger<NUM_BYTES, ALLOC> ZERO = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(0);
 	if (A == ZERO)
 	{
 		return ZERO;
 	}
 
-	CBigInteger<NUM_BYTES> multiplier = CBigInteger<NUM_BYTES>::ValueOf(1);
-	CBigInteger<NUM_BYTES> nextMultiplier = CBigInteger<NUM_BYTES>::ValueOf(2);
-	CBigInteger<NUM_BYTES> product = *this;
+	CBigInteger<NUM_BYTES, ALLOC> multiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(1);
+	CBigInteger<NUM_BYTES, ALLOC> nextMultiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(2);
+	CBigInteger<NUM_BYTES, ALLOC> product = *this;
 
 	while (nextMultiplier <= A)
 	{
@@ -331,7 +331,7 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const CBigInteger<NUM_B
 		Double(nextMultiplier);
 	}
 
-	CBigInteger<NUM_BYTES> remaining = A - multiplier;
+	CBigInteger<NUM_BYTES, ALLOC> remaining = A - multiplier;
 
 	if (remaining > ZERO)
 	{
@@ -342,7 +342,7 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const CBigInteger<NUM_B
 
 
 	//// TODO: This math is all wrong
-	//std::vector<unsigned char> tempNUM_BYTES;
+	//std::vector<unsigned char, ALLOC> tempNUM_BYTES;
 
 	//int result = 0;
 	//int k = 0;
@@ -366,14 +366,14 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const CBigInteger<NUM_B
 	//	}
 	//}
 
-	//CBigInteger<NUM_BYTES> product(&temp[0]);
+	//CBigInteger<NUM_BYTES, ALLOC> product(&temp[0]);
 	//return product;
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator+(const CBigInteger<NUM_BYTES>& addend) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator+(const CBigInteger<NUM_BYTES, ALLOC>& addend) const
 {
-	std::vector<unsigned char> totalSum(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> totalSum(NUM_BYTES);
 
 	int carry = 0;
 
@@ -397,13 +397,13 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator+(const CBigInteger<NUM_B
 		totalSum[i] = (unsigned char)sum;
 	}
 
-	return CBigInteger<NUM_BYTES>(&totalSum[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&totalSum[0]);
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator-(const CBigInteger<NUM_BYTES>& amount) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator-(const CBigInteger<NUM_BYTES, ALLOC>& amount) const
 {
-	std::vector<unsigned char> result(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> result(NUM_BYTES);
 
 	int carry = 0;
 
@@ -424,11 +424,11 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator-(const CBigInteger<NUM_B
 		result[i] = (unsigned char)(temp - digit2);
 	}
 
-	return CBigInteger<NUM_BYTES>(&result[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&result[0]);
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const int multiplier) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator*(const int multiplier) const
 {
 	CBigInteger temp(&m_data[0]);
 	for (int i = 1; i < multiplier; i++)
@@ -439,10 +439,10 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator*(const int multiplier) c
 	return temp;
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const int divisor) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator/(const int divisor) const
 {
-	std::vector<unsigned char> quotient(NUM_BYTES);
+	std::vector<unsigned char, ALLOC> quotient(NUM_BYTES);
 
 	int remainder = 0;
 	for (int i = 0; i < NUM_BYTES; i++)
@@ -452,26 +452,26 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const int divisor) cons
 		remainder -= quotient[i] * divisor;
 	}
 
-	return CBigInteger<NUM_BYTES>(&quotient[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(&quotient[0]);
 }
 
-template<size_t NUM_BYTES>
-static void Double(CBigInteger<NUM_BYTES>& number)
+template<size_t NUM_BYTES, class ALLOC>
+static void Double(CBigInteger<NUM_BYTES, ALLOC>& number)
 {
 	// TODO: Handle overflow
 	number = number + number;
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const CBigInteger<NUM_BYTES>& divisor) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator/(const CBigInteger<NUM_BYTES, ALLOC>& divisor) const
 {
-	CBigInteger<NUM_BYTES> remaining = *this;
+	CBigInteger<NUM_BYTES, ALLOC> remaining = *this;
 
-	const CBigInteger<NUM_BYTES> ZERO = CBigInteger<NUM_BYTES>::ValueOf(0);
+	const CBigInteger<NUM_BYTES, ALLOC> ZERO = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(0);
 
-	CBigInteger<NUM_BYTES> multiplier = CBigInteger<NUM_BYTES>::ValueOf(0);
-	CBigInteger<NUM_BYTES> prevTotal = divisor;
-	CBigInteger<NUM_BYTES> total = divisor;
+	CBigInteger<NUM_BYTES, ALLOC> multiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(0);
+	CBigInteger<NUM_BYTES, ALLOC> prevTotal = divisor;
+	CBigInteger<NUM_BYTES, ALLOC> total = divisor;
 
 	while (total <= remaining)
 	{
@@ -480,7 +480,7 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const CBigInteger<NUM_B
 
 		if (multiplier == ZERO)
 		{
-			multiplier = CBigInteger<NUM_BYTES>::ValueOf(1);
+			multiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(1);
 		}
 		else
 		{
@@ -490,7 +490,7 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const CBigInteger<NUM_B
 
 	total = prevTotal;
 
-	CBigInteger<NUM_BYTES> quotient = multiplier;
+	CBigInteger<NUM_BYTES, ALLOC> quotient = multiplier;
 	remaining  = remaining - total;
 	
 	if (remaining >= divisor)
@@ -501,24 +501,24 @@ CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator/(const CBigInteger<NUM_B
 	return quotient;
 }
 
-template<size_t NUM_BYTES>
-int CBigInteger<NUM_BYTES>::operator%(const int modulo) const
+template<size_t NUM_BYTES, class ALLOC>
+int CBigInteger<NUM_BYTES, ALLOC>::operator%(const int modulo) const
 {
-	CBigInteger<NUM_BYTES> quotient = *this / modulo;
+	CBigInteger<NUM_BYTES, ALLOC> quotient = *this / modulo;
 
-	CBigInteger<NUM_BYTES> product = quotient * modulo;
-	CBigInteger<NUM_BYTES> modResult = *this - product;
+	CBigInteger<NUM_BYTES, ALLOC> product = quotient * modulo;
+	CBigInteger<NUM_BYTES, ALLOC> modResult = *this - product;
 
 	return modResult.m_data[NUM_BYTES - 1];
 }
 
-template<size_t NUM_BYTES>
-CBigInteger<NUM_BYTES> CBigInteger<NUM_BYTES>::operator%(const CBigInteger<NUM_BYTES>& modulo) const
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator%(const CBigInteger<NUM_BYTES, ALLOC>& modulo) const
 {
-	CBigInteger<NUM_BYTES> quotient = *this / modulo;
+	CBigInteger<NUM_BYTES, ALLOC> quotient = *this / modulo;
 
-	CBigInteger<NUM_BYTES> product = quotient * modulo;
-	CBigInteger<NUM_BYTES> modResult = *this - product;
+	CBigInteger<NUM_BYTES, ALLOC> product = quotient * modulo;
+	CBigInteger<NUM_BYTES, ALLOC> modResult = *this - product;
 
 	return modResult;
 }

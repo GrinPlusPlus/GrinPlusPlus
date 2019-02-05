@@ -9,10 +9,10 @@ class IDatabase;
 class IBlockChainServer;
 class IP2PServer;
 
-class RestServer
+class NodeRestServer
 {
 public:
-	RestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer);
+	NodeRestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer);
 
 	bool Start();
 	bool Shutdown();

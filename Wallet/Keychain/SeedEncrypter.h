@@ -1,13 +1,10 @@
 #pragma once
 
+#include <BigInteger.h>
+#include <Wallet/EncryptedSeed.h>
+#include <Common/Secure.h>
 #include <vector>
 #include <memory>
-#include <tuple>
-#include <BigInteger.h>
-
-typedef CBigInteger<16> IV;
-typedef std::vector<unsigned char> Salt;
-typedef std::vector<unsigned char> EncryptedBytes;
 
 //
 // A container for the HD Wallet's master seed and other sensitive data.
@@ -51,13 +48,13 @@ public:
 	//
 	// Encrypts the wallet seed using the password and a randomly generated salt.
 	//
-	std::tuple<Salt, IV, EncryptedBytes> EncryptWalletSeed(const CBigInteger<32>& walletSeed, const std::string& password) const;
+	EncryptedSeed EncryptWalletSeed(const CBigInteger<32>& walletSeed, const SecureString& password) const;
 
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
-	CBigInteger<32> DecryptWalletSeed(const EncryptedBytes& encryptedBytes, const Salt& salt, const IV& iv, const std::string& password) const;
+	CBigInteger<32> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
 
 private:
-	 CBigInteger<32> CalculatePasswordHash(const std::string& password, const Salt& salt) const;
+	 CBigInteger<32> CalculatePasswordHash(const SecureString& password, const CBigInteger<8>& salt) const;
 };

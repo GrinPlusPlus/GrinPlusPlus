@@ -189,6 +189,11 @@ public:
 		return std::vector<unsigned char>(m_bytes.cbegin() + index, m_bytes.cbegin() + index + numBytes);
 	}
 
+	inline size_t GetRemainingSize() const
+	{
+		return m_bytes.size() - m_index;
+	}
+
 private:
 	size_t m_index;
 	const std::vector<unsigned char>& m_bytes;

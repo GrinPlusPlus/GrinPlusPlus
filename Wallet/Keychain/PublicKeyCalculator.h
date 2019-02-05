@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Keys/PrivateExtKey.h"
-#include "Keys/PublicExtKey.h"
+#include <Wallet/PrivateExtKey.h>
+#include <Wallet/PublicExtKey.h>
 
 #include <memory>
 

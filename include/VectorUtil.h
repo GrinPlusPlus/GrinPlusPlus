@@ -32,4 +32,16 @@ namespace VectorUtil
 
 		return false;
 	}
+
+	template<typename T>
+	static std::vector<T> Concat(const std::vector<T>& vec1, const std::vector<T>& vec2)
+	{
+		std::vector<T> result;
+		result.reserve(vec1.size() + vec2.size());
+
+		result.insert(result.end(), vec1.cbegin(), vec2.cend());
+		result.insert(result.end(), vec2.cbegin(), vec2.cend());
+
+		return result;
+	}
 }

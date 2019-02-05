@@ -29,7 +29,7 @@ PrivateExtKey KeyGenerator::GenerateMasterKey(const CBigInteger<32>& seed) const
 
 	CBigInteger<32> masterChainCode(&vchHash[32]);
 
-	return PrivateExtKey::Create(m_config.GetEnvironment().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
+	return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
 }
 
 std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
@@ -85,7 +85,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 	vchRight.insert(vchRight.begin(), hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64);
 	CBigInteger<32> childChainCode(&vchRight[0]);
 
-	return std::make_unique<PrivateExtKey>(PrivateExtKey::Create(m_config.GetEnvironment().GetPrivateKeyVersion(), parentExtendedKey.GetDepth() + 1, parentFingerprint, childKeyIndex, std::move(childChainCode), std::move(childPrivateKey)));
+	return std::make_unique<PrivateExtKey>(PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), parentExtendedKey.GetDepth() + 1, parentFingerprint, childKeyIndex, std::move(childChainCode), std::move(childPrivateKey)));
 }
 
 PublicExtKey KeyGenerator::GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const

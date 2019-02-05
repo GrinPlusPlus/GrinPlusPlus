@@ -35,12 +35,12 @@ public:
 namespace DatabaseAPI
 {
 	//
-	// Creates a new instance of the BlockChain server.
+	// Opens all node databases and returns an instance of IDatabase.
 	//
 	DATABASE_API IDatabase* OpenDatabase(const Config& config);
 
 	//
-	// Stops the BlockChain server and clears up its memory usage.
+	// Closes all node databases and cleans up the memory of IDatabase.
 	//
 	DATABASE_API void CloseDatabase(IDatabase* pDatabase);
 }

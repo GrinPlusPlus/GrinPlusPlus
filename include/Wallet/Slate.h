@@ -12,6 +12,19 @@
 // binary or JSON serialization helpers here).
 class Slate
 {
+public:
+	Slate(const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
+		: m_numParticipants(numParticipants),
+		m_slateId(std::move(slateId)),
+		m_transaction(std::move(transaction)),
+		m_amount(amount),
+		m_fee(fee),
+		m_blockHeight(blockHeight),
+		m_lockHeight(lockHeight)
+	{
+
+	}
+
 private:
 	// The number of participants intended to take part in this transaction
 	uint64_t m_numParticipants;

@@ -5,14 +5,15 @@
 #include <Config/P2PConfig.h>
 #include <Config/Environment.h>
 #include <Config/Genesis.h>
+#include <Config/WalletConfig.h>
 #include <string>
 #include <filesystem>
 
 class Config
 {
 public:
-	Config(const EClientMode clientMode, const Environment& environment, const std::string& dataPath, const DandelionConfig& dandelionConfig, const P2PConfig& p2pConfig)
-		: m_clientMode(clientMode), m_environment(environment), m_dataPath(dataPath), m_dandelionConfig(dandelionConfig), m_p2pConfig(p2pConfig)
+	Config(const EClientMode clientMode, const Environment& environment, const std::string& dataPath, const DandelionConfig& dandelionConfig, const P2PConfig& p2pConfig, const WalletConfig& walletConfig)
+		: m_clientMode(clientMode), m_environment(environment), m_dataPath(dataPath), m_dandelionConfig(dandelionConfig), m_p2pConfig(p2pConfig), m_walletConfig(walletConfig)
 	{
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath);
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "kernel/");
@@ -31,6 +32,7 @@ public:
 	inline const DandelionConfig& GetDandelionConfig() const { return m_dandelionConfig; }
 	inline const P2PConfig& GetP2PConfig() const { return m_p2pConfig; }
 	inline const EClientMode GetClientMode() const { return EClientMode::FAST_SYNC; }
+	inline const WalletConfig& GetWalletConfig() const { return m_walletConfig; }
 
 private:
 	std::string m_txHashSetPath{ "TXHASHSET/" };
@@ -42,4 +44,5 @@ private:
 	DandelionConfig m_dandelionConfig;
 	P2PConfig m_p2pConfig;
 	Environment m_environment;
+	WalletConfig m_walletConfig;
 };

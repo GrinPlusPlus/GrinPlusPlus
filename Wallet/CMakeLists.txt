@@ -4,8 +4,10 @@ set(TARGET_NAME Wallet)
 file(GLOB Wallet_SRC
 	"Wallet.cpp"
 	"Sender.cpp"
+	"WalletUtil.cpp"
 )
 
+add_subdirectory(WalletDB)
 add_subdirectory(Keychain)
 
 add_library(${TARGET_NAME} SHARED ${Wallet_SRC})

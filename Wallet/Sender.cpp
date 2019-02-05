@@ -1,7 +1,13 @@
 #include "Sender.h"
+#include "WalletUtil.h"
+#include "WalletCoin.h"
 
+#include <Wallet/InsufficientFundsException.h>
+#include <Wallet/SlateContext.h>
+#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CryptoUtil.h>
 #include <Common/FunctionalUtil.h>
-#include <uuid.h>
+#include <Infrastructure/Logger.h>
 
 Sender::Sender(const INodeClient& nodeClient)
 	: m_nodeClient(nodeClient)
@@ -29,60 +35,110 @@ Sender::Sender(const INodeClient& nodeClient)
 	14: Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
 		**fee, amount, lock_height, kSG, xSG, oS**
 */
-std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy) const
+std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const SecureString& password, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
 {
-	// 1. Create Transaction UUID (for reference and maintaining correct state).
-	const uuids::uuid slateId = uuids::uuid_system_generator()();
+	// Create Transaction UUID (for reference and maintaining correct state).
+	uuids::uuid slateId = uuids::uuid_system_generator()();
 
-	// 2. Set lock_height for transaction kernel (current chain height).
+	// Set lock_height for transaction kernel (current chain height).
 	const uint64_t lockHeight = m_nodeClient.GetChainHeight() + 1;
 
-	// 3. Select inputs using desired selection strategy.
-	std::vector<WalletCoin> inputs = wallet.GetAvailableCoins(strategy, amount + fee);
+	// Select inputs using desired selection strategy.
+	const uint64_t numOutputs = 2;
+	const uint64_t numKernels = 1;
+	std::vector<WalletCoin> inputs = SelectCoinsToSpend(wallet, password, amount, feeBase, strategy, numOutputs, numKernels);
 	
-	// 4. Calculate sum inputs blinding factors xI.
-	auto getInputBlindingFactors = [](WalletCoin& input) -> BlindingFactor { return input.GetPrivateKey().GetPrivateKey(); };
+	// Calculate sum inputs blinding factors xI.
+	auto getInputBlindingFactors = [wallet](WalletCoin& input) -> BlindingFactor { return input.GetBlindingFactor(); };
 	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getInputBlindingFactors);
 	std::unique_ptr<BlindingFactor> pBlindingFactorSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
+	
+	// Calculate the fee
+	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), 2, 1);
 
-	// 5. Create change output.
+	// Create change output with blinding factor xC
+	std::unique_ptr<WalletCoin> pChangeOutput = CreateChangeOutput(wallet, password, inputs, amount, fee);
+
+	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
+	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&pChangeOutput->GetBlindingFactor(), pBlindingFactorSum.get());
+
+	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
+	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
+	BlindingFactor secretKey = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);
+	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey.GetBlindingFactorBytes());
+
+	// Select a random nonce kS
+	BlindingFactor secretNonce = RandomNumberGenerator::GenerateRandom32();
+	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce.GetBlindingFactorBytes());
+
+	// Build Transaction
+	Transaction transaction = BuildTransaction(inputs, *pChangeOutput, transactionOffset, fee, lockHeight);
+
+	// Save secretKey and secretNonce
+	if (!wallet.SaveSlateContext(slateId, SlateContext(std::move(secretKey), std::move(secretNonce))))
+	{
+		LoggerAPI::LogError("Sender::BuildSendSlate - Failed to save context for slate " + uuids::to_string(slateId));
+		return std::unique_ptr<Slate>(nullptr);
+	}
+
+	// Lock coins
+	if (!wallet.LockCoins(inputs))
+	{
+		LoggerAPI::LogError("Sender::BuildSendSlate - Failed to lock coins.");
+		return std::unique_ptr<Slate>(nullptr);
+	}
+
+	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
+	return std::make_unique<Slate>(Slate(2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
+}
+
+// TODO: Apply Strategy instead of just selecting greatest number of outputs.
+// If strategy is "ALL", spend all available coins to reduce the fee.
+std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const SecureString& password, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
+{
+	std::vector<WalletCoin> availableCoins = wallet.GetAllAvailableCoins(password);
+	std::sort(availableCoins.begin(), availableCoins.end());
+
+	uint64_t amountFound = 0;
+	std::vector<WalletCoin> selectedCoins;
+	for (const WalletCoin& coin : availableCoins)
+	{
+		amountFound += coin.GetOutputData().GetAmount();
+		selectedCoins.push_back(coin);
+
+		const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
+		if (amountFound >= (amount + fee))
+		{
+			return selectedCoins;
+		}
+	}
+
+	// Not enough coins found.
+	LoggerAPI::LogError("Sender::SelectCoinsToSpend - Not enough funds.");
+	throw InsufficientFundsException();
+}
+
+std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const SecureString& password, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
+{
 	uint64_t inputTotal = 0;
 	for (const WalletCoin& input : inputs)
 	{
-		inputTotal += input.GetAmount();
+		inputTotal += input.GetOutputData().GetAmount();
 	}
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 
-	// 6. Select blinding factor xC for change output.
-	const uint64_t numOutputs = 1;
-	std::unique_ptr<WalletCoin> pChangeOutput = wallet.CreateBlindedOutput(changeAmount);
+	return wallet.CreateBlindedOutput(changeAmount, password);
+}
 
-	// 7. Create lock function **sF** that locks **inputs** and stores **change_output** in wallet
-	// and identifying wallet transaction log entry **TS** linking **inputs + outputs** (Not executed at this point)
+Transaction Sender::BuildTransaction(const std::vector<WalletCoin>& inputs, const WalletCoin& changeOutput, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight) const
+{
+	auto getInput = [](WalletCoin& input) -> TransactionInput { return TransactionInput(input.GetOutputData().GetOutput().GetFeatures(), Commitment(input.GetOutputData().GetOutput().GetCommitment())); };
+	std::vector<TransactionInput> transactionInputs = FunctionalUtil::map<std::vector<TransactionInput>>(inputs, getInput);
 
+	std::vector<TransactionOutput> transactionOutputs({ changeOutput.GetOutputData().GetOutput() });
 
-	// 8. Calculate **tx_weight**: MAX(-1 * **num_inputs** + 4 * (**num_change_outputs** + 1), 1)
-	// (+1 covers a single output on the receiver's side)
-	const uint64_t txWeight = max(-1 * ((int64_t)inputs.size()) + (int64_t)(4 * (numOutputs + 1)), 1);
+	TransactionKernel kernel(EKernelFeatures::HEIGHT_LOCKED, fee, lockHeight, Commitment(CBigInteger<33>::ValueOf(0)), Signature(CBigInteger<64>::ValueOf(0)));
+	std::vector<TransactionKernel> kernels({ kernel });
 
-	// 9. Calculate **fee**:  **tx_weight** * 1_000_000 nG
-	const uint64_t fee = txWeight * 1000000;
-
-	// 10. Calculate total blinding excess sum for all inputs and outputs **xS1** = **xC** - **xI** (private scalar)
-	const std::vector<BlindingFactor> positiveBlindingFactors = { pChangeOutput->GetPrivateKey().ToBlindingFactor() };
-	const std::vector<BlindingFactor> negativeBlindingFactors = { *pBlindingFactorSum };
-	std::unique_ptr<BlindingFactor> pTotalBlindingExcessSum = Crypto::AddBlindingFactors(positiveBlindingFactors, negativeBlindingFactors);
-
-	// 11. Select a random nonce **kS** (private scalar)
-
-	// 12. Subtract random kernel offset **oS** from **xS1**. Calculate **xS** = **xS1** - **oS**
-
-	// 13. Multiply **xS** and **kS** by generator G to create public curve points **xSG** and **kSG**
-
-	// 14. Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
-	// **fee, amount, lock_height, kSG, xSG, oS**
-
-	// TODO: Finish this.
-
-	return std::unique_ptr<Slate>(nullptr);
+	return Transaction(BlindingFactor(transactionOffset), TransactionBody(std::move(transactionInputs), std::move(transactionOutputs), std::move(kernels)));
 }

@@ -5,10 +5,10 @@
 #include <HexUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 
-CBigInteger<32> SeedEncrypter::DecryptWalletSeed(const EncryptedBytes& encryptedBytes, const Salt& salt, const IV& iv, const std::string& password) const
+CBigInteger<32> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
 {
-	CBigInteger<32> passwordHash = CalculatePasswordHash(password, salt);
-	const std::vector<unsigned char> decrypted = Crypto::AES256_Decrypt(encryptedBytes, passwordHash, iv);
+	CBigInteger<32> passwordHash = CalculatePasswordHash(password, encryptedSeed.GetSalt());
+	const std::vector<unsigned char> decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
 	if (decrypted.size() != 64)
 	{
 		return CBigInteger<32>();
@@ -27,11 +27,11 @@ CBigInteger<32> SeedEncrypter::DecryptWalletSeed(const EncryptedBytes& encrypted
 	return CBigInteger<32>();
 }
 
-std::tuple<Salt, IV, EncryptedBytes> SeedEncrypter::EncryptWalletSeed(const CBigInteger<32>& walletSeed, const std::string& password) const
+EncryptedSeed SeedEncrypter::EncryptWalletSeed(const CBigInteger<32>& walletSeed, const SecureString& password) const
 {
-	CBigInteger<32> randomNumber = RandomNumberGenerator().GeneratePseudoRandomNumber(CBigInteger<32>(), CBigInteger<32>::GetMaximumValue());
+	CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
 	CBigInteger<16> iv = CBigInteger<16>(&randomNumber.GetData()[0]);
-	std::vector<unsigned char> salt(randomNumber.GetData().cbegin() + 16, randomNumber.GetData().cbegin() + 24);
+	CBigInteger<8> salt(std::vector<unsigned char>(randomNumber.GetData().cbegin() + 16, randomNumber.GetData().cbegin() + 24));
 
 	CBigInteger<32> passwordHash = CalculatePasswordHash(password, salt);
 
@@ -46,12 +46,12 @@ std::tuple<Salt, IV, EncryptedBytes> SeedEncrypter::EncryptWalletSeed(const CBig
 
 	std::vector<unsigned char> encrypted = Crypto::AES256_Encrypt(seedPlusHash, passwordHash, iv);
 
-	return std::make_tuple<Salt, IV, EncryptedBytes>(std::move(salt), std::move(iv), std::move(encrypted));
+	return EncryptedSeed(std::move(iv), std::move(salt), std::move(encrypted));
 }
 
-CBigInteger<32> SeedEncrypter::CalculatePasswordHash(const std::string& password, const std::vector<unsigned char>& salt) const
+CBigInteger<32> SeedEncrypter::CalculatePasswordHash(const SecureString& password, const CBigInteger<8>& salt) const
 {
 	const std::vector<unsigned char> passwordBytes(&password[0], &password[0] + password.length());
-	const CBigInteger<64> scryptHash = Crypto::Scrypt(passwordBytes, salt);
+	const CBigInteger<64> scryptHash = Crypto::Scrypt(passwordBytes, salt.GetData());
 	return Crypto::Blake2b(scryptHash.GetData());
 }

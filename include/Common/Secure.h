@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 //
 // Allocator that clears its contents before deletion
@@ -29,8 +30,9 @@ struct secure_allocator : public std::allocator<T>
 	{
 		if (p != NULL)
 			memset(p, 0, sizeof(T) * n);
-		std::allocator_traits<T>::deallocate(p, m_value.string, 1);
+		std::allocator<T>::deallocate(p, n);
 	}
 };
 
 typedef std::basic_string<char, std::char_traits<char>, secure_allocator<char>> SecureString;
+typedef std::vector<unsigned char, secure_allocator<unsigned char>> SecureVector;

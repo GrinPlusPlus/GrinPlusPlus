@@ -1,5 +1,5 @@
 #include "Server.h"
-#include "RestServer.h"
+#include "NodeRestServer.h"
 
 #include <P2PServer.h>
 #include <Config/Config.h>
@@ -53,8 +53,8 @@ void Server::Run()
 	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager);
 	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase);
 
-	RestServer restServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
-	restServer.Start();
+	NodeRestServer nodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
+	nodeRestServer.Start();
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	while(true)
@@ -102,7 +102,7 @@ void Server::Run()
 
 	std::cout << "\nSHUTTING DOWN...";
 
-	restServer.Shutdown();
+	nodeRestServer.Shutdown();
 
 	P2PAPI::ShutdownP2PServer(m_pP2PServer);
 	BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);

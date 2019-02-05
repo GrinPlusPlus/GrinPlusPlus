@@ -5,7 +5,7 @@ file(GLOB SERVER_SRC
     "civetweb/src/civetweb.c"
 	"Main.cpp"
 	"Server.cpp"
-	"RestServer.cpp"
+	"NodeRestServer.cpp"
 	"API/BlockAPI.cpp"
 	"API/ChainAPI.cpp"
 	"API/HeaderAPI.cpp"

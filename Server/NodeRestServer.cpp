@@ -1,4 +1,4 @@
-#include "RestServer.h"
+#include "NodeRestServer.h"
 #include "civetweb/include/civetweb.h"
 
 #include "API/HeaderAPI.h"
@@ -10,7 +10,7 @@
 #include <BlockChainServer.h>
 #include <Database/Database.h>
 
-RestServer::RestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer)
+NodeRestServer::NodeRestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer)
 	: m_config(config), m_pDatabase(pDatabase), m_pTxHashSetManager(pTxHashSetManager), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer)
 {
 	m_serverContainer.m_pBlockChainServer = m_pBlockChainServer;
@@ -18,7 +18,7 @@ RestServer::RestServer(const Config& config, IDatabase* pDatabase, TxHashSetMana
 	m_serverContainer.m_pTxHashSetManager = m_pTxHashSetManager;
 }
 
-bool RestServer::Start()
+bool NodeRestServer::Start()
 {
 	/* Initialize the library */
 	mg_init_library(0);
@@ -38,7 +38,7 @@ bool RestServer::Start()
 	return true;
 }
 
-bool RestServer::Shutdown()
+bool NodeRestServer::Shutdown()
 {
 	/* Stop the server */
 	mg_stop(ctx);

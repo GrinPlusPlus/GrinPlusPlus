@@ -12,7 +12,7 @@
 Config ConfigManager::LoadConfig()
 {
 	const std::string currentDir = std::filesystem::current_path().string();
-	const std::string configPath = currentDir + "/config.json";
+	const std::string configPath = currentDir + "/mainnet.json"; // TODO: Check for --floonet flag.
 
 	std::ifstream file(configPath, std::ifstream::binary);
 	if (file.is_open())

@@ -82,7 +82,7 @@ bool BaseMessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
 	readFDS.fd_count = 1;
 	readFDS.fd_array[0] = socket;
 	timeval timeout;
-	timeout.tv_usec = 100 * 1000; // 100ms
+	timeout.tv_usec = 10 * 1000; // 10ms
 
 	if (select(0, &readFDS, nullptr, nullptr, &timeout) > 0)
 	{

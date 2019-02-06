@@ -46,6 +46,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	HeaderSyncer headerSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
 	StateSyncer stateSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
 	BlockSyncer blockSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
+	bool startup = true;
 
 	while (!syncer.m_terminate)
 	{
@@ -55,7 +56,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 		if (syncer.m_syncStatus.GetNumActiveConnections() >= 4)
 		{
 			// Sync Headers
-			if (headerSyncer.SyncHeaders(syncer.m_syncStatus))
+			if (headerSyncer.SyncHeaders(syncer.m_syncStatus, startup))
 			{
 				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_HEADERS);
 				continue;
@@ -69,11 +70,13 @@ void Syncer::Thread_Sync(Syncer& syncer)
 			}
 
 			// Sync Blocks
-			if (blockSyncer.SyncBlocks(syncer.m_syncStatus))
+			if (blockSyncer.SyncBlocks(syncer.m_syncStatus, startup))
 			{
 				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
 				continue;
 			}
+
+			startup = false;
 		}
 
 		syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);

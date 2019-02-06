@@ -16,7 +16,7 @@ class BlockSyncer
 public:
 	BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
 
-	bool SyncBlocks(const SyncStatus& syncStatus);
+	bool SyncBlocks(const SyncStatus& syncStatus, const bool startup);
 
 private:
 	bool IsBlockSyncDue(const SyncStatus& syncStatus);

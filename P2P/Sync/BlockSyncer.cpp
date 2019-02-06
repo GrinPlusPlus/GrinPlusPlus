@@ -14,12 +14,12 @@ BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer
 	m_highestRequested = 0;
 }
 
-bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus)
+bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus, const bool startup)
 {
 	const uint64_t chainHeight = syncStatus.GetBlockHeight();
 	const uint64_t networkHeight = syncStatus.GetNetworkHeight();
 
-	if (networkHeight >= (chainHeight + 5))
+	if (networkHeight >= (chainHeight + 5) || (startup && networkHeight > chainHeight))
 	{
 		if (IsBlockSyncDue(syncStatus))
 		{

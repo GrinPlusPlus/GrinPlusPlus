@@ -94,6 +94,8 @@ void Seeder::Thread_Seed(Seeder& seeder)
 			{
 				task.wait();
 			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 		else
 		{
@@ -152,7 +154,13 @@ bool Seeder::SeedNewConnection()
 	std::unique_ptr<Peer> pPeer = m_peerManager.GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		return ConnectToPeer(*pPeer);
+		bool connected = ConnectToPeer(*pPeer);
+		if (connected)
+		{
+			m_peerManager.UpdatePeer(*pPeer);
+		}
+
+		return connected;
 	}
 	else if (!m_usedDNS.exchange(true))
 	{

@@ -12,7 +12,7 @@ class HeaderSyncer
 public:
 	HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
 
-	bool SyncHeaders(const SyncStatus& syncStatus);
+	bool SyncHeaders(const SyncStatus& syncStatus, const bool startup);
 
 private:
 	bool IsHeaderSyncDue(const SyncStatus& syncStatus);

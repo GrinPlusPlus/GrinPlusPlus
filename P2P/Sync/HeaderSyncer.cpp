@@ -14,7 +14,7 @@ HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServ
 	m_connectionId = 0;
 }
 
-bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus)
+bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 {
 	const uint64_t chainHeight = syncStatus.GetHeaderHeight();
 	const uint64_t networkHeight = syncStatus.GetNetworkHeight();
@@ -25,7 +25,7 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus)
 		return true;
 	}
 
-	if (networkHeight >= (chainHeight + 5))
+	if (networkHeight >= (chainHeight + 5) || (startup && networkHeight > chainHeight))
 	{
 		if (IsHeaderSyncDue(syncStatus))
 		{

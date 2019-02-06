@@ -72,12 +72,12 @@ bool PeerManager::UpdatePeer(const Peer& peer)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
 
+	m_peerDB.AddPeers(std::vector<Peer>({ peer }));
+
 	const IPAddress& address = peer.GetIPAddress();
 	if (m_peersByAddress.find(address) != m_peersByAddress.cend())
 	{
 		m_peersByAddress.emplace(address, peer);
-		m_peerDB.AddPeers(std::vector<Peer>({ peer }));
-
 		return true;
 	}
 	else
@@ -93,7 +93,7 @@ bool PeerManager::AddPeer(const Peer& peer)
 	if (m_peersByAddress.find(address) == m_peersByAddress.cend())
 	{
 		m_peersByAddress.emplace(address, PeerEntry(peer));
-		m_peerDB.AddPeers(std::vector<Peer>({ peer }));
+		//m_peerDB.AddPeers(std::vector<Peer>({ peer }));
 
 		return true;
 	}

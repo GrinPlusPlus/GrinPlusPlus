@@ -37,7 +37,7 @@
 #include <fstream>
 #include <filesystem>
 
-static const int BUFFER_SIZE = 64 * 1024;
+static const int BUFFER_SIZE = 256 * 1024;
 
 using namespace MessageTypes;
 
@@ -202,6 +202,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
 				const FullBlock& block = blockMessage.GetBlock();
 
+				LoggerAPI::LogInfo("Block received: " + std::to_string(block.GetBlockHeader().GetHeight()));
 				m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
 
 				return EStatus::SUCCESS;
@@ -303,8 +304,10 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	syncStatus.UpdateDownloaded(0);
 	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
-	const DWORD timeout = 25 * 1000;
+	const DWORD timeout = 10 * 1000;
 	setsockopt(connectedPeer.GetConnection(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+	const int socketRcvBuff = BUFFER_SIZE;
+	setsockopt(connectedPeer.GetConnection(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
 
 	const std::string hashStr = HexUtil::ConvertHash(txHashSetArchiveMessage.GetBlockHash());
 	const std::string txHashSetPath = m_config.GetTxHashSetDirectory() + StringUtil::Format("txhashset_%s.zip", hashStr.c_str());

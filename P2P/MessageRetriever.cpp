@@ -1,4 +1,4 @@
-#include "BaseMessageRetriever.h"
+#include "MessageRetriever.h"
 
 #include "ConnectedPeer.h"
 #include "Messages/MessageHeader.h"
@@ -8,13 +8,13 @@
 #include <Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
 
-BaseMessageRetriever::BaseMessageRetriever(const Config& config)
+MessageRetriever::MessageRetriever(const Config& config)
 	: m_config(config)
 {
 
 }
 
-std::unique_ptr<RawMessage> BaseMessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
+std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
 {
 	SOCKET socket = connectedPeer.GetConnection();
 	if (retrievalMode == BLOCKING || HasMessageBeenReceived(socket))
@@ -56,7 +56,7 @@ std::unique_ptr<RawMessage> BaseMessageRetriever::RetrieveMessage(const Connecte
 	return std::unique_ptr<RawMessage>(nullptr);
 }
 
-bool BaseMessageRetriever::RetrievePayload(const SOCKET socket, std::vector<unsigned char>& payload) const
+bool MessageRetriever::RetrievePayload(const SOCKET socket, std::vector<unsigned char>& payload) const
 {
 	const size_t payloadSize = payload.size();
 	size_t bytesReceived = 0;
@@ -76,7 +76,7 @@ bool BaseMessageRetriever::RetrievePayload(const SOCKET socket, std::vector<unsi
 	return true;
 }
 
-bool BaseMessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
+bool MessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
 {
 	fd_set readFDS;
 	readFDS.fd_count = 1;
@@ -92,7 +92,7 @@ bool BaseMessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
 	return false;
 }
 
-void BaseMessageRetriever::LogError() const
+void MessageRetriever::LogError() const
 {
 	const int lastError = WSAGetLastError();
 

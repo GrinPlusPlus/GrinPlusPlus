@@ -35,7 +35,7 @@ Sender::Sender(const INodeClient& nodeClient)
 	14: Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
 		**fee, amount, lock_height, kSG, xSG, oS**
 */
-std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const SecureString& password, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
+std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
 {
 	// Create Transaction UUID (for reference and maintaining correct state).
 	uuids::uuid slateId = uuids::uuid_system_generator()();
@@ -46,7 +46,7 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const SecureString
 	// Select inputs using desired selection strategy.
 	const uint64_t numOutputs = 2;
 	const uint64_t numKernels = 1;
-	std::vector<WalletCoin> inputs = SelectCoinsToSpend(wallet, password, amount, feeBase, strategy, numOutputs, numKernels);
+	std::vector<WalletCoin> inputs = SelectCoinsToSpend(wallet, masterSeed, amount, feeBase, strategy, numOutputs, numKernels);
 	
 	// Calculate sum inputs blinding factors xI.
 	auto getInputBlindingFactors = [wallet](WalletCoin& input) -> BlindingFactor { return input.GetBlindingFactor(); };
@@ -57,7 +57,7 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const SecureString
 	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), 2, 1);
 
 	// Create change output with blinding factor xC
-	std::unique_ptr<WalletCoin> pChangeOutput = CreateChangeOutput(wallet, password, inputs, amount, fee);
+	std::unique_ptr<WalletCoin> pChangeOutput = CreateChangeOutput(wallet, masterSeed, inputs, amount, fee);
 
 	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
 	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&pChangeOutput->GetBlindingFactor(), pBlindingFactorSum.get());
@@ -94,9 +94,9 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const SecureString
 
 // TODO: Apply Strategy instead of just selecting greatest number of outputs.
 // If strategy is "ALL", spend all available coins to reduce the fee.
-std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const SecureString& password, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
+std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
 {
-	std::vector<WalletCoin> availableCoins = wallet.GetAllAvailableCoins(password);
+	std::vector<WalletCoin> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
 	std::sort(availableCoins.begin(), availableCoins.end());
 
 	uint64_t amountFound = 0;
@@ -118,7 +118,7 @@ std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const SecureS
 	throw InsufficientFundsException();
 }
 
-std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const SecureString& password, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
+std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
 {
 	uint64_t inputTotal = 0;
 	for (const WalletCoin& input : inputs)
@@ -127,7 +127,7 @@ std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const Sec
 	}
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 
-	return wallet.CreateBlindedOutput(changeAmount, password);
+	return wallet.CreateBlindedOutput(masterSeed, changeAmount);
 }
 
 Transaction Sender::BuildTransaction(const std::vector<WalletCoin>& inputs, const WalletCoin& changeOutput, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight) const

@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Wallet.h"
+#include "SessionManager.h"
 
 #include <Wallet/WalletServer.h>
+#include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
+#include <map>
 
 class WalletServer : public IWalletServer
 {
@@ -13,14 +15,12 @@ public:
 
 	virtual SecureString InitializeNewWallet(const std::string& username, const SecureString& password) override final;
 
-	virtual bool Login(const std::string& username, const SecureString& password) override final;
-	virtual void Logoff() override final;
+	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
+	virtual void Logoff(const SessionToken& token) override final;
 
 private:
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
 	IWalletDB* m_pWalletDB;
-
-	Wallet* m_pWallet;
-	SecureString* m_pPassword;
+	SessionManager m_sessionManager;
 };

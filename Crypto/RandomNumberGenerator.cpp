@@ -4,18 +4,24 @@
 
 CBigInteger<32> RandomNumberGenerator::GenerateRandom32()
 {
+	std::vector<unsigned char> randomBytes = GenerateRandomBytes(32);
+	return CBigInteger<32>(std::move(randomBytes));
+}
+
+std::vector<unsigned char> RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
+{
 	// TODO: Find a good CSPRNG
 	std::random_device randomDevice;
 	std::mt19937 rng(randomDevice());
 	std::uniform_int_distribution<unsigned short> uniformDistribution(0, 255);
 
-	std::vector<unsigned char> buffer(32);
-	for (uint8_t i = 0; i < 32; i++)
+	std::vector<unsigned char> buffer(numBytes);
+	for (uint8_t i = 0; i < numBytes; i++)
 	{
 		buffer[i] = (unsigned char)uniformDistribution(rng);
 	}
 
-	return CBigInteger<32>(buffer);
+	return buffer;
 }
 
 uint64_t RandomNumberGenerator::GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum)

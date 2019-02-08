@@ -12,17 +12,15 @@
 class KeyChain
 {
 public:
-	KeyChain(const Config& config, EncryptedSeed&& encryptedSeed);
-	KeyChain(const Config& config, const EncryptedSeed& encryptedSeed);
+	KeyChain(const Config& config);
 
-	std::unique_ptr<PrivateExtKey> DerivePrivateKey(const SecureString& password, const KeyChainPath& keyPath) const;
+	std::unique_ptr<PrivateExtKey> DerivePrivateKey(const CBigInteger<32>& masterSeed, const KeyChainPath& keyPath) const;
 	std::unique_ptr<PublicExtKey> DerivePublicKey(const PublicExtKey& publicKey, const KeyChainPath& keyPath) const;
 
-	std::unique_ptr<RangeProof> GenerateRangeProof(const KeyChainPath& keyChainPath, const SecureString& password, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const;
+	std::unique_ptr<RangeProof> GenerateRangeProof(const CBigInteger<32>& masterSeed, const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const;
 
 private:
-	CBigInteger<32> CreateNonce(const Commitment& commitment, const SecureString& password) const;
+	CBigInteger<32> CreateNonce(const CBigInteger<32>& masterSeed, const Commitment& commitment) const;
 
 	const Config& m_config;
-	EncryptedSeed m_encryptedSeed;
 };

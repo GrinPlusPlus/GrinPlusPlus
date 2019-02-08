@@ -16,21 +16,21 @@
 class Wallet
 {
 public:
-	Wallet(const Config& config, INodeClient& nodeClient, IWalletDB& walletDB, KeyChain&& keyChain, const std::string& username, KeyChainPath&& userPath);
+	Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath);
 
-	static Wallet* LoadWallet(const Config& config, INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, const EncryptedSeed& encryptedSeed);
+	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
-	bool Send(const SecureString& password, const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination);
+	bool Send(const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination);
 
-	std::vector<WalletCoin> GetAllAvailableCoins(const SecureString& password) const;
-	std::unique_ptr<WalletCoin> CreateBlindedOutput(const uint64_t amount, const SecureString& password);
+	std::vector<WalletCoin> GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const;
+	std::unique_ptr<WalletCoin> CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount);
 
 	bool SaveSlateContext(const uuids::uuid& slateId, const SlateContext& slateContext);
 	bool LockCoins(const std::vector<WalletCoin>& coins);
 
 private:
 	const Config& m_config;
-	INodeClient& m_nodeClient;
+	const INodeClient& m_nodeClient;
 	IWalletDB& m_walletDB;
 	KeyChain m_keyChain;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.

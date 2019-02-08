@@ -4,22 +4,14 @@
 
 #include <VectorUtil.h>
 
-KeyChain::KeyChain(const Config& config, EncryptedSeed&& encryptedSeed)
-	: m_config(config), m_encryptedSeed(encryptedSeed)
+KeyChain::KeyChain(const Config& config)
+	: m_config(config)
 {
 
 }
 
-KeyChain::KeyChain(const Config& config, const EncryptedSeed& encryptedSeed)
-	: m_config(config), m_encryptedSeed(encryptedSeed)
+std::unique_ptr<PrivateExtKey> KeyChain::DerivePrivateKey(const CBigInteger<32>& masterSeed, const KeyChainPath& keyPath) const
 {
-
-}
-
-std::unique_ptr<PrivateExtKey> KeyChain::DerivePrivateKey(const SecureString& password, const KeyChainPath& keyPath) const
-{
-	const CBigInteger<32> masterSeed = SeedEncrypter().DecryptWalletSeed(m_encryptedSeed, password);
-
 	PrivateExtKey masterKey = KeyGenerator(m_config).GenerateMasterKey(masterSeed);
 
 	std::unique_ptr<PrivateExtKey> pPrivateKey = std::make_unique<PrivateExtKey>(std::move(masterKey));
@@ -37,17 +29,17 @@ std::unique_ptr<PrivateExtKey> KeyChain::DerivePrivateKey(const SecureString& pa
 	return pPrivateKey;
 }
 
-std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(const KeyChainPath& keyChainPath, const SecureString& password, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const
+std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(const CBigInteger<32>& masterSeed, const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const
 {
-	CBigInteger<32> nonce = CreateNonce(commitment, password);
+	CBigInteger<32> nonce = CreateNonce(masterSeed, commitment);
 	ProofMessage proofMessage = ProofMessage::FromKeyIndices(keyChainPath.GetKeyIndices());
 
 	return Crypto::GenerateRangeProof(amount, blindingFactor, nonce, proofMessage);
 }
 
-CBigInteger<32> KeyChain::CreateNonce(const Commitment& commitment, const SecureString& password) const
+CBigInteger<32> KeyChain::CreateNonce(const CBigInteger<32>& masterSeed, const Commitment& commitment) const
 {
-	std::unique_ptr<PrivateExtKey> pRootKey = DerivePrivateKey(password, KeyChainPath::FromString("m"));
+	std::unique_ptr<PrivateExtKey> pRootKey = DerivePrivateKey(masterSeed, KeyChainPath::FromString("m"));
 	std::vector<unsigned char> input = VectorUtil::Concat(commitment.GetCommitmentBytes().GetData(), pRootKey->ToBlindingFactor().GetBlindingFactorBytes().GetData());
 
 	return Crypto::Blake2b(input);

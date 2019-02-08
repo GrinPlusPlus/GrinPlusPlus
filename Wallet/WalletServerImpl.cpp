@@ -3,16 +3,16 @@
 #include "Keychain/Mnemonic.h"
 
 #include <Crypto/RandomNumberGenerator.h>
+#include <VectorUtil.h>
 
 WalletServer::WalletServer(const Config& config, const INodeClient& nodeClient, IWalletDB* pWalletDB)
-	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB)
+	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB)
 {
 
 }
 
 WalletServer::~WalletServer()
 {
-	Logoff();
 	WalletDBAPI::CloseWalletDB(m_pWalletDB);
 }
 
@@ -28,33 +28,14 @@ SecureString WalletServer::InitializeNewWallet(const std::string& username, cons
 	return SecureString("");
 }
 
-bool WalletServer::Login(const std::string& username, const SecureString& password)
+std::unique_ptr<SessionToken> WalletServer::Login(const std::string& username, const SecureString& password)
 {
-	std::unique_ptr<EncryptedSeed> pSeed = m_pWalletDB->LoadWalletSeed(username);
-	if (pSeed != nullptr)
-	{
-		CBigInteger<32> decryptedSeed = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
-		if (decryptedSeed != CBigInteger<32>::ValueOf(0))
-		{
-			Logoff();
-
-			m_pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username, *pSeed);
-			m_pPassword = new SecureString(password);
-
-			return true;
-		}
-	}
-
-	return false;
+	return m_sessionManager.Login(username, password);
 }
 
-void WalletServer::Logoff()
+void WalletServer::Logoff(const SessionToken& token)
 {
-	delete m_pWallet;
-	m_pWallet = nullptr;
-
-	delete m_pPassword;
-	m_pPassword = nullptr;
+	m_sessionManager.Logoff(token);
 }
 
 namespace WalletAPI
@@ -65,7 +46,7 @@ namespace WalletAPI
 	WALLET_API IWalletServer* StartWalletServer(const Config& config, const INodeClient& nodeClient)
 	{
 		IWalletDB* pWalletDB = WalletDBAPI::OpenWalletDB(config);
-		return new WalletServer(config, nodeClient, pWalletDB)
+		return new WalletServer(config, nodeClient, pWalletDB);
 	}
 
 	//

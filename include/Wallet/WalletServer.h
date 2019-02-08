@@ -9,7 +9,8 @@
 #include <ImportExport.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
-#include <Common/SecureString.h>
+#include <Wallet/SessionToken.h>
+#include <Common/Secure.h>
 
 #ifdef MW_WALLET
 #define WALLET_API EXPORT
@@ -27,16 +28,14 @@ public:
 	virtual SecureString InitializeNewWallet(const std::string& username, const SecureString& password) = 0;
 
 	//
-	// Authenticates the user, and if successful, stores the credentials to avoid having to pass them in for future calls.
-	// Logging in makes consumption of other wallet server functions faster and more convenient, at the cost of your credentials being stored in memory.
-	// USE AT YOUR OWN RISK!
+	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
-	virtual bool Login(const std::string& username, const SecureString& password) = 0;
+	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) = 0;
 
 	//
 	// Deletes any credentials stored in memory.
 	//
-	virtual void Logoff() = 0;
+	virtual void Logoff(const SessionToken& token) = 0;
 };
 
 namespace WalletAPI

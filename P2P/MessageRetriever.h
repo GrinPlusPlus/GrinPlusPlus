@@ -11,10 +11,10 @@
 // Forward Declarations
 class ConnectedPeer;
 
-class BaseMessageRetriever
+class MessageRetriever
 {
 public:
-	BaseMessageRetriever(const Config& config);
+	MessageRetriever(const Config& config);
 
 	enum ERetrievalMode
 	{

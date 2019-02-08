@@ -2,7 +2,7 @@
 
 #include "../Messages/HandMessage.h"
 #include "../Messages/ShakeMessage.h"
-#include "../BaseMessageRetriever.h"
+#include "../MessageRetriever.h"
 #include "../MessageSender.h"
 #include "../SocketHelper.h"
 #include "../ConnectionManager.h"
@@ -48,7 +48,7 @@ Connection* ConnectionFactory::PerformHandshake(SOCKET connection, Peer& peer) c
 	if (bHandMessageSent)
 	{
 		// Get Shake Message
-		std::unique_ptr<RawMessage> receivedShakeMessage = BaseMessageRetriever(m_config).RetrieveMessage(connectedPeer, BaseMessageRetriever::BLOCKING);
+		std::unique_ptr<RawMessage> receivedShakeMessage = MessageRetriever(m_config).RetrieveMessage(connectedPeer, MessageRetriever::BLOCKING);
 
 		if (receivedShakeMessage.get() != nullptr && receivedShakeMessage->GetMessageHeader().GetMessageType() == MessageTypes::Shake)
 		{
@@ -62,7 +62,6 @@ Connection* ConnectionFactory::PerformHandshake(SOCKET connection, Peer& peer) c
 
 			return new Connection(m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
 		}
-
 	}
 
 	return nullptr;

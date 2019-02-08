@@ -28,5 +28,7 @@ public:
 	//
 	static CBigInteger<32> GenerateRandom32();
 
+	static std::vector<unsigned char> GenerateRandomBytes(const size_t numBytes);
+
 	static uint64_t GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum);
 };

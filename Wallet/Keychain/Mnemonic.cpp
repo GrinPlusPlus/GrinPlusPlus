@@ -4,7 +4,8 @@
 #include <Crypto.h>
 #include <VectorUtil.h>
 
-SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy, const std::optional<SecureString> password)
+// TODO: Apply password
+SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy, const std::optional<SecureString>& password)
 {
 	if (entropy.size() % 4 != 0)
 	{
@@ -30,7 +31,7 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy,
 		}
 	}
 
-	SecureString result = "";
+	SecureString result("");
 	for (size_t i = 0; i < numWords; i++)
 	{
 		if (i != 0)

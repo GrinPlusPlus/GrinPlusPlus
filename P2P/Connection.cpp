@@ -1,11 +1,12 @@
 #include "Connection.h"
-#include "BaseMessageRetriever.h"
+#include "MessageRetriever.h"
 #include "MessageProcessor.h"
 #include "MessageSender.h"
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 
 #include <Infrastructure/ThreadManager.h>
+#include <Infrastructure/Logger.h>
 #include <thread>
 #include <chrono>
 #include <memory>
@@ -96,7 +97,7 @@ Capabilities Connection::GetCapabilities() const
 void Connection::Thread_ProcessConnection(Connection& connection)
 {
 	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
-	const BaseMessageRetriever messageRetriever(connection.m_config);
+	const MessageRetriever messageRetriever(connection.m_config);
 
 	while (!connection.m_terminate)
 	{
@@ -105,7 +106,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 		bool messageSentOrReceived = false;
 
 		// Check for received messages and if there is a new message, process it.
-		std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, BaseMessageRetriever::NON_BLOCKING);
+		std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, MessageRetriever::NON_BLOCKING);
 		if (pRawMessage.get() != nullptr)
 		{
 			const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
@@ -124,7 +125,6 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			messageSentOrReceived = true;
 		}
 
-		// TODO: If no message sent or received in last ~15 seconds, send ping.
 		sendLockGuard.unlock();
 		lockGuard.unlock();
 

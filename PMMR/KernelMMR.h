@@ -26,7 +26,7 @@ public:
 
 	virtual bool Rewind(const uint64_t lastMMRIndex) override final;
 	virtual bool Flush() override final;
-	//virtual bool Discard() override final;
+	virtual bool Discard() override final;
 
 	bool ApplyKernel(const TransactionKernel& kernel);
 

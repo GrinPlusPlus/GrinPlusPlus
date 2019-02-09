@@ -64,14 +64,15 @@ bool KernelMMR::Rewind(const uint64_t lastMMRIndex)
 {
 	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex);
 	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex));
-	// TODO: Rewind leafset?
+
+	m_leafSet.Rewind(MMRUtil::GetNumLeaves(lastMMRIndex), Roaring());
 
 	return hashRewind && dataRewind;
 }
 
 bool KernelMMR::Flush()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("KernelMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LoggerAPI::LogTrace(StringUtil::Format("KernelMMR::Flush - Flushing with size (%llu)", GetSize()));
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
@@ -79,10 +80,21 @@ bool KernelMMR::Flush()
 	return hashFlush && dataFlush && leafSetFlush;
 }
 
+bool KernelMMR::Discard()
+{
+	LoggerAPI::LogDebug(StringUtil::Format("KernelMMR::Discard - Discarding changes since last flush."));
+	const bool hashDiscard = m_pHashFile->Discard();
+	const bool dataDiscard = m_pDataFile->Discard();
+	m_leafSet.DiscardChanges();
+
+	return hashDiscard && dataDiscard;
+}
+
 bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
 	uint64_t nextMMRIndex = m_pHashFile->GetSize();
 	Hash hash = HashWithIndex(kernel, nextMMRIndex++);
+	m_pHashFile->AddHash(hash);
 
 	const uint64_t newMMRSize = MMRUtil::GetNumNodes(nextMMRIndex);
 	while (nextMMRIndex < newMMRSize)
@@ -91,6 +103,8 @@ bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 		hash = MMRUtil::HashParentWithIndex(m_pHashFile->GetHashAt(leftSibling), hash, nextMMRIndex++);
 		m_pHashFile->AddHash(hash);
 	}
+
+	m_leafSet.Add(MMRUtil::GetNumLeaves(nextMMRIndex));
 
 	return true;
 }

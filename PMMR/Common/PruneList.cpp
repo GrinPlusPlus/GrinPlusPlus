@@ -52,6 +52,12 @@ bool PruneList::Flush()
 	return false;
 }
 
+bool PruneList::Discard()
+{
+	// TODO: Implement
+	return true;
+}
+
 // Push the node at the provided position in the prune list.
 // Compacts the list if pruning the additional node means a parent can get pruned as well.
 void PruneList::Add(const uint64_t position)

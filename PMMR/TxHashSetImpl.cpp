@@ -45,7 +45,23 @@ bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
 
 bool TxHashSet::IsValid(const Transaction& transaction) const
 {
-	// TODO: Implement
+	for (const TransactionInput& input : transaction.GetBody().GetInputs())
+	{
+		const Commitment& commitment = input.GetCommitment();
+		std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
+		if (!outputPosOpt.has_value())
+		{
+			return false;
+		}
+
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value());
+		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
+		{
+			LoggerAPI::LogWarning("TxHashSet::IsValid - Transaction invalid: " + HexUtil::ConvertHash(transaction.GetHash()));
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -79,6 +95,8 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		{
 			return false;
 		}
+
+		// TODO: Prune RangeProof
 	}
 
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
@@ -93,13 +111,13 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 
 	for (const TransactionKernel& kernel : block.GetTransactionBody().GetKernels())
 	{
-		// TODO: m_pKernelMMR->ApplyKernel(kernel);
+		m_pKernelMMR->ApplyKernel(kernel);
 	}
 
 	return true;
 }
 
-// TODO: Also store block heights
+// TODO: Also store block heights?
 bool TxHashSet::SaveOutputPositions()
 {
 	const uint64_t size = m_pOutputPMMR->GetSize();
@@ -138,9 +156,9 @@ bool TxHashSet::Commit()
 
 bool TxHashSet::Discard()
 {
-	//m_pKernelMMR->Discard();
-	//m_pOutputPMMR->Discard();
-	//m_pRangeProofPMMR->Discard();
+	m_pKernelMMR->Discard();
+	m_pOutputPMMR->Discard();
+	m_pRangeProofPMMR->Discard();
 	return true;
 }
 

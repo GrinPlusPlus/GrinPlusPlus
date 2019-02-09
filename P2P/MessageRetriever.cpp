@@ -32,7 +32,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 
 			if (!messageHeader.IsValid(m_config))
 			{
-				LoggerAPI::LogError(connectedPeer.GetPeer().GetIPAddress().Format() + "> FAILURE");
+				//LoggerAPI::LogError(connectedPeer.GetPeer().GetIPAddress().Format() + "> FAILURE");
 			}
 			else
 			{
@@ -82,6 +82,7 @@ bool MessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
 	readFDS.fd_count = 1;
 	readFDS.fd_array[0] = socket;
 	timeval timeout;
+	timeout.tv_sec = 0;
 	timeout.tv_usec = 10 * 1000; // 10ms
 
 	if (select(0, &readFDS, nullptr, nullptr, &timeout) > 0)

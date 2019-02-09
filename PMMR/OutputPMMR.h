@@ -29,6 +29,7 @@ public:
 
 	virtual bool Rewind(const uint64_t lastMMRIndex) override final;
 	virtual bool Flush() override final;
+	virtual bool Discard() override final;
 
 	std::unique_ptr<OutputIdentifier> GetOutputAt(const uint64_t mmrIndex) const;
 

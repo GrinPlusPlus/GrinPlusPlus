@@ -36,5 +36,5 @@ public:
 	//
 	// Discards all working changes since the last flush to disk.
 	//
-	// TODO: virtual bool Discard() = 0;
+	virtual bool Discard() = 0;
 };

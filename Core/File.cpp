@@ -67,12 +67,12 @@ bool File::Flush_Locked()
 		return false;
 	}
 
+	m_mmap.unmap();
+
 	if (m_fileSize > m_bufferIndex)
 	{
-		TruncateFile(m_path, m_fileSize);
+		TruncateFile(m_path, m_bufferIndex);
 	}
-
-	m_mmap.unmap();
 
 	if (!m_buffer.empty())
 	{
@@ -101,6 +101,10 @@ bool File::Flush_Locked()
 	{
 		std::error_code error;
 		m_mmap = mio::make_mmap_source(m_path, error);
+		if (error.value() > 0)
+		{
+			printf("ERROR");
+		}
 	}
 
 	return true;

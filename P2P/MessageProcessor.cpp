@@ -153,9 +153,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const BlockHeader& blockHeader = headerMessage.GetHeader();
 
 				const EBlockChainStatus status = m_blockChainServer.AddBlockHeader(blockHeader);
-				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS)
+				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
 				{
-					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
+					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
 
 					const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
 
@@ -163,7 +163,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				}
 				else
 				{
-					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Header %s from %s not needed.", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
+					LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Header %s from %s not needed.", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
 				}
 
 				return (status == EBlockChainStatus::SUCCESS) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
@@ -178,7 +178,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
 					this->m_blockChainServer.AddBlockHeaders(blockHeaders);
-					LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
+					LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
 
 				return EStatus::SUCCESS;
@@ -202,7 +202,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
 				const FullBlock& block = blockMessage.GetBlock();
 
-				LoggerAPI::LogInfo("Block received: " + std::to_string(block.GetBlockHeader().GetHeight()));
+				LoggerAPI::LogDebug("Block received: " + std::to_string(block.GetBlockHeader().GetHeight()));
 				m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
 
 				return EStatus::SUCCESS;
@@ -229,6 +229,17 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				{
 					const GetBlockMessage getBlockMessage(compactBlock.GetHash());
 					return MessageSender(m_config).Send(connectedPeer, getBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
+				else if (added == EBlockChainStatus::ORPHANED)
+				{
+					if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
+					{
+						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
+						{
+							const GetBlockMessage getPreviousBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
+							return MessageSender(m_config).Send(connectedPeer, getPreviousBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+						}
+					}
 				}
 				else if (added == EBlockChainStatus::INVALID)
 				{

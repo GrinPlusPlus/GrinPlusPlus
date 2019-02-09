@@ -13,6 +13,7 @@ public:
 
 	void Add(const uint32_t position);
 	void Remove(const uint32_t position);
+	void Rewind(const uint32_t lastPosition, const Roaring& positionsToAdd);
 	bool Contains(const uint32_t position) const;
 
 	bool Load();
@@ -29,5 +30,5 @@ private:
 
 	const std::string m_path;
 	Roaring m_bitmap;
-	Roaring m_bitmapBackup; // TODO: Use a batch/transaction object with a commit(), instead
+	Roaring m_bitmapBackup;
 };

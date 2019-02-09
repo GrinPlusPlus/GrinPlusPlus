@@ -80,7 +80,11 @@ void Server::Run()
 		}
 		else if (status == ESyncStatus::SYNCING_TXHASHSET)
 		{
-			std::cout << "\nStatus: Syncing TxHashSet " << syncStatus.GetDownloaded() << "/" << syncStatus.GetDownloadSize();
+			const uint64_t downloaded = syncStatus.GetDownloaded();
+			const uint64_t downloadSize = syncStatus.GetDownloadSize();
+			const uint64_t percentage = (downloaded * 100) / downloadSize;
+
+			std::cout << "\nStatus: Syncing TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
 		}
 		else if (status == ESyncStatus::SYNCING_BLOCKS)
 		{

@@ -137,3 +137,14 @@ bool RangeProofPMMR::Flush()
 
 	return hashFlush && dataFlush && leafSetFlush && pruneFlush;
 }
+
+bool RangeProofPMMR::Discard()
+{
+	LoggerAPI::LogInfo(StringUtil::Format("RangeProofPMMR::Discard - Discarding changes since last flush."));
+	const bool hashDiscard = m_pHashFile->Discard();
+	const bool dataDiscard = m_pDataFile->Discard();
+	const bool pruneDiscard = m_pruneList.Discard();
+	m_leafSet.DiscardChanges();
+
+	return hashDiscard && dataDiscard && pruneDiscard;
+}

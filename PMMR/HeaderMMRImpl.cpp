@@ -30,7 +30,7 @@ bool HeaderMMR::Rewind(const uint64_t size)
 	if (mmrSize != m_hashFile.GetSize())
 	{
 		LoggerAPI::LogDebug("HeaderMMR::Rewind - Rewinding to height " + std::to_string(size) + " Hashes: " + std::to_string(mmrSize));
-		return m_hashFile.Rewind(mmrSize));
+		return m_hashFile.Rewind(mmrSize);
 	}
 
 	return true;

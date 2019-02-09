@@ -24,6 +24,7 @@ public:
 
 	virtual bool Rewind(const uint64_t lastMMRIndex) override final;
 	virtual bool Flush() override final;
+	virtual bool Discard() override final;
 
 private:
 	RangeProofPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile);

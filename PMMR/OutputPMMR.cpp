@@ -31,7 +31,7 @@ OutputPMMR* OutputPMMR::Load(const Config& config)
 	LeafSet leafSet(config.GetTxHashSetDirectory() + "output/pmmr_leaf.bin");
 	leafSet.Load();
 
-	PruneList pruneList(std::move(PruneList::Load(config.GetTxHashSetDirectory() + "output/pmmr_prun.bin")));
+	PruneList pruneList(PruneList::Load(config.GetTxHashSetDirectory() + "output/pmmr_prun.bin"));
 
 	DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(config.GetTxHashSetDirectory() + "output/pmmr_data.bin");
 	pDataFile->Load();
@@ -76,7 +76,7 @@ bool OutputPMMR::SpendOutput(const uint64_t mmrIndex)
 		return false;
 	}
 
-	m_leafSet.Remove((uint64_t)mmrIndex);
+	m_leafSet.Remove((uint32_t)mmrIndex);
 
 	return true;
 }
@@ -178,6 +178,17 @@ bool OutputPMMR::Flush()
 	const bool pruneFlush = m_pruneList.Flush();
 
 	return hashFlush && dataFlush && leafSetFlush && pruneFlush;
+}
+
+bool OutputPMMR::Discard()
+{
+	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Discard - Discarding changes since last flush."));
+	const bool hashDiscard = m_pHashFile->Discard();
+	const bool dataDiscard = m_pDataFile->Discard();
+	const bool pruneDiscard = m_pruneList.Discard();
+	m_leafSet.DiscardChanges();
+
+	return hashDiscard && dataDiscard && pruneDiscard;
 }
 
 Roaring OutputPMMR::DetermineLeavesToRemove(const uint64_t cutoffSize, const Roaring& rewindRmPos) const

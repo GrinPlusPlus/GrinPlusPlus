@@ -19,7 +19,8 @@ bool HeaderMMR::Load()
 
 bool HeaderMMR::Commit()
 {
-	LoggerAPI::LogTrace("HeaderMMR::Commit - Flushing.");
+	const uint64_t height = MMRUtil::GetNumLeaves(m_hashFile.GetSize());
+	LoggerAPI::LogDebug("HeaderMMR::Commit - Flushing. Height:" + std::to_string(height) + " Size: " + std::to_string(m_hashFile.GetSize()));
 	return m_hashFile.Flush();
 }
 
@@ -28,8 +29,8 @@ bool HeaderMMR::Rewind(const uint64_t size)
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
 	if (mmrSize != m_hashFile.GetSize())
 	{
-		LoggerAPI::LogDebug("HeaderMMR::Rewind - Rewinding to height " + std::to_string(size));
-		return m_hashFile.Rewind(mmrSize);
+		LoggerAPI::LogDebug("HeaderMMR::Rewind - Rewinding to height " + std::to_string(size) + " Hashes: " + std::to_string(mmrSize));
+		return m_hashFile.Rewind(mmrSize));
 	}
 
 	return true;
@@ -43,7 +44,7 @@ bool HeaderMMR::Rollback()
 
 void HeaderMMR::AddHeader(const BlockHeader& header)
 {
-	LoggerAPI::LogTrace("HeaderMMR::AddHeader - Adding header at height " + std::to_string(header.GetHeight()));
+	LoggerAPI::LogTrace("HeaderMMR::AddHeader - Adding header at height " + std::to_string(header.GetHeight()) + " MMR: " + std::to_string(m_hashFile.GetSize()));
 
 	uint64_t position = m_hashFile.GetSize();
 	uint64_t peak = 1;

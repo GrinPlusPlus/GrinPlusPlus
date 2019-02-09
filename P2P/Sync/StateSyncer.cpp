@@ -44,7 +44,7 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 	}
 
 	// If block height is within threshold, just rely on block sync.
-	if (blockHeight > (headerHeight - Consensus::STATE_SYNC_THRESHOLD))
+	if (blockHeight > (headerHeight - Consensus::CUT_THROUGH_HORIZON))
 	{
 		return false;
 	}

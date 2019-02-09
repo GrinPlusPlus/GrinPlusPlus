@@ -42,7 +42,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	const uint64_t blocksDownloaded = (chainHeight - m_lastHeight);
 	if (blocksDownloaded > 0)
 	{
-		LoggerAPI::LogDebug(StringUtil::Format("BlockSyncer::IsBlockSyncDue() - %llu blocks received since last check.", blocksDownloaded));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockSyncer::IsBlockSyncDue() - %llu blocks received since last check.", blocksDownloaded));
 	}
 
 	// Remove downloaded blocks from queue.
@@ -56,7 +56,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	// Check if blocks were received, and we're ready to request next batch.
 	if (m_requestedBlocks.size() < 15)
 	{
-		LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Requesting next batch.");
+		LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Requesting next batch.");
 		return true;
 	}
 
@@ -68,13 +68,13 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 		auto requestedBlocksIter = m_requestedBlocks.find(iter->first);
 		if (requestedBlocksIter == m_requestedBlocks.end())
 		{
-			LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Block not requested yet. Requesting now.");
+			LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Block not requested yet. Requesting now.");
 			return true;
 		}
 
 		if (m_slowPeers.count(requestedBlocksIter->second.PEER_ID) > 0)
 		{
-			LoggerAPI::LogInfo("BlockSyncer::IsBlockSyncDue() - Waiting on block from banned peer. Requesting from valid peer now.");
+			LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Waiting on block from banned peer. Requesting from valid peer now.");
 			return true;
 		}
 
@@ -95,13 +95,13 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 
 bool BlockSyncer::RequestBlocks()
 {
-	LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - Requesting blocks.");
+	LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - Requesting blocks.");
 
 	std::vector<uint64_t> mostWorkPeers = m_connectionManager.GetMostWorkPeers();
 	const uint64_t numPeers = mostWorkPeers.size();
 	if (mostWorkPeers.empty())
 	{
-		LoggerAPI::LogWarning("BlockSyncer::RequestBlocks - No most-work peers found.");
+		LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - No most-work peers found.");
 		return false;
 	}
 
@@ -109,7 +109,7 @@ bool BlockSyncer::RequestBlocks()
 	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
-		LoggerAPI::LogWarning("BlockSyncer::RequestBlocks - No blocks needed.");
+		LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - No blocks needed.");
 		return false;
 	}
 
@@ -172,7 +172,7 @@ bool BlockSyncer::RequestBlocks()
 
 	if (!blocksToRequest.empty())
 	{
-		LoggerAPI::LogDebug(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers));
 	}
 
 	return true;

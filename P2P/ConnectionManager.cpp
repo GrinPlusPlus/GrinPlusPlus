@@ -173,6 +173,8 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		pingConnections = true;
 	}
 
+	std::unique_lock<std::shared_mutex> disconnectLock(m_disconnectMutex);
+
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
 	{
 		Connection* pConnection = m_connections[i];
@@ -181,22 +183,18 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		{
 			// TODO: Implement this.
 			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::BanConnection() - Banning peer (%d) at (%s).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str()));
-			pConnection->Disconnect();
 
+			m_connectionsToClose.push_back(pConnection);
 			VectorUtil::Remove<Connection*>(m_connections, i);
-			delete pConnection;
 
 			continue;
 		}
 
 		if (!bInactiveOnly || !pConnection->IsConnectionActive())
 		{
-			pConnection->Disconnect();
-
-			m_peerManager.UpdatePeer(pConnection->GetPeer()); // TODO: Also save connection stats.
-
+			m_connectionsToClose.push_back(pConnection);
 			VectorUtil::Remove<Connection*>(m_connections, i);
-			delete pConnection;
+
 			continue;
 		}
 
@@ -206,6 +204,19 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
 		}
 	}
+
+	writeLock.unlock();
+
+	for (Connection* pConnection : m_connectionsToClose)
+	{
+		pConnection->Disconnect();
+
+		m_peerManager.UpdatePeer(pConnection->GetPeer()); // TODO: Also save connection stats.
+
+		delete pConnection;
+	}
+
+	m_connectionsToClose.clear();
 }
 
 void ConnectionManager::BanConnection(const uint64_t connectionId)

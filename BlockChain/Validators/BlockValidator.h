@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Core/FullBlock.h>
+#include <Core/BlockSums.h>
+#include <Database/BlockDb.h>
+#include <memory>
 
 // Forward Declarations
 class BlindingFactor;
@@ -10,16 +13,16 @@ class ITxHashSet;
 class BlockValidator
 {
 public:
-	BlockValidator(const ITransactionPool& transactionPool, const ITxHashSet* pTxHashSet);
+	BlockValidator(const ITransactionPool& transactionPool, const IBlockDB& blockDB, const ITxHashSet* pTxHashSet);
 
-	bool IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateSelfConsistent) const;
+	std::unique_ptr<BlockSums> ValidateBlock(const FullBlock& block, const bool validateSelfConsistent) const;
 	bool IsBlockSelfConsistent(const FullBlock& block) const;
 
 private:
 	bool VerifyKernelLockHeights(const FullBlock& block) const;
 	bool VerifyCoinbase(const FullBlock& block) const;
-	bool VerifyKernelSums(const FullBlock& block, int64_t overage, const BlindingFactor& kernelOffset) const;
 
 	const ITransactionPool& m_transactionPool;
+	const IBlockDB& m_blockDB;
 	const ITxHashSet* m_pTxHashSet;
 };

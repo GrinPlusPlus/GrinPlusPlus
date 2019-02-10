@@ -6,6 +6,7 @@
 #include <Consensus/Common.h>
 #include <Infrastructure/Logger.h>
 
+// TODO: Refactor to Use Core/Validation/KernelSumValidator.h
 bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader, const bool genesisHasReward, Commitment& outputSumOut, Commitment& kernelSumOut) const
 {
 	// Calculate overage
@@ -29,7 +30,7 @@ bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHea
 	}
 
 	// Accounting for the kernel offset.
-	std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, blockHeader.GetTotalKernelOffset(), blockHeader.GetKernelMMRSize());
+	std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, blockHeader.GetTotalKernelOffset());
 	if (pKernelSumPlusOffset == nullptr)
 	{
 		LoggerAPI::LogError("KernelSumValidator::ValidateKernelSums - Failed to add kernel excesses for block " + HexUtil::ConvertHash(blockHeader.GetHash()));
@@ -94,7 +95,7 @@ std::unique_ptr<Commitment> KernelSumValidator::AddKernelExcesses(TxHashSet& txH
 	return Crypto::AddCommitments(excessCommitments, std::vector<Commitment>());
 }
 
-std::unique_ptr<Commitment> KernelSumValidator::AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset, const uint64_t kernelMMRSize) const
+std::unique_ptr<Commitment> KernelSumValidator::AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset) const
 {
 	// Add the commitments along with the commit to zero built from the offset
 	std::vector<Commitment> commitments;

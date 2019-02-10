@@ -21,7 +21,7 @@ namespace Consensus
 	static const uint64_t NANO_GRIN = 1;
 
 	// The block subsidy amount, one grin per second on average
-	static const uint64_t REWARD = 60 * GRIN_BASE;
+	static const int64_t REWARD = 60 * GRIN_BASE;
 
 	// Actual block reward for a given total fee amount
 	static uint64_t CalculateReward(const uint64_t fee)

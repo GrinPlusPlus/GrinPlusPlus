@@ -2,53 +2,44 @@
 #include "../Processors/BlockHeaderProcessor.h"
 
 #include <Crypto.h>
+#include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>
 #include <TxPool/TransactionPool.h>
 
-BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const ITxHashSet* pTxHashSet)
-	: m_transactionPool(transactionPool), m_pTxHashSet(pTxHashSet)
+BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const IBlockDB& blockDB, const ITxHashSet* pTxHashSet)
+	: m_transactionPool(transactionPool), m_blockDB(blockDB), m_pTxHashSet(pTxHashSet)
 {
 
 }
 
 // Validates a block is self-consistent and validates the state (eg. MMRs).
-bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& previousKernelOffset, const bool validateSelfConsistent) const
+std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block, const bool validateSelfConsistent) const
 {
 	if (validateSelfConsistent)
 	{
 		if (!IsBlockSelfConsistent(block))
 		{
-			return false;
+			return std::unique_ptr<BlockSums>(nullptr);
 		}
 	}
 
-	BlindingFactor blockKernelOffset(CBigInteger<32>::ValueOf(0));
-
-	// take the kernel offset for this block (block offset minus previous) and verify.body.outputs and kernel sums
-	if (block.GetBlockHeader().GetTotalKernelOffset() == previousKernelOffset)
-	{
-		std::unique_ptr<BlindingFactor> pBlockKernelOffset = Crypto::AddBlindingFactors(std::vector<BlindingFactor>({ block.GetBlockHeader().GetTotalKernelOffset() }), std::vector<BlindingFactor>({ previousKernelOffset }));
-		if (pBlockKernelOffset == nullptr)
-		{
-			return false;
-		}
-
-		blockKernelOffset = *pBlockKernelOffset;
-	}
-
-	const bool kernelSumsValid = VerifyKernelSums(block, 0 - Consensus::REWARD, blockKernelOffset);
-	if (!kernelSumsValid)
-	{
-		return false;
-	}
+	// TODO: Verify Coinbase Maturity
 
 	if (!m_pTxHashSet->ValidateRoots(block.GetBlockHeader()))
 	{
-		return false;
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
-	return true;
+	const Hash previousHash = block.GetBlockHeader().GetPreviousBlockHash();
+	std::unique_ptr<BlockSums> pPreviousBlockSums = m_blockDB.GetBlockSums(previousHash);
+	if (pPreviousBlockSums == nullptr)
+	{
+		LoggerAPI::LogWarning("BlockValidator::IsBlockValid - Failed to retrieve block sums for block " + HexUtil::ConvertHash(previousHash));
+		return std::unique_ptr<BlockSums>(nullptr);
+	}
+
+	return KernelSumValidator::ValidateKernelSums(block.GetTransactionBody(), 0 - Consensus::REWARD, block.GetBlockHeader().GetTotalKernelOffset(), std::make_optional<BlockSums>(*pPreviousBlockSums));
 }
 
 // Validates all the elements in a block that can be checked without additional data. 
@@ -72,8 +63,6 @@ bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate coinbase for " + HexUtil::ConvertHash(block.GetHash()));
 		return false;
 	}
-
-	// TODO: Verify Coinbase Maturity
 
 	return true;
 }
@@ -140,10 +129,4 @@ bool BlockValidator::VerifyCoinbase(const FullBlock& block) const
 	}
 
 	return *pKernelSum == *pOutputAdjustedSum;
-}
-
-bool BlockValidator::VerifyKernelSums(const FullBlock& block, int64_t overage, const BlindingFactor& kernelOffset) const
-{
-	// TODO: Implement
-	return true;
 }

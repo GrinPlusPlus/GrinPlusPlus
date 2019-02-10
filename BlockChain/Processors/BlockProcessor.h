@@ -10,7 +10,7 @@
 class BlockProcessor
 {
 public:
-	BlockProcessor(const Config& config, ChainState& chainState, const ITransactionPool& transactionPool);
+	BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState, const ITransactionPool& transactionPool);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block, const bool orphan);
 
@@ -22,6 +22,7 @@ private:
 	bool ShouldOrphan(const FullBlock& block, LockedChainState& lockedState);
 
 	const Config& m_config;
+	const IBlockDB& m_blockDB;
 	ChainState& m_chainState;
 	const ITransactionPool& m_transactionPool;
 };

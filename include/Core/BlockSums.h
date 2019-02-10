@@ -13,6 +13,12 @@ public:
 
 	}
 
+	BlockSums(const Commitment& outputSum, const Commitment& kernelSum)
+		: m_outputSum(outputSum), m_kernelSum(kernelSum)
+	{
+
+	}
+
 	inline const Commitment& GetOutputSum() const { return m_outputSum; }
 	inline const Commitment& GetKernelSum() const { return m_kernelSum; }
 

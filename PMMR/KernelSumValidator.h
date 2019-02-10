@@ -16,5 +16,5 @@ public:
 private:
 	std::unique_ptr<Commitment> AddCommitments(TxHashSet& txHashSet, const uint64_t overage, const uint64_t outputMMRSize) const;
 	std::unique_ptr<Commitment> AddKernelExcesses(TxHashSet& txHashSet, const uint64_t kernelMMRSize) const;
-	std::unique_ptr<Commitment> AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset, const uint64_t kernelMMRSize) const;
+	std::unique_ptr<Commitment> AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset) const;
 };

@@ -5,6 +5,7 @@
 #include "ValidTransactionFinder.h"
 
 #include <Database/BlockDb.h>
+#include <Consensus/BlockTime.h>
 #include <Crypto/RandomNumberGenerator.h>
 
 TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
@@ -38,11 +39,11 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	}
 
 	// Verify coinbase maturity
+	const uint64_t maximumBlockHeight = std::max(lastConfirmedBlock.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
-		// TODO: Store output block height in blockDB instead of passing in maximumCoinbasePosition.
-		const std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
-		if (!outputPosOpt.has_value() || outputPosOpt.value() < maximumCoinbasePosition)
+		const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+		if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
 		{
 			return false;
 		}

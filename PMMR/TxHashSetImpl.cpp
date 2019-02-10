@@ -23,11 +23,11 @@ TxHashSet::~TxHashSet()
 
 bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
 {
-	const std::optional<uint64_t> mmrIndex = m_blockDB.GetOutputPosition(output.GetCommitment());
-	if (mmrIndex.has_value())
+	const std::optional<OutputLocation> outputLocationOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
+	if (outputLocationOpt.has_value())
 	{
 		// TODO: I believe this should call GetOutputAt. GetHashAt returns spent hashes, as long as they aren't pruned.
-		std::unique_ptr<Hash> pMMRHash = m_pOutputPMMR->GetHashAt(mmrIndex.value());
+		std::unique_ptr<Hash> pMMRHash = m_pOutputPMMR->GetHashAt(outputLocationOpt.value().GetMMRIndex());
 		if (pMMRHash != nullptr)
 		{
 			Serializer serializer;
@@ -49,13 +49,13 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
-		std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
+		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
 		if (!outputPosOpt.has_value())
 		{
 			return false;
 		}
 
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value());
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
 			LoggerAPI::LogWarning("TxHashSet::IsValid - Transaction invalid: " + HexUtil::ConvertHash(transaction.GetHash()));
@@ -87,22 +87,23 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
-		std::optional<uint64_t> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
+		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
 		if (!outputPosOpt.has_value())
 		{
 			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Output position not found for commitment: " + HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData(), false, false) + " in block: " + std::to_string(block.GetBlockHeader().GetHeight()));
 			return false;
 		}
 
-		if (!m_pOutputPMMR->Remove(outputPosOpt.value()))
+		const uint64_t mmrIndex = outputPosOpt.value().GetMMRIndex();
+		if (!m_pOutputPMMR->Remove(mmrIndex))
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove output at position:" + std::to_string(outputPosOpt.value()));
+			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove output at position:" + std::to_string(mmrIndex));
 			return false;
 		}
 
-		if (!m_pRangeProofPMMR->Remove(outputPosOpt.value()))
+		if (!m_pRangeProofPMMR->Remove(mmrIndex))
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove rangeproof at position:" + std::to_string(outputPosOpt.value()));
+			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove rangeproof at position:" + std::to_string(mmrIndex));
 			return false;
 		}
 	}
@@ -110,7 +111,7 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	// Append new outputs
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
 	{
-		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output)))
+		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output), block.GetBlockHeader().GetHeight()))
 		{
 			return false;
 		}
@@ -153,16 +154,15 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 	return true;
 }
 
-// TODO: Also store block heights?
-bool TxHashSet::SaveOutputPositions()
+bool TxHashSet::SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex)
 {
-	const uint64_t size = m_pOutputPMMR->GetSize();
-	for (uint64_t mmrIndex = 0; mmrIndex < size; mmrIndex++)
+	const uint64_t size = blockHeader.GetOutputMMRSize();
+	for (uint64_t mmrIndex = firstOutputIndex; mmrIndex < size; mmrIndex++)
 	{
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
 		if (pOutput != nullptr)
 		{
-			m_blockDB.AddOutputPosition(pOutput->GetCommitment(), mmrIndex);
+			m_blockDB.AddOutputPosition(pOutput->GetCommitment(), OutputLocation(mmrIndex, blockHeader.GetHeight()));
 		}
 	}
 

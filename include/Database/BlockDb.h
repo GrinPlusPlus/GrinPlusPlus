@@ -4,6 +4,7 @@
 #include <Core/FullBlock.h>
 #include <Core/BlockSums.h>
 #include <Core/ChainType.h>
+#include <Core/OutputLocation.h>
 #include <memory>
 #include <optional>
 
@@ -22,6 +23,6 @@ public:
 	virtual void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) = 0;
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const = 0;
 
-	virtual void AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex) = 0;
-	virtual std::optional<uint64_t> GetOutputPosition(const Commitment& outputCommitment) const = 0;
+	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) = 0;
+	virtual std::optional<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
 };

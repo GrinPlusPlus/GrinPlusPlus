@@ -41,7 +41,7 @@ OutputPMMR* OutputPMMR::Load(const Config& config, IBlockDB& blockDB)
 	return new OutputPMMR(config, blockDB, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
-bool OutputPMMR::Append(const OutputIdentifier& output)
+bool OutputPMMR::Append(const OutputIdentifier& output, const uint64_t blockHeight)
 {
 	// Add to LeafSet
 	const uint64_t totalShift = m_pruneList.GetTotalShift();
@@ -49,7 +49,7 @@ bool OutputPMMR::Append(const OutputIdentifier& output)
 	m_leafSet.Add((uint32_t)position);
 
 	// Save output position
-	m_blockDB.AddOutputPosition(output.GetCommitment(), position);
+	m_blockDB.AddOutputPosition(output.GetCommitment(), OutputLocation(position, blockHeight));
 
 	// Add to data file
 	Serializer serializer;

@@ -209,26 +209,25 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 	return pBlockSums;
 }
 
-
-void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex)
+void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location)
 {
 	const std::string outputHex = HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData(), false, false);
-	LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) for output (%s).", mmrIndex, outputHex.c_str()));
+	LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) at height (%llu) for output (%s).", location.GetMMRIndex(), location.GetBlockHeight(), outputHex.c_str()));
 
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 
 	// Serializes the output position
 	Serializer serializer;
-	serializer.Append<uint64_t>(mmrIndex);
+	location.Serialize(serializer);
 	Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());
 
 	// Insert the output position
 	m_pDatabase->Put(WriteOptions(), m_pOutputPosHandle, key, value);
 }
 
-std::optional<uint64_t> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
+std::optional<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
 {
-	std::optional<uint64_t> outputPosition = std::nullopt;
+	std::optional<OutputLocation> outputPosition = std::nullopt;
 
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 
@@ -240,7 +239,7 @@ std::optional<uint64_t> BlockDB::GetOutputPosition(const Commitment& outputCommi
 		// Deserialize result
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
 		ByteBuffer byteBuffer(data);
-		outputPosition = std::make_optional<uint64_t>(byteBuffer.ReadU64());
+		outputPosition = std::make_optional<OutputLocation>(OutputLocation::Deserialize(byteBuffer));
 	}
 
 	return outputPosition;

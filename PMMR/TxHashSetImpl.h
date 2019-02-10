@@ -19,7 +19,7 @@ public:
 	virtual bool ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut) override final;
 	virtual bool ApplyBlock(const FullBlock& block) override final;
 	virtual bool ValidateRoots(const BlockHeader& blockHeader) const override final;
-	virtual bool SaveOutputPositions() override final;
+	virtual bool SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex) override final;
 
 	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;

@@ -48,7 +48,22 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	m_blockDB.AddBlockSums(pHeader->GetHash(), blockSums);
 
 	// 5. Add Output positions to DB
-	pTxHashSet->SaveOutputPositions();
+	{
+		LockedChainState lockedState = m_chainState.GetLocked();
+		Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+
+		uint64_t firstOutput = 0;
+		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)
+		{
+			BlockIndex* pIndex = candidateChain.GetByHeight(i);
+			std::unique_ptr<BlockHeader> pNextHeader = lockedState.m_blockStore.GetBlockHeaderByHash(pIndex->GetHash());
+			if (pNextHeader != nullptr)
+			{
+				pTxHashSet->SaveOutputPositions(*pNextHeader, firstOutput);
+				firstOutput = pNextHeader->GetOutputMMRSize();
+			}
+		}
+	}
 
 	// 6. Store TxHashSet
 	m_chainState.GetLocked().m_txHashSetManager.SetTxHashSet(pTxHashSet);

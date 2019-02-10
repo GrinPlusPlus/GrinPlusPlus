@@ -104,32 +104,17 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commit
 
 	std::unique_ptr<BlockHeader> pHeader(nullptr);
 
-	std::optional<uint64_t> mmrIndex = m_blockStore.GetBlockDB().GetOutputPosition(outputCommitment);
-	if (mmrIndex.has_value())
+	std::optional<OutputLocation> outputLocationOpt = m_blockStore.GetBlockDB().GetOutputPosition(outputCommitment);
+	if (outputLocationOpt.has_value())
 	{
-		BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetTip();
-		const uint64_t height = pBlockIndex->GetHeight();
-		const uint64_t horizonHeight = std::max(height, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
-
-		for (size_t i = height; i >= horizonHeight; i--)
+		BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetByHeight(outputLocationOpt.value().GetBlockHeight());
+		if (pBlockIndex != nullptr)
 		{
-			if (pBlockIndex == nullptr)
-			{
-				break;
-			}
-
-			std::unique_ptr<BlockHeader> pCurrentHeader = m_blockStore.GetBlockHeaderByHash(pBlockIndex->GetHash());
-			if (pCurrentHeader != nullptr && pCurrentHeader->GetOutputMMRSize() < mmrIndex)
-			{
-				return pHeader;
-			}
-
-			pBlockIndex = pBlockIndex->GetPrevious();
-			pHeader.swap(pCurrentHeader);
+			return m_blockStore.GetBlockHeaderByHash(pBlockIndex->GetHash());
 		}
 	}
 
-	return pHeader;
+	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
 std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash)

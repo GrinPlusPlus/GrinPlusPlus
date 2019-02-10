@@ -32,8 +32,8 @@ public:
 	virtual void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) override final;
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const override final;
 
-	virtual void AddOutputPosition(const Commitment& outputCommitment, const uint64_t mmrIndex) override final;
-	virtual std::optional<uint64_t> GetOutputPosition(const Commitment& outputCommitment) const override final;
+	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) override final;
+	virtual std::optional<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const override final;
 
 private:
 	const Config& m_config;

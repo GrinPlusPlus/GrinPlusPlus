@@ -22,10 +22,10 @@ public:
 	virtual bool ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut) = 0;
 
 	//
-	// Saves the commitments and MMR indices of all unspent outputs to the database.
+	// Saves the commitments, MMR indices, and block height for all unspent outputs in the block.
 	// This is typically only used during initial sync.
 	//
-	virtual bool SaveOutputPositions() = 0;
+	virtual bool SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex) = 0;
 
 
 

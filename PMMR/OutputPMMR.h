@@ -20,7 +20,7 @@ public:
 	static OutputPMMR* Load(const Config& config, IBlockDB& blockDB);
 	~OutputPMMR();
 
-	bool Append(const OutputIdentifier& output);
+	bool Append(const OutputIdentifier& output, const uint64_t blockHeight);
 	bool Remove(const uint64_t mmrIndex);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;

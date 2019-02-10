@@ -23,11 +23,11 @@ ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerMana
 
 void ConnectionManager::Start()
 {
+	m_terminate = false;
+
 	m_seeder.Start();
 	m_syncer.Start();
 	m_pipeline.Start();
-
-	m_terminate = false;
 
 	if (m_broadcastThread.joinable())
 	{
@@ -39,11 +39,11 @@ void ConnectionManager::Start()
 
 void ConnectionManager::Stop()
 {
+	m_terminate = true;
+
 	m_seeder.Stop();
 	m_syncer.Stop();
 	m_pipeline.Stop();
-
-	m_terminate = true;
 
 	if (m_broadcastThread.joinable())
 	{

@@ -8,6 +8,7 @@
 #include "Common/DataFile.h"
 
 #include <Core/OutputIdentifier.h>
+#include <Database/BlockDB.h>
 #include <Config/Config.h>
 #include <Hash.h>
 
@@ -16,12 +17,11 @@
 class OutputPMMR : public MMR
 {
 public:
-	static OutputPMMR* Load(const Config& config);
+	static OutputPMMR* Load(const Config& config, IBlockDB& blockDB);
 	~OutputPMMR();
 
-	void Compact();
 	bool Append(const OutputIdentifier& output);
-	bool SpendOutput(const uint64_t mmrIndex);
+	bool Remove(const uint64_t mmrIndex);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
@@ -34,12 +34,13 @@ public:
 	std::unique_ptr<OutputIdentifier> GetOutputAt(const uint64_t mmrIndex) const;
 
 private:
-	OutputPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
+	OutputPMMR(const Config& config, IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
 
 	Roaring DetermineLeavesToRemove(const uint64_t cutoffSize, const Roaring& rewindRmPos) const;
 	Roaring DetermineNodesToRemove(const Roaring& leavesToRemove) const;
 
 	const Config& m_config;
+	IBlockDB& m_blockDB;
 
 	HashFile* m_pHashFile;
 	LeafSet m_leafSet;

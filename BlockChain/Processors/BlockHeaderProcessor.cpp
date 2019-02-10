@@ -119,11 +119,11 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 
 	if (newHeaders.empty())
 	{
-		LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Headers already processed.");
+		LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Headers already processed.");
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Processing " + std::to_string(newHeaders.size()) + " headers.");
+	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Processing " + std::to_string(newHeaders.size()) + " headers.");
 
 	// Check if previous header exists and matches previous.
 	BlockIndex* pPrevIndex = syncChain.GetByHeight(newHeaders.front().GetHeight() - 1);
@@ -135,7 +135,6 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 
 	// Rewind MMR
 	IHeaderMMR& headerMMR = lockedState.m_headerMMR;
-
 	headerMMR.Rewind(newHeaders.front().GetHeight());
 
 	// Validate the headers.

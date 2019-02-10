@@ -20,8 +20,5 @@ public:
 	virtual Hash Root(const uint64_t lastHeight) const override final;
 
 private:
-	Hash HashWithIndex(const BlockHeader& header, const uint64_t index) const;
-
 	HashFile m_hashFile;
-	std::vector<Hash> m_hashes;
 };

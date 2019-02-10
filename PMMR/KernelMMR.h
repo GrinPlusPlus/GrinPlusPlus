@@ -33,8 +33,6 @@ public:
 private:
 	KernelMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile);
 
-	Hash KernelMMR::HashWithIndex(const TransactionKernel& kernel, const uint64_t index) const;
-
 	const Config& m_config;
 	HashFile* m_pHashFile;
 	LeafSet m_leafSet;

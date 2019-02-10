@@ -202,8 +202,34 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
 				const FullBlock& block = blockMessage.GetBlock();
 
-				LoggerAPI::LogDebug("Block received: " + std::to_string(block.GetBlockHeader().GetHeight()));
-				m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
+				LoggerAPI::LogTrace("Block received: " + std::to_string(block.GetBlockHeader().GetHeight()));
+
+				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::SYNCING_BLOCKS)
+				{
+					m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
+				}
+				else
+				{
+					const EBlockChainStatus added = m_blockChainServer.AddBlock(block);
+					if (added == EBlockChainStatus::SUCCESS)
+					{
+						const HeaderMessage headerMessage(block.GetBlockHeader());
+						m_connectionManager.BroadcastMessage(headerMessage, connectionId);
+						return EStatus::SUCCESS;
+					}
+					else if (added == EBlockChainStatus::ORPHANED)
+					{
+						if (block.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
+						{
+							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetBlockHeader().GetPreviousBlockHash());
+							return MessageSender(m_config).Send(connectedPeer, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+						}
+					}
+					else if (added == EBlockChainStatus::INVALID)
+					{
+						return EStatus::BAN_PEER;
+					}
+				}
 
 				return EStatus::SUCCESS;
 			}
@@ -236,8 +262,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					{
 						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
 						{
-							const GetBlockMessage getPreviousBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
-							return MessageSender(m_config).Send(connectedPeer, getPreviousBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
+							return MessageSender(m_config).Send(connectedPeer, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
 				}
@@ -333,8 +359,7 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 		const int newBytesReceived = recv(connectedPeer.GetConnection(), (char*)&buffer[0], expectedBytes, 0);
 		if (newBytesReceived <= 0 || m_connectionManager.IsTerminating())
 		{
-			syncStatus.UpdateDownloaded(0);
-			syncStatus.UpdateDownloadSize(0);
+			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 
 			LoggerAPI::LogError("MessageProcessor::ReceiveTxHashSet - Transmission ended abruptly.");
 			fout.close();
@@ -352,7 +377,15 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	fout.close();
 
 	LoggerAPI::LogInfo("MessageProcessor::ReceiveTxHashSet - Downloading successful.");
-	m_blockChainServer.ProcessTransactionHashSet(txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
+	syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
+
+	// TODO: Process asynchronously.
+	const EBlockChainStatus processStatus = m_blockChainServer.ProcessTransactionHashSet(txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
+	if (processStatus == EBlockChainStatus::INVALID)
+	{
+		syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+		return EStatus::BAN_PEER;
+	}
 
 	return EStatus::SUCCESS;
 }

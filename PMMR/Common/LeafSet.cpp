@@ -90,7 +90,7 @@ bool LeafSet::Snapshot(const Hash& blockHash)
 	return Flush(path, snapshotBitmap);
 }
 
-void LeafSet::DiscardChanges()
+void LeafSet::Discard()
 {
 	m_bitmap = m_bitmapBackup;
 }

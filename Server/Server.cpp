@@ -82,9 +82,17 @@ void Server::Run()
 		{
 			const uint64_t downloaded = syncStatus.GetDownloaded();
 			const uint64_t downloadSize = syncStatus.GetDownloadSize();
-			const uint64_t percentage = (downloaded * 100) / downloadSize;
+			const uint64_t percentage = downloadSize > 0 ? (downloaded * 100) / downloadSize : 0;
 
 			std::cout << "\nStatus: Syncing TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
+		}
+		else if (status == ESyncStatus::PROCESSING_TXHASHSET)
+		{
+			std::cout << "\nStatus: Validating and processing TxHashSet.";
+		}
+		else if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
+		{
+			std::cout << "\nStatus: TxHashSet Sync Failed. Trying Again.";
 		}
 		else if (status == ESyncStatus::SYNCING_BLOCKS)
 		{

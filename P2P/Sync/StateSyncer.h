@@ -18,8 +18,9 @@ private:
 	bool IsStateSyncDue(const SyncStatus& syncStatus) const;
 	bool RequestState(const SyncStatus& syncStatus);
 
-	std::chrono::time_point<std::chrono::system_clock> m_timeout;
+	std::chrono::time_point<std::chrono::system_clock> m_timeRequested;
 	uint64_t m_requestedHeight;
+	uint64_t m_connectionId;
 
 	ConnectionManager & m_connectionManager;
 	IBlockChainServer& m_blockChainServer;

@@ -43,7 +43,10 @@ bool BlockValidator::IsBlockValid(const FullBlock& block, const BlindingFactor& 
 		return false;
 	}
 
-	// TODO: Validate MMRs
+	if (!m_pTxHashSet->ValidateRoots(block.GetBlockHeader()))
+	{
+		return false;
+	}
 
 	return true;
 }

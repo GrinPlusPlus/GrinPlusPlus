@@ -1,5 +1,6 @@
 #include "KernelMMR.h"
 #include "Common/MMRUtil.h"
+#include "Common/MMRHashUtil.h"
 
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
@@ -38,7 +39,7 @@ KernelMMR* KernelMMR::Load(const Config& config)
 
 Hash KernelMMR::Root(const uint64_t mmrIndex) const
 {
-	return m_pHashFile->Root(mmrIndex);
+	return MMRHashUtil::Root(*m_pHashFile, mmrIndex, nullptr);
 }
 
 std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrIndex) const
@@ -85,34 +86,24 @@ bool KernelMMR::Discard()
 	LoggerAPI::LogDebug(StringUtil::Format("KernelMMR::Discard - Discarding changes since last flush."));
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
-	m_leafSet.DiscardChanges();
+	m_leafSet.Discard();
 
 	return hashDiscard && dataDiscard;
 }
 
 bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
-	uint64_t nextMMRIndex = m_pHashFile->GetSize();
-	Hash hash = HashWithIndex(kernel, nextMMRIndex++);
-	m_pHashFile->AddHash(hash);
+	// Update leafset
+	const uint64_t position = m_pHashFile->GetSize();
+	m_leafSet.Add(position);
 
-	const uint64_t newMMRSize = MMRUtil::GetNumNodes(nextMMRIndex);
-	while (nextMMRIndex < newMMRSize)
-	{
-		const uint64_t leftSibling = MMRUtil::GetSiblingIndex(nextMMRIndex - 1);
-		hash = MMRUtil::HashParentWithIndex(m_pHashFile->GetHashAt(leftSibling), hash, nextMMRIndex++);
-		m_pHashFile->AddHash(hash);
-	}
+	// Add to data file
+	Serializer serializer;
+	kernel.Serialize(serializer);
+	m_pDataFile->AddData(serializer.GetBytes());
 
-	m_leafSet.Add(MMRUtil::GetNumLeaves(nextMMRIndex));
+	// Add hashes
+	MMRHashUtil::AddHashes(*m_pHashFile, serializer.GetBytes(), nullptr);
 
 	return true;
-}
-
-Hash KernelMMR::HashWithIndex(const TransactionKernel& kernel, const uint64_t index) const
-{
-	Serializer serializer;
-	serializer.Append<uint64_t>(index);
-	kernel.Serialize(serializer);
-	return Crypto::Blake2b(serializer.GetBytes());
 }

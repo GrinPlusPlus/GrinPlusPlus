@@ -18,7 +18,7 @@ ITxHashSet* TxHashSetManager::Open()
 	Close();
 
 	KernelMMR* pKernelMMR = KernelMMR::Load(m_config);
-	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config);
+	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config, m_blockDB);
 	RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(m_config);
 
 	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR);
@@ -46,7 +46,7 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 		pKernelMMR->Rewind(blockHeader.GetKernelMMRSize());
 		pKernelMMR->Flush();
 
-		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config, blockDB);
 		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize());
 		pOutputPMMR->Flush();
 

@@ -16,8 +16,9 @@ public:
 
 	virtual bool IsUnspent(const OutputIdentifier& output) const override final;
 	virtual bool IsValid(const Transaction& transaction) const override final;
-	virtual bool Validate(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut) override final;
+	virtual bool ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut) override final;
 	virtual bool ApplyBlock(const FullBlock& block) override final;
+	virtual bool ValidateRoots(const BlockHeader& blockHeader) const override final;
 	virtual bool SaveOutputPositions() override final;
 
 	virtual bool Snapshot(const BlockHeader& header) override final;

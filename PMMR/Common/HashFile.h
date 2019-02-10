@@ -18,9 +18,6 @@ public:
 	Hash GetHashAt(const uint64_t mmrIndex) const;
 	
 	void AddHash(const Hash& hash);
-	void AddHashes(const std::vector<Hash>& hashes);
-
-	Hash Root(const uint64_t size) const;
 
 private:
 	// TODO: Store peaks in memory

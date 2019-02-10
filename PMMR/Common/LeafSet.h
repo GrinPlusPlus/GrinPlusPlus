@@ -13,13 +13,13 @@ public:
 
 	void Add(const uint32_t position);
 	void Remove(const uint32_t position);
-	void Rewind(const uint32_t lastPosition, const Roaring& positionsToAdd);
 	bool Contains(const uint32_t position) const;
 
 	bool Load();
+	void Rewind(const uint32_t lastPosition, const Roaring& positionsToAdd);
 	bool Flush();
+	void Discard();
 	bool Snapshot(const Hash& blockHash);
-	void DiscardChanges();
 
 	Roaring CalculatePrunedPositions(const uint64_t cutoffSize, const Roaring& rewindRmPos, const PruneList& pruneList) const;
 

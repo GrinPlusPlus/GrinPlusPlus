@@ -36,7 +36,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	// 3. Validate entire TxHashSet
 	Commitment outputSum(CBigInteger<33>::ValueOf(0));
 	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
-	if (!pTxHashSet->Validate(*pHeader, m_blockChainServer, outputSum, kernelSum))
+	if (!pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, outputSum, kernelSum))
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Validation of %s failed.", path.c_str()));
 		TxHashSetManager::DestroyTxHashSet(pTxHashSet);

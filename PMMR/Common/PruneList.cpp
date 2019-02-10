@@ -108,13 +108,13 @@ uint64_t PruneList::GetShift(const uint64_t position) const
 		return 0;
 	}
 
-	const uint64_t index = m_prunedRoots.rank(position + 1);
-	if (index == 0)
+	if (m_shiftCache.empty())
 	{
 		return 0;
 	}
 
-	if (m_shiftCache.empty())
+	const uint64_t index = m_prunedRoots.rank(position + 1);
+	if (index == 0)
 	{
 		return 0;
 	}
@@ -164,11 +164,12 @@ void PruneList::BuildPrunedCache()
 		return;
 	}
 
-	m_prunedCache = Roaring(roaring_bitmap_create_with_capacity(m_prunedRoots.maximum()));
-	for (uint64_t position = 0; position < m_prunedRoots.maximum(); position++)
+	const uint64_t maximum = m_prunedRoots.maximum();
+	m_prunedCache = Roaring(roaring_bitmap_create_with_capacity(maximum));
+	for (uint64_t position = 0; position < maximum; position++)
 	{
 		uint64_t parent = position;
-		while (parent < m_prunedRoots.maximum())
+		while (parent < maximum)
 		{
 			if (m_prunedRoots.contains(parent + 1))
 			{
@@ -194,7 +195,8 @@ void PruneList::BuildShiftCaches()
 	m_leafShiftCache.clear();
 
 	// TODO: Use m_prunedRoots.iterate instead of looping through all values and checking contains.
-	for (uint64_t position = 0; position < m_prunedRoots.maximum(); position++)
+	const uint64_t maximum = m_prunedRoots.maximum();
+	for (uint64_t position = 0; position < maximum; position++)
 	{
 		if (m_prunedRoots.contains(position + 1))
 		{

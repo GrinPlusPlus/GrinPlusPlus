@@ -3,6 +3,7 @@
 #include "KernelMMR.h"
 #include "Common/MMR.h"
 #include "Common/MMRUtil.h"
+#include "Common/MMRHashUtil.h"
 #include "KernelSumValidator.h"
 #include "KernelSignatureValidator.h"
 
@@ -69,7 +70,7 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, genesisHasReward, outputSum, kernelSum))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel sums.");
-		//return TxHashSetValidationResult::Fail();
+		return TxHashSetValidationResult::Fail();
 	}
 
 	// Validate the rangeproof associated with each unspent output.
@@ -112,6 +113,7 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 	return true;
 }
 
+// TODO: This probably belongs in MMRHashUtil.
 bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
 {
 	const uint64_t size = mmr.GetSize();
@@ -131,7 +133,7 @@ bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
 
 				if (pLeftHash != nullptr && pRightHash != nullptr)
 				{
-					const Hash expectedHash = MMRUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
+					const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
 					if (*pParentHash != expectedHash)
 					{
 						LoggerAPI::LogError("TxHashSetValidator::ValidateMMRHashes - Invalid parent hash at index " + std::to_string(i));

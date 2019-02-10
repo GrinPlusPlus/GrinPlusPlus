@@ -1,9 +1,9 @@
 #include "HeaderMMRImpl.h"
 #include "Common/MMRUtil.h"
+#include "Common/MMRHashUtil.h"
 
 #include <Infrastructure/Logger.h>
 #include <Serialization/Serializer.h>
-#include <Crypto.h>
 #include <Config/Config.h>
 
 HeaderMMR::HeaderMMR(const std::string& path)
@@ -20,7 +20,7 @@ bool HeaderMMR::Load()
 bool HeaderMMR::Commit()
 {
 	const uint64_t height = MMRUtil::GetNumLeaves(m_hashFile.GetSize());
-	LoggerAPI::LogDebug("HeaderMMR::Commit - Flushing. Height:" + std::to_string(height) + " Size: " + std::to_string(m_hashFile.GetSize()));
+	LoggerAPI::LogTrace("HeaderMMR::Commit - Flushing. Height:" + std::to_string(height) + " Size: " + std::to_string(m_hashFile.GetSize()));
 	return m_hashFile.Flush();
 }
 
@@ -46,41 +46,20 @@ void HeaderMMR::AddHeader(const BlockHeader& header)
 {
 	LoggerAPI::LogTrace("HeaderMMR::AddHeader - Adding header at height " + std::to_string(header.GetHeight()) + " MMR: " + std::to_string(m_hashFile.GetSize()));
 
-	uint64_t position = m_hashFile.GetSize();
-	uint64_t peak = 1;
+	// Serialize header
+	Serializer serializer;
+	header.GetProofOfWork().SerializeProofNonces(serializer);
+	const std::vector<unsigned char> serializedHeader = serializer.GetBytes();
 
-	// Add in the new leaf
-	m_hashFile.AddHash(HashWithIndex(header, position));
-
-	// Add parents
-	while (MMRUtil::GetHeight(position + 1) > 0)
-	{
-		const uint64_t leftSiblingPosition = (position + 1) - (2 * peak);
-
-		const Hash leftHash = m_hashFile.GetHashAt(leftSiblingPosition);
-		const Hash rightHash = m_hashFile.GetHashAt(position);
-
-		++position;
-		peak *= 2;
-
-		const Hash parentHash = MMRUtil::HashParentWithIndex(leftHash, rightHash, position);
-		m_hashFile.AddHash(parentHash);
-	}
+	// Add hashes
+	MMRHashUtil::AddHashes(m_hashFile, serializedHeader, nullptr);
 }
 
 Hash HeaderMMR::Root(const uint64_t lastHeight) const
 {
 	const uint64_t position = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(lastHeight));
 
-	return m_hashFile.Root(position);
-}
-
-Hash HeaderMMR::HashWithIndex(const BlockHeader& header, const uint64_t index) const
-{
-	Serializer serializer;
-	serializer.Append<uint64_t>(index);
-	header.GetProofOfWork().SerializeProofNonces(serializer);
-	return Crypto::Blake2b(serializer.GetBytes());
+	return MMRHashUtil::Root(m_hashFile, position, nullptr);
 }
 
 namespace HeaderMMRAPI

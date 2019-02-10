@@ -24,7 +24,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const boo
 	uint64_t height = header.GetHeight();
 	if (height <= horizonHeight)
 	{
-		LoggerAPI::LogError("BlockProcessor::ProcessBlock - Can't process blocks beyond horizon.");
+		LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Can't process blocks beyond horizon.");
 		return EBlockChainStatus::INVALID;
 	}
 
@@ -40,7 +40,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const boo
 			// Verify block is self-consistent before locking
 			if (!BlockValidator(m_transactionPool, nullptr).IsBlockSelfConsistent(block))
 			{
-				LoggerAPI::LogError("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
+				LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
 				return EBlockChainStatus::INVALID;
 			}
 		}
@@ -48,7 +48,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const boo
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
+			LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
 		}
 
 		return returnStatus;
@@ -67,7 +67,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
 	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.GetHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already part of confirmed chain.", header.FormatHash().c_str()));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already part of confirmed chain.", header.FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -97,7 +97,12 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 	ITxHashSet* pTxHashSet = lockedState.m_txHashSetManager.GetTxHashSet();
 	pTxHashSet->Rewind(*pPreviousHeader);
 
-	pTxHashSet->ApplyBlock(block);
+	if (!pTxHashSet->ApplyBlock(block))
+	{
+		pTxHashSet->Discard();
+		return EBlockChainStatus::INVALID;
+	}
+
 	if (!BlockValidator(lockedState.m_transactionPool, pTxHashSet).IsBlockValid(block, pPreviousHeader->GetTotalKernelOffset(), false))
 	{
 		pTxHashSet->Discard();
@@ -107,7 +112,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 	lockedState.m_transactionPool.ReconcileBlock(block);
 	lockedState.m_blockStore.AddBlock(block);
 
-	//pTxHashSet->Commit();
+	pTxHashSet->Commit();
 
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 	confirmedChain.AddBlock(candidateChain.GetByHeight(block.GetBlockHeader().GetHeight()));
@@ -120,7 +125,7 @@ EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, Loc
 	// Check if already processed as an orphan
 	if (lockedState.m_orphanPool.IsOrphan(block.GetBlockHeader().GetHeight(), block.GetHash()))
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str()));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str()));
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -138,7 +143,7 @@ bool BlockProcessor::ShouldOrphan(const FullBlock& block, LockedChainState& lock
 	BlockIndex* pPreviousCandidateIndex = candidateChain.GetByHeight(header.GetHeight() - 1);
 	if (pPreviousCandidateIndex == nullptr || pPreviousCandidateIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Previous block header missing. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Previous block header missing. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}
@@ -147,7 +152,7 @@ bool BlockProcessor::ShouldOrphan(const FullBlock& block, LockedChainState& lock
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}
@@ -158,7 +163,7 @@ bool BlockProcessor::ShouldOrphan(const FullBlock& block, LockedChainState& lock
 	BlockIndex* pPreviousConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr || pPreviousConfirmedIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Previous confirmed block missing. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Previous confirmed block missing. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}
@@ -167,7 +172,7 @@ bool BlockProcessor::ShouldOrphan(const FullBlock& block, LockedChainState& lock
 	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
 	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("BlockProcessor::ProcessBlock - Confirmed block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+		LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Confirmed block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
 
 		return true;
 	}

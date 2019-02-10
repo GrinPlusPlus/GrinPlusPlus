@@ -37,6 +37,13 @@ namespace HexUtil
 		return stream.str();
 	}
 
+	static std::string ConvertToHex(const std::vector<unsigned char>& data, const size_t numBytes)
+	{
+		const std::vector<unsigned char> firstNBytes = std::vector<unsigned char>(data.cbegin(), data.cbegin() + numBytes);
+
+		return ConvertToHex(firstNBytes, false, false);
+	}
+
 	static std::string ConvertHash(const Hash& hash)
 	{
 		const std::vector<unsigned char>& bytes = hash.GetData();

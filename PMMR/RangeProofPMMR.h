@@ -17,6 +17,9 @@ public:
 	static RangeProofPMMR* Load(const Config& config);
 	~RangeProofPMMR();
 
+	bool Append(const RangeProof& rangeProof);
+	bool Remove(const uint64_t mmrIndex);
+
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
 	std::unique_ptr<RangeProof> GetRangeProofAt(const uint64_t mmrIndex) const;

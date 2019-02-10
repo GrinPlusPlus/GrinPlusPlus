@@ -54,7 +54,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 	// Check if header download timed out.
 	if (m_timeout < std::chrono::system_clock::now())
 	{
-		LoggerAPI::LogInfo("HeaderSyncer::IsHeaderSyncDue() - Timed out. Banning then requesting from new peer.");
+		LoggerAPI::LogDebug("HeaderSyncer::IsHeaderSyncDue() - Timed out. Banning then requesting from new peer.");
 
 		if (m_connectionId != 0)
 		{
@@ -71,7 +71,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 
 bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
-	LoggerAPI::LogInfo("HeaderSyncer::RequestHeaders - Requesting headers.");
+	LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Requesting headers.");
 
 	std::vector<CBigInteger<32>> locators = BlockLocator(m_blockChainServer).GetLocators(syncStatus);
 
@@ -88,7 +88,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 
 	if (m_connectionId != 0)
 	{
-		LoggerAPI::LogInfo("HeaderSyncer::RequestHeaders - Headers requested.");
+		LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Headers requested.");
 		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}

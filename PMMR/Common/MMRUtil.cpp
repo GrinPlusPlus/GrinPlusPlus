@@ -175,12 +175,3 @@ uint64_t MMRUtil::GetPMMRIndex(const uint64_t leafIndex)
 {
 	return 2 * leafIndex - BitUtil::CountBitsSet(leafIndex);
 }
-
-Hash MMRUtil::HashParentWithIndex(const Hash& leftChild, const Hash& rightChild, const uint64_t parentIndex)
-{
-	Serializer serializer;
-	serializer.Append<uint64_t>(parentIndex);
-	serializer.AppendBigInteger<32>(leftChild);
-	serializer.AppendBigInteger<32>(rightChild);
-	return Crypto::Blake2b(serializer.GetBytes());
-}

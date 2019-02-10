@@ -1,5 +1,6 @@
 #include "RangeProofPMMR.h"
 #include "Common/MMRUtil.h"
+#include "Common/MMRHashUtil.h"
 
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
@@ -39,47 +40,59 @@ RangeProofPMMR* RangeProofPMMR::Load(const Config& config)
 	return new RangeProofPMMR(config, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
+bool RangeProofPMMR::Append(const RangeProof& rangeProof)
+{
+	// Add to LeafSet
+	const uint64_t totalShift = m_pruneList.GetTotalShift();
+	const uint64_t position = m_pHashFile->GetSize() + totalShift;
+	m_leafSet.Add((uint32_t)position);
+
+	// Add to data file
+	Serializer serializer;
+	rangeProof.Serialize(serializer);
+	m_pDataFile->AddData(serializer.GetBytes());
+
+	// Add hashes
+	MMRHashUtil::AddHashes(*m_pHashFile, serializer.GetBytes(), &m_pruneList);
+
+	return true;
+}
+
+bool RangeProofPMMR::Remove(const uint64_t mmrIndex)
+{
+	LoggerAPI::LogTrace("RangeProofPMMR::Remove - Spending rangeproof at index " + std::to_string(mmrIndex));
+
+	if (!MMRUtil::IsLeaf(mmrIndex))
+	{
+		LoggerAPI::LogWarning("RangeProofPMMR::Remove - RangeProof is not a leaf " + std::to_string(mmrIndex));
+		return false;
+	}
+
+	if (!m_leafSet.Contains(mmrIndex))
+	{
+		LoggerAPI::LogWarning("RangeProofPMMR::Remove - LeafSet does not contain output " + std::to_string(mmrIndex));
+		return false;
+	}
+
+	m_leafSet.Remove((uint32_t)mmrIndex);
+
+	return true;
+}
+
 Hash RangeProofPMMR::Root(const uint64_t size) const
 {
-	LoggerAPI::LogTrace("RangeProofPMMR::Root - Calculating root of MMR with size " + std::to_string(size));
-
-	if (size == 0)
-	{
-		return ZERO_HASH;
-	}
-
-	Hash hash = ZERO_HASH;
-	const std::vector<uint64_t> peakIndices = MMRUtil::GetPeakIndices(size);
-	for (auto iter = peakIndices.crbegin(); iter != peakIndices.crend(); iter++)
-	{
-		std::unique_ptr<Hash> pHash = GetHashAt(*iter);
-		if (pHash != nullptr)
-		{
-			if (hash == ZERO_HASH)
-			{
-				hash = *pHash;
-			}
-			else
-			{
-				hash = MMRUtil::HashParentWithIndex(*pHash, hash, size);
-			}
-		}
-	}
-
-	return hash;
+	return MMRHashUtil::Root(*m_pHashFile, size, &m_pruneList);
 }
 
 std::unique_ptr<Hash> RangeProofPMMR::GetHashAt(const uint64_t mmrIndex) const
 {
-	if (m_pruneList.IsPruned(mmrIndex) && !m_pruneList.IsPrunedRoot(mmrIndex))
+	Hash hash = MMRHashUtil::GetHashAt(*m_pHashFile, mmrIndex, &m_pruneList);
+	if (hash == ZERO_HASH)
 	{
 		return std::unique_ptr<Hash>(nullptr);
 	}
 
-	const uint64_t shift = m_pruneList.GetShift(mmrIndex);
-	const uint64_t shiftedIndex = (mmrIndex - shift);
-
-	return std::make_unique<Hash>(m_pHashFile->GetHashAt(shiftedIndex));
+	return std::make_unique<Hash>(std::move(hash));
 }
 
 std::unique_ptr<RangeProof> RangeProofPMMR::GetRangeProofAt(const uint64_t mmrIndex) const
@@ -88,11 +101,6 @@ std::unique_ptr<RangeProof> RangeProofPMMR::GetRangeProofAt(const uint64_t mmrIn
 	{
 		if (m_leafSet.Contains(mmrIndex))
 		{
-			if (m_pruneList.IsCompacted(mmrIndex))
-			{
-				return std::unique_ptr<RangeProof>(nullptr);
-			}
-
 			const uint64_t shift = m_pruneList.GetLeafShift(mmrIndex);
 			const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
 			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
@@ -133,9 +141,10 @@ bool RangeProofPMMR::Flush()
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
-	const bool pruneFlush = m_pruneList.Flush();
 
-	return hashFlush && dataFlush && leafSetFlush && pruneFlush;
+	// TODO: const bool pruneFlush = m_pruneList.Flush();
+
+	return hashFlush && dataFlush && leafSetFlush;
 }
 
 bool RangeProofPMMR::Discard()
@@ -143,8 +152,9 @@ bool RangeProofPMMR::Discard()
 	LoggerAPI::LogInfo(StringUtil::Format("RangeProofPMMR::Discard - Discarding changes since last flush."));
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
-	const bool pruneDiscard = m_pruneList.Discard();
-	m_leafSet.DiscardChanges();
+	m_leafSet.Discard();
 
-	return hashDiscard && dataDiscard && pruneDiscard;
+	// TODO: const bool pruneDiscard = m_pruneList.Discard();
+
+	return hashDiscard && dataDiscard;
 }

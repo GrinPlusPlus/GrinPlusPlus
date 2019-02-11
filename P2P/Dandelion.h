@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ConnectionManager.h"
-
 #include <Config/Config.h>
 #include <BlockChainServer.h>
 #include <TxPool/TransactionPool.h>
@@ -9,6 +7,9 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+
+// Forward Declarations
+class ConnectionManager;
 
 class Dandelion
 {

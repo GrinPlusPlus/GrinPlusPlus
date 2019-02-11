@@ -1,5 +1,6 @@
 #include "Dandelion.h"
 
+#include "ConnectionManager.h"
 #include "Messages/TransactionMessage.h"
 #include "Messages/StemTransactionMessage.h"
 

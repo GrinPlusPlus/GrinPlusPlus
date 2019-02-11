@@ -45,11 +45,11 @@ bool OutputPMMR::Append(const OutputIdentifier& output, const uint64_t blockHeig
 {
 	// Add to LeafSet
 	const uint64_t totalShift = m_pruneList.GetTotalShift();
-	const uint64_t position = m_pHashFile->GetSize() + totalShift;
-	m_leafSet.Add((uint32_t)position);
+	const uint64_t mmrIndex = m_pHashFile->GetSize() + totalShift;
+	m_leafSet.Add((uint32_t)mmrIndex);
 
 	// Save output position
-	m_blockDB.AddOutputPosition(output.GetCommitment(), OutputLocation(position, blockHeight));
+	m_blockDB.AddOutputPosition(output.GetCommitment(), OutputLocation(mmrIndex, blockHeight));
 
 	// Add to data file
 	Serializer serializer;
@@ -58,6 +58,11 @@ bool OutputPMMR::Append(const OutputIdentifier& output, const uint64_t blockHeig
 
 	// Add hashes
 	MMRHashUtil::AddHashes(*m_pHashFile, serializer.GetBytes(), &m_pruneList);
+
+	if (!MMRUtil::IsLeaf(mmrIndex))
+	{
+		throw std::exception();
+	}
 
 	return true;
 }
@@ -130,10 +135,10 @@ uint64_t OutputPMMR::GetSize() const
 	return totalShift + m_pHashFile->GetSize();
 }
 
-bool OutputPMMR::Rewind(const uint64_t lastMMRIndex)
+bool OutputPMMR::Rewind(const uint64_t size)
 {
-	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex - m_pruneList.GetShift(lastMMRIndex));
-	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex) - m_pruneList.GetLeafShift(lastMMRIndex));
+	const bool hashRewind = m_pHashFile->Rewind(size - m_pruneList.GetShift(size));
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size));
 	// TODO: Rewind leafset
 
 	return hashRewind && dataRewind;
@@ -141,7 +146,7 @@ bool OutputPMMR::Rewind(const uint64_t lastMMRIndex)
 
 bool OutputPMMR::Flush()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LoggerAPI::LogTrace(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%llu)", GetSize()));
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();

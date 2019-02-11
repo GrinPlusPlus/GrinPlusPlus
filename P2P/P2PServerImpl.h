@@ -6,11 +6,12 @@
 #include <P2PServer.h>
 #include <Database/Database.h>
 #include <Config/Config.h>
+#include <TxPool/TransactionPool.h>
 
 class P2PServer : public IP2PServer
 {
 public:
-	P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database);
+	P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool);
 	virtual ~P2PServer() = default;
 
 	void StartServer();

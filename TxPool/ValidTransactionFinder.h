@@ -15,8 +15,7 @@ public:
 
 private:
 	bool IsValidTransaction(const Transaction& transaction, const BlockHeader& header) const;
-	std::unique_ptr<Commitment> AddCommitments(const Transaction& transaction, const BlockSums& blockSums) const;
-	std::unique_ptr<Commitment> AddKernelOffsets(const Transaction& transaction, const BlockHeader& header, const BlockSums& blockSums) const;
+	bool ValidateKernelSums(const Transaction& transaction, const BlockHeader& header) const;
 
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;

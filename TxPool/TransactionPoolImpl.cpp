@@ -42,12 +42,14 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	const uint64_t maximumBlockHeight = std::max(lastConfirmedBlock.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
-		const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
-		if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
+		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
 		{
-			return false;
+			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
+			{
+				return false;
+			}
 		}
-
 	}
 
 	if (poolType == EPoolType::MEMPOOL)

@@ -44,8 +44,8 @@ bool RangeProofPMMR::Append(const RangeProof& rangeProof)
 {
 	// Add to LeafSet
 	const uint64_t totalShift = m_pruneList.GetTotalShift();
-	const uint64_t position = m_pHashFile->GetSize() + totalShift;
-	m_leafSet.Add((uint32_t)position);
+	const uint64_t mmrIndex = m_pHashFile->GetSize() + totalShift;
+	m_leafSet.Add((uint32_t)mmrIndex);
 
 	// Add to data file
 	Serializer serializer;
@@ -126,10 +126,10 @@ uint64_t RangeProofPMMR::GetSize() const
 	return totalShift + m_pHashFile->GetSize();
 }
 
-bool RangeProofPMMR::Rewind(const uint64_t lastMMRIndex)
+bool RangeProofPMMR::Rewind(const uint64_t size)
 {
-	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex - m_pruneList.GetShift(lastMMRIndex));
-	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex) - m_pruneList.GetLeafShift(lastMMRIndex));
+	const bool hashRewind = m_pHashFile->Rewind(size - m_pruneList.GetShift(size));
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size));
 	// TODO: Rewind leafset && pruneList?
 
 	return hashRewind && dataRewind;
@@ -137,7 +137,7 @@ bool RangeProofPMMR::Rewind(const uint64_t lastMMRIndex)
 
 bool RangeProofPMMR::Flush()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("RangeProofPMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LoggerAPI::LogTrace(StringUtil::Format("RangeProofPMMR::Flush - Flushing with size (%llu)", GetSize()));
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();

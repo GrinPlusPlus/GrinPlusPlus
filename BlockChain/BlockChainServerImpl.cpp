@@ -12,8 +12,8 @@
 #include <Consensus/BlockTime.h>
 #include <algorithm>
 
-BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager)
-	: m_config(config), m_database(database), m_txHashSetManager(txHashSetManager)
+BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
+	: m_config(config), m_database(database), m_txHashSetManager(txHashSetManager), m_transactionPool(transactionPool)
 {
 
 }
@@ -34,8 +34,7 @@ void BlockChainServer::Initialize()
 	m_pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(m_config);
 
 	m_pBlockStore = new BlockStore(m_config, m_database.GetBlockDB());
-	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, m_txHashSetManager, m_database.GetBlockDB());
-	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, *m_pTransactionPool, m_txHashSetManager);
+	m_pChainState = new ChainState(m_config, *m_pChainStore, *m_pBlockStore, *m_pHeaderMMR, m_transactionPool, m_txHashSetManager);
 	m_pChainState->Initialize(genesisBlock.GetBlockHeader());
 
 	// TODO: Trigger Compaction
@@ -62,9 +61,6 @@ void BlockChainServer::Shutdown()
 
 		HeaderMMRAPI::CloseHeaderMMR(m_pHeaderMMR);
 		m_pHeaderMMR = nullptr;
-
-		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
-		m_pTransactionPool = nullptr;
 	}
 }
 
@@ -85,7 +81,7 @@ uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(m_config, m_pBlockStore->GetBlockDB(), *m_pChainState, *m_pTransactionPool).ProcessBlock(block, false);
+	return BlockProcessor(m_config, m_pBlockStore->GetBlockDB(), *m_pChainState, m_transactionPool).ProcessBlock(block, false);
 }
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
@@ -98,7 +94,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	std::unique_ptr<FullBlock> pHydratedBlock = BlockHydrator(*m_pChainState, *m_pTransactionPool).Hydrate(compactBlock);
+	std::unique_ptr<FullBlock> pHydratedBlock = BlockHydrator(*m_pChainState, m_transactionPool).Hydrate(compactBlock);
 	if (pHydratedBlock != nullptr)
 	{
 		return AddBlock(*pHydratedBlock);
@@ -126,7 +122,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 			return EBlockChainStatus::STORE_ERROR;
 		}
 
-		if (m_pTransactionPool->AddTransaction(transaction, poolType, *pLastConfimedHeader, pMaximumBlockHeaderForCoinbase->GetOutputMMRSize()))
+		if (m_transactionPool.AddTransaction(transaction, poolType, *pLastConfimedHeader, pMaximumBlockHeaderForCoinbase->GetOutputMMRSize()))
 		{
 			return EBlockChainStatus::SUCCESS;
 		}
@@ -226,14 +222,14 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 		return false;
 	}
 
-	return BlockProcessor(m_config, m_pBlockStore->GetBlockDB(), *m_pChainState, *m_pTransactionPool).ProcessBlock(*pOrphanBlock, true) == EBlockChainStatus::SUCCESS;
+	return BlockProcessor(m_config, m_pBlockStore->GetBlockDB(), *m_pChainState, m_transactionPool).ProcessBlock(*pOrphanBlock, true) == EBlockChainStatus::SUCCESS;
 }
 
 namespace BlockChainAPI
 {
-	EXPORT IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager)
+	EXPORT IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
 	{
-		BlockChainServer* pServer = new BlockChainServer(config, database, txHashSetManager);
+		BlockChainServer* pServer = new BlockChainServer(config, database, txHashSetManager, transactionPool);
 		pServer->Initialize();
 
 		return pServer;

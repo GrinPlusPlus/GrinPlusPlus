@@ -177,7 +177,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 {
-	LoggerAPI::LogInfo("BlockDB::AddBlockSums - Adding BlockSums for block " + HexUtil::ConvertHash(blockHash));
+	LoggerAPI::LogTrace("BlockDB::AddBlockSums - Adding BlockSums for block " + HexUtil::ConvertHash(blockHash));
 
 	Slice key((const char*)&blockHash[0], 32);
 

@@ -15,7 +15,7 @@
 class BlockChainServer : public IBlockChainServer
 {
 public:
-	BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager);
+	BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool);
 	~BlockChainServer();
 
 	//
@@ -58,7 +58,7 @@ private:
 	ChainState* m_pChainState;
 	ChainStore* m_pChainStore;
 	IHeaderMMR* m_pHeaderMMR;
-	ITransactionPool* m_pTransactionPool;
+	ITransactionPool& m_transactionPool;
 
 	const Config& m_config;
 	IDatabase& m_database;

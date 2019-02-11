@@ -22,9 +22,9 @@ public:
 		return m_file.Flush();
 	}
 
-	inline bool Rewind(const uint64_t nextMMRIndex)
+	inline bool Rewind(const uint64_t size)
 	{
-		return m_file.Rewind(nextMMRIndex * NUM_BYTES);
+		return m_file.Rewind(size * NUM_BYTES);
 	}
 
 	inline bool Discard()

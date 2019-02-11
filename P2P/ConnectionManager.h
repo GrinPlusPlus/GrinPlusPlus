@@ -4,6 +4,7 @@
 #include "Sync/Syncer.h"
 #include "Seed/Seeder.h"
 #include "Pipeline.h"
+#include "Dandelion.h"
 
 #include <Config/Config.h>
 #include <BlockChainServer.h>
@@ -18,7 +19,7 @@ class PeerManager;
 class ConnectionManager
 {
 public:
-	ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer);
+	ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool);
 
 	void Start();
 	void Stop();
@@ -78,4 +79,5 @@ private:
 	Syncer m_syncer;
 	Seeder m_seeder;
 	Pipeline m_pipeline;
+	Dandelion m_dandelion;
 };

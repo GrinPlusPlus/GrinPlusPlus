@@ -61,12 +61,12 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 	return std::unique_ptr<TransactionKernel>(nullptr);
 }
 
-bool KernelMMR::Rewind(const uint64_t lastMMRIndex)
+bool KernelMMR::Rewind(const uint64_t size)
 {
-	const bool hashRewind = m_pHashFile->Rewind(lastMMRIndex);
-	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(lastMMRIndex));
+	const bool hashRewind = m_pHashFile->Rewind(size);
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
 
-	m_leafSet.Rewind(MMRUtil::GetNumLeaves(lastMMRIndex), Roaring());
+	m_leafSet.Rewind(MMRUtil::GetNumLeaves(size - 1), Roaring());
 
 	return hashRewind && dataRewind;
 }
@@ -95,7 +95,7 @@ bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
 	// Update leafset
 	const uint64_t position = m_pHashFile->GetSize();
-	m_leafSet.Add(position);
+	m_leafSet.Add((uint32_t)position);
 
 	// Add to data file
 	Serializer serializer;

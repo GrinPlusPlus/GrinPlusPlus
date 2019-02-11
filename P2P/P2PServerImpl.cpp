@@ -2,12 +2,12 @@
 
 #include <BlockChainServer.h>
 
-P2PServer::P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database)
+P2PServer::P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)
 	: m_config(config), 
 	m_blockChainServer(blockChainServer), 
 	m_database(database), 
 	m_peerManager(config, database.GetPeerDB()), 
-	m_connectionManager(config, m_peerManager, blockChainServer)
+	m_connectionManager(config, m_peerManager, blockChainServer, transactionPool)
 {
 
 }
@@ -34,9 +34,9 @@ const SyncStatus& P2PServer::GetSyncStatus() const
 
 namespace P2PAPI
 {
-	EXPORT IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database)
+	EXPORT IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)
 	{
-		P2PServer* pServer = new P2PServer(config, blockChainServer, database);
+		P2PServer* pServer = new P2PServer(config, blockChainServer, database, transactionPool);
 		pServer->StartServer();
 
 		return pServer;

@@ -50,8 +50,9 @@ void Server::Run()
 	m_config = ConfigManager::LoadConfig();
 	m_pDatabase = DatabaseAPI::OpenDatabase(m_config);
 	m_pTxHashSetManager = new TxHashSetManager(m_config, m_pDatabase->GetBlockDB());
-	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager);
-	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase);
+	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, *m_pTxHashSetManager, m_pDatabase->GetBlockDB());
+	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager, *m_pTransactionPool);
+	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase, *m_pTransactionPool);
 
 	NodeRestServer nodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
 	nodeRestServer.Start();
@@ -117,6 +118,7 @@ void Server::Run()
 	nodeRestServer.Shutdown();
 
 	P2PAPI::ShutdownP2PServer(m_pP2PServer);
+	TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
 	BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
 	delete m_pTxHashSetManager;
 	DatabaseAPI::CloseDatabase(m_pDatabase);

@@ -10,13 +10,14 @@
 #include <Infrastructure/Logger.h>
 #include <StringUtil.h>
 
-ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer)
+ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool)
 	: m_config(config), 
 	m_peerManager(peerManager), 
 	m_blockChainServer(blockChainServer),
 	m_syncer(*this, blockChainServer), 
 	m_seeder(config, *this, peerManager, blockChainServer),
-	m_pipeline(config, *this, blockChainServer)
+	m_pipeline(config, *this, blockChainServer),
+	m_dandelion(config, *this, blockChainServer, transactionPool)
 {
 
 }
@@ -28,6 +29,7 @@ void ConnectionManager::Start()
 	m_seeder.Start();
 	m_syncer.Start();
 	m_pipeline.Start();
+	m_dandelion.Start();
 
 	if (m_broadcastThread.joinable())
 	{
@@ -44,6 +46,7 @@ void ConnectionManager::Stop()
 	m_seeder.Stop();
 	m_syncer.Stop();
 	m_pipeline.Stop();
+	m_dandelion.Stop();
 
 	if (m_broadcastThread.joinable())
 	{

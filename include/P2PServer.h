@@ -10,6 +10,7 @@
 #include <BigInteger.h>
 #include <Core/BlockHeader.h>
 #include <P2P/SyncStatus.h>
+#include <TxPool/TransactionPool.h>
 
 #ifdef MW_P2P
 #define P2P_API EXPORT
@@ -44,7 +45,7 @@ namespace P2PAPI
 	//
 	// Creates a new instance of the P2P Server.
 	//
-	P2P_API IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database);
+	P2P_API IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool);
 
 	//
 	// Stops the P2P Server and clears up its memory usage.

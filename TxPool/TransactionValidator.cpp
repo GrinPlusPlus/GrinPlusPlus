@@ -7,11 +7,17 @@
 #include <Infrastructure/Logger.h>
 #include <Common/FunctionalUtil.h>
 
+TransactionValidator::TransactionValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+	: m_transactionBodyValidator(bulletproofsCache)
+{
+
+}
+
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic
-bool TransactionValidator::ValidateTransaction(const Transaction& transaction) const
+bool TransactionValidator::ValidateTransaction(const Transaction& transaction)
 {
 	// Validate the "transaction body"
-	if (!TransactionBodyValidator().ValidateTransactionBody(transaction.GetBody(), false))
+	if (!m_transactionBodyValidator.ValidateTransactionBody(transaction.GetBody(), false))
 	{
 		return false;
 	}
@@ -31,7 +37,7 @@ bool TransactionValidator::ValidateTransaction(const Transaction& transaction) c
 	return true;
 }
 
-bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBody) const
+bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBody)
 {
 	// Validate output features.
 	for (const TransactionOutput& output : transactionBody.GetOutputs())
@@ -55,7 +61,7 @@ bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 }
 
 // Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
-bool TransactionValidator::ValidateKernelSums(const Transaction& transaction) const
+bool TransactionValidator::ValidateKernelSums(const Transaction& transaction)
 {
 	// Calculate overage
 	int64_t overage = 0;

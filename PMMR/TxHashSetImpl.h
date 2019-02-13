@@ -8,6 +8,7 @@
 #include <Config/Config.h>
 #include <string>
 
+// TODO: Implement an "UpdateContext" object that can be committed to.
 class TxHashSet : public ITxHashSet
 {
 public:
@@ -16,13 +17,14 @@ public:
 
 	virtual bool IsUnspent(const OutputIdentifier& output) const override final;
 	virtual bool IsValid(const Transaction& transaction) const override final;
-	virtual bool ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut) override final;
+	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer) override final;
 	virtual bool ApplyBlock(const FullBlock& block) override final;
 	virtual bool ValidateRoots(const BlockHeader& blockHeader) const override final;
 	virtual bool SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex) override final;
 
 	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;
+	virtual bool RewindBlock(const FullBlock& block) override final;
 	virtual bool Commit() override final;
 	virtual bool Discard() override final;
 	virtual bool Compact() override final;

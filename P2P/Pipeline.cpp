@@ -111,11 +111,7 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		{
 			const TxEntry& txEntry = pipeline.m_transactionsToProcess.front();
 
-			const EBlockChainStatus status = pipeline.m_blockChainServer.AddTransaction(txEntry.transaction, txEntry.poolType);
-			if (status == EBlockChainStatus::INVALID)
-			{
-				pipeline.m_connectionManager.BanConnection(txEntry.connectionId);
-			}
+			pipeline.m_blockChainServer.AddTransaction(txEntry.transaction, txEntry.poolType);
 
 			std::unique_lock<std::shared_mutex> writeLock(pipeline.m_transactionMutex);
 			pipeline.m_transactionsToProcess.pop_front();

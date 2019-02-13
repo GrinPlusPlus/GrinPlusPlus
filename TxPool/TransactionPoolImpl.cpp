@@ -12,8 +12,9 @@ TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& t
 	: m_config(config), 
 	m_txHashSetManager(txHashSetManager), 
 	m_blockDB(blockDB),
-	m_memPool(config, txHashSetManager, blockDB),
-	m_stemPool(config, txHashSetManager, blockDB)
+	m_bulletproofsCache(3000),
+	m_memPool(config, txHashSetManager, blockDB, m_bulletproofsCache),
+	m_stemPool(config, txHashSetManager, blockDB, m_bulletproofsCache)
 {
 
 }
@@ -25,7 +26,7 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
-bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock, const uint64_t maximumCoinbasePosition)
+bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
 {
 	// TODO: Verify fee meets minimum
 	
@@ -103,7 +104,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(const BlockHe
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToStem, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager, m_blockDB, m_bulletproofsCache).FindValidTransactions(transactionsToStem, pMemPoolAggTx, lastConfirmedBlock);
 	if (validTransactionsToStem.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -130,7 +131,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockH
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToFluff, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager, m_blockDB, m_bulletproofsCache).FindValidTransactions(transactionsToFluff, pMemPoolAggTx, lastConfirmedBlock);
 	if (validTransactionsToFluff.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -155,12 +156,12 @@ std::vector<Transaction> TransactionPool::GetExpiredTransactions() const
 
 bool TransactionPool::ValidateTransaction(const Transaction& transaction) const
 {
-	return TransactionValidator().ValidateTransaction(transaction);
+	return TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction);
 }
 
 bool TransactionPool::ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward) const
 {
-	return TransactionBodyValidator().ValidateTransactionBody(transactionBody, withReward);
+	return TransactionBodyValidator(m_bulletproofsCache).ValidateTransactionBody(transactionBody, withReward);
 }
 
 namespace TxPoolAPI

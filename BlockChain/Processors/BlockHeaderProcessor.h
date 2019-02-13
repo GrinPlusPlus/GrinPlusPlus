@@ -15,7 +15,7 @@ public:
 	EBlockChainStatus ProcessSingleHeader(const BlockHeader& header);
 
 private:
-	EBlockChainStatus ProcessChunkedSyncHeaders(const std::vector<BlockHeader>& headers);
+	EBlockChainStatus ProcessChunkedSyncHeaders(LockedChainState& lockedState, const std::vector<BlockHeader>& headers);
 	EBlockChainStatus AddSyncHeaders(LockedChainState& lockedState, const std::vector<BlockHeader>& headers) const;
 	bool CheckAndAcceptSyncChain(LockedChainState& lockedState) const;
 

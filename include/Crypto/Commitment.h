@@ -7,6 +7,7 @@
 //
 
 #include <BigInteger.h>
+#include <BitUtil.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 
@@ -60,3 +61,16 @@ private:
 	// The 33 byte commitment.
 	CBigInteger<33> m_commitmentBytes;
 };
+
+namespace std
+{
+	template<>
+	struct hash<Commitment>
+	{
+		size_t operator()(const Commitment& commitment) const
+		{
+			const std::vector<unsigned char>& bytes = commitment.GetCommitmentBytes().GetData();
+			return BitUtil::ConvertToU64(bytes[0], bytes[4], bytes[8], bytes[12], bytes[16], bytes[20], bytes[24], bytes[28]);
+		}
+	};
+}

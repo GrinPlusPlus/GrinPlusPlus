@@ -5,8 +5,8 @@
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/FunctionalUtil.h>
 
-ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
-	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)
+ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)
 {
 
 }
@@ -42,7 +42,7 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 
 bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, const BlockHeader& header) const
 {
-	if (!TransactionValidator().ValidateTransaction(transaction))
+	if (!TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction))
 	{
 		return false;
 	}

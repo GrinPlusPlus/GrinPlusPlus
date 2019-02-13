@@ -267,10 +267,6 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 						}
 					}
 				}
-				else if (added == EBlockChainStatus::INVALID)
-				{
-					return EStatus::BAN_PEER;
-				}
 
 				return EStatus::UNKNOWN_ERROR;
 			}

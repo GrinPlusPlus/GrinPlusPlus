@@ -17,3 +17,6 @@
 [submodule "include/thirdparty/stduuid"]
 	path = include/thirdparty/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
+[submodule "include/thirdparty/lru-cache"]
+	path = include/thirdparty/lru-cache
+	url = https://github.com/goldsborough/lru-cache.git

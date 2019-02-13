@@ -24,7 +24,7 @@ public:
 	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const override final;
 
 	virtual void AddBlockHeader(const BlockHeader& blockHeader) override final;
-	virtual void AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders) override final;
+	virtual void AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) override final;
 
 	virtual void AddBlock(const FullBlock& block) override final;
 	virtual std::unique_ptr<FullBlock> GetBlock(const Hash& hash) const override final;

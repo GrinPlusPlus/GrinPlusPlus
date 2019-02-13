@@ -1,7 +1,7 @@
 #include "TransactionAggregator.h"
 
+#include <Core/Util/TransactionUtil.h>
 #include <Crypto.h>
-#include <Common/FunctionalUtil.h>
 #include <set>
 
 // Aggregate a vector of transactions into a multi-kernel transaction with cut_through.
@@ -44,7 +44,7 @@ std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<
 	}
 
 	// Sort inputs and outputs during cut_through.
-	PerformCutThrough(inputs, outputs);
+	TransactionUtil::PerformCutThrough(inputs, outputs);
 
 	// Sort the kernels.
 	std::sort(kernels.begin(), kernels.end());
@@ -62,25 +62,4 @@ std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<
 	//   * full set of tx kernels
 	//   * sum of all kernel offsets
 	return std::make_unique<Transaction>(Transaction(BlindingFactor(*pTotalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels))));
-}
-
-void TransactionAggregator::PerformCutThrough(std::vector<TransactionInput>& inputs, std::vector<TransactionOutput>& outputs)
-{
-	std::set<Commitment> inputCommitments;
-	for (const TransactionInput& input : inputs)
-	{
-		inputCommitments.insert(input.GetCommitment());
-	}
-
-	std::set<Commitment> outputCommitments;
-	for (const TransactionOutput& output : outputs)
-	{
-		outputCommitments.insert(output.GetCommitment());
-	}
-
-	auto filterInputs = [outputCommitments](TransactionInput& input) -> bool { return outputCommitments.count(input.GetCommitment()) > 0; };
-	FunctionalUtil::filter(inputs, filterInputs);
-
-	auto filterOutputs = [inputCommitments](TransactionOutput& output) -> bool { return inputCommitments.count(output.GetCommitment()) > 0; };
-	FunctionalUtil::filter(outputs, filterOutputs);
 }

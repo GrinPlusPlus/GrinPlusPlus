@@ -58,7 +58,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
-			LoggerAPI::LogWarning("TxHashSet::IsValid - Transaction invalid: " + HexUtil::ConvertHash(transaction.GetHash()));
+			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData(), false, false) + " not found at mmrIndex " + std::to_string(outputPosOpt.value().GetMMRIndex()));
 			return false;
 		}
 	}
@@ -66,19 +66,16 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	return true;
 }
 
-bool TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, Commitment& outputSumOut, Commitment& kernelSumOut)
+std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer)
 {
 	LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
-	const TxHashSetValidationResult result = TxHashSetValidator(blockChainServer).Validate(*this, header, outputSumOut, kernelSumOut);
-	if (result.Successful())
+	std::unique_ptr<BlockSums> pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header);
+	if (pBlockSums != nullptr)
 	{
 		LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Successfully validated TxHashSet.");
-		outputSumOut = result.GetOutputSum();
-		kernelSumOut = result.GetKernelSum();
-		return true;
 	}
 
-	return false;
+	return pBlockSums;
 }
 
 bool TxHashSet::ApplyBlock(const FullBlock& block)
@@ -176,10 +173,32 @@ bool TxHashSet::Snapshot(const BlockHeader& header)
 
 bool TxHashSet::Rewind(const BlockHeader& header)
 {
+	// TODO: Restore spent outputs/rangeproofs (Use block input bitmaps)
 	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
 	m_pOutputPMMR->Rewind(header.GetOutputMMRSize());
 	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize());
+
 	return true;
+}
+
+bool TxHashSet::RewindBlock(const FullBlock& block)
+{
+	std::unique_ptr<BlockHeader> pPreviousHeader = m_blockDB.GetBlockHeader(block.GetBlockHeader().GetPreviousBlockHash());
+	if (pPreviousHeader != nullptr)
+	{
+		m_pKernelMMR->Rewind(pPreviousHeader->GetKernelMMRSize());
+		m_pOutputPMMR->Rewind(pPreviousHeader->GetOutputMMRSize());
+		m_pRangeProofPMMR->Rewind(pPreviousHeader->GetOutputMMRSize());
+
+		for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+		{
+
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 bool TxHashSet::Commit()

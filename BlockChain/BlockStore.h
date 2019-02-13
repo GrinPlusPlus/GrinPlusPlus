@@ -5,13 +5,13 @@
 #include <Core/BlockHeader.h>
 #include <unordered_map>
 
+// TODO: This was meant to be a wrapper with caching, but no longer contains caching. Remove this class
 class BlockStore
 {
 public:
 	BlockStore(const Config& config, IBlockDB& blockDB);
 	~BlockStore();
 
-	void LoadHeaders(const std::vector<Hash>& hashes);
 	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash) const;
 
 	bool AddHeader(const BlockHeader& blockHeader);
@@ -25,6 +25,4 @@ public:
 private:
 	const Config& m_config;
 	IBlockDB& m_blockDB;
-
-	std::unordered_map<Hash, BlockHeader*> m_blockHeadersByHash;
 };

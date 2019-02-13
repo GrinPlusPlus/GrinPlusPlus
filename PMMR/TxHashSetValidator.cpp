@@ -19,7 +19,7 @@ TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer
 }
 
 // TODO: Where do we validate the data in MMR actually hashes to HashFile's hash?
-TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, Commitment& outputSumOut, Commitment& kernelSumOut) const
+std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
 {
 	const KernelMMR& kernelMMR = *txHashSet.GetKernelMMR();
 	const OutputPMMR& outputPMMR = *txHashSet.GetOutputPMMR();
@@ -29,7 +29,7 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	if (!ValidateSizes(txHashSet, blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR size.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate MMR hashes in parallel
@@ -45,21 +45,21 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	if (!mmrHashesValidated)
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR hashes.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate root for each MMR matches blockHeader
 	if (!ValidateRoots(txHashSet, blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR roots.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate the full kernel history (kernel MMR root for every block header).
 	if (!ValidateKernelHistory(*txHashSet.GetKernelMMR(), blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel history.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate kernel sums
@@ -70,24 +70,24 @@ TxHashSetValidationResult TxHashSetValidator::Validate(TxHashSet& txHashSet, con
 	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, genesisHasReward, outputSum, kernelSum))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel sums.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate the rangeproof associated with each unspent output.
 	if (!ValidateRangeProofs(txHashSet, blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid range proof.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Validate kernel signatures
 	if (!KernelSignatureValidator().ValidateKernelSignatures(*txHashSet.GetKernelMMR()))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel signatures.");
-		return TxHashSetValidationResult::Fail();
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
-	return TxHashSetValidationResult(true, std::move(outputSum), std::move(kernelSum));
+	return std::make_unique<BlockSums>(BlockSums(std::move(outputSum), std::move(kernelSum)));
 }
 
 bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
@@ -211,7 +211,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 			commitments.push_back(pOutput->GetCommitment());
 			rangeProofs.push_back(*pRangeProof);
 
-			if (commitments.size() >= 1000)
+			if (commitments.size() >= 2000)
 			{
 				if (!Crypto::VerifyRangeProofs(commitments, rangeProofs))
 				{

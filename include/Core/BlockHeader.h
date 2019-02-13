@@ -46,6 +46,7 @@ public:
 	//
 	BlockHeader& operator=(const BlockHeader& other) = default;
 	BlockHeader& operator=(BlockHeader&& other) noexcept = default;
+	inline bool operator!=(const BlockHeader& rhs) const { return this->GetHash() != rhs.GetHash(); }
 
 	//
 	// Getters

@@ -6,9 +6,15 @@
 #include <Crypto.h>
 #include <set>
 
+TransactionBodyValidator::TransactionBodyValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+	: m_bulletproofsCache(bulletproofsCache)
+{
+
+}
+
 // Validates all relevant parts of a transaction body. 
 // Checks the excess value against the signature as well as range proofs for each output.
-bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward) const
+bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward)
 {
 	if (!ValidateWeight(transactionBody, withReward))
 	{
@@ -39,7 +45,7 @@ bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& tr
 }
 
 // Verify the body is not too big in terms of number of inputs|outputs|kernels.
-bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transactionBody, const bool withReward) const
+bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transactionBody, const bool withReward)
 {
 	// If with reward check the body as if it was a block, with an additional output and kernel for reward.
 	const uint32_t reserve = withReward ? 1 : 0;
@@ -55,7 +61,7 @@ bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transaction
 	return true;
 }
 
-bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody) const
+bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
 {
 	for (auto iter = transactionBody.GetInputs().cbegin(); iter != transactionBody.GetInputs().cend(); iter++)
 	{
@@ -100,7 +106,7 @@ bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBo
 }
 
 // Verify that no input is spending an output from the same block.
-bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody) const
+bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody)
 {
 	std::set<Commitment> commitments;
 	for (auto output : transactionBody.GetOutputs())
@@ -119,24 +125,42 @@ bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transacti
 	return true;
 }
 
-bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput>& outputs) const
+bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput>& outputs)
 {
 	std::vector<Commitment> commitments;
 	std::vector<RangeProof> proofs;
 
 	for (auto output : outputs)
 	{
-		commitments.push_back(output.GetCommitment());
-		proofs.push_back(output.GetRangeProof());
+		auto iter = m_bulletproofsCache.find(output.GetCommitment());
+		if (iter == m_bulletproofsCache.end() || iter->value() != output.GetCommitment())
+		{
+			commitments.push_back(output.GetCommitment());
+			proofs.push_back(output.GetRangeProof());
+		}
 	}
 
-	return Crypto::VerifyRangeProofs(commitments, proofs);
+	if (commitments.empty())
+	{
+		return true;
+	}
+
+	const bool verified = Crypto::VerifyRangeProofs(commitments, proofs);
+	if (verified)
+	{
+		for (const Commitment& commitment : commitments)
+		{
+			m_bulletproofsCache.insert(commitment, commitment);
+		}
+	}
+
+	return verified;
 }
 
 // Verify the unverified tx kernels.
 // No ability to batch verify these right now
 // so just do them individually.
-bool TransactionBodyValidator::VerifyKernels(const std::vector<TransactionKernel>& kernels) const
+bool TransactionBodyValidator::VerifyKernels(const std::vector<TransactionKernel>& kernels)
 {
 	// Verify the transaction proof validity. Entails handling the commitment as a public key and checking the signature verifies with the fee as message.
 	for (auto kernel : kernels)

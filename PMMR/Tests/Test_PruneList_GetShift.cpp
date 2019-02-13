@@ -12,6 +12,7 @@ TEST_CASE("PruneList::GetShift_Empty")
 	REQUIRE(pruneList.GetShift(1) == 0);
 	REQUIRE(pruneList.GetShift(2) == 0);
 	REQUIRE(pruneList.GetShift(3) == 0);
+	REQUIRE(pruneList.GetTotalShift() == 0);
 }
 
 // Add a single leaf to the prune list.
@@ -28,6 +29,7 @@ TEST_CASE("PruneList::GetShift Pruned 0")
 	REQUIRE(pruneList.GetShift(1) == 0);
 	REQUIRE(pruneList.GetShift(2) == 0);
 	REQUIRE(pruneList.GetShift(3) == 0);
+	REQUIRE(pruneList.GetTotalShift() == 0);
 }
 
 // Add the first 2 leaves to the prune list.
@@ -46,6 +48,7 @@ TEST_CASE("PruneList::GetShift Pruned 0,1")
 	REQUIRE(pruneList.GetShift(2) == 2);
 	REQUIRE(pruneList.GetShift(3) == 2);
 	REQUIRE(pruneList.GetShift(4) == 2);
+	REQUIRE(pruneList.GetTotalShift() == 2);
 }
 
 // Add the first 2 leaves to the prune list. Also, add the parent (node 2) to prune list.
@@ -65,6 +68,7 @@ TEST_CASE("PruneList::GetShift Pruned 0,1,2")
 	REQUIRE(pruneList.GetShift(2) == 2);
 	REQUIRE(pruneList.GetShift(3) == 2);
 	REQUIRE(pruneList.GetShift(4) == 2);
+	REQUIRE(pruneList.GetTotalShift() == 2);
 }
 
 // TODO: Finish this.

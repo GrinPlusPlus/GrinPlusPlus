@@ -1,5 +1,11 @@
 #include "OrphanPool.h"
 
+OrphanPool::OrphanPool() : m_orphanHeadersByHash(128)
+{
+
+}
+
+
 bool OrphanPool::IsOrphan(const uint64_t height, const Hash& hash) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
@@ -22,6 +28,12 @@ bool OrphanPool::IsOrphan(const uint64_t height, const Hash& hash) const
 void OrphanPool::AddOrphanBlock(const FullBlock& block)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
+	const BlockHeader& header = block.GetBlockHeader();
+	if (!m_orphanHeadersByHash.contains(header.GetHash()))
+	{
+		m_orphanHeadersByHash.insert(header.GetHash(), header);
+	}
 
 	auto heightIter = m_orphansByHeight.find(block.GetBlockHeader().GetHeight());
 	if (heightIter != m_orphansByHeight.cend())
@@ -83,4 +95,25 @@ void OrphanPool::RemoveOrphan(const uint64_t height, const Hash& hash)
 			m_orphansByHeight.erase(height);
 		}
 	}
+}
+
+std::unique_ptr<BlockHeader> OrphanPool::GetOrphanHeader(const Hash& hash) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	auto iter = m_orphanHeadersByHash.find(hash);
+	if (iter != m_orphanHeadersByHash.cend())
+	{
+		BlockHeader header = iter->value();
+		return std::make_unique<BlockHeader>(std::move(header));
+	}
+
+	return std::unique_ptr<BlockHeader>(nullptr);
+}
+
+void OrphanPool::AddOrphanHeader(const BlockHeader& header)
+{
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
+	m_orphanHeadersByHash.insert(header.GetHash(), header);
 }

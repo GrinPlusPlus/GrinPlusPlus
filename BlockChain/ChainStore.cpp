@@ -161,6 +161,50 @@ BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChai
 	return pChain1Index;
 }
 
+bool ChainStore::ReorgChain(const EChainType source, const EChainType destination, const uint64_t height)
+{
+	Chain& sourceChain = GetChain(source);
+	Chain& destinationChain = GetChain(destination);
+
+	if (sourceChain.GetTip()->GetHeight() < height)
+	{
+		return false;
+	}
+
+	BlockIndex* pBlockIndex = FindCommonIndex(source, destination);
+	if (pBlockIndex != nullptr)
+	{
+		const uint64_t commonHeight = pBlockIndex->GetHeight();
+		if (destinationChain.Rewind(commonHeight))
+		{
+			for (uint64_t i = commonHeight + 1; i <= height; i++)
+			{
+				destinationChain.AddBlock(sourceChain.GetByHeight(i));
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ChainStore::AddBlock(const EChainType source, const EChainType destination, const uint64_t height)
+{
+	Chain& sourceChain = GetChain(source);
+	Chain& destinationChain = GetChain(destination);
+
+	if (destinationChain.GetTip()->GetHeight() + 1 == height)
+	{
+		if (sourceChain.GetTip()->GetHeight() >= height)
+		{
+			return destinationChain.AddBlock(sourceChain.GetByHeight(height));
+		}
+	}
+
+	return false;
+}
+
 Chain& ChainStore::GetChain(const EChainType chainType)
 {
 	if (chainType == EChainType::CONFIRMED)

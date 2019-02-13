@@ -1,8 +1,7 @@
 #pragma once
 
-#include "TxHashSetValidationResult.h"
-
 #include <Core/BlockHeader.h>
+#include <Core/BlockSums.h>
 
 // Forward Declarations
 class HashFile;
@@ -17,7 +16,7 @@ class TxHashSetValidator
 public:
 	TxHashSetValidator(const IBlockChainServer& blockChainServer);
 
-	TxHashSetValidationResult Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, Commitment& outputSumOut, Commitment& kernelSumOut) const;
+	std::unique_ptr<BlockSums> Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
 
 private:
 	bool ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;

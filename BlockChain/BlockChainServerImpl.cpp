@@ -97,7 +97,13 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	std::unique_ptr<FullBlock> pHydratedBlock = BlockHydrator(*m_pChainState, m_transactionPool).Hydrate(compactBlock);
 	if (pHydratedBlock != nullptr)
 	{
-		return AddBlock(*pHydratedBlock);
+		const EBlockChainStatus added = AddBlock(*pHydratedBlock);
+		if (added == EBlockChainStatus::INVALID)
+		{
+			return EBlockChainStatus::TRANSACTIONS_MISSING;
+		}
+
+		return added;
 	}
 
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
@@ -115,14 +121,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 	std::unique_ptr<BlockHeader> pLastConfimedHeader = m_pChainState->GetBlockHeaderByHeight(m_pChainState->GetHeight(EChainType::CONFIRMED), EChainType::CONFIRMED);
 	if (pLastConfimedHeader != nullptr)
 	{
-		const uint64_t maximumBlockHeightForCoinbase = std::max(pLastConfimedHeader->GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
-		std::unique_ptr<BlockHeader> pMaximumBlockHeaderForCoinbase = m_pChainState->GetBlockHeaderByHeight(maximumBlockHeightForCoinbase, EChainType::CONFIRMED);
-		if (pMaximumBlockHeaderForCoinbase == nullptr)
-		{
-			return EBlockChainStatus::STORE_ERROR;
-		}
-
-		if (m_transactionPool.AddTransaction(transaction, poolType, *pLastConfimedHeader, pMaximumBlockHeaderForCoinbase->GetOutputMMRSize()))
+		if (m_transactionPool.AddTransaction(transaction, poolType, *pLastConfimedHeader))
 		{
 			return EBlockChainStatus::SUCCESS;
 		}

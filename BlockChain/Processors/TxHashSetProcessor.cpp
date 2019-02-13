@@ -34,9 +34,8 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 3. Validate entire TxHashSet
-	Commitment outputSum(CBigInteger<33>::ValueOf(0));
-	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
-	if (!pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, outputSum, kernelSum))
+	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer);
+	if (pBlockSums == nullptr)
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Validation of %s failed.", path.c_str()));
 		TxHashSetManager::DestroyTxHashSet(pTxHashSet);
@@ -44,8 +43,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 4. Add BlockSums to DB
-	const BlockSums blockSums(std::move(outputSum), std::move(kernelSum));
-	m_blockDB.AddBlockSums(pHeader->GetHash(), blockSums);
+	m_blockDB.AddBlockSums(pHeader->GetHash(), *pBlockSums);
 
 	// 5. Add Output positions to DB
 	{
@@ -75,8 +73,6 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 		m_chainState.GetLocked().m_txHashSetManager.Close();
 		return false;
 	}
-
-	// TODO: 7. Check for orphans
 
 	return true;
 }

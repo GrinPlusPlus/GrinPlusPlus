@@ -127,16 +127,16 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 	m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, Slice(key), value);
 }
 
-void BlockDB::AddBlockHeaders(const std::vector<BlockHeader*>& blockHeaders)
+void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 {
 	LoggerAPI::LogTrace("BlockDB::AddBlockHeaders - Adding headers - " + std::to_string(blockHeaders.size()));
 
-	for (const BlockHeader* pBlockHeader : blockHeaders)
+	for (const BlockHeader& blockHeader : blockHeaders)
 	{
-		const std::vector<unsigned char>& hash = pBlockHeader->GetHash().GetData();
+		const std::vector<unsigned char>& hash = blockHeader.GetHash().GetData();
 
 		Serializer serializer;
-		pBlockHeader->Serialize(serializer);
+		blockHeader.Serialize(serializer);
 
 		Slice key((const char*)&hash[0], hash.size());
 		Slice value((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size());

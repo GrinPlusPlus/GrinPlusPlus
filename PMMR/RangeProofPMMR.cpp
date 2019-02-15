@@ -95,6 +95,11 @@ std::unique_ptr<Hash> RangeProofPMMR::GetHashAt(const uint64_t mmrIndex) const
 	return std::make_unique<Hash>(std::move(hash));
 }
 
+std::vector<Hash> RangeProofPMMR::GetLastLeafHashes(const uint64_t numHashes) const
+{
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, &m_pruneList, numHashes);
+}
+
 std::unique_ptr<RangeProof> RangeProofPMMR::GetRangeProofAt(const uint64_t mmrIndex) const
 {
 	if (MMRUtil::IsLeaf(mmrIndex))

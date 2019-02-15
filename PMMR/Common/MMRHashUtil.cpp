@@ -82,6 +82,35 @@ Hash MMRHashUtil::GetHashAt(const HashFile& hashFile, const uint64_t mmrIndex, c
 	}
 }
 
+std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const LeafSet& leafSet, const PruneList* pPruneList, const uint64_t numHashes)
+{
+	uint64_t nextPosition = hashFile.GetSize();
+	if (pPruneList != nullptr)
+	{
+		nextPosition += pPruneList->GetTotalShift();
+	}
+
+	std::vector<Hash> hashes;
+
+	uint64_t leafIndex =  MMRUtil::GetNumNodes(nextPosition);
+	while (leafIndex > 0 && hashes.size() < numHashes)
+	{
+		--leafIndex;
+
+		const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex);
+		if (leafSet.Contains(mmrIndex))
+		{
+			Hash hash = GetHashAt(hashFile, mmrIndex, pPruneList);
+			if (hash != ZERO_HASH)
+			{
+				hashes.emplace_back(std::move(hash));
+			}
+		}
+	}
+
+	return hashes;
+}
+
 Hash MMRHashUtil::HashLeafWithIndex(const std::vector<unsigned char>& serializedLeaf, const uint64_t mmrIndex)
 {
 	Serializer hashSerializer;

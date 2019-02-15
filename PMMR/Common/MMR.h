@@ -24,6 +24,11 @@ public:
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const = 0;
 
 	//
+	// Gets the last n leaf hashes.
+	//
+	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const = 0;
+
+	//
 	// Flushes all working changes to disk.
 	//
 	virtual bool Flush() = 0;

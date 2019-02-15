@@ -22,6 +22,11 @@ public:
 	virtual bool ValidateRoots(const BlockHeader& blockHeader) const override final;
 	virtual bool SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex) override final;
 
+	virtual std::vector<Hash> GetLastKernelHashes(const uint64_t numberOfKernels) const override final;
+	virtual std::vector<Hash> GetLastOutputHashes(const uint64_t numberOfOutputs) const override final;
+	virtual std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const override final;
+	virtual OutputRange GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
+
 	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;
 	virtual bool Commit() override final;

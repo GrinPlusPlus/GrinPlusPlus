@@ -2,6 +2,8 @@
 
 #include <string>
 #include <Core/BlockSums.h>
+#include <PMMR/OutputRange.h>
+#include <Hash.h>
 
 // Forward Declarations
 class Config;
@@ -53,6 +55,28 @@ public:
 
 
 	//
+	// Get last n kernel hashes.
+	//
+	virtual std::vector<Hash> GetLastKernelHashes(const uint64_t numberOfKernels) const = 0;
+
+	//
+	// Get last n output hashes.
+	//
+	virtual std::vector<Hash> GetLastOutputHashes(const uint64_t numberOfOutputs) const = 0;
+
+	//
+	// Get last n rangeproof hashes.
+	//
+	virtual std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const = 0;
+
+	//
+	// Get outputs by leaf/insertion index.
+	//
+	virtual OutputRange GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const = 0;
+
+
+
+	//
 	// Rewinds the kernel, output, and rangeproof MMRs to the given block.
 	//
 	virtual bool Rewind(const BlockHeader& header) = 0;
@@ -66,7 +90,6 @@ public:
 	// Discards all changes since the last commit.
 	//
 	virtual bool Discard() = 0;
-
 
 
 	virtual bool Snapshot(const BlockHeader& header) = 0;

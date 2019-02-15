@@ -104,6 +104,11 @@ std::unique_ptr<Hash> OutputPMMR::GetHashAt(const uint64_t mmrIndex) const
 	return std::make_unique<Hash>(std::move(hash));
 }
 
+std::vector<Hash> OutputPMMR::GetLastLeafHashes(const uint64_t numHashes) const
+{
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, &m_pruneList, numHashes);
+}
+
 std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrIndex) const
 {
 	if (MMRUtil::IsLeaf(mmrIndex))

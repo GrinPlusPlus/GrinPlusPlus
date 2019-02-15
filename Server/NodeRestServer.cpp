@@ -6,6 +6,7 @@
 #include "API/ServerAPI.h"
 #include "API/ChainAPI.h"
 #include "API/PeersAPI.h"
+#include "API/TxHashSetAPI.h"
 
 #include <P2PServer.h>
 #include <BlockChainServer.h>
@@ -38,6 +39,20 @@ bool NodeRestServer::Start()
 	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/txhashset/roots", TxHashSetAPI::GetRoots_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastkernels", TxHashSetAPI::GetLastKernels_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, &m_serverContainer);
+
+	/*
+	// TODO: Still missing
+		"get pool",
+		"post pool/push"
+		"post chain/compact"
+		"post chain/validate"
+		"get chain/outputs"
+	*/
 
 	return true;
 }

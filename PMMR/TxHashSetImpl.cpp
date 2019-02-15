@@ -1,5 +1,6 @@
 #include "TxHashSetImpl.h"
 #include "TxHashSetValidator.h"
+#include "Common/MMRUtil.h"
 
 #include <HexUtil.h>
 #include <FileUtil.h>
@@ -166,6 +167,56 @@ bool TxHashSet::SaveOutputPositions(const BlockHeader& blockHeader, const uint64
 	}
 
 	return true;
+}
+
+std::vector<Hash> TxHashSet::GetLastKernelHashes(const uint64_t numberOfKernels) const
+{
+	return m_pKernelMMR->GetLastLeafHashes(numberOfKernels);
+}
+
+std::vector<Hash> TxHashSet::GetLastOutputHashes(const uint64_t numberOfOutputs) const
+{
+	return m_pOutputPMMR->GetLastLeafHashes(numberOfOutputs);
+}
+
+std::vector<Hash> TxHashSet::GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const
+{
+	return m_pRangeProofPMMR->GetLastLeafHashes(numberOfRangeProofs);
+}
+
+OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const
+{
+	const uint64_t outputSize = m_pOutputPMMR->GetSize();
+	
+	uint64_t leafIndex = startIndex;
+	std::vector<OutputInfo> outputs;
+	outputs.reserve(maxNumOutputs);
+	while (outputs.size() < maxNumOutputs)
+	{
+		const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex++);
+		if (mmrIndex >= outputSize)
+		{
+			break;
+		}
+
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
+		if (pOutput != nullptr)
+		{
+			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
+			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
+			if (pRangeProof == nullptr || !locationOpt.has_value() || locationOpt.value().GetMMRIndex() != mmrIndex)
+			{
+				return OutputRange(0, 0, std::vector<OutputInfo>());
+			}
+
+			outputs.emplace_back(OutputInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
+		}
+	}
+
+	const uint64_t maxLeafIndex = MMRUtil::GetNumLeaves(outputSize - 1);
+	const uint64_t lastRetrievedIndex = outputs.empty() ? 0 : MMRUtil::GetNumLeaves(outputs.back().GetLocation().GetMMRIndex());
+
+	return OutputRange(maxLeafIndex, lastRetrievedIndex, std::move(outputs));
 }
 
 bool TxHashSet::Snapshot(const BlockHeader& header)

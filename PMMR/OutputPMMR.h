@@ -26,6 +26,7 @@ public:
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
+	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
 	virtual uint64_t GetSize() const override final;
 
 	virtual bool Flush() override final;

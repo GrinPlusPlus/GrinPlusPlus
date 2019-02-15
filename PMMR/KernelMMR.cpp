@@ -61,6 +61,11 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 	return std::unique_ptr<TransactionKernel>(nullptr);
 }
 
+std::vector<Hash> KernelMMR::GetLastLeafHashes(const uint64_t numHashes) const
+{
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, nullptr, numHashes);
+}
+
 bool KernelMMR::Rewind(const uint64_t size)
 {
 	const bool hashRewind = m_pHashFile->Rewind(size);

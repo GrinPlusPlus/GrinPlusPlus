@@ -58,7 +58,7 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 			const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
 			if (status == EBlockChainStatus::INVALID)
 			{
-				pipeline.m_connectionManager.BanConnection(blockEntry.connectionId);
+				pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
 			}
 
 			std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);

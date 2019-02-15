@@ -20,7 +20,7 @@ public:
 	void CloseDB();
 
 	virtual std::vector<Peer> LoadAllPeers() override final;
-	virtual std::unique_ptr<Peer> GetPeer(const IPAddress& address) override final;
+	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) override final;
 
 	virtual void AddPeers(const std::vector<Peer>& peers) override final;
 

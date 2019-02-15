@@ -33,6 +33,8 @@ public:
 
 	size_t GetNumberOfActiveConnections() const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
+	std::vector<ConnectedPeer> GetConnectedPeers() const;
+	std::optional<std::pair<uint64_t, ConnectedPeer>> GetConnectedPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const;
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 
@@ -43,7 +45,7 @@ public:
 	void PruneConnections(const bool bInactiveOnly);
 	void AddConnection(Connection* pConnection);
 
-	void BanConnection(const uint64_t connectionId);
+	void BanConnection(const uint64_t connectionId, const EBanReason banReason);
 
 private:
 	Connection* GetMostWorkPeer() const;
@@ -52,7 +54,7 @@ private:
 
 	mutable std::shared_mutex m_connectionsMutex;
 	std::vector<Connection*> m_connections;
-	std::set<uint64_t> m_peersToBan;
+	std::unordered_map<uint64_t, EBanReason> m_peersToBan;
 	std::chrono::system_clock::time_point m_lastPingTime;
 
 	mutable std::shared_mutex m_disconnectMutex;

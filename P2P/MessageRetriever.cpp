@@ -1,9 +1,9 @@
 #include "MessageRetriever.h"
 
-#include "ConnectedPeer.h"
 #include "Messages/MessageHeader.h"
 
 #include <iostream>
+#include <P2P/ConnectedPeer.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
@@ -16,7 +16,7 @@ MessageRetriever::MessageRetriever(const Config& config)
 
 std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
 {
-	SOCKET socket = connectedPeer.GetConnection();
+	SOCKET socket = connectedPeer.GetSocket();
 	if (retrievalMode == BLOCKING || HasMessageBeenReceived(socket))
 	{
 		DWORD timeout = 3 * 1000;

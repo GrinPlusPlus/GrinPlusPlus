@@ -65,7 +65,6 @@ bool KernelMMR::Rewind(const uint64_t size)
 {
 	const bool hashRewind = m_pHashFile->Rewind(size);
 	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
-
 	m_leafSet.Rewind(MMRUtil::GetNumLeaves(size - 1), Roaring());
 
 	return hashRewind && dataRewind;

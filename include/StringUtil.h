@@ -17,4 +17,14 @@ namespace StringUtil
 		std::snprintf(buf.get(), size, format.c_str(), args ...);
 		return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 	}
+
+	inline bool EndsWith(const std::string& value, const std::string& ending)
+	{
+		if (ending.size() > value.size())
+		{
+			return false;
+		}
+
+		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+	}
 }

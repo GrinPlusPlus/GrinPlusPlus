@@ -3,8 +3,10 @@
 #include "ConnectionFactory.h"
 
 #include <Config/Config.h>
+#include <P2P/Direction.h>
 #include <atomic>
 #include <thread>
+#include <optional>
 
 // Forward Declarations
 class ConnectionManager;
@@ -26,7 +28,7 @@ private:
 
 	bool SeedNewConnection();
 	bool ListenForConnections(const SOCKET& listenerSocket);
-	bool ConnectToPeer(Peer& peer);
+	bool ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<SOCKET>& socketOpt);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;

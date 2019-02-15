@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ConnectedPeer.h"
 #include "Messages/Message.h"
 
+#include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 #include <mutex>
 #include <atomic>
@@ -31,10 +31,12 @@ public:
 
 	void Send(const IMessage& message);
 
-	Peer GetPeer() const;
-	uint64_t GetTotalDifficulty() const;
-	uint64_t GetHeight() const;
-	Capabilities GetCapabilities() const;
+	inline Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
+	inline const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
+	inline const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
+	inline uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
+	inline uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
+	inline Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
 
 private:
 	static void Thread_ProcessConnection(Connection& connection);

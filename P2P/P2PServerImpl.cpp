@@ -32,6 +32,63 @@ const SyncStatus& P2PServer::GetSyncStatus() const
 	return m_connectionManager.GetSyncStatus();
 }
 
+std::vector<Peer> P2PServer::GetAllPeers() const
+{
+	return m_peerManager.GetAllPeers();
+}
+
+std::vector<ConnectedPeer> P2PServer::GetConnectedPeers() const
+{
+	return m_connectionManager.GetConnectedPeers();
+}
+
+std::optional<Peer> P2PServer::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+{
+	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_connectionManager.GetConnectedPeer(address, portOpt);
+	if (connectedPeerOpt.has_value())
+	{
+		return std::make_optional<Peer>(connectedPeerOpt.value().second.GetPeer());
+	}
+
+	return m_peerManager.GetPeer(address, portOpt);
+}
+
+bool P2PServer::BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason)
+{
+	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_connectionManager.GetConnectedPeer(address, portOpt);
+	if (connectedPeerOpt.has_value())
+	{
+		m_connectionManager.BanConnection(connectedPeerOpt.value().first, EBanReason::ManualBan);
+		return true;
+	}
+
+	std::optional<Peer> peerOpt = m_peerManager.GetPeer(address, portOpt);
+	if (peerOpt.has_value())
+	{
+		m_peerManager.BanPeer(peerOpt.value(), EBanReason::ManualBan);
+		return true;
+	}
+
+	return false;
+}
+
+bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
+{
+	std::optional<Peer> peerOpt = m_peerManager.GetPeer(address, portOpt);
+	if (peerOpt.has_value())
+	{
+		Peer peer = peerOpt.value();
+		if (peer.IsBanned())
+		{
+			peer.Unban();
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 namespace P2PAPI
 {
 	EXPORT IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)

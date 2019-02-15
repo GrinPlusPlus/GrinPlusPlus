@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ConnectedPeer.h"
 #include "Messages/Message.h"
 
+#include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 
 class MessageSender

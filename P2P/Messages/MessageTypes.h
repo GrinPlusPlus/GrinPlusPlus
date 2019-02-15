@@ -26,7 +26,7 @@ namespace MessageTypes
 		TransactionMsg = 15,
 		TxHashSetRequest = 16,
 		TxHashSetArchive = 17,
-		BanReason = 18
+		BanReasonMsg = 18
 		// GetTransaction = 19,
 		// CompactTransaction = 20,
 	};

@@ -64,7 +64,8 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 6. Store TxHashSet
-	m_chainState.GetLocked().m_txHashSetManager.SetTxHashSet(pTxHashSet);
+	LockedChainState lockedState = m_chainState.GetLocked();
+	lockedState.m_txHashSetManager.SetTxHashSet(pTxHashSet);
 
 	// 6. Update confirmed chain
 	if (!UpdateConfirmedChain(*pHeader))
@@ -73,6 +74,8 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 		m_chainState.GetLocked().m_txHashSetManager.Close();
 		return false;
 	}
+
+	lockedState.m_chainStore.Flush();
 
 	return true;
 }

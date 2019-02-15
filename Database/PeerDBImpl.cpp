@@ -57,16 +57,38 @@ std::vector<Peer> PeerDB::LoadAllPeers()
 	return peers;
 }
 
-std::unique_ptr<Peer> PeerDB::GetPeer(const IPAddress& address)
+std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
 {
-	// TODO: Implement
+	LoggerAPI::LogTrace("PeerDB::LoadAllPeers - Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
 
-	return std::unique_ptr<Peer>(nullptr);
+	Serializer addressSerializer;
+	if (address.IsLocalhost() && portOpt.has_value())
+	{
+		SocketAddress(address, portOpt.value()).Serialize(addressSerializer);
+	}
+	else
+	{
+		address.Serialize(addressSerializer);
+	}
+
+	Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+
+	std::string value;
+	const Status status = m_pDatabase->Get(ReadOptions(), key, &value);
+	if (status.ok())
+	{
+		std::vector<unsigned char> data(value.data(), value.data() + value.size());
+		ByteBuffer byteBuffer(data);
+
+		return std::make_optional<Peer>(Peer::Deserialize(byteBuffer));
+	}
+
+	return std::nullopt;
 }
 
 void PeerDB::AddPeers(const std::vector<Peer>& peers)
 {
-	LoggerAPI::LogTrace("PeerDB::AddPeers - Adding peers - " + std::to_string(peers.size()));
+	LoggerAPI::LogTrace("PeerDB::AddPeers - Adding peers: " + std::to_string(peers.size()));
 
 	for (const Peer& peer : peers)
 	{

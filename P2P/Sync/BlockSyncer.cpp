@@ -131,7 +131,7 @@ bool BlockSyncer::RequestBlocks()
 		{
 			if (m_slowPeers.count(iter->second.PEER_ID) > 0 || iter->second.TIMEOUT < std::chrono::system_clock::now())
 			{
-				m_connectionManager.BanConnection(iter->second.PEER_ID);
+				m_connectionManager.BanConnection(iter->second.PEER_ID, EBanReason::FraudHeight);
 				m_slowPeers.insert(iter->second.PEER_ID);
 
 				blocksToRequest.emplace_back(blocksNeeded[blockIndex]);

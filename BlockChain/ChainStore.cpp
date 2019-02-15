@@ -92,6 +92,7 @@ bool ChainStore::Flush()
 	return success;
 }
 
+// TODO: Use mem-mapped file
 bool ChainStore::WriteChain(Chain& chain, const std::string& path)
 {
 	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::ate);

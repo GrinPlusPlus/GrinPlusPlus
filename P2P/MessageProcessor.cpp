@@ -79,7 +79,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				return EStatus::BAN_PEER;
 			}
-			case BanReason:
+			case BanReasonMsg:
 			{
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
@@ -338,9 +338,9 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
 	const DWORD timeout = 10 * 1000;
-	setsockopt(connectedPeer.GetConnection(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+	setsockopt(connectedPeer.GetSocket(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 	const int socketRcvBuff = BUFFER_SIZE;
-	setsockopt(connectedPeer.GetConnection(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
+	setsockopt(connectedPeer.GetSocket(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
 
 	const std::string hashStr = HexUtil::ConvertHash(txHashSetArchiveMessage.GetBlockHash());
 	const std::string txHashSetPath = m_config.GetTxHashSetDirectory() + StringUtil::Format("txhashset_%s.zip", hashStr.c_str());
@@ -351,8 +351,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 	{
-		const int expectedBytes = min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const int newBytesReceived = recv(connectedPeer.GetConnection(), (char*)&buffer[0], expectedBytes, 0);
+		const int expectedBytes = std::min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
+		const int newBytesReceived = recv(connectedPeer.GetSocket(), (char*)&buffer[0], expectedBytes, 0);
 		if (newBytesReceived <= 0 || m_connectionManager.IsTerminating())
 		{
 			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
@@ -375,7 +375,7 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	LoggerAPI::LogInfo("MessageProcessor::ReceiveTxHashSet - Downloading successful.");
 	syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
 
-	// TODO: Process asynchronously.
+	// TODO: Process asynchronously in pipeline.
 	const EBlockChainStatus processStatus = m_blockChainServer.ProcessTransactionHashSet(txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
 	if (processStatus == EBlockChainStatus::INVALID)
 	{

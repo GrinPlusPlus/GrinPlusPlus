@@ -5,6 +5,7 @@
 #include "API/BlockAPI.h"
 #include "API/ServerAPI.h"
 #include "API/ChainAPI.h"
+#include "API/PeersAPI.h"
 
 #include <P2PServer.h>
 #include <BlockChainServer.h>
@@ -34,6 +35,9 @@ bool NodeRestServer::Start()
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetServer_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
+	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_serverContainer);
 
 	return true;
 }

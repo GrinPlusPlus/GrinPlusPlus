@@ -19,13 +19,13 @@ public:
 
 	bool Append(const RangeProof& rangeProof);
 	bool Remove(const uint64_t mmrIndex);
+	bool Rewind(const uint64_t size, const Roaring& leavesToAdd);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
 	std::unique_ptr<RangeProof> GetRangeProofAt(const uint64_t mmrIndex) const;
 	virtual uint64_t GetSize() const override final;
 
-	virtual bool Rewind(const uint64_t size) override final;
 	virtual bool Flush() override final;
 	virtual bool Discard() override final;
 

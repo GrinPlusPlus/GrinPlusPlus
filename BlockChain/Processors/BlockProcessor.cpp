@@ -215,6 +215,7 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, LockedChai
 	}
 
 	lockedState.m_chainStore.ReorgChain(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
+	lockedState.m_chainStore.Flush();
 	pTxHashSet->Commit();
 	return EBlockChainStatus::SUCCESS;
 }

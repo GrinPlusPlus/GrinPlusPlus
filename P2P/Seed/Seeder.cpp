@@ -12,6 +12,7 @@
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>
+#include <algorithm>
 
 Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer)
 	: m_config(config), 
@@ -68,7 +69,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
 
-	const int minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
+	const size_t minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
 		seeder.m_connectionManager.PruneConnections(true);
@@ -76,7 +77,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 		const size_t numConnections = seeder.m_connectionManager.GetNumberOfActiveConnections();
 		if (numConnections < minimumConnections)
 		{
-			const int connectionsToAdd = min(8, (minimumConnections - numConnections));
+			const size_t connectionsToAdd = std::min((size_t)8, (minimumConnections - numConnections));
 			if (connectionsToAdd == 1)
 			{
 				seeder.SeedNewConnection();
@@ -154,7 +155,7 @@ bool Seeder::SeedNewConnection()
 	std::unique_ptr<Peer> pPeer = m_peerManager.GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		bool connected = ConnectToPeer(*pPeer);
+		bool connected = ConnectToPeer(*pPeer, EDirection::OUTBOUND, std::nullopt);
 		if (connected)
 		{
 			m_peerManager.UpdatePeer(*pPeer);
@@ -185,16 +186,16 @@ bool Seeder::ListenForConnections(const SOCKET& listenerSocket)
 		const std::optional<SocketAddress> socketAddressOpt = SocketHelper::GetSocketAddress(socketOpt.value());
 		if (socketAddressOpt.has_value())
 		{
-			return ConnectToPeer(Peer(socketAddressOpt.value()));
+			return ConnectToPeer(Peer(socketAddressOpt.value()), EDirection::INBOUND, socketOpt);
 		}
 	}
 
 	return false;
 }
 
-bool Seeder::ConnectToPeer(Peer& peer)
+bool Seeder::ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<SOCKET>& socketOpt)
 {
-	Connection* pConnection = m_connectionFactory.CreateConnection(peer);
+	Connection* pConnection = m_connectionFactory.CreateConnection(peer, direction, socketOpt);
 	if (pConnection != nullptr)
 	{
 		if (m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))

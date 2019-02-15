@@ -37,6 +37,10 @@ public:
 	//
 	inline const IPAddress& GetIPAddress() const { return m_ipAddress; }
 	inline const uint16_t GetPortNumber() const { return m_port; }
+	inline std::string Format() const
+	{
+		return m_ipAddress.Format() + ":" + std::to_string(m_port);
+	}
 
 	//
 	// Serialization/Deserialization

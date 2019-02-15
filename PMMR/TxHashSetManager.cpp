@@ -21,7 +21,7 @@ ITxHashSet* TxHashSetManager::Open()
 	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config, m_blockDB);
 	RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(m_config);
 
-	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR);
+	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, m_config.GetEnvironment().GetGenesisBlock().GetBlockHeader());
 
 	return m_pTxHashSet;
 }
@@ -47,14 +47,14 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 		pKernelMMR->Flush();
 
 		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config, blockDB);
-		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize());
+		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pOutputPMMR->Flush();
 
 		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config);
-		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize());
+		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pRangeProofPMMR->Flush();
 
-		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR); // TODO: Just call Rewind(BlockHeader) on TxHashSet instead of each MMR
+		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, blockHeader);
 	}
 
 	return nullptr;

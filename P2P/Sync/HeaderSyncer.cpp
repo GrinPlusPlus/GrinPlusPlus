@@ -58,7 +58,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 
 		if (m_connectionId != 0)
 		{
-			m_connectionManager.BanConnection(m_connectionId);
+			m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
 		}
 
 		m_connectionId = 0;

@@ -1,8 +1,15 @@
 #pragma once
 
 #include "civetweb/include/civetweb.h"
+#include "RestException.h"
 
 #include <string>
+
+enum class EHTTPMethod
+{
+	GET,
+	POST
+};
 
 class RestUtil
 {
@@ -28,16 +35,41 @@ public:
 		return req_info->query_string;
 	}
 
+	static EHTTPMethod GetHTTPMethod(struct mg_connection* conn)
+	{
+		const struct mg_request_info* req_info = mg_get_request_info(conn);
+		if (req_info->request_method == std::string("GET"))
+		{
+			return EHTTPMethod::GET;
+		}
+		else if (req_info->request_method == std::string("POST"))
+		{
+			return EHTTPMethod::POST;
+		}
+		
+		throw RestException();
+	}
+
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)
 	{
 		unsigned long len = (unsigned long)response.size();
 
-		mg_printf(conn,
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Length: %lu\r\n"
-			"Content-Type: application/json\r\n"
-			"Connection: close\r\n\r\n",
-			len);
+		if (response.empty())
+		{
+			mg_printf(conn,
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Length: 0\r\n"
+				"Connection: close\r\n\r\n");
+		}
+		else
+		{
+			mg_printf(conn,
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Length: %lu\r\n"
+				"Content-Type: application/json\r\n"
+				"Connection: close\r\n\r\n",
+				len);
+		}
 
 		mg_write(conn, response.c_str(), len);
 
@@ -50,6 +82,22 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 400 Bad Request\r\n"
+			"Content-Length: %lu\r\n"
+			"Content-Type: text/plain\r\n"
+			"Connection: close\r\n\r\n",
+			len);
+
+		mg_write(conn, response.c_str(), len);
+
+		return 400;
+	}
+
+	static int BuildNotFoundResponse(struct mg_connection* conn, const std::string& response)
+	{
+		unsigned long len = (unsigned long)response.size();
+
+		mg_printf(conn,
+			"HTTP/1.1 404 Not Found\r\n"
 			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
@@ -73,6 +121,6 @@ public:
 
 		mg_write(conn, response.c_str(), len);
 
-		return 400;
+		return 500;
 	}
 };

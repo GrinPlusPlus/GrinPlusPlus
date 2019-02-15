@@ -4,9 +4,11 @@
 #include <P2P/peer.h>
 #include <P2P/SocketAddress.h>
 #include <P2P/capabilities.h>
+#include <P2P/BanReason.h>
 #include <Database/PeerDB.h>
 #include <Config/Config.h>
 
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
@@ -20,11 +22,16 @@ public:
 	void Initialize();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
+
+	std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const;
 	std::unique_ptr<Peer> GetNewPeer(const Capabilities::ECapability& preferredCapability) const;
+	std::vector<Peer> GetAllPeers() const;
 	std::vector<Peer> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
+
 	void AddPeerAddresses(const std::vector<SocketAddress>& peerAddresses);
 	bool UpdatePeer(const Peer& peer);
-	// TODO: BanPeer & RemovePeer
+	bool BanPeer(Peer& peer, const EBanReason banReason);
+	// TODO: RemovePeer
 
 private:
 	bool AddPeer(const Peer& peer);

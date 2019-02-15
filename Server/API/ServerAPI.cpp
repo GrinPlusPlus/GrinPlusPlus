@@ -1,7 +1,6 @@
 #include "ServerAPI.h"
 #include "../RestUtil.h"
 #include "../ServerContainer.h"
-#include "../RestUtil.h"
 
 #include <P2P/Common.h>
 #include <json/json.h>

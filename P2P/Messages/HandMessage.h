@@ -61,7 +61,7 @@ public:
 	//
 	// Deserialization
 	//
-	static HandMessage&& Deserialize(ByteBuffer& byteBuffer)
+	static HandMessage Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint32_t version = byteBuffer.ReadU32();
 		const Capabilities capabilities = Capabilities::Deserialize(byteBuffer);

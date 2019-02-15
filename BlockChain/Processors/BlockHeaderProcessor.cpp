@@ -78,6 +78,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.GetHash(), header.GetHeight(), pLastIndex);
 	lockedState.m_chainStore.GetSyncChain().AddBlock(pBlockIndex);
 	candidateChain.AddBlock(pBlockIndex);
+	lockedState.m_chainStore.Flush();
 
 	LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessSingleHeader - Successfully validated " + header.FormatHash());
 

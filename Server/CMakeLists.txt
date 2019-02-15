@@ -9,6 +9,7 @@ file(GLOB SERVER_SRC
 	"API/BlockAPI.cpp"
 	"API/ChainAPI.cpp"
 	"API/HeaderAPI.cpp"
+	"API/PeersAPI.cpp"
 	"API/ServerAPI.cpp"
 	"API/TxHashSetAPI.cpp"
 	"JSONFactory.cpp"

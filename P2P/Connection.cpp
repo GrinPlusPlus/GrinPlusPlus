@@ -68,28 +68,6 @@ void Connection::Send(const IMessage& message)
 	m_sendQueue.emplace(message.Clone());
 }
 
-Peer Connection::GetPeer() const
-{
-	std::lock_guard<std::mutex> lockGuard(m_peerMutex);
-
-	return m_connectedPeer.GetPeer();
-}
-
-uint64_t Connection::GetTotalDifficulty() const
-{
-	return m_connectedPeer.GetTotalDifficulty();
-}
-
-uint64_t Connection::GetHeight() const
-{
-	return m_connectedPeer.GetHeight();
-}
-
-Capabilities Connection::GetCapabilities() const
-{
-	return m_connectedPeer.GetPeer().GetCapabilities();
-}
-
 //
 // Continuously checks for messages to send and/or receive until the connection is terminated.
 // This function runs in its own thread.

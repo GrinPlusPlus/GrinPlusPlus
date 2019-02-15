@@ -23,13 +23,13 @@ void LeafSet::Remove(const uint32_t position)
 
 void LeafSet::Rewind(const uint32_t lastPosition, const Roaring& positionsToAdd)
 {
+	// Add back pruned positions.
+	m_bitmap |= positionsToAdd;
+
 	// Remove positions after the rewind point.
 	Roaring positionsToRemove;
 	positionsToRemove.addRange(lastPosition + 1, m_bitmap.maximum() + 1);
 	m_bitmap -= positionsToRemove;
-	
-	// Add back pruned positions.
-	m_bitmap |= positionsToAdd;
 }
 
 bool LeafSet::Contains(const uint32_t position) const

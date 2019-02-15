@@ -3,6 +3,9 @@
 #include <Infrastructure/Logger.h>
 #include <HexUtil.h>
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <WinSock2.h>
+
 MessageSender::MessageSender(const Config& config)
 	: m_config(config)
 {
@@ -26,9 +29,8 @@ bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) 
 	const std::vector<unsigned char>& serializedMessage = serializer.GetBytes();
 
 	const std::string hexMessage = HexUtil::ConvertToHex(serializedMessage, true, true);
-	//LoggerAPI::LogInfo(connectedPeer.GetPeer().GetIPAddress().Format() + "> Sent(" + std::to_string(message.GetMessageType()) + "): " + hexMessage);
 
-	const int nSendBytes = send(connectedPeer.GetConnection(), (const char*)&serializedMessage[0], (int)serializedMessage.size(), 0);
+	const int nSendBytes = send(connectedPeer.GetSocket(), (const char*)&serializedMessage[0], (int)serializedMessage.size(), 0);
 
 	// TODO: Update stats.
 

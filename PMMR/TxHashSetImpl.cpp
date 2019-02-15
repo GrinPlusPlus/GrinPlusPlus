@@ -8,8 +8,8 @@
 #include <Database/BlockDb.h>
 #include <Infrastructure/Logger.h>
 
-TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR)
-	: m_blockDB(blockDB), m_pKernelMMR(pKernelMMR), m_pOutputPMMR(pOutputPMMR), m_pRangeProofPMMR(pRangeProofPMMR)
+TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader)
+	: m_blockDB(blockDB), m_pKernelMMR(pKernelMMR), m_pOutputPMMR(pOutputPMMR), m_pRangeProofPMMR(pRangeProofPMMR), m_blockHeader(blockHeader), m_blockHeaderBackup(blockHeader)
 {
 
 }
@@ -125,6 +125,8 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		m_pKernelMMR->ApplyKernel(kernel);
 	}
 
+	m_blockHeader = block.GetBlockHeader();
+
 	return true;
 }
 
@@ -173,32 +175,31 @@ bool TxHashSet::Snapshot(const BlockHeader& header)
 
 bool TxHashSet::Rewind(const BlockHeader& header)
 {
-	// TODO: Restore spent outputs/rangeproofs (Use block input bitmaps)
-	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
-	m_pOutputPMMR->Rewind(header.GetOutputMMRSize());
-	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize());
-
-	return true;
-}
-
-bool TxHashSet::RewindBlock(const FullBlock& block)
-{
-	std::unique_ptr<BlockHeader> pPreviousHeader = m_blockDB.GetBlockHeader(block.GetBlockHeader().GetPreviousBlockHash());
-	if (pPreviousHeader != nullptr)
+	// TODO: Use block input bitmaps
+	Roaring leavesToAdd;
+	while (m_blockHeader != header)
 	{
-		m_pKernelMMR->Rewind(pPreviousHeader->GetKernelMMRSize());
-		m_pOutputPMMR->Rewind(pPreviousHeader->GetOutputMMRSize());
-		m_pRangeProofPMMR->Rewind(pPreviousHeader->GetOutputMMRSize());
-
-		for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+		std::unique_ptr<FullBlock> pBlock = m_blockDB.GetBlock(m_blockHeader.GetHash());
+		if (pBlock != nullptr)
 		{
-
+			for (const TransactionInput& input : pBlock->GetTransactionBody().GetInputs())
+			{
+				std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+				if (locationOpt.has_value())
+				{
+					leavesToAdd.add(locationOpt.value().GetMMRIndex());
+				}
+			}
 		}
 
-		return true;
+		m_blockHeader = *m_blockDB.GetBlockHeader(m_blockHeader.GetPreviousBlockHash());
 	}
 
-	return false;
+	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
+	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
+	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
+
+	return true;
 }
 
 bool TxHashSet::Commit()
@@ -206,6 +207,7 @@ bool TxHashSet::Commit()
 	m_pKernelMMR->Flush();
 	m_pOutputPMMR->Flush();
 	m_pRangeProofPMMR->Flush();
+	m_blockHeaderBackup = m_blockHeader;
 	return true;
 }
 
@@ -214,6 +216,7 @@ bool TxHashSet::Discard()
 	m_pKernelMMR->Discard();
 	m_pOutputPMMR->Discard();
 	m_pRangeProofPMMR->Discard();
+	m_blockHeader = m_blockHeaderBackup;
 	return true;
 }
 

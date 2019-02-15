@@ -92,7 +92,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 	if (m_connectionId > 0)
 	{
-		m_connectionManager.BanConnection(m_connectionId);
+		m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
 	}
 
 	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);

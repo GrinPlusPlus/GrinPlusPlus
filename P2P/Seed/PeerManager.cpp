@@ -22,8 +22,43 @@ void PeerManager::Initialize()
 
 bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const
 {
-	// TODO: Implement
-	return true;
+	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
+
+	uint64_t peersFound = 0;
+	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
+	{
+		PeerEntry& peerEntry = iter->second;
+		const Peer& peer = peerEntry.m_peer;
+
+		if (peer.IsBanned())
+		{
+			continue;
+		}
+
+		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
+		if (hasCapability)
+		{
+			if (!peerEntry.m_peerServed)
+			{
+				++peersFound;
+			}
+		}
+	}
+
+	return peersFound < 100;
+}
+
+std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
+
+	auto iter = m_peersByAddress.find(address);
+	if (iter != m_peersByAddress.cend())
+	{
+		return std::make_optional<Peer>(iter->second.m_peer);
+	}
+
+	return m_peerDB.GetPeer(address, portOpt);
 }
 
 std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability) const
@@ -42,6 +77,25 @@ std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& p
 	}
 
 	return std::make_unique<Peer>(peers.front());
+}
+
+std::vector<Peer> PeerManager::GetAllPeers() const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
+
+	std::vector<Peer> peers;
+	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
+	{
+		PeerEntry& peerEntry = iter->second;
+		const Peer& peer = peerEntry.m_peer;
+
+		if (peer.GetLastContactTime() > 0)
+		{
+			peers.push_back(peer);
+		}
+	}
+
+	return peers;
 }
 
 std::vector<Peer> PeerManager::GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
@@ -75,9 +129,10 @@ bool PeerManager::UpdatePeer(const Peer& peer)
 	m_peerDB.AddPeers(std::vector<Peer>({ peer }));
 
 	const IPAddress& address = peer.GetIPAddress();
-	if (m_peersByAddress.find(address) != m_peersByAddress.cend())
+	auto iter = m_peersByAddress.find(address);
+	if (iter != m_peersByAddress.end())
 	{
-		m_peersByAddress.emplace(address, peer);
+		iter->second.m_peer = peer;
 		return true;
 	}
 	else
@@ -87,14 +142,20 @@ bool PeerManager::UpdatePeer(const Peer& peer)
 	}
 }
 
+bool PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
+{
+	peer.UpdateLastBanTime();
+	peer.UpdateBanReason(banReason);
+
+	return UpdatePeer(peer);
+}
+
 bool PeerManager::AddPeer(const Peer& peer)
 {
 	const IPAddress& address = peer.GetIPAddress();
 	if (m_peersByAddress.find(address) == m_peersByAddress.cend())
 	{
 		m_peersByAddress.emplace(address, PeerEntry(peer));
-		//m_peerDB.AddPeers(std::vector<Peer>({ peer }));
-
 		return true;
 	}
 
@@ -109,6 +170,11 @@ std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapab
 	{
 		PeerEntry& peerEntry = iter->second;
 		const Peer& peer = peerEntry.m_peer;
+
+		if (connectingToPeer && peer.IsBanned())
+		{
+			continue;
+		}
 
 		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
 		if (hasCapability)

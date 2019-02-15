@@ -12,7 +12,7 @@
 class TxHashSet : public ITxHashSet
 {
 public:
-	TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR);
+	TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader);
 	~TxHashSet();
 
 	virtual bool IsUnspent(const OutputIdentifier& output) const override final;
@@ -24,7 +24,6 @@ public:
 
 	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;
-	virtual bool RewindBlock(const FullBlock& block) override final;
 	virtual bool Commit() override final;
 	virtual bool Discard() override final;
 	virtual bool Compact() override final;
@@ -39,4 +38,7 @@ private:
 	KernelMMR* m_pKernelMMR;
 	OutputPMMR* m_pOutputPMMR;
 	RangeProofPMMR* m_pRangeProofPMMR;
+
+	BlockHeader m_blockHeader;
+	BlockHeader m_blockHeaderBackup;
 };

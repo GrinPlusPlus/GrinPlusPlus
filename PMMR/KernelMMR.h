@@ -19,12 +19,12 @@ public:
 	~KernelMMR();
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
+	bool Rewind(const uint64_t size);
 
 	virtual Hash Root(const uint64_t lastMMRIndex) const override final;
 	virtual uint64_t GetSize() const override final { return m_pHashFile->GetSize(); }
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_pHashFile->GetHashAt(mmrIndex)); }
 
-	virtual bool Rewind(const uint64_t size) override final;
 	virtual bool Flush() override final;
 	virtual bool Discard() override final;
 

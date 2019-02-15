@@ -3,9 +3,11 @@
 #include "../Connection.h"
 
 #include <P2P/peer.h>
+#include <P2P/Direction.h>
 #include <WinSock2.h>
 #include <memory>
 #include <Config/Config.h>
+#include <optional>
 
 // Forward Declarations
 class Peer;
@@ -19,11 +21,12 @@ class ConnectionFactory
 public:
 	ConnectionFactory(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
 
-	Connection* CreateConnection(Peer& peer) const;
+	Connection* CreateConnection(Peer& peer, const EDirection direction, const std::optional<SOCKET>& socketOpt) const;
 
 private:
-	Connection* PerformHandshake(SOCKET connection, Peer& peer) const;
+	Connection* PerformHandshake(SOCKET connection, Peer& peer, const EDirection direction) const;
 	bool TransmitHandMessage(ConnectedPeer& connectedPeer) const;
+	bool TransmitShakeMessage(ConnectedPeer& connectedPeer) const;
 
 private:
 	const Config& m_config;

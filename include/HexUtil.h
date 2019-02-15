@@ -3,9 +3,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <ios>
 #include <iomanip>
 #include <Hash.h>
+#include <Serialization/EndianHelper.h>
 
 namespace HexUtil
 {
@@ -42,6 +44,20 @@ namespace HexUtil
 		const std::vector<unsigned char> firstNBytes = std::vector<unsigned char>(data.cbegin(), data.cbegin() + numBytes);
 
 		return ConvertToHex(firstNBytes, false, false);
+	}
+
+	static std::string ConvertToHex(const uint16_t value, const bool abbreviate)
+	{
+		const uint16_t bigEndian = EndianHelper::GetBigEndian16(value);
+
+		std::vector<unsigned char> bytes(2);
+		memcpy(&bytes, (unsigned char*)&bigEndian, 2);
+
+		std::string hex = ConvertToHex(bytes, true, false);
+		const size_t firstNonZero = hex.find_first_not_of('0');
+		hex.erase(0, std::min(firstNonZero, hex.size() - 1));
+
+		return hex;
 	}
 
 	static std::string ConvertHash(const Hash& hash)

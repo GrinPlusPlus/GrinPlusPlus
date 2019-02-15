@@ -29,6 +29,11 @@ namespace BitUtil
 		return count;
 	}
 
+	static uint16_t ConvertToU16(const uint8_t byte1, const uint8_t byte2)
+	{
+		return (((uint16_t)byte1) << 8) | ((uint16_t)byte2);
+	}
+
 	static uint32_t ConvertToU32(const uint8_t byte1, const uint8_t byte2, const uint8_t byte3, const uint8_t byte4)
 	{
 		return ((((uint32_t)byte1) << 24) | (((uint32_t)byte2) << 16) | (((uint32_t)byte3) << 8) | ((uint32_t)byte4));

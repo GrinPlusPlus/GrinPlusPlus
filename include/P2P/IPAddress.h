@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <BitUtil.h>
+#include <HexUtil.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 
@@ -11,6 +12,7 @@ enum class EAddressFamily
 	IPv6
 };
 
+// TODO: Implement IPv6
 class IPAddress
 {
 public:
@@ -38,6 +40,17 @@ public:
 		return IPAddress(EAddressFamily::IPv4, std::vector<unsigned char>({ byte1, byte2, byte3, byte4 }));
 	}
 
+	static IPAddress FromString(const std::string& addressStr)
+	{
+		uint32_t byte1;
+		uint32_t byte2;
+		uint32_t byte3;
+		uint32_t byte4;
+		sscanf_s(addressStr.c_str(), "%u.%u.%u.%u", &byte1, &byte2, &byte3, &byte4);
+
+		return FromIP((uint8_t)byte1, (uint8_t)byte2, (uint8_t)byte3, (uint8_t)byte4);
+	}
+
 	//
 	// Destructor
 	//
@@ -59,9 +72,6 @@ public:
 		}
 
 		return false;
-		//// std::tuple's lexicographic ordering does all the actual work for you
-		//// and using std::tie means no actual copies are made
-		//return std::tie(m_address) < std::tie(rhs.m_address);
 	}
 
 	inline bool operator==(const IPAddress& rhs) const
@@ -79,6 +89,25 @@ public:
 	//
 	inline const EAddressFamily GetFamily() const { return m_family; }
 	inline const std::vector<unsigned char>& GetAddress() const { return m_address; }
+	inline bool IsLocalhost() const
+	{
+		if (m_family == EAddressFamily::IPv4)
+		{
+			return m_address[0] == 127 && m_address[1] == 0 && m_address[2] == 0 && m_address[3] == 1;
+		}
+		else
+		{
+			for (size_t i = 0; i < 15; i++)
+			{
+				if (m_address[i] != 0)
+				{
+					return false;
+				}
+			}
+
+			return m_address[15] == 1;
+		}
+	}
 	inline std::string Format() const 
 	{
 		if (m_family == EAddressFamily::IPv4)
@@ -88,8 +117,32 @@ public:
 		}
 		else
 		{
-			return std::to_string(m_address[0]) + ":" + std::to_string(m_address[1]) + ":" + std::to_string(m_address[2]) + ":" 
-				+ std::to_string(m_address[3]) + ":" + std::to_string(m_address[4]) + ":" + std::to_string(m_address[5]);
+			const uint16_t words[8] = { BitUtil::ConvertToU16(m_address[0], m_address[1]), BitUtil::ConvertToU16(m_address[2], m_address[3]), 
+				BitUtil::ConvertToU16(m_address[4], m_address[5]), BitUtil::ConvertToU16(m_address[6], m_address[7]), BitUtil::ConvertToU16(m_address[8], m_address[9]), 
+				BitUtil::ConvertToU16(m_address[10], m_address[11]), BitUtil::ConvertToU16(m_address[12], m_address[13]), BitUtil::ConvertToU16(m_address[14], m_address[15]) };
+
+			std::string formatted;
+			for (int i = 0; i < 8; i++)
+			{
+				if (i > 0)
+				{
+					formatted += ":";
+				}
+
+				if (words[i] == 0 && i < 8 && words[i + 1] == 0)
+				{
+					while (words[i + 1] == 0)
+					{
+						++i;
+					}
+
+					continue;
+				}
+
+				formatted += HexUtil::ConvertToHex(words[i], true);
+			}
+
+			return formatted;
 		}
 	}
 
@@ -119,10 +172,14 @@ public:
 			std::vector<unsigned char> ipAddress = byteBuffer.ReadVector(4);
 			return IPAddress(EAddressFamily::IPv4, std::move(ipAddress));
 		}
-		else
+		else if (ipAddressFamily == 1)
 		{
 			std::vector<unsigned char> ipAddress = byteBuffer.ReadVector(16);
 			return IPAddress(EAddressFamily::IPv6, std::move(ipAddress));
+		}
+		else
+		{
+			throw DeserializationException();
 		}
 	}
 

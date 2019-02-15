@@ -10,7 +10,10 @@
 #include <BigInteger.h>
 #include <Core/BlockHeader.h>
 #include <P2P/SyncStatus.h>
+#include <P2P/Peer.h>
+#include <P2P/ConnectedPeer.h>
 #include <TxPool/TransactionPool.h>
+#include <optional>
 
 #ifdef MW_P2P
 #define P2P_API EXPORT
@@ -32,12 +35,23 @@ class IP2PServer
 public:
 	virtual ~IP2PServer() {}
 
+	virtual const SyncStatus& GetSyncStatus() const = 0;
+
 	//
 	// Returns the number of peers the client is currently connected to.
 	//
 	virtual size_t GetNumberOfConnectedPeers() const = 0;
 
-	virtual const SyncStatus& GetSyncStatus() const = 0;
+	virtual std::vector<Peer> GetAllPeers() const = 0;
+
+	virtual std::vector<ConnectedPeer> GetConnectedPeers() const = 0;
+
+
+	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const = 0;
+
+	virtual bool BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason) = 0;
+
+	virtual bool UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) = 0;
 };
 
 namespace P2PAPI

@@ -97,6 +97,38 @@ std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
 	return mostWorkPeers;
 }
 
+std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	std::vector<ConnectedPeer> connectedPeers;
+	for (Connection* pConnection : m_connections)
+	{
+		connectedPeers.push_back(pConnection->GetConnectedPeer());
+	}
+
+	return connectedPeers;
+}
+
+std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnectedPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	for (Connection* pConnection : m_connections)
+	{
+		ConnectedPeer connectedPeer = pConnection->GetConnectedPeer();
+		if (connectedPeer.GetPeer().GetIPAddress() == address)
+		{
+			if (!portOpt.has_value() || portOpt.value() == connectedPeer.GetPeer().GetPortNumber() || !connectedPeer.GetPeer().GetIPAddress().IsLocalhost())
+			{
+				return std::make_optional<std::pair<uint64_t, ConnectedPeer>>(std::make_pair<uint64_t, ConnectedPeer>(pConnection->GetId(), std::move(connectedPeer)));
+			}
+		}
+	}
+
+	return std::nullopt;
+}
+
 uint64_t ConnectionManager::GetMostWork() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
@@ -182,10 +214,14 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	{
 		Connection* pConnection = m_connections[i];
 
-		if (m_peersToBan.count(pConnection->GetId()) > 0)
+		auto iter = m_peersToBan.find(pConnection->GetId());
+		if (iter != m_peersToBan.end())
 		{
-			// TODO: Implement this.
-			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::BanConnection() - Banning peer (%d) at (%s).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str()));
+			const EBanReason banReason = iter->second;
+			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::BanConnection() - Banning peer (%d) at (%s) for (%d).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str(), (int32_t)banReason));
+
+			pConnection->GetPeer().UpdateLastBanTime();
+			pConnection->GetPeer().UpdateBanReason(banReason);
 
 			m_connectionsToClose.push_back(pConnection);
 			VectorUtil::Remove<Connection*>(m_connections, i);
@@ -222,11 +258,11 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	m_connectionsToClose.clear();
 }
 
-void ConnectionManager::BanConnection(const uint64_t connectionId)
+void ConnectionManager::BanConnection(const uint64_t connectionId, const EBanReason banReason)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_connectionsMutex);
 
-	m_peersToBan.insert(connectionId);
+	m_peersToBan.insert(std::pair<uint64_t, EBanReason>(connectionId, banReason));
 }
 
 Connection* ConnectionManager::GetMostWorkPeer() const

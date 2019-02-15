@@ -58,12 +58,6 @@ public:
 	virtual bool Rewind(const BlockHeader& header) = 0;
 
 	//
-	// Removes all outputs, rangeproofs, and kernels added by the block, and adds back any inputs spent from it.
-	// This is the reverse of ApplyBlock, and should only be called for the most recently applied block.
-	//
-	virtual bool RewindBlock(const FullBlock& block) = 0;
-
-	//
 	// Flushes all changes to disk.
 	//
 	virtual bool Commit() = 0;

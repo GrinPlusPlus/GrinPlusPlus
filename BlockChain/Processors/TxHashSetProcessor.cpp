@@ -2,7 +2,7 @@
 
 #include <Infrastructure/Logger.h>
 #include <Database/BlockDb.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <BlockChainServer.h>
 #include <StringUtil.h>
 #include <HexUtil.h>

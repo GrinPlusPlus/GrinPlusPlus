@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Core/Transaction.h>
+#include <Core/Models/Transaction.h>
 
 class TransactionMessage : public IMessage
 {

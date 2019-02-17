@@ -7,8 +7,8 @@
 //
 
 #include <Hash.h>
-#include <Core/Features.h>
-#include <Core/OutputIdentifier.h>
+#include <Core/Models/Features.h>
+#include <Core/Models/OutputIdentifier.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/RangeProof.h>
 #include <Serialization/ByteBuffer.h>

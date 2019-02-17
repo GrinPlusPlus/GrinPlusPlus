@@ -7,7 +7,7 @@
 #include "OrphanPool/OrphanPool.h"
 
 #include <P2P/SyncStatus.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <Core/ChainType.h>
 #include <Core/Models/Display/BlockWithOutputs.h>
 #include <HeaderMMR.h>

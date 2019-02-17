@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Core/BlockHeader.h>
-#include <Core/FullBlock.h>
-#include <Core/BlockSums.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/BlockSums.h>
 #include <Core/ChainType.h>
-#include <Core/OutputLocation.h>
+#include <Core/Models/OutputLocation.h>
 #include <memory>
 #include <optional>
 

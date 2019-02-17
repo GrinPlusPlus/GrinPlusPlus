@@ -5,7 +5,7 @@
 #include "OrphanPool/OrphanPool.h"
 
 #include <HeaderMMR.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <Infrastructure/Logger.h>
 #include <TxPool/TransactionPool.h>
 #include <PMMR/TxHashSetManager.h>

@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Core/FullBlock.h>
+#include <Core/Models/FullBlock.h>
 
 class BlockMessage : public IMessage
 {

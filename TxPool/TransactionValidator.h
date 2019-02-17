@@ -2,7 +2,7 @@
 
 #include "TransactionBodyValidator.h"
 
-#include <Core/Transaction.h>
+#include <Core/Models/Transaction.h>
 
 class TransactionValidator
 {

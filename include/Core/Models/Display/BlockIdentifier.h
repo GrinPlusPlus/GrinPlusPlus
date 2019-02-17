@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Hash.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 class BlockIdentifier
 {

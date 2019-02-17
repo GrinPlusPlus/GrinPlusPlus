@@ -8,7 +8,7 @@
 
 #include <ImportExport.h>
 #include <BigInteger.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/Peer.h>
 #include <P2P/ConnectedPeer.h>

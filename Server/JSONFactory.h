@@ -1,9 +1,9 @@
 #pragma once
 
 #include <json/json.h>
-#include <Core/BlockHeader.h>
-#include <Core/FullBlock.h>
-#include <Core/Transaction.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/Transaction.h>
 #include <P2P/Peer.h>
 #include <P2P/ConnectedPeer.h>
 

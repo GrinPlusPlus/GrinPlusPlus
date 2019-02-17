@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <BlockChainServer.h>
 #include <P2P/SyncStatus.h>
 

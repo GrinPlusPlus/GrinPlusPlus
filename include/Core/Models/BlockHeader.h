@@ -5,7 +5,7 @@
 #include <Hash.h>
 #include <Crypto.h>
 #include <BigInteger.h>
-#include <Core/ProofOfWork.h>
+#include <Core/Models/ProofOfWork.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 #include <HexUtil.h>

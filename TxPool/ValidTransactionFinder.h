@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/Transaction.h>
-#include <Core/BlockHeader.h>
-#include <Core/BlockSums.h>
+#include <Core/Models/Transaction.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/BlockSums.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
 #include <lru/cache.hpp>

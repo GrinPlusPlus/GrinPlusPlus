@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/TransactionBody.h>
+#include <Core/Models/TransactionBody.h>
 #include <set>
 
 class CutThroughVerifier

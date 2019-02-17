@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <Core/BlockSums.h>
-#include <Core/OutputLocation.h>
+#include <Core/Models/BlockSums.h>
+#include <Core/Models/OutputLocation.h>
 #include <PMMR/OutputRange.h>
 #include <Hash.h>
 

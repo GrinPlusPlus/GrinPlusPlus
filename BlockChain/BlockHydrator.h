@@ -2,9 +2,9 @@
 
 #include "ChainState.h"
 
-#include <Core/CompactBlock.h>
-#include <Core/FullBlock.h>
-#include <Core/Transaction.h>
+#include <Core/Models/CompactBlock.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/Transaction.h>
 #include <TxPool/TransactionPool.h>
 #include <memory>
 

@@ -2,7 +2,7 @@
 
 #include <Hash.h>
 #include <Core/ChainType.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 class BlockIndex
 {

@@ -3,7 +3,7 @@
 #include "../ChainState.h"
 
 #include <Config/Config.h>
-#include <Core/FullBlock.h>
+#include <Core/Models/FullBlock.h>
 #include <BlockChainStatus.h>
 #include <TxPool/TransactionPool.h>
 

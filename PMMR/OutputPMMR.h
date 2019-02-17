@@ -7,7 +7,7 @@
 #include "Common/HashFile.h"
 
 #include <Core/DataFile.h>
-#include <Core/OutputIdentifier.h>
+#include <Core/Models/OutputIdentifier.h>
 #include <Database/BlockDB.h>
 #include <Hash.h>
 

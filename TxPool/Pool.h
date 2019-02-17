@@ -3,10 +3,10 @@
 #include "TxPoolEntry.h"
 
 #include <TxPool/DandelionStatus.h>
-#include <Core/Transaction.h>
-#include <Core/TransactionKernel.h>
-#include <Core/FullBlock.h>
-#include <Core/ShortId.h>
+#include <Core/Models/Transaction.h>
+#include <Core/Models/TransactionKernel.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/ShortId.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>

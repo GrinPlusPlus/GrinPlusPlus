@@ -8,7 +8,7 @@
 
 #include <ImportExport.h>
 #include <Config/Config.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 #ifdef MW_POW
 #define POW_API EXPORT

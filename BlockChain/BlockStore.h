@@ -2,7 +2,7 @@
 
 #include <Config/Config.h>
 #include <Database/BlockDb.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <unordered_map>
 
 // TODO: This was meant to be a wrapper with caching, but no longer contains caching. Remove this class

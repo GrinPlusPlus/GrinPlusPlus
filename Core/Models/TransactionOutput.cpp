@@ -1,4 +1,4 @@
-#include <Core/TransactionOutput.h>
+#include <Core/Models/TransactionOutput.h>
 #include <Crypto.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)

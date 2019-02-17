@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 class HeadersMessage : public IMessage
 {

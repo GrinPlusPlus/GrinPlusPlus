@@ -9,11 +9,11 @@
 #include <ImportExport.h>
 #include <TxPool/DandelionStatus.h>
 #include <TxPool/PoolType.h>
-#include <Core/Transaction.h>
-#include <Core/ShortId.h>
-#include <Core/FullBlock.h>
-#include <Core/BlockHeader.h>
-#include <Core/BlockSums.h>
+#include <Core/Models/Transaction.h>
+#include <Core/Models/ShortId.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/BlockSums.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Hash.h>

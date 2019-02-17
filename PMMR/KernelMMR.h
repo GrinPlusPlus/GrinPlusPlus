@@ -5,7 +5,7 @@
 #include "Common/HashFile.h"
 
 #include <Core/DataFile.h>
-#include <Core/TransactionKernel.h>
+#include <Core/Models/TransactionKernel.h>
 #include <Hash.h>
 #include <stdint.h>
 

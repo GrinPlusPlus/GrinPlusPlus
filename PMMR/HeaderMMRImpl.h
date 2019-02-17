@@ -3,7 +3,7 @@
 #include "Common/HashFile.h"
 
 #include <HeaderMMR.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <string>
 
 class HeaderMMR : public IHeaderMMR

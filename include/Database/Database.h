@@ -9,7 +9,7 @@
 #include <ImportExport.h>
 #include <Database/BlockDB.h>
 #include <Database/PeerDB.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <BigInteger.h>
 
 #include <vector>

@@ -7,8 +7,8 @@
 //
 
 #include <vector>
-#include <Core/BlockHeader.h>
-#include <Core/TransactionBody.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/TransactionBody.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 

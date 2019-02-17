@@ -1,5 +1,5 @@
-#include <Core/OutputIdentifier.h>
-#include <Core/TransactionOutput.h>
+#include <Core/Models/OutputIdentifier.h>
+#include <Core/Models/TransactionOutput.h>
 
 OutputIdentifier::OutputIdentifier(const EOutputFeatures features, Commitment&& commitment)
 	: m_features(features), m_commitment(std::move(commitment))

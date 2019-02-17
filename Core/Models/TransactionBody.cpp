@@ -1,4 +1,4 @@
-#include <Core/TransactionBody.h>
+#include <Core/Models/TransactionBody.h>
 
 #include <Serialization/Serializer.h>
 

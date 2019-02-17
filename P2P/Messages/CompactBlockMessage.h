@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Core/CompactBlock.h>
+#include <Core/Models/CompactBlock.h>
 
 class CompactBlockMessage : public IMessage
 {

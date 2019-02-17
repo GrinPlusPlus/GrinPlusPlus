@@ -1,4 +1,4 @@
-#include <Core/ProofOfWork.h>
+#include <Core/Models/ProofOfWork.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Crypto.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/OutputDisplayInfo.h>
+#include <Core/Models/Display/OutputDisplayInfo.h>
 
 class OutputRange
 {

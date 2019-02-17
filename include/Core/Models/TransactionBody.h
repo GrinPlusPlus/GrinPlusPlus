@@ -10,9 +10,9 @@
 #include <BigInteger.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
-#include <Core/TransactionInput.h>
-#include <Core/TransactionOutput.h>
-#include <Core/TransactionKernel.h>
+#include <Core/Models/TransactionInput.h>
+#include <Core/Models/TransactionOutput.h>
+#include <Core/Models/TransactionKernel.h>
 
 ////////////////////////////////////////
 // TRANSACTION BODY

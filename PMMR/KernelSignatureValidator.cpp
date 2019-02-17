@@ -1,7 +1,7 @@
 #include "KernelSignatureValidator.h"
 #include "Common/MMRUtil.h"
 
-#include <Core/TransactionKernel.h>
+#include <Core/Models/TransactionKernel.h>
 #include <Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
 #include <HexUtil.h>

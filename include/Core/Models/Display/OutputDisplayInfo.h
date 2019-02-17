@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/OutputIdentifier.h>
-#include <Core/OutputLocation.h>
+#include <Core/Models/OutputIdentifier.h>
+#include <Core/Models/OutputLocation.h>
 #include <Crypto/RangeProof.h>
 
 // TODO: Move to Core/Models/Display

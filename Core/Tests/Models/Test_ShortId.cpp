@@ -1,6 +1,6 @@
 #include <Catch2/catch.hpp>
 
-#include <Core/ShortId.h>
+#include <Core/Models/ShortId.h>
 
 TEST_CASE("ShortId::Create")
 {

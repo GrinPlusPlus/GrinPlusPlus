@@ -1,4 +1,4 @@
-#include <Core/TransactionInput.h>
+#include <Core/Models/TransactionInput.h>
 
 #include <Serialization/Serializer.h>
 #include <Crypto.h>

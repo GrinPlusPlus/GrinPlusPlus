@@ -1,6 +1,6 @@
 #include <Catch2/catch.hpp>
 
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 TEST_CASE("BlockHeader::Deserialize")
 {

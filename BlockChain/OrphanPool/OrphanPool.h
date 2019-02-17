@@ -3,7 +3,7 @@
 #include "Orphan.h"
 
 #include <Hash.h>
-#include <Core/FullBlock.h>
+#include <Core/Models/FullBlock.h>
 #include <unordered_map>
 #include <shared_mutex>
 #include <lru/cache.hpp>

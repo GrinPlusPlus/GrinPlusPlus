@@ -3,8 +3,8 @@
 #include "Pool.h"
 
 #include <TxPool/TransactionPool.h>
-#include <Core/Transaction.h>
-#include <Core/ShortId.h>
+#include <Core/Models/Transaction.h>
+#include <Core/Models/ShortId.h>
 #include <lru/cache.hpp>
 #include <Hash.h>
 #include <set>

@@ -7,7 +7,7 @@
 //
 
 #include <Hash.h>
-#include <Core/Features.h>
+#include <Core/Models/Features.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/Signature.h>
 #include <Serialization/ByteBuffer.h>

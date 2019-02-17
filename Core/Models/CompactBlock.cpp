@@ -1,4 +1,4 @@
-#include <Core/CompactBlock.h>
+#include <Core/Models/CompactBlock.h>
 
 CompactBlock::CompactBlock(BlockHeader&& blockHeader, const uint64_t nonce, std::vector<TransactionOutput>&& fullOutputs, std::vector<TransactionKernel>&& fullKernels, std::vector<ShortId>&& shortIds)
 	: m_blockHeader(std::move(blockHeader)), m_nonce(nonce), m_outputs(std::move(fullOutputs)), m_kernels(std::move(fullKernels)), m_shortIds(std::move(shortIds))

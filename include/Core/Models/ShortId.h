@@ -7,7 +7,7 @@
 //
 
 #include <vector>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 

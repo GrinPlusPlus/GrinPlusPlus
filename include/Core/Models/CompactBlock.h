@@ -7,10 +7,10 @@
 //
 
 #include <vector>
-#include <Core/BlockHeader.h>
-#include <Core/ShortId.h>
-#include <Core/TransactionOutput.h>
-#include <Core/TransactionKernel.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/ShortId.h>
+#include <Core/Models/TransactionOutput.h>
+#include <Core/Models/TransactionKernel.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
 

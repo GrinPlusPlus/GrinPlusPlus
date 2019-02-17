@@ -2,7 +2,7 @@
 
 #include "TxHashSetImpl.h"
 
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/BlindingFactor.h>
 

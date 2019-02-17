@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/FullBlock.h>
-#include <Core/BlockSums.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/BlockSums.h>
 #include <Database/BlockDb.h>
 #include <memory>
 

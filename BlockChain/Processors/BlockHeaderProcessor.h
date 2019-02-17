@@ -4,7 +4,7 @@
 
 #include <Config/Config.h>
 #include <BlockChainStatus.h>
-#include <Core/BlockHeader.h>
+#include <Core/Models/BlockHeader.h>
 
 class BlockHeaderProcessor
 {

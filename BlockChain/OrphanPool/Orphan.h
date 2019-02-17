@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/FullBlock.h>
+#include <Core/Models/FullBlock.h>
 
 struct Orphan
 {

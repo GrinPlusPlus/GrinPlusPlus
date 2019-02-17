@@ -6,7 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <Core/Features.h>
+#include <Core/Models/Features.h>
 #include <Crypto/Commitment.h>
 
 // Forward Declarations

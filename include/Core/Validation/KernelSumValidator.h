@@ -3,8 +3,8 @@
 #include <Crypto.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/BlindingFactor.h>
-#include <Core/BlockSums.h>
-#include <Core/TransactionBody.h>
+#include <Core/Models/BlockSums.h>
+#include <Core/Models/TransactionBody.h>
 #include <Common/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 #include <optional>

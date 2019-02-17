@@ -11,7 +11,7 @@
 #include <BigInteger.h>
 #include <Serialization/ByteBuffer.h>
 #include <Serialization/Serializer.h>
-#include <Core/TransactionBody.h>
+#include <Core/Models/TransactionBody.h>
 #include <Crypto/BlindingFactor.h>
 
 ////////////////////////////////////////

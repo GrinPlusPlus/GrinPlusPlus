@@ -11,12 +11,12 @@
 #include <TxPool/PoolType.h>
 #include <P2P/SyncStatus.h>
 #include <Core/Models/Display/BlockWithOutputs.h>
-#include "Core/ChainType.h"
-#include "Core/BlockHeader.h"
-#include "Core/FullBlock.h"
-#include "Core/CompactBlock.h"
-#include "Core/Transaction.h"
-#include "BigInteger.h"
+#include <Core/ChainType.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/CompactBlock.h>
+#include <Core/Models/Transaction.h>
+#include <BigInteger.h>
 
 #include <vector>
 #include <memory>

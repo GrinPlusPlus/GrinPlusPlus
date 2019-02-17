@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/TransactionInput.h>
-#include <Core/TransactionOutput.h>
+#include <Core/Models/TransactionInput.h>
+#include <Core/Models/TransactionOutput.h>
 #include <Common/FunctionalUtil.h>
 #include <set>
 

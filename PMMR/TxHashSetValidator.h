@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/BlockHeader.h>
-#include <Core/BlockSums.h>
+#include <Core/Models/BlockHeader.h>
+#include <Core/Models/BlockSums.h>
 
 // Forward Declarations
 class HashFile;

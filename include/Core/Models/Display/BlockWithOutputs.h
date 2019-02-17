@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Models/Display/BlockIdentifier.h>
-#include <Core/OutputDisplayInfo.h>
+#include <Core/Models/Display/OutputDisplayInfo.h>
 
 class BlockWithOutputs
 {

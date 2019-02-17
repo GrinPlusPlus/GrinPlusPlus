@@ -109,6 +109,18 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
 }
 
+std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
+{
+	// TODO: Check horizon.
+	const std::string destination = m_config.GetDataDirectory() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
+	if (m_txHashSetManager.SaveSnapshot(blockHeader, destination))
+	{
+		return destination;
+	}
+
+	return "";
+}
+
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path)
 {
 	const bool success = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);

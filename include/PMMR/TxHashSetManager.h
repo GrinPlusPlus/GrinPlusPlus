@@ -27,7 +27,7 @@ public:
 	static void DestroyTxHashSet(ITxHashSet* pTxHashSet);
 
 	static ITxHashSet* LoadFromZip(const Config& config, IBlockDB& blockDB, const std::string& zipFilePath, const BlockHeader& header);
-	bool SaveSnapshot(const BlockHeader& header);
+	bool SaveSnapshot(const BlockHeader& header, const std::string& zipFilePath);
 
 private:
 	const Config& m_config;

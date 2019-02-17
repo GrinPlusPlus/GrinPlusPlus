@@ -47,6 +47,7 @@ public:
 	virtual EBlockChainStatus AddBlock(const FullBlock& block) = 0;
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& compactBlock) = 0;
 
+	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) = 0;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) = 0;
 	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) = 0;
 

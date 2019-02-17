@@ -309,7 +309,6 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				// TODO: Ban if not syncing
 				return ReceiveTxHashSet(connectionId, connectedPeer, txHashSetArchiveMessage);
 			}
 			default:
@@ -326,7 +325,44 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 {
 	LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::SendTxHashSet - Sending TxHashSet snapshot to %s.", connectedPeer.GetPeer().GetIPAddress().Format().c_str()));
 
-	// TODO: Implement
+	std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
+	if (pHeader == nullptr)
+	{
+		return EStatus::UNKNOWN_ERROR;
+	}
+
+	const std::string zipFilePath = m_blockChainServer.SnapshotTxHashSet(*pHeader);
+	if (zipFilePath.empty())
+	{
+		return EStatus::UNKNOWN_ERROR;
+	}
+
+	std::ifstream file(zipFilePath, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+	if (!file.is_open())
+	{
+		return EStatus::UNKNOWN_ERROR;
+	}
+
+	const uint64_t fileSize = file.tellg();
+	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
+
+	std::vector<unsigned char> buffer;
+	buffer.reserve(BUFFER_SIZE);
+	uint64_t totalBytesRead = 0;
+	while (totalBytesRead < fileSize)
+	{
+		file.read((char*)&buffer[0], BUFFER_SIZE);
+		const uint64_t bytesRead = file.gcount();
+
+		uint64_t bytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[0], bytesRead, 0);
+		//while (bytesSent < bytesRead)
+		//{
+		//	bytesSent += send(connectedPeer.GetSocket(), (char*)&buffer[bytesSent], bytesRead - bytesSent, 0);
+		//}
+
+		totalBytesRead += bytesRead;
+	}
+
 	return EStatus::SUCCESS;
 }
 

@@ -61,7 +61,7 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 	return nullptr;
 }
 
-bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader)
+bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader, const std::string& zipFilePath)
 {
 	if (m_pTxHashSet == nullptr)
 	{
@@ -112,8 +112,7 @@ bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader)
 
 		// 8. Create Zip
 		const std::vector<std::string> pathsToZip = { snapshotDir + "kernel", snapshotDir + "output", snapshotDir + "rangeproof" };
-		const std::string destination = m_config.GetDataDirectory() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
-		if (!Zipper::CreateZipFile(destination, pathsToZip))
+		if (!Zipper::CreateZipFile(zipFilePath, pathsToZip))
 		{
 			return false;
 		}

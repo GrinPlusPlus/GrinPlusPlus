@@ -35,6 +35,7 @@ public:
 	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) override final;
 	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) override final;
 
+	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) override final;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) override final;
 	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) override final;
 

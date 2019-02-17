@@ -1,5 +1,6 @@
 #pragma once
 
+#include <P2P/Common.h>
 #include <P2P/IPAddress.h>
 #include <P2P/Capabilities.h>
 #include <P2P/SocketAddress.h>
@@ -98,7 +99,7 @@ public:
 	inline EBanReason GetBanReason() const { return m_banReason; }
 	inline bool IsBanned() const
 	{
-		const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
+		const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 		return GetLastBanTime() > maxBanTime;
 	}
 

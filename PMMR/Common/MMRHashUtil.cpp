@@ -45,7 +45,8 @@ Hash MMRHashUtil::Root(const HashFile& hashFile, const uint64_t size, const Prun
 	const std::vector<uint64_t> peakIndices = MMRUtil::GetPeakIndices(size);
 	for (auto iter = peakIndices.crbegin(); iter != peakIndices.crend(); iter++)
 	{
-		Hash peakHash = GetHashAt(hashFile, *iter, pPruneList);
+		const uint64_t shiftedIndex = GetShiftedIndex(*iter, pPruneList);
+		Hash peakHash = hashFile.GetHashAt(shiftedIndex);
 		if (peakHash != ZERO_HASH)
 		{
 			if (hash == ZERO_HASH)
@@ -79,6 +80,20 @@ Hash MMRHashUtil::GetHashAt(const HashFile& hashFile, const uint64_t mmrIndex, c
 	else
 	{
 		return hashFile.GetHashAt(mmrIndex);
+	}
+}
+
+uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, const PruneList* pPruneList)
+{
+	if (pPruneList != nullptr)
+	{
+		const uint64_t shift = pPruneList->GetShift(mmrIndex);
+
+		return mmrIndex - shift;
+	}
+	else
+	{
+		return mmrIndex;
 	}
 }
 

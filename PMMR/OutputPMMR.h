@@ -5,11 +5,10 @@
 #include "Common/LeafSet.h"
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
-#include "Common/DataFile.h"
 
+#include <Core/DataFile.h>
 #include <Core/OutputIdentifier.h>
 #include <Database/BlockDB.h>
-#include <Config/Config.h>
 #include <Hash.h>
 
 #define OUTPUT_SIZE 34
@@ -17,7 +16,7 @@
 class OutputPMMR : public MMR
 {
 public:
-	static OutputPMMR* Load(const Config& config, IBlockDB& blockDB);
+	static OutputPMMR* Load(const std::string& txHashSetDirectory, IBlockDB& blockDB);
 	~OutputPMMR();
 
 	bool Append(const OutputIdentifier& output, const uint64_t blockHeight);
@@ -32,15 +31,15 @@ public:
 	virtual bool Flush() override final;
 	virtual bool Discard() override final;
 
+	bool IsUnspent(const uint64_t mmrIndex) const;
 	std::unique_ptr<OutputIdentifier> GetOutputAt(const uint64_t mmrIndex) const;
 
 private:
-	OutputPMMR(const Config& config, IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
+	OutputPMMR(IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
 
 	Roaring DetermineLeavesToRemove(const uint64_t cutoffSize, const Roaring& rewindRmPos) const;
 	Roaring DetermineNodesToRemove(const Roaring& leavesToRemove) const;
 
-	const Config& m_config;
 	IBlockDB& m_blockDB;
 
 	HashFile* m_pHashFile;

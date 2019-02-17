@@ -10,11 +10,12 @@ class Logger
 public:
 	static Logger& GetInstance();
 
+	void StartLogger(const std::string& directory);
 	void Log(const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
 
 private:
 	Logger();
 
-	std::shared_ptr<spdlog::logger> m_logger;
+	std::shared_ptr<spdlog::logger> m_pLogger;
 };

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <Core/BlockSums.h>
+#include <Core/OutputLocation.h>
 #include <PMMR/OutputRange.h>
 #include <Hash.h>
 
@@ -33,9 +34,9 @@ public:
 
 
 	//
-	// Returns true if the output has not been spent.
+	// Returns true if the output at the given location has not been spent.
 	//
-	virtual bool IsUnspent(const OutputIdentifier& output) const = 0;
+	virtual bool IsUnspent(const OutputLocation& location) const = 0;
 
 	//
 	// Returns true if all inputs in the transaction are valid and unspent. Otherwise, false.
@@ -91,7 +92,6 @@ public:
 	//
 	virtual bool Discard() = 0;
 
-
-	virtual bool Snapshot(const BlockHeader& header) = 0;
+	
 	virtual bool Compact() = 0;
 };

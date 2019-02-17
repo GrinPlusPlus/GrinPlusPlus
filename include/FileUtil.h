@@ -66,9 +66,26 @@ public:
 		std::error_code ec;
 		if (std::filesystem::exists(filePath, ec))
 		{
-			return std::filesystem::remove(filePath, ec);
+			const uintmax_t removed = std::filesystem::remove_all(filePath, ec);
+
+			return removed > 0 && ec.value() == 0;
 		}
 
 		return false;
+	}
+
+	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
+	{
+		std::error_code ec;
+		std::filesystem::create_directories(destDir, ec);
+
+		if (!std::filesystem::exists(sourceDir, ec) || !std::filesystem::exists(destDir, ec))
+		{
+			return false;
+		}
+
+		std::filesystem::copy(sourceDir, destDir, std::filesystem::copy_options::recursive, ec);
+
+		return ec.value() == 0;
 	}
 };

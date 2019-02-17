@@ -7,11 +7,10 @@
 #include <Infrastructure/Logger.h>
 
 // TODO: Refactor to Use Core/Validation/KernelSumValidator.h
-bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader, const bool genesisHasReward, Commitment& outputSumOut, Commitment& kernelSumOut) const
+bool KernelSumValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader, Commitment& outputSumOut, Commitment& kernelSumOut) const
 {
 	// Calculate overage
-	const int64_t genesisReward = genesisHasReward ? 1 : 0;
-	const uint64_t overage = (genesisReward + blockHeader.GetHeight()) * Consensus::REWARD;
+	const uint64_t overage = (1 + blockHeader.GetHeight()) * Consensus::REWARD;
 
 	// Sum all outputs & overage commitments.
 	std::unique_ptr<Commitment> pUtxoSum = AddCommitments(txHashSet, overage, blockHeader.GetOutputMMRSize());

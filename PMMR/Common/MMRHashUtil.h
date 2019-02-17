@@ -17,4 +17,5 @@ public:
 
 private:
 	static Hash HashLeafWithIndex(const std::vector<unsigned char>& serializedLeaf, const uint64_t mmrIndex);
+	static uint64_t GetShiftedIndex(const uint64_t mmrIndex, const PruneList* pPruneList);
 };

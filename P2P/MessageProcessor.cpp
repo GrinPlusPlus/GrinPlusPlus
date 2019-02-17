@@ -170,14 +170,15 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case Headers:
 			{
-				async::spawn([this, rawMessage, formattedIPAddress] {
+				IBlockChainServer& blockChainServer = m_blockChainServer;
+				async::spawn([&blockChainServer, rawMessage, formattedIPAddress] {
 					ByteBuffer byteBuffer(rawMessage.GetPayload());
 					const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
 					const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
 
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
-					this->m_blockChainServer.AddBlockHeaders(blockHeaders);
+					blockChainServer.AddBlockHeaders(blockHeaders);
 					LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
 

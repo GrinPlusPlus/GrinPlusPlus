@@ -38,6 +38,7 @@ bool NodeRestServer::Start()
 	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetServer_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_serverContainer);
@@ -53,7 +54,6 @@ bool NodeRestServer::Start()
 		"post pool/push"
 		"post chain/compact"
 		"post chain/validate"
-		"get chain/outputs"
 	*/
 
 	return true;

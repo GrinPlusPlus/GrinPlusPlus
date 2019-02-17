@@ -29,7 +29,9 @@ void ChainState::Initialize(const BlockHeader& genesisHeader)
 		m_headerMMR.AddHeader(genesisHeader);
 	}
 
-	m_txHashSetManager.Open();
+	const BlockIndex* pConfirmedIndex = m_chainStore.GetConfirmedChain().GetTip();
+	const std::unique_ptr<BlockHeader> pConfirmedHeader = m_blockStore.GetBlockHeaderByHash(pConfirmedIndex->GetHash());
+	m_txHashSetManager.Open(*pConfirmedHeader);
 }
 
 void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
@@ -51,7 +53,7 @@ void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 	}
 }
 
-uint64_t ChainState::GetHeight(const EChainType chainType)
+uint64_t ChainState::GetHeight(const EChainType chainType) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
@@ -64,7 +66,7 @@ uint64_t ChainState::GetHeight(const EChainType chainType)
 	return 0;
 }
 
-uint64_t ChainState::GetTotalDifficulty(const EChainType chainType)
+uint64_t ChainState::GetTotalDifficulty(const EChainType chainType) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
@@ -77,18 +79,25 @@ uint64_t ChainState::GetTotalDifficulty(const EChainType chainType)
 	return 0;
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash)
+std::unique_ptr<BlockHeader> ChainState::GetTipBlockHeader(const EChainType chainType) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	return GetHead_Locked(chainType);
+}
+
+std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	return m_blockStore.GetBlockHeaderByHash(hash);
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType)
+std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
-	Chain& chain = m_chainStore.GetChain(chainType);
+	const Chain& chain = m_chainStore.GetChain(chainType);
 	const BlockIndex* pBlockIndex = chain.GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
@@ -117,11 +126,26 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commit
 	return std::unique_ptr<BlockHeader>(nullptr);
 }
 
-std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash)
+std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	return m_blockStore.GetBlockByHash(hash);
+}
+
+std::unique_ptr<FullBlock> ChainState::GetBlockByHeight(const uint64_t height) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetByHeight(height);
+	if (pBlockIndex != nullptr)
+	{
+		return m_blockStore.GetBlockByHash(pBlockIndex->GetHash());
+	}
+	else
+	{
+		return std::unique_ptr<FullBlock>(nullptr);
+	}
 }
 
 std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const uint64_t height, const Hash& hash) const
@@ -129,6 +153,43 @@ std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const uint64_t height, con
 	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
 
 	return m_orphanPool.GetOrphanBlock(height, hash);
+}
+
+std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t height) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_chainMutex);
+
+	ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+	if (pTxHashSet == nullptr)
+	{
+		return std::unique_ptr<BlockWithOutputs>(nullptr);
+	}
+
+	BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetByHeight(height);
+	if (pBlockIndex != nullptr)
+	{
+		std::unique_ptr<FullBlock> pBlock = m_blockStore.GetBlockByHash(pBlockIndex->GetHash());
+		if (pBlock != nullptr)
+		{
+			std::vector<OutputDisplayInfo> outputsFound;
+			outputsFound.reserve(pBlock->GetTransactionBody().GetOutputs().size());
+
+			const std::vector<TransactionOutput>& outputs = pBlock->GetTransactionBody().GetOutputs();
+			for (const TransactionOutput& output : outputs)
+			{
+				std::optional<OutputLocation> locationOpt = m_blockStore.GetBlockDB().GetOutputPosition(output.GetCommitment());
+				if (locationOpt.has_value())
+				{
+					const bool spent = !pTxHashSet->IsUnspent(locationOpt.value());
+					outputsFound.emplace_back(OutputDisplayInfo(spent, OutputIdentifier::FromOutput(output), locationOpt.value(), output.GetRangeProof()));
+				}
+			}
+
+			return std::make_unique<BlockWithOutputs>(BlockWithOutputs(BlockIdentifier::FromHeader(pBlock->GetBlockHeader()), std::move(outputsFound)));
+		}
+	}
+
+	return std::unique_ptr<BlockWithOutputs>(nullptr);
 }
 
 std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_t maxNumBlocks) const
@@ -161,7 +222,7 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 	return blocksNeeded;
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetHead_Locked(const EChainType chainType)
+std::unique_ptr<BlockHeader> ChainState::GetHead_Locked(const EChainType chainType) const
 {
 	const Hash& headHash = GetHeadHash_Locked(chainType);
 

@@ -221,13 +221,13 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pServerCo
 		rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
 
 		Json::Value outputsNode;
-		for (const OutputInfo& info : range.GetOutputs())
+		for (const OutputDisplayInfo& info : range.GetOutputs())
 		{
 			Json::Value outputNode;
 			const EOutputFeatures features = info.GetIdentifier().GetFeatures();
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
 			outputNode["commit"] = HexUtil::ConvertToHex(info.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData(), false, false);
-			outputNode["spent"] = false;
+			outputNode["spent"] = info.IsSpent();
 			outputNode["proof"] = HexUtil::ConvertToHex(info.GetRangeProof().GetProofBytes(), false, false);
 
 			Serializer proofSerializer;

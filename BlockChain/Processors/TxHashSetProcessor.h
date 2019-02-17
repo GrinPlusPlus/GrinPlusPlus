@@ -20,7 +20,7 @@ public:
 	bool ProcessTxHashSet(const Hash& blockHash, const std::string& path);
 
 private:
-	bool UpdateConfirmedChain(const BlockHeader& blockHeader);
+	bool UpdateConfirmedChain(LockedChainState& lockedState, const BlockHeader& blockHeader);
 
 	const Config& m_config;
 	IBlockChainServer& m_blockChainServer;

@@ -4,10 +4,11 @@
 #include <Core/OutputLocation.h>
 #include <Crypto/RangeProof.h>
 
-class OutputInfo
+// TODO: Move to Core/Models/Display
+class OutputDisplayInfo
 {
 public:
-	OutputInfo(const bool spent, const OutputIdentifier& identifier, const OutputLocation& location, const RangeProof& rangeProof)
+	OutputDisplayInfo(const bool spent, const OutputIdentifier& identifier, const OutputLocation& location, const RangeProof& rangeProof)
 		: m_spent(spent), m_identifier(identifier), m_location(location), m_rangeProof(rangeProof)
 	{
 

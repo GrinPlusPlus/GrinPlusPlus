@@ -7,9 +7,9 @@
 
 ChainStore::ChainStore(const Config& config, BlockIndex* pGenesisIndex)
 	: m_config(config),
-	m_confirmedChain(EChainType::CONFIRMED, pGenesisIndex),
-	m_candidateChain(EChainType::CANDIDATE, pGenesisIndex),
-	m_syncChain(EChainType::SYNC, pGenesisIndex),
+	m_confirmedChain(EChainType::CONFIRMED, config.GetChainDirectory() + "confirmed.chain", pGenesisIndex),
+	m_candidateChain(EChainType::CANDIDATE, config.GetChainDirectory() + "candidate.chain", pGenesisIndex),
+	m_syncChain(EChainType::SYNC, config.GetChainDirectory() + "sync.chain", pGenesisIndex),
 	m_loaded(false)
 {
 
@@ -24,45 +24,20 @@ bool ChainStore::Load()
 
 	m_loaded = true;
 
-	const std::string dbPath = m_config.GetChainDirectory();
-
 	bool success = true;
-	if (!ReadChain(m_syncChain, dbPath + "sync.chain"))
+	if (!m_syncChain.Load(*this))
+	{
+		success = false;
+	}
+	
+	if (!m_candidateChain.Load(*this))
 	{
 		success = false;
 	}
 
-	if (!ReadChain(m_candidateChain, dbPath + "candidate.chain"))
+	if (!m_confirmedChain.Load(*this))
 	{
 		success = false;
-	}
-
-	if (!ReadChain(m_confirmedChain, dbPath + "confirmed.chain"))
-	{
-		success = false;
-	}
-
-	return false;
-}
-
-bool ChainStore::ReadChain(Chain& chain, const std::string& path)
-{
-	std::vector<unsigned char> data;
-	if (FileUtil::ReadFile(path, data)) // TODO: Buffered read
-	{
-		BlockIndex* pPrevious = chain.GetByHeight(0);
-		uint64_t height = 1; // Start at 1 to ignore genesis hash
-		while (height * 32 < data.size())
-		{
-			const Hash hash = Hash(&data[height * 32]);
-			BlockIndex* pIndex = GetOrCreateIndex(hash, height, pPrevious);
-			chain.AddBlock(pIndex);
-
-			pPrevious = pIndex;
-			++height;
-		}
-
-		return true;
 	}
 
 	return false;
@@ -70,55 +45,7 @@ bool ChainStore::ReadChain(Chain& chain, const std::string& path)
 
 bool ChainStore::Flush()
 {
-	// Open file for writing
-	const std::string path = m_config.GetChainDirectory();
-
-	bool success = true;
-	if (!WriteChain(m_syncChain, path + "sync.chain"))
-	{
-		success = false;
-	}
-
-	if (!WriteChain(m_candidateChain, path + "candidate.chain"))
-	{
-		success = false;
-	}
-
-	if (!WriteChain(m_confirmedChain, path + "confirmed.chain"))
-	{
-		success = false;
-	}
-
-	return success;
-}
-
-// TODO: Use mem-mapped file
-bool ChainStore::WriteChain(Chain& chain, const std::string& path)
-{
-	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::ate);
-	if (!file.is_open())
-	{
-		return false;
-	}
-
-	bool success = false;
-
-	// For each block, write hash to file
-	const uint64_t height = chain.GetTip()->GetHeight();
-	for (uint64_t i = 0; i <= height; i++)
-	{
-		BlockIndex* pIndex = chain.GetByHeight(i);
-		if (pIndex == nullptr)
-		{
-			break;
-		}
-
-		file.write((const char*)&pIndex->GetHash().GetData()[0], 32); // TODO: Use a buffered write.
-	}
-
-	// Close file
-	file.close();
-	return success;
+	return m_syncChain.Flush() && m_candidateChain.Flush() && m_confirmedChain.Flush();
 }
 
 BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)
@@ -207,6 +134,24 @@ bool ChainStore::AddBlock(const EChainType source, const EChainType destination,
 }
 
 Chain& ChainStore::GetChain(const EChainType chainType)
+{
+	if (chainType == EChainType::CONFIRMED)
+	{
+		return m_confirmedChain;
+	}
+	else if (chainType == EChainType::CANDIDATE)
+	{
+		return m_candidateChain;
+	}
+	else if (chainType == EChainType::SYNC)
+	{
+		return m_syncChain;
+	}
+
+	throw std::exception();
+}
+
+const Chain& ChainStore::GetChain(const EChainType chainType) const
 {
 	if (chainType == EChainType::CONFIRMED)
 	{

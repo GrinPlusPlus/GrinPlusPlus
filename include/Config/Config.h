@@ -21,9 +21,11 @@ public:
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "rangeproof/");
 		std::filesystem::create_directories(m_dataPath + m_chainPath);
 		std::filesystem::create_directories(m_dataPath + m_databasePath);
+		std::filesystem::create_directories(m_dataPath + m_logDirectory);
 	}
 
 	inline const std::string& GetDataDirectory() const { return m_dataPath; }
+	inline const std::string GetLogDirectory() const { return m_dataPath + m_logDirectory; }
 	inline const std::string GetChainDirectory() const { return m_dataPath + m_chainPath; }
 	inline const std::string GetDatabaseDirectory() const { return m_dataPath + m_databasePath; }
 	inline const std::string GetTxHashSetDirectory() const { return m_dataPath + m_txHashSetPath; }
@@ -37,6 +39,7 @@ public:
 private:
 	std::string m_txHashSetPath{ "TXHASHSET/" };
 	std::string m_chainPath{ "CHAIN/" };
+	std::string m_logDirectory{ "LOGS/" };
 	std::string m_databasePath{ "DB/" };
 	std::string m_dataPath;
 	EClientMode m_clientMode;

@@ -5,9 +5,8 @@
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-KernelMMR::KernelMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile)
-	: m_config(config),
-	m_pHashFile(pHashFile),
+KernelMMR::KernelMMR(HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile)
+	: m_pHashFile(pHashFile),
 	m_leafSet(std::move(leafSet)),
 	m_pDataFile(pDataFile)
 {
@@ -23,23 +22,23 @@ KernelMMR::~KernelMMR()
 	m_pDataFile = nullptr;
 }
 
-KernelMMR* KernelMMR::Load(const Config& config)
+KernelMMR* KernelMMR::Load(const std::string& txHashSetDirectory)
 {
-	HashFile* pHashFile = new HashFile(config.GetTxHashSetDirectory() + "kernel/pmmr_hash.bin");
+	HashFile* pHashFile = new HashFile(txHashSetDirectory + "kernel/pmmr_hash.bin");
 	pHashFile->Load();
 
-	LeafSet leafSet(config.GetTxHashSetDirectory() + "kernel/pmmr_leaf.bin");
+	LeafSet leafSet(txHashSetDirectory + "kernel/pmmr_leaf.bin");
 	leafSet.Load();
 
-	DataFile<KERNEL_SIZE>* pDataFile = new DataFile<KERNEL_SIZE>(config.GetTxHashSetDirectory() + "kernel/pmmr_data.bin");
+	DataFile<KERNEL_SIZE>* pDataFile = new DataFile<KERNEL_SIZE>(txHashSetDirectory + "kernel/pmmr_data.bin");
 	pDataFile->Load();
 
-	return new KernelMMR(config, pHashFile, std::move(leafSet), pDataFile);
+	return new KernelMMR(pHashFile, std::move(leafSet), pDataFile);
 }
 
-Hash KernelMMR::Root(const uint64_t mmrIndex) const
+Hash KernelMMR::Root(const uint64_t size) const
 {
-	return MMRHashUtil::Root(*m_pHashFile, mmrIndex, nullptr);
+	return MMRHashUtil::Root(*m_pHashFile, size, nullptr);
 }
 
 std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrIndex) const

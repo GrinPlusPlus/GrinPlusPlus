@@ -99,6 +99,7 @@ EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Locke
 
 	lockedState.m_txHashSetManager.GetTxHashSet()->Commit();
 	lockedState.m_chainStore.AddBlock(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
+	lockedState.m_chainStore.Flush();
 
 	return EBlockChainStatus::SUCCESS;
 }

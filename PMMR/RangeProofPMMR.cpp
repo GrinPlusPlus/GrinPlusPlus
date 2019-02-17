@@ -5,9 +5,8 @@
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-RangeProofPMMR::RangeProofPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile)
-	: m_config(config),
-	m_pHashFile(pHashFile),
+RangeProofPMMR::RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile)
+	: m_pHashFile(pHashFile),
 	m_leafSet(std::move(leafSet)),
 	m_pruneList(std::move(pruneList)),
 	m_pDataFile(pDataFile)
@@ -24,20 +23,20 @@ RangeProofPMMR::~RangeProofPMMR()
 	m_pDataFile = nullptr;
 }
 
-RangeProofPMMR* RangeProofPMMR::Load(const Config& config)
+RangeProofPMMR* RangeProofPMMR::Load(const std::string& txHashSetDirectory)
 {
-	HashFile* pHashFile = new HashFile(config.GetTxHashSetDirectory() + "rangeproof/pmmr_hash.bin");
+	HashFile* pHashFile = new HashFile(txHashSetDirectory + "rangeproof/pmmr_hash.bin");
 	pHashFile->Load();
 
-	LeafSet leafSet(config.GetTxHashSetDirectory() + "rangeproof/pmmr_leaf.bin");
+	LeafSet leafSet(txHashSetDirectory + "rangeproof/pmmr_leaf.bin");
 	leafSet.Load();
 
-	PruneList pruneList(std::move(PruneList::Load(config.GetTxHashSetDirectory() + "rangeproof/pmmr_prun.bin")));
+	PruneList pruneList(std::move(PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin")));
 
-	DataFile<RANGE_PROOF_SIZE>* pDataFile = new DataFile<RANGE_PROOF_SIZE>(config.GetTxHashSetDirectory() + "rangeproof/pmmr_data.bin");
+	DataFile<RANGE_PROOF_SIZE>* pDataFile = new DataFile<RANGE_PROOF_SIZE>(txHashSetDirectory + "rangeproof/pmmr_data.bin");
 	pDataFile->Load();
 
-	return new RangeProofPMMR(config, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+	return new RangeProofPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
 bool RangeProofPMMR::Append(const RangeProof& rangeProof)

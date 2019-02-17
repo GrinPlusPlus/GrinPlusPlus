@@ -5,9 +5,8 @@
 #include <StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-OutputPMMR::OutputPMMR(const Config& config, IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)
-	: m_config(config),
-	m_blockDB(blockDB),
+OutputPMMR::OutputPMMR(IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)
+	: m_blockDB(blockDB),
 	m_pHashFile(pHashFile),
 	m_leafSet(std::move(leafSet)),
 	m_pruneList(std::move(pruneList)),
@@ -25,20 +24,20 @@ OutputPMMR::~OutputPMMR()
 	m_pDataFile = nullptr;
 }
 
-OutputPMMR* OutputPMMR::Load(const Config& config, IBlockDB& blockDB)
+OutputPMMR* OutputPMMR::Load(const std::string& txHashSetDirectory, IBlockDB& blockDB)
 {
-	HashFile* pHashFile = new HashFile(config.GetTxHashSetDirectory() + "output/pmmr_hash.bin");
+	HashFile* pHashFile = new HashFile(txHashSetDirectory + "output/pmmr_hash.bin");
 	pHashFile->Load();
 
-	LeafSet leafSet(config.GetTxHashSetDirectory() + "output/pmmr_leaf.bin");
+	LeafSet leafSet(txHashSetDirectory + "output/pmmr_leaf.bin");
 	leafSet.Load();
 
-	PruneList pruneList(PruneList::Load(config.GetTxHashSetDirectory() + "output/pmmr_prun.bin"));
+	PruneList pruneList(PruneList::Load(txHashSetDirectory + "output/pmmr_prun.bin"));
 
-	DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(config.GetTxHashSetDirectory() + "output/pmmr_data.bin");
+	DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(txHashSetDirectory + "output/pmmr_data.bin");
 	pDataFile->Load();
 
-	return new OutputPMMR(config, blockDB, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+	return new OutputPMMR(blockDB, pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
 }
 
 bool OutputPMMR::Append(const OutputIdentifier& output, const uint64_t blockHeight)
@@ -109,24 +108,31 @@ std::vector<Hash> OutputPMMR::GetLastLeafHashes(const uint64_t numHashes) const
 	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, &m_pruneList, numHashes);
 }
 
-std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrIndex) const
+bool OutputPMMR::IsUnspent(const uint64_t mmrIndex) const
 {
 	if (MMRUtil::IsLeaf(mmrIndex))
 	{
-		if (m_leafSet.Contains(mmrIndex))
+		return m_leafSet.Contains(mmrIndex);
+	}
+
+	return false;
+}
+
+std::unique_ptr<OutputIdentifier> OutputPMMR::GetOutputAt(const uint64_t mmrIndex) const
+{
+	if (IsUnspent(mmrIndex))
+	{
+		const uint64_t shift = m_pruneList.GetLeafShift(mmrIndex);
+		const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
+		const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
+
+		std::vector<unsigned char> data;
+		m_pDataFile->GetDataAt(shiftedIndex, data);
+
+		if (data.size() == OUTPUT_SIZE)
 		{
-			const uint64_t shift = m_pruneList.GetLeafShift(mmrIndex);
-			const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
-			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
-
-			std::vector<unsigned char> data;
-			m_pDataFile->GetDataAt(shiftedIndex, data);
-
-			if (data.size() == OUTPUT_SIZE)
-			{
-				ByteBuffer byteBuffer(data);
-				return std::make_unique<OutputIdentifier>(OutputIdentifier::Deserialize(byteBuffer));
-			}
+			ByteBuffer byteBuffer(data);
+			return std::make_unique<OutputIdentifier>(OutputIdentifier::Deserialize(byteBuffer));
 		}
 	}
 

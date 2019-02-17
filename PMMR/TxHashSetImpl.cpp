@@ -8,6 +8,7 @@
 #include <BlockChainServer.h>
 #include <Database/BlockDb.h>
 #include <Infrastructure/Logger.h>
+#include <async++.h>
 
 TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader)
 	: m_blockDB(blockDB), m_pKernelMMR(pKernelMMR), m_pOutputPMMR(pOutputPMMR), m_pRangeProofPMMR(pRangeProofPMMR), m_blockHeader(blockHeader), m_blockHeaderBackup(blockHeader)
@@ -17,36 +18,24 @@ TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutp
 
 TxHashSet::~TxHashSet()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
 	delete m_pKernelMMR;
 	delete m_pOutputPMMR;
 	delete m_pRangeProofPMMR;
 }
 
-bool TxHashSet::IsUnspent(const OutputIdentifier& output) const
+bool TxHashSet::IsUnspent(const OutputLocation& location) const
 {
-	const std::optional<OutputLocation> outputLocationOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
-	if (outputLocationOpt.has_value())
-	{
-		// TODO: I believe this should call GetOutputAt. GetHashAt returns spent hashes, as long as they aren't pruned.
-		std::unique_ptr<Hash> pMMRHash = m_pOutputPMMR->GetHashAt(outputLocationOpt.value().GetMMRIndex());
-		if (pMMRHash != nullptr)
-		{
-			Serializer serializer;
-			output.Serialize(serializer);
-			const Hash outputHash = Crypto::Blake2b(serializer.GetBytes());
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
-			if (outputHash == *pMMRHash)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return m_pOutputPMMR->IsUnspent(location.GetMMRIndex());
 }
 
 bool TxHashSet::IsValid(const Transaction& transaction) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
@@ -69,6 +58,8 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 
 std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer)
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
 	std::unique_ptr<BlockSums> pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header);
 	if (pBlockSums != nullptr)
@@ -81,6 +72,8 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 bool TxHashSet::ApplyBlock(const FullBlock& block)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
 	// Prune inputs
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
@@ -133,6 +126,8 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 
 bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	if (m_pKernelMMR->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
 	{
 		LoggerAPI::LogError("TxHashSet::ValidateRoots - Kernel root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
@@ -156,6 +151,8 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 
 bool TxHashSet::SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex)
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	const uint64_t size = blockHeader.GetOutputMMRSize();
 	for (uint64_t mmrIndex = firstOutputIndex; mmrIndex < size; mmrIndex++)
 	{
@@ -171,25 +168,33 @@ bool TxHashSet::SaveOutputPositions(const BlockHeader& blockHeader, const uint64
 
 std::vector<Hash> TxHashSet::GetLastKernelHashes(const uint64_t numberOfKernels) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	return m_pKernelMMR->GetLastLeafHashes(numberOfKernels);
 }
 
 std::vector<Hash> TxHashSet::GetLastOutputHashes(const uint64_t numberOfOutputs) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	return m_pOutputPMMR->GetLastLeafHashes(numberOfOutputs);
 }
 
 std::vector<Hash> TxHashSet::GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	return m_pRangeProofPMMR->GetLastLeafHashes(numberOfRangeProofs);
 }
 
 OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
 	const uint64_t outputSize = m_pOutputPMMR->GetSize();
 	
 	uint64_t leafIndex = startIndex;
-	std::vector<OutputInfo> outputs;
+	std::vector<OutputDisplayInfo> outputs;
 	outputs.reserve(maxNumOutputs);
 	while (outputs.size() < maxNumOutputs)
 	{
@@ -206,10 +211,10 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const ui
 			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
 			if (pRangeProof == nullptr || !locationOpt.has_value() || locationOpt.value().GetMMRIndex() != mmrIndex)
 			{
-				return OutputRange(0, 0, std::vector<OutputInfo>());
+				return OutputRange(0, 0, std::vector<OutputDisplayInfo>());
 			}
 
-			outputs.emplace_back(OutputInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
+			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
 		}
 	}
 
@@ -219,13 +224,10 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const ui
 	return OutputRange(maxLeafIndex, lastRetrievedIndex, std::move(outputs));
 }
 
-bool TxHashSet::Snapshot(const BlockHeader& header)
-{
-	return true;
-}
-
 bool TxHashSet::Rewind(const BlockHeader& header)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
 	// TODO: Use block input bitmaps
 	Roaring leavesToAdd;
 	while (m_blockHeader != header)
@@ -255,15 +257,25 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 
 bool TxHashSet::Commit()
 {
-	m_pKernelMMR->Flush();
-	m_pOutputPMMR->Flush();
-	m_pRangeProofPMMR->Flush();
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
+	async::task<bool> kernelTask = async::spawn([this] { return this->m_pKernelMMR->Flush(); });
+	async::task<bool> outputTask = async::spawn([this] { return this->m_pOutputPMMR->Flush(); });
+	async::task<bool> rangeProofTask = async::spawn([this] { return this->m_pRangeProofPMMR->Flush(); });
+
+	const bool flushed = async::when_all(kernelTask, outputTask, rangeProofTask).then(
+		[](std::tuple<async::task<bool>, async::task<bool>, async::task<bool>> results) -> bool {
+		return std::get<0>(results).get() && std::get<1>(results).get() && std::get<2>(results).get();
+	}).get();
+
 	m_blockHeaderBackup = m_blockHeader;
 	return true;
 }
 
 bool TxHashSet::Discard()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
 	m_pKernelMMR->Discard();
 	m_pOutputPMMR->Discard();
 	m_pRangeProofPMMR->Discard();
@@ -273,5 +285,9 @@ bool TxHashSet::Discard()
 
 bool TxHashSet::Compact()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
+
+	// TODO: Implement
+
 	return true;
 }

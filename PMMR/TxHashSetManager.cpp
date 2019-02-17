@@ -2,6 +2,7 @@
 
 #include "TxHashSetImpl.h"
 #include "Zip/TxHashSetZip.h"
+#include "Zip/Zipper.h"
 
 #include <FileUtil.h>
 #include <StringUtil.h>
@@ -13,15 +14,15 @@ TxHashSetManager::TxHashSetManager(const Config& config, IBlockDB& blockDB)
 
 }
 
-ITxHashSet* TxHashSetManager::Open()
+ITxHashSet* TxHashSetManager::Open(const BlockHeader& confirmedTip)
 {
 	Close();
 
-	KernelMMR* pKernelMMR = KernelMMR::Load(m_config);
-	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config, m_blockDB);
-	RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(m_config);
+	KernelMMR* pKernelMMR = KernelMMR::Load(m_config.GetTxHashSetDirectory());
+	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetDirectory(), m_blockDB);
+	RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetDirectory());
 
-	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, m_config.GetEnvironment().GetGenesisBlock().GetBlockHeader());
+	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, confirmedTip);
 
 	return m_pTxHashSet;
 }
@@ -42,15 +43,15 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 		LoggerAPI::LogInfo(StringUtil::Format("TxHashSetAPI::LoadFromZip - %s extracted successfully.", zipFilePath.c_str()));
 		FileUtil::RemoveFile(zipFilePath);
 
-		KernelMMR* pKernelMMR = KernelMMR::Load(config);
+		KernelMMR* pKernelMMR = KernelMMR::Load(config.GetTxHashSetDirectory());
 		pKernelMMR->Rewind(blockHeader.GetKernelMMRSize());
 		pKernelMMR->Flush();
 
-		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config, blockDB);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory(), blockDB);
 		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pOutputPMMR->Flush();
 
-		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config);
+		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config.GetTxHashSetDirectory());
 		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pRangeProofPMMR->Flush();
 
@@ -58,6 +59,70 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 	}
 
 	return nullptr;
+}
+
+bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader)
+{
+	if (m_pTxHashSet == nullptr)
+	{
+		return false;
+	}
+
+	// 1. Lock TxHashSet
+	TxHashSet* pTxHashSet = (TxHashSet*)m_pTxHashSet;
+	pTxHashSet->ReadLock();
+
+	// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
+	const std::string txHashSetDirectory = m_config.GetTxHashSetDirectory();
+
+	const std::string snapshotDir = m_config.GetDataDirectory() + "Snapshots/" + blockHeader.FormatHash() + "/";
+	if (!FileUtil::CopyDirectory(txHashSetDirectory, snapshotDir))
+	{
+		pTxHashSet->Unlock();
+		return false;
+	}
+
+	const BlockHeader flushedBlockHeader = pTxHashSet->GetFlushedBlockHeader();
+
+	// 3. Unlock TxHashSet
+	pTxHashSet->Unlock();
+
+	{
+		// 4. Load Snapshot TxHashSet
+		KernelMMR* pKernelMMR = KernelMMR::Load(snapshotDir);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(snapshotDir, m_blockDB);
+		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
+		TxHashSet snapshotTxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, flushedBlockHeader);
+
+		// 5. Rewind Snapshot TxHashSet
+		if (!snapshotTxHashSet.Rewind(blockHeader))
+		{
+			return false;
+		}
+
+		// 6. Flush Snapshot TxHashSet
+		if (!snapshotTxHashSet.Commit())
+		{
+			return false;
+		}
+
+		// 7. Rename pmmr_leaf files
+		FileUtil::RenameFile(snapshotDir + "output/pmmr_leaf.bin", snapshotDir + "output/pmmr_leaf.bin." + blockHeader.FormatHash());
+		FileUtil::RenameFile(snapshotDir + "rangeproof/pmmr_leaf.bin", snapshotDir + "rangeproof/pmmr_leaf.bin." + blockHeader.FormatHash());
+
+		// 8. Create Zip
+		const std::vector<std::string> pathsToZip = { snapshotDir + "kernel", snapshotDir + "output", snapshotDir + "rangeproof" };
+		const std::string destination = m_config.GetDataDirectory() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
+		if (!Zipper::CreateZipFile(destination, pathsToZip))
+		{
+			return false;
+		}
+	}
+
+	// 9. Delete Snapshots/Hash folder
+	FileUtil::RemoveFile(snapshotDir);
+
+	return true;
 }
 
 ITxHashSet* TxHashSetManager::GetTxHashSet()
@@ -78,11 +143,11 @@ void TxHashSetManager::SetTxHashSet(ITxHashSet* pTxHashSet)
 
 void TxHashSetManager::DestroyTxHashSet(ITxHashSet* pTxHashSet)
 {
-	delete pTxHashSet;
+	delete (TxHashSet*)pTxHashSet;
 }
 
 void TxHashSetManager::Close()
 {
-	delete m_pTxHashSet;
+	delete (TxHashSet*)m_pTxHashSet;
 	m_pTxHashSet = nullptr;
 }

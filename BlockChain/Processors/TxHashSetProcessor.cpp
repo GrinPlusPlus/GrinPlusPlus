@@ -68,10 +68,10 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	lockedState.m_txHashSetManager.SetTxHashSet(pTxHashSet);
 
 	// 6. Update confirmed chain
-	if (!UpdateConfirmedChain(*pHeader))
+	if (!UpdateConfirmedChain(lockedState, *pHeader))
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Failed to update confirmed chain for %s.", path.c_str()));
-		m_chainState.GetLocked().m_txHashSetManager.Close();
+		lockedState.m_txHashSetManager.Close();
 		return false;
 	}
 
@@ -80,9 +80,8 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	return true;
 }
 
-bool TxHashSetProcessor::UpdateConfirmedChain(const BlockHeader& blockHeader)
+bool TxHashSetProcessor::UpdateConfirmedChain(LockedChainState& lockedState, const BlockHeader& blockHeader)
 {
-	LockedChainState lockedState = m_chainState.GetLocked();
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
 	

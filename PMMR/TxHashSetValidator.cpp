@@ -49,7 +49,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	}
 
 	// Validate root for each MMR matches blockHeader
-	if (!ValidateRoots(txHashSet, blockHeader))
+	if (!txHashSet.ValidateRoots(blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR roots.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -63,11 +63,9 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	}
 
 	// Validate kernel sums
-	const std::unique_ptr<BlockHeader> pGenesisHeader = m_blockChainServer.GetBlockHeaderByHeight(0, EChainType::CANDIDATE);
-	const bool genesisHasReward = pGenesisHeader->GetKernelMMRSize() > 0;
 	Commitment outputSum(CBigInteger<33>::ValueOf(0));
 	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
-	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, genesisHasReward, outputSum, kernelSum))
+	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, outputSum, kernelSum))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel sums.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -146,30 +144,6 @@ bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
 
 	return true;
 }
-
-bool TxHashSetValidator::ValidateRoots(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
-{
-	if (txHashSet.GetKernelMMR()->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
-	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Kernel root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
-		return false;
-	}
-
-	if (txHashSet.GetOutputPMMR()->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetOutputRoot())
-	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - Output root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
-		return false;
-	}
-
-	if (txHashSet.GetRangeProofPMMR()->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetRangeProofRoot())
-	{
-		LoggerAPI::LogError("TxHashSetValidator::ValidateRoots - RangeProof root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
-		return false;
-	}
-
-	return true;
-}
-
 bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader) const
 {
 	for (uint64_t height = 0; height <= blockHeader.GetHeight(); height++)
@@ -180,7 +154,7 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 			LoggerAPI::LogError("TxHashSetValidator::ValidateKernelHistory - No header found at height " + std::to_string(height));
 			return false;
 		}
-
+		
 		if (kernelMMR.Root(pHeader->GetKernelMMRSize()) != pHeader->GetKernelRoot())
 		{
 			LoggerAPI::LogError("TxHashSetValidator::ValidateKernelHistory - Kernel root not matching for header at height " + std::to_string(height));

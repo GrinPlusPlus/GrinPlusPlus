@@ -10,6 +10,7 @@
 #include <BlockChainStatus.h>
 #include <TxPool/PoolType.h>
 #include <P2P/SyncStatus.h>
+#include <Core/Models/Display/BlockWithOutputs.h>
 #include "Core/ChainType.h"
 #include "Core/BlockHeader.h"
 #include "Core/FullBlock.h"
@@ -103,6 +104,8 @@ public:
 	// This will be null if the output commitment is not found or the block doesn't exist in the DB.
 	//
 	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& outputCommitment) const = 0;
+
+	virtual std::vector<BlockWithOutputs> GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const = 0;
 
 	//
 	// Returns the hashes of blocks(indexed by height) that are part of the candidate (header) chain, but whose bodies haven't been downloaded yet.

@@ -12,7 +12,7 @@ namespace P2P
 	static const uint32_t PROTOCOL_VERSION = 1;
 
 	// Grin's user agent with current version
-	static const std::string USER_AGENT = "MW/C++ 0.0.1";
+	static const std::string USER_AGENT = "GRIN++ 0.0.1";
 
 	// Size in bytes of a message header
 	static const uint64_t HEADER_LENGTH = 11;
@@ -34,10 +34,4 @@ namespace P2P
 
 	// How long a banned peer should be banned for
 	static const int64_t BAN_WINDOW = 10800;
-
-	// The max peer count
-	static const uint8_t PEER_MAX_COUNT = 25;
-
-	// min preferred peer count
-	static const uint8_t PEER_MIN_PREFERRED_COUNT = 8;
 }

@@ -11,7 +11,7 @@
 class KernelSumValidator
 {
 public:
-	bool ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader, const bool genesisHasReward, Commitment& outputSumOut, Commitment& kernelSumOut) const;
+	bool ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader, Commitment& outputSumOut, Commitment& kernelSumOut) const;
 
 private:
 	std::unique_ptr<Commitment> AddCommitments(TxHashSet& txHashSet, const uint64_t overage, const uint64_t outputMMRSize) const;

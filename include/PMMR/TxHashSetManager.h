@@ -17,7 +17,7 @@ public:
 	TxHashSetManager(const Config& config, IBlockDB& blockDB);
 	~TxHashSetManager() = default;
 
-	ITxHashSet* Open();
+	ITxHashSet* Open(const BlockHeader& confirmedTip);
 	void Flush();
 	void Close();
 
@@ -27,6 +27,7 @@ public:
 	static void DestroyTxHashSet(ITxHashSet* pTxHashSet);
 
 	static ITxHashSet* LoadFromZip(const Config& config, IBlockDB& blockDB, const std::string& zipFilePath, const BlockHeader& header);
+	bool SaveSnapshot(const BlockHeader& header);
 
 private:
 	const Config& m_config;

@@ -13,8 +13,6 @@ public:
 
 	bool Flush();
 
-	bool Discard();
-
 	// Adds the node to the prune list.
 	// Compacts if pruning the node means a parent can get pruned as well.
 	void Add(const uint64_t mmrIndex);

@@ -13,6 +13,7 @@ public:
 	bool Flush();
 
 	Chain& GetChain(const EChainType chainType);
+	const Chain& GetChain(const EChainType chainType) const;
 	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex);
 	BlockIndex* FindCommonIndex(const EChainType chainType1, const EChainType chainType2);
 
@@ -28,9 +29,6 @@ public:
 	inline Chain& GetSyncChain() { return m_syncChain; }
 
 private:
-	bool ReadChain(Chain& chain, const std::string& path);
-	bool WriteChain(Chain& chain, const std::string& path);
-
 	bool m_loaded;
 	Chain m_confirmedChain;
 	Chain m_candidateChain;

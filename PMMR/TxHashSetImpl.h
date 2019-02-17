@@ -6,6 +6,7 @@
 
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
+#include <shared_mutex>
 #include <string>
 
 // TODO: Implement an "UpdateContext" object that can be committed to.
@@ -15,7 +16,12 @@ public:
 	TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader);
 	~TxHashSet();
 
-	virtual bool IsUnspent(const OutputIdentifier& output) const override final;
+	inline void ReadLock() { m_txHashSetMutex.lock_shared(); }
+	inline void Unlock() { m_txHashSetMutex.unlock_shared(); }
+	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
+	inline const BlockHeader& GetFlushedBlockHeader() const { return m_blockHeaderBackup; }
+
+	virtual bool IsUnspent(const OutputLocation& location) const override final;
 	virtual bool IsValid(const Transaction& transaction) const override final;
 	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer) override final;
 	virtual bool ApplyBlock(const FullBlock& block) override final;
@@ -27,7 +33,6 @@ public:
 	virtual std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const override final;
 	virtual OutputRange GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
 
-	virtual bool Snapshot(const BlockHeader& header) override final;
 	virtual bool Rewind(const BlockHeader& header) override final;
 	virtual bool Commit() override final;
 	virtual bool Discard() override final;
@@ -46,4 +51,6 @@ private:
 
 	BlockHeader m_blockHeader;
 	BlockHeader m_blockHeaderBackup;
+
+	mutable std::shared_mutex m_txHashSetMutex;
 };

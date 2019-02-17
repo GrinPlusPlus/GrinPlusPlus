@@ -5,16 +5,17 @@
 #include "Common/LeafSet.h"
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
-#include "Common/DataFile.h"
 
-#include <Config/Config.h>
+#include <Hash.h>
+#include <Core/DataFile.h>
+#include <Crypto/RangeProof.h>
 
 #define RANGE_PROOF_SIZE 683
 
 class RangeProofPMMR : public MMR
 {
 public:
-	static RangeProofPMMR* Load(const Config& config);
+	static RangeProofPMMR* Load(const std::string& txHashSetDirectory);
 	~RangeProofPMMR();
 
 	bool Append(const RangeProof& rangeProof);
@@ -31,9 +32,8 @@ public:
 	virtual bool Discard() override final;
 
 private:
-	RangeProofPMMR(const Config& config, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile);
+	RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile);
 
-	const Config& m_config;
 	HashFile* m_pHashFile;
 	LeafSet m_leafSet;
 	PruneList m_pruneList;

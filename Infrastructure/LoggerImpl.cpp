@@ -13,21 +13,23 @@ Logger& Logger::GetInstance()
 
 Logger::Logger()
 {
-	const std::filesystem::path currentPath = std::filesystem::current_path();
+}
 
-	const std::string logPath = currentPath.string() + "/DATA/MimbleWimble.log"; // TODO: Load from Config
+void Logger::StartLogger(const std::string& directory)
+{
+	const std::string logPath = directory + "GrinPlusPlus.log";
 
 	auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
-	m_logger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(2));
-	if (m_logger != nullptr)
+	m_pLogger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(2));
+	if (m_pLogger != nullptr)
 	{
-		m_logger->set_level(spdlog::level::level_enum::debug); // TODO: Load from config.
+		m_pLogger->set_level(spdlog::level::level_enum::debug); // TODO: Load from config.
 	}
 }
 
 void Logger::Log(const spdlog::level::level_enum logLevel, const std::string& eventText)
 {
-	if (m_logger != nullptr)
+	if (m_pLogger != nullptr)
 	{
 		std::string eventTextClean = eventText;
 		while (eventTextClean.find("\n") != std::string::npos)
@@ -41,20 +43,25 @@ void Logger::Log(const spdlog::level::level_enum logLevel, const std::string& ev
 			eventTextClean = threadName + " => " + eventTextClean;
 		}
 
-		m_logger->log(logLevel, eventTextClean);
+		m_pLogger->log(logLevel, eventTextClean);
 	}
 }
 
 void Logger::Flush()
 {
-	if (m_logger != nullptr)
+	if (m_pLogger != nullptr)
 	{
-		m_logger->flush();
+		m_pLogger->flush();
 	}
 }
 
 namespace LoggerAPI
 {
+	LOGGER_API void Initialize(const std::string& directory)
+	{
+		Logger::GetInstance().StartLogger(directory);
+	}
+
 	LOGGER_API void LogTrace(const std::string& message)
 	{
 		Logger::GetInstance().Log(spdlog::level::level_enum::trace, message);

@@ -9,6 +9,7 @@
 #include <P2P/SyncStatus.h>
 #include <Core/BlockHeader.h>
 #include <Core/ChainType.h>
+#include <Core/Models/Display/BlockWithOutputs.h>
 #include <HeaderMMR.h>
 #include <Hash.h>
 #include <shared_mutex>
@@ -26,14 +27,19 @@ public:
 	void Initialize(const BlockHeader& genesisHeader);
 
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
-	uint64_t GetHeight(const EChainType chainType);
-	uint64_t GetTotalDifficulty(const EChainType chainType);
+	uint64_t GetHeight(const EChainType chainType) const;
+	uint64_t GetTotalDifficulty(const EChainType chainType) const;
 
-	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash);
-	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType);
+	std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const;
+	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash) const;
+	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const;
 	std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const;
-	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash);
+
+	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash) const;
+	std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const;
 	std::unique_ptr<FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
+
+	std::unique_ptr<BlockWithOutputs> GetBlockWithOutputs(const uint64_t height) const;
 
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
@@ -41,7 +47,7 @@ public:
 	void FlushAll();
 
 private:
-	std::unique_ptr<BlockHeader> GetHead_Locked(const EChainType chainType);
+	std::unique_ptr<BlockHeader> GetHead_Locked(const EChainType chainType) const;
 	const Hash& GetHeadHash_Locked(const EChainType chainType) const;
 
 	mutable std::shared_mutex m_chainMutex;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Transaction.h>
+#include <Core/Models/Transaction.h>
 #include <Wallet/ParticipantData.h>
 #include <uuid.h>
 

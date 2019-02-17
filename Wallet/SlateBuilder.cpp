@@ -1,4 +1,4 @@
-#include "Sender.h"
+#include "SlateBuilder.h"
 #include "WalletUtil.h"
 #include "WalletCoin.h"
 
@@ -9,7 +9,7 @@
 #include <Common/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 
-Sender::Sender(const INodeClient& nodeClient)
+SlateBuilder::SlateBuilder(const INodeClient& nodeClient)
 	: m_nodeClient(nodeClient)
 {
 
@@ -35,7 +35,7 @@ Sender::Sender(const INodeClient& nodeClient)
 	14: Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
 		**fee, amount, lock_height, kSG, xSG, oS**
 */
-std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
+std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
 {
 	// Create Transaction UUID (for reference and maintaining correct state).
 	uuids::uuid slateId = uuids::uuid_system_generator()();
@@ -77,14 +77,14 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const CBigInteger<
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slateId, SlateContext(std::move(secretKey), std::move(secretNonce))))
 	{
-		LoggerAPI::LogError("Sender::BuildSendSlate - Failed to save context for slate " + uuids::to_string(slateId));
+		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to save context for slate " + uuids::to_string(slateId));
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
 	// Lock coins
 	if (!wallet.LockCoins(inputs))
 	{
-		LoggerAPI::LogError("Sender::BuildSendSlate - Failed to lock coins.");
+		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to lock coins.");
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
@@ -94,7 +94,7 @@ std::unique_ptr<Slate> Sender::BuildSendSlate(Wallet& wallet, const CBigInteger<
 
 // TODO: Apply Strategy instead of just selecting greatest number of outputs.
 // If strategy is "ALL", spend all available coins to reduce the fee.
-std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
+std::vector<WalletCoin> SlateBuilder::SelectCoinsToSpend(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
 {
 	std::vector<WalletCoin> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
 	std::sort(availableCoins.begin(), availableCoins.end());
@@ -114,11 +114,11 @@ std::vector<WalletCoin> Sender::SelectCoinsToSpend(Wallet& wallet, const CBigInt
 	}
 
 	// Not enough coins found.
-	LoggerAPI::LogError("Sender::SelectCoinsToSpend - Not enough funds.");
+	LoggerAPI::LogError("SlateBuilder::SelectCoinsToSpend - Not enough funds.");
 	throw InsufficientFundsException();
 }
 
-std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
+std::unique_ptr<WalletCoin> SlateBuilder::CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
 {
 	uint64_t inputTotal = 0;
 	for (const WalletCoin& input : inputs)
@@ -130,7 +130,7 @@ std::unique_ptr<WalletCoin> Sender::CreateChangeOutput(Wallet& wallet, const CBi
 	return wallet.CreateBlindedOutput(masterSeed, changeAmount);
 }
 
-Transaction Sender::BuildTransaction(const std::vector<WalletCoin>& inputs, const WalletCoin& changeOutput, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight) const
+Transaction SlateBuilder::BuildTransaction(const std::vector<WalletCoin>& inputs, const WalletCoin& changeOutput, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight) const
 {
 	auto getInput = [](WalletCoin& input) -> TransactionInput { return TransactionInput(input.GetOutputData().GetOutput().GetFeatures(), Commitment(input.GetOutputData().GetOutput().GetCommitment())); };
 	std::vector<TransactionInput> transactionInputs = FunctionalUtil::map<std::vector<TransactionInput>>(inputs, getInput);

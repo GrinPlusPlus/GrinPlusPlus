@@ -20,6 +20,7 @@ public:
 	void Logoff(const SessionToken& token);
 
 	CBigInteger<32> GetSeed(const SessionToken& token) const;
+	Wallet& GetWallet(const SessionToken& token);
 
 private:
 	struct LoggedInSession

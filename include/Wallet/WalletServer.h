@@ -10,6 +10,9 @@
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/SessionToken.h>
+#include <Wallet/SelectionStrategy.h>
+#include <Wallet/SendMethod.h>
+#include <Wallet/Slate.h>
 #include <Common/Secure.h>
 
 #ifdef MW_WALLET
@@ -33,9 +36,17 @@ public:
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) = 0;
 
 	//
-	// Deletes any credentials stored in memory.
+	// Deletes the session information.
 	//
 	virtual void Logoff(const SessionToken& token) = 0;
+
+	//
+	// Sends coins to the given destination using the specified method. Returns true if successful.
+	// Exceptions thrown:
+	// * SessionTokenException - If no matching session found, or if the token is invalid.
+	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
+	//
+	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination) = 0;
 };
 
 namespace WalletAPI

@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "WalletDBImpl.h"
 
 #include <FileUtil.h>

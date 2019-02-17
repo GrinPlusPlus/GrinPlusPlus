@@ -15,6 +15,8 @@ public:
 	inline const BlindingFactor& GetBlindingFactor() const { return m_blindingFactor; }
 	inline const OutputData& GetOutputData() const { return m_outputData; }
 
+	inline void SetStatus(const EOutputStatus status) { m_outputData.SetStatus(status); }
+
 	//
 	// Operators
 	//

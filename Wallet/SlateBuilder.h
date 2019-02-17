@@ -7,12 +7,12 @@
 #include <Wallet/Slate.h>
 #include <Wallet/NodeClient.h>
 #include <BlockChainServer.h>
-#include <Core/Transaction.h>
+#include <Core/Models/Transaction.h>
 
-class Sender
+class SlateBuilder
 {
 public:
-	Sender(const INodeClient& nodeClient);
+	SlateBuilder(const INodeClient& nodeClient);
 
 	// Creates a slate for sending grins from the provided wallet.
 	std::unique_ptr<Slate> BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const; // TODO: Password?

@@ -1,5 +1,4 @@
 #include "Wallet.h"
-#include "Sender.h"
 
 #include "Keychain/KeyChain.h"
 
@@ -15,18 +14,6 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
-bool Wallet::Send(const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination)
-{
-	std::unique_ptr<Slate> pSlate = Sender(m_nodeClient).BuildSendSlate(*this, masterSeed, amount, fee, message, strategy);
-	if (pSlate != nullptr)
-	{
-		// TODO: Send slate to destination using ESendMethod.
-		return true;
-	}
-
-	return false;
-}
-
 std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
 {
 	std::vector<WalletCoin> coins;
@@ -34,9 +21,15 @@ std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 	std::vector<OutputData> outputs = m_walletDB.GetOutputs(m_username);
 	for (OutputData& output : outputs)
 	{
-		// TODO: Check spent & confirmation status.
-		BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
-		coins.emplace_back(WalletCoin(std::move(blindingFactor), std::move(output)));
+		if (output.GetStatus() == EOutputStatus::UNSPENT)
+		{
+			// CONFIG: Allow configurable number of confirmations.
+			if (m_nodeClient.GetNumConfirmations(output.GetOutput().GetCommitment()) >= 10)
+			{
+				BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
+				coins.emplace_back(WalletCoin(std::move(blindingFactor), std::move(output)));
+			}
+		}
 	}
 
 	return coins;
@@ -53,7 +46,7 @@ std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const CBigInteger<32>& m
 		if (pRangeProof != nullptr)
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
-			OutputData outputData(std::move(keyChainPath), std::move(transactionOutput), amount);
+			OutputData outputData(std::move(keyChainPath), std::move(transactionOutput), amount, EOutputStatus::UNSPENT);
 
 			return std::make_unique<WalletCoin>(WalletCoin(std::move(blindingFactor), std::move(outputData)));
 		}
@@ -67,7 +60,15 @@ bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SlateContext& sl
 	return m_walletDB.SaveSlateContext(m_username, slateId, slateContext);
 }
 
-bool Wallet::LockCoins(const std::vector<WalletCoin>& coins)
+bool Wallet::LockCoins(std::vector<WalletCoin>& coins)
 {
-	return true;
+	std::vector<OutputData> outputs;
+
+	for (WalletCoin& coin : coins)
+	{
+		coin.SetStatus(EOutputStatus::LOCKED);
+		outputs.push_back(coin.GetOutputData());
+	}
+
+	return m_walletDB.AddOutputs(m_username, outputs);
 }

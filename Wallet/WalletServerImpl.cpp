@@ -1,6 +1,7 @@
 #include "WalletServerImpl.h"
 #include "Keychain/SeedEncrypter.h"
 #include "Keychain/Mnemonic.h"
+#include "SlateBuilder.h"
 
 #include <Crypto/RandomNumberGenerator.h>
 #include <VectorUtil.h>
@@ -36,6 +37,21 @@ std::unique_ptr<SessionToken> WalletServer::Login(const std::string& username, c
 void WalletServer::Logoff(const SessionToken& token)
 {
 	m_sessionManager.Logoff(token);
+}
+
+std::unique_ptr<Slate> WalletServer::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination)
+{
+	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
+	Wallet& wallet = m_sessionManager.GetWallet(token);
+
+	std::unique_ptr<Slate> pSlate = SlateBuilder(m_nodeClient).BuildSendSlate(wallet, masterSeed, amount, feeBase, message, strategy);
+	if (pSlate != nullptr)
+	{
+		// TODO: Send slate to destination using ESendMethod.
+		return pSlate;
+	}
+
+	return std::unique_ptr<Slate>(nullptr);
 }
 
 namespace WalletAPI

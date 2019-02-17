@@ -3,11 +3,13 @@ set(TARGET_NAME Wallet)
 # Wallet
 file(GLOB Wallet_SRC
 	"Wallet.cpp"
-	"Sender.cpp"
+	"SlateBuilder.cpp"
 	"SessionManager.cpp"
 	"WalletServerImpl.cpp"
 	"WalletUtil.cpp"
 )
+
+remove_definitions(-DNOMINMAX)
 
 add_subdirectory(WalletDB)
 add_subdirectory(Keychain)

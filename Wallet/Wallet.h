@@ -11,7 +11,7 @@
 #include <Wallet/SelectionStrategy.h>
 #include <Wallet/SlateContext.h>
 #include <Wallet/WalletDB/WalletDB.h>
-#include <Core/TransactionOutput.h>
+#include <Core/Models/TransactionOutput.h>
 
 class Wallet
 {
@@ -20,13 +20,11 @@ public:
 
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
-	bool Send(const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t fee, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination);
-
 	std::vector<WalletCoin> GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const;
 	std::unique_ptr<WalletCoin> CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount);
 
 	bool SaveSlateContext(const uuids::uuid& slateId, const SlateContext& slateContext);
-	bool LockCoins(const std::vector<WalletCoin>& coins);
+	bool LockCoins(std::vector<WalletCoin>& coins);
 
 private:
 	const Config& m_config;

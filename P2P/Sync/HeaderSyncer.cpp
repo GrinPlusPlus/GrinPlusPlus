@@ -3,7 +3,7 @@
 #include "../ConnectionManager.h"
 #include "../Messages/GetHeadersMessage.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 
 HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)

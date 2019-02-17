@@ -2,10 +2,10 @@
 #include "TxHashSetValidator.h"
 #include "Common/MMRUtil.h"
 
-#include <HexUtil.h>
-#include <FileUtil.h>
-#include <StringUtil.h>
-#include <BlockChainServer.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/FileUtil.h>
+#include <Common/Util/StringUtil.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Database/BlockDb.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>

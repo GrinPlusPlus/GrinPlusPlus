@@ -1,7 +1,7 @@
 #include "PruneList.h"
 #include "MMRUtil.h"
 
-#include <FileUtil.h>
+#include <Common/Util/FileUtil.h>
 
 PruneList::PruneList(const std::string& filePath, Roaring&& prunedRoots)
 	: m_filePath(filePath), m_prunedRoots(std::move(prunedRoots))

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <BigInteger.h>
-#include <BitUtil.h>
+#include <Crypto/BigInteger.h>
+#include <Common/Util/BitUtil.h>
 
 typedef CBigInteger<32> Hash;
 

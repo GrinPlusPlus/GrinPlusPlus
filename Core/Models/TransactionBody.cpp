@@ -1,6 +1,6 @@
 #include <Core/Models/TransactionBody.h>
 
-#include <Serialization/Serializer.h>
+#include <Core/Serialization/Serializer.h>
 
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)
 	: m_inputs(std::move(inputs)), m_outputs(std::move(outputs)), m_kernels(std::move(kernels))

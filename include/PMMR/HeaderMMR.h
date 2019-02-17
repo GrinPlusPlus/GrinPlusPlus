@@ -6,8 +6,8 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
-#include <Hash.h>
+#include <Common/ImportExport.h>
+#include <Crypto/Hash.h>
 #include <vector>
 
 #ifdef MW_PMMR

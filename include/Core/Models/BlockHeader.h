@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 
-#include <Hash.h>
-#include <Crypto.h>
-#include <BigInteger.h>
+#include <Crypto/Hash.h>
+#include <Crypto/Crypto.h>
+#include <Crypto/BigInteger.h>
 #include <Core/Models/ProofOfWork.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
-#include <HexUtil.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
+#include <Common/Util/HexUtil.h>
 
 class BlockHeader
 {

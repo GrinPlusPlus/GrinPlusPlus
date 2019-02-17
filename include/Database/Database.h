@@ -6,11 +6,11 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
+#include <Common/ImportExport.h>
 #include <Database/BlockDB.h>
 #include <Database/PeerDB.h>
 #include <Core/Models/BlockHeader.h>
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 
 #include <vector>
 #include <memory>

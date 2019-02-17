@@ -1,8 +1,8 @@
 #include "KernelSumValidator.h"
 #include "Common/MMRUtil.h"
 
-#include <HexUtil.h>
-#include <Crypto.h>
+#include <Common/Util/HexUtil.h>
+#include <Crypto/Crypto.h>
 #include <Consensus/Common.h>
 #include <Infrastructure/Logger.h>
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Crypto.h>
-#include <Serialization/Serializer.h>
-#include <Serialization/ByteBuffer.h>
+#include <Crypto/Crypto.h>
+#include <Core/Serialization/Serializer.h>
+#include <Core/Serialization/ByteBuffer.h>
 
 class SlateContext
 {

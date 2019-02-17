@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Models/BlockHeader.h>
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <P2P/SyncStatus.h>
 
 class BlockLocator

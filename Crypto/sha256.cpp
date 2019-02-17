@@ -4,7 +4,7 @@
 
 #include "sha256.h"
 
-#include <Serialization/EndianHelper.h>
+#include <Core/Serialization/EndianHelper.h>
 #include <assert.h>
 #include <string.h>
 #include <atomic>

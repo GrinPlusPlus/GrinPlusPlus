@@ -7,7 +7,7 @@
 #include "Dandelion.h"
 
 #include <Config/Config.h>
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <vector>
 #include <shared_mutex>
 #include <thread>

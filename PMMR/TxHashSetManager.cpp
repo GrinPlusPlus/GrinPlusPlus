@@ -4,8 +4,8 @@
 #include "Zip/TxHashSetZip.h"
 #include "Zip/Zipper.h"
 
-#include <FileUtil.h>
-#include <StringUtil.h>
+#include <Common/Util/FileUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 TxHashSetManager::TxHashSetManager(const Config& config, IBlockDB& blockDB)

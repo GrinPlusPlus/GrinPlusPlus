@@ -1,7 +1,7 @@
 #include "TransactionAggregator.h"
 
 #include <Core/Util/TransactionUtil.h>
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <set>
 
 // Aggregate a vector of transactions into a multi-kernel transaction with cut_through.

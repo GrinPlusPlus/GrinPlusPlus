@@ -6,8 +6,8 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
-#include <BigInteger.h>
+#include <Common/ImportExport.h>
+#include <Crypto/BigInteger.h>
 #include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/Peer.h>

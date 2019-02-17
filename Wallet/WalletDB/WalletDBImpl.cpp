@@ -4,7 +4,7 @@
 
 #include "WalletDBImpl.h"
 
-#include <FileUtil.h>
+#include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
 
 static ColumnFamilyDescriptor NEXT_CHILD_COLUMN = ColumnFamilyDescriptor("NEXT_CHILD", *ColumnFamilyOptions().OptimizeForPointLookup(1024));

@@ -4,7 +4,7 @@
 #include "BlockSyncer.h"
 #include "../ConnectionManager.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <P2P/SyncStatus.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>

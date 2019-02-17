@@ -8,8 +8,8 @@
 #include "API/PeersAPI.h"
 #include "API/TxHashSetAPI.h"
 
-#include <P2PServer.h>
-#include <BlockChainServer.h>
+#include <P2P/P2PServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Database/Database.h>
 
 NodeRestServer::NodeRestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer)

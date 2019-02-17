@@ -6,7 +6,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Models/ShortId.h>
 #include <lru/cache.hpp>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <set>
 
 class TransactionPool : public ITransactionPool

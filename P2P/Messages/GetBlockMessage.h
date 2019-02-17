@@ -2,8 +2,8 @@
 
 #include "Message.h"
 
-#include <BigInteger.h>
-#include <Hash.h>
+#include <Crypto/BigInteger.h>
+#include <Crypto/Hash.h>
 
 class GetBlockMessage : public IMessage
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
 
 class CryptoUtil

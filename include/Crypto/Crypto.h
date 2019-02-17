@@ -6,8 +6,8 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
-#include <BigInteger.h>
+#include <Common/ImportExport.h>
+#include <Crypto/BigInteger.h>
 #include <stdint.h>
 #include <vector>
 #include <memory>
@@ -17,7 +17,7 @@
 #include <Crypto/Signature.h>
 #include <Crypto/ProofMessage.h>
 #include <Crypto/RewoundProof.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 
 #ifdef MW_CRYPTO
 #define CRYPTO_API EXPORT

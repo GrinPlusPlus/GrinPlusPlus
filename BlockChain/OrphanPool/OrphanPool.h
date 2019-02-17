@@ -2,7 +2,7 @@
 
 #include "Orphan.h"
 
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <Core/Models/FullBlock.h>
 #include <unordered_map>
 #include <shared_mutex>

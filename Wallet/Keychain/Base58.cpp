@@ -1,6 +1,6 @@
 #include "Base58.h"
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <stdexcept>
 
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";

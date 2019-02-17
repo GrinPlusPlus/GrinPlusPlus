@@ -1,8 +1,8 @@
 #include "MMRUtil.h"
 
-#include <Serialization/Serializer.h>
-#include <Crypto.h>
-#include <BitUtil.h>
+#include <Core/Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
+#include <Common/Util/BitUtil.h>
 #include <vector>
 
 //

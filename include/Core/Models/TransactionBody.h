@@ -7,9 +7,9 @@
 //
 
 #include <vector>
-#include <BigInteger.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/BigInteger.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionInput.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Models/TransactionKernel.h>

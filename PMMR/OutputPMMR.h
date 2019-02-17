@@ -9,7 +9,7 @@
 #include <Core/DataFile.h>
 #include <Core/Models/OutputIdentifier.h>
 #include <Database/BlockDB.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 
 #define OUTPUT_SIZE 34
 

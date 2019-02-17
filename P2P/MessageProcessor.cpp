@@ -28,10 +28,10 @@
 #include "Messages/TxHashSetArchiveMessage.h"
 
 #include <P2P/Common.h>
-#include <HexUtil.h>
-#include <StringUtil.h>
-#include <FileUtil.h>
-#include <BlockChainServer.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
+#include <Common/Util/FileUtil.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>
 #include <fstream>

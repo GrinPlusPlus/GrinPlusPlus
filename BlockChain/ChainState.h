@@ -8,10 +8,10 @@
 
 #include <P2P/SyncStatus.h>
 #include <Core/Models/BlockHeader.h>
-#include <Core/ChainType.h>
+#include <BlockChain/ChainType.h>
 #include <Core/Models/Display/BlockWithOutputs.h>
-#include <HeaderMMR.h>
-#include <Hash.h>
+#include <PMMR/HeaderMMR.h>
+#include <Crypto/Hash.h>
 #include <shared_mutex>
 
 // Forward Declarations

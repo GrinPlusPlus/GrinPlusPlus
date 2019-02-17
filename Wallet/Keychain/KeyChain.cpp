@@ -2,7 +2,7 @@
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 
 KeyChain::KeyChain(const Config& config)
 	: m_config(config)

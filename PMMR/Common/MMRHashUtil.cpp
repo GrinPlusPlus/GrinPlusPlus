@@ -1,8 +1,8 @@
 #include "MMRHashUtil.h"
 #include "MMRUtil.h"
 
-#include <Crypto.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
+#include <Core/Serialization/Serializer.h>
 
 void MMRHashUtil::AddHashes(HashFile& hashFile, const std::vector<unsigned char>& serializedLeaf, const PruneList* pPruneList)
 {

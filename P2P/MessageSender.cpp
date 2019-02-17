@@ -1,7 +1,7 @@
 #include "MessageSender.h"
 
 #include <Infrastructure/Logger.h>
-#include <HexUtil.h>
+#include <Common/Util/HexUtil.h>
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>

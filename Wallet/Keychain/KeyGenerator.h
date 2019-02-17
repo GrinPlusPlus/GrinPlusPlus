@@ -3,7 +3,7 @@
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/PublicExtKey.h>
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 #include <Config/Config.h>
 
 //

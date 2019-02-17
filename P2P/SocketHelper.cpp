@@ -1,7 +1,7 @@
 #include "SocketHelper.h"
 
 #include <WS2tcpip.h>
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 std::optional<SOCKET> SocketHelper::Connect(const IPAddress& ipAddress, const uint16_t portNumber)

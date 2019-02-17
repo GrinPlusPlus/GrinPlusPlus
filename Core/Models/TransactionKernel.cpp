@@ -1,7 +1,7 @@
 #include <Core/Models/TransactionKernel.h>
 
-#include <Serialization/Serializer.h>
-#include <Crypto.h>
+#include <Core/Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
 
 TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
 	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(std::move(excessCommitment)), m_excessSignature(std::move(excessSignature))

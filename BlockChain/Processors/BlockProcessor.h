@@ -4,7 +4,7 @@
 
 #include <Config/Config.h>
 #include <Core/Models/FullBlock.h>
-#include <BlockChainStatus.h>
+#include <BlockChain/BlockChainStatus.h>
 #include <TxPool/TransactionPool.h>
 
 // TODO: Move this?

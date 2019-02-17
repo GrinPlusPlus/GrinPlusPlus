@@ -3,7 +3,7 @@
 #include "TransactionAggregator.h"
 #include "ValidTransactionFinder.h"
 
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 #include <algorithm>
 
 Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache)

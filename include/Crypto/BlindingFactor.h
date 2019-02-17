@@ -6,9 +6,9 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <Hash.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/Hash.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 
 class BlindingFactor
 {

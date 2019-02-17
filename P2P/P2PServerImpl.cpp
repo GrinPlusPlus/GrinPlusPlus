@@ -1,6 +1,6 @@
 #include "P2PServerImpl.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 
 P2PServer::P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)
 	: m_config(config), 

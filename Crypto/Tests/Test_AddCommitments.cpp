@@ -1,8 +1,8 @@
-#include <Catch2/catch.hpp>
+#include <ThirdParty/Catch2/catch.hpp>
 
 #include "../secp256k1-zkp/include/secp256k1_commitment.h"
 #include "../secp256k1-zkp/include/secp256k1_generator.h"
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
 
 TEST_CASE("Crypto::AddCommitment")

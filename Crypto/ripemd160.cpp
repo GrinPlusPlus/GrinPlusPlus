@@ -4,7 +4,7 @@
 
 #include "ripemd160.h"
 
-#include <Serialization/EndianHelper.h>
+#include <Core/Serialization/EndianHelper.h>
 #include <string.h>
 
 

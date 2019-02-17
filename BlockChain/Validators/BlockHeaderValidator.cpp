@@ -1,12 +1,12 @@
 #include "BlockHeaderValidator.h"
 
-#include <HexUtil.h>
+#include <Common/Util/HexUtil.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>
 #include <Infrastructure/Logger.h>
 #include <PoW/PoWManager.h>
-#include <HeaderMMR.h>
+#include <PMMR/HeaderMMR.h>
 #include <chrono>
 
 BlockHeaderValidator::BlockHeaderValidator(const Config& config, const IHeaderMMR& headerMMR)

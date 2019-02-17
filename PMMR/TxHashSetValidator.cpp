@@ -7,9 +7,9 @@
 #include "KernelSumValidator.h"
 #include "KernelSignatureValidator.h"
 
-#include <HexUtil.h>
+#include <Common/Util/HexUtil.h>
 #include <Infrastructure/Logger.h>
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <async++.h>
 
 TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer)

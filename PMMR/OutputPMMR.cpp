@@ -2,7 +2,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 OutputPMMR::OutputPMMR(IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)

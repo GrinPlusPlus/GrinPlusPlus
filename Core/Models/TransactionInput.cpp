@@ -1,7 +1,7 @@
 #include <Core/Models/TransactionInput.h>
 
-#include <Serialization/Serializer.h>
-#include <Crypto.h>
+#include <Core/Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
 
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
 	: m_features(features), m_commitment(std::move(commitment))

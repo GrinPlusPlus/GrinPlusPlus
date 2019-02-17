@@ -1,11 +1,11 @@
 #include "TransactionValidator.h"
 #include "TransactionBodyValidator.h"
 
-#include <Crypto.h>
-#include <HexUtil.h>
+#include <Crypto/Crypto.h>
+#include <Common/Util/HexUtil.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Infrastructure/Logger.h>
-#include <Common/FunctionalUtil.h>
+#include <Common/Util/FunctionalUtil.h>
 
 TransactionValidator::TransactionValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)
 	: m_transactionBodyValidator(bulletproofsCache)

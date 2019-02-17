@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Database/Database.h>
-#include <BlockChainServer.h>
-#include <P2PServer.h>
+#include <BlockChain/BlockChainServer.h>
+#include <P2P/P2PServer.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 

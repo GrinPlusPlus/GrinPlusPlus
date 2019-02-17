@@ -6,8 +6,8 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
-#include <BigInteger.h>
+#include <Common/ImportExport.h>
+#include <Crypto/BigInteger.h>
 #include <vector>
 
 #ifdef MW_CRYPTO

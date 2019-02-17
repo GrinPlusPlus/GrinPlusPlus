@@ -1,8 +1,8 @@
 #include "Mnemonic.h"
 #include "WordList.h"
 
-#include <Crypto.h>
-#include <VectorUtil.h>
+#include <Crypto/Crypto.h>
+#include <Common/Util/VectorUtil.h>
 
 // TODO: Apply password
 SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy, const std::optional<SecureString>& password)

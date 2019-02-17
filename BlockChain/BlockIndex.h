@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Hash.h>
-#include <Core/ChainType.h>
+#include <Crypto/Hash.h>
+#include <BlockChain/ChainType.h>
 #include <Core/Models/BlockHeader.h>
 
 class BlockIndex

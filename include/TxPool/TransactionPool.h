@@ -6,7 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
+#include <Common/ImportExport.h>
 #include <TxPool/DandelionStatus.h>
 #include <TxPool/PoolType.h>
 #include <Core/Models/Transaction.h>
@@ -16,7 +16,7 @@
 #include <Core/Models/BlockSums.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <vector>
 #include <set>
 

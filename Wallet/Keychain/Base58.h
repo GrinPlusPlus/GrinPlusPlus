@@ -6,7 +6,7 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 #include <string>
 
 // TODO: Use generic template so sizes aren't fixed?

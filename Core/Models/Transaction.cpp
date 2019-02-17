@@ -1,7 +1,7 @@
 #include <Core/Models/Transaction.h>
 
-#include <Crypto.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
+#include <Core/Serialization/Serializer.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
 	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody))

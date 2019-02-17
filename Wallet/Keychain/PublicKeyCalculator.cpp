@@ -1,6 +1,6 @@
 #include "PublicKeyCalculator.h"
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 
 std::unique_ptr<PublicExtKey> PublicKeyCalculator::DeterminePublicKey(const PrivateExtKey& privateKey) const
 {

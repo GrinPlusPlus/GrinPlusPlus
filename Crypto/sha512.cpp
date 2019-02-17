@@ -4,7 +4,7 @@
 
 #include "sha512.h"
 
-#include <Serialization/EndianHelper.h>
+#include <Core/Serialization/EndianHelper.h>
 #include <string.h>
 
 static inline uint64_t ReadBE64(const unsigned char* ptr)

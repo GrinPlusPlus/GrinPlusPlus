@@ -1,11 +1,11 @@
 #include "Server.h"
 #include "NodeRestServer.h"
 
-#include <P2PServer.h>
+#include <P2P/P2PServer.h>
 #include <Config/Config.h>
 #include <Config/ConfigManager.h>
-#include <BlockChainServer.h>
-#include <Crypto.h>
+#include <BlockChain/BlockChainServer.h>
+#include <Crypto/Crypto.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Database/Database.h>
 #include <Infrastructure/Logger.h>

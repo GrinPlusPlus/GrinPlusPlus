@@ -1,4 +1,4 @@
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 
 #include "Blake2.h"
 #include "sha256.h"

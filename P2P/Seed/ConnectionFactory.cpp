@@ -10,7 +10,7 @@
 
 #include <ctime>
 #include <WS2tcpip.h>
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 #include <cstdlib>
 
 ConnectionFactory::ConnectionFactory(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer)

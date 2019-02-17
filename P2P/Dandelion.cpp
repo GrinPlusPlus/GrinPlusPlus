@@ -4,7 +4,7 @@
 #include "Messages/TransactionMessage.h"
 #include "Messages/StemTransactionMessage.h"
 
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>

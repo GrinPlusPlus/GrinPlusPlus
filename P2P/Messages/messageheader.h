@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdint.h>
 #include <Config/Config.h>
-#include <Serialization/ByteBuffer.h>
+#include <Core/Serialization/ByteBuffer.h>
 
 class MessageHeader
 {

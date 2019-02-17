@@ -6,7 +6,7 @@
 #include <Common/Secure.h>
 #include <Wallet/Slate.h>
 #include <Wallet/NodeClient.h>
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Core/Models/Transaction.h>
 
 class SlateBuilder

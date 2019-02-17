@@ -2,9 +2,9 @@
 #include "../Validators/BlockHeaderValidator.h"
 
 #include <Infrastructure/Logger.h>
-#include <HeaderMMR.h>
-#include <HexUtil.h>
-#include <StringUtil.h>
+#include <PMMR/HeaderMMR.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
 
 BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, ChainState& chainState)
 	: m_config(config), m_chainState(chainState)

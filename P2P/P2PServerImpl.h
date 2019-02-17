@@ -3,7 +3,7 @@
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 
-#include <P2PServer.h>
+#include <P2P/P2PServer.h>
 #include <Database/Database.h>
 #include <Config/Config.h>
 #include <TxPool/TransactionPool.h>

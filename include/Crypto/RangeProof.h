@@ -6,9 +6,9 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <BigInteger.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/BigInteger.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 
 static const int MAX_PROOF_SIZE = 675; // TODO: Find central location for this.
 

@@ -1,5 +1,5 @@
 #include <Core/Models/TransactionOutput.h>
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)
 	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof))

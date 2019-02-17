@@ -2,7 +2,7 @@
 
 #include <Core/Models/TransactionInput.h>
 #include <Core/Models/TransactionOutput.h>
-#include <Common/FunctionalUtil.h>
+#include <Common/Util/FunctionalUtil.h>
 #include <set>
 
 class TransactionUtil

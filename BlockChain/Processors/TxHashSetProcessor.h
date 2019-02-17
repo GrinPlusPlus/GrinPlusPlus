@@ -4,7 +4,7 @@
 
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <string>
 
 // Forward Declarations

@@ -2,7 +2,7 @@
 #include "../IPAddressUtil.h"
 #include <P2P/Common.h>
 
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 #pragma comment(lib , "ws2_32.lib")
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>

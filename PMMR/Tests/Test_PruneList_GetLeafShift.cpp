@@ -1,4 +1,4 @@
-#include <Catch2/catch.hpp>
+#include <ThirdParty/Catch2/catch.hpp>
 
 #include "../Common/PruneList.h"
 

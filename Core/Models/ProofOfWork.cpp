@@ -1,6 +1,6 @@
 #include <Core/Models/ProofOfWork.h>
 #include <Consensus/BlockDifficulty.h>
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 
 ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces)
 	: m_edgeBits(edgeBits),

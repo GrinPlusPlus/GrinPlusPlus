@@ -5,10 +5,10 @@
 
 #include <thread>
 #include <chrono>
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 
 ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool)
 	: m_config(config), 

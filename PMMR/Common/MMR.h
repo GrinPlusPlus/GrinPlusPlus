@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <stdint.h>
 #include <memory>
 

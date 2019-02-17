@@ -2,10 +2,10 @@
 #include "Common/MMRUtil.h"
 
 #include <Core/Models/TransactionKernel.h>
-#include <Serialization/Serializer.h>
+#include <Core/Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
-#include <HexUtil.h>
-#include <Crypto.h>
+#include <Common/Util/HexUtil.h>
+#include <Crypto/Crypto.h>
 
 bool KernelSignatureValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR) const
 {

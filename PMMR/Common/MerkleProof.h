@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 #include <stdint.h>
 #include <vector>
 

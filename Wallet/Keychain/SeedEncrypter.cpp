@@ -1,8 +1,8 @@
 #include "SeedEncrypter.h"
 
-#include <Crypto.h>
-#include <VectorUtil.h>
-#include <HexUtil.h>
+#include <Crypto/Crypto.h>
+#include <Common/Util/VectorUtil.h>
+#include <Common/Util/HexUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 
 CBigInteger<32> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const

@@ -6,14 +6,14 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <Serialization/EndianHelper.h>
-#include <Serialization/DeserializationException.h>
+#include <Core/Serialization/EndianHelper.h>
+#include <Core/Serialization/DeserializationException.h>
 
 #include <vector>
 #include <string>
 #include <stdint.h>
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 
 class ByteBuffer
 {

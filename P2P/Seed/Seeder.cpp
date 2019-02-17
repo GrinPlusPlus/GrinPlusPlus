@@ -7,8 +7,8 @@
 
 #include <P2P/capabilities.h>
 #include <P2P/SocketAddress.h>
-#include <BlockChainServer.h>
-#include <StringUtil.h>
+#include <BlockChain/BlockChainServer.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>

@@ -1,7 +1,7 @@
 #include "JSONFactory.h"
 
-#include <HexUtil.h>
-#include <TimeUtil.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/TimeUtil.h>
 
 Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 {

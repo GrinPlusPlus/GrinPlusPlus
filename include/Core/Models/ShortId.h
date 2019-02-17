@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <Core/Models/BlockHeader.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 
 class ShortId
 {

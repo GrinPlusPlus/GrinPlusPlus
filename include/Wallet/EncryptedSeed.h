@@ -1,8 +1,8 @@
 #pragma once
 
-#include <BigInteger.h>
-#include <Serialization/Serializer.h>
-#include <Serialization/ByteBuffer.h>
+#include <Crypto/BigInteger.h>
+#include <Core/Serialization/Serializer.h>
+#include <Core/Serialization/ByteBuffer.h>
 
 class EncryptedSeed
 {

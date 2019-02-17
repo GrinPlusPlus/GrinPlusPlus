@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <Core/Models/BlockHeader.h>
 
 class BlockIdentifier

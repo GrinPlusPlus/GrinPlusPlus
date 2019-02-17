@@ -2,8 +2,8 @@
 #include "MMRUtil.h"
 
 #include <fstream>
-#include <FileUtil.h>
-#include <HexUtil.h>
+#include <Common/Util/FileUtil.h>
+#include <Common/Util/HexUtil.h>
 
 LeafSet::LeafSet(const std::string& path)
 	: m_path(path)

@@ -11,8 +11,8 @@
 #include <Core/Models/ShortId.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Models/TransactionKernel.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 
 class CompactBlock
 {

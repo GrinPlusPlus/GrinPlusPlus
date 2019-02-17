@@ -4,9 +4,9 @@
 
 #include <Consensus/BlockTime.h>
 #include <Infrastructure/Logger.h>
-#include <HeaderMMR.h>
-#include <HexUtil.h>
-#include <StringUtil.h>
+#include <PMMR/HeaderMMR.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <algorithm>
 
 BlockProcessor::BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState, const ITransactionPool& transactionPool)

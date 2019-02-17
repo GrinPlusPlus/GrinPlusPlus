@@ -8,7 +8,7 @@
 #include <Crypto/RangeProof.h>
 #include <Crypto/ProofMessage.h>
 #include <Crypto/RewoundProof.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <vector>
 #include <memory>
 

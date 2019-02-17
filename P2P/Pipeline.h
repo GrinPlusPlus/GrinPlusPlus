@@ -1,8 +1,8 @@
 #pragma once
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <TxPool/PoolType.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <deque>
 #include <shared_mutex>
 #include <thread>

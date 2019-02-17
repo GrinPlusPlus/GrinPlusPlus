@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Serialization/DeserializationException.h>
+#include <Core/Serialization/DeserializationException.h>
 #include <stdint.h>
 #include <string>
 #include <vector>

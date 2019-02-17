@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 #include <Wallet/EncryptedSeed.h>
 #include <Common/Secure.h>
 #include <vector>

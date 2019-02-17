@@ -10,7 +10,7 @@
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <lru/cache.hpp>
 #include <map>
 #include <set>

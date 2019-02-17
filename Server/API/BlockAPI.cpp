@@ -2,7 +2,7 @@
 #include "../RestUtil.h"
 #include "../JSONFactory.h"
 
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 //

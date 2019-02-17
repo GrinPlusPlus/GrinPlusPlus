@@ -3,8 +3,8 @@
 #include "../JSONFactory.h"
 #include "../ServerContainer.h"
 
-#include <HexUtil.h>
-#include <StringUtil.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <json/json.h>
 
 /*

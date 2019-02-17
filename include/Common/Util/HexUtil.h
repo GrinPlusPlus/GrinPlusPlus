@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
-#include <Hash.h>
-#include <Serialization/EndianHelper.h>
+#include <Crypto/Hash.h>
+#include <Core/Serialization/EndianHelper.h>
 
 namespace HexUtil
 {

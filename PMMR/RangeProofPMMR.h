@@ -6,7 +6,7 @@
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
 
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <Core/DataFile.h>
 #include <Crypto/RangeProof.h>
 

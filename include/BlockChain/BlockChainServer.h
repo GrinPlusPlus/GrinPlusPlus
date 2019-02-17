@@ -6,17 +6,17 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-#include <ImportExport.h>
-#include <BlockChainStatus.h>
+#include <Common/ImportExport.h>
+#include <BlockChain/BlockChainStatus.h>
 #include <TxPool/PoolType.h>
 #include <P2P/SyncStatus.h>
 #include <Core/Models/Display/BlockWithOutputs.h>
-#include <Core/ChainType.h>
+#include <BlockChain/ChainType.h>
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/CompactBlock.h>
 #include <Core/Models/Transaction.h>
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 
 #include <vector>
 #include <memory>

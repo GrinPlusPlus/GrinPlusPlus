@@ -5,8 +5,8 @@
 #include "ChainStore.h"
 
 #include <TxPool/TransactionPool.h>
-#include <BlockChainServer.h>
-#include <HeaderMMR.h>
+#include <BlockChain/BlockChainServer.h>
+#include <PMMR/HeaderMMR.h>
 #include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
 #include <stdint.h>

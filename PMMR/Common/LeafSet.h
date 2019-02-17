@@ -4,7 +4,7 @@
 #include "PruneList.h"
 
 #include <string>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 
 class LeafSet
 {

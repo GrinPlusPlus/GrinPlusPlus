@@ -4,7 +4,7 @@
 #include "SlateBuilder.h"
 
 #include <Crypto/RandomNumberGenerator.h>
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 
 WalletServer::WalletServer(const Config& config, const INodeClient& nodeClient, IWalletDB* pWalletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB)

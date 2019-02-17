@@ -1,8 +1,8 @@
 #include "TxHashSetZip.h"
 #include "ZipFile.h"
 
-#include <HexUtil.h>
-#include <FileUtil.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
 #include <filesystem>
 

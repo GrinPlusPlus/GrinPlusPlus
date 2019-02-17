@@ -3,7 +3,7 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
-#include <Core/ChainType.h>
+#include <BlockChain/ChainType.h>
 #include <Core/Models/OutputLocation.h>
 #include <memory>
 #include <optional>

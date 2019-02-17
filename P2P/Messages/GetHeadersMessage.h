@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 
 class GetHeadersMessage : public IMessage
 {

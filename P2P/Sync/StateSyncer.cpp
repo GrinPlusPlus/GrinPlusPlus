@@ -3,7 +3,7 @@
 #include "../ConnectionManager.h"
 #include "../Messages/TxHashSetRequestMessage.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
 
 StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)

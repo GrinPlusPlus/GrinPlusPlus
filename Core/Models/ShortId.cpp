@@ -1,5 +1,5 @@
 #include <Core/Models/ShortId.h>
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 
 ShortId::ShortId(CBigInteger<6>&& id)
 	: m_id(id)

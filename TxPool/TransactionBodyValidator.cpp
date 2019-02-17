@@ -2,8 +2,8 @@
 
 #include <Consensus/BlockWeight.h>
 #include <Infrastructure/Logger.h>
-#include <HexUtil.h>
-#include <Crypto.h>
+#include <Common/Util/HexUtil.h>
+#include <Crypto/Crypto.h>
 #include <set>
 
 TransactionBodyValidator::TransactionBodyValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)

@@ -6,7 +6,7 @@
 #include <Wallet/SlateContext.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Crypto/CryptoUtil.h>
-#include <Common/FunctionalUtil.h>
+#include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 
 SlateBuilder::SlateBuilder(const INodeClient& nodeClient)

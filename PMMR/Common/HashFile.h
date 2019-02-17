@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/File.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <string>
 
 class HashFile

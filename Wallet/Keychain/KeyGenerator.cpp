@@ -2,10 +2,10 @@
 #include "KeyDefs.h"
 #include "PublicKeyCalculator.h"
 
-#include <Crypto.h>
-#include <BitUtil.h>
-#include <VectorUtil.h>
-#include <Serialization/Serializer.h>
+#include <Crypto/Crypto.h>
+#include <Common/Util/BitUtil.h>
+#include <Common/Util/VectorUtil.h>
+#include <Core/Serialization/Serializer.h>
 
 KeyGenerator::KeyGenerator(const Config& config)
 	: m_config(config)

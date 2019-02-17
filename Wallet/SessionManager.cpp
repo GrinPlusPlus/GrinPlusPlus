@@ -1,10 +1,10 @@
 #include "SessionManager.h"
 #include "Keychain/SeedEncrypter.h"
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Wallet/SessionTokenException.h>
-#include <VectorUtil.h>
+#include <Common/Util/VectorUtil.h>
 
 SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)

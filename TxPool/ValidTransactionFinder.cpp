@@ -3,7 +3,7 @@
 #include "TransactionValidator.h"
 
 #include <Core/Validation/KernelSumValidator.h>
-#include <Common/FunctionalUtil.h>
+#include <Common/Util/FunctionalUtil.h>
 
 ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache)
 	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)

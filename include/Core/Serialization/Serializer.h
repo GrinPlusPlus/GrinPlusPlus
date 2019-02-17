@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EndianHelper.h"
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 
 #include <stdint.h>
 #include <vector>

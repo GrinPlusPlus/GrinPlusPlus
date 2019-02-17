@@ -2,10 +2,10 @@
 #include "../RestUtil.h"
 #include "../ServerContainer.h"
 
-#include <HexUtil.h>
-#include <StringUtil.h>
+#include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <json/json.h>
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 
 int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pBlockChainServer)
 {

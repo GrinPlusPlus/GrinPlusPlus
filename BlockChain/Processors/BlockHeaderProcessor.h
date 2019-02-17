@@ -3,7 +3,7 @@
 #include "../ChainState.h"
 
 #include <Config/Config.h>
-#include <BlockChainStatus.h>
+#include <BlockChain/BlockChainStatus.h>
 #include <Core/Models/BlockHeader.h>
 
 class BlockHeaderProcessor

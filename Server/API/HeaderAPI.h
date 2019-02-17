@@ -2,7 +2,7 @@
 
 #include "../civetweb/include/civetweb.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <string>
 
 class HeaderAPI

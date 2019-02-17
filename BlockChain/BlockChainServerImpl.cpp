@@ -7,7 +7,7 @@
 #include "Processors/BlockProcessor.h"
 
 #include <Config/Config.h>
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <PMMR/TxHashSet.h>
 #include <Consensus/BlockTime.h>
 #include <algorithm>

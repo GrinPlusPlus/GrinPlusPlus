@@ -2,10 +2,10 @@
 #include "../RestUtil.h"
 #include "../JSONFactory.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
-#include <StringUtil.h>
-#include <HexUtil.h>
+#include <Common/Util/StringUtil.h>
+#include <Common/Util/HexUtil.h>
 #include <string>
 
 //

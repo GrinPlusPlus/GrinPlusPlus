@@ -2,7 +2,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 KernelMMR::KernelMMR(HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile)

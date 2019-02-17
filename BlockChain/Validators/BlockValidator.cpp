@@ -1,7 +1,7 @@
 #include "BlockValidator.h"
 #include "../Processors/BlockHeaderProcessor.h"
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>

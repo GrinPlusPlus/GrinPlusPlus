@@ -3,7 +3,7 @@
 #include "Common/MMRHashUtil.h"
 
 #include <Infrastructure/Logger.h>
-#include <Serialization/Serializer.h>
+#include <Core/Serialization/Serializer.h>
 #include <Config/Config.h>
 
 HeaderMMR::HeaderMMR(const std::string& path)

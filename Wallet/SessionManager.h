@@ -2,7 +2,7 @@
 
 #include "Wallet.h"
 
-#include <BigInteger.h>
+#include <Crypto/BigInteger.h>
 #include <Common/Secure.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>

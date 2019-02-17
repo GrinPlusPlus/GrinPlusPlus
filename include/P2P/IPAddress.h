@@ -1,10 +1,10 @@
 #pragma once
 
 #include <vector>
-#include <BitUtil.h>
-#include <HexUtil.h>
-#include <Serialization/ByteBuffer.h>
-#include <Serialization/Serializer.h>
+#include <Common/Util/BitUtil.h>
+#include <Common/Util/HexUtil.h>
+#include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 
 enum class EAddressFamily
 {

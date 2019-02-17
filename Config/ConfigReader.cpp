@@ -3,7 +3,7 @@
 
 #include <Config/Environment.h>
 #include <Config/Genesis.h>
-#include <BitUtil.h>
+#include <Common/Util/BitUtil.h>
 #include <filesystem>
 
 Config ConfigReader::ReadConfig(const Json::Value& root) const

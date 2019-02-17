@@ -3,9 +3,9 @@
 #include <Infrastructure/Logger.h>
 #include <Database/BlockDb.h>
 #include <Core/Models/BlockHeader.h>
-#include <BlockChainServer.h>
-#include <StringUtil.h>
-#include <HexUtil.h>
+#include <BlockChain/BlockChainServer.h>
+#include <Common/Util/StringUtil.h>
+#include <Common/Util/HexUtil.h>
 
 TxHashSetProcessor::TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, ChainState& chainState, IBlockDB& blockDB)
 	: m_config(config), m_blockChainServer(blockChainServer), m_chainState(chainState), m_blockDB(blockDB)

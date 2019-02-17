@@ -2,7 +2,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
 RangeProofPMMR::RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile)

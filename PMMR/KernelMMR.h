@@ -6,7 +6,7 @@
 
 #include <Core/DataFile.h>
 #include <Core/Models/TransactionKernel.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <stdint.h>
 
 #define KERNEL_SIZE 114

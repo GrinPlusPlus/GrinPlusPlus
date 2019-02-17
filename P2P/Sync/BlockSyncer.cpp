@@ -2,9 +2,9 @@
 #include "../ConnectionManager.h"
 #include "../Messages/GetBlockMessage.h"
 
-#include <BlockChainServer.h>
+#include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
-#include <StringUtil.h>
+#include <Common/Util/StringUtil.h>
 
 BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
 	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Crypto.h>
+#include <Crypto/Crypto.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/BlindingFactor.h>
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/TransactionBody.h>
-#include <Common/FunctionalUtil.h>
+#include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 #include <optional>
 

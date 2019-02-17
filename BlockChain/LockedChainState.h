@@ -4,12 +4,12 @@
 #include "ChainStore.h"
 #include "OrphanPool/OrphanPool.h"
 
-#include <HeaderMMR.h>
+#include <PMMR/HeaderMMR.h>
 #include <Core/Models/BlockHeader.h>
 #include <Infrastructure/Logger.h>
 #include <TxPool/TransactionPool.h>
 #include <PMMR/TxHashSetManager.h>
-#include <Hash.h>
+#include <Crypto/Hash.h>
 #include <shared_mutex>
 #include <map>
 

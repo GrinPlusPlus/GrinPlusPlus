@@ -31,4 +31,5 @@ private:
 	uint64_t m_height;
 	BlockIndex* m_pPrevious; // TODO: Storing this is probably not necessary
 	uint8_t m_chainTypeMask;
+	// TODO: Also save output & kernel MMR sizes
 };

@@ -24,7 +24,6 @@ file(GLOB PMMR_SRC
     "HeaderMMRImpl.cpp"
     "KernelMMR.cpp"
     "KernelSignatureValidator.cpp"
-    "KernelSumValidator.cpp"
     "OutputPMMR.cpp"
     "RangeProofPMMR.cpp"
     "TxHashSetImpl.cpp"

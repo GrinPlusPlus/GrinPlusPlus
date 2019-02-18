@@ -1,6 +1,10 @@
 #include "DifficultyLoader.h"
 
 #include <Consensus/BlockDifficulty.h>
+#include <lru/cache.hpp>
+
+// TODO: A FIFO cache would be more appropriate.
+LRU::Cache<Hash, BlockHeader> BLOCK_HEADERS_CACHE(128);
 
 DifficultyLoader::DifficultyLoader(const IBlockDB& blockDB)
 	: m_blockDB(blockDB)
@@ -14,7 +18,7 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 	std::vector<HeaderInfo> difficultyData;
 	difficultyData.reserve(numBlocksNeeded);
 
-	std::unique_ptr<BlockHeader> pHeader = m_blockDB.GetBlockHeader(header.GetPreviousBlockHash());
+	std::unique_ptr<BlockHeader> pHeader = LoadHeader(header.GetPreviousBlockHash());
 	while (difficultyData.size() < numBlocksNeeded && pHeader != nullptr)
 	{
 		const int64_t timestamp = pHeader->GetTimestamp();
@@ -22,17 +26,41 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 		const uint32_t scalingFactor = pHeader->GetScalingDifficulty();
 		const bool secondary = pHeader->GetProofOfWork().IsSecondary();
 
-		// TODO: Use cache instead of m_blockDB
-		pHeader = m_blockDB.GetBlockHeader(pHeader->GetPreviousBlockHash());
+		pHeader = LoadHeader(pHeader->GetPreviousBlockHash());
 		if (pHeader != nullptr)
 		{
 			const uint64_t difficulty = totalDifficulty - pHeader->GetTotalDifficulty();
 
 			difficultyData.emplace_back(HeaderInfo(timestamp, difficulty, scalingFactor, secondary));
 		}
+		else
+		{
+			difficultyData.emplace_back(HeaderInfo(timestamp, totalDifficulty, scalingFactor, secondary));
+		}
 	}
 
+	BLOCK_HEADERS_CACHE.insert(header.GetHash(), header);
+
 	return PadDifficultyData(difficultyData);
+}
+
+std::unique_ptr<BlockHeader> DifficultyLoader::LoadHeader(const Hash& headerHash) const
+{
+	auto iter = BLOCK_HEADERS_CACHE.find(headerHash);
+	if (iter != BLOCK_HEADERS_CACHE.end())
+	{
+		return std::make_unique<BlockHeader>(iter->second);
+	}
+	else
+	{
+		std::unique_ptr<BlockHeader> pHeader = m_blockDB.GetBlockHeader(headerHash);
+		if (pHeader != nullptr)
+		{
+			BLOCK_HEADERS_CACHE.insert(headerHash, *pHeader);
+		}
+
+		return pHeader;
+	}
 }
 
 // Converts an iterator of block difficulty data to more a more manageable

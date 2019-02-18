@@ -202,7 +202,7 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 	Chain& candidateChain = m_chainStore.GetCandidateChain();
 	const uint64_t candidateHeight = candidateChain.GetTip()->GetHeight();
 
-	uint64_t nextHeight = m_chainStore.GetConfirmedChain().GetTip()->GetHeight() + 1;
+	uint64_t nextHeight = m_chainStore.FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 	while (nextHeight <= candidateHeight)
 	{
 		const BlockIndex* pIndex = candidateChain.GetByHeight(nextHeight);

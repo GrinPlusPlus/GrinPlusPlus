@@ -4,9 +4,10 @@
 #include "Common/MMR.h"
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
-#include "KernelSumValidator.h"
 #include "KernelSignatureValidator.h"
 
+#include <Core/Validation/KernelSumValidator.h>
+#include <Consensus/Common.h>
 #include <Common/Util/HexUtil.h>
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
@@ -63,9 +64,8 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	}
 
 	// Validate kernel sums
-	Commitment outputSum(CBigInteger<33>::ValueOf(0));
-	Commitment kernelSum(CBigInteger<33>::ValueOf(0));
-	if (!KernelSumValidator().ValidateKernelSums(txHashSet, blockHeader, outputSum, kernelSum))
+	std::unique_ptr<BlockSums> pBlockSums = ValidateKernelSums(txHashSet, blockHeader);
+	if (pBlockSums == nullptr)
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel sums.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -85,7 +85,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
-	return std::make_unique<BlockSums>(BlockSums(std::move(outputSum), std::move(kernelSum)));
+	return pBlockSums;
 }
 
 bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
@@ -144,6 +144,7 @@ bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
 
 	return true;
 }
+
 bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader) const
 {
 	for (uint64_t height = 0; height <= blockHeader.GetHeight(); height++)
@@ -163,6 +164,38 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 	}
 
 	return true;
+}
+
+std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
+{
+	// Calculate overage
+	const int64_t overage = 0 - (Consensus::REWARD * (1 + blockHeader.GetHeight()));
+
+	// Determine output commitments
+	OutputPMMR* pOutputPMMR = txHashSet.GetOutputPMMR();
+	std::vector<Commitment> outputCommitments;
+	for (uint64_t i = 0; i < blockHeader.GetOutputMMRSize(); i++)
+	{
+		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetOutputAt(i);
+		if (pOutput != nullptr)
+		{
+			outputCommitments.push_back(pOutput->GetCommitment());
+		}
+	}
+
+	// Determine kernel excess commitments
+	KernelMMR* pKernelMMR = txHashSet.GetKernelMMR();
+	std::vector<Commitment> excessCommitments;
+	for (uint64_t i = 0; i < blockHeader.GetKernelMMRSize(); i++)
+	{
+		std::unique_ptr<TransactionKernel> pKernel = pKernelMMR->GetKernelAt(i);
+		if (pKernel != nullptr)
+		{
+			excessCommitments.push_back(pKernel->GetExcessCommitment());
+		}
+	}
+
+	return KernelSumValidator::ValidateKernelSums(std::vector<Commitment>(), outputCommitments, excessCommitments, overage, blockHeader.GetTotalKernelOffset(), std::nullopt);
 }
 
 bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const

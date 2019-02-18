@@ -12,6 +12,7 @@
 class KernelSumValidator
 {
 public:
+
 	// Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
 	static std::unique_ptr<BlockSums> ValidateKernelSums(const TransactionBody& transactionBody, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
 	{
@@ -22,6 +23,16 @@ public:
 		auto getOutputCommitments = [](TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
 		std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transactionBody.GetOutputs(), getOutputCommitments);
 
+		auto getKernelCommitments = [](TransactionKernel& kernel) -> Commitment { return kernel.GetExcessCommitment(); };
+		std::vector<Commitment> kernelCommitments = FunctionalUtil::map<std::vector<Commitment>>(transactionBody.GetKernels(), getKernelCommitments);
+
+		return ValidateKernelSums(inputCommitments, outputCommitments, kernelCommitments, overage, kernelOffset, blockSumsOpt);
+	}
+
+	static std::unique_ptr<BlockSums> ValidateKernelSums(const std::vector<Commitment>& inputs, const std::vector<Commitment>& outputs, const std::vector<Commitment>& kernels, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
+	{
+		std::vector<Commitment> inputCommitments = inputs;
+		std::vector<Commitment> outputCommitments = outputs;
 		if (overage > 0)
 		{
 			std::unique_ptr<Commitment> pOverCommitment = Crypto::CommitTransparent(overage);
@@ -53,9 +64,7 @@ public:
 		}
 
 		// Sum the kernel excesses accounting for the kernel offset.
-		auto getKernelCommitments = [](TransactionKernel& kernel) -> Commitment { return kernel.GetExcessCommitment(); };
-		std::vector<Commitment> kernelCommitments = FunctionalUtil::map<std::vector<Commitment>>(transactionBody.GetKernels(), getKernelCommitments);
-
+		std::vector<Commitment> kernelCommitments = kernels;
 		if (blockSumsOpt.has_value())
 		{
 			kernelCommitments.push_back(blockSumsOpt.value().GetKernelSum());

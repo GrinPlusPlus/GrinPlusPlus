@@ -130,11 +130,15 @@ uint64_t RangeProofPMMR::GetSize() const
 	return totalShift + m_pHashFile->GetSize();
 }
 
-bool RangeProofPMMR::Rewind(const uint64_t size, const Roaring& positionsToAdd)
+bool RangeProofPMMR::Rewind(const uint64_t size, const std::optional<Roaring>& leavesToAddOpt)
 {
-	const bool hashRewind = m_pHashFile->Rewind(size - m_pruneList.GetShift(size));
-	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size));
-	m_leafSet.Rewind(size - 1, positionsToAdd);
+	const bool hashRewind = m_pHashFile->Rewind(size - m_pruneList.GetShift(size - 1));
+	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size - 1));
+
+	if (leavesToAddOpt.has_value())
+	{
+		m_leafSet.Rewind(size, leavesToAddOpt.value());
+	}
 
 	return hashRewind && dataRewind;
 }

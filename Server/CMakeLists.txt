@@ -1,4 +1,4 @@
-set(TARGET_NAME Server)
+set(TARGET_NAME GrinNode)
 
 file(GLOB SERVER_SRC
     "civetweb/src/CivetServer.cpp"

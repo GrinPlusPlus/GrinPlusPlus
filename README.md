@@ -1,7 +1,13 @@
 ![Grin++](https://github.com/GrinPlusPlus/GrinPlusPlus/blob/master/Logo.png "Grin++")
 ## A Windows-Compatible C++ Implementation of the Grin(MimbleWimble) Protocol
 
-This project is currently in progress. Although expected to be ready before mainnet (January 15th), this will be nowhere near as well tested as the official Grin Linux/MacOSX implementation. **USE AT YOUR OWN RISK.**
+### Project Status
+#### Node
+The node has been released on 64-bit Windows for beta-testing! Since the wallet is not yet released, running Grin++ should not put any of your grins at risk.
+However, since it is only a beta release, it is not yet recommended for production environments. Additionally, expect that future releases could have backward-incompatible changes that may require deleting chain data and re-syncing.
+
+#### Wallet - In Progress
+The wallet is currently in progress, but is not expected to be ready for beta testing until mid-March.
 
 ### Build Instructions
 
@@ -31,13 +37,3 @@ Replace `<CONFIG>` with `Debug` or `Release`
 7. ```cmake --build . --config <CONFIG>```
 
 Once your code is built, you can just open Server.exe from your bin folder.
-
-### Project Status
-#### Node
-Although the node is fully syncing, and implements much (most?) of the protocol, there's still a ton of work to do before mainnet. See the issues list for a non-comprehensive list of what still needs done.
-
-#### Wallet - Not Implemented Yet
-This will be implemented in the future, but will not be ready for mainnet.
-
-#### Miner - In Progress
-Stratum will be implemented for mainnet, allowing existing miners to connect to a Grin++ node. 

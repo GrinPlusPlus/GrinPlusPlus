@@ -48,11 +48,11 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 		pKernelMMR->Flush();
 
 		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory(), blockDB);
-		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
+		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), std::nullopt);
 		pOutputPMMR->Flush();
 
 		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config.GetTxHashSetDirectory());
-		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
+		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), std::nullopt);
 		pRangeProofPMMR->Flush();
 
 		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, blockHeader);

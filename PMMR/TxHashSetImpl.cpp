@@ -240,7 +240,7 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 				std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
 				if (locationOpt.has_value())
 				{
-					leavesToAdd.add(locationOpt.value().GetMMRIndex());
+					leavesToAdd.add(locationOpt.value().GetMMRIndex() + 1);
 				}
 			}
 		}
@@ -249,8 +249,8 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 	}
 
 	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
-	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
-	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
+	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), std::make_optional<Roaring>(leavesToAdd));
+	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), std::make_optional<Roaring>(leavesToAdd));
 
 	return true;
 }

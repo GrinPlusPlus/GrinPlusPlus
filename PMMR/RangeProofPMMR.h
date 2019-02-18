@@ -6,6 +6,7 @@
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
 
+#include <optional>
 #include <Crypto/Hash.h>
 #include <Core/DataFile.h>
 #include <Crypto/RangeProof.h>
@@ -20,7 +21,7 @@ public:
 
 	bool Append(const RangeProof& rangeProof);
 	bool Remove(const uint64_t mmrIndex);
-	bool Rewind(const uint64_t size, const Roaring& leavesToAdd);
+	bool Rewind(const uint64_t size, const std::optional<Roaring>& leavesToAddOpt);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;

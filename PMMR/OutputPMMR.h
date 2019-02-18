@@ -21,7 +21,7 @@ public:
 
 	bool Append(const OutputIdentifier& output, const uint64_t blockHeight);
 	bool Remove(const uint64_t mmrIndex);
-	bool Rewind(const uint64_t size, const Roaring& leavesToAdd);
+	bool Rewind(const uint64_t size, const std::optional<Roaring>& leavesToAddOpt);
 
 	virtual Hash Root(const uint64_t mmrIndex) const override final;
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;

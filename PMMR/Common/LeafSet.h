@@ -13,10 +13,10 @@ public:
 
 	void Add(const uint32_t position);
 	void Remove(const uint32_t position);
-	bool Contains(const uint32_t position) const;
+	bool Contains(const uint64_t position) const;
 
 	bool Load();
-	void Rewind(const uint32_t lastPosition, const Roaring& positionsToAdd);
+	void Rewind(const uint64_t size, const Roaring& positionsToAdd);
 	bool Flush();
 	void Discard();
 	bool Snapshot(const Hash& blockHash);

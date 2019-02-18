@@ -37,7 +37,7 @@ public:
 	//
 	TransactionKernel& operator=(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel& operator=(TransactionKernel&& transactionKernel) noexcept = default;
-	inline bool operator<(const TransactionKernel& transactionKernel) const { return GetHash() < transactionKernel.GetHash(); }
+	inline bool operator<(const TransactionKernel& transactionKernel) const { return GetExcessCommitment() < transactionKernel.GetExcessCommitment(); }
 	inline bool operator==(const TransactionKernel& transactionKernel) const { return GetHash() == transactionKernel.GetHash(); }
 	inline bool operator!=(const TransactionKernel& transactionKernel) const { return GetHash() != transactionKernel.GetHash(); }
 

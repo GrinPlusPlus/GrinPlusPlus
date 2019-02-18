@@ -91,7 +91,7 @@ std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironme
 P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 {
 	int maxPeers = 30;
-	int minPeers = 15;
+	int minPeers = 20;
 
 	if (root.isMember(ConfigProps::P2P::P2P))
 	{
@@ -104,7 +104,7 @@ P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 
 		if (p2pRoot.isMember(ConfigProps::P2P::MIN_PEERS))
 		{
-			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 15).asInt();
+			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 20).asInt();
 		}
 	}
 

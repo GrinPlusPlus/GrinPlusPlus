@@ -65,7 +65,11 @@ void Syncer::Thread_Sync(Syncer& syncer)
 			// Sync State (TxHashSet)
 			if (stateSyncer.SyncState(syncer.m_syncStatus))
 			{
-				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
+				if (syncer.m_syncStatus.GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
+				{
+					syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
+				}
+
 				continue;
 			}
 

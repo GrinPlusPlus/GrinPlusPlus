@@ -36,7 +36,7 @@ public:
 	//
 	TransactionInput& operator=(const TransactionInput& transactionInput) = default;
 	TransactionInput& operator=(TransactionInput&& transactionInput) noexcept = default;
-	inline bool operator<(const TransactionInput& transactionInput) const { return GetHash() < transactionInput.GetHash(); }
+	inline bool operator<(const TransactionInput& transactionInput) const { return GetCommitment() < transactionInput.GetCommitment(); }
 	inline bool operator==(const TransactionInput& transactionInput) const { return GetHash() == transactionInput.GetHash(); }
 
 	//

@@ -78,7 +78,9 @@ void Server::Run()
 		}
 		else if (status == ESyncStatus::SYNCING_HEADERS)
 		{
-			std::cout << "\nStatus: Syncing Headers";
+			const uint64_t networkHeight = syncStatus.GetNetworkHeight();
+			const uint64_t percentage = networkHeight > 0 ? (syncStatus.GetHeaderHeight() * 100 / networkHeight) : 0;
+			std::cout << "\nStatus: Syncing Headers (" << percentage << "%)";
 		}
 		else if (status == ESyncStatus::SYNCING_TXHASHSET)
 		{
@@ -90,11 +92,11 @@ void Server::Run()
 		}
 		else if (status == ESyncStatus::PROCESSING_TXHASHSET)
 		{
-			std::cout << "\nStatus: Validating and processing TxHashSet.";
+			std::cout << "\nStatus: Validating TxHashSet";
 		}
 		else if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
 		{
-			std::cout << "\nStatus: TxHashSet Sync Failed. Trying Again.";
+			std::cout << "\nStatus: TxHashSet Sync Failed - Trying Again";
 		}
 		else if (status == ESyncStatus::SYNCING_BLOCKS)
 		{

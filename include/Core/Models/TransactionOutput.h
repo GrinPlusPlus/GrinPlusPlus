@@ -38,7 +38,7 @@ public:
 	//
 	TransactionOutput& operator=(const TransactionOutput& transactionOutput) = default;
 	TransactionOutput& operator=(TransactionOutput&& transactionOutput) noexcept = default;
-	inline bool operator<(const TransactionOutput& transactionOutput) const { return GetHash() < transactionOutput.GetHash(); }
+	inline bool operator<(const TransactionOutput& transactionOutput) const { return GetCommitment() < transactionOutput.GetCommitment(); }
 	inline bool operator==(const TransactionOutput& transactionOutput) const { return GetHash() == transactionOutput.GetHash(); }
 
 	//

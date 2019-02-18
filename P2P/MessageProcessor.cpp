@@ -157,9 +157,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				{
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
 
-					const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
-
-					return MessageSender(m_config).Send(connectedPeer, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					if (m_blockChainServer.GetBlockByHash(blockHeader.GetHash()) == nullptr)
+					{
+						const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
+						return MessageSender(m_config).Send(connectedPeer, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					}
 				}
 				else
 				{
@@ -236,7 +238,15 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case GetCompactBlock:
 			{
-				// TODO: Implement
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const GetCompactBlockMessage getCompactBlockMessage = GetCompactBlockMessage::Deserialize(byteBuffer);
+				std::unique_ptr<CompactBlock> pCompactBlock = m_blockChainServer.GetCompactBlockByHash(getCompactBlockMessage.GetHash());
+				if (pCompactBlock != nullptr)
+				{
+					const CompactBlockMessage compactBlockMessage(*pCompactBlock);
+					return MessageSender(m_config).Send(connectedPeer, compactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
+
 				return EStatus::SUCCESS;
 			}
 			case CompactBlockMsg:
@@ -354,14 +364,28 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		file.read((char*)&buffer[0], BUFFER_SIZE);
 		const uint64_t bytesRead = file.gcount();
 
-		uint64_t bytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[0], bytesRead, 0);
-		//while (bytesSent < bytesRead)
-		//{
-		//	bytesSent += send(connectedPeer.GetSocket(), (char*)&buffer[bytesSent], bytesRead - bytesSent, 0);
-		//}
+		uint64_t tempBytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[0], bytesRead, 0);
+		uint64_t intervalBytesSent = tempBytesSent;
+		while (tempBytesSent > 0 && intervalBytesSent < bytesRead)
+		{
+			tempBytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[intervalBytesSent], bytesRead - intervalBytesSent, 0);
+			intervalBytesSent += tempBytesSent;
+		}
+
+		if (intervalBytesSent < bytesRead || m_connectionManager.IsTerminating())
+		{
+			LoggerAPI::LogError("MessageProcessor::SendTxHashSet - Transmission ended abruptly.");
+			file.close();
+			FileUtil::RemoveFile(zipFilePath);
+
+			return EStatus::BAN_PEER;
+		}
 
 		totalBytesRead += bytesRead;
 	}
+
+	file.close();
+	FileUtil::RemoveFile(zipFilePath);
 
 	return EStatus::SUCCESS;
 }

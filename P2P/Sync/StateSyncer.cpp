@@ -38,7 +38,13 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 	const uint64_t blockHeight = syncStatus.GetBlockHeight();
 
-	if (syncStatus.GetStatus() == ESyncStatus::TXHASHSET_SYNC_FAILED)
+	const ESyncStatus status = syncStatus.GetStatus();
+	if (status == ESyncStatus::PROCESSING_TXHASHSET)
+	{
+		return false;
+	}
+
+	if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
 	{
 		return true;
 	}

@@ -7,84 +7,138 @@ Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 {
 	Json::Value blockNode;
 	blockNode["header"] = BuildHeaderJSON(block.GetBlockHeader());
-	blockNode["Body"] = BuildTransactionBodyJSON(block.GetTransactionBody());
+
+	// Transaction Inputs
+	Json::Value inputsNode;
+	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+	{
+		inputsNode.append(BuildTransactionInputJSON(input));
+	}
+	blockNode["inputs"] = inputsNode;
+
+	// Transaction Outputs
+	Json::Value outputsNode;
+	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
+	{
+		outputsNode.append(BuildTransactionOutputJSON(output, block.GetBlockHeader().GetHeight()));
+	}
+	blockNode["outputs"] = outputsNode;
+
+	// Transaction Kernels
+	Json::Value kernelsNode;
+	for (const TransactionKernel& kernel : block.GetTransactionBody().GetKernels())
+	{
+		kernelsNode.append(BuildTransactionKernelJSON(kernel));
+	}
+	blockNode["kernels"] = kernelsNode;
+
+	return blockNode;
+}
+
+Json::Value JSONFactory::BuildCompactBlockJSON(const CompactBlock& compactBlock)
+{
+	Json::Value blockNode;
+	blockNode["header"] = BuildHeaderJSON(compactBlock.GetBlockHeader());
+
+
+	// Short Ids
+	Json::Value inputsNode;
+	for (const ShortId& shortId : compactBlock.GetShortIds())
+	{
+		inputsNode.append(HexUtil::ConvertToHex(shortId.GetId().GetData(), false, false));
+	}
+	blockNode["inputs"] = inputsNode;
+
+	// Transaction Outputs
+	Json::Value outputsNode;
+	for (const TransactionOutput& output : compactBlock.GetOutputs())
+	{
+		outputsNode.append(BuildTransactionOutputJSON(output, compactBlock.GetBlockHeader().GetHeight()));
+	}
+	blockNode["out_full"] = outputsNode;
+
+	// Transaction Kernels
+	Json::Value kernelsNode;
+	for (const TransactionKernel& kernel : compactBlock.GetKernels())
+	{
+		kernelsNode.append(BuildTransactionKernelJSON(kernel));
+	}
+	blockNode["kern_full"] = kernelsNode;
+
 	return blockNode;
 }
 
 Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 {
 	Json::Value headerNode;
-	headerNode["Height"] = header.GetHeight();
-	headerNode["Hash"] = HexUtil::ConvertToHex(header.GetHash().GetData(), false, false);
-	headerNode["Version"] = header.GetVersion();
+	headerNode["height"] = header.GetHeight();
+	headerNode["hash"] = HexUtil::ConvertToHex(header.GetHash().GetData(), false, false);
+	headerNode["version"] = header.GetVersion();
 
-	headerNode["TimestampRaw"] = header.GetTimestamp();
-	headerNode["TimestampLocal"] = TimeUtil::FormatLocal(header.GetTimestamp());
-	headerNode["TimestampUTC"] = TimeUtil::FormatUTC(header.GetTimestamp());
+	headerNode["timestamp_raw"] = header.GetTimestamp();
+	headerNode["timestamp_local"] = TimeUtil::FormatLocal(header.GetTimestamp());
+	headerNode["timestamp"] = TimeUtil::FormatUTC(header.GetTimestamp());
 
-	headerNode["PreviousHash"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData(), false, false);
-	headerNode["PreviousMMRRoot"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData(), false, false);
+	headerNode["previous"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData(), false, false);
+	headerNode["prev_root"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData(), false, false);
 
-	headerNode["KernelMMRRoot"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData(), false, false);
-	headerNode["KernelMMRSize"] = header.GetKernelMMRSize();
-	headerNode["TotalKernelOffset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData(), false, false);
+	headerNode["kernel_root"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData(), false, false);
+	headerNode["output_root"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData(), false, false);
+	headerNode["range_proof_root"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData(), false, false);
 
-	headerNode["OutputMMRRoot"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData(), false, false);
-	headerNode["OutputMMRSIze"] = header.GetOutputMMRSize();
-	headerNode["RangeProofMMRRoot"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData(), false, false);
+	headerNode["output_mmr_size"] = header.GetOutputMMRSize();
+	headerNode["kernel_mmr_size"] = header.GetKernelMMRSize();
 
-	headerNode["ScalingDifficulty"] = header.GetScalingDifficulty();
-	headerNode["TotalDifficulty"] = header.GetTotalDifficulty();
-	headerNode["Nonce"] = header.GetNonce();
+	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData(), false, false);
+	headerNode["secondary_scaling"] = header.GetScalingDifficulty();
+	headerNode["total_difficulty"] = header.GetTotalDifficulty();
+	headerNode["nonce"] = header.GetNonce();
+
+	headerNode["edge_bits"] = header.GetProofOfWork().GetEdgeBits();
+
+	Json::Value cuckooSolution;
+	for (const uint64_t proofNonce : header.GetProofOfWork().GetProofNonces())
+	{
+		cuckooSolution.append(proofNonce);
+	}
+	headerNode["cuckoo_solution"] = cuckooSolution;
 
 	return headerNode;
-}
-
-Json::Value JSONFactory::BuildTransactionBodyJSON(const TransactionBody& body)
-{
-	Json::Value transactionBodyNode;
-
-	// Transaction Inputs
-	Json::Value inputsNode;
-	for (const TransactionInput& input : body.GetInputs())
-	{
-		inputsNode.append(BuildTransactionInputJSON(input));
-	}
-	transactionBodyNode["inputs"] = inputsNode;
-
-	// Transaction Outputs
-	Json::Value outputsNode;
-	for (const TransactionOutput& output : body.GetOutputs())
-	{
-		outputsNode.append(BuildTransactionOutputJSON(output));
-	}
-	transactionBodyNode["outputs"] = outputsNode;
-
-	// Transaction Kernels
-	Json::Value kernelsNode;
-	for (const TransactionKernel& kernel : body.GetKernels())
-	{
-		kernelsNode.append(BuildTransactionKernelJSON(kernel));
-	}
-	transactionBodyNode["kernels"] = kernelsNode;
-
-	return transactionBodyNode;
 }
 
 Json::Value JSONFactory::BuildTransactionInputJSON(const TransactionInput& input)
 {
 	Json::Value inputNode;
-
-	// TODO: Implement
-
+	inputNode = HexUtil::ConvertToHex(input.GetCommitment().GetCommitmentBytes().GetData(), false, false);
 	return inputNode;
 }
 
-Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& output)
+/*
+{
+	  "output_type": "Transaction",
+	  "commit": "085330fdb767cbbc46a3c103cc66cf215d784e851a025c2f37ce1a57fcfa306df9",
+	  "spent": true,
+	  "proof": null,
+	  "proof_hash": "890c52c2d69df36c9b68c26d3499ed46cc8245241226a129ef9e714c0921a2a3",
+	  "block_height": null,
+	  "merkle_proof": null,
+	  "mmr_index": 913519
+	},
+*/
+Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& output, const uint64_t blockHeight) // TODO: Should be OutputDisplayInfo
 {
 	Json::Value outputNode;
 
-	// TODO: Implement
+	outputNode["output_type"] = output.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT ? "Coinbase" : "Transaction";
+	// TODO: outputNode["spent"]
+	outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes(), false, false);
+
+	Serializer proofSerializer;
+	output.GetRangeProof().Serialize(proofSerializer);
+	outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData(), false, false);
+
+	outputNode["block_height"] = blockHeight;
+	outputNode["mmr_index"] = 0; // TODO: This will be part of OutputDisplayInfo
 
 	return outputNode;
 }
@@ -93,7 +147,19 @@ Json::Value JSONFactory::BuildTransactionKernelJSON(const TransactionKernel& ker
 {
 	Json::Value kernelNode;
 
-	// TODO: Implement
+	if (kernel.GetFeatures() == EKernelFeatures::COINBASE_KERNEL)
+	{
+		kernelNode["features"] = "Coinbase";
+	}
+	else if (kernel.GetFeatures() == EKernelFeatures::HEIGHT_LOCKED)
+	{
+		kernelNode["features"] = "HeightLocked";
+	}
+
+	kernelNode["fee"] = kernel.GetFee();
+	kernelNode["lock_height"] = kernel.GetLockHeight();
+	kernelNode["excess"] = HexUtil::ConvertToHex(kernel.GetExcessCommitment().GetCommitmentBytes().GetData(), false, false);
+	kernelNode["excess_sig"] = HexUtil::ConvertToHex(kernel.GetExcessSignature().GetSignatureBytes().GetData(), false, false);
 
 	return kernelNode;
 }

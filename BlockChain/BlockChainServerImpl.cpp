@@ -1,5 +1,6 @@
 #include "BlockChainServerImpl.h"
 #include "BlockHydrator.h"
+#include "CompactBlockFactory.h"
 #include "Validators/BlockHeaderValidator.h"
 #include "Validators/BlockValidator.h"
 #include "Processors/BlockHeaderProcessor.h"
@@ -185,6 +186,17 @@ std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const 
 std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
 {
 	return m_pChainState->GetTipBlockHeader(chainType);
+}
+
+std::unique_ptr<CompactBlock> BlockChainServer::GetCompactBlockByHash(const Hash& hash) const
+{
+	std::unique_ptr<FullBlock> pBlock = m_pBlockStore->GetBlockByHash(hash);
+	if (pBlock != nullptr)
+	{
+		return std::make_unique<CompactBlock>(CompactBlockFactory::CreateCompactBlock(*pBlock));
+	}
+
+	return std::unique_ptr<CompactBlock>(nullptr);
 }
 
 std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Commitment& outputCommitment) const

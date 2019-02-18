@@ -12,5 +12,4 @@ public:
 
 private:
 	static std::unique_ptr<FullBlock> GetBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer);
-	static std::unique_ptr<CompactBlock> GetCompactBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer);
 };

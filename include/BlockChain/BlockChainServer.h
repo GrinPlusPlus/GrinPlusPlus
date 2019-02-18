@@ -89,6 +89,11 @@ public:
 	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
 
 	//
+	// Creates a compact block to represent the block with the given hash, if it exists.
+	//
+	virtual std::unique_ptr<CompactBlock> GetCompactBlockByHash(const Hash& hash) const = 0;
+
+	//
 	// Returns the block at the given height.
 	// This will be null if no matching block is found.
 	//
@@ -105,6 +110,7 @@ public:
 	// This will be null if the output commitment is not found or the block doesn't exist in the DB.
 	//
 	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& outputCommitment) const = 0;
+
 
 	virtual std::vector<BlockWithOutputs> GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const = 0;
 

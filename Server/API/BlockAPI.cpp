@@ -22,17 +22,17 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pBlockChainServ
 
 	if (queryString == "compact")
 	{
-		const std::string response = "NOT IMPLEMENTED";
-		return RestUtil::BuildBadRequestResponse(conn, response);
+		std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
 
-		// TODO: Implement
-		//std::unique_ptr<CompactBlock> pCompactBlock = GetCompactBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
-
-		//if (nullptr != pCompactBlock)
-		//{
-		//	const std::string response = BuildCompactBlockJSON(*pCompactBlock);
-		//	return RestUtil::BuildSuccessResponse(conn, response);
-		//}
+		if (nullptr != pBlock)
+		{
+			std::unique_ptr<CompactBlock> pCompactBlock = ((IBlockChainServer*)pBlockChainServer)->GetCompactBlockByHash(pBlock->GetHash());
+			if (pCompactBlock != nullptr)
+			{
+				const Json::Value compactBlockJSON = JSONFactory::BuildCompactBlockJSON(*pCompactBlock);
+				return RestUtil::BuildSuccessResponse(conn, compactBlockJSON.toStyledString());
+			}
+		}
 	}
 	else
 	{

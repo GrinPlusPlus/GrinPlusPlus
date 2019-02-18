@@ -65,7 +65,7 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	}
 	else if (poolType == EPoolType::STEMPOOL)
 	{
-		const uint8_t random = (uint8_t)RandomNumberGenerator::GeneratePseudoRandomNumber(0, 100);
+		const uint8_t random = (uint8_t)RandomNumberGenerator::GenerateRandom(0, 100);
 		if (random <= m_config.GetDandelionConfig().GetStemProbability())
 		{
 			return m_stemPool.AddTransaction(transaction, EDandelionStatus::TO_STEM);
@@ -150,7 +150,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockH
 
 std::vector<Transaction> TransactionPool::GetExpiredTransactions() const
 {
-	const uint16_t embargoSeconds = m_config.GetDandelionConfig().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GeneratePseudoRandomNumber(0, 30);
+	const uint16_t embargoSeconds = m_config.GetDandelionConfig().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
 }
 

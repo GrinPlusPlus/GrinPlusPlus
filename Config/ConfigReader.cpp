@@ -26,8 +26,11 @@ Config ConfigReader::ReadConfig(const Json::Value& root) const
 	// Read Wallet Config
 	const WalletConfig walletConfig = ReadWalletConfig(root, environment.GetEnvironmentType(), dataPath);
 
+	// Read Server Config
+	const ServerConfig serverConfig = ReadServerConfig(root);
+
 	// TODO: Mempool, mining, and logger settings
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig);
+	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
@@ -163,4 +166,20 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 	}
 
 	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion);
+}
+
+ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root) const
+{
+	uint32_t restAPIPort = 3413;
+	if (root.isMember(ConfigProps::Server::SERVER))
+	{
+		const Json::Value& serverRoot = root[ConfigProps::Server::SERVER];
+
+		if (serverRoot.isMember(ConfigProps::Server::REST_API_PORT))
+		{
+			restAPIPort = serverRoot.get(ConfigProps::Server::REST_API_PORT, 3413).asInt();
+		}
+	}
+
+	return ServerConfig(restAPIPort);
 }

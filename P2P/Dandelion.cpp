@@ -100,7 +100,7 @@ bool Dandelion::ProcessStemPhase()
 
 		const uint16_t relaySeconds = m_config.GetDandelionConfig().GetRelaySeconds();
 		m_relayExpirationTime = std::chrono::system_clock::now() + std::chrono::seconds(relaySeconds);
-		const int index = RandomNumberGenerator::GeneratePseudoRandomNumber(0, mostWorkPeers.size() - 1);
+		const int index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
 		m_relayNodeId = mostWorkPeers[index];
 	}
 

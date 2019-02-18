@@ -24,7 +24,7 @@ std::vector<unsigned char> RandomNumberGenerator::GenerateRandomBytes(const size
 	return buffer;
 }
 
-uint64_t RandomNumberGenerator::GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum)
+uint64_t RandomNumberGenerator::GenerateRandom(const uint64_t minimum, const uint64_t maximum)
 {
 	std::random_device seeder;
 	std::mt19937 engine(seeder());

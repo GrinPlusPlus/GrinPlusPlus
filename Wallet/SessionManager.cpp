@@ -9,7 +9,7 @@
 SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)
 {
-	m_nextSessionId = RandomNumberGenerator::GeneratePseudoRandomNumber(0, UINT64_MAX);
+	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 }
 
 SessionManager::~SessionManager()

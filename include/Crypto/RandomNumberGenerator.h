@@ -30,5 +30,5 @@ public:
 
 	static std::vector<unsigned char> GenerateRandomBytes(const size_t numBytes);
 
-	static uint64_t GeneratePseudoRandomNumber(const uint64_t minimum, const uint64_t maximum);
+	static uint64_t GenerateRandom(const uint64_t minimum, const uint64_t maximum);
 };

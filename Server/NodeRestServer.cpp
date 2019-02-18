@@ -26,23 +26,23 @@ bool NodeRestServer::Start()
 	/* Initialize the library */
 	mg_init_library(0);
 
-	/* Start the server */	
-	// TODO: Read num_threads and listening_ports from config
+	/* Start the server */
+
+	const uint32_t port = m_config.GetServerConfig().GetRestAPIPort();
 	const char* mg_options[] = {
 		"num_threads", "5",
-		"listening_ports", "150",
+		"listening_ports", std::to_string(port).c_str(),
 		NULL
 	};
 	ctx = mg_start(NULL, 0, mg_options);
 
 	/* Add handlers */
-	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetStatus_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
-	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_serverContainer);
@@ -51,6 +51,7 @@ bool NodeRestServer::Start()
 	mg_set_request_handler(ctx, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_serverContainer);
 
 	/*
 	// TODO: Still missing

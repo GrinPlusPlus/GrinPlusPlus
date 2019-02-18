@@ -15,6 +15,11 @@ public:
 	{
 
 	}
+	CompactBlockMessage(const CompactBlock& block)
+		: m_block(block)
+	{
+
+	}
 	CompactBlockMessage(const CompactBlockMessage& other) = default;
 	CompactBlockMessage(CompactBlockMessage&& other) noexcept = default;
 

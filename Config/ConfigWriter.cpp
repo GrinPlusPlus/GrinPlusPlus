@@ -13,6 +13,7 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 	WriteDataPath(root, config.GetDataDirectory());
 	WriteP2P(root, config.GetP2PConfig());
 	WriteDandelion(root, config.GetDandelionConfig());
+	WriteServer(root, config.GetServerConfig());
 
 	std::ofstream file(configPath, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!file.is_open())
@@ -117,4 +118,16 @@ void ConfigWriter::WriteDandelion(Json::Value& root, const DandelionConfig& dand
 	dandelionJSON[ConfigProps::Dandelion::STEM_PROBABILITY] = stemProbabilityValue;
 
 	root[ConfigProps::Dandelion::DANDELION] = dandelionJSON;
+}
+
+void ConfigWriter::WriteServer(Json::Value& root, const ServerConfig& serverConfig) const
+{
+	Json::Value serverJSON;
+
+	Json::Value restAPIPortValue = Json::Value(serverConfig.GetRestAPIPort());
+	const std::string restAPIPortComment = "/* Port number to host the node's Rest API. */";
+	restAPIPortValue.setComment(restAPIPortComment, Json::commentBefore);
+	serverJSON[ConfigProps::Server::REST_API_PORT] = restAPIPortValue;
+
+	root[ConfigProps::Server::SERVER] = serverJSON;
 }

@@ -25,4 +25,11 @@ namespace ConfigProps
 		static const std::string PATIENCE_SECS = "PATIENCE_SECS";
 		static const std::string STEM_PROBABILITY = "STEM_PROBABILITY";
 	}
+	
+	namespace Server
+	{
+		static const std::string SERVER = "SERVER";
+
+		static const std::string REST_API_PORT = "REST_API_PORT";
+	}
 }

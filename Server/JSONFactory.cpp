@@ -98,19 +98,6 @@ Json::Value JSONFactory::BuildTransactionKernelJSON(const TransactionKernel& ker
 	return kernelNode;
 }
 
-/*
-{
-	"addr": "1.0.156.224:3414",
-	"capabilities": {
-		"bits": 0
-	},
-	"user_agent": "",
-	"flags": "Defunct",
-	"last_banned": 0,
-	"ban_reason": "None",
-	"last_connected": 1550025063
-}
-*/
 Json::Value JSONFactory::BuildPeerJSON(const Peer& peer)
 {
 	Json::Value peerNode;
@@ -130,9 +117,6 @@ Json::Value JSONFactory::BuildPeerJSON(const Peer& peer)
 	return peerNode;
 }
 
-/*
-{"capabilities":{"bits":15},"user_agent":"MW/Grin 1.0.0","version":1,"addr":"47.111.75.83:3414","direction":"Outbound","total_difficulty":72925553766598,"height":42840}
-*/
 Json::Value JSONFactory::BuildConnectedPeerJSON(const ConnectedPeer& connectedPeer)
 {
 	Json::Value peerNode;

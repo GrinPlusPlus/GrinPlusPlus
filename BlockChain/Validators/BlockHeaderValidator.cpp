@@ -9,8 +9,8 @@
 #include <PMMR/HeaderMMR.h>
 #include <chrono>
 
-BlockHeaderValidator::BlockHeaderValidator(const Config& config, const IHeaderMMR& headerMMR)
-	: m_config(config), m_headerMMR(headerMMR)
+BlockHeaderValidator::BlockHeaderValidator(const Config& config, const IBlockDB& blockDB, const IHeaderMMR& headerMMR)
+	: m_config(config), m_blockDB(blockDB), m_headerMMR(headerMMR)
 {
 
 }
@@ -50,7 +50,7 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	}
 
 	// Validate Proof Of Work
-	const bool validPoW = PoWManager(m_config).IsPoWValid(header, previousHeader);
+	const bool validPoW = PoWManager(m_config, m_blockDB).IsPoWValid(header, previousHeader);
 	if (!validPoW)
 	{
 		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid Proof of Work for header " + HexUtil::ConvertHash(header.GetHash()));

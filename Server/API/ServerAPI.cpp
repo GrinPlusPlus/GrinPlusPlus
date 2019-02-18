@@ -5,7 +5,24 @@
 #include <P2P/Common.h>
 #include <json/json.h>
 
-int ServerAPI::GetServer_Handler(struct mg_connection* conn, void* pServerContainer)
+int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
+{
+	if (RestUtil::GetHTTPMethod(conn) == EHTTPMethod::GET)
+	{
+		Json::Value rootNode;
+		rootNode.append("get blocks");
+		rootNode.append("get chain");
+		// TODO: Finish this.
+
+		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+	}
+	else
+	{
+		return RestUtil::BuildNotFoundResponse(conn, "Not Found");
+	}
+}
+
+int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pServerContainer)
 {
 	ServerContainer* pServer = (ServerContainer*)pServerContainer;
 	

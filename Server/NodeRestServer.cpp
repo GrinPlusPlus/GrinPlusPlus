@@ -27,15 +27,19 @@ bool NodeRestServer::Start()
 	mg_init_library(0);
 
 	/* Start the server */	
+	// TODO: Read num_threads and listening_ports from config
 	const char* mg_options[] = {
-		"num_threads", "3"
+		"num_threads", "5",
+		"listening_ports", "150",
+		NULL
 	};
-	ctx = mg_start(NULL, 0, NULL);// mg_options);
+	ctx = mg_start(NULL, 0, mg_options);
 
 	/* Add handlers */
+	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetStatus_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
-	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetServer_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, &m_serverContainer);

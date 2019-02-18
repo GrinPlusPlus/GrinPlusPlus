@@ -7,7 +7,6 @@
 #include <BlockChain/BlockChainStatus.h>
 #include <TxPool/TransactionPool.h>
 
-// TODO: Move this?
 enum class EBlockStatus
 {
 	NEXT_BLOCK,

@@ -55,7 +55,7 @@ namespace Consensus
 	static const uint64_t MEDIAN_TIME_INDEX = MEDIAN_TIME_WINDOW / 2;
 
 	// Number of blocks used to calculate difficulty adjustments
-	static const uint64_t DIFFICULTY_ADJUST_WINDOW = 60;
+	static const uint64_t DIFFICULTY_ADJUST_WINDOW = HOUR_HEIGHT;
 
 	// Average time span of the difficulty adjustment window
 	static const uint64_t BLOCK_TIME_WINDOW = DIFFICULTY_ADJUST_WINDOW * BLOCK_TIME_SEC;

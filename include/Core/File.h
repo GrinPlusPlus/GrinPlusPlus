@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <mutex>
 
 class File
 {
@@ -35,9 +34,6 @@ public:
 	bool Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const;
 
 private:
-	bool Flush_Locked();
-
-	mutable std::mutex m_mutex;
 	std::string m_path;
 	uint64_t m_bufferIndex;
 	uint64_t m_fileSize;

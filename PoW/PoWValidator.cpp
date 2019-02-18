@@ -1,5 +1,6 @@
 #include "PoWValidator.h"
 #include "uint128/uint128_t.h"
+#include "DifficultyCalculator.h"
 #include "PoWUtil.h"
 #include "Cuckaroo.h"
 #include "Cuckatoo.h"
@@ -7,8 +8,8 @@
 #include <Consensus/BlockTime.h>
 #include <Consensus/BlockDifficulty.h>
 
-PoWValidator::PoWValidator(const Config& config)
-	: m_config(config)
+PoWValidator::PoWValidator(const Config& config, const IBlockDB& blockDB)
+	: m_config(config), m_blockDB(blockDB)
 {
 
 }
@@ -27,21 +28,19 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 		return false;
 	}
 
-	// TODO: Implement
-	//let child_batch = ctx.batch.child() ? ;
-	//let diff_iter = store::DifficultyIter::from_batch(header.previous, child_batch);
-	//let next_header_info = Consensus::next_difficulty(header.GetHeight(), diff_iter);
-	//if (targetDifficulty != next_header_info.difficulty
-	//{
-	//	return Err(ErrorKind::WrongTotalDifficulty.into());
-	//}
+	// Explicit check to ensure total_difficulty has increased by exactly the _network_ difficulty of the previous block.
+	const HeaderInfo nextHeaderInfo = DifficultyCalculator(m_blockDB).CalculateNextDifficulty(header);
+	if (targetDifficulty != nextHeaderInfo.GetDifficulty())
+	{
+		return false;
+	}
 
-	// TODO: Implement
-	// check the secondary PoW scaling factor if applicable
-	//if (proofOfWork.GetScalingDifficulty() != next_header_info.secondary_scaling)
-	//{
-	//	return Err(ErrorKind::InvalidScaling.into());
-	//}
+	// Check the secondary PoW scaling factor if applicable.
+	if (header.GetScalingDifficulty() != nextHeaderInfo.GetSecondaryScaling())
+	{
+		return false;
+	}
+
 
 	const ProofOfWork& proofOfWork = header.GetProofOfWork();
 	const EPoWType powType = PoWUtil(m_config).DeterminePoWType(proofOfWork.GetEdgeBits());

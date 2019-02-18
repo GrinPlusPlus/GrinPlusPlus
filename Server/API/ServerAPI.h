@@ -5,5 +5,6 @@
 class ServerAPI
 {
 public:
-	static int GetServer_Handler(struct mg_connection* conn, void* pServerContainer);
+	static int V1_Handler(struct mg_connection* conn, void* pVoid);
+	static int GetStatus_Handler(struct mg_connection* conn, void* pServerContainer);
 };

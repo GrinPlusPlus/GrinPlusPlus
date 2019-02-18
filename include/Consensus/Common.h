@@ -28,13 +28,4 @@ namespace Consensus
 	{
 		return REWARD + fee;
 	}
-
-	/*
-	TODO: Implement this.
-	// Consensus rule that collections of items are sorted lexicographically.
-	pub trait VerifySortOrder<T> {
-		// Verify a collection of items is sorted as required.
-		fn verify_sort_order(&self)->Result<(), Error>;
-	}
-	*/
 }

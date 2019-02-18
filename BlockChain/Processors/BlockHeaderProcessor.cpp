@@ -65,7 +65,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 
 	// Validate the header.
 	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
-	if (!BlockHeaderValidator(m_config, lockedState.m_headerMMR).IsValidHeader(header, *pPreviousHeaderPtr))
+	if (!BlockHeaderValidator(m_config, lockedState.m_blockStore.GetBlockDB(), lockedState.m_headerMMR).IsValidHeader(header, *pPreviousHeaderPtr))
 	{
 		LoggerAPI::LogError("BlockHeaderProcessor::ProcessSingleHeader - Header failed to validate.");
 		return EBlockChainStatus::INVALID;
@@ -171,13 +171,14 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 	const BlockHeader* pPreviousHeader = pPreviousHeaderPtr.get();
 	for (auto& header : newHeaders)
 	{
-		if (!BlockHeaderValidator(m_config, headerMMR).IsValidHeader(header, *pPreviousHeader))
+		if (!BlockHeaderValidator(m_config, lockedState.m_blockStore.GetBlockDB(), headerMMR).IsValidHeader(header, *pPreviousHeader))
 		{
 			headerMMR.Rollback();
 			return EBlockChainStatus::INVALID;
 		}
 
 		headerMMR.AddHeader(header);
+		lockedState.m_blockStore.AddHeader(header);
 		pPreviousHeader = &header;
 	}
 
@@ -234,8 +235,6 @@ EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(LockedChainState& lockedS
 		syncChain.AddBlock(pBlockIndex);
 		pPrevious = pBlockIndex;
 	}
-
-	lockedState.m_blockStore.AddHeaders(headers);
 
 	return EBlockChainStatus::SUCCESS;
 }

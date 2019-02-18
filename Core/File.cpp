@@ -27,8 +27,6 @@ File::File(const std::string& path)
 
 bool File::Load()
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
 	std::ifstream file(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
 	if (!file.is_open())
 	{
@@ -49,13 +47,6 @@ bool File::Load()
 }
 
 bool File::Flush()
-{
-	std::lock_guard<std::mutex> lock(m_mutex);
-
-	return Flush_Locked();
-}
-
-bool File::Flush_Locked()
 {
 	if (m_fileSize == m_bufferIndex && m_buffer.empty())
 	{
@@ -112,16 +103,12 @@ bool File::Flush_Locked()
 
 void File::Append(const std::vector<unsigned char>& data)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
 	m_buffer.insert(m_buffer.end(), data.cbegin(), data.cend());
 }
 
 bool File::Rewind(const uint64_t nextPosition)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
-	if (!Flush_Locked())
+	if (!Flush())
 	{
 		return false;
 	}
@@ -147,8 +134,6 @@ bool File::Rewind(const uint64_t nextPosition)
 
 bool File::Discard()
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
 	m_bufferIndex = m_fileSize;
 	m_buffer.clear();
 
@@ -157,15 +142,11 @@ bool File::Discard()
 
 uint64_t File::GetSize() const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
 	return m_bufferIndex + m_buffer.size();
 }
 
 bool File::Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-
 	if (position < m_bufferIndex)
 	{
 		data = std::vector<unsigned char>(m_mmap.cbegin() + position, m_mmap.cbegin() + position + numBytes);

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <Crypto/Hash.h>
 #include <Crypto/BigInteger.h>
+#include <Consensus/BlockDifficulty.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -27,6 +28,13 @@ public:
 
 	inline uint8_t GetEdgeBits() const { return m_edgeBits; }
 	inline const std::vector<uint64_t>& GetProofNonces() const { return m_proofNonces; }
+
+
+	// Whether this proof of work is for the primary algorithm (as opposed to secondary). Only depends on the edge_bits at this time.
+	inline bool IsPrimary() const { return m_edgeBits != Consensus::SECOND_POW_EDGE_BITS && m_edgeBits >= Consensus::DEFAULT_MIN_EDGE_BITS; }
+
+	// Whether this proof of work is for the secondary algorithm (as opposed to primary). Only depends on the edge_bits at this time.
+	inline bool IsSecondary() const { return m_edgeBits == Consensus::SECOND_POW_EDGE_BITS; }
 
 	////////////////////////////////////////
 	// SERIALIZATION/DESERIALIZATION

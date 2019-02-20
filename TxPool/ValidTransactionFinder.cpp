@@ -5,7 +5,7 @@
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Util/FunctionalUtil.h>
 
-ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache)
 	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)
 {
 

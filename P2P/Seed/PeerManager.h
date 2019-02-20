@@ -34,7 +34,7 @@ public:
 	// TODO: RemovePeer
 
 private:
-	bool AddPeer(const Peer& peer);
+	bool AddPeer(const Peer& peer, const bool served);
 	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
 	const Config& m_config;

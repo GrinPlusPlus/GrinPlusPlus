@@ -83,12 +83,20 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 
 		bool messageSentOrReceived = false;
 
-		// Check for received messages and if there is a new message, process it.
-		std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, MessageRetriever::NON_BLOCKING);
-		if (pRawMessage.get() != nullptr)
+		try
 		{
-			const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
-			messageSentOrReceived = true;
+			// Check for received messages and if there is a new message, process it.
+			std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, MessageRetriever::NON_BLOCKING);
+			if (pRawMessage.get() != nullptr)
+			{
+				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
+				messageSentOrReceived = true;
+			}
+		}
+		catch (const DeserializationException&)
+		{
+			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Deserialization exception occurred.");
+			break;
 		}
 
 		// Send the next message in the queue, if one exists.
@@ -111,4 +119,6 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		}
 	}
+
+	closesocket(connection.GetConnectedPeer().GetSocket());
 }

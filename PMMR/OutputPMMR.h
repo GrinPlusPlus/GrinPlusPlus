@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Common/MMR.h"
-#include "Common/CRoaring/roaring.hh"
 #include "Common/LeafSet.h"
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
@@ -10,6 +9,7 @@
 #include <Core/Models/OutputIdentifier.h>
 #include <Database/BlockDB.h>
 #include <Crypto/Hash.h>
+#include <Core/CRoaring/roaring.hh>
 
 #define OUTPUT_SIZE 34
 

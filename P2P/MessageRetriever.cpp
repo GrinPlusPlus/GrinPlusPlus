@@ -32,7 +32,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 
 			if (!messageHeader.IsValid(m_config))
 			{
-				//LoggerAPI::LogError(connectedPeer.GetPeer().GetIPAddress().Format() + "> FAILURE");
+				throw DeserializationException();
 			}
 			else
 			{

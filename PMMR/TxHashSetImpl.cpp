@@ -74,6 +74,8 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
 
+	Roaring blockInputBitmap;
+
 	// Prune inputs
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
@@ -97,7 +99,11 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove rangeproof at position:" + std::to_string(mmrIndex));
 			return false;
 		}
+
+		blockInputBitmap.add(mmrIndex);
 	}
+
+	m_blockDB.AddBlockInputBitmap(block.GetBlockHeader().GetHash(), blockInputBitmap);
 
 	// Append new outputs
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
@@ -228,21 +234,17 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
 
-	// TODO: Use block input bitmaps
 	Roaring leavesToAdd;
 	while (m_blockHeader != header)
 	{
-		std::unique_ptr<FullBlock> pBlock = m_blockDB.GetBlock(m_blockHeader.GetHash());
-		if (pBlock != nullptr)
+		std::optional<Roaring> blockInputBitmapOpt = m_blockDB.GetBlockInputBitmap(m_blockHeader.GetHash());
+		if (blockInputBitmapOpt.has_value())
 		{
-			for (const TransactionInput& input : pBlock->GetTransactionBody().GetInputs())
-			{
-				std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
-				if (locationOpt.has_value())
-				{
-					leavesToAdd.add(locationOpt.value().GetMMRIndex() + 1);
-				}
-			}
+			leavesToAdd |= blockInputBitmapOpt.value();
+		}
+		else
+		{
+			return false;
 		}
 
 		m_blockHeader = *m_blockDB.GetBlockHeader(m_blockHeader.GetPreviousBlockHash());

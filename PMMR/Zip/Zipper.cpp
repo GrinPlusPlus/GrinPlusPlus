@@ -44,7 +44,7 @@ bool Zipper::AddDirectory(zipFile zf, const std::filesystem::path& sourceDir, co
 	{
 		if (std::filesystem::is_directory(entry))
 		{
-			if (!AddDirectory(zf, entry, destDir + "\\" + entry.path().filename().string()))
+			if (!AddDirectory(zf, entry, destDir + "/" + entry.path().filename().string()))
 			{
 				return false;
 			}
@@ -74,9 +74,9 @@ bool Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 		if (size == 0 || file.read(&buffer[0], size))
 		{
 			zip_fileinfo zfi = { 0 };
-			std::string fileName = destDir + "\\" + sourceFile.substr(std::max(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
+			std::string fileName = destDir + "/" + sourceFile.substr(std::max(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
 
-			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_NO_COMPRESSION))
+			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
 			{
 				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], size))
 				{

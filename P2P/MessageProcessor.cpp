@@ -347,17 +347,20 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		return EStatus::UNKNOWN_ERROR;
 	}
 
-	std::ifstream file(zipFilePath, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+	std::ifstream file(zipFilePath, std::ios::in | std::ios::ate | std::ios::binary);
 	if (!file.is_open())
 	{
 		return EStatus::UNKNOWN_ERROR;
 	}
 
 	const uint64_t fileSize = file.tellg();
+	file.seekg(0);
 	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
+	MessageSender(m_config).Send(connectedPeer, archiveMessage);
 
-	std::vector<unsigned char> buffer;
-	buffer.reserve(BUFFER_SIZE);
+	unsigned long nonblocking = 0;
+	ioctlsocket(connectedPeer.GetSocket(), FIONBIO, &nonblocking);
+	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	uint64_t totalBytesRead = 0;
 	while (totalBytesRead < fileSize)
 	{

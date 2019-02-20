@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Pool.h"
+#include "BulletProofsCache.h"
 
 #include <TxPool/TransactionPool.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Models/ShortId.h>
-#include <lru/cache.hpp>
 #include <Crypto/Hash.h>
 #include <set>
 
@@ -32,7 +32,7 @@ private:
 	const Config& m_config;
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
-	mutable LRU::Cache<Commitment, Commitment> m_bulletproofsCache;
+	mutable BulletProofsCache m_bulletproofsCache;
 
 	Pool m_memPool;
 	Pool m_stemPool;

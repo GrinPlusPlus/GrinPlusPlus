@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Common/MMR.h"
-#include "Common/CRoaring/roaring.hh"
 #include "Common/LeafSet.h"
 #include "Common/PruneList.h"
 #include "Common/HashFile.h"
@@ -10,6 +9,7 @@
 #include <Crypto/Hash.h>
 #include <Core/DataFile.h>
 #include <Crypto/RangeProof.h>
+#include <Core/CRoaring/roaring.hh>
 
 #define RANGE_PROOF_SIZE 683
 

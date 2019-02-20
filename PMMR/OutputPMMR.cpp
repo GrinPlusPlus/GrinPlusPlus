@@ -105,7 +105,7 @@ std::unique_ptr<Hash> OutputPMMR::GetHashAt(const uint64_t mmrIndex) const
 
 std::vector<Hash> OutputPMMR::GetLastLeafHashes(const uint64_t numHashes) const
 {
-	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, &m_pruneList, numHashes);
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, &m_leafSet, &m_pruneList, numHashes);
 }
 
 bool OutputPMMR::IsUnspent(const uint64_t mmrIndex) const

@@ -7,7 +7,7 @@
 class TransactionValidator
 {
 public:
-	TransactionValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache);
+	TransactionValidator(BulletProofsCache& bulletproofsCache);
 
 	bool ValidateTransaction(const Transaction& transaction);
 

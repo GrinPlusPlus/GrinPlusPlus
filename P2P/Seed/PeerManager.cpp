@@ -118,7 +118,7 @@ void PeerManager::AddPeerAddresses(const std::vector<SocketAddress>& peerAddress
 	for (auto peerAddress : peerAddresses)
 	{
 		const Peer peer(peerAddress);
-		AddPeer(peer);
+		AddPeer(peer, false);
 	}
 }
 
@@ -133,11 +133,12 @@ bool PeerManager::UpdatePeer(const Peer& peer)
 	if (iter != m_peersByAddress.end())
 	{
 		iter->second.m_peer = peer;
+		iter->second.m_peerServed = true;
 		return true;
 	}
 	else
 	{
-		AddPeer(peer);
+		AddPeer(peer, true);
 		return false;
 	}
 }
@@ -150,7 +151,7 @@ bool PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 	return UpdatePeer(peer);
 }
 
-bool PeerManager::AddPeer(const Peer& peer)
+bool PeerManager::AddPeer(const Peer& peer, const bool served)
 {
 	const IPAddress& address = peer.GetIPAddress();
 	if (m_peersByAddress.find(address) == m_peersByAddress.cend())

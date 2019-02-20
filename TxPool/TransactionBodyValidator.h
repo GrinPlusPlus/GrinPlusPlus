@@ -1,12 +1,13 @@
 #pragma once
 
+#include "BulletProofsCache.h"
+
 #include <Core/Models/TransactionBody.h>
-#include <lru/cache.hpp>
 
 class TransactionBodyValidator
 {
 public:
-	TransactionBodyValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache);
+	TransactionBodyValidator(BulletProofsCache& bulletproofsCache);
 
 	bool ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward);
 
@@ -17,5 +18,5 @@ private:
 	bool VerifyOutputs(const std::vector<TransactionOutput>& outputs);
 	bool VerifyKernels(const std::vector<TransactionKernel>& kernels);
 
-	LRU::Cache<Commitment, Commitment>& m_bulletproofsCache;
+	BulletProofsCache& m_bulletproofsCache;
 };

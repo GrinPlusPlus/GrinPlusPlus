@@ -12,7 +12,6 @@ TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& t
 	: m_config(config), 
 	m_txHashSetManager(txHashSetManager), 
 	m_blockDB(blockDB),
-	m_bulletproofsCache(3000),
 	m_memPool(config, txHashSetManager, blockDB, m_bulletproofsCache),
 	m_stemPool(config, txHashSetManager, blockDB, m_bulletproofsCache)
 {

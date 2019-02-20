@@ -26,55 +26,59 @@ namespace MessageTypes
 		TransactionMsg = 15,
 		TxHashSetRequest = 16,
 		TxHashSetArchive = 17,
-		BanReasonMsg = 18
-		// GetTransaction = 19,
-		// CompactTransaction = 20,
+		BanReasonMsg = 18,
+		GetTransaction = 19,
+		TransactionKernel = 20
 	};
 
-	//static uint64_t GetMaximumSize(const EMessageType messageType)
-	//{
-	//	switch (messageType)
-	//	{
-	//		case Error: 
-	//			return 0;
-	//		case Hand: 
-	//			return 128;
-	//		case Shake: 
-	//			return 88;
-	//		case Ping: 
-	//			return 16;
-	//		case Pong: 
-	//			return 16;
-	//		case GetPeerAddrs: 
-	//			return 4;
-	//		case PeerAddrs: 
-	//			return 4 + (1 + 16 + 2) * ((uint64_t)P2P::MAX_PEER_ADDRS);
-	//		case GetHeaders: 
-	//			return 1 + 32 * ((uint64_t)P2P::MAX_LOCATORS);
-	//		case Header:
-	//			return 365;
-	//		case Headers: 
-	//			return 2 + 365 * ((uint64_t)P2P::MAX_BLOCK_HEADERS);
-	//		case GetBlock: 
-	//			return 32;
-	//		case Block: 
-	//			return P2P::MAX_BLOCK_SIZE;
-	//		case GetCompactBlock: 
-	//			return 32;
-	//		case CompactBlock: 
-	//			return P2P::MAX_BLOCK_SIZE / 10;
-	//		case StemTransaction: 
-	//			return P2P::MAX_BLOCK_SIZE;
-	//		case Transaction: 
-	//			return P2P::MAX_BLOCK_SIZE;
-	//		case TxHashSetRequest: 
-	//			return 40;
-	//		case TxHashSetArchive: 
-	//			return 64;
-	//		case BanReason: 
-	//			return 64;
-	//	}
+	static uint64_t GetMaximumSize(const EMessageType messageType)
+	{
+		switch (messageType)
+		{
+			case Error: 
+				return 0;
+			case Hand: 
+				return 128;
+			case Shake: 
+				return 88;
+			case Ping: 
+				return 16;
+			case Pong: 
+				return 16;
+			case GetPeerAddrs: 
+				return 4;
+			case PeerAddrs: 
+				return 4 + (1 + 16 + 2) * ((uint64_t)P2P::MAX_PEER_ADDRS);
+			case GetHeaders: 
+				return 1 + 32 * ((uint64_t)P2P::MAX_LOCATORS);
+			case Header:
+				return 365;
+			case Headers: 
+				return 2 + 365 * ((uint64_t)P2P::MAX_BLOCK_HEADERS);
+			case GetBlock: 
+				return 32;
+			case Block: 
+				return P2P::MAX_BLOCK_SIZE;
+			case GetCompactBlock: 
+				return 32;
+			case CompactBlockMsg: 
+				return P2P::MAX_BLOCK_SIZE / 10;
+			case StemTransaction: 
+				return P2P::MAX_BLOCK_SIZE;
+			case TransactionMsg:
+				return P2P::MAX_BLOCK_SIZE;
+			case TxHashSetRequest: 
+				return 40;
+			case TxHashSetArchive: 
+				return 64;
+			case BanReasonMsg:
+				return 64;
+			case GetTransaction:
+				return 32;
+			case TransactionKernel:
+				return 32;
+		}
 
-	//	return 0;
-	//}
+		return 0;
+	}
 }

@@ -5,9 +5,8 @@
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-KernelMMR::KernelMMR(HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile)
+KernelMMR::KernelMMR(HashFile* pHashFile, DataFile<KERNEL_SIZE>* pDataFile)
 	: m_pHashFile(pHashFile),
-	m_leafSet(std::move(leafSet)),
 	m_pDataFile(pDataFile)
 {
 
@@ -27,13 +26,10 @@ KernelMMR* KernelMMR::Load(const std::string& txHashSetDirectory)
 	HashFile* pHashFile = new HashFile(txHashSetDirectory + "kernel/pmmr_hash.bin");
 	pHashFile->Load();
 
-	LeafSet leafSet(txHashSetDirectory + "kernel/pmmr_leaf.bin");
-	leafSet.Load();
-
 	DataFile<KERNEL_SIZE>* pDataFile = new DataFile<KERNEL_SIZE>(txHashSetDirectory + "kernel/pmmr_data.bin");
 	pDataFile->Load();
 
-	return new KernelMMR(pHashFile, std::move(leafSet), pDataFile);
+	return new KernelMMR(pHashFile, pDataFile);
 }
 
 Hash KernelMMR::Root(const uint64_t size) const
@@ -62,14 +58,13 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 
 std::vector<Hash> KernelMMR::GetLastLeafHashes(const uint64_t numHashes) const
 {
-	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, nullptr, numHashes);
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, nullptr, nullptr, numHashes);
 }
 
 bool KernelMMR::Rewind(const uint64_t size)
 {
 	const bool hashRewind = m_pHashFile->Rewind(size);
 	const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
-	m_leafSet.Rewind(MMRUtil::GetNumLeaves(size - 1), Roaring());
 
 	return hashRewind && dataRewind;
 }
@@ -79,9 +74,8 @@ bool KernelMMR::Flush()
 	LoggerAPI::LogTrace(StringUtil::Format("KernelMMR::Flush - Flushing with size (%llu)", GetSize()));
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
-	const bool leafSetFlush = m_leafSet.Flush();
 
-	return hashFlush && dataFlush && leafSetFlush;
+	return hashFlush && dataFlush;
 }
 
 bool KernelMMR::Discard()
@@ -89,17 +83,12 @@ bool KernelMMR::Discard()
 	LoggerAPI::LogDebug(StringUtil::Format("KernelMMR::Discard - Discarding changes since last flush."));
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
-	m_leafSet.Discard();
 
 	return hashDiscard && dataDiscard;
 }
 
 bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
-	// Update leafset
-	const uint64_t position = m_pHashFile->GetSize();
-	m_leafSet.Add((uint32_t)position);
-
 	// Add to data file
 	Serializer serializer;
 	kernel.Serialize(serializer);

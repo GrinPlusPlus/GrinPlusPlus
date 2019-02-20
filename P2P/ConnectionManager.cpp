@@ -75,6 +75,21 @@ size_t ConnectionManager::GetNumberOfActiveConnections() const
 	return m_connections.size();
 }
 
+bool ConnectionManager::IsConnected(const IPAddress& address) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	for (Connection* pConnection : m_connections)
+	{
+		if (pConnection->GetConnectedPeer().GetPeer().GetIPAddress() == address)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);

@@ -1,5 +1,12 @@
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable:4018)
+#pragma warning(disable:4127)
+#pragma warning(disable:4244)
+#include <Core/CRoaring/roaring.hh>
+#pragma warning(pop)
+
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
@@ -25,4 +32,7 @@ public:
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) = 0;
 	virtual std::optional<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
+
+	virtual void AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap) = 0;
+	virtual std::optional<Roaring> GetBlockInputBitmap(const Hash& blockHash) const = 0;
 };

@@ -97,7 +97,7 @@ uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, const PruneList* 
 	}
 }
 
-std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const LeafSet& leafSet, const PruneList* pPruneList, const uint64_t numHashes)
+std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const LeafSet* pLeafSet, const PruneList* pPruneList, const uint64_t numHashes)
 {
 	uint64_t nextPosition = hashFile.GetSize();
 	if (pPruneList != nullptr)
@@ -113,7 +113,7 @@ std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const
 		--leafIndex;
 
 		const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex);
-		if (leafSet.Contains(mmrIndex))
+		if (pLeafSet == nullptr || pLeafSet->Contains(mmrIndex))
 		{
 			Hash hash = GetHashAt(hashFile, mmrIndex, pPruneList);
 			if (hash != ZERO_HASH)

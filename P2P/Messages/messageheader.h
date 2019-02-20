@@ -47,8 +47,10 @@ public:
 	{
 		if (m_magicBytes[0] == config.GetEnvironment().GetMagicBytes()[0] && m_magicBytes[1] == config.GetEnvironment().GetMagicBytes()[1])
 		{
-			// TODO: Check max length.
-			return true;
+			if (m_messageLength <= (MessageTypes::GetMaximumSize(m_messageType) * 4))
+			{
+				return true;
+			}
 		}
 
 		return false;

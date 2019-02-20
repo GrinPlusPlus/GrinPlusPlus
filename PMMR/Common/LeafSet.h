@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CRoaring/roaring.hh"
 #include "PruneList.h"
 
 #include <string>
 #include <Crypto/Hash.h>
+#include <Core/CRoaring/roaring.hh>
 
 class LeafSet
 {

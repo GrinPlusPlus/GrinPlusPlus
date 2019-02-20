@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Common/MMR.h"
-#include "Common/LeafSet.h"
 #include "Common/HashFile.h"
 
 #include <Core/DataFile.h>
@@ -31,9 +30,8 @@ public:
 	bool ApplyKernel(const TransactionKernel& kernel);
 
 private:
-	KernelMMR(HashFile* pHashFile, LeafSet&& leafSet, DataFile<KERNEL_SIZE>* pDataFile);
+	KernelMMR(HashFile* pHashFile, DataFile<KERNEL_SIZE>* pDataFile);
 
 	HashFile* m_pHashFile;
-	LeafSet m_leafSet;
 	DataFile<KERNEL_SIZE>* m_pDataFile;
 };

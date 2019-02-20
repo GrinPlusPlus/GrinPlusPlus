@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TxPoolEntry.h"
+#include "BulletProofsCache.h"
 
 #include <TxPool/DandelionStatus.h>
 #include <Core/Models/Transaction.h>
@@ -11,7 +12,6 @@
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
 #include <Crypto/Hash.h>
-#include <lru/cache.hpp>
 #include <map>
 #include <set>
 #include <shared_mutex>
@@ -19,7 +19,7 @@
 class Pool
 {
 public:
-	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache);
+	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache);
 
 	bool AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	void RemoveTransactions(const std::vector<Transaction>& transactions);
@@ -38,7 +38,7 @@ private:
 	const Config& m_config;
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
-	LRU::Cache<Commitment, Commitment>& m_bulletproofsCache;
+	BulletProofsCache& m_bulletproofsCache;
 
 	mutable std::shared_mutex m_transactionsMutex;
 	std::vector<TxPoolEntry> m_transactions;

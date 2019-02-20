@@ -6,7 +6,7 @@
 #include <Crypto/Crypto.h>
 #include <set>
 
-TransactionBodyValidator::TransactionBodyValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+TransactionBodyValidator::TransactionBodyValidator(BulletProofsCache& bulletproofsCache)
 	: m_bulletproofsCache(bulletproofsCache)
 {
 
@@ -132,8 +132,7 @@ bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput
 
 	for (auto output : outputs)
 	{
-		auto iter = m_bulletproofsCache.find(output.GetCommitment());
-		if (iter == m_bulletproofsCache.end() || iter->value() != output.GetCommitment())
+		if (!m_bulletproofsCache.WasAlreadyVerified(output.GetCommitment()))
 		{
 			commitments.push_back(output.GetCommitment());
 			proofs.push_back(output.GetRangeProof());
@@ -150,7 +149,7 @@ bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput
 	{
 		for (const Commitment& commitment : commitments)
 		{
-			m_bulletproofsCache.insert(commitment, commitment);
+			m_bulletproofsCache.AddToCache(commitment);
 		}
 	}
 

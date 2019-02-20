@@ -12,7 +12,7 @@ namespace P2P
 	static const uint32_t PROTOCOL_VERSION = 1;
 
 	// Grin's user agent with current version
-	static const std::string USER_AGENT = "GRIN++ 0.0.1";
+	static const std::string USER_AGENT = "GRIN++ 0.0.2";
 
 	// Size in bytes of a message header
 	static const uint64_t HEADER_LENGTH = 11;

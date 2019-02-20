@@ -6,7 +6,7 @@
 #include <Common/Util/VectorUtil.h>
 #include <algorithm>
 
-Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache)
 	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)
 {
 

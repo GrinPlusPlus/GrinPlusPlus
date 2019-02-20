@@ -11,7 +11,10 @@
 #include <ctime>
 #include <WS2tcpip.h>
 #include <Common/Util/VectorUtil.h>
+#include <Crypto/RandomNumberGenerator.h>
 #include <cstdlib>
+
+static const uint64_t NONCE = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 
 ConnectionFactory::ConnectionFactory(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer)
 	: m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_blockChainServer(blockChainServer)
@@ -30,13 +33,20 @@ Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection dir
 	if (socketOptional.has_value())
 	{
 		SOCKET socket = socketOptional.value();
-		Connection* pConnection = PerformHandshake(socket, peer, direction);
-		if (pConnection != nullptr)
+		try
 		{
-			// This will start the message processing loop.
-			pConnection->Connect();
+			Connection* pConnection = PerformHandshake(socket, peer, direction);
+			if (pConnection != nullptr)
+			{
+				// This will start the message processing loop.
+				pConnection->Connect();
 
-			return pConnection;
+				return pConnection;
+			}
+		}
+		catch (const DeserializationException&)
+		{
+			// Do nothing
 		}
 
 		closesocket(socket);
@@ -80,15 +90,18 @@ Connection* ConnectionFactory::PerformHandshake(SOCKET connection, Peer& peer, c
 			ByteBuffer byteBuffer(receivedHandMessage->GetPayload());
 			const HandMessage handMessage = HandMessage::Deserialize(byteBuffer);
 
-			connectedPeer.UpdateVersion(handMessage.GetVersion());
-			connectedPeer.UpdateCapabilities(handMessage.GetCapabilities());
-			connectedPeer.UpdateUserAgent(handMessage.GetUserAgent());
-			connectedPeer.UpdateTotals(handMessage.GetTotalDifficulty(), 0);
-
-			// Send Shake Message
-			if (TransmitShakeMessage(connectedPeer))
+			if (handMessage.GetNonce() != NONCE && !m_connectionManager.IsConnected(peer.GetIPAddress()))
 			{
-				return new Connection(m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
+				connectedPeer.UpdateVersion(handMessage.GetVersion());
+				connectedPeer.UpdateCapabilities(handMessage.GetCapabilities());
+				connectedPeer.UpdateUserAgent(handMessage.GetUserAgent());
+				connectedPeer.UpdateTotals(handMessage.GetTotalDifficulty(), 0);
+
+				// Send Shake Message
+				if (TransmitShakeMessage(connectedPeer))
+				{
+					return new Connection(m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
+				}
 			}
 		}
 	}
@@ -108,7 +121,7 @@ bool ConnectionFactory::TransmitHandMessage(ConnectedPeer& connectedPeer) const
 
 	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
-	const uint64_t nonce = rand();
+	const uint64_t nonce = NONCE;
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
 	const uint64_t totalDifficulty = m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED);
 	SocketAddress senderAddress(localHostIP, m_config.GetEnvironment().GetP2PPort());

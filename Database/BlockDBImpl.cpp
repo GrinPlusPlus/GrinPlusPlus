@@ -11,6 +11,7 @@ static ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *Co
 static ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+static ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 std::string kDBPath = "/tmp/rocksdb_simple_example";
 
@@ -49,8 +50,9 @@ void BlockDB::OpenDB()
 		m_pDatabase->CreateColumnFamily(HEADER_COLUMN.options, HEADER_COLUMN.name, &m_pHeaderHandle);
 		m_pDatabase->CreateColumnFamily(BLOCK_SUMS_COLUMN.options, BLOCK_SUMS_COLUMN.name, &m_pBlockSumsHandle);
 		m_pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &m_pOutputPosHandle);
+		m_pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &m_pInputBitmapHandle);
 	}
-	else
+	else if (columnFamilies.size() == 5)
 	{
 		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN });
 		std::vector<ColumnFamilyHandle*> columnHandles;
@@ -60,6 +62,19 @@ void BlockDB::OpenDB()
 		m_pHeaderHandle = columnHandles[2];
 		m_pBlockSumsHandle = columnHandles[3];
 		m_pOutputPosHandle = columnHandles[4];
+		m_pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &m_pInputBitmapHandle);
+	}
+	else
+	{
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
+		std::vector<ColumnFamilyHandle*> columnHandles;
+		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
+		m_pDefaultHandle = columnHandles[0];
+		m_pBlockHandle = columnHandles[1];
+		m_pHeaderHandle = columnHandles[2];
+		m_pBlockSumsHandle = columnHandles[3];
+		m_pOutputPosHandle = columnHandles[4];
+		m_pInputBitmapHandle = columnHandles[5];
 	}
 }
 
@@ -243,4 +258,38 @@ std::optional<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outpu
 	}
 
 	return outputPosition;
+}
+
+void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
+{
+	Slice key((const char*)&blockHash[0], 32);
+
+	// Serializes the bitmap
+	const size_t bitmapSize = bitmap.getSizeInBytes();
+	std::vector<char> serializedBitmap(bitmapSize);
+	bitmap.write(&serializedBitmap[0], true);
+
+	Slice value(&serializedBitmap[0], bitmapSize);
+
+	// Insert the output position
+	m_pDatabase->Put(WriteOptions(), m_pInputBitmapHandle, key, value);
+}
+
+std::optional<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) const
+{
+	std::optional<Roaring> blockInputBitmap = std::nullopt;
+
+	Slice key((const char*)&blockHash[0], 32);
+
+	// Read from DB
+	std::string value;
+	const Status s = m_pDatabase->Get(ReadOptions(), m_pInputBitmapHandle, key, &value);
+	if (s.ok())
+	{
+		// Deserialize result
+		std::vector<unsigned char> data(value.data(), value.data() + value.size());
+		blockInputBitmap = std::make_optional<Roaring>(Roaring::readSafe((char*)&data[0], data.size()));
+	}
+
+	return blockInputBitmap;
 }

@@ -96,7 +96,7 @@ std::unique_ptr<Hash> RangeProofPMMR::GetHashAt(const uint64_t mmrIndex) const
 
 std::vector<Hash> RangeProofPMMR::GetLastLeafHashes(const uint64_t numHashes) const
 {
-	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, m_leafSet, &m_pruneList, numHashes);
+	return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, &m_leafSet, &m_pruneList, numHashes);
 }
 
 std::unique_ptr<RangeProof> RangeProofPMMR::GetRangeProofAt(const uint64_t mmrIndex) const

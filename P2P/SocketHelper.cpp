@@ -72,7 +72,7 @@ std::optional<SocketAddress> SocketHelper::GetSocketAddress(SOCKET socket)
 	// TODO: Handle IPv6
 	struct sockaddr_in sin;
 	int addrlen = sizeof(sin);
-	if (getsockname(socket, (struct sockaddr *)&sin, &addrlen) == 0)
+	if (getpeername(socket, (struct sockaddr *)&sin, &addrlen) == 0)
 	{
 		if (sin.sin_family == AF_INET && addrlen == sizeof(sin))
 		{
@@ -106,8 +106,7 @@ std::optional<SOCKET> SocketHelper::CreateListener(const IPAddress& localHost, c
 			sockaddr_in service;
 			service.sin_family = AF_INET;
 			service.sin_port = htons(portNumber);
-			const std::vector<unsigned char>& bytes = localHost.GetAddress();
-			service.sin_addr.S_un.S_un_b = { bytes[0], bytes[1], bytes[2], bytes[3] };
+			service.sin_addr.S_un.S_un_b = { 0, 0, 0, 0 };
 
 			const int bindResult = bind(listenSocket, (SOCKADDR *)&service, sizeof(service));
 			if (bindResult != SOCKET_ERROR)

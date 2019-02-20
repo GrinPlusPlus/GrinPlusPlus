@@ -7,7 +7,7 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/FunctionalUtil.h>
 
-TransactionValidator::TransactionValidator(LRU::Cache<Commitment, Commitment>& bulletproofsCache)
+TransactionValidator::TransactionValidator(BulletProofsCache& bulletproofsCache)
 	: m_transactionBodyValidator(bulletproofsCache)
 {
 

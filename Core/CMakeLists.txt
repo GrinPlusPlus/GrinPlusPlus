@@ -1,7 +1,8 @@
 set(TARGET_NAME Core)
 
 file(GLOB CORE_SRC
-    "*.cpp"
+	"roaring.c"
+    "File.cpp"
     "Models/*.cpp"
 )
 

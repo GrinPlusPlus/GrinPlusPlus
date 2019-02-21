@@ -27,6 +27,7 @@ public:
 
 	std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const;
 	std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;
+	std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const;
 	std::vector<Transaction> FindTransactionsByStatus(const EDandelionStatus status) const;
 	std::vector<Transaction> GetExpiredTransactions(const uint16_t embargoSeconds) const;
 

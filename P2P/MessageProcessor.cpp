@@ -26,6 +26,8 @@
 #include "Messages/StemTransactionMessage.h"
 #include "Messages/TxHashSetRequestMessage.h"
 #include "Messages/TxHashSetArchiveMessage.h"
+#include "Messages/GetTransactionMessage.h"
+#include "Messages/TransactionKernelMessage.h"
 
 #include <P2P/Common.h>
 #include <Common/Util/HexUtil.h>
@@ -320,6 +322,32 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
 				return ReceiveTxHashSet(connectionId, connectedPeer, txHashSetArchiveMessage);
+			}
+			case GetTransactionMsg:
+			{
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
+				const Hash& kernelHash = getTransactionMessage.GetKernelHash();
+
+				std::unique_ptr<Transaction> pTransaction = m_blockChainServer.GetTransactionByKernelHash(kernelHash);
+				if (pTransaction == nullptr)
+				{
+					const TransactionMessage transactionMessage(*pTransaction);
+					return MessageSender(m_config).Send(connectedPeer, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
+			}
+			case TransactionKernelMsg:
+			{
+				ByteBuffer byteBuffer(rawMessage.GetPayload());
+				const TransactionKernelMessage transactionKernelMessage = TransactionKernelMessage::Deserialize(byteBuffer);
+				const Hash& kernelHash = transactionKernelMessage.GetKernelHash();
+
+				std::unique_ptr<Transaction> pTransaction = m_blockChainServer.GetTransactionByKernelHash(kernelHash);
+				if (pTransaction == nullptr)
+				{
+					const GetTransactionMessage getTransactionMessage(kernelHash);
+					return MessageSender(m_config).Send(connectedPeer, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				}
 			}
 			default:
 			{

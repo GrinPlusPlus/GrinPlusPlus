@@ -143,10 +143,11 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Locked
 	
 	if (pPreviousConfirmedIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		LoggerAPI::LogWarning(StringUtil::Format("BlockProcessor::ProcessBlock - Fork detected for block (%s) at height (%lld).", header.FormatHash().c_str(), header.GetHeight()));
+		const uint64_t forkPoint = lockedState.m_chainStore.FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
+
+		LoggerAPI::LogWarning(StringUtil::Format("BlockProcessor::ProcessBlock - Fork detected at height (%lld).", forkPoint));
 
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
-		const uint64_t forkPoint = lockedState.m_chainStore.FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 		for (uint64_t i = forkPoint; i < header.GetHeight(); i++)
 		{
 			BlockIndex* pIndex = candidateChain.GetByHeight(i);
@@ -213,6 +214,13 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, LockedChai
 			pTxHashSet->Discard();
 			return EBlockChainStatus::INVALID;
 		}
+	}
+
+	const EBlockChainStatus added = ValidateAndAddBlock(block, lockedState);
+	if (added != EBlockChainStatus::SUCCESS)
+	{
+		pTxHashSet->Discard();
+		return EBlockChainStatus::INVALID;
 	}
 
 	lockedState.m_chainStore.ReorgChain(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());

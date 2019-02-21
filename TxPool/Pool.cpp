@@ -74,6 +74,24 @@ std::vector<Transaction> Pool::FindTransactionsByKernel(const std::set<Transacti
 	return transactions;
 }
 
+std::unique_ptr<Transaction> Pool::FindTransactionByKernelHash(const Hash& kernelHash) const
+{
+	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+
+	for (const TxPoolEntry& txPoolEntry : m_transactions)
+	{
+		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction().GetBody().GetKernels())
+		{
+			if (kernel.GetHash() == kernelHash)
+			{
+				return std::make_unique<Transaction>(txPoolEntry.GetTransaction());
+			}
+		}
+	}
+
+	return std::unique_ptr<Transaction>(nullptr);
+}
+
 std::vector<Transaction> Pool::FindTransactionsByStatus(const EDandelionStatus status) const
 {
 	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);

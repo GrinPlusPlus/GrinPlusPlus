@@ -83,6 +83,17 @@ std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::se
 	return m_memPool.FindTransactionsByKernel(kernels);
 }
 
+std::unique_ptr<Transaction> TransactionPool::FindTransactionByKernelHash(const Hash& kernelHash) const
+{
+	std::unique_ptr<Transaction> pTransaction = m_memPool.FindTransactionByKernelHash(kernelHash);
+	if (pTransaction == nullptr)
+	{
+		pTransaction = m_stemPool.FindTransactionByKernelHash(kernelHash);
+	}
+
+	return pTransaction;
+}
+
 void TransactionPool::ReconcileBlock(const FullBlock& block)
 {
 	// First reconcile the txpool.

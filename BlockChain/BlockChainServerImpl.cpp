@@ -143,6 +143,11 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 	return EBlockChainStatus::INVALID;
 }
 
+std::unique_ptr<Transaction> BlockChainServer::GetTransactionByKernelHash(const Hash& kernelHash) const
+{
+	return m_transactionPool.FindTransactionByKernelHash(kernelHash);
+}
+
 EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeader)
 {
 	return BlockHeaderProcessor(m_config, *m_pChainState).ProcessSingleHeader(blockHeader);

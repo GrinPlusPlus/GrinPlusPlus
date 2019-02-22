@@ -6,6 +6,7 @@
 #include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>
 #include <TxPool/TransactionPool.h>
+#include <algorithm>
 
 BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const IBlockDB& blockDB, const ITxHashSet* pTxHashSet)
 	: m_transactionPool(transactionPool), m_blockDB(blockDB), m_pTxHashSet(pTxHashSet)
@@ -24,7 +25,20 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block,
 		}
 	}
 
-	// TODO: Verify Coinbase Maturity
+	// Verify coinbase maturity
+	const uint64_t maximumBlockHeight = std::max(block.GetBlockHeader().GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+	{
+		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
+		{
+			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
+			{
+				LoggerAPI::LogInfo("BlockValidator::ValidateBlock - Coinbase not mature: " + HexUtil::ConvertHash(block.GetHash()));
+				return false;
+			}
+		}
+	}
 
 	if (!m_pTxHashSet->ValidateRoots(block.GetBlockHeader()))
 	{

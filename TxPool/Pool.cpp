@@ -4,6 +4,7 @@
 #include "ValidTransactionFinder.h"
 
 #include <Common/Util/VectorUtil.h>
+#include <Infrastructure/Logger.h>
 #include <algorithm>
 
 Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache)
@@ -16,7 +17,7 @@ Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const
 // Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
 std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 
 	std::vector<Transaction> transactionsFound;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
@@ -41,12 +42,32 @@ std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const 
 
 bool Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus status)
 {
-	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
 	if (TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction))
 	{
+		LoggerAPI::LogDebug("Pool::AddTransaction - Transaction added: " + HexUtil::ConvertHash(transaction.GetHash()));
+
 		m_transactions.emplace_back(TxPoolEntry(transaction, status, std::time_t()));
 		return true;
+	}
+	else
+	{
+		LoggerAPI::LogInfo("Pool::AddTransaction - Transaction Invalid: " + HexUtil::ConvertHash(transaction.GetHash()));
+		return false;
+	}
+}
+
+bool Pool::ContainsTransaction(const Transaction& transaction) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
+
+	for (const TxPoolEntry& txPoolEntry : m_transactions)
+	{
+		if (txPoolEntry.GetTransaction() == transaction)
+		{
+			return true;
+		}
 	}
 
 	return false;
@@ -54,7 +75,7 @@ bool Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus
 
 std::vector<Transaction> Pool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 
 	std::set<Transaction> transactionSet;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
@@ -76,7 +97,7 @@ std::vector<Transaction> Pool::FindTransactionsByKernel(const std::set<Transacti
 
 std::unique_ptr<Transaction> Pool::FindTransactionByKernelHash(const Hash& kernelHash) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
@@ -94,7 +115,7 @@ std::unique_ptr<Transaction> Pool::FindTransactionByKernelHash(const Hash& kerne
 
 std::vector<Transaction> Pool::FindTransactionsByStatus(const EDandelionStatus status) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 
 	std::vector<Transaction> transactions;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
@@ -110,7 +131,7 @@ std::vector<Transaction> Pool::FindTransactionsByStatus(const EDandelionStatus s
 
 std::vector<Transaction> Pool::GetExpiredTransactions(const uint16_t embargoSeconds) const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 
 	const std::time_t cutoff = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(embargoSeconds));
 
@@ -126,31 +147,20 @@ std::vector<Transaction> Pool::GetExpiredTransactions(const uint16_t embargoSeco
 	return transactions;
 }
 
-void Pool::RemoveTransactions(const std::vector<Transaction>& transactions)
+void Pool::RemoveTransaction(const Transaction& transaction)
 {
-	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
 	auto iter = m_transactions.begin();
 	while (iter != m_transactions.end())
 	{
-		bool remove = false;
-		for (const Transaction& transaction : transactions)
+		if (transaction == iter->GetTransaction())
 		{
-			if (transaction == iter->GetTransaction())
-			{
-				remove = true;
-				break;
-			}
+			m_transactions.erase(iter);
+			break;
 		}
 
-		if (remove)
-		{
-			m_transactions.erase(iter++);
-		}
-		else
-		{
-			++iter;
-		}
+		++iter;
 	}
 }
 
@@ -158,7 +168,7 @@ void Pool::RemoveTransactions(const std::vector<Transaction>& transactions)
 // inputs or kernels intersect with the block.
 void Pool::ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx)
 {
-	std::lock_guard<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
 	std::vector<Transaction> filteredTransactions;
 	std::unordered_map<Hash, TxPoolEntry> filteredEntriesByHash;
@@ -211,7 +221,7 @@ bool Pool::ShouldEvict_Locked(const Transaction& transaction, const FullBlock& b
 
 std::unique_ptr<Transaction> Pool::Aggregate() const
 {
-	std::shared_lock<std::shared_mutex> lockGuard(m_transactionsMutex);
+	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
 	if (m_transactions.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);

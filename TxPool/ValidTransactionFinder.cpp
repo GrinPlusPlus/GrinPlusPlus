@@ -13,8 +13,13 @@ ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSet
 
 std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std::vector<Transaction>& transactions, const std::unique_ptr<Transaction>& pExtraTransaction, const BlockHeader& header) const
 {
-	std::vector<Transaction> validTransactions;
+	std::unique_ptr<BlockSums> pBlockSums = m_blockDB.GetBlockSums(header.GetHash());
+	if (pBlockSums == nullptr)
+	{
+		return std::vector<Transaction>();
+	}
 
+	std::vector<Transaction> validTransactions;
 	for (const Transaction& transaction : transactions)
 	{
 		std::vector<Transaction> candidateTransactions = validTransactions;
@@ -30,7 +35,7 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 		if (pAggregateTransaction != nullptr)
 		{
 			// We know the tx is valid if the entire aggregate tx is valid.
-			if (IsValidTransaction(*pAggregateTransaction, header))
+			if (IsValidTransaction(*pAggregateTransaction, header, *pBlockSums))
 			{
 				validTransactions.push_back(transaction);
 			}
@@ -40,7 +45,7 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 	return validTransactions;
 }
 
-bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, const BlockHeader& header) const
+bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, const BlockHeader& header, const BlockSums& blockSums) const
 {
 	if (!TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction))
 	{
@@ -55,13 +60,13 @@ bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, 
 
 	// Validate the tx against current chain state.
 	// Check all inputs are in the current UTXO set.
-	// TODO: Check all outputs are unique in current UTXO set.
+	// Check all outputs are unique in current UTXO set.
 	if (!pTxHashSet->IsValid(transaction))
 	{
 		return false;
 	}
 
-	if (!ValidateKernelSums(transaction, header))
+	if (!ValidateKernelSums(transaction, header, blockSums))
 	{
 		return false;
 	}
@@ -70,14 +75,8 @@ bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, 
 }
 
 // Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
-bool ValidTransactionFinder::ValidateKernelSums(const Transaction& transaction, const BlockHeader& header) const
+bool ValidTransactionFinder::ValidateKernelSums(const Transaction& transaction, const BlockHeader& header, const BlockSums& blockSums) const
 {
-	std::unique_ptr<BlockSums> pBlockSums = m_blockDB.GetBlockSums(header.GetHash());
-	if (pBlockSums == nullptr)
-	{
-		return false;
-	}
-
 	// Calculate overage
 	uint64_t overage = 0;
 	for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
@@ -92,7 +91,7 @@ bool ValidTransactionFinder::ValidateKernelSums(const Transaction& transaction, 
 		return false;
 	}
 
-	std::unique_ptr<BlockSums> pCalculatedBlockSums = KernelSumValidator::ValidateKernelSums(transaction.GetBody(), (int64_t)overage, *pOffset, std::make_optional<BlockSums>(*pBlockSums));
+	std::unique_ptr<BlockSums> pCalculatedBlockSums = KernelSumValidator::ValidateKernelSums(transaction.GetBody(), (int64_t)overage, *pOffset, std::make_optional<BlockSums>(blockSums));
 	if (pCalculatedBlockSums == nullptr)
 	{
 		return false;

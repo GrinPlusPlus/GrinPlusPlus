@@ -29,8 +29,8 @@ CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block)
 		}
 	}
 
-	std::sort(coinbaseOutputs.begin(), coinbaseOutputs.end());
-	std::sort(coinbaseKernels.begin(), coinbaseKernels.end());
+	std::sort(coinbaseOutputs.begin(), coinbaseOutputs.end(), SortOutputsByHash);
+	std::sort(coinbaseKernels.begin(), coinbaseKernels.end(), SortKernelsByHash);
 	std::sort(kernelIds.begin(), kernelIds.end());
 
 	return CompactBlock(BlockHeader(block.GetBlockHeader()), nonce, std::move(coinbaseOutputs), std::move(coinbaseKernels), std::move(kernelIds));

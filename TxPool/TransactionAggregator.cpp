@@ -47,7 +47,7 @@ std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<
 	TransactionUtil::PerformCutThrough(inputs, outputs);
 
 	// Sort the kernels.
-	std::sort(kernels.begin(), kernels.end());
+	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
 
 	// Sum the kernel_offsets up to give us an aggregate offset for the transaction.
 	const std::unique_ptr<BlindingFactor> pTotalKernelOffset = Crypto::AddBlindingFactors(kernelOffsets, std::vector<BlindingFactor>());

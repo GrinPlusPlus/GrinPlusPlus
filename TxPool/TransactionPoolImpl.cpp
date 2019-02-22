@@ -7,6 +7,7 @@
 #include <Database/BlockDb.h>
 #include <Consensus/BlockTime.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Infrastructure/Logger.h>
 
 TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
 	: m_config(config), 
@@ -27,6 +28,11 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 
 bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
 {
+	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(transaction))
+	{
+		return false;
+	}
+
 	// TODO: Verify fee meets minimum
 	
 	// Verify lock time
@@ -34,6 +40,7 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	{
 		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
 		{
+			LoggerAPI::LogInfo("TransactionPool::AddTransaction - Invalid lock height: " + HexUtil::ConvertHash(transaction.GetHash()));
 			return false;
 		}
 	}
@@ -44,21 +51,30 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	{
 		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
 		{
-			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
+			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment()); // TODO: Already loaded during pTxHashSet-IsValid. Combine for efficiency
 			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
 			{
+				LoggerAPI::LogInfo("TransactionPool::AddTransaction - Coinbase not mature: " + HexUtil::ConvertHash(transaction.GetHash()));
 				return false;
 			}
 		}
 	}
 
+	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
+	const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(transaction))
+	{
+		LoggerAPI::LogInfo("TransactionPool::AddTransaction - Transaction inputs/outputs not valid: " + HexUtil::ConvertHash(transaction.GetHash()));
+		return false;
+	}
+
 	if (poolType == EPoolType::MEMPOOL)
 	{
-		// TODO: Load BlockSums
+		// TODO: Load BlockSums?
 		const bool added = m_memPool.AddTransaction(transaction, EDandelionStatus::FLUFFED);
 		if (added)
 		{
-			m_stemPool.RemoveTransactions(std::vector<Transaction>({ transaction }));
+			m_stemPool.RemoveTransaction(transaction);
 			return true;
 		}
 	}

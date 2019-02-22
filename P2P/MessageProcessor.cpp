@@ -199,7 +199,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					return MessageSender(m_config).Send(connectedPeer, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
-				return EStatus::UNKNOWN_ERROR;
+				return EStatus::RESOURCE_NOT_FOUND;
 			}
 			case Block:
 			{
@@ -249,7 +249,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					return MessageSender(m_config).Send(connectedPeer, compactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
-				return EStatus::SUCCESS;
+				return EStatus::RESOURCE_NOT_FOUND;
 			}
 			case CompactBlockMsg:
 			{
@@ -285,29 +285,29 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case StemTransaction:
 			{
+				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				{
+					return EStatus::SYNCING;
+				}
+
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
-				{
-					return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
-				}
-
-				return EStatus::UNKNOWN_ERROR;
+				return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TransactionMsg:
 			{
+				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				{
+					return EStatus::SYNCING;
+				}
+
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
-				{
-					return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
-				}
-
-				return EStatus::UNKNOWN_ERROR;
+				return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -335,19 +335,29 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					const TransactionMessage transactionMessage(*pTransaction);
 					return MessageSender(m_config).Send(connectedPeer, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
+
+				return EStatus::RESOURCE_NOT_FOUND;
 			}
 			case TransactionKernelMsg:
 			{
+				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				{
+					return EStatus::SYNCING;
+				}
+
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TransactionKernelMessage transactionKernelMessage = TransactionKernelMessage::Deserialize(byteBuffer);
 				const Hash& kernelHash = transactionKernelMessage.GetKernelHash();
 
+				// TODO: Also check pipeline
 				std::unique_ptr<Transaction> pTransaction = m_blockChainServer.GetTransactionByKernelHash(kernelHash);
 				if (pTransaction == nullptr)
 				{
 					const GetTransactionMessage getTransactionMessage(kernelHash);
 					return MessageSender(m_config).Send(connectedPeer, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
+
+				return EStatus::RESOURCE_NOT_FOUND;
 			}
 			default:
 			{
@@ -356,7 +366,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 		}
 	}
 
-	return EStatus::SUCCESS;
+	return EStatus::UNKNOWN_MESSAGE;
 }
 
 MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage)

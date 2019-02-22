@@ -66,3 +66,11 @@ private:
 
 	mutable Hash m_hash;
 };
+
+static struct
+{
+	bool operator()(const TransactionInput& a, const TransactionInput& b) const
+	{
+		return a.GetHash() < b.GetHash();
+	}
+} SortInputsByHash;

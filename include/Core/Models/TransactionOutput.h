@@ -71,3 +71,11 @@ private:
 
 	mutable Hash m_hash;
 };
+
+static struct
+{
+	bool operator()(const TransactionOutput& a, const TransactionOutput& b) const
+	{
+		return a.GetHash() < b.GetHash();
+	}
+} SortOutputsByHash;

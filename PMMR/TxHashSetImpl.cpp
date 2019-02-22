@@ -1,6 +1,7 @@
 #include "TxHashSetImpl.h"
 #include "TxHashSetValidator.h"
 #include "Common/MMRUtil.h"
+#include "Common/MMRHashUtil.h"
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
@@ -36,6 +37,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
+	// Validate inputs
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
@@ -50,6 +52,20 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 		{
 			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData(), false, false) + " not found at mmrIndex " + std::to_string(outputPosOpt.value().GetMMRIndex()));
 			return false;
+		}
+	}
+
+	// Validate outputs
+	for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
+	{
+		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
+		if (outputPosOpt.has_value())
+		{
+			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
+			{
+				return false;
+			}
 		}
 	}
 
@@ -108,6 +124,16 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	// Append new outputs
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
 	{
+		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
+		if (outputPosOpt.has_value())
+		{
+			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
+			{
+				return false;
+			}
+		}
+
 		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output), block.GetBlockHeader().GetHeight()))
 		{
 			return false;

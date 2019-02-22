@@ -96,9 +96,9 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	TransactionUtil::PerformCutThrough(allInputs, allOutputs);
 
 	// Sort allInputs, allOutputs, and allKernels.
-	std::sort(allInputs.begin(), allInputs.end());
-	std::sort(allOutputs.begin(), allOutputs.end());
-	std::sort(allKernels.begin(), allKernels.end());
+	std::sort(allInputs.begin(), allInputs.end(), SortInputsByHash);
+	std::sort(allOutputs.begin(), allOutputs.end(), SortOutputsByHash);
+	std::sort(allKernels.begin(), allKernels.end(), SortKernelsByHash);
 
 	// Create a Transaction Body.
 	TransactionBody transactionBody(std::move(allInputs), std::move(allOutputs), std::move(allKernels));

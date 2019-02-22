@@ -82,3 +82,11 @@ private:
 
 	mutable Hash m_hash;
 };
+
+static struct
+{
+	bool operator()(const TransactionKernel& a, const TransactionKernel& b) const
+	{
+		return a.GetHash() < b.GetHash();
+	}
+} SortKernelsByHash;

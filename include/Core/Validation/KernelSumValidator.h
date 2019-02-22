@@ -78,7 +78,6 @@ public:
 		}
 
 		std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, kernelOffset);
-
 		if (*pUTXOSum != *pKernelSumPlusOffset)
 		{
 			LoggerAPI::LogError("ValidationUtil::ValidateKernelSums - Failed to validate kernel sums.");

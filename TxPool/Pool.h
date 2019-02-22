@@ -22,7 +22,8 @@ public:
 	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache);
 
 	bool AddTransaction(const Transaction& transaction, const EDandelionStatus status);
-	void RemoveTransactions(const std::vector<Transaction>& transactions);
+	bool ContainsTransaction(const Transaction& transaction) const;
+	void RemoveTransaction(const Transaction& transaction);
 	void ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx);
 
 	std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const;
@@ -41,6 +42,6 @@ private:
 	const IBlockDB& m_blockDB;
 	BulletProofsCache& m_bulletproofsCache;
 
-	mutable std::shared_mutex m_transactionsMutex;
+	mutable std::shared_mutex m_transactionsMutex; // TODO: Lock belongs in TransactionPoolImpl, instead.
 	std::vector<TxPoolEntry> m_transactions;
 };

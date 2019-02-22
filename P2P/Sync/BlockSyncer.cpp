@@ -109,7 +109,7 @@ bool BlockSyncer::RequestBlocks()
 	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
-		LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - No blocks needed.");
+		LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - No blocks needed.");
 		return false;
 	}
 

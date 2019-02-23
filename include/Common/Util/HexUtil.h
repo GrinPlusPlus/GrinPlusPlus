@@ -23,17 +23,12 @@ namespace HexUtil
 		}
 	}
 
-	static std::string ConvertToHex(const std::vector<unsigned char>& data, const bool upperCase, const bool includePrefix)
+	static std::string ConvertToHex(const std::vector<unsigned char>& data)
 	{
 		std::ostringstream stream;
 		for (const unsigned char byte : data)
 		{
-			stream << std::hex << std::setfill('0') << std::setw(2) << (upperCase ? std::uppercase : std::nouppercase) << (int)byte;
-		}
-
-		if (includePrefix)
-		{
-			return "0x" + stream.str();
+			stream << std::hex << std::setfill('0') << std::setw(2) << std::nouppercase << (int)byte;
 		}
 
 		return stream.str();
@@ -43,7 +38,7 @@ namespace HexUtil
 	{
 		const std::vector<unsigned char> firstNBytes = std::vector<unsigned char>(data.cbegin(), data.cbegin() + numBytes);
 
-		return ConvertToHex(firstNBytes, false, false);
+		return ConvertToHex(firstNBytes);
 	}
 
 	static std::string ConvertToHex(const uint16_t value, const bool abbreviate)
@@ -53,7 +48,7 @@ namespace HexUtil
 		std::vector<unsigned char> bytes(2);
 		memcpy(&bytes, (unsigned char*)&bigEndian, 2);
 
-		std::string hex = ConvertToHex(bytes, true, false);
+		std::string hex = ConvertToHex(bytes);
 		const size_t firstNonZero = hex.find_first_not_of('0');
 		hex.erase(0, std::min(firstNonZero, hex.size() - 1));
 
@@ -65,6 +60,6 @@ namespace HexUtil
 		const std::vector<unsigned char>& bytes = hash.GetData();
 		const std::vector<unsigned char> firstSixBytes = std::vector<unsigned char>(bytes.cbegin(), bytes.cbegin() + 6);
 		
-		return ConvertToHex(firstSixBytes, false, false);
+		return ConvertToHex(firstSixBytes);
 	}
 }

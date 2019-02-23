@@ -29,7 +29,6 @@ public:
 	virtual bool Rewind(const uint64_t nextHeight) = 0;
 	virtual bool Rollback() = 0;
 	virtual bool Commit() = 0;
-	// TODO: Create a Flush() separate from Commit(). Commit should eliminate a rewind point, whereas Flush should actually write to disk.
 };
 
 namespace HeaderMMRAPI

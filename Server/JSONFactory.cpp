@@ -45,7 +45,7 @@ Json::Value JSONFactory::BuildCompactBlockJSON(const CompactBlock& compactBlock)
 	Json::Value inputsNode;
 	for (const ShortId& shortId : compactBlock.GetShortIds())
 	{
-		inputsNode.append(HexUtil::ConvertToHex(shortId.GetId().GetData(), false, false));
+		inputsNode.append(HexUtil::ConvertToHex(shortId.GetId().GetData()));
 	}
 	blockNode["inputs"] = inputsNode;
 
@@ -72,24 +72,24 @@ Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 {
 	Json::Value headerNode;
 	headerNode["height"] = header.GetHeight();
-	headerNode["hash"] = HexUtil::ConvertToHex(header.GetHash().GetData(), false, false);
+	headerNode["hash"] = HexUtil::ConvertToHex(header.GetHash().GetData());
 	headerNode["version"] = header.GetVersion();
 
 	headerNode["timestamp_raw"] = header.GetTimestamp();
 	headerNode["timestamp_local"] = TimeUtil::FormatLocal(header.GetTimestamp());
 	headerNode["timestamp"] = TimeUtil::FormatUTC(header.GetTimestamp());
 
-	headerNode["previous"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData(), false, false);
-	headerNode["prev_root"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData(), false, false);
+	headerNode["previous"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData());
+	headerNode["prev_root"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData());
 
-	headerNode["kernel_root"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData(), false, false);
-	headerNode["output_root"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData(), false, false);
-	headerNode["range_proof_root"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData(), false, false);
+	headerNode["kernel_root"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData());
+	headerNode["output_root"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData());
+	headerNode["range_proof_root"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData());
 
 	headerNode["output_mmr_size"] = header.GetOutputMMRSize();
 	headerNode["kernel_mmr_size"] = header.GetKernelMMRSize();
 
-	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData(), false, false);
+	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData());
 	headerNode["secondary_scaling"] = header.GetScalingDifficulty();
 	headerNode["total_difficulty"] = header.GetTotalDifficulty();
 	headerNode["nonce"] = header.GetNonce();
@@ -109,7 +109,7 @@ Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 Json::Value JSONFactory::BuildTransactionInputJSON(const TransactionInput& input)
 {
 	Json::Value inputNode;
-	inputNode = HexUtil::ConvertToHex(input.GetCommitment().GetCommitmentBytes().GetData(), false, false);
+	inputNode = HexUtil::ConvertToHex(input.GetCommitment().GetCommitmentBytes().GetData());
 	return inputNode;
 }
 
@@ -131,11 +131,11 @@ Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& out
 
 	outputNode["output_type"] = output.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT ? "Coinbase" : "Transaction";
 	// TODO: outputNode["spent"]
-	outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes(), false, false);
+	outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
 
 	Serializer proofSerializer;
 	output.GetRangeProof().Serialize(proofSerializer);
-	outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData(), false, false);
+	outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
 
 	outputNode["block_height"] = blockHeight;
 	outputNode["mmr_index"] = 0; // TODO: This will be part of OutputDisplayInfo
@@ -158,8 +158,8 @@ Json::Value JSONFactory::BuildTransactionKernelJSON(const TransactionKernel& ker
 
 	kernelNode["fee"] = kernel.GetFee();
 	kernelNode["lock_height"] = kernel.GetLockHeight();
-	kernelNode["excess"] = HexUtil::ConvertToHex(kernel.GetExcessCommitment().GetCommitmentBytes().GetData(), false, false);
-	kernelNode["excess_sig"] = HexUtil::ConvertToHex(kernel.GetExcessSignature().GetSignatureBytes().GetData(), false, false);
+	kernelNode["excess"] = HexUtil::ConvertToHex(kernel.GetExcessCommitment().GetCommitmentBytes().GetData());
+	kernelNode["excess_sig"] = HexUtil::ConvertToHex(kernel.GetExcessSignature().GetSignatureBytes().GetData());
 
 	return kernelNode;
 }

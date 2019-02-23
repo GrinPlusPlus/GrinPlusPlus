@@ -4,8 +4,8 @@
 #include "Common/MMR.h"
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
-#include "KernelSignatureValidator.h"
 
+#include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/Common.h>
 #include <Common/Util/HexUtil.h>
@@ -72,18 +72,15 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	}
 
 	// Validate the rangeproof associated with each unspent output.
-	if (!ValidateRangeProofs(txHashSet, blockHeader))
-	{
-		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid range proof.");
-		return std::unique_ptr<BlockSums>(nullptr);
-	}
+	async::task<bool> rangeProofValidationTask = async::spawn([this, &txHashSet, &blockHeader] { return this->ValidateRangeProofs(txHashSet, blockHeader); });
 
 	// Validate kernel signatures
-	if (!KernelSignatureValidator().ValidateKernelSignatures(*txHashSet.GetKernelMMR()))
-	{
-		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel signatures.");
-		return std::unique_ptr<BlockSums>(nullptr);
-	}
+	async::task<bool> kernelSignatureTask = async::spawn([this, &txHashSet] { return this->ValidateKernelSignatures(*txHashSet.GetKernelMMR()); });
+
+	const bool rangeProofsAndKernelSigsValidated = async::when_all(rangeProofValidationTask, kernelSignatureTask).then(
+		[](std::tuple<async::task<bool>, async::task<bool>> results) -> bool {
+		return std::get<0>(results).get() && std::get<1>(results).get();
+	}).get();
 
 	return pBlockSums;
 }
@@ -241,5 +238,43 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 		}
 	}
 	
+	return true;
+}
+
+bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR) const
+{
+	std::vector<TransactionKernel> kernels;
+
+	const uint64_t mmrSize = kernelMMR.GetSize();
+	const uint64_t numKernels = MMRUtil::GetNumLeaves(mmrSize);
+	for (uint64_t i = 0; i < mmrSize; i++)
+	{
+		std::unique_ptr<TransactionKernel> pKernel = kernelMMR.GetKernelAt(i);
+		if (pKernel != nullptr)
+		{
+			kernels.push_back(*pKernel);
+
+			if (kernels.size() >= 2000)
+			{
+				if (!KernelSignatureValidator::VerifyKernelSignatures(kernels))
+				{
+					LoggerAPI::LogError("TxHashSetValidator::ValidateKernelSignatures - Failed to verify kernel signatures.");
+					return false;
+				}
+
+				kernels.clear();
+			}
+		}
+	}
+
+	if (!kernels.empty())
+	{
+		if (!KernelSignatureValidator::VerifyKernelSignatures(kernels))
+		{
+			LoggerAPI::LogError("TxHashSetValidator::ValidateKernelSignatures - Failed to verify kernel signatures.");
+			return false;
+		}
+	}
+
 	return true;
 }

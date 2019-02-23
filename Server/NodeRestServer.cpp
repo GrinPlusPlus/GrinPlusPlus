@@ -8,6 +8,8 @@
 #include "API/PeersAPI.h"
 #include "API/TxHashSetAPI.h"
 
+#include "API/Explorer/BlockInfoAPI.h"
+
 #include <P2P/P2PServer.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Database/Database.h>
@@ -37,6 +39,8 @@ bool NodeRestServer::Start()
 	ctx = mg_start(NULL, 0, mg_options);
 
 	/* Add handlers */
+	mg_set_request_handler(ctx, "/v1/explorer/blockinfo/", BlockInfoAPI::GetBlockInfo_Handler, &m_serverContainer);
+
 	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetStatus_Handler, &m_serverContainer);
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);

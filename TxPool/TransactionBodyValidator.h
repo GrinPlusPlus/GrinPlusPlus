@@ -16,7 +16,6 @@ private:
 	bool VerifySorted(const TransactionBody& transactionBody);
 	bool VerifyCutThrough(const TransactionBody& transactionBody);
 	bool VerifyOutputs(const std::vector<TransactionOutput>& outputs);
-	bool VerifyKernels(const std::vector<TransactionKernel>& kernels);
 
 	BulletProofsCache& m_bulletproofsCache;
 };

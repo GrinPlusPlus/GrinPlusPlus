@@ -12,7 +12,6 @@
 class KernelSumValidator
 {
 public:
-
 	// Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
 	static std::unique_ptr<BlockSums> ValidateKernelSums(const TransactionBody& transactionBody, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
 	{

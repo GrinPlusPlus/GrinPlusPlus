@@ -23,7 +23,6 @@ set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEB
 file(GLOB PMMR_SRC
     "HeaderMMRImpl.cpp"
     "KernelMMR.cpp"
-    "KernelSignatureValidator.cpp"
     "OutputPMMR.cpp"
     "RangeProofPMMR.cpp"
     "TxHashSetImpl.cpp"

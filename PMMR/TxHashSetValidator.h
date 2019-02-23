@@ -25,6 +25,7 @@ private:
 	bool ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader) const;
 	std::unique_ptr<BlockSums> ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
 	bool ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
+	bool ValidateKernelSignatures(const KernelMMR& kernelMMR) const;
 
 	const IBlockChainServer& m_blockChainServer;
 };

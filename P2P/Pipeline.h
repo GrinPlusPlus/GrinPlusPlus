@@ -47,7 +47,7 @@ private:
 		uint64_t connectionId;
 		FullBlock block;
 	};
-	std::deque<BlockEntry> m_blocksToProcess; // TODO: Store connectionId with Block
+	std::deque<BlockEntry> m_blocksToProcess;
 
 	mutable std::shared_mutex m_transactionMutex;
 	std::thread m_transactionThread;
@@ -63,5 +63,5 @@ private:
 		Transaction transaction;
 		EPoolType poolType;
 	};
-	std::deque<TxEntry> m_transactionsToProcess; // TODO: Store connectionId with Transaction
+	std::deque<TxEntry> m_transactionsToProcess;
 };

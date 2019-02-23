@@ -23,9 +23,9 @@ int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pServerCont
 	if (pTipHeader != nullptr)
 	{
 		Json::Value rootNode;
-		rootNode["output_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetOutputRoot().GetData(), false, false);
-		rootNode["range_proof_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetRangeProofRoot().GetData(), false, false);
-		rootNode["kernel_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetKernelRoot().GetData(), false, false);
+		rootNode["output_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetOutputRoot().GetData());
+		rootNode["range_proof_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetRangeProofRoot().GetData());
+		rootNode["kernel_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetKernelRoot().GetData());
 
 		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
@@ -62,7 +62,7 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pServ
 		for (const Hash& hash : hashes)
 		{
 			Json::Value kernelNode;
-			kernelNode["hash"] = HexUtil::ConvertToHex(hash.GetData(), false, false);
+			kernelNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
 			rootNode.append(kernelNode);
 		}
 
@@ -101,7 +101,7 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pServ
 		for (const Hash& hash : hashes)
 		{
 			Json::Value outputNode;
-			outputNode["hash"] = HexUtil::ConvertToHex(hash.GetData(), false, false);
+			outputNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
 			rootNode.append(outputNode);
 		}
 
@@ -140,7 +140,7 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 		for (const Hash& hash : hashes)
 		{
 			Json::Value rangeProofNode;
-			rangeProofNode["hash"] = HexUtil::ConvertToHex(hash.GetData(), false, false);
+			rangeProofNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
 			rootNode.append(rangeProofNode);
 		}
 
@@ -226,13 +226,13 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pServerCo
 			Json::Value outputNode;
 			const EOutputFeatures features = info.GetIdentifier().GetFeatures();
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
-			outputNode["commit"] = HexUtil::ConvertToHex(info.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData(), false, false);
+			outputNode["commit"] = HexUtil::ConvertToHex(info.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData());
 			outputNode["spent"] = info.IsSpent();
-			outputNode["proof"] = HexUtil::ConvertToHex(info.GetRangeProof().GetProofBytes(), false, false);
+			outputNode["proof"] = HexUtil::ConvertToHex(info.GetRangeProof().GetProofBytes());
 
 			Serializer proofSerializer;
 			info.GetRangeProof().Serialize(proofSerializer);
-			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData(), false, false);
+			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
 
 			outputNode["block_height"] = info.GetLocation().GetBlockHeight();
 			outputNode["merkle_proof"] = Json::nullValue;

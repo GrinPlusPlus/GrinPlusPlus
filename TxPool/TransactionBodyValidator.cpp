@@ -1,5 +1,6 @@
 #include "TransactionBodyValidator.h"
 
+#include <Core/Validation/KernelSignatureValidator.h>
 #include <Consensus/BlockWeight.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/HexUtil.h>
@@ -36,7 +37,7 @@ bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& tr
 		return false;
 	}
 
-	if (!VerifyKernels(transactionBody.GetKernels()))
+	if (!KernelSignatureValidator::VerifyKernelSignatures(transactionBody.GetKernels()))
 	{
 		return false;
 	}
@@ -154,26 +155,4 @@ bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput
 	}
 
 	return verified;
-}
-
-// Verify the unverified tx kernels.
-// No ability to batch verify these right now
-// so just do them individually.
-bool TransactionBodyValidator::VerifyKernels(const std::vector<TransactionKernel>& kernels)
-{
-	// Verify the transaction proof validity. Entails handling the commitment as a public key and checking the signature verifies with the fee as message.
-	for (auto kernel : kernels)
-	{
-		const Commitment& publicKey = kernel.GetExcessCommitment();
-		const Signature& signature = kernel.GetExcessSignature();
-		const Hash signatureMessage = kernel.GetSignatureMessage();
-
-		if (!Crypto::VerifyKernelSignature(signature, publicKey, signatureMessage))
-		{
-			LoggerAPI::LogError("TransactionBodyValidator::VerifyKernels - Failed to verify kernel " + HexUtil::ConvertHash(kernel.GetHash()));
-			return false;
-		}
-	}
-
-	return true;
 }

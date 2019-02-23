@@ -3,7 +3,9 @@
 #include "civetweb/include/civetweb.h"
 #include "RestException.h"
 
+#include <Common/Util/StringUtil.h>
 #include <string>
+#include <optional>
 
 enum class EHTTPMethod
 {
@@ -33,6 +35,30 @@ public:
 		}
 
 		return req_info->query_string;
+	}
+
+	static std::optional<std::string> GetQueryParam(struct mg_connection* conn, const std::string& parameterName)
+	{
+		const std::string queryString = RestUtil::GetQueryString(conn);
+		if (!queryString.empty())
+		{
+			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
+			for (const std::string& token : tokens)
+			{
+				if (StringUtil::StartsWith(token, parameterName + "="))
+				{
+					std::vector<std::string> parameterTokens = StringUtil::Split(token, "=");
+					if (parameterTokens.size() != 2)
+					{
+						throw RestException();
+					}
+
+					return std::make_optional<std::string>(parameterTokens[1]);
+				}
+			}
+		}
+
+		return std::nullopt;
 	}
 
 	static EHTTPMethod GetHTTPMethod(struct mg_connection* conn)

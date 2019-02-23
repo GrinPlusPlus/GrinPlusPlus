@@ -16,8 +16,8 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pBlockChainServ
 	{
 		Json::Value chainNode;
 		chainNode["height"] = pTip->GetHeight();
-		chainNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData(), false, false);
-		chainNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData(), false, false);
+		chainNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData());
+		chainNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
 		chainNode["total_difficulty"] = pTip->GetTotalDifficulty();
 
 		return RestUtil::BuildSuccessResponse(conn, chainNode.toStyledString());
@@ -96,9 +96,9 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 		Json::Value blockNode;
 
 		Json::Value headerNode;
-		headerNode["hash"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetHash().GetData(), false, false);
+		headerNode["hash"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetHash().GetData());
 		headerNode["height"] = block.GetBlockIdentifier().GetHeight();
-		headerNode["previous"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetPreviousHash().GetData(), false, false);
+		headerNode["previous"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetPreviousHash().GetData());
 		blockNode["header"] = headerNode;
 
 		Json::Value outputsNode;
@@ -108,13 +108,13 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 			Json::Value outputNode;
 			const EOutputFeatures features = output.GetIdentifier().GetFeatures();
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
-			outputNode["commit"] = HexUtil::ConvertToHex(output.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData(), false, false);
+			outputNode["commit"] = HexUtil::ConvertToHex(output.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData());
 			outputNode["spent"] = false;
-			outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes(), false, false);
+			outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
 
 			Serializer proofSerializer;
 			output.GetRangeProof().Serialize(proofSerializer);
-			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData(), false, false);
+			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
 
 			outputNode["block_height"] = output.GetLocation().GetBlockHeight();
 			outputNode["merkle_proof"] = Json::nullValue;
@@ -165,7 +165,7 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pSe
 		if (locationOpt.has_value())
 		{
 			Json::Value outputNode;
-			outputNode["commit"] = HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData(), false, false);
+			outputNode["commit"] = HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData());
 			outputNode["height"] = locationOpt.value().GetBlockHeight();
 			outputNode["mmr_index"] = locationOpt.value().GetMMRIndex() + 1;
 

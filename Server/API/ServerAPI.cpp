@@ -69,8 +69,8 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pServerContai
 
 	Json::Value tipNode;
 	tipNode["height"] = pTip->GetHeight();
-	tipNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData(), false, false);
-	tipNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData(), false, false);
+	tipNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData());
+	tipNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
 	tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
 	statusNode["tip"] = tipNode;
 

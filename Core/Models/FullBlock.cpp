@@ -1,7 +1,7 @@
 #include <Core/Models/FullBlock.h>
 
 FullBlock::FullBlock(BlockHeader&& blockHeader, TransactionBody&& transactionBody)
-	: m_blockHeader(std::move(blockHeader)), m_transactionBody(std::move(transactionBody))
+	: m_blockHeader(std::move(blockHeader)), m_transactionBody(std::move(transactionBody)), m_validated(false)
 {
 
 }

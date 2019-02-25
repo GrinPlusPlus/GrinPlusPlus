@@ -15,7 +15,7 @@ class BlockValidator
 public:
 	BlockValidator(const ITransactionPool& transactionPool, const IBlockDB& blockDB, const ITxHashSet* pTxHashSet);
 
-	std::unique_ptr<BlockSums> ValidateBlock(const FullBlock& block, const bool validateSelfConsistent) const;
+	std::unique_ptr<BlockSums> ValidateBlock(const FullBlock& block) const;
 	bool IsBlockSelfConsistent(const FullBlock& block) const;
 
 private:

@@ -3,6 +3,7 @@
 
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
+#include <async++.h>
 
 Pipeline::Pipeline(const Config& config, ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
 	: m_config(config), m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
@@ -42,6 +43,11 @@ void Pipeline::Stop()
 	{
 		m_transactionThread.join();
 	}
+
+	if (m_txHashSetThread.joinable())
+	{
+		m_txHashSetThread.join();
+	}
 }
 
 void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
@@ -53,18 +59,51 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 	{
 		if (pipeline.m_blocksToProcess.size() > 0)
 		{
-			const BlockEntry& blockEntry = pipeline.m_blocksToProcess.front();
-			
-			const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
-			if (status == EBlockChainStatus::INVALID)
+			const size_t blocksToProcess = std::min((size_t)8, pipeline.m_blocksToProcess.size());
+			if (blocksToProcess == 1)
 			{
-				pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
-			}
+				const BlockEntry& blockEntry = pipeline.m_blocksToProcess.front();
 
-			std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);
-			pipeline.m_blocksToProcess.pop_front();
+				const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
+				if (status == EBlockChainStatus::INVALID)
+				{
+					pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+				}
+
+				std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);
+				pipeline.m_blocksToProcess.pop_front();
+			}
+			else
+			{
+				// Using when_any to find task which finishes first
+				std::vector<async::task<void>> tasks;
+				for (size_t i = 0; i < blocksToProcess; i++)
+				{
+					const BlockEntry& blockEntry = pipeline.m_blocksToProcess.at(i);
+					tasks.push_back(async::spawn([&pipeline, blockEntry] 
+					{
+						const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
+						if (status == EBlockChainStatus::INVALID)
+						{
+							pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+						}
+					}));
+				}
+
+				for (auto& task : tasks)
+				{
+					task.wait();
+				}
+
+				std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);
+				for (size_t i = 0; i < blocksToProcess; i++)
+				{
+					pipeline.m_blocksToProcess.pop_front();
+				}
+			}
 		}
-		else if (!pipeline.m_blockChainServer.ProcessNextOrphanBlock())
+		
+		if (!pipeline.m_blockChainServer.ProcessNextOrphanBlock())
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(30));
 		}
@@ -150,4 +189,35 @@ bool Pipeline::IsProcessingTransaction(const Hash& hash) const
 	}
 
 	return false;
+}
+
+void Pipeline::Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connectionId, const Hash blockHash, const std::string path)
+{
+	ThreadManagerAPI::SetCurrentThreadName("TXHASHSET_PIPE_THREAD");
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTxHashSet() - BEGIN");
+
+	SyncStatus& syncStatus = pipeline.m_connectionManager.GetSyncStatus();
+
+	syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
+
+	const EBlockChainStatus processStatus = pipeline.m_blockChainServer.ProcessTransactionHashSet(blockHash, path);
+	if (processStatus == EBlockChainStatus::INVALID)
+	{
+		syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+		pipeline.m_connectionManager.BanConnection(connectionId, EBanReason::BadTxHashSet);
+	}
+	else
+	{
+		syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
+	}
+
+	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - END");
+}
+
+bool Pipeline::AddTxHashSetToProcess(const uint64_t connectionId, const Hash& blockHash, const std::string& path)
+{
+	// TODO: What if TxHashSet already processing?
+	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), connectionId, blockHash, path);
+
+	return true;
 }

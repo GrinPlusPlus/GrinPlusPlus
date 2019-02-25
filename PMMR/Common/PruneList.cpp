@@ -167,7 +167,7 @@ void PruneList::BuildPrunedCache()
 		{
 			if (m_prunedRoots.contains(parent + 1))
 			{
-				m_prunedCache.add(position);
+				m_prunedCache.add(position + 1);
 				break;
 			}
 

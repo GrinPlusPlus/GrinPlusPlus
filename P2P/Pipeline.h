@@ -25,15 +25,16 @@ public:
 	bool AddTransactionToProcess(const uint64_t connectionId, const Transaction& transaction, const EPoolType poolType);
 	bool IsProcessingTransaction(const Hash& hash) const;
 
-private:
-	static void Thread_ProcessBlocks(Pipeline& pipeline);
-	static void Thread_ProcessTransactions(Pipeline& pipeline);
+	bool AddTxHashSetToProcess(const uint64_t connectionId, const Hash& blockHash, const std::string& path);
 
+private:
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	IBlockChainServer& m_blockChainServer;
 	std::atomic<bool> m_terminate;
 
+	// Blocks
+	static void Thread_ProcessBlocks(Pipeline& pipeline);
 	mutable std::shared_mutex m_blockMutex;
 	std::thread m_blockThread;
 	struct BlockEntry
@@ -49,6 +50,8 @@ private:
 	};
 	std::deque<BlockEntry> m_blocksToProcess;
 
+	// Transactions
+	static void Thread_ProcessTransactions(Pipeline& pipeline);
 	mutable std::shared_mutex m_transactionMutex;
 	std::thread m_transactionThread;
 	struct TxEntry
@@ -64,4 +67,8 @@ private:
 		EPoolType poolType;
 	};
 	std::deque<TxEntry> m_transactionsToProcess;
+
+	// TxHashSet
+	static void Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connectionId, const Hash blockHash, const std::string path);
+	std::thread m_txHashSetThread;
 };

@@ -475,15 +475,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	fout.close();
 
 	LoggerAPI::LogInfo("MessageProcessor::ReceiveTxHashSet - Downloading successful.");
-	syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
 
-	// TODO: Process asynchronously in pipeline.
-	const EBlockChainStatus processStatus = m_blockChainServer.ProcessTransactionHashSet(txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
-	if (processStatus == EBlockChainStatus::INVALID)
-	{
-		syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-		return EStatus::BAN_PEER;
-	}
+	m_connectionManager.GetPipeline().AddTxHashSetToProcess(connectionId, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
 
 	return EStatus::SUCCESS;
 }

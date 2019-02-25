@@ -51,7 +51,14 @@ public:
 	//
 	inline const Hash& GetHash() const { return m_blockHeader.GetHash(); }
 
+	//
+	// Validation Status
+	//
+	inline bool WasValidated() const { return m_validated; }
+	inline void MarkAsValidated() const { m_validated = true; }
+
 private:
 	BlockHeader m_blockHeader;
 	TransactionBody m_transactionBody;
+	mutable bool m_validated;
 };

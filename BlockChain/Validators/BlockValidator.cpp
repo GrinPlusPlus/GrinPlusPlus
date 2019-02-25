@@ -15,14 +15,11 @@ BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const IB
 }
 
 // Validates a block is self-consistent and validates the state (eg. MMRs).
-std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block, const bool validateSelfConsistent) const
+std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block) const
 {
-	if (validateSelfConsistent)
+	if (!IsBlockSelfConsistent(block))
 	{
-		if (!IsBlockSelfConsistent(block))
-		{
-			return std::unique_ptr<BlockSums>(nullptr);
-		}
+		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
 	// Verify coinbase maturity
@@ -60,6 +57,12 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block,
 // Includes commitment sums and kernels, reward, etc.
 bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 {
+	if (block.WasValidated())
+	{
+		LoggerAPI::LogTrace("BlockValidator::IsBlockSelfConsistent - Block already validated: " + HexUtil::ConvertHash(block.GetHash()));
+		return true;
+	}
+
 	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
 	{
 		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate transaction body for " + HexUtil::ConvertHash(block.GetHash()));
@@ -78,6 +81,7 @@ bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 		return false;
 	}
 
+	block.MarkAsValidated();
 	return true;
 }
 

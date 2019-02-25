@@ -35,6 +35,7 @@ TEST_CASE("MMRUtil::GetHeight")
 	REQUIRE(MMRUtil::GetHeight(28) == 2);
 	REQUIRE(MMRUtil::GetHeight(29) == 3);
 	REQUIRE(MMRUtil::GetHeight(30) == 4);
+	REQUIRE(MMRUtil::GetHeight(1048574) == 19);
 }
 
 TEST_CASE("MMRUtil::GetPeakIndices")

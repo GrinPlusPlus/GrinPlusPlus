@@ -15,7 +15,7 @@ BlockProcessor::BlockProcessor(const Config& config, const IBlockDB& blockDB, Ch
 
 }
 
-EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const bool orphan)
+EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 {	
 	const uint64_t candidateHeight = m_chainState.GetHeight(EChainType::CANDIDATE);
 	const uint64_t horizonHeight = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
@@ -34,15 +34,11 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block, const boo
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
-		// Blocks from the orphan pool would've already been validated.
-		if (!orphan)
+		// Verify block is self-consistent before locking
+		if (!BlockValidator(m_transactionPool, m_blockDB, nullptr).IsBlockSelfConsistent(block))
 		{
-			// Verify block is self-consistent before locking
-			if (!BlockValidator(m_transactionPool, m_blockDB, nullptr).IsBlockSelfConsistent(block))
-			{
-				LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
-				return EBlockChainStatus::INVALID;
-			}
+			LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
+			return EBlockChainStatus::INVALID;
 		}
 
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
@@ -244,7 +240,7 @@ EBlockChainStatus BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Lo
 		return EBlockChainStatus::INVALID;
 	}
 
-	std::unique_ptr<BlockSums> pBlockSums = BlockValidator(lockedState.m_transactionPool, m_blockDB, pTxHashSet).ValidateBlock(block, false);
+	std::unique_ptr<BlockSums> pBlockSums = BlockValidator(lockedState.m_transactionPool, m_blockDB, pTxHashSet).ValidateBlock(block);
 	if (pBlockSums == nullptr)
 	{
 		return EBlockChainStatus::INVALID;

@@ -4,7 +4,7 @@
 
 std::unique_ptr<PublicExtKey> PublicKeyCalculator::DeterminePublicKey(const PrivateExtKey& privateKey) const
 {
-	std::unique_ptr<CBigInteger<33>> pCompressedPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(privateKey.GetPrivateKey());
+	std::unique_ptr<CBigInteger<33>> pCompressedPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(privateKey.ToBlindingFactor());
 	if (pCompressedPublicKey != nullptr)
 	{
 		CBigInteger<32> chainCode = privateKey.GetChainCode();

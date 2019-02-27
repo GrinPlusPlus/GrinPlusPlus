@@ -55,6 +55,11 @@ std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const CBigInteger<32>& m
 	return std::unique_ptr<WalletCoin>(nullptr);
 }
 
+std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId) const
+{
+	return m_walletDB.LoadSlateContext(m_username, slateId);
+}
+
 bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SlateContext& slateContext)
 {
 	return m_walletDB.SaveSlateContext(m_username, slateId, slateContext);

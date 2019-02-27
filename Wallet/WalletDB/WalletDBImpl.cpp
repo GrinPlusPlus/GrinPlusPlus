@@ -154,6 +154,21 @@ KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyCh
 	return nextChildPath;
 }
 
+std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const uuids::uuid& slateId) const
+{
+	Slice key(uuids::to_string(slateId));
+	std::string value;
+	Status readStatus = m_pDatabase->Get(ReadOptions(), m_pSlateHandle, key, &value);
+	if (readStatus.ok())
+	{
+		const std::vector<unsigned char> slateContextBytes(value.data(), value.data() + value.size());
+		ByteBuffer byteBuffer(slateContextBytes);
+		return std::make_unique<SlateContext>(SlateContext::Deserialize(byteBuffer));
+	}
+
+	return std::unique_ptr<SlateContext>(nullptr);
+}
+
 bool WalletDB::SaveSlateContext(const std::string& username, const uuids::uuid& slateId, const SlateContext& slateContext)
 {
 	Slice key(uuids::to_string(slateId));

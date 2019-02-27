@@ -21,6 +21,7 @@ public:
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const override final;
 	virtual KeyChainPath GetNextChildPath(const std::string& username, const KeyChainPath& parentPath) override final;
 
+	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const uuids::uuid& slateId) const override final;
 	virtual bool SaveSlateContext(const std::string& username, const uuids::uuid& slateId, const SlateContext& slateContext) override final;
 
 	virtual bool AddOutputs(const std::string& username, const std::vector<OutputData>& outputs) override final;

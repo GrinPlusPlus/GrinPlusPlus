@@ -65,11 +65,11 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
 	BlindingFactor secretKey = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);
-	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey.GetBlindingFactorBytes());
+	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
 
 	// Select a random nonce kS
 	BlindingFactor secretNonce = RandomNumberGenerator::GenerateRandom32();
-	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce.GetBlindingFactorBytes());
+	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
 
 	// Build Transaction
 	Transaction transaction = BuildTransaction(inputs, *pChangeOutput, transactionOffset, fee, lockHeight);
@@ -89,7 +89,116 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 	}
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
-	return std::make_unique<Slate>(Slate(2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
+	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
+	pSlate->AddParticpantData(ParticipantData(0, *pPublicKey, *pPublicNonce));
+
+	return pSlate;
+}
+
+bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const
+{
+	// TODO: Verify fees
+
+	// Generate message
+	const Transaction& transaction = slate.GetTransaction();
+	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
+	if (kernels.size() != 1)
+	{
+		return false;
+	}
+
+	const TransactionKernel& kernel = kernels.front();
+	const Hash message = kernel.GetSignatureMessage();
+
+	// Generate output
+	std::unique_ptr<WalletCoin> pWalletCoin = wallet.CreateBlindedOutput(masterSeed, slate.GetAmount());
+	BlindingFactor secretKey = pWalletCoin->GetBlindingFactor();
+	std::unique_ptr<CBigInteger<33>> pPublicBlindExcess = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
+
+	// Generate nonce
+	BlindingFactor secretNonce = RandomNumberGenerator::GenerateRandom32();
+	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
+
+	// Build receiver's ParticipantData
+	ParticipantData receiverData(1, *pPublicBlindExcess, *pPublicNonce);
+
+	// Generate signature
+	std::vector<ParticipantData> participants = slate.GetParticipantData();
+	participants.emplace_back(receiverData);
+
+	std::unique_ptr<Signature> pPartialSignature = GeneratePartialSignature(secretKey, secretNonce, participants, message);
+	if (pPartialSignature == nullptr)
+	{
+		LoggerAPI::LogError("SlateBuilder::AddReceiverData - Failed to generate signature for slate " + uuids::to_string(slate.GetSlateId()));
+		return false;
+	}
+
+	receiverData.AddPartialSignature(*pPartialSignature);
+
+	// Save secretKey and secretNonce
+	if (!wallet.SaveSlateContext(slate.GetSlateId(), SlateContext(std::move(secretKey), std::move(secretNonce))))
+	{
+		LoggerAPI::LogError("SlateBuilder::AddReceiverData - Failed to save context for slate " + uuids::to_string(slate.GetSlateId()));
+		return false;
+	}
+
+	// TODO: Add output to Transaction
+	// Add receiver's ParticipantData to Slate
+	slate.AddParticpantData(receiverData);
+
+	return true;
+}
+
+std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const
+{
+	// TODO: Verify partial signatures
+
+	// Load secretKey and secretNonce
+	std::unique_ptr<SlateContext> pSlateContext = wallet.GetSlateContext(slate.GetSlateId());
+	if (pSlateContext == nullptr)
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
+	const BlindingFactor& secretKey = pSlateContext->GetSecretKey();
+	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
+
+	const BlindingFactor& secretNonce = pSlateContext->GetSecretNonce();
+	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
+
+	// Generate message
+	const Transaction& transaction = slate.GetTransaction();
+	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
+	if (kernels.size() != 1)
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
+	const TransactionKernel& kernel = kernels.front();
+	const Hash message = kernel.GetSignatureMessage();
+
+	// Generate partial signature
+	std::unique_ptr<Signature> pPartialSignature = GeneratePartialSignature(secretKey, secretNonce, slate.GetParticipantData(), message);
+
+	// TODO: Aggregate partial signatures
+	std::unique_ptr<Signature> pAggSignature = std::unique_ptr<Signature>(nullptr);
+
+	// Build the final excess based on final tx and offset
+	auto getInputCommitments = [](const TransactionInput& input) -> Commitment { return input.GetCommitment(); };
+	std::vector<Commitment> inputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetInputs(), getInputCommitments);
+	inputCommitments.emplace_back(*Crypto::CommitBlinded(0, transaction.GetOffset()));
+
+	auto getOutputCommitments = [](const TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
+	std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetOutputs(), getOutputCommitments);
+	outputCommitments.emplace_back(*Crypto::CommitTransparent(slate.GetFee()));
+
+	std::unique_ptr<Commitment> pFinalExcess = Crypto::AddCommitments(outputCommitments, inputCommitments);
+
+	// Update the tx kernel to reflect the offset excess and sig
+	TransactionKernel finalKernel(kernel.GetFeatures(), kernel.GetFee(), kernel.GetLockHeight(), Commitment(*pFinalExcess), Signature(*pAggSignature));
+	// TODO: Verify finalKernel && final Transaction
+
+	return std::unique_ptr<Transaction>(nullptr);
 }
 
 // TODO: Apply Strategy instead of just selecting greatest number of outputs.
@@ -141,4 +250,21 @@ Transaction SlateBuilder::BuildTransaction(const std::vector<WalletCoin>& inputs
 	std::vector<TransactionKernel> kernels({ kernel });
 
 	return Transaction(BlindingFactor(transactionOffset), TransactionBody(std::move(transactionInputs), std::move(transactionOutputs), std::move(kernels)));
+}
+
+std::unique_ptr<Signature> SlateBuilder::GeneratePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message) const
+{
+	std::vector<Commitment> pubKeys;
+	std::vector<Commitment> pubNonces;
+
+	for (const ParticipantData& participantData : participants)
+	{
+		pubKeys.push_back(participantData.GetPublicBlindExcess());
+		pubNonces.push_back(participantData.GetPublicNonce());
+	}
+
+	const Commitment sumPubKeys = CryptoUtil::AddCommitments(pubKeys);
+	const Commitment sumPubNonces = CryptoUtil::AddCommitments(pubNonces);
+
+	return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys.GetCommitmentBytes(), sumPubNonces.GetCommitmentBytes(), message);
 }

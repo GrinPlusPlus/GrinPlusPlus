@@ -25,6 +25,14 @@ public:
 
 	}
 
+	inline const uuids::uuid& GetSlateId() const { return m_slateId; }
+	inline uint64_t GetAmount() const { return m_amount; }
+	inline uint64_t GetFee() const { return m_fee; }
+	inline const Transaction& GetTransaction() const { return m_transaction; }
+	inline const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
+
+	inline void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
+
 private:
 	// The number of participants intended to take part in this transaction
 	uint64_t m_numParticipants;

@@ -23,6 +23,7 @@ public:
 	std::vector<WalletCoin> GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const;
 	std::unique_ptr<WalletCoin> CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount);
 
+	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId) const;
 	bool SaveSlateContext(const uuids::uuid& slateId, const SlateContext& slateContext);
 	bool LockCoins(std::vector<WalletCoin>& coins);
 

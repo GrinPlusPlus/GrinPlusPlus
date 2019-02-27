@@ -5,7 +5,6 @@
 #include <Config/Config.h>
 #include <Core/Models/FullBlock.h>
 #include <BlockChain/BlockChainStatus.h>
-#include <TxPool/TransactionPool.h>
 
 enum class EBlockStatus
 {
@@ -17,7 +16,7 @@ enum class EBlockStatus
 class BlockProcessor
 {
 public:
-	BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState, const ITransactionPool& transactionPool);
+	BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
@@ -33,5 +32,4 @@ private:
 	const Config& m_config;
 	const IBlockDB& m_blockDB;
 	ChainState& m_chainState;
-	const ITransactionPool& m_transactionPool;
 };

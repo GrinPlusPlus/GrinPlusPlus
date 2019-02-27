@@ -197,8 +197,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 
 bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
 {
-	std::vector<Commitment> commitments;
-	std::vector<RangeProof> rangeProofs;
+	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 
 	for (uint64_t mmrIndex = 0; mmrIndex < txHashSet.GetOutputPMMR()->GetSize(); mmrIndex++)
 	{
@@ -212,26 +211,24 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 				return false;
 			}
 
-			commitments.push_back(pOutput->GetCommitment());
-			rangeProofs.push_back(*pRangeProof);
+			rangeProofs.emplace_back(std::make_pair<Commitment, RangeProof>(Commitment(pOutput->GetCommitment()), RangeProof(*pRangeProof)));
 
-			if (commitments.size() >= 2000)
+			if (rangeProofs.size() >= 2000)
 			{
-				if (!Crypto::VerifyRangeProofs(commitments, rangeProofs))
+				if (!Crypto::VerifyRangeProofs(rangeProofs))
 				{
 					LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
 					return false;
 				}
 
-				commitments.clear();
 				rangeProofs.clear();
 			}
 		}
 	}
 
-	if (!commitments.empty())
+	if (!rangeProofs.empty())
 	{
-		if (!Crypto::VerifyRangeProofs(commitments, rangeProofs))
+		if (!Crypto::VerifyRangeProofs(rangeProofs))
 		{
 			LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
 			return false;

@@ -9,8 +9,8 @@
 #include <Common/Util/StringUtil.h>
 #include <algorithm>
 
-BlockProcessor::BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState, const ITransactionPool& transactionPool)
-	: m_config(config), m_blockDB(blockDB), m_chainState(chainState), m_transactionPool(transactionPool)
+BlockProcessor::BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState)
+	: m_config(config), m_blockDB(blockDB), m_chainState(chainState)
 {
 
 }
@@ -35,7 +35,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
 		// Verify block is self-consistent before locking
-		if (!BlockValidator(m_transactionPool, m_blockDB, nullptr).IsBlockSelfConsistent(block))
+		if (!BlockValidator(m_blockDB, nullptr).IsBlockSelfConsistent(block))
 		{
 			LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
 			return EBlockChainStatus::INVALID;
@@ -240,7 +240,7 @@ EBlockChainStatus BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Lo
 		return EBlockChainStatus::INVALID;
 	}
 
-	std::unique_ptr<BlockSums> pBlockSums = BlockValidator(lockedState.m_transactionPool, m_blockDB, pTxHashSet).ValidateBlock(block);
+	std::unique_ptr<BlockSums> pBlockSums = BlockValidator(m_blockDB, pTxHashSet).ValidateBlock(block);
 	if (pBlockSums == nullptr)
 	{
 		return EBlockChainStatus::INVALID;

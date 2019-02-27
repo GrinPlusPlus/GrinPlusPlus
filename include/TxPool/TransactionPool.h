@@ -44,9 +44,6 @@ public:
 	virtual std::unique_ptr<Transaction> GetTransactionToFluff(const BlockHeader& lastConfirmedHeader) = 0;
 	virtual std::vector<Transaction> GetExpiredTransactions() const = 0;
 
-	virtual bool ValidateTransaction(const Transaction& transaction) const = 0;
-	virtual bool ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward) const = 0;
-
 	// TODO: Prepare Mineable Transactions
 };
 

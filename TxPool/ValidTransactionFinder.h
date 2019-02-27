@@ -1,17 +1,17 @@
 #pragma once
 
-#include "BulletProofsCache.h"
-
 #include <Core/Models/Transaction.h>
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/BlockSums.h>
-#include <PMMR/TxHashSetManager.h>
-#include <Database/BlockDb.h>
+
+// Forward Declarations
+class TxHashSetManager;
+class IBlockDB;
 
 class ValidTransactionFinder
 {
 public:
-	ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache);
+	ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
 
 	std::vector<Transaction> FindValidTransactions(const std::vector<Transaction>& transactions, const std::unique_ptr<Transaction>& pExtraTransaction, const BlockHeader& header) const;
 
@@ -21,5 +21,4 @@ private:
 
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
-	BulletProofsCache& m_bulletproofsCache;
 };

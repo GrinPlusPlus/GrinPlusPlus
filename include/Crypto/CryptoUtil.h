@@ -28,4 +28,9 @@ public:
 
 		return *pBlindingFactor;
 	}
+
+	static Commitment AddCommitments(const std::vector<Commitment>& commitments)
+	{
+		return *Crypto::AddCommitments(commitments, std::vector<Commitment>());
+	}
 };

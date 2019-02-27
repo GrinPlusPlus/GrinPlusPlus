@@ -7,6 +7,7 @@
 
 #include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Common/Util/FunctionalUtil.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
@@ -51,10 +52,10 @@ bool Secp256k1Wrapper::VerifySingleAggSig(const Signature& signature, const Comm
 	return false;
 }
 
-bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs) const
+bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs) const
 {
 	const size_t numBits = 64;
-	const size_t proofLength = rangeProofs.front().GetProofBytes().size();
+	const size_t proofLength = rangeProofs.front().second.GetProofBytes().size();
 
 	// array of generator multiplied by value in pedersen commitments (cannot be NULL)
 	std::vector<secp256k1_generator> valueGenerators;
@@ -63,12 +64,12 @@ bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<Commitment>& commitm
 		valueGenerators.push_back(secp256k1_generator_const_h);
 	}
 
+	auto getCommitments = [](const std::pair<Commitment, RangeProof>& rangeProof) -> Commitment { return rangeProof.first; };
+	std::vector<Commitment> commitments = FunctionalUtil::map<std::vector<Commitment>>(rangeProofs, getCommitments);
 	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = ConvertCommitments(commitments);
-	std::vector<const unsigned char*> bulletproofPointers;
-	for (const RangeProof& rangeProof : rangeProofs)
-	{
-		bulletproofPointers.push_back(rangeProof.GetProofBytes().data());
-	}
+
+	auto getBulletProofPointers = [](const std::pair<Commitment, RangeProof>& rangeProof) -> const unsigned char* { return rangeProof.second.GetProofBytes().data(); };
+	std::vector<const unsigned char*> bulletproofPointers = FunctionalUtil::map<std::vector<const unsigned char*>>(rangeProofs, getBulletProofPointers);
 
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 	const int result = secp256k1_bulletproof_rangeproof_verify_multi(m_pContext, pScratchSpace, m_pGenerators, bulletproofPointers.data(), rangeProofs.size(), proofLength, NULL, commitmentPointers.data(), 1, numBits, valueGenerators.data(), NULL, NULL);
@@ -313,4 +314,37 @@ void Secp256k1Wrapper::CleanupCommitments(std::vector<secp256k1_pedersen_commitm
 	}
 
 	commitments.clear();
+}
+
+std::unique_ptr<Signature> Secp256k1Wrapper::SignSingle(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message) const
+{
+	secp256k1_pubkey pubKeyForE;
+	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, &sumPubKeys.GetData()[0], sumPubKeys.GetData().size());
+
+	secp256k1_pubkey pubNoncesForE;
+	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNoncesForE, &sumPubNonces.GetData()[0], sumPubNonces.GetData().size());
+
+	if (pubKeyParsed == 1 && noncesParsed == 1)
+	{
+		std::vector<unsigned char> signatureBytes(64);
+		int signedResult = secp256k1_aggsig_sign_single(
+			m_pContext,
+			&signatureBytes[0],
+			&message.GetData()[0],
+			&secretKey.GetBlindingFactorBytes().GetData()[0],
+			&secretNonce.GetBlindingFactorBytes().GetData()[0],
+			nullptr,
+			&pubNoncesForE,
+			nullptr,
+			&pubKeyForE,
+			nullptr
+		);
+
+		if (signedResult == 1)
+		{
+			return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
+		}
+	}
+
+	return std::unique_ptr<Signature>(nullptr);
 }

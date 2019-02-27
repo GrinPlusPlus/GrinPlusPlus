@@ -1,4 +1,4 @@
-#include "TransactionBodyValidator.h"
+#include <Core/Validation/TransactionBodyValidator.h>
 
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Consensus/BlockWeight.h>
@@ -6,12 +6,6 @@
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
 #include <set>
-
-TransactionBodyValidator::TransactionBodyValidator(BulletProofsCache& bulletproofsCache)
-	: m_bulletproofsCache(bulletproofsCache)
-{
-
-}
 
 // Validates all relevant parts of a transaction body. 
 // Checks the excess value against the signature as well as range proofs for each output.
@@ -32,7 +26,7 @@ bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& tr
 		return false;
 	}
 
-	if (!VerifyOutputs(transactionBody.GetOutputs()))
+	if (!VerifyRangeProofs(transactionBody.GetOutputs()))
 	{
 		return false;
 	}
@@ -126,33 +120,13 @@ bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transacti
 	return true;
 }
 
-bool TransactionBodyValidator::VerifyOutputs(const std::vector<TransactionOutput>& outputs)
+bool TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOutput>& outputs)
 {
-	std::vector<Commitment> commitments;
-	std::vector<RangeProof> proofs;
-
+	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 	for (auto output : outputs)
 	{
-		if (!m_bulletproofsCache.WasAlreadyVerified(output.GetCommitment()))
-		{
-			commitments.push_back(output.GetCommitment());
-			proofs.push_back(output.GetRangeProof());
-		}
+		rangeProofs.emplace_back(std::make_pair<Commitment, RangeProof>(Commitment(output.GetCommitment()), RangeProof(output.GetRangeProof())));
 	}
 
-	if (commitments.empty())
-	{
-		return true;
-	}
-
-	const bool verified = Crypto::VerifyRangeProofs(commitments, proofs);
-	if (verified)
-	{
-		for (const Commitment& commitment : commitments)
-		{
-			m_bulletproofsCache.AddToCache(commitment);
-		}
-	}
-
-	return verified;
+	return Crypto::VerifyRangeProofs(rangeProofs);
 }

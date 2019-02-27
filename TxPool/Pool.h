@@ -1,7 +1,6 @@
 #pragma once
 
 #include "TxPoolEntry.h"
-#include "BulletProofsCache.h"
 
 #include <TxPool/DandelionStatus.h>
 #include <Core/Models/Transaction.h>
@@ -19,7 +18,7 @@
 class Pool
 {
 public:
-	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache);
+	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
 
 	bool AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	bool ContainsTransaction(const Transaction& transaction) const;
@@ -40,7 +39,6 @@ private:
 	const Config& m_config;
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
-	BulletProofsCache& m_bulletproofsCache;
 
 	mutable std::shared_mutex m_transactionsMutex; // TODO: Lock belongs in TransactionPoolImpl, instead.
 	std::vector<TxPoolEntry> m_transactions;

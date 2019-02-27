@@ -22,6 +22,11 @@ public:
 	{
 
 	}
+	Commitment(const CBigInteger<33>& commitmentBytes)
+		: m_commitmentBytes(commitmentBytes)
+	{
+
+	}
 	Commitment(const Commitment& other) = default;
 	Commitment(Commitment&& other) noexcept = default;
 

@@ -4,6 +4,7 @@ file(GLOB CORE_SRC
 	"roaring.c"
     "File.cpp"
     "Models/*.cpp"
+	"Validation/*.cpp"
 )
 
 add_subdirectory(Tests)

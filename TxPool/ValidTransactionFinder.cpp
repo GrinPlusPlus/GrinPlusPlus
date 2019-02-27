@@ -1,12 +1,14 @@
 #include "ValidTransactionFinder.h"
 #include "TransactionAggregator.h"
-#include "TransactionValidator.h"
 
+#include <Core/Validation/TransactionValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Util/FunctionalUtil.h>
+#include <PMMR/TxHashSetManager.h>
+#include <Database/BlockDb.h>
 
-ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache)
-	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)
+ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
+	: m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)
 {
 
 }
@@ -47,7 +49,7 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 
 bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction, const BlockHeader& header, const BlockSums& blockSums) const
 {
-	if (!TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction))
+	if (!TransactionValidator().ValidateTransaction(transaction))
 	{
 		return false;
 	}

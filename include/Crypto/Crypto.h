@@ -83,7 +83,7 @@ public:
 	//
 	//
 	//
-	static bool VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs);
+	static bool VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs);
 
 	//
 	//
@@ -114,5 +114,7 @@ public:
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
 	//
-	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey); // TODO: Take in BlindingFactor
+	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey);
+
+	static std::unique_ptr<Signature> CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message);
 };

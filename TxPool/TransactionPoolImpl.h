@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Pool.h"
-#include "BulletProofsCache.h"
 
 #include <TxPool/TransactionPool.h>
 #include <Core/Models/Transaction.h>
@@ -26,14 +25,10 @@ public:
 	virtual std::unique_ptr<Transaction> GetTransactionToFluff(const BlockHeader& lastConfirmedBlock) override final;
 	virtual std::vector<Transaction> GetExpiredTransactions() const override final;
 
-	virtual bool ValidateTransaction(const Transaction& transaction) const override final;
-	virtual bool ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward) const override final;
-
 private:
 	const Config& m_config;
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
-	mutable BulletProofsCache m_bulletproofsCache;
 
 	Pool m_memPool;
 	Pool m_stemPool;

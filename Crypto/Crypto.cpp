@@ -1,5 +1,6 @@
 #include <Crypto/Crypto.h>
 
+#include "BulletProofsCache.h"
 #include "Blake2.h"
 #include "sha256.h"
 #include "ripemd160.h"
@@ -14,6 +15,8 @@
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "ws2_32.lib")
 #endif
+
+BulletProofsCache BULLETPROOFS_CACHE;
 
 CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
 {
@@ -137,14 +140,32 @@ std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitm
 	return Secp256k1Wrapper::GetInstance().RewindProof(commitment, rangeProof, nonce);
 }
 
-bool Crypto::VerifyRangeProofs(const std::vector<Commitment>& commitments, const std::vector<RangeProof>& rangeProofs)
+bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
 {
-	if (commitments.size() != rangeProofs.size())
+	std::vector<std::pair<Commitment, RangeProof>> filteredRangeProofs;
+	for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
 	{
-		return false;
+		if (!BULLETPROOFS_CACHE.WasAlreadyVerified(rangeProof.first))
+		{
+			filteredRangeProofs.emplace_back(rangeProof);
+		}
 	}
 
-	return Secp256k1Wrapper::GetInstance().VerifyBulletproofs(commitments, rangeProofs);
+	if (filteredRangeProofs.empty())
+	{
+		return true;
+	}
+
+	const bool verified = Secp256k1Wrapper::GetInstance().VerifyBulletproofs(filteredRangeProofs);
+	if (verified)
+	{
+		for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
+		{
+			BULLETPROOFS_CACHE.AddToCache(rangeProof.first);
+		}
+	}
+
+	return verified;
 }
 
 bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
@@ -215,7 +236,12 @@ CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const st
 	return CBigInteger<64>();
 }
 
-std::unique_ptr<CBigInteger<33>> Crypto::SECP256K1_CalculateCompressedPublicKey(const CBigInteger<32>& privateKey)
+std::unique_ptr<CBigInteger<33>> Crypto::SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey)
 {
-	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey);
+	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey.GetBlindingFactorBytes());
+}
+
+std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message)
+{
+	return Secp256k1Wrapper::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }

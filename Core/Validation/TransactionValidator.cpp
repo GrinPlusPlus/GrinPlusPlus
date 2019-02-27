@@ -1,5 +1,5 @@
-#include "TransactionValidator.h"
-#include "TransactionBodyValidator.h"
+#include <Core/Validation/TransactionValidator.h>
+#include <Core/Validation/TransactionBodyValidator.h>
 
 #include <Crypto/Crypto.h>
 #include <Common/Util/HexUtil.h>
@@ -7,17 +7,11 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/FunctionalUtil.h>
 
-TransactionValidator::TransactionValidator(BulletProofsCache& bulletproofsCache)
-	: m_transactionBodyValidator(bulletproofsCache)
-{
-
-}
-
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic
 bool TransactionValidator::ValidateTransaction(const Transaction& transaction)
 {
 	// Validate the "transaction body"
-	if (!m_transactionBodyValidator.ValidateTransactionBody(transaction.GetBody(), false))
+	if (!TransactionBodyValidator().ValidateTransactionBody(transaction.GetBody(), false))
 	{
 		return false;
 	}

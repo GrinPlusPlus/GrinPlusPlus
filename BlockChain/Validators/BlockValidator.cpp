@@ -2,14 +2,14 @@
 #include "../Processors/BlockHeaderProcessor.h"
 
 #include <Crypto/Crypto.h>
+#include <Core/Validation/TransactionBodyValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>
-#include <TxPool/TransactionPool.h>
 #include <algorithm>
 
-BlockValidator::BlockValidator(const ITransactionPool& transactionPool, const IBlockDB& blockDB, const ITxHashSet* pTxHashSet)
-	: m_transactionPool(transactionPool), m_blockDB(blockDB), m_pTxHashSet(pTxHashSet)
+BlockValidator::BlockValidator(const IBlockDB& blockDB, const ITxHashSet* pTxHashSet)
+	: m_blockDB(blockDB), m_pTxHashSet(pTxHashSet)
 {
 
 }
@@ -63,7 +63,7 @@ bool BlockValidator::IsBlockSelfConsistent(const FullBlock& block) const
 		return true;
 	}
 
-	if (!m_transactionPool.ValidateTransactionBody(block.GetTransactionBody(), true))
+	if (!TransactionBodyValidator().ValidateTransactionBody(block.GetTransactionBody(), true))
 	{
 		LoggerAPI::LogError("BlockValidator::IsBlockSelfConsistent - Failed to validate transaction body for " + HexUtil::ConvertHash(block.GetHash()));
 		return false;

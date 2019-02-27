@@ -1,14 +1,14 @@
 #include "Pool.h"
-#include "TransactionValidator.h"
 #include "TransactionAggregator.h"
 #include "ValidTransactionFinder.h"
 
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
+#include <Core/Validation/TransactionValidator.h>
 #include <algorithm>
 
-Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB, BulletProofsCache& bulletproofsCache)
-	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB), m_bulletproofsCache(bulletproofsCache)
+Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
+	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)
 {
 
 }
@@ -44,7 +44,7 @@ bool Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
-	if (TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction))
+	if (TransactionValidator().ValidateTransaction(transaction))
 	{
 		LoggerAPI::LogDebug("Pool::AddTransaction - Transaction added: " + HexUtil::ConvertHash(transaction.GetHash()));
 
@@ -188,7 +188,7 @@ void Pool::ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transact
 
 	m_transactions.clear();
 
-	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_txHashSetManager, m_blockDB, m_bulletproofsCache).FindValidTransactions(filteredTransactions, pMemPoolAggTx, block.GetBlockHeader());
+	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(filteredTransactions, pMemPoolAggTx, block.GetBlockHeader());
 	for (auto& transaction : validTransactions)
 	{
 		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(transaction.GetHash());

@@ -1,6 +1,4 @@
 #include "TransactionPoolImpl.h"
-#include "TransactionValidator.h"
-#include "TransactionBodyValidator.h"
 #include "TransactionAggregator.h"
 #include "ValidTransactionFinder.h"
 
@@ -13,8 +11,8 @@ TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& t
 	: m_config(config), 
 	m_txHashSetManager(txHashSetManager), 
 	m_blockDB(blockDB),
-	m_memPool(config, txHashSetManager, blockDB, m_bulletproofsCache),
-	m_stemPool(config, txHashSetManager, blockDB, m_bulletproofsCache)
+	m_memPool(config, txHashSetManager, blockDB),
+	m_stemPool(config, txHashSetManager, blockDB)
 {
 
 }
@@ -130,7 +128,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(const BlockHe
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager, m_blockDB, m_bulletproofsCache).FindValidTransactions(transactionsToStem, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToStem, pMemPoolAggTx, lastConfirmedBlock);
 	if (validTransactionsToStem.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -157,7 +155,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockH
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager, m_blockDB, m_bulletproofsCache).FindValidTransactions(transactionsToFluff, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToFluff, pMemPoolAggTx, lastConfirmedBlock);
 	if (validTransactionsToFluff.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -178,16 +176,6 @@ std::vector<Transaction> TransactionPool::GetExpiredTransactions() const
 {
 	const uint16_t embargoSeconds = m_config.GetDandelionConfig().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
-}
-
-bool TransactionPool::ValidateTransaction(const Transaction& transaction) const
-{
-	return TransactionValidator(m_bulletproofsCache).ValidateTransaction(transaction);
-}
-
-bool TransactionPool::ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward) const
-{
-	return TransactionBodyValidator(m_bulletproofsCache).ValidateTransactionBody(transactionBody, withReward);
 }
 
 namespace TxPoolAPI

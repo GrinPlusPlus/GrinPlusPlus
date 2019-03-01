@@ -2,8 +2,9 @@
 
 #include <Core/Models/Transaction.h>
 #include <Wallet/ParticipantData.h>
+#include <Core/Serialization/Serializer.h>
+#include <Core/Serialization/ByteBuffer.h>
 #include <uuid.h>
-
 #include <stdint.h>
 
 // A 'Slate' is passed around to all parties to build up all of the public
@@ -13,8 +14,9 @@
 class Slate
 {
 public:
-	Slate(const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
-		: m_numParticipants(numParticipants),
+	Slate(const uint64_t version, const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
+		: m_version(version),
+		m_numParticipants(numParticipants),
 		m_slateId(std::move(slateId)),
 		m_transaction(std::move(transaction)),
 		m_amount(amount),
@@ -33,7 +35,14 @@ public:
 
 	inline void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
 
+	void Serialize(Serializer& serializer) const
+	{
+
+	}
+
 private:
+	// Slate format version
+	uint64_t m_version;
 	// The number of participants intended to take part in this transaction
 	uint64_t m_numParticipants;
 	// Unique transaction/slate ID, selected by sender

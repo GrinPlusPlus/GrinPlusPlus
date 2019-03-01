@@ -87,11 +87,13 @@ public:
 	CBigInteger operator/(const int divisor) const;
 	CBigInteger operator/(const CBigInteger& divisor) const;
 
+	CBigInteger operator^(const CBigInteger& xor) const;
+
 	int operator%(const int modulo) const;
 	CBigInteger operator%(const CBigInteger& modulo) const;
 
-	unsigned char& operator[] (const int x) { return m_data[x]; }
-	const unsigned char& operator[] (const int x) const { return m_data[x]; }
+	unsigned char& operator[] (const size_t x) { return m_data[x]; }
+	const unsigned char& operator[] (const size_t x) const { return m_data[x]; }
 
 	inline bool operator<(const CBigInteger& rhs) const
 	{
@@ -173,6 +175,13 @@ public:
 	inline CBigInteger operator/=(const CBigInteger& rhs)
 	{
 		*this = *this / rhs;
+		return *this;
+	}
+
+	inline CBigInteger operator^=(const CBigInteger& rhs)
+	{
+		*this = *this ^ rhs;
+
 		return *this;
 	}
 
@@ -521,4 +530,16 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator%(const CBi
 	CBigInteger<NUM_BYTES, ALLOC> modResult = *this - product;
 
 	return modResult;
+}
+
+template<size_t NUM_BYTES, class ALLOC>
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator^(const CBigInteger<NUM_BYTES, ALLOC>& xor) const
+{
+	CBigInteger<NUM_BYTES, ALLOC> result = *this;
+	for (size_t i = 0; i < NUM_BYTES; i++)
+	{
+		result[i] ^= xor[i];
+	}
+
+	return result;
 }

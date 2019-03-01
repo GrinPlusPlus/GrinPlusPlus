@@ -16,7 +16,7 @@ public:
 	virtual SecureString InitializeNewWallet(const std::string& username, const SecureString& password) override final;
 
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
-	virtual void Logoff(const SessionToken& token) override final;
+	virtual void Logout(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination) override final;
 

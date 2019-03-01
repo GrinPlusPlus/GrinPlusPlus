@@ -93,7 +93,7 @@ private:
 		std::vector<Commitment> commitments;
 		commitments.push_back(kernelSum);
 
-		if (totalKernelOffset.GetBlindingFactorBytes() != CBigInteger<32>::ValueOf(0))
+		if (totalKernelOffset.GetBytes() != CBigInteger<32>::ValueOf(0))
 		{
 			std::unique_ptr<Commitment> pOffsetCommitment = Crypto::CommitBlinded((uint64_t)0, totalKernelOffset);
 			if (pOffsetCommitment == nullptr)

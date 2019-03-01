@@ -9,6 +9,8 @@
 #include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 
+static const uint64_t SLATE_VERSION = 1;
+
 SlateBuilder::SlateBuilder(const INodeClient& nodeClient)
 	: m_nodeClient(nodeClient)
 {
@@ -75,21 +77,21 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 	Transaction transaction = BuildTransaction(inputs, *pChangeOutput, transactionOffset, fee, lockHeight);
 
 	// Save secretKey and secretNonce
-	if (!wallet.SaveSlateContext(slateId, SlateContext(std::move(secretKey), std::move(secretNonce))))
+	if (!wallet.SaveSlateContext(slateId, masterSeed, SlateContext(std::move(secretKey), std::move(secretNonce))))
 	{
 		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to save context for slate " + uuids::to_string(slateId));
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
 	// Lock coins
-	if (!wallet.LockCoins(inputs))
+	if (!wallet.LockCoins(masterSeed, inputs))
 	{
 		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to lock coins.");
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
-	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
+	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(SLATE_VERSION, 2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
 	pSlate->AddParticpantData(ParticipantData(0, *pPublicKey, *pPublicNonce));
 
 	return pSlate;
@@ -136,7 +138,7 @@ bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& master
 	receiverData.AddPartialSignature(*pPartialSignature);
 
 	// Save secretKey and secretNonce
-	if (!wallet.SaveSlateContext(slate.GetSlateId(), SlateContext(std::move(secretKey), std::move(secretNonce))))
+	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, SlateContext(std::move(secretKey), std::move(secretNonce))))
 	{
 		LoggerAPI::LogError("SlateBuilder::AddReceiverData - Failed to save context for slate " + uuids::to_string(slate.GetSlateId()));
 		return false;
@@ -154,7 +156,7 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 	// TODO: Verify partial signatures
 
 	// Load secretKey and secretNonce
-	std::unique_ptr<SlateContext> pSlateContext = wallet.GetSlateContext(slate.GetSlateId());
+	std::unique_ptr<SlateContext> pSlateContext = wallet.GetSlateContext(slate.GetSlateId(), masterSeed);
 	if (pSlateContext == nullptr)
 	{
 		return std::unique_ptr<Transaction>(nullptr);

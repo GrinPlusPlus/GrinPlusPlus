@@ -40,7 +40,7 @@ std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(const CBigInteger<32>& 
 CBigInteger<32> KeyChain::CreateNonce(const CBigInteger<32>& masterSeed, const Commitment& commitment) const
 {
 	std::unique_ptr<PrivateExtKey> pRootKey = DerivePrivateKey(masterSeed, KeyChainPath::FromString("m"));
-	std::vector<unsigned char> input = VectorUtil::Concat(commitment.GetCommitmentBytes().GetData(), pRootKey->ToBlindingFactor().GetBlindingFactorBytes().GetData());
+	std::vector<unsigned char> input = VectorUtil::Concat(commitment.GetCommitmentBytes().GetData(), pRootKey->ToBlindingFactor().GetBytes().GetData());
 
 	return Crypto::Blake2b(input);
 }

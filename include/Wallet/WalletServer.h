@@ -38,10 +38,10 @@ public:
 	//
 	// Deletes the session information.
 	//
-	virtual void Logoff(const SessionToken& token) = 0;
+	virtual void Logout(const SessionToken& token) = 0;
 
 	//
-	// Sends coins to the given destination using the specified method. Returns true if successful.
+	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.
 	// Exceptions thrown:
 	// * SessionTokenException - If no matching session found, or if the token is invalid.
 	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.

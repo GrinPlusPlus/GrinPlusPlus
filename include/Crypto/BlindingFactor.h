@@ -39,14 +39,14 @@ public:
 	//
 	BlindingFactor& operator=(const BlindingFactor& other) = default;
 	BlindingFactor& operator=(BlindingFactor&& other) noexcept = default;
-	inline bool operator<(const BlindingFactor& rhs) const { return m_blindingFactorBytes < rhs.GetBlindingFactorBytes(); }
-	inline bool operator!=(const BlindingFactor& rhs) const { return m_blindingFactorBytes != rhs.GetBlindingFactorBytes(); }
-	inline bool operator==(const BlindingFactor& rhs) const { return m_blindingFactorBytes == rhs.GetBlindingFactorBytes(); }
+	inline bool operator<(const BlindingFactor& rhs) const { return m_blindingFactorBytes < rhs.GetBytes(); }
+	inline bool operator!=(const BlindingFactor& rhs) const { return m_blindingFactorBytes != rhs.GetBytes(); }
+	inline bool operator==(const BlindingFactor& rhs) const { return m_blindingFactorBytes == rhs.GetBytes(); }
 
 	//
 	// Getters
 	//
-	inline const CBigInteger<32>& GetBlindingFactorBytes() const { return m_blindingFactorBytes; }
+	inline const CBigInteger<32>& GetBytes() const { return m_blindingFactorBytes; }
 
 	//
 	// Serialization/Deserialization

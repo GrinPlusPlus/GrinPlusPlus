@@ -89,7 +89,7 @@ Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 	headerNode["output_mmr_size"] = header.GetOutputMMRSize();
 	headerNode["kernel_mmr_size"] = header.GetKernelMMRSize();
 
-	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBlindingFactorBytes().GetData());
+	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBytes().GetData());
 	headerNode["secondary_scaling"] = header.GetScalingDifficulty();
 	headerNode["total_difficulty"] = header.GetTotalDifficulty();
 	headerNode["nonce"] = header.GetNonce();

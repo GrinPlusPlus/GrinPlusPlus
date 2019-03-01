@@ -24,11 +24,11 @@ public:
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const = 0;
 	virtual KeyChainPath GetNextChildPath(const std::string& username, const KeyChainPath& parentPath) = 0;
 
-	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const uuids::uuid& slateId) const = 0;
-	virtual bool SaveSlateContext(const std::string& username, const uuids::uuid& slateId, const SlateContext& slateContext) = 0;
+	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId) const = 0;
+	virtual bool SaveSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) = 0;
 
-	virtual bool AddOutputs(const std::string& username, const std::vector<OutputData>& outputs) = 0;
-	virtual std::vector<OutputData> GetOutputs(const std::string& username) const = 0;
+	virtual bool AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs) = 0;
+	virtual std::vector<OutputData> GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const = 0;
 };
 
 namespace WalletDBAPI

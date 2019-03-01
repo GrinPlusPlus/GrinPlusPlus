@@ -17,7 +17,7 @@ public:
 	~SessionManager();
 
 	std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password);
-	void Logoff(const SessionToken& token);
+	void Logout(const SessionToken& token);
 
 	CBigInteger<32> GetSeed(const SessionToken& token) const;
 	Wallet& GetWallet(const SessionToken& token);

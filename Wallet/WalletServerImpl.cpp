@@ -34,9 +34,9 @@ std::unique_ptr<SessionToken> WalletServer::Login(const std::string& username, c
 	return m_sessionManager.Login(username, password);
 }
 
-void WalletServer::Logoff(const SessionToken& token)
+void WalletServer::Logout(const SessionToken& token)
 {
-	m_sessionManager.Logoff(token);
+	m_sessionManager.Logout(token);
 }
 
 std::unique_ptr<Slate> WalletServer::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination)

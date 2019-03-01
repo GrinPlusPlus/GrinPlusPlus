@@ -50,18 +50,14 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 		// Generate a hardened child key
 		serializer.Append<uint8_t>(0x00);
 		serializer.AppendBigInteger<32>(parentExtendedKey.GetPrivateKey());
-
-		const uint32_t bigEndianIndex = EndianHelper::GetBigEndian32(childKeyIndex);
-		serializer.Append<uint32_t>(bigEndianIndex);
 	}
 	else
 	{
 		// Generate a normal child key
 		serializer.AppendBigInteger<33>(pPublicKey->GetPublicKey());
-
-		const uint32_t bigEndianIndex = EndianHelper::GetBigEndian32(childKeyIndex);
-		serializer.Append<uint32_t>(bigEndianIndex);
 	}
+
+	serializer.Append<uint32_t>(EndianHelper::GetBigEndian32(childKeyIndex));
 
 	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetData(), serializer.GetBytes());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();

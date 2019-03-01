@@ -31,6 +31,12 @@ public:
 
 	static Commitment AddCommitments(const std::vector<Commitment>& commitments)
 	{
-		return *Crypto::AddCommitments(commitments, std::vector<Commitment>());
+		std::unique_ptr<Commitment> pCommitment = Crypto::AddCommitments(commitments, std::vector<Commitment>());
+		if (pCommitment == nullptr)
+		{
+			throw CryptoException();
+		}
+
+		return *pCommitment;
 	}
 };

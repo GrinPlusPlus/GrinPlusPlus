@@ -51,7 +51,7 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 	return std::unique_ptr<SessionToken>(nullptr);
 }
 
-void SessionManager::Logoff(const SessionToken& token)
+void SessionManager::Logout(const SessionToken& token)
 {
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())

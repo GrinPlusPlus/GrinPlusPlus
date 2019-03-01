@@ -18,7 +18,7 @@ std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 {
 	std::vector<WalletCoin> coins;
 
-	std::vector<OutputData> outputs = m_walletDB.GetOutputs(m_username);
+	std::vector<OutputData> outputs = m_walletDB.GetOutputs(m_username, masterSeed);
 	for (OutputData& output : outputs)
 	{
 		if (output.GetStatus() == EOutputStatus::UNSPENT)
@@ -55,17 +55,17 @@ std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const CBigInteger<32>& m
 	return std::unique_ptr<WalletCoin>(nullptr);
 }
 
-std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId) const
+std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed) const
 {
-	return m_walletDB.LoadSlateContext(m_username, slateId);
+	return m_walletDB.LoadSlateContext(m_username, masterSeed, slateId);
 }
 
-bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SlateContext& slateContext)
+bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed, const SlateContext& slateContext)
 {
-	return m_walletDB.SaveSlateContext(m_username, slateId, slateContext);
+	return m_walletDB.SaveSlateContext(m_username, masterSeed, slateId, slateContext);
 }
 
-bool Wallet::LockCoins(std::vector<WalletCoin>& coins)
+bool Wallet::LockCoins(const CBigInteger<32>& masterSeed, std::vector<WalletCoin>& coins)
 {
 	std::vector<OutputData> outputs;
 
@@ -75,5 +75,5 @@ bool Wallet::LockCoins(std::vector<WalletCoin>& coins)
 		outputs.push_back(coin.GetOutputData());
 	}
 
-	return m_walletDB.AddOutputs(m_username, outputs);
+	return m_walletDB.AddOutputs(m_username, masterSeed, outputs);
 }

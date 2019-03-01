@@ -1,4 +1,5 @@
 #include <Crypto/Crypto.h>
+#include <Crypto/CryptoException.h>
 
 #include "BulletProofsCache.h"
 #include "Blake2.h"
@@ -192,7 +193,7 @@ std::vector<unsigned char> Crypto::AES256_Encrypt(const std::vector<unsigned cha
 	const size_t nLen = enc.Encrypt(&input[0], input.size(), ciphertext.data());
 	if (nLen < input.size())
 	{
-		throw std::out_of_range("Encrypted text is smaller than plaintext.");
+		throw CryptoException();
 	}
 
 	ciphertext.resize(nLen);
@@ -213,7 +214,7 @@ std::vector<unsigned char> Crypto::AES256_Decrypt(const std::vector<unsigned cha
 	nLen = dec.Decrypt(ciphertext.data(), ciphertext.size(), &plaintext[0]);
 	if (nLen == 0)
 	{
-		throw std::runtime_error("Failed to decrypt data.");
+		throw CryptoException();
 	}
 
 	plaintext.resize(nLen);
@@ -238,7 +239,7 @@ CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const st
 
 std::unique_ptr<CBigInteger<33>> Crypto::SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey)
 {
-	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey.GetBlindingFactorBytes());
+	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey.GetBytes());
 }
 
 std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message)

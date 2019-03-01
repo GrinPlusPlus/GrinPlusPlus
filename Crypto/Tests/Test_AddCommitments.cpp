@@ -32,7 +32,7 @@ TEST_CASE("Crypto::AddCommitment")
 		secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
 		std::vector<unsigned char> blindOutBytes(32);
-		std::vector<const unsigned char*> blindingIn({ blind_a.GetBlindingFactorBytes().GetData().data(), blind_b.GetBlindingFactorBytes().GetData().data() });
+		std::vector<const unsigned char*> blindingIn({ blind_a.GetBytes().GetData().data(), blind_b.GetBytes().GetData().data() });
 		int result = secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 2);
 
 		BlindingFactor blind_c(std::move(blindOutBytes));
@@ -52,7 +52,7 @@ TEST_CASE("Crypto::AddCommitment")
 		secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
 		std::vector<unsigned char> blindOutBytes(32);
-		std::vector<const unsigned char*> blindingIn({ blind_a.GetBlindingFactorBytes().GetData().data(), blind_b.GetBlindingFactorBytes().GetData().data() });
+		std::vector<const unsigned char*> blindingIn({ blind_a.GetBytes().GetData().data(), blind_b.GetBytes().GetData().data() });
 		int result = secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 1);
 
 		BlindingFactor blind_c(std::move(blindOutBytes));

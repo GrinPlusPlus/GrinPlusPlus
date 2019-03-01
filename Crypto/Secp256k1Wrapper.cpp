@@ -111,7 +111,7 @@ std::unique_ptr<RangeProof> Secp256k1Wrapper::GenerateRangeProof(const uint64_t 
 	 */
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 
-	std::vector<const unsigned char*> blindingFactors({ key.GetBlindingFactorBytes().GetData().data() });
+	std::vector<const unsigned char*> blindingFactors({ key.GetBytes().GetData().data() });
 	int result = secp256k1_bulletproof_rangeproof_prove(
 		m_pContext, 
 		pScratchSpace, 
@@ -210,7 +210,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t valu
 	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
 
 	secp256k1_pedersen_commitment commitment;
-	const int result = secp256k1_pedersen_commit(m_pContext, &commitment, &blindingFactor.GetBlindingFactorBytes()[0], value, &secp256k1_generator_const_h, &secp256k1_generator_const_g);
+	const int result = secp256k1_pedersen_commit(m_pContext, &commitment, &blindingFactor.GetBytes()[0], value, &secp256k1_generator_const_h, &secp256k1_generator_const_g);
 	if (result == 1)
 	{
 		std::vector<unsigned char> serializedCommitment(33);
@@ -219,7 +219,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t valu
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommit - Failed to create commitment. Result: " + std::to_string(result) + " Value: " + std::to_string(value) + " Blind: " + blindingFactor.GetBlindingFactorBytes().ToHex());
+	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommit - Failed to create commitment. Result: " + std::to_string(result) + " Value: " + std::to_string(value) + " Blind: " + blindingFactor.GetBytes().ToHex());
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -264,12 +264,12 @@ std::unique_ptr<BlindingFactor> Secp256k1Wrapper::PedersenBlindSum(const std::ve
 	std::vector<const unsigned char*> blindingFactors;
 	for (const BlindingFactor& positiveFactor : positive)
 	{
-		blindingFactors.push_back(positiveFactor.GetBlindingFactorBytes().GetData().data());
+		blindingFactors.push_back(positiveFactor.GetBytes().GetData().data());
 	}
 
 	for (const BlindingFactor& negativeFactor : negative)
 	{
-		blindingFactors.push_back(negativeFactor.GetBlindingFactorBytes().GetData().data());
+		blindingFactors.push_back(negativeFactor.GetBytes().GetData().data());
 	}
 
 	CBigInteger<32> blindingFactorBytes;
@@ -331,8 +331,8 @@ std::unique_ptr<Signature> Secp256k1Wrapper::SignSingle(const BlindingFactor& se
 			m_pContext,
 			&signatureBytes[0],
 			&message.GetData()[0],
-			&secretKey.GetBlindingFactorBytes().GetData()[0],
-			&secretNonce.GetBlindingFactorBytes().GetData()[0],
+			&secretKey.GetBytes().GetData()[0],
+			&secretNonce.GetBytes().GetData()[0],
 			nullptr,
 			&pubNoncesForE,
 			nullptr,

@@ -12,7 +12,7 @@ Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionB
 void Transaction::Serialize(Serializer& serializer) const
 {
 	// Serialize BlindingFactor/Offset
-	const CBigInteger<32>& offsetBytes = m_offset.GetBlindingFactorBytes();
+	const CBigInteger<32>& offsetBytes = m_offset.GetBytes();
 	serializer.AppendBigInteger(offsetBytes);
 
 	// Serialize Transaction Body

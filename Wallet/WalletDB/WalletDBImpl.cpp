@@ -82,6 +82,7 @@ bool WalletDB::CreateWallet(const std::string& username, const EncryptedSeed& en
 	if (LoadWalletSeed(username) != nullptr)
 	{
 		LoggerAPI::LogWarning("WalletDB::CreateWallet - Wallet already exists for user: " + username);
+		return false;
 	}
 
 	const Slice key(username);

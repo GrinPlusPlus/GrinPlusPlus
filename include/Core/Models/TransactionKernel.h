@@ -12,6 +12,7 @@
 #include <Crypto/Signature.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION KERNEL
@@ -56,6 +57,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionKernel Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
+	static TransactionKernel FromJSON(const Json::Value& transactionKernelJSON);
 
 	//
 	// Hashing

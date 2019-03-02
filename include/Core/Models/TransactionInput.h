@@ -11,6 +11,7 @@
 #include <Crypto/Commitment.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION INPUT
@@ -50,6 +51,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionInput Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
+	static TransactionInput FromJSON(const Json::Value& transactionInputJSON);
 
 	//
 	// Hashing

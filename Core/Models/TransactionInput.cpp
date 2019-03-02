@@ -1,6 +1,7 @@
 #include <Core/Models/TransactionInput.h>
 
 #include <Core/Serialization/Serializer.h>
+#include <Core/Util/JsonUtil.h>
 #include <Crypto/Crypto.h>
 
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
@@ -27,6 +28,21 @@ TransactionInput TransactionInput::Deserialize(ByteBuffer& byteBuffer)
 	Commitment commitment = Commitment::Deserialize(byteBuffer);
 
 	return TransactionInput((EOutputFeatures)features, std::move(commitment));
+}
+
+Json::Value TransactionInput::ToJSON() const
+{
+	Json::Value inputNode;
+	inputNode["features"] = OutputFeatures::ToString(GetFeatures());
+	inputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
+	return inputNode;
+}
+
+TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJSON)
+{
+	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionInputJSON, "features").asString());
+	Commitment commitment = JsonUtil::ConvertToCommitment(JsonUtil::GetRequiredField(transactionInputJSON, "commit"));
+	return TransactionInput(features, std::move(commitment));
 }
 
 const Hash& TransactionInput::GetHash() const

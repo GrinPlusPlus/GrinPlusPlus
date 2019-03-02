@@ -14,6 +14,10 @@ int main(int argc, char* argv[])
 	system("pause");
 	system("PMMR_TESTS.exe");
 
+	std::cout << "Preparing to run Wallet tests\n";
+	system("pause");
+	system("Wallet_Tests.exe");
+
 	system("pause");
 
 	return 0;

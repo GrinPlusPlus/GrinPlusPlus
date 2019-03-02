@@ -13,6 +13,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionBody.h>
 #include <Crypto/BlindingFactor.h>
+#include <Json/Json.h>
 
 ////////////////////////////////////////
 // TRANSACTION
@@ -53,6 +54,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static Transaction Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
+	static Transaction FromJSON(const Json::Value& transactionJSON);
 
 	//
 	// Hashing

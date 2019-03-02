@@ -13,6 +13,7 @@
 #include <Crypto/RangeProof.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION OUTPUT
@@ -53,6 +54,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionOutput Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
+	static TransactionOutput FromJSON(const Json::Value& transactionOutputJSON);
 
 	//
 	// Hashing

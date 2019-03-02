@@ -2,7 +2,6 @@
 #include "WordList.h"
 
 #include <Crypto/Crypto.h>
-#include <Common/Util/VectorUtil.h>
 
 // TODO: Apply password
 SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy, const std::optional<SecureString>& password)
@@ -16,19 +15,26 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy,
 	const size_t checksumBits = (entropyBits / 32);
 	const size_t numWords = ((entropyBits + checksumBits) / 11);
 
-	const std::vector<unsigned char> entropyAndCS = VectorUtil::Concat(entropy, Crypto::SHA256(entropy).GetData());
+	std::vector<uint16_t, secure_allocator<uint16_t>> wordIndices(numWords);
 
-	std::vector<uint16_t> wordIndices(numWords);
 	size_t loc = 0;
-
-	for (const uint8_t byte : entropyAndCS)
+	for (const uint8_t byte : entropy)
 	{
-		for (uint8_t i = 7; i >= 0; i--)
+		for (uint8_t i = 8; i > 0; i--)
 		{
-			uint16_t bit = (byte & (1 << i)) == 0 ? 0 : 1;
+			uint16_t bit = (byte & (1 << (i - 1))) == 0 ? 0 : 1;
 			wordIndices[loc / 11] |= bit << (10 - (loc % 11));
 			loc += 1;
 		}
+	}
+
+	const uint8_t mask = (uint8_t)((1 << checksumBits) - 1);
+	const uint32_t checksum = (Crypto::SHA256(entropy)[0] >> (8 - checksumBits)) & mask;
+	for (size_t i = checksumBits; i > 0; i--)
+	{
+		uint16_t bit = (checksum & (1 << (i - 1))) == 0 ? 0 : 1;
+		wordIndices[loc / 11] |= bit << (10 - (loc % 11));
+		loc += 1;
 	}
 
 	SecureString result("");

@@ -3,6 +3,50 @@
 #include <string>
 #include <vector>
 
+#if defined(_MSC_VER)
+#ifndef NOMINMAX
+#define NOMINMAX
+#define NOMINMAX_DEFINED
+#endif
+
+#include <Windows.h> // For SecureZeroMemory.
+
+#ifdef NOMINMAX_DEFINED
+#undef NOMINMAX
+#endif
+#endif
+
+/* Compilers have a bad habit of removing "superfluous" memset calls that
+ * are trying to zero memory. For example, when memset()ing a buffer and
+ * then free()ing it, the compiler might decide that the memset is
+ * unobservable and thus can be removed.
+ *
+ * Previously we used OpenSSL which tried to stop this by a) implementing
+ * memset in assembly on x86 and b) putting the function in its own file
+ * for other platforms.
+ *
+ * This change removes those tricks in favour of using asm directives to
+ * scare the compiler away. As best as our compiler folks can tell, this is
+ * sufficient and will continue to be so.
+ *
+ * Adam Langley <agl@google.com>
+ * Commit: ad1907fe73334d6c696c8539646c21b11178f20f
+ * BoringSSL (LICENSE: ISC)
+ */
+static void cleanse(void *ptr, size_t len)
+{
+	std::memset(ptr, 0, len);
+
+	/* As best as we can tell, this is sufficient to break any optimisations that
+	   might try to eliminate "superfluous" memsets. If there's an easy way to
+	   detect memset_s, it would be better to use that. */
+#if defined(_MSC_VER)
+	SecureZeroMemory(ptr, len);
+#else
+	__asm__ __volatile__("" : : "r"(ptr) : "memory");
+#endif
+}
+
 //
 // Allocator that clears its contents before deletion
 //
@@ -18,18 +62,22 @@ struct secure_allocator : public std::allocator<T>
 	typedef typename base::reference reference;
 	typedef typename base::const_reference const_reference;
 	typedef typename base::value_type value_type;
-	secure_allocator() throw() {}
-	secure_allocator(const secure_allocator& a) throw() : base(a) {}
-	~secure_allocator() throw() {}
+
+	constexpr secure_allocator() noexcept {}
+	constexpr secure_allocator(const secure_allocator& a) noexcept : base(a) {}
+	template <typename U>
+	constexpr secure_allocator(const secure_allocator<U>& a) noexcept : base(a) {}
+	~secure_allocator() noexcept {}
+
 	template<typename _Other> struct rebind
 	{
 		typedef secure_allocator<_Other> other;
 	};
 
-	void deallocate(T* p, std::size_t n)
+	void deallocate(T* p, std::size_t n) noexcept
 	{
 		if (p != NULL)
-			memset(p, 0, sizeof(T) * n);
+			cleanse(p, sizeof(T) * n);
 		std::allocator<T>::deallocate(p, n);
 	}
 };

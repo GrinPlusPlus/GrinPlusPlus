@@ -1,4 +1,5 @@
 #include <Core/Models/TransactionOutput.h>
+#include <Core/Util/JsonUtil.h>
 #include <Crypto/Crypto.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)
@@ -31,6 +32,23 @@ TransactionOutput TransactionOutput::Deserialize(ByteBuffer& byteBuffer)
 	RangeProof rangeProof = RangeProof::Deserialize(byteBuffer);
 
 	return TransactionOutput((EOutputFeatures)features, std::move(commitment), std::move(rangeProof));
+}
+
+Json::Value TransactionOutput::ToJSON() const
+{
+	Json::Value outputNode;
+	outputNode["features"] = OutputFeatures::ToString(GetFeatures());
+	outputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
+	outputNode["proof"] = JsonUtil::ConvertToJSON(GetRangeProof());
+	return outputNode;
+}
+
+TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON)
+{
+	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionOutputJSON, "features").asString());
+	Commitment commitment = JsonUtil::ConvertToCommitment(JsonUtil::GetRequiredField(transactionOutputJSON, "commit"));
+	RangeProof rangeProof = JsonUtil::ConvertToRangeProof(JsonUtil::GetRequiredField(transactionOutputJSON, "proof"));
+	return TransactionOutput(features, std::move(commitment), std::move(rangeProof));
 }
 
 const Hash& TransactionOutput::GetHash() const

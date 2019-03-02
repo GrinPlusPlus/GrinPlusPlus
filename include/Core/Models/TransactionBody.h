@@ -13,6 +13,7 @@
 #include <Core/Models/TransactionInput.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Models/TransactionKernel.h>
+#include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION BODY
@@ -51,6 +52,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionBody Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
+	static TransactionBody FromJSON(const Json::Value& transactionBodyJSON);
 
 private:
 	// List of inputs spent by the transaction.

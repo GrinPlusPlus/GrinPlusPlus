@@ -6,9 +6,8 @@
 // Author: David Burkett (davidburkett38@gmail.com)
 //
 
-////////////////////////////////////////
-// FEATURES
-////////////////////////////////////////
+#include <string>
+#include <Core/Serialization/DeserializationException.h>
 
 enum EOutputFeatures
 {
@@ -18,6 +17,36 @@ enum EOutputFeatures
 	// Output is a coinbase output, must not be spent until maturity
 	COINBASE_OUTPUT = 1
 };
+
+namespace OutputFeatures
+{
+	static std::string ToString(const EOutputFeatures& features)
+	{
+		switch (features)
+		{
+			case DEFAULT_OUTPUT:
+				return "Plain";
+			case COINBASE_OUTPUT:
+				return "Coinbase";
+		}
+
+		return "";
+	}
+
+	static EOutputFeatures FromString(const std::string& string)
+	{
+		if (string == "Plain")
+		{
+			return EOutputFeatures::DEFAULT_OUTPUT;
+		}
+		else if (string == "Coinbase")
+		{
+			return EOutputFeatures::COINBASE_OUTPUT;
+		}
+
+		throw DeserializationException();
+	}
+}
 
 enum EKernelFeatures
 {
@@ -30,3 +59,39 @@ enum EKernelFeatures
 	// Absolute height locked kernel; has fee and lock_height
 	HEIGHT_LOCKED = 2
 };
+
+namespace KernelFeatures
+{
+	static std::string ToString(const EKernelFeatures& features)
+	{
+		switch (features)
+		{
+			case DEFAULT_KERNEL:
+				return "Plain";
+			case COINBASE_KERNEL:
+				return "Coinbase";
+			case HEIGHT_LOCKED:
+				return "HeightLocked";
+		}
+
+		return "";
+	}
+
+	static EKernelFeatures FromString(const std::string& string)
+	{
+		if (string == "Plain")
+		{
+			return EKernelFeatures::DEFAULT_KERNEL;
+		}
+		else if (string == "Coinbase")
+		{
+			return EKernelFeatures::COINBASE_KERNEL;
+		}
+		else if (string == "HeightLocked")
+		{
+			return EKernelFeatures::HEIGHT_LOCKED;
+		}
+
+		throw DeserializationException();
+	}
+}

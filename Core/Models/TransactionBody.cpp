@@ -1,6 +1,7 @@
 #include <Core/Models/TransactionBody.h>
 
 #include <Core/Serialization/Serializer.h>
+#include <Core/Util/JsonUtil.h>
 
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)
 	: m_inputs(std::move(inputs)), m_outputs(std::move(outputs)), m_kernels(std::move(kernels))
@@ -58,6 +59,63 @@ TransactionBody TransactionBody::Deserialize(ByteBuffer& byteBuffer)
 	for (int i = 0; i < numKernels; i++)
 	{
 		kernels.emplace_back(TransactionKernel::Deserialize(byteBuffer));
+	}
+
+	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
+}
+
+Json::Value TransactionBody::ToJSON() const
+{
+	Json::Value bodyNode;
+
+	Json::Value inputsNode;
+	for (const TransactionInput& input : GetInputs())
+	{
+		inputsNode.append(input.ToJSON());
+	}
+	bodyNode["inputs"] = inputsNode;
+
+	Json::Value outputsNode;
+	for (const TransactionOutput& output : GetOutputs())
+	{
+		outputsNode.append(output.ToJSON());
+	}
+	bodyNode["outputs"] = outputsNode;
+
+	Json::Value kernelsNode;
+	for (const TransactionKernel& kernel : GetKernels())
+	{
+		kernelsNode.append(kernel.ToJSON());
+	}
+	bodyNode["kernels"] = kernelsNode;
+
+	return bodyNode;
+}
+
+TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON)
+{
+	// Deserialize inputs
+	const Json::Value inputsJSON = JsonUtil::GetRequiredField(transactionBodyJSON, "inputs");
+	std::vector<TransactionInput> inputs;
+	for (size_t i = 0; i < inputsJSON.size(); i++)
+	{
+		inputs.emplace_back(TransactionInput::FromJSON(inputsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
+	}
+
+	// Deserialize outputs
+	const Json::Value outputsJSON = JsonUtil::GetRequiredField(transactionBodyJSON, "outputs");
+	std::vector<TransactionOutput> outputs;
+	for (size_t i = 0; i < outputsJSON.size(); i++)
+	{
+		outputs.emplace_back(TransactionOutput::FromJSON(outputsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
+	}
+
+	// Deserialize kernels
+	const Json::Value kernelsJSON = JsonUtil::GetRequiredField(transactionBodyJSON, "kernels");
+	std::vector<TransactionKernel> kernels;
+	for (size_t i = 0; i < kernelsJSON.size(); i++)
+	{
+		kernels.emplace_back(TransactionKernel::FromJSON(kernelsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
 	}
 
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));

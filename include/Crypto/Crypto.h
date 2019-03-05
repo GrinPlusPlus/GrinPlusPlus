@@ -116,5 +116,7 @@ public:
 	//
 	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey);
 
+	static std::unique_ptr<CBigInteger<33>> AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys);
+
 	static std::unique_ptr<Signature> CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message);
 };

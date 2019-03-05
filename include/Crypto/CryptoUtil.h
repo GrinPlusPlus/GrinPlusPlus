@@ -29,14 +29,14 @@ public:
 		return *pBlindingFactor;
 	}
 
-	static Commitment AddCommitments(const std::vector<Commitment>& commitments)
+	static CBigInteger<33> AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys)
 	{
-		std::unique_ptr<Commitment> pCommitment = Crypto::AddCommitments(commitments, std::vector<Commitment>());
-		if (pCommitment == nullptr)
+		std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::AddPublicKeys(publicKeys);
+		if (pPublicKey == nullptr)
 		{
 			throw CryptoException();
 		}
 
-		return *pCommitment;
+		return *pPublicKey;
 	}
 };

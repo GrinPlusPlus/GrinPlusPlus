@@ -260,8 +260,8 @@ Transaction SlateBuilder::BuildTransaction(const std::vector<WalletCoin>& inputs
 
 std::unique_ptr<Signature> SlateBuilder::GeneratePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message) const
 {
-	std::vector<Commitment> pubKeys;
-	std::vector<Commitment> pubNonces;
+	std::vector<CBigInteger<33>> pubKeys;
+	std::vector<CBigInteger<33>> pubNonces;
 
 	for (const ParticipantData& participantData : participants)
 	{
@@ -269,8 +269,8 @@ std::unique_ptr<Signature> SlateBuilder::GeneratePartialSignature(const Blinding
 		pubNonces.push_back(participantData.GetPublicNonce());
 	}
 
-	const Commitment sumPubKeys = CryptoUtil::AddCommitments(pubKeys);
-	const Commitment sumPubNonces = CryptoUtil::AddCommitments(pubNonces);
+	const CBigInteger<33> sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
+	const CBigInteger<33> sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
 
-	return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys.GetCommitmentBytes(), sumPubNonces.GetCommitmentBytes(), message);
+	return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }

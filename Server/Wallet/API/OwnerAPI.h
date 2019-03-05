@@ -19,4 +19,5 @@ private:
 	static int Logout(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 
 	static int Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
+	static int Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 };

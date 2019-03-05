@@ -204,6 +204,51 @@ std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBig
 	return std::unique_ptr<CBigInteger<33>>(nullptr);
 }
 
+std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::PublicKeySum(const std::vector<CBigInteger<33>>& publicKeys) const
+{
+	std::vector<secp256k1_pubkey*> parsedPubKeys;
+	for (const CBigInteger<33>& publicKey : publicKeys)
+	{
+		secp256k1_pubkey* pPublicKey = new secp256k1_pubkey();
+		int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, pPublicKey, &publicKey.GetData()[0], publicKey.GetData().size());
+		if (pubKeyParsed == 1)
+		{
+			parsedPubKeys.push_back(pPublicKey);
+		}
+		else
+		{
+			delete pPublicKey;
+			for (secp256k1_pubkey* pParsedPubKey : parsedPubKeys)
+			{
+				delete pParsedPubKey;
+			}
+
+			return std::unique_ptr<CBigInteger<33>>(nullptr);
+		}
+	}
+
+	secp256k1_pubkey publicKey;
+	const int pubKeysCombined = secp256k1_ec_pubkey_combine(m_pContext, &publicKey, parsedPubKeys.data(), parsedPubKeys.size());
+
+	for (secp256k1_pubkey* pParsedPubKey : parsedPubKeys)
+	{
+		delete pParsedPubKey;
+	}
+
+	if (pubKeysCombined == 1)
+	{
+		size_t length = 33;
+		std::vector<unsigned char> serializedPublicKey(length);
+		const int serializeResult = secp256k1_ec_pubkey_serialize(m_pContext, serializedPublicKey.data(), &length, &publicKey, SECP256K1_EC_COMPRESSED);
+		if (serializeResult == 1)
+		{
+			return std::make_unique<CBigInteger<33>>(CBigInteger<33>(std::move(serializedPublicKey)));
+		}
+	}
+
+	return std::unique_ptr<CBigInteger<33>>(nullptr);
+}
+
 std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const
 {
 	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();

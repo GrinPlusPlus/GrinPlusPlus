@@ -242,6 +242,11 @@ std::unique_ptr<CBigInteger<33>> Crypto::SECP256K1_CalculateCompressedPublicKey(
 	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey.GetBytes());
 }
 
+std::unique_ptr<CBigInteger<33>> Crypto::AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys)
+{
+	return Secp256k1Wrapper::GetInstance().PublicKeySum(publicKeys);
+}
+
 std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message)
 {
 	return Secp256k1Wrapper::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);

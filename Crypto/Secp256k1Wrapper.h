@@ -22,6 +22,7 @@ public:
 
 	bool VerifySingleAggSig(const Signature& signature, const Commitment& publicKey, const Hash& message) const;
 	std::unique_ptr<CBigInteger<33>> CalculatePublicKey(const CBigInteger<32>& privateKey) const;
+	std::unique_ptr<CBigInteger<33>> PublicKeySum(const std::vector<CBigInteger<33>>& publicKeys) const;
 	std::unique_ptr<Commitment> PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
 	std::unique_ptr<Commitment> PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
 	std::unique_ptr<BlindingFactor> PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;

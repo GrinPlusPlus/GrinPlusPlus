@@ -61,6 +61,10 @@ int OwnerAPI::Handler(mg_connection* pConnection, void* pWalletContext)
 		{
 			return Send(pConnection, *pContext->m_pWalletManager, token, json);
 		}
+		else if (action == "receive_tx")
+		{
+			return Receive(pConnection, *pContext->m_pWalletManager, token, json);
+		}
 		/*
 			// TODO: If receive_tx included, maybe just leave foreign api/listener to front-end?
 			issue_send_tx
@@ -167,5 +171,28 @@ int OwnerAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, co
 	else
 	{
 		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+	}
+}
+
+int OwnerAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+{
+	try
+	{
+		Slate slate = Slate::FromJSON(json);
+
+		const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
+
+		if (walletManager.Receive(token, slate, messageOpt))
+		{
+			return RestUtil::BuildSuccessResponse(pConnection, slate.ToJSON().toStyledString());
+		}
+		else
+		{
+			return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		}
+	}
+	catch (const std::exception&)
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "Unknown error occurred.");
 	}
 }

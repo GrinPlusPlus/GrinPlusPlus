@@ -37,7 +37,7 @@ SlateBuilder::SlateBuilder(const INodeClient& nodeClient)
 	14: Add values to **Slate** for passing to other participants: **UUID, inputs, change_outputs,**
 		**fee, amount, lock_height, kSG, xSG, oS**
 */
-std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const
+std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) const
 {
 	// Create Transaction UUID (for reference and maintaining correct state).
 	uuids::uuid slateId = uuids::uuid_system_generator()();
@@ -92,12 +92,15 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
 	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(SLATE_VERSION, 2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
-	pSlate->AddParticpantData(ParticipantData(0, *pPublicKey, *pPublicNonce));
+
+	ParticipantData participantData(0, *pPublicKey, *pPublicNonce);
+	// TODO: Add message signature
+	pSlate->AddParticpantData(participantData);
 
 	return pSlate;
 }
 
-bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const
+bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate, const std::optional<std::string>& messageOpt) const
 {
 	// TODO: Verify fees
 
@@ -145,13 +148,14 @@ bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& master
 	}
 
 	// TODO: Add output to Transaction
+	// TODO: Add message signature
 	// Add receiver's ParticipantData to Slate
 	slate.AddParticpantData(receiverData);
 
 	return true;
 }
 
-std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const
+std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, const Slate& slate) const
 {
 	// TODO: Verify partial signatures
 

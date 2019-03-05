@@ -4,16 +4,19 @@ file(GLOB SERVER_SRC
     "civetweb/src/CivetServer.cpp"
     "civetweb/src/civetweb.c"
 	"Main.cpp"
-	"Server.cpp"
-	"NodeRestServer.cpp"
-	"API/BlockAPI.cpp"
-	"API/ChainAPI.cpp"
-	"API/HeaderAPI.cpp"
-	"API/PeersAPI.cpp"
-	"API/ServerAPI.cpp"
-	"API/TxHashSetAPI.cpp"
-	"API/Explorer/BlockInfoAPI.cpp"
 	"JSONFactory.cpp"
+	"Node/NodeDaemon.cpp"
+	"Node/NodeRestServer.cpp"
+	"Node/API/BlockAPI.cpp"
+	"Node/API/ChainAPI.cpp"
+	"Node/API/HeaderAPI.cpp"
+	"Node/API/PeersAPI.cpp"
+	"Node/API/ServerAPI.cpp"
+	"Node/API/TxHashSetAPI.cpp"
+	"Node/API/Explorer/BlockInfoAPI.cpp"
+	"Wallet/WalletDaemon.cpp"
+	"Wallet/WalletRestServer.cpp"
+	"Wallet/API/OwnerAPI.cpp"
 )
 
 include_directories(civetweb/include)
@@ -25,5 +28,5 @@ set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHD
 
 add_executable(${TARGET_NAME} ${SERVER_SRC})
 
-add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config)
-target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config jsoncpp_lib_static)
+add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet)
+target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config jsoncpp_lib_static Wallet)

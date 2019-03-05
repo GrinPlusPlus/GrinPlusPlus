@@ -1,7 +1,7 @@
 #include "TxHashSetAPI.h"
-#include "../RestUtil.h"
-#include "../JSONFactory.h"
-#include "../ServerContainer.h"
+#include "../../RestUtil.h"
+#include "../../JSONFactory.h"
+#include "../NodeContext.h"
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -16,9 +16,9 @@
 */
 
 
-int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pServerContainer)
+int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 	std::unique_ptr<BlockHeader> pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTipHeader != nullptr)
 	{
@@ -35,9 +35,9 @@ int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pServerCont
 	}
 }
 
-int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pServerContainer)
+int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	uint64_t numHashes = 10;
 
@@ -74,9 +74,9 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pServ
 	}
 }
 
-int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pServerContainer)
+int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	uint64_t numHashes = 10;
 
@@ -113,9 +113,9 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pServ
 	}
 }
 
-int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* pServerContainer)
+int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	uint64_t numHashes = 10;
 
@@ -170,9 +170,9 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 	  "mmr_index": 999
 	},
 */
-int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pServerContainer)
+int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	uint64_t startIndex = 1;
 	uint64_t max = 100;

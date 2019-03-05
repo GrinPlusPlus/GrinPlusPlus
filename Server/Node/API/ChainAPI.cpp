@@ -1,17 +1,17 @@
 #include "ChainAPI.h"
-#include "../RestUtil.h"
-#include "../ServerContainer.h"
+#include "../../RestUtil.h"
+#include "../NodeContext.h"
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <json/json.h>
 #include <BlockChain/BlockChainServer.h>
 
-int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pBlockChainServer)
+int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	IBlockChainServer* pBlockChain = (IBlockChainServer*)pBlockChainServer;
+	IBlockChainServer* pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	
-	std::unique_ptr<BlockHeader> pTip = pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
+	std::unique_ptr<BlockHeader> pTip = pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip != nullptr)
 	{
 		Json::Value chainNode;
@@ -28,9 +28,9 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pBlockChainServ
 	}
 }
 
-int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* pServerContainer)
+int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	uint64_t startHeight = 0;
 	uint64_t endHeight = 0;
@@ -130,9 +130,9 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 	return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
-int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pServerContainer)
+int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	std::vector<std::string> ids;
 	const std::string queryString = RestUtil::GetQueryString(conn);

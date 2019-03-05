@@ -1,6 +1,7 @@
 #include "BlockAPI.h"
-#include "../RestUtil.h"
-#include "../JSONFactory.h"
+#include "../../RestUtil.h"
+#include "../../JSONFactory.h"
+#include "../NodeContext.h"
 
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
@@ -15,18 +16,19 @@
 //
 // Return results as "compact blocks" by passing "?compact" query
 // GET /v1/blocks/<hash>?compact
-int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pBlockChainServer)
+int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	const std::string requestedBlock = RestUtil::GetURIParam(conn, "/v1/blocks/");
 	const std::string queryString = RestUtil::GetQueryString(conn);
 
+	IBlockChainServer* pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	if (queryString == "compact")
 	{
-		std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
+		std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChainServer);
 
 		if (nullptr != pBlock)
 		{
-			std::unique_ptr<CompactBlock> pCompactBlock = ((IBlockChainServer*)pBlockChainServer)->GetCompactBlockByHash(pBlock->GetHash());
+			std::unique_ptr<CompactBlock> pCompactBlock = pBlockChainServer->GetCompactBlockByHash(pBlock->GetHash());
 			if (pCompactBlock != nullptr)
 			{
 				const Json::Value compactBlockJSON = JSONFactory::BuildCompactBlockJSON(*pCompactBlock);
@@ -36,7 +38,7 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pBlockChainServ
 	}
 	else
 	{
-		std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, (IBlockChainServer*)pBlockChainServer);
+		std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, pBlockChainServer);
 
 		if (nullptr != pFullBlock)
 		{

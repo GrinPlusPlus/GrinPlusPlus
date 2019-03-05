@@ -218,6 +218,27 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 	return outputs;
 }
 
+std::vector<OutputData> WalletDB::GetOutputsByStatus(const std::string& username, const CBigInteger<32>& masterSeed, const EOutputStatus outputStatus) const
+{
+	std::vector<OutputData> outputs;
+
+	const std::string prefix = GetUsernamePrefix(username);
+
+	auto iter = m_pDatabase->NewIterator(ReadOptions(), m_pOutputHandle);
+	for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+	{
+		const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
+		OutputData outputData = OutputData::Decrypt(masterSeed, encrypted);
+
+		if (outputData.GetStatus() == outputStatus)
+		{
+			outputs.emplace_back(std::move(outputData));
+		}
+	}
+
+	return outputs;
+}
+
 std::string WalletDB::GetUsernamePrefix(const std::string& username)
 {
 	const std::vector<unsigned char> usernameBytes(username.cbegin(), username.cend());

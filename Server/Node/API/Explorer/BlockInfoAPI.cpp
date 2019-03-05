@@ -1,7 +1,7 @@
 #include "BlockInfoAPI.h"
 #include "../../RestUtil.h"
 #include "../../JSONFactory.h"
-#include "../../ServerContainer.h"
+#include "../../NodeContext.h"
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -12,9 +12,9 @@
 */
 
 
-int BlockInfoAPI::GetBlockInfo_Handler(struct mg_connection* conn, void* pServerContainer)
+int BlockInfoAPI::GetBlockInfo_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	EHTTPMethod httpMethod = RestUtil::GetHTTPMethod(conn);
 	if (httpMethod == EHTTPMethod::GET)
@@ -29,7 +29,7 @@ int BlockInfoAPI::GetBlockInfo_Handler(struct mg_connection* conn, void* pServer
 	return RestUtil::BuildBadRequestResponse(conn, "Endpoint not found.");
 }
 
-int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, ServerContainer& server)
+int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& server)
 {
 	int numBlocks = 20;
 	std::optional<std::string> numBlocksOpt = RestUtil::GetQueryParam(conn, "num_blocks");

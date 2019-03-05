@@ -1,20 +1,22 @@
 #pragma once
 
-#include "ServerContainer.h"
-
 #include <Config/Config.h>
 
 // Forward Declarations
 class IDatabase;
 class IBlockChainServer;
 class IP2PServer;
+class TxHashSetManager;
+struct NodeContext;
+struct mg_context;
 
 class NodeRestServer
 {
 public:
 	NodeRestServer(const Config& config, IDatabase* pDatabase, TxHashSetManager* pTxHashSetManager, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer);
+	~NodeRestServer();
 
-	bool Start();
+	bool Initialize();
 	bool Shutdown();
 
 private:
@@ -24,8 +26,6 @@ private:
 	IBlockChainServer* m_pBlockChainServer;
 	IP2PServer* m_pP2PServer;
 
-	/* Server context handle */
-	struct mg_context *ctx;
-
-	ServerContainer m_serverContainer;
+	NodeContext* m_pNodeContext;
+	mg_context* m_pNodeCivetContext;
 };

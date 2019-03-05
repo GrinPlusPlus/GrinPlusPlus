@@ -15,9 +15,9 @@ public:
 	SlateBuilder(const INodeClient& nodeClient);
 
 	// Creates a slate for sending grins from the provided wallet.
-	std::unique_ptr<Slate> BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy) const;
-	bool AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const;
-	std::unique_ptr<Transaction> Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate) const;
+	std::unique_ptr<Slate> BuildSendSlate(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) const;
+	bool AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate, const std::optional<std::string>& messageOpt) const;
+	std::unique_ptr<Transaction> Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, const Slate& slate) const;
 
 private:
 	std::vector<WalletCoin> SelectCoinsToSpend(Wallet& wallet, const CBigInteger<32>& masterSeed, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const;

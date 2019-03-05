@@ -2,6 +2,9 @@
 
 #include "Keychain/KeyChain.h"
 
+// CONFIG: Allow configurable number of confirmations.
+static const int MINIMUM_CONFIRMATIONS = 10;
+
 Wallet::Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_keyChain(config), m_username(username), m_userPath(std::move(userPath))
 {
@@ -16,15 +19,24 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 
 std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
 {
-	std::vector<WalletCoin> coins;
-
-	std::vector<OutputData> outputs = m_walletDB.GetOutputs(m_username, masterSeed);
+	std::vector<Commitment> commitments;
+	std::vector<OutputData> outputs = m_walletDB.GetOutputsByStatus(m_username, masterSeed, EOutputStatus::UNSPENT);
 	for (OutputData& output : outputs)
 	{
-		if (output.GetStatus() == EOutputStatus::UNSPENT)
+		commitments.push_back(output.GetOutput().GetCommitment());
+	}
+
+	std::vector<WalletCoin> coins;
+
+	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
+	const std::map<Commitment, OutputLocation> outputLocations = m_nodeClient.GetOutputsByCommitment(commitments);
+	for (OutputData& output : outputs)
+	{
+		auto iter = outputLocations.find(output.GetOutput().GetCommitment());
+		if (iter != outputLocations.end())
 		{
-			// CONFIG: Allow configurable number of confirmations.
-			if (m_nodeClient.GetNumConfirmations(output.GetOutput().GetCommitment()) >= 10)
+			const uint64_t blockHeight = iter->second.GetBlockHeight();
+			if (blockHeight < chainHeight && (chainHeight - blockHeight) >= MINIMUM_CONFIRMATIONS)
 			{
 				BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
 				coins.emplace_back(WalletCoin(std::move(blindingFactor), std::move(output)));

@@ -6,8 +6,14 @@
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 
-struct ServerContainer
+struct NodeContext
 {
+	NodeContext(IDatabase* pDatabase, IBlockChainServer* pBlockChainServer, IP2PServer* pP2PServer, TxHashSetManager* pTxHashSetManager)
+		: m_pDatabase(pDatabase), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer), m_pTxHashSetManager(pTxHashSetManager)
+	{
+
+	}
+
 	IDatabase* m_pDatabase;
 	IBlockChainServer* m_pBlockChainServer;
 	IP2PServer* m_pP2PServer;

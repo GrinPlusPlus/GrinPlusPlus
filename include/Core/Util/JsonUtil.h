@@ -18,7 +18,7 @@ public:
 
 		for (size_t i = 0; i < bytes.size(); i++)
 		{
-			node.append(i);
+			node.append(bytes[i]);
 		}
 
 		return node;

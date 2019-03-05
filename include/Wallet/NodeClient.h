@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Crypto/Commitment.h>
+#include <Core/Models/OutputLocation.h>
 #include <stdint.h>
+#include <map>
 
 //
 // INodeClient is an interface whose implementations communicate with nodes in various ways.
@@ -16,8 +18,7 @@ public:
 	virtual uint64_t GetChainHeight() const = 0;
 
 	//
-	// Returns the number of blocks that confirm the output.
-	// Ex: If an output was added in block 50, and the chain is currently on block 53, this will return 4 (confirmed on blocks 50, 51, 52, and 53).
+	// Returns the location (block height and mmr index) of each requested output, if it is *unspent*.
 	//
-	virtual uint64_t GetNumConfirmations(const Commitment& outputCommitment) const = 0;
+	virtual std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const = 0;
 };

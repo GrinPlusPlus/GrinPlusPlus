@@ -29,6 +29,7 @@ public:
 
 	virtual bool AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs) = 0;
 	virtual std::vector<OutputData> GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const = 0;
+	virtual std::vector<OutputData> GetOutputsByStatus(const std::string& username, const CBigInteger<32>& masterSeed, const EOutputStatus outputStatus) const = 0;
 };
 
 namespace WalletDBAPI

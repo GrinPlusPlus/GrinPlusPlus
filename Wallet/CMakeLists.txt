@@ -6,7 +6,7 @@ file(GLOB Wallet_SRC
 	"Wallet.cpp"
 	"SlateBuilder.cpp"
 	"SessionManager.cpp"
-	"WalletServerImpl.cpp"
+	"WalletManagerImpl.cpp"
 	"WalletUtil.cpp"
 )
 

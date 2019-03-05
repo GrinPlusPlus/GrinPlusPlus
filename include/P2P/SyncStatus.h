@@ -10,6 +10,7 @@ enum class ESyncStatus
 	PROCESSING_TXHASHSET,
 	TXHASHSET_SYNC_FAILED,
 	SYNCING_BLOCKS,
+	WAITING_FOR_PEERS,
 	NOT_SYNCING
 };
 
@@ -45,6 +46,7 @@ public:
 
 	}
 
+	inline bool IsSyncing() const { return m_syncStatus != ESyncStatus::NOT_SYNCING; }
 	inline ESyncStatus GetStatus() const { return m_syncStatus; }
 	inline uint64_t GetNumActiveConnections() const { return m_numActiveConnections; }
 	inline uint64_t GetNetworkHeight() const { return m_networkHeight; }

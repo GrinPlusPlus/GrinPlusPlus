@@ -4,8 +4,17 @@
 #include <Wallet/ParticipantData.h>
 #include <Core/Util/JsonUtil.h>
 #include <json/json.h>
-#include <uuid.h>
 #include <stdint.h>
+
+#ifdef NOMINMAX
+#define SLATE_NOMINMAX_DEFINED
+#undef NOMINMAX
+#endif
+#include <uuid.h>
+#ifdef SLATE_NOMINMAX_DEFINED
+#undef SLATE_NOMINMAX_DEFINED
+#define NOMINMAX
+#endif
 
 // A 'Slate' is passed around to all parties to build up all of the public transaction data needed to create a finalized transaction. 
 // Callers can pass the slate around by whatever means they choose, (but we can provide some binary or JSON serialization helpers here).
@@ -28,6 +37,8 @@ public:
 	inline const uuids::uuid& GetSlateId() const { return m_slateId; }
 	inline uint64_t GetAmount() const { return m_amount; }
 	inline uint64_t GetFee() const { return m_fee; }
+	inline uint64_t GetLockHeight() const { return m_lockHeight; }
+	inline uint64_t GetBlockHeight() const { return m_blockHeight; }
 	inline const Transaction& GetTransaction() const { return m_transaction; }
 	inline const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
 

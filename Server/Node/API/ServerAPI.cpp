@@ -1,26 +1,26 @@
 #include "ServerAPI.h"
-#include "../RestUtil.h"
-#include "../ServerContainer.h"
+#include "../../RestUtil.h"
+#include "../NodeContext.h"
 
 #include <P2P/Common.h>
 #include <json/json.h>
 
 /*
-	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetStatus_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/status", ServerAPI::GetStatus_Handler, &m_nodeContext);
 	mg_set_request_handler(ctx, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pBlockChainServer);
 	mg_set_request_handler(ctx, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pBlockChainServer);
-	mg_set_request_handler(ctx, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, &m_nodeContext);
 	mg_set_request_handler(ctx, "/v1/chain", ChainAPI::GetChain_Handler, m_pBlockChainServer);
-	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/txhashset/roots", TxHashSetAPI::GetRoots_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/txhashset/lastkernels", TxHashSetAPI::GetLastKernels_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, &m_serverContainer);
-	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_serverContainer);
+	mg_set_request_handler(ctx, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/peers/", PeersAPI::Peer_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/txhashset/roots", TxHashSetAPI::GetRoots_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastkernels", TxHashSetAPI::GetLastKernels_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, &m_nodeContext);
+	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_nodeContext);
 */
 int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
 {
@@ -52,9 +52,9 @@ int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
 	}
 }
 
-int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pServerContainer)
+int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 	
 	std::unique_ptr<BlockHeader> pTip = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip == nullptr)

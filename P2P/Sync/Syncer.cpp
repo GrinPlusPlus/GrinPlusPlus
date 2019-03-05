@@ -81,9 +81,13 @@ void Syncer::Thread_Sync(Syncer& syncer)
 			}
 
 			startup = false;
-		}
 
-		syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);
+			syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);
+		}
+		else
+		{
+			syncer.m_syncStatus.UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
+		}
 	}
 
 	LoggerAPI::LogInfo("Syncer::Thread_Sync() - END");

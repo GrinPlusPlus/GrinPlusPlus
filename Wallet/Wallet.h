@@ -7,7 +7,6 @@
 #include <Common/Secure.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
-#include <Wallet/SendMethod.h>
 #include <Wallet/SelectionStrategy.h>
 #include <Wallet/SlateContext.h>
 #include <Wallet/WalletDB/WalletDB.h>

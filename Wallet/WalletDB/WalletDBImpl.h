@@ -26,6 +26,7 @@ public:
 
 	virtual bool AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs) override final;
 	virtual std::vector<OutputData> GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const override final;
+	virtual std::vector<OutputData> GetOutputsByStatus(const std::string& username, const CBigInteger<32>& masterSeed, const EOutputStatus outputStatus) const override final;
 
 private:
 	static std::string GetUsernamePrefix(const std::string& username);

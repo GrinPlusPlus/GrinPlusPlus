@@ -1,29 +1,32 @@
 #pragma once
 
 #include <Config/Config.h>
+#include <Wallet/NodeClient.h>
 
 // Forward Declarations
 class IDatabase;
 class IBlockChainServer;
 class IP2PServer;
-class RestServer;
+class NodeRestServer;
 class TxHashSetManager;
 class ITransactionPool;
 
-class Server
+class NodeDaemon
 {
 public:
-	Server();
+	NodeDaemon(const Config& config);
 
-	void Run();
+	INodeClient* Initialize();
+	void UpdateDisplay(const int secondsRunning);
+	void Shutdown();
 
 private:
-	Config m_config;
+	const Config& m_config;
 	IDatabase* m_pDatabase;
 	TxHashSetManager* m_pTxHashSetManager;
 	ITransactionPool* m_pTransactionPool;
 	IBlockChainServer* m_pBlockChainServer;
 	IP2PServer* m_pP2PServer;
 
-	RestServer* m_pRestServer;
+	NodeRestServer* m_pNodeRestServer;
 };

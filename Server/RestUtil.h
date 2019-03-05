@@ -61,6 +61,17 @@ public:
 		return std::nullopt;
 	}
 
+	static std::optional<std::string> GetHeaderValue(mg_connection* conn, const std::string& headerName)
+	{
+		const char* pHeaderValue = mg_get_header(conn, headerName.c_str());
+		if (pHeaderValue != nullptr)
+		{
+			return std::make_optional<std::string>(std::string(pHeaderValue));
+		}
+
+		return std::nullopt;
+	}
+
 	static EHTTPMethod GetHTTPMethod(struct mg_connection* conn)
 	{
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
@@ -74,6 +85,27 @@ public:
 		}
 		
 		throw RestException();
+	}
+
+	static std::optional<std::string> GetRequestBody(mg_connection* conn)
+	{
+		const struct mg_request_info* req_info = mg_get_request_info(conn);
+		const long long contentLength = req_info->content_length;
+		if (contentLength <= 0)
+		{
+			return std::nullopt;
+		}
+
+		std::string requestBody;
+		requestBody.resize(contentLength);
+
+		const int bytesRead = mg_read(conn, requestBody.data(), contentLength);
+		if (bytesRead != contentLength)
+		{
+			throw RestException();
+		}
+
+		return std::make_optional<std::string>(requestBody);
 	}
 
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)
@@ -116,6 +148,22 @@ public:
 		mg_write(conn, response.c_str(), len);
 
 		return 400;
+	}
+
+	static int BuildUnauthorizedResponse(struct mg_connection* conn, const std::string& response)
+	{
+		unsigned long len = (unsigned long)response.size();
+
+		mg_printf(conn,
+			"HTTP/1.1 401 Unauthorized\r\n"
+			"Content-Length: %lu\r\n"
+			"Content-Type: text/plain\r\n"
+			"Connection: close\r\n\r\n",
+			len);
+
+		mg_write(conn, response.c_str(), len);
+
+		return 401;
 	}
 
 	static int BuildNotFoundResponse(struct mg_connection* conn, const std::string& response)

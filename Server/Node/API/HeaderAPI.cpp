@@ -1,6 +1,7 @@
 #include "HeaderAPI.h"
-#include "../RestUtil.h"
-#include "../JSONFactory.h"
+#include "../../RestUtil.h"
+#include "../../JSONFactory.h"
+#include "../NodeContext.h"
 
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
@@ -16,10 +17,10 @@
 // GET /v1/headers/<height>
 // GET /v1/headers/<output commit>
 //
-int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pBlockChainServer)
+int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	const std::string requestedHeader = RestUtil::GetURIParam(conn, "/v1/headers/");
-	std::unique_ptr<BlockHeader> pBlockHeader = GetHeader(requestedHeader, (IBlockChainServer*)pBlockChainServer);
+	std::unique_ptr<BlockHeader> pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
 
 	if (nullptr != pBlockHeader)
 	{

@@ -1,7 +1,7 @@
 #include "PeersAPI.h"
-#include "../RestUtil.h"
-#include "../JSONFactory.h"
-#include "../ServerContainer.h"
+#include "../../RestUtil.h"
+#include "../../JSONFactory.h"
+#include "../NodeContext.h"
 
 #include <Common/Util/StringUtil.h>
 #include <json/json.h>
@@ -12,9 +12,9 @@
 // APIs:
 // GET /v1/peers/all
 //
-int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pServerContainer)
+int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	const std::vector<Peer> peers = pServer->m_pP2PServer->GetAllPeers();
 
@@ -34,9 +34,9 @@ int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pServerConta
 // APIs:
 // GET /v1/peers/connected
 //
-int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pServerContainer)
+int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	const std::vector<ConnectedPeer> connectedPeers = pServer->m_pP2PServer->GetConnectedPeers();
 
@@ -61,13 +61,13 @@ int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pServe
 // POST /v1/peers/a.b.c.d/unban
 // POST /v1/peers/a.b.c.d:p/unban
 //
-int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pServerContainer)
+int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ServerContainer* pServer = (ServerContainer*)pServerContainer;
+	NodeContext* pServer = (NodeContext*)pNodeContext;
 	const std::string requestedPeer = RestUtil::GetURIParam(conn, "/v1/peers/");
 	if (requestedPeer.empty())
 	{
-		return GetAllPeers_Handler(conn, pServerContainer);
+		return GetAllPeers_Handler(conn, pNodeContext);
 	}
 
 	try

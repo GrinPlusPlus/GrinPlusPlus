@@ -11,7 +11,6 @@
 #include <Wallet/NodeClient.h>
 #include <Wallet/SessionToken.h>
 #include <Wallet/SelectionStrategy.h>
-#include <Wallet/SendMethod.h>
 #include <Wallet/Slate.h>
 #include <Common/Secure.h>
 
@@ -21,7 +20,7 @@
 #define WALLET_API IMPORT
 #endif
 
-class IWalletServer
+class IWalletManager
 {
 public:
 	//
@@ -46,7 +45,11 @@ public:
 	// * SessionTokenException - If no matching session found, or if the token is invalid.
 	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
 	//
-	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::string& message, const ESelectionStrategy& strategy, const ESendMethod& method, const std::string& destination) = 0;
+	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) = 0;
+
+	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) = 0;
+
+	virtual std::unique_ptr<Transaction> Finalize(const SessionToken& token, const Slate& slate) = 0;
 };
 
 namespace WalletAPI
@@ -54,10 +57,10 @@ namespace WalletAPI
 	//
 	// Creates a new instance of the Wallet server.
 	//
-	WALLET_API IWalletServer* StartWalletServer(const Config& config, const INodeClient& nodeClient);
+	WALLET_API IWalletManager* StartWalletManager(const Config& config, const INodeClient& nodeClient);
 
 	//
 	// Stops the Wallet server and clears up its memory usage.
 	//
-	WALLET_API void ShutdownWalletServer(IWalletServer* pWalletServer);
+	WALLET_API void ShutdownWalletManager(IWalletManager* pWalletManager);
 }

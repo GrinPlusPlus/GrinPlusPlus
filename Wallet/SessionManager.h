@@ -17,10 +17,12 @@ public:
 	~SessionManager();
 
 	std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password);
+	SessionToken Login(const std::string& username, const CBigInteger<32>& seed);
 	void Logout(const SessionToken& token);
 
 	CBigInteger<32> GetSeed(const SessionToken& token) const;
 	Wallet& GetWallet(const SessionToken& token);
+	const Wallet& GetWallet(const SessionToken& token) const;
 
 private:
 	struct LoggedInSession

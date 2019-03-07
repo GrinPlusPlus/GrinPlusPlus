@@ -4,6 +4,8 @@
 #include "RestException.h"
 
 #include <Common/Util/StringUtil.h>
+#include <Core/Serialization/DeserializationException.h>
+#include <json/json.h>
 #include <string>
 #include <optional>
 
@@ -87,7 +89,7 @@ public:
 		throw RestException();
 	}
 
-	static std::optional<std::string> GetRequestBody(mg_connection* conn)
+	static std::optional<Json::Value> GetRequestBody(mg_connection* conn)
 	{
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
 		const long long contentLength = req_info->content_length;
@@ -105,7 +107,14 @@ public:
 			throw RestException();
 		}
 
-		return std::make_optional<std::string>(requestBody);
+		Json::Value json;
+		Json::Reader reader;
+		if (!reader.parse(requestBody, json))
+		{
+			throw DeserializationException();
+		}
+
+		return std::make_optional<Json::Value>(json);
 	}
 
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)

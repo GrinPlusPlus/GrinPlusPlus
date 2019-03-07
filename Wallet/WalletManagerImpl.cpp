@@ -17,16 +17,19 @@ WalletManager::~WalletManager()
 	WalletDBAPI::CloseWalletDB(m_pWalletDB);
 }
 
-SecureString WalletManager::InitializeNewWallet(const std::string& username, const SecureString& password)
+std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNewWallet(const std::string& username, const SecureString& password)
 {
 	const CBigInteger<32> walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
 	if (m_pWalletDB->CreateWallet(username, encryptedSeed))
 	{
-		return Mnemonic::CreateMnemonic(walletSeed.GetData(), std::make_optional(password));
+		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetData(), std::make_optional(password));
+		SessionToken token = m_sessionManager.Login(username, walletSeed);
+
+		return std::make_optional<std::pair<SecureString, SessionToken>>(std::make_pair< SecureString, SessionToken>(std::move(walletWords), std::move(token)));
 	}
 
-	return SecureString("");
+	return std::nullopt;
 }
 
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
@@ -37,6 +40,36 @@ std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, 
 void WalletManager::Logout(const SessionToken& token)
 {
 	m_sessionManager.Logout(token);
+}
+
+WalletSummary WalletManager::GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) const
+{
+	const uint64_t lastConfirmedHeight = m_nodeClient.GetChainHeight();
+
+	uint64_t awaitingConfirmation = 0;
+	uint64_t immature = 0;
+	uint64_t locked = 0;
+	uint64_t spendable = 0;
+
+	const Wallet& wallet = m_sessionManager.GetWallet(token);
+	const std::vector<WalletCoin> coins = wallet.GetAllAvailableCoins(m_sessionManager.GetSeed(token));
+	for (const WalletCoin& coin : coins)
+	{
+		const OutputData& outputData = coin.GetOutputData();
+		const uint64_t amount = outputData.GetAmount();
+		const EOutputStatus status = outputData.GetStatus();
+		if (status == EOutputStatus::LOCKED)
+		{
+			locked += amount;
+		}
+		else if (status == EOutputStatus::UNSPENT)
+		{
+			// TODO: Determine #confirmations
+			spendable += amount;
+		}
+	}
+
+	return WalletSummary(lastConfirmedHeight, minimumConfirmations, awaitingConfirmation, immature, locked, spendable);
 }
 
 std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy)

@@ -3,6 +3,7 @@
 #include <Crypto/BigInteger.h>
 #include <Wallet/EncryptedSeed.h>
 #include <Common/Secure.h>
+#include <optional>
 #include <vector>
 #include <memory>
 
@@ -53,7 +54,7 @@ public:
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
-	CBigInteger<32> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
+	std::optional<CBigInteger<32>> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
 
 private:
 	 CBigInteger<32> CalculatePasswordHash(const SecureString& password, const CBigInteger<8>& salt) const;

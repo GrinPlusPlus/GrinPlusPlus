@@ -25,30 +25,35 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 	std::unique_ptr<EncryptedSeed> pSeed = m_walletDB.LoadWalletSeed(username);
 	if (pSeed != nullptr)
 	{
-		CBigInteger<32> decryptedSeed = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
-		if (decryptedSeed != CBigInteger<32>::ValueOf(0))
+		std::optional<CBigInteger<32>> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+		if (decryptedSeedOpt.has_value())
 		{
-			Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
-
-			const CBigInteger<32> hash = Crypto::SHA256(decryptedSeed.GetData());
-			const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
-			const std::vector<unsigned char> seedWithChecksum = VectorUtil::Concat(decryptedSeed.GetData(), checksum);
-
-			std::vector<unsigned char> tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
-			std::vector<unsigned char> encryptedSeedWithCS(36);
-			for (size_t i = 0; i < 36; i++)
-			{
-				encryptedSeedWithCS[i] = seedWithChecksum[i] ^ tokenKey[i];
-			}
-
-			const uint64_t sessionId = m_nextSessionId++;
-			m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS));
-
-			return std::make_unique<SessionToken>(SessionToken(sessionId, std::move(tokenKey)));
+			return std::make_unique<SessionToken>(Login(username, decryptedSeedOpt.value()));
 		}
 	}
 
 	return std::unique_ptr<SessionToken>(nullptr);
+}
+
+SessionToken SessionManager::Login(const std::string& username, const CBigInteger<32>& seed)
+{
+	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
+
+	const CBigInteger<32> hash = Crypto::SHA256(seed.GetData());
+	const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
+	const std::vector<unsigned char> seedWithChecksum = VectorUtil::Concat(seed.GetData(), checksum);
+
+	std::vector<unsigned char> tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
+	std::vector<unsigned char> encryptedSeedWithCS(36);
+	for (size_t i = 0; i < 36; i++)
+	{
+		encryptedSeedWithCS[i] = seedWithChecksum[i] ^ tokenKey[i];
+	}
+
+	const uint64_t sessionId = m_nextSessionId++;
+	m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS));
+
+	return SessionToken(sessionId, std::move(tokenKey));
 }
 
 void SessionManager::Logout(const SessionToken& token)
@@ -91,6 +96,19 @@ CBigInteger<32> SessionManager::GetSeed(const SessionToken& token) const
 }
 
 Wallet& SessionManager::GetWallet(const SessionToken& token)
+{
+	auto iter = m_sessionsById.find(token.GetSessionId());
+	if (iter != m_sessionsById.end())
+	{
+		const LoggedInSession* pSession = iter->second;
+
+		return *(pSession->m_pWallet);
+	}
+
+	throw SessionTokenException();
+}
+
+const Wallet& SessionManager::GetWallet(const SessionToken& token) const
 {
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())

@@ -18,6 +18,6 @@ TEST_CASE("WalletServer::InitiailizeNewWallet")
 	IWalletManager* pWalletManager = WalletAPI::StartWalletManager(config, nodeClient);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	SecureString words = pWalletManager->InitializeNewWallet(username, "Password1");
-	REQUIRE(!words.empty());
+	std::optional<std::pair<SecureString, SessionToken>> words = pWalletManager->InitializeNewWallet(username, "Password1");
+	REQUIRE(words.has_value());
 }

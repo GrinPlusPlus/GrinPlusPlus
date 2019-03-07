@@ -1,30 +1,37 @@
 #include "SeedEncrypter.h"
 
 #include <Crypto/Crypto.h>
+#include <Crypto/CryptoException.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 
-CBigInteger<32> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
+std::optional<CBigInteger<32>> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
 {
-	CBigInteger<32> passwordHash = CalculatePasswordHash(password, encryptedSeed.GetSalt());
-	const std::vector<unsigned char> decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
-	if (decrypted.size() != 64)
+	try
 	{
-		return CBigInteger<32>();
+		CBigInteger<32> passwordHash = CalculatePasswordHash(password, encryptedSeed.GetSalt());
+		const std::vector<unsigned char> decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
+		if (decrypted.size() != 64)
+		{
+			return std::nullopt;
+		}
+
+		CBigInteger<32> walletSeed(&decrypted[0]);
+
+		const CBigInteger<32> hash256 = Crypto::HMAC_SHA256(walletSeed.GetData(), passwordHash.GetData());
+		const CBigInteger<32> hash256Check(&decrypted[32]);
+		if (hash256 == hash256Check)
+		{
+			return std::make_optional<CBigInteger<32>>(std::move(walletSeed));
+		}
+	}
+	catch (CryptoException&)
+	{
+		return std::nullopt;
 	}
 
-	const CBigInteger<32> walletSeed(&decrypted[0]);
-	const CBigInteger<32> hash256 = Crypto::HMAC_SHA256(walletSeed.GetData(), passwordHash.GetData());
-
-	const CBigInteger<32> hash256Check(&decrypted[32]);
-
-	if (hash256 == hash256Check)
-	{
-		return walletSeed;
-	}
-
-	return CBigInteger<32>();
+	return std::nullopt;
 }
 
 EncryptedSeed SeedEncrypter::EncryptWalletSeed(const CBigInteger<32>& walletSeed, const SecureString& password) const

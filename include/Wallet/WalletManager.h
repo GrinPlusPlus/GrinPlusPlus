@@ -12,6 +12,7 @@
 #include <Wallet/SessionToken.h>
 #include <Wallet/SelectionStrategy.h>
 #include <Wallet/Slate.h>
+#include <Wallet/WalletSummary.h>
 #include <Common/Secure.h>
 
 #ifdef MW_WALLET
@@ -27,7 +28,7 @@ public:
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.
 	//
-	virtual SecureString InitializeNewWallet(const std::string& username, const SecureString& password) = 0;
+	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
@@ -38,6 +39,8 @@ public:
 	// Deletes the session information.
 	//
 	virtual void Logout(const SessionToken& token) = 0;
+
+	virtual WalletSummary GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) const = 0;
 
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.

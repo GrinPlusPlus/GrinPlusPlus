@@ -9,6 +9,7 @@ class TestNodeClient : public INodeClient
 public:
 	virtual uint64_t GetChainHeight() const override final { return 0; }
 	virtual std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const override final { return std::map<Commitment, OutputLocation>(); }
+	virtual bool PostTransaction(const Transaction& transaction) override final { return true; }
 };
 
 TEST_CASE("WalletServer::InitiailizeNewWallet")

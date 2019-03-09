@@ -251,3 +251,8 @@ std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFacto
 {
 	return Secp256k1Wrapper::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }
+
+std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces)
+{
+	return Secp256k1Wrapper::GetInstance().AggregateSignatures(signatures, sumPubNonces);
+}

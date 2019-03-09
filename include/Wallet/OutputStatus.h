@@ -2,7 +2,9 @@
 
 enum EOutputStatus
 {
-	UNSPENT = 0,
-	SPENT = 1,
-	LOCKED = 2
+	SPENDABLE = 0,
+	IMMATURE = 1,
+	NO_CONFIRMATIONS = 2,
+	SPENT = 3,
+	LOCKED = 4
 };

@@ -40,7 +40,7 @@ public:
 	//
 	virtual void Logout(const SessionToken& token) = 0;
 
-	virtual WalletSummary GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) const = 0;
+	virtual WalletSummary GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) = 0;
 
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.
@@ -53,6 +53,8 @@ public:
 	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) = 0;
 
 	virtual std::unique_ptr<Transaction> Finalize(const SessionToken& token, const Slate& slate) = 0;
+
+	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) = 0;
 };
 
 namespace WalletAPI
@@ -60,7 +62,7 @@ namespace WalletAPI
 	//
 	// Creates a new instance of the Wallet server.
 	//
-	WALLET_API IWalletManager* StartWalletManager(const Config& config, const INodeClient& nodeClient);
+	WALLET_API IWalletManager* StartWalletManager(const Config& config, INodeClient& nodeClient);
 
 	//
 	// Stops the Wallet server and clears up its memory usage.

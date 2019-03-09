@@ -1,5 +1,5 @@
 #include "Wallet.h"
-
+#include "WalletRefresher.h"
 #include "Keychain/KeyChain.h"
 
 // CONFIG: Allow configurable number of confirmations.
@@ -17,30 +17,52 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
-std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
+WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed, const uint64_t minimumConfirmations)
 {
-	std::vector<Commitment> commitments;
-	std::vector<OutputData> outputs = m_walletDB.GetOutputsByStatus(m_username, masterSeed, EOutputStatus::UNSPENT);
-	for (OutputData& output : outputs)
+	uint64_t awaitingConfirmation = 0;
+	uint64_t immature = 0;
+	uint64_t locked = 0;
+	uint64_t spendable = 0;
+
+	const uint64_t lastConfirmedHeight = m_nodeClient.GetChainHeight();
+	const std::vector<OutputData> outputs = WalletRefresher(m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed, minimumConfirmations);
+	for (const OutputData& outputData : outputs)
 	{
-		commitments.push_back(output.GetOutput().GetCommitment());
+		const EOutputStatus status = outputData.GetStatus();
+		if (status == EOutputStatus::LOCKED)
+		{
+			locked += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::SPENDABLE)
+		{
+			spendable += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::IMMATURE)
+		{
+			immature += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::NO_CONFIRMATIONS)
+		{
+			awaitingConfirmation += outputData.GetAmount();
+		}
 	}
 
+	const uint64_t total = awaitingConfirmation + immature + spendable;
+	return WalletSummary(lastConfirmedHeight, minimumConfirmations, total, awaitingConfirmation, immature, locked, spendable);
+}
+
+std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
+{
 	std::vector<WalletCoin> coins;
 
-	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
-	const std::map<Commitment, OutputLocation> outputLocations = m_nodeClient.GetOutputsByCommitment(commitments);
-	for (OutputData& output : outputs)
+	std::vector<Commitment> commitments;
+	const std::vector<OutputData> outputs = WalletRefresher(m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed, MINIMUM_CONFIRMATIONS);
+	for (const OutputData& output : outputs)
 	{
-		auto iter = outputLocations.find(output.GetOutput().GetCommitment());
-		if (iter != outputLocations.end())
+		if (output.GetStatus() == EOutputStatus::SPENDABLE)
 		{
-			const uint64_t blockHeight = iter->second.GetBlockHeight();
-			if (blockHeight < chainHeight && (chainHeight - blockHeight) >= MINIMUM_CONFIRMATIONS)
-			{
-				BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
-				coins.emplace_back(WalletCoin(std::move(blindingFactor), std::move(output)));
-			}
+			BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
+			coins.emplace_back(WalletCoin(std::move(blindingFactor), OutputData(output)));
 		}
 	}
 
@@ -58,9 +80,12 @@ std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const CBigInteger<32>& m
 		if (pRangeProof != nullptr)
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
-			OutputData outputData(std::move(keyChainPath), std::move(transactionOutput), amount, EOutputStatus::UNSPENT);
+			OutputData outputData(std::move(keyChainPath), std::move(transactionOutput), amount, EOutputStatus::NO_CONFIRMATIONS);
 
-			return std::make_unique<WalletCoin>(WalletCoin(std::move(blindingFactor), std::move(outputData)));
+			if (m_walletDB.AddOutputs(m_username, masterSeed, std::vector<OutputData>({ outputData })))
+			{
+				return std::make_unique<WalletCoin>(WalletCoin(std::move(blindingFactor), std::move(outputData)));
+			}
 		}
 	}
 

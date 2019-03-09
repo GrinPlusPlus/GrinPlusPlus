@@ -3,7 +3,9 @@ set(TEST_TARGET_NAME Wallet_Tests)
 
 # Wallet
 file(GLOB Wallet_SRC
+	"CoinSelection.cpp"
 	"Wallet.cpp"
+	"WalletRefresher.cpp"
 	"SlateBuilder.cpp"
 	"SessionManager.cpp"
 	"WalletManagerImpl.cpp"

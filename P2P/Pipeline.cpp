@@ -217,6 +217,11 @@ void Pipeline::Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connec
 bool Pipeline::AddTxHashSetToProcess(const uint64_t connectionId, const Hash& blockHash, const std::string& path)
 {
 	// TODO: What if TxHashSet already processing?
+	if (m_txHashSetThread.joinable())
+	{
+		m_txHashSetThread.join();
+	}
+
 	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), connectionId, blockHash, path);
 
 	return true;

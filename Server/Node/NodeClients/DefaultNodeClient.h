@@ -4,12 +4,13 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Database/BlockDb.h>
 #include <PMMR/TxHashSetManager.h>
+#include <TxPool/TransactionPool.h>
 
 class DefaultNodeClient : public INodeClient
 {
 public:
-	DefaultNodeClient(const IBlockChainServer& blockChainServer, const IBlockDB& blockDB, const TxHashSetManager& txHashSetManager)
-		: m_blockChainServer(blockChainServer), m_blockDB(blockDB), m_txHashSetManager(txHashSetManager)
+	DefaultNodeClient(const IBlockChainServer& blockChainServer, const IBlockDB& blockDB, const TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
+		: m_blockChainServer(blockChainServer), m_blockDB(blockDB), m_txHashSetManager(txHashSetManager), m_transactionPool(transactionPool)
 	{
 
 	}
@@ -40,8 +41,20 @@ public:
 		return outputs;
 	}
 
+	virtual bool PostTransaction(const Transaction& transaction) override final
+	{
+		std::unique_ptr<BlockHeader> pTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);
+		if (pTipHeader != nullptr)
+		{
+			return m_transactionPool.AddTransaction(transaction, EPoolType::STEMPOOL, *pTipHeader);
+		}
+
+		return false;
+	}
+
 private:
 	const IBlockChainServer& m_blockChainServer;
 	const IBlockDB& m_blockDB;
 	const TxHashSetManager& m_txHashSetManager;
+	ITransactionPool& m_transactionPool;
 };

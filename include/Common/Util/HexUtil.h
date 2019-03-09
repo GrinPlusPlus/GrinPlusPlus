@@ -50,7 +50,7 @@ namespace HexUtil
 
 		std::string hex = ConvertToHex(bytes);
 		const size_t firstNonZero = hex.find_first_not_of('0');
-		hex.erase(0, std::min(firstNonZero, hex.size() - 1));
+		hex.erase(0, (std::min)(firstNonZero, hex.size() - 1));
 
 		return hex;
 	}

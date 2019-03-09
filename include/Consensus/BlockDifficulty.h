@@ -66,13 +66,13 @@ namespace Consensus
 	// This can wait until end of 2019 at latest
 	static uint64_t GraphWeight(const uint64_t height, const uint8_t edge_bits)
 	{
-		const uint64_t bits_over_min = edge_bits - std::min(edge_bits, DEFAULT_MIN_EDGE_BITS);
+		const uint64_t bits_over_min = edge_bits - (std::min)(edge_bits, DEFAULT_MIN_EDGE_BITS);
 		const uint64_t expiry_height = (((uint64_t)1) << bits_over_min) * YEAR_HEIGHT;
 
 		uint64_t xpr_edge_bits = (uint64_t)edge_bits;
 		if (height >= expiry_height)
 		{
-			xpr_edge_bits = xpr_edge_bits -= std::min(xpr_edge_bits, 1 + (height - expiry_height) / WEEK_HEIGHT);
+			xpr_edge_bits = xpr_edge_bits -= (std::min)(xpr_edge_bits, 1 + (height - expiry_height) / WEEK_HEIGHT);
 		}
 
 		return (((uint64_t)2) << ((uint64_t)(edge_bits - BASE_EDGE_BITS))) * xpr_edge_bits;
@@ -90,7 +90,7 @@ namespace Consensus
 	// limit value to be within some factor from a goal
 	static uint64_t Clamp(const uint64_t actual, const uint64_t goal, const uint64_t clamp_factor)
 	{
-		return std::max(goal / clamp_factor, std::min(actual, goal * clamp_factor));
+		return (std::max)(goal / clamp_factor, (std::min)(actual, goal * clamp_factor));
 	}
 
 	// Ratio the secondary proof of work should take over the primary, as a function of block height (time).
@@ -99,6 +99,6 @@ namespace Consensus
 	{
 		const uint64_t subtrahend = (height / (2 * YEAR_HEIGHT / 90));
 		
-		return 90 - std::min((uint64_t)90, (height / (2 * YEAR_HEIGHT / 90)));
+		return 90 - (std::min)((uint64_t)90, (height / (2 * YEAR_HEIGHT / 90)));
 	}
 }

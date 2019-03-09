@@ -43,6 +43,7 @@ public:
 	inline const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
 
 	inline void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
+	inline void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }
 
 	Json::Value ToJSON() const
 	{

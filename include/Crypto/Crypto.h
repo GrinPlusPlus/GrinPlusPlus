@@ -119,4 +119,6 @@ public:
 	static std::unique_ptr<CBigInteger<33>> AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys);
 
 	static std::unique_ptr<Signature> CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message);
+
+	static std::unique_ptr<Signature> AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces);
 };

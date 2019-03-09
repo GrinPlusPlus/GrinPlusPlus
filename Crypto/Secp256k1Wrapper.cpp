@@ -393,3 +393,26 @@ std::unique_ptr<Signature> Secp256k1Wrapper::SignSingle(const BlindingFactor& se
 
 	return std::unique_ptr<Signature>(nullptr);
 }
+
+std::unique_ptr<Signature> Secp256k1Wrapper::AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces) const
+{
+	secp256k1_pubkey pubNonces;
+	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNonces, &sumPubNonces.GetData()[0], sumPubNonces.GetData().size());
+	if (noncesParsed == 1)
+	{
+		std::vector<const unsigned char*> signaturePointers;
+		for (const Signature signature : signatures)
+		{
+			signaturePointers.push_back(signature.GetSignatureBytes().GetData().data());
+		}
+
+		std::vector<unsigned char> signatureBytes(64);
+		int result = secp256k1_aggsig_add_signatures_single(m_pContext, signatureBytes.data(), signaturePointers.data(), signaturePointers.size(), &pubNonces);
+		if (result == 1)
+		{
+			return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
+		}
+	}
+
+	return std::unique_ptr<Signature>(nullptr);
+}

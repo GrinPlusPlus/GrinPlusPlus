@@ -32,7 +32,7 @@ INodeClient* NodeDaemon::Initialize()
 	m_pNodeRestServer = new NodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
 	m_pNodeRestServer->Initialize();
 
-	return new DefaultNodeClient(*m_pBlockChainServer, m_pDatabase->GetBlockDB(), *m_pTxHashSetManager);
+	return new DefaultNodeClient(*m_pBlockChainServer, m_pDatabase->GetBlockDB(), *m_pTxHashSetManager, *m_pTransactionPool);
 }
 
 void NodeDaemon::Shutdown()

@@ -94,8 +94,7 @@ int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, 
 	{
 		return Login(pConnection, walletManager);
 	}
-
-	if (action == "logout")
+	else if (action == "logout")
 	{
 		const SessionToken token = GetSessionToken(pConnection);
 		return Logout(pConnection, walletManager, token);
@@ -122,12 +121,18 @@ int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, 
 		const SessionToken token = GetSessionToken(pConnection);
 		return Finalize(pConnection, walletManager, token, requestBodyOpt.value());
 	}
-	/*
-		// TODO: Since receive_tx requires session_token, maybe just leave foreign api/listener to front-end?
-		cancel_tx
-		post_tx
-		repost
-	*/
+	else if (action == "cancel_tx")
+	{
+		// TODO: Implement
+	}
+	else if (action == "post_tx")
+	{
+		// TODO: Implement
+	}
+	else if (action == "repost")
+	{
+		// TODO: Implement
+	}
 
 	return RestUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
 }

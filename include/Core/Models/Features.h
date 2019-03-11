@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable: 4505) // Unreferenced local function has been removed
 
 //
 // This code is free for all purposes without any express guarantee it works.

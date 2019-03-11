@@ -14,11 +14,13 @@ public:
 	~WalletManager();
 
 	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) override final;
+	virtual std::optional<SessionToken> Restore(const std::string& username, const SecureString& password, const SecureString& walletWords) override final;
+	virtual bool CheckForOutputs(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
 
-	virtual WalletSummary GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) override final;
+	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) override final;
 	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) override final;

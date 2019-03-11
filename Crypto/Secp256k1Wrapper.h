@@ -11,6 +11,7 @@
 #include <Crypto/Hash.h>
 #include <vector>
 #include <memory>
+#include <shared_mutex>
 
 // Forward Declarations
 struct secp256k1_bulletproof_generators;
@@ -41,6 +42,7 @@ private:
 	std::vector<secp256k1_pedersen_commitment*> ConvertCommitments(const std::vector<Commitment>& commitments) const;
 	void CleanupCommitments(std::vector<secp256k1_pedersen_commitment*>& commitments) const;
 
+	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;
 	secp256k1_bulletproof_generators* m_pGenerators;
 };

@@ -20,8 +20,9 @@ public:
 
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
-	WalletSummary GetWalletSummary(const CBigInteger<32>& masterSeed, const uint64_t minimumConfirmations);
+	WalletSummary GetWalletSummary(const CBigInteger<32>& masterSeed);
 
+	bool AddOutputs(const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs);
 	std::vector<WalletCoin> GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const;
 	std::unique_ptr<WalletCoin> CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount);
 
@@ -30,8 +31,6 @@ public:
 	bool LockCoins(const CBigInteger<32>& masterSeed, std::vector<WalletCoin>& coins);
 
 private:
-	std::vector<OutputData> UpdateOutputs(const CBigInteger<32>& masterSeed, const uint64_t minimumConfirmations);
-
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
 	IWalletDB& m_walletDB;

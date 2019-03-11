@@ -23,6 +23,32 @@ namespace HexUtil
 		}
 	}
 
+	static unsigned char FromHexChar(const char value)
+	{
+		if (value <= '9' && value >= 0)
+		{
+			return (unsigned char)(value - '0');
+		}
+
+		if (value >= 'a')
+		{
+			return (unsigned char)(10 + value - 'a');
+		}
+
+		return (unsigned char)(10 + value - 'A');
+	}
+
+	static std::vector<unsigned char> FromHex(const std::string& hex)
+	{
+		std::vector<unsigned char> data((hex.size() + 1) / 2);
+		for (size_t i = 0; i < hex.length(); i += 2)
+		{
+			data[i / 2] = (FromHexChar(hex[i]) * 16 + FromHexChar(hex[i + 1]));
+		}
+
+		return data;
+	}
+
 	static std::string ConvertToHex(const std::vector<unsigned char>& data)
 	{
 		std::ostringstream stream;

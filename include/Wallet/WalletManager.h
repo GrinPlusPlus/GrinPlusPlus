@@ -30,6 +30,11 @@ public:
 	//
 	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) = 0;
 
+	virtual std::optional<SessionToken> Restore(const std::string& username, const SecureString& password, const SecureString& walletWords) = 0;
+
+	// TODO: Determine return value.
+	virtual bool CheckForOutputs(const SessionToken& token) = 0;
+
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
@@ -40,7 +45,7 @@ public:
 	//
 	virtual void Logout(const SessionToken& token) = 0;
 
-	virtual WalletSummary GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations) = 0;
+	virtual WalletSummary GetWalletSummary(const SessionToken& token) = 0;
 
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.

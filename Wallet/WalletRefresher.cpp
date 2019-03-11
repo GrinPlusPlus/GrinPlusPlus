@@ -1,15 +1,16 @@
 #include "WalletRefresher.h"
+#include "WalletUtil.h"
 
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
 
-WalletRefresher::WalletRefresher(const INodeClient& nodeClient, IWalletDB& walletDB)
-	: m_nodeClient(nodeClient), m_walletDB(walletDB)
+WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
+	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)
 {
 
 }
 
-std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const uint64_t minimumConfirmations)
+std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const CBigInteger<32>& masterSeed)
 {
 	std::vector<Commitment> commitments;
 
@@ -24,7 +25,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	}
 
 	const uint64_t lastConfirmedHeight = m_nodeClient.GetChainHeight();
-	// TODO: Update lastRefreshedHeight in DB
+	m_walletDB.UpdateRefreshBlockHeight(username, lastConfirmedHeight);
 
 	std::vector<OutputData> outputsToUpdate;
 	const std::map<Commitment, OutputLocation> outputLocations = m_nodeClient.GetOutputsByCommitment(commitments);
@@ -36,20 +37,23 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 		{
 			if (outputData.GetStatus() != EOutputStatus::LOCKED)
 			{
-				const OutputLocation& outputLocation = iter->second;
-				if ((outputLocation.GetBlockHeight() + minimumConfirmations) <= lastConfirmedHeight)
+				const EOutputFeatures features = outputData.GetOutput().GetFeatures();
+				const uint64_t outputBlockHeight = iter->second.GetBlockHeight();
+				const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
+
+				if (WalletUtil::IsOutputImmature(features, outputBlockHeight, lastConfirmedHeight, minimumConfirmations))
 				{
-					if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
+					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
 					{
-						outputData.SetStatus(EOutputStatus::SPENDABLE);
+						outputData.SetStatus(EOutputStatus::IMMATURE);
 						outputsToUpdate.push_back(outputData);
 					}
 				}
 				else
 				{
-					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
+					if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
 					{
-						outputData.SetStatus(EOutputStatus::IMMATURE);
+						outputData.SetStatus(EOutputStatus::SPENDABLE);
 						outputsToUpdate.push_back(outputData);
 					}
 				}

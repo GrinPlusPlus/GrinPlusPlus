@@ -116,7 +116,7 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 			return false;
 		}
 
-		blockInputBitmap.add(mmrIndex);
+		blockInputBitmap.add(mmrIndex + 1);
 	}
 
 	m_blockDB.AddBlockInputBitmap(block.GetBlockHeader().GetHash(), blockInputBitmap);

@@ -2,9 +2,6 @@
 #include "WalletRefresher.h"
 #include "Keychain/KeyChain.h"
 
-// CONFIG: Allow configurable number of confirmations.
-static const int MINIMUM_CONFIRMATIONS = 10;
-
 Wallet::Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_keyChain(config), m_username(username), m_userPath(std::move(userPath))
 {
@@ -17,7 +14,7 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
-WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed, const uint64_t minimumConfirmations)
+WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed)
 {
 	uint64_t awaitingConfirmation = 0;
 	uint64_t immature = 0;
@@ -25,7 +22,7 @@ WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed, const 
 	uint64_t spendable = 0;
 
 	const uint64_t lastConfirmedHeight = m_nodeClient.GetChainHeight();
-	const std::vector<OutputData> outputs = WalletRefresher(m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed, minimumConfirmations);
+	const std::vector<OutputData> outputs = WalletRefresher(m_config, m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed);
 	for (const OutputData& outputData : outputs)
 	{
 		const EOutputStatus status = outputData.GetStatus();
@@ -48,7 +45,12 @@ WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed, const 
 	}
 
 	const uint64_t total = awaitingConfirmation + immature + spendable;
-	return WalletSummary(lastConfirmedHeight, minimumConfirmations, total, awaitingConfirmation, immature, locked, spendable);
+	return WalletSummary(lastConfirmedHeight, m_config.GetWalletConfig().GetMinimumConfirmations(), total, awaitingConfirmation, immature, locked, spendable);
+}
+
+bool Wallet::AddOutputs(const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs)
+{
+	return m_walletDB.AddOutputs(m_username, masterSeed, outputs);
 }
 
 std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
@@ -56,7 +58,7 @@ std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 	std::vector<WalletCoin> coins;
 
 	std::vector<Commitment> commitments;
-	const std::vector<OutputData> outputs = WalletRefresher(m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed, MINIMUM_CONFIRMATIONS);
+	const std::vector<OutputData> outputs = WalletRefresher(m_config, m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed);
 	for (const OutputData& output : outputs)
 	{
 		if (output.GetStatus() == EOutputStatus::SPENDABLE)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 #include <stdint.h>
 
 class TimeUtil
@@ -24,5 +25,15 @@ public:
 		char buffer[32];
 		std::strftime(buffer, 32, format.c_str(), &tm);
 		return std::string(buffer);
+	}
+
+	static int64_t ToInt64(const std::chrono::system_clock::time_point& timePoint)
+	{
+		return timePoint.time_since_epoch().count();
+	}
+
+	static std::chrono::system_clock::time_point ToTimePoint(const int64_t millisSinceEpoch)
+	{
+		return std::chrono::system_clock::time_point(std::chrono::milliseconds(millisSinceEpoch));
 	}
 };

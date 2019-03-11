@@ -29,6 +29,18 @@ public:
 		return ProofMessage(CBigInteger<16>(paddedPath));
 	}
 
+	std::vector<uint32_t> ToKeyIndices(const uint8_t length) const
+	{
+		std::vector<uint32_t> keyIndices(length);
+		ByteBuffer byteBuffer(m_proofMessageBytes.GetData());
+		for (size_t i = 0; i < length; i++)
+		{
+			keyIndices[i] = byteBuffer.ReadU32();
+		}
+
+		return keyIndices;
+	}
+
 	inline const CBigInteger<16>& GetBytes() const { return m_proofMessageBytes; }
 
 private:

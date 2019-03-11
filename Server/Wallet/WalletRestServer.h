@@ -18,12 +18,11 @@ public:
 	bool Shutdown();
 
 private:
-	static int ForeignAPIHandler(mg_connection* pConnection, void* pWalletContext);
+	static int OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext);
 
 	const Config& m_config;
 	IWalletManager& m_walletManager;
 
 	WalletContext* m_pWalletContext;
 	mg_context* m_pOwnerCivetContext;
-	mg_context* m_pForeignCivetContext;
 };

@@ -267,9 +267,9 @@ void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 	// Serializes the bitmap
 	const size_t bitmapSize = bitmap.getSizeInBytes();
 	std::vector<char> serializedBitmap(bitmapSize);
-	bitmap.write(&serializedBitmap[0], true);
+	bitmap.write(serializedBitmap.data(), true);
 
-	Slice value(&serializedBitmap[0], bitmapSize);
+	Slice value(serializedBitmap.data(), bitmapSize);
 
 	// Insert the output position
 	m_pDatabase->Put(WriteOptions(), m_pInputBitmapHandle, key, value);
@@ -287,8 +287,7 @@ std::optional<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) const
 	if (s.ok())
 	{
 		// Deserialize result
-		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		blockInputBitmap = std::make_optional<Roaring>(Roaring::readSafe((char*)&data[0], data.size()));
+		blockInputBitmap = std::make_optional<Roaring>(Roaring::readSafe(value.data(), value.size()));
 	}
 
 	return blockInputBitmap;

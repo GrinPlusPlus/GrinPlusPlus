@@ -8,12 +8,15 @@
 #include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
 
+static const uint8_t ENCRYPTION_FORMAT = 0;
+
 static ColumnFamilyDescriptor SEED_COLUMN = ColumnFamilyDescriptor("SEED", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor NEXT_CHILD_COLUMN = ColumnFamilyDescriptor("NEXT_CHILD", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor LOG_COLUMN = ColumnFamilyDescriptor("LOG", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor SLATE_COLUMN = ColumnFamilyDescriptor("SLATE", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor TX_COLUMN = ColumnFamilyDescriptor("TX", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor OUTPUT_COLUMN = ColumnFamilyDescriptor("OUTPUT", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+static ColumnFamilyDescriptor USER_METADATA_COLUMN = ColumnFamilyDescriptor("METADATA", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 WalletDB::WalletDB(const Config& config)
 	: m_config(config)
@@ -50,10 +53,11 @@ void WalletDB::Open()
 		m_pDatabase->CreateColumnFamily(SLATE_COLUMN.options, SLATE_COLUMN.name, &m_pSlateHandle);
 		m_pDatabase->CreateColumnFamily(TX_COLUMN.options, TX_COLUMN.name, &m_pTxHandle);
 		m_pDatabase->CreateColumnFamily(OUTPUT_COLUMN.options, OUTPUT_COLUMN.name, &m_pOutputHandle);
+		m_pDatabase->CreateColumnFamily(USER_METADATA_COLUMN.options, USER_METADATA_COLUMN.name, &m_pUserMetadataHandle);
 	}
 	else
 	{
-		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), SEED_COLUMN, NEXT_CHILD_COLUMN, LOG_COLUMN, SLATE_COLUMN, TX_COLUMN, OUTPUT_COLUMN });
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), SEED_COLUMN, NEXT_CHILD_COLUMN, LOG_COLUMN, SLATE_COLUMN, TX_COLUMN, OUTPUT_COLUMN, USER_METADATA_COLUMN });
 		std::vector<ColumnFamilyHandle*> columnHandles;
 		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
 		m_pDefaultHandle = columnHandles[0];
@@ -63,6 +67,7 @@ void WalletDB::Open()
 		m_pSlateHandle = columnHandles[4];
 		m_pTxHandle = columnHandles[5];
 		m_pOutputHandle = columnHandles[6];
+		m_pUserMetadataHandle = columnHandles[7];
 	}
 }
 
@@ -92,12 +97,12 @@ bool WalletDB::CreateWallet(const std::string& username, const EncryptedSeed& en
 	const Slice value(std::string((const char*)&serializer.GetBytes()[0], serializer.GetBytes().size()));
 
 	const Status updateStatus = m_pDatabase->Put(WriteOptions(), m_pSeedHandle, key, value);
-	if (updateStatus.ok())
+	if (!updateStatus.ok())
 	{
-		return true;
+		return false;
 	}
 
-	return false;
+	return SaveMetadata(username, UserMetadata(0, 0));
 }
 
 std::unique_ptr<EncryptedSeed> WalletDB::LoadWalletSeed(const std::string& username) const
@@ -192,10 +197,12 @@ bool WalletDB::AddOutputs(const std::string& username, const CBigInteger<32>& ma
 			keyStr += "_" + std::to_string(output.GetMMRIndex().value());
 		}
 
-		const std::vector<unsigned char> encrypted = output.Encrypt(masterSeed);
+		Serializer serializer;
+		output.Serialize(serializer);
+		const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "OUTPUT", serializer.GetBytes());
 
 		const Slice key(keyStr);
-		const Slice value(std::string(encrypted.begin(), encrypted.end()));
+		const Slice value((const char*)encrypted.data(), encrypted.size());
 		batch.Put(m_pOutputHandle, key, value);
 	}
 
@@ -209,34 +216,129 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 	const std::string prefix = GetUsernamePrefix(username);
 
 	auto iter = m_pDatabase->NewIterator(ReadOptions(), m_pOutputHandle);
-	for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+	//for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+	for (iter->SeekToFirst(); iter->Valid(); iter->Next())
 	{
-		const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
-		outputs.emplace_back(OutputData::Decrypt(masterSeed, encrypted));
+		if (iter->key().starts_with(prefix))
+		{
+			const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
+			const std::vector<unsigned char> decrypted = Decrypt(masterSeed, "OUTPUT", encrypted);
+
+			ByteBuffer byteBuffer(decrypted);
+			outputs.emplace_back(OutputData::Deserialize(byteBuffer));
+		}
 	}
 
 	return outputs;
 }
 
-std::vector<OutputData> WalletDB::GetOutputsByStatus(const std::string& username, const CBigInteger<32>& masterSeed, const EOutputStatus outputStatus) const
+bool WalletDB::AddTransaction(const std::string& username, const CBigInteger<32>& masterSeed, const WalletTx& walletTx)
 {
-	std::vector<OutputData> outputs;
+	const Slice key(CombineKeyWithUsername(username, std::to_string(walletTx.GetId())));
+
+	Serializer serializer;
+	walletTx.Serialize(serializer);
+	const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "WALLET_TX", serializer.GetBytes());
+	const Slice value((const char*)encrypted.data(), encrypted.size());
+
+	const Status updateStatus = m_pDatabase->Put(WriteOptions(), m_pTxHandle, key, value);
+	if (updateStatus.ok())
+	{
+		LoggerAPI::LogInfo("WalletDB::AddTransaction - WalletTx saved with ID " + std::to_string(walletTx.GetId()));
+		return true;
+	}
+
+	LoggerAPI::LogError("WalletDB::AddTransaction - Failed to save WalletTx with ID " + std::to_string(walletTx.GetId()));
+	return false;
+}
+
+std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, const CBigInteger<32>& masterSeed) const
+{
+	std::vector<WalletTx> walletTransactions;
 
 	const std::string prefix = GetUsernamePrefix(username);
 
-	auto iter = m_pDatabase->NewIterator(ReadOptions(), m_pOutputHandle);
-	for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+	auto iter = m_pDatabase->NewIterator(ReadOptions(), m_pTxHandle);
+	//for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+	for (iter->SeekToFirst(); iter->Valid(); iter->Next())
 	{
-		const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
-		OutputData outputData = OutputData::Decrypt(masterSeed, encrypted);
-
-		if (outputData.GetStatus() == outputStatus)
+		if (iter->key().starts_with(prefix))
 		{
-			outputs.emplace_back(std::move(outputData));
+			const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
+			const std::vector<unsigned char> decrypted = Decrypt(masterSeed, "WALLET_TX", encrypted);
+
+			ByteBuffer byteBuffer(decrypted);
+			walletTransactions.emplace_back(WalletTx::Deserialize(byteBuffer));
 		}
 	}
 
-	return outputs;
+	return walletTransactions;
+}
+
+uint32_t WalletDB::GetNextTransactionId(const std::string& username)
+{
+	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
+	if (pUserMetadata == nullptr)
+	{
+		throw WalletStoreException();
+	}
+
+	const uint32_t nextTxId = pUserMetadata->GetNextTxId();
+	const UserMetadata updatedMetadata(nextTxId + 1, pUserMetadata->GetRefreshBlockHeight());
+	if (!SaveMetadata(username, updatedMetadata))
+	{
+		throw WalletStoreException();
+	}
+
+	return nextTxId;
+}
+
+uint64_t WalletDB::GetRefreshBlockHeight(const std::string& username) const
+{
+	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
+	if (pUserMetadata == nullptr)
+	{
+		throw WalletStoreException();
+	}
+
+	return pUserMetadata->GetRefreshBlockHeight();
+}
+
+bool WalletDB::UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight)
+{
+	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
+	if (pUserMetadata == nullptr)
+	{
+		throw WalletStoreException();
+	}
+
+	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), refreshBlockHeight));
+}
+
+std::unique_ptr<UserMetadata> WalletDB::GetMetadata(const std::string& username) const
+{
+	const Slice key(GetUsernamePrefix(username));
+	std::string value;
+	Status readStatus = m_pDatabase->Get(ReadOptions(), m_pUserMetadataHandle, key, &value);
+	if (readStatus.ok())
+	{
+		const std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
+		ByteBuffer byteBuffer(bytes);
+		return std::make_unique<UserMetadata>(UserMetadata::Deserialize(byteBuffer));
+	}
+
+	return std::unique_ptr<UserMetadata>(nullptr);
+}
+
+bool WalletDB::SaveMetadata(const std::string& username, const UserMetadata& userMetadata)
+{
+	const Slice key(GetUsernamePrefix(username));
+
+	Serializer serializer;
+	userMetadata.Serialize(serializer);
+	const Slice value((const char*)serializer.GetBytes().data(), serializer.GetBytes().size());
+
+	return m_pDatabase->Put(WriteOptions(), m_pUserMetadataHandle, key, value).ok();
 }
 
 std::string WalletDB::GetUsernamePrefix(const std::string& username)
@@ -248,6 +350,46 @@ std::string WalletDB::GetUsernamePrefix(const std::string& username)
 Slice WalletDB::CombineKeyWithUsername(const std::string& username, const std::string& key)
 {
 	return Slice(GetUsernamePrefix(username) + key);
+}
+
+std::vector<unsigned char> WalletDB::Encrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes)
+{
+	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
+	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
+
+	Serializer keySerializer;
+	keySerializer.AppendBigInteger(masterSeed);
+	keySerializer.AppendVarStr(dataType);
+	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
+
+	const std::vector<unsigned char> encryptedBytes = Crypto::AES256_Encrypt(bytes, key, iv);
+
+	Serializer serializer;
+	serializer.Append<uint8_t>(ENCRYPTION_FORMAT);
+	serializer.AppendBigInteger(iv);
+	serializer.AppendByteVector(encryptedBytes);
+	return serializer.GetBytes();
+}
+
+std::vector<unsigned char> WalletDB::Decrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
+{
+	ByteBuffer byteBuffer(encrypted);
+
+	const uint8_t formatVersion = byteBuffer.ReadU8();
+	if (formatVersion != ENCRYPTION_FORMAT)
+	{
+		throw DeserializationException();
+	}
+
+	const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
+	const std::vector<unsigned char> encryptedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
+
+	Serializer keySerializer;
+	keySerializer.AppendBigInteger(masterSeed);
+	keySerializer.AppendVarStr(dataType);
+	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
+
+	return Crypto::AES256_Decrypt(encryptedBytes, key, iv);
 }
 
 namespace WalletDBAPI

@@ -165,7 +165,9 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 		publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	}
 
-	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion);
+	const uint32_t minimumConfirmations = 10; // TODO: Read value
+
+	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion, minimumConfirmations);
 }
 
 ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root) const

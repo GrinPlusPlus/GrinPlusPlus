@@ -41,6 +41,17 @@ public:
 		return outputs;
 	}
 
+	virtual std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final
+	{
+		const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+		if (pTxHashSet == nullptr)
+		{
+			return std::unique_ptr<OutputRange>(nullptr);
+		}
+
+		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(startIndex, maxNumOutputs));
+	}
+
 	virtual bool PostTransaction(const Transaction& transaction) override final
 	{
 		std::unique_ptr<BlockHeader> pTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);

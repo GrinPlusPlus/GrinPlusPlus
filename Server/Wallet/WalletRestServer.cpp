@@ -4,6 +4,8 @@
 #include "../RestUtil.h"
 #include "API/OwnerAPI.h"
 
+#include <Wallet/SessionTokenException.h>
+
 WalletRestServer::WalletRestServer(const Config& config, IWalletManager& walletManager, INodeClient& nodeClient)
 	: m_config(config), m_walletManager(walletManager)
 {
@@ -17,7 +19,6 @@ WalletRestServer::~WalletRestServer()
 
 bool WalletRestServer::Initialize()
 {
-	// Owner API
 	const uint32_t ownerPort = m_config.GetWalletConfig().GetOwnerPort();
 	const char* pOwnerOptions[] = {
 		"num_threads", "1",
@@ -26,39 +27,47 @@ bool WalletRestServer::Initialize()
 	};
 
 	m_pOwnerCivetContext = mg_start(NULL, 0, pOwnerOptions);
-	mg_set_request_handler(m_pOwnerCivetContext, "/v1/wallet/owner/", OwnerAPI::Handler, m_pWalletContext);
-
-	// Foreign API
-	const uint32_t listenPort = m_config.GetWalletConfig().GetListenPort();
-	const char* pForeignOptions[] = {
-		"num_threads", "3",
-		"listening_ports", std::to_string(listenPort).c_str(),
-		NULL
-	};
-
-	m_pForeignCivetContext = mg_start(NULL, 0, pForeignOptions);
-	mg_set_request_handler(m_pForeignCivetContext, "/v1/wallet/foreign/", WalletRestServer::ForeignAPIHandler, m_pWalletContext);
+	mg_set_request_handler(m_pOwnerCivetContext, "/v1/wallet/owner/", WalletRestServer::OwnerAPIHandler, m_pWalletContext);
 
 	return true;
 }
 
-int WalletRestServer::ForeignAPIHandler(mg_connection* pConnection, void* pWalletContext)
+int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext)
 {
+	WalletContext* pContext = (WalletContext*)pWalletContext;
+
+	const std::string action = RestUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
 	const EHTTPMethod method = RestUtil::GetHTTPMethod(pConnection);
-	if (method == EHTTPMethod::GET)
+
+	try
 	{
-		/*
-			build_coinbase
-			receive_tx
-		*/
+		if (method == EHTTPMethod::GET)
+		{
+			return OwnerAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+		}
+		else if (method == EHTTPMethod::POST)
+		{
+			return OwnerAPI::HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+		}
+	}
+	catch (const SessionTokenException&)
+	{
+		return RestUtil::BuildUnauthorizedResponse(pConnection, "session_token is missing or invalid.");
+	}
+	catch (const DeserializationException&)
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "Failed to deserialize one or more fields.");
+	}
+	catch (const std::exception&)
+	{
+		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
 	}
 
-	return RestUtil::BuildBadRequestResponse(pConnection, "Not Supported");
+	return RestUtil::BuildBadRequestResponse(pConnection, "HTTPMethod not Supported");
 }
 
 bool WalletRestServer::Shutdown()
 {
-	mg_stop(m_pForeignCivetContext);
 	mg_stop(m_pOwnerCivetContext);
 
 	return true;

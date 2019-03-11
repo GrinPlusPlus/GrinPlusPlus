@@ -9,6 +9,7 @@
 #include <Wallet/KeychainPath.h>
 #include <Wallet/SlateContext.h>
 #include <Wallet/OutputData.h>
+#include <Wallet/WalletTx.h>
 
 #ifdef MW_WalletDB
 #define WALLET_DB_API __declspec(dllexport)
@@ -29,9 +30,13 @@ public:
 
 	virtual bool AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs) = 0;
 	virtual std::vector<OutputData> GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const = 0;
-	virtual std::vector<OutputData> GetOutputsByStatus(const std::string& username, const CBigInteger<32>& masterSeed, const EOutputStatus outputStatus) const = 0;
 
-	// TODO: TransactionLog
+	virtual bool AddTransaction(const std::string& username, const CBigInteger<32>& masterSeed, const WalletTx& walletTx) = 0;
+	virtual std::vector<WalletTx> GetTransactions(const std::string& username, const CBigInteger<32>& masterSeed) const = 0;
+
+	virtual uint32_t GetNextTransactionId(const std::string& username) = 0;
+	virtual uint64_t GetRefreshBlockHeight(const std::string& username) const = 0;
+	virtual bool UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight) = 0;
 };
 
 namespace WalletDBAPI

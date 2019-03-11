@@ -15,7 +15,7 @@ public:
 
 	inline uint64_t GetAmount() const { return m_amount; }
 	inline const BlindingFactor& GetBlindingFactor() const { return m_blindingFactor; }
-	inline const ProofMessage& GetMessage() const { return m_proofMessage; }
+	inline const ProofMessage& GetProofMessage() const { return m_proofMessage; }
 
 private:
 	uint64_t m_amount;

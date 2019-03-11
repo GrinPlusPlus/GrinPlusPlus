@@ -2,6 +2,7 @@
 #include "Keychain/SeedEncrypter.h"
 #include "Keychain/Mnemonic.h"
 #include "SlateBuilder.h"
+#include "WalletRestorer.h"
 
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
@@ -32,6 +33,33 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 	return std::nullopt;
 }
 
+std::optional<SessionToken> WalletManager::Restore(const std::string& username, const SecureString& password, const SecureString& walletWords)
+{
+	std::optional<std::vector<unsigned char>> entropyOpt = Mnemonic::ToEntropy(walletWords, std::make_optional<SecureString>(password));
+	if (entropyOpt.has_value())
+	{
+		if (entropyOpt.value().size() == 32)
+		{
+			const CBigInteger<32> walletSeed(entropyOpt.value());
+			const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
+			if (m_pWalletDB->CreateWallet(username, encryptedSeed))
+			{
+				return std::make_optional<SessionToken>(m_sessionManager.Login(username, walletSeed));
+			}
+		}
+	}
+
+	return std::nullopt;
+}
+
+bool WalletManager::CheckForOutputs(const SessionToken& token)
+{
+	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
+	Wallet& wallet = m_sessionManager.GetWallet(token);
+
+	return WalletRestorer(m_config, m_nodeClient).Restore(masterSeed, wallet);
+}
+
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
 {
 	return m_sessionManager.Login(username, password);
@@ -42,12 +70,12 @@ void WalletManager::Logout(const SessionToken& token)
 	m_sessionManager.Logout(token);
 }
 
-WalletSummary WalletManager::GetWalletSummary(const SessionToken& token, const uint64_t minimumConfirmations)
+WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
 {
 	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
 	Wallet& wallet = m_sessionManager.GetWallet(token);
 
-	return wallet.GetWalletSummary(masterSeed, minimumConfirmations);
+	return wallet.GetWalletSummary(masterSeed);
 }
 
 std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy)

@@ -29,6 +29,11 @@ std::unique_ptr<PrivateExtKey> KeyChain::DerivePrivateKey(const CBigInteger<32>&
 	return pPrivateKey;
 }
 
+std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const CBigInteger<32>& masterSeed, const Commitment& commitment, const RangeProof& rangeProof) const
+{
+	return Crypto::RewindRangeProof(commitment, rangeProof, CreateNonce(masterSeed, commitment));
+}
+
 std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(const CBigInteger<32>& masterSeed, const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const
 {
 	CBigInteger<32> nonce = CreateNonce(masterSeed, commitment);

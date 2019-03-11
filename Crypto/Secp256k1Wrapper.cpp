@@ -33,6 +33,8 @@ Secp256k1Wrapper::~Secp256k1Wrapper()
 
 bool Secp256k1Wrapper::VerifySingleAggSig(const Signature& signature, const Commitment& publicKey, const Hash& message) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	secp256k1_pedersen_commitment commitment;
 	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &commitment, publicKey.GetCommitmentBytes().GetData().data());
 	if (commitmentResult == 1)
@@ -54,6 +56,8 @@ bool Secp256k1Wrapper::VerifySingleAggSig(const Signature& signature, const Comm
 
 bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	const size_t numBits = 64;
 	const size_t proofLength = rangeProofs.front().second.GetProofBytes().size();
 
@@ -82,6 +86,11 @@ bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<std::pair<Commitment
 
 std::unique_ptr<RangeProof> Secp256k1Wrapper::GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage) const
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
+	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
+	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+
 	std::vector<unsigned char> proofBytes(MAX_PROOF_SIZE, 0);
 	size_t proofLen = MAX_PROOF_SIZE;
 
@@ -146,6 +155,8 @@ std::unique_ptr<RangeProof> Secp256k1Wrapper::GenerateRangeProof(const uint64_t 
 
 std::unique_ptr<RewoundProof> Secp256k1Wrapper::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = ConvertCommitments(std::vector<Commitment>({ commitment }));
 
 	if (!commitmentPointers.empty())
@@ -184,6 +195,8 @@ std::unique_ptr<RewoundProof> Secp256k1Wrapper::RewindProof(const Commitment& co
 
 std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBigInteger<32>& privateKey) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	const int verifyResult = secp256k1_ec_seckey_verify(m_pContext, privateKey.GetData().data());
 	if (verifyResult == 1)
 	{
@@ -206,6 +219,8 @@ std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::CalculatePublicKey(const CBig
 
 std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::PublicKeySum(const std::vector<CBigInteger<33>>& publicKeys) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	std::vector<secp256k1_pubkey*> parsedPubKeys;
 	for (const CBigInteger<33>& publicKey : publicKeys)
 	{
@@ -251,8 +266,7 @@ std::unique_ptr<CBigInteger<33>> Secp256k1Wrapper::PublicKeySum(const std::vecto
 
 std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const
 {
-	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	secp256k1_pedersen_commitment commitment;
 	const int result = secp256k1_pedersen_commit(m_pContext, &commitment, &blindingFactor.GetBytes()[0], value, &secp256k1_generator_const_h, &secp256k1_generator_const_g);
@@ -270,8 +284,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommit(const uint64_t valu
 
 std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const
 {
-	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	std::vector<secp256k1_pedersen_commitment*> positiveCommitments = ConvertCommitments(positive);
 	std::vector<secp256k1_pedersen_commitment*> negativeCommitments = ConvertCommitments(negative);
@@ -303,8 +316,7 @@ std::unique_ptr<Commitment> Secp256k1Wrapper::PedersenCommitSum(const std::vecto
 
 std::unique_ptr<BlindingFactor> Secp256k1Wrapper::PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const
 {
-	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	std::vector<const unsigned char*> blindingFactors;
 	for (const BlindingFactor& positiveFactor : positive)
@@ -363,6 +375,11 @@ void Secp256k1Wrapper::CleanupCommitments(std::vector<secp256k1_pedersen_commitm
 
 std::unique_ptr<Signature> Secp256k1Wrapper::SignSingle(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message) const
 {
+	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
+
+	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
+	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+
 	secp256k1_pubkey pubKeyForE;
 	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, &sumPubKeys.GetData()[0], sumPubKeys.GetData().size());
 
@@ -396,6 +413,8 @@ std::unique_ptr<Signature> Secp256k1Wrapper::SignSingle(const BlindingFactor& se
 
 std::unique_ptr<Signature> Secp256k1Wrapper::AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	secp256k1_pubkey pubNonces;
 	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNonces, &sumPubNonces.GetData()[0], sumPubNonces.GetData().size());
 	if (noncesParsed == 1)

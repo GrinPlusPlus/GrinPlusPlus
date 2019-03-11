@@ -4,7 +4,7 @@
 #include <Core/Models/OutputLocation.h>
 #include <Crypto/RangeProof.h>
 
-// TODO: Move to Core/Models/Display
+// TODO: This is no longer just used for display purposes. It's now a core part of the wallet restore logic. Rename this and move it.
 class OutputDisplayInfo
 {
 public:

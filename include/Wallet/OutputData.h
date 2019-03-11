@@ -42,47 +42,28 @@ public:
 	inline void SetStatus(const EOutputStatus status) { m_status = status; }
 
 	//
-	// Encryption & Serialization
+	// Serialization
 	//
-	std::vector<unsigned char> Encrypt(const CBigInteger<32>& masterSeed) const
+	void Serialize(Serializer& serializer) const
 	{
-		const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
-		const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
-
-		Serializer encryptionSerializer;
-		encryptionSerializer.AppendVarStr(m_keyChainPath.ToString());
-		m_output.Serialize(encryptionSerializer);
-		encryptionSerializer.Append(m_amount);
-		encryptionSerializer.Append((uint8_t)m_status);
-		encryptionSerializer.Append<uint64_t>(m_mmrIndexOpt.value_or(0));
-
-		const std::vector<unsigned char> encryptedBytes = Crypto::AES256_Encrypt(encryptionSerializer.GetBytes(), masterSeed, iv);
-
-		Serializer serializer;
 		serializer.Append<uint8_t>(OUTPUT_DATA_FORMAT);
-		serializer.AppendBigInteger(iv);
-		serializer.AppendByteVector(encryptedBytes);
-
-		return serializer.GetBytes();
+		serializer.AppendVarStr(m_keyChainPath.ToString());
+		m_output.Serialize(serializer);
+		serializer.Append(m_amount);
+		serializer.Append((uint8_t)m_status);
+		serializer.Append<uint64_t>(m_mmrIndexOpt.value_or(0));
 	}
 
 	//
-	// Decryption & Deserialization
+	// Deserialization
 	//
-	static OutputData Decrypt(const CBigInteger<32>& masterSeed, const std::vector<unsigned char>& encrypted)
+	static OutputData Deserialize(ByteBuffer& byteBuffer)
 	{
-		ByteBuffer byteBuffer(encrypted);
-
 		const uint8_t formatVersion = byteBuffer.ReadU8();
 		if (formatVersion != OUTPUT_DATA_FORMAT)
 		{
 			throw DeserializationException();
 		}
-
-		const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
-		const std::vector<unsigned char> encryptedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
-
-		const std::vector<unsigned char> decrypted = Crypto::AES256_Decrypt(encryptedBytes, masterSeed, iv);
 
 		KeyChainPath keyChainPath = KeyChainPath::FromString(byteBuffer.ReadVarStr());
 		TransactionOutput output = TransactionOutput::Deserialize(byteBuffer);

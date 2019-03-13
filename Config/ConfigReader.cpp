@@ -4,6 +4,7 @@
 #include <Config/Environment.h>
 #include <Config/Genesis.h>
 #include <Common/Util/BitUtil.h>
+#include <Common/Util/FileUtil.h>
 #include <filesystem>
 
 Config ConfigReader::ReadConfig(const Json::Value& root) const
@@ -82,7 +83,7 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	const std::string dataDirectory = environmentType == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET";
-	const std::string defaultPath = std::filesystem::current_path().string() + "/" + dataDirectory  + "/";
+	const std::string defaultPath = FileUtil::GetHomeDirectory() + "\\GrinPP\\" + dataDirectory  + "\\";
 	if (root.isMember(ConfigProps::DATA_PATH))
 	{
 		return root.get(ConfigProps::DATA_PATH, defaultPath).asString();
@@ -156,11 +157,10 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 	const uint32_t listenPort = 3415; // TODO: Read value
 	const uint32_t ownerPort = 3420; // TODO: Read value
 
-	uint32_t privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
-	uint32_t publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
+	uint32_t privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3A, 0x10);
+	uint32_t publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3E, 0x4B);
 	if (environmentType == EEnvironmentType::MAINNET)
 	{
-		// TODO: Figure out mainnet private/public Version
 		privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
 		publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	}

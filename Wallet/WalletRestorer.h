@@ -12,7 +12,7 @@ class RewoundProof;
 class WalletRestorer
 {
 public:
-	WalletRestorer(const Config& config, const INodeClient& nodeClient);
+	WalletRestorer(const Config& config, const INodeClient& nodeClient, const KeyChain& keyChain);
 
 	bool Restore(const CBigInteger<32>& masterSeed, Wallet& wallet) const;
 
@@ -22,4 +22,5 @@ private:
 
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
+	const KeyChain& m_keyChain;
 };

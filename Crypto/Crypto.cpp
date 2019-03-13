@@ -28,6 +28,15 @@ CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
 	return CBigInteger<32>(&tmp[0]);
 }
 
+CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& key, const std::vector<unsigned char>& input)
+{
+	std::vector<unsigned char> tmp(32, 0);
+
+	blake2b(&tmp[0], 32, input.data(), input.size(), key.data(), key.size());
+
+	return CBigInteger<32>(&tmp[0]);
+}
+
 CBigInteger<32> Crypto::SHA256(const std::vector<unsigned char>& input)
 {
 	std::vector<unsigned char> sha256(32, 0);
@@ -255,4 +264,9 @@ std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFacto
 std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces)
 {
 	return Secp256k1Wrapper::GetInstance().AggregateSignatures(signatures, sumPubNonces);
+}
+
+std::unique_ptr<BlindingFactor> Crypto::BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount)
+{
+	return Secp256k1Wrapper::GetInstance().BlindSwitch(secretKey, amount);
 }

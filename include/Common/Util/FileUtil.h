@@ -5,6 +5,7 @@
 #include <vector>
 #include <filesystem>
 
+
 class FileUtil
 {
 public:
@@ -88,4 +89,28 @@ public:
 
 		return ec.value() == 0;
 	}
+
+	static std::string GetHomeDirectory()
+	{
+		#ifdef _WIN32
+		char homeDriveBuf[MAX_PATH_LEN];
+		size_t homeDriveLen = MAX_PATH_LEN;
+		getenv_s(&homeDriveLen, homeDriveBuf, sizeof(homeDriveBuf) - 1, "HOMEDRIVE");
+
+		char homePathBuf[MAX_PATH_LEN];
+		size_t homePathLen = MAX_PATH_LEN;
+		getenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, "HOMEPATH");
+
+		return std::string(&homeDriveBuf[0]) + std::string(&homePathBuf[0]);
+		#else
+		char homePathBuf[MAX_PATH_LEN];
+		size_t homePathLen = MAX_PATH_LEN;
+		getenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, "HOME");
+
+		return std::string(&homePathBuf[0]);
+		#endif
+	}
+
+private:
+	static const size_t MAX_PATH_LEN = 260;
 };

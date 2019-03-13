@@ -56,8 +56,9 @@ bool WalletManager::CheckForOutputs(const SessionToken& token)
 {
 	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
 	Wallet& wallet = m_sessionManager.GetWallet(token);
+	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
-	return WalletRestorer(m_config, m_nodeClient).Restore(masterSeed, wallet);
+	return WalletRestorer(m_config, m_nodeClient, keyChain).Restore(masterSeed, wallet);
 }
 
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
@@ -111,6 +112,18 @@ bool WalletManager::PostTransaction(const SessionToken& token, const Transaction
 	// TODO: Save transaction(TxLogEntry)
 
 	return m_nodeClient.PostTransaction(transaction);
+}
+
+bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
+{
+	// TODO: Implement
+	return false;
+}
+
+bool WalletManager::CancelBySlateId(const SessionToken& token, const uuids::uuid& slateId)
+{
+	// TODO: Implement
+	return false;
 }
 
 namespace WalletAPI

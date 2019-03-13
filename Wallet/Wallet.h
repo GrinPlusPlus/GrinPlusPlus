@@ -34,7 +34,6 @@ private:
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
 	IWalletDB& m_walletDB;
-	KeyChain m_keyChain;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
 };

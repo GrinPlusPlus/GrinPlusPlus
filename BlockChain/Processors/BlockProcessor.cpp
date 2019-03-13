@@ -204,7 +204,7 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, LockedChai
 			return EBlockChainStatus::INVALID;
 		}
 
-		const EBlockChainStatus added = ValidateAndAddBlock(block, lockedState);
+		const EBlockChainStatus added = ValidateAndAddBlock(*pBlock, lockedState);
 		if (added != EBlockChainStatus::SUCCESS)
 		{
 			pTxHashSet->Discard();

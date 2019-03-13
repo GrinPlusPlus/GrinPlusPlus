@@ -4,6 +4,7 @@
 #include "secp256k1-zkp/include/secp256k1_aggsig.h"
 #include "secp256k1-zkp/include/secp256k1_commitment.h"
 #include "secp256k1-zkp/include/secp256k1_bulletproofs.h"
+#include "SwitchGeneratorPoint.h"
 
 #include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
@@ -72,8 +73,12 @@ bool Secp256k1Wrapper::VerifyBulletproofs(const std::vector<std::pair<Commitment
 	std::vector<Commitment> commitments = FunctionalUtil::map<std::vector<Commitment>>(rangeProofs, getCommitments);
 	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = ConvertCommitments(commitments);
 
-	auto getBulletProofPointers = [](const std::pair<Commitment, RangeProof>& rangeProof) -> const unsigned char* { return rangeProof.second.GetProofBytes().data(); };
-	std::vector<const unsigned char*> bulletproofPointers = FunctionalUtil::map<std::vector<const unsigned char*>>(rangeProofs, getBulletProofPointers);
+	std::vector<const unsigned char*> bulletproofPointers;
+	bulletproofPointers.reserve(rangeProofs.size());
+	for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
+	{
+		bulletproofPointers.emplace_back(rangeProof.second.GetProofBytes().data());
+	}
 
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 	const int result = secp256k1_bulletproof_rangeproof_verify_multi(m_pContext, pScratchSpace, m_pGenerators, bulletproofPointers.data(), rangeProofs.size(), proofLength, NULL, commitmentPointers.data(), 1, numBits, valueGenerators.data(), NULL, NULL);
@@ -165,7 +170,6 @@ std::unique_ptr<RewoundProof> Secp256k1Wrapper::RewindProof(const Commitment& co
 		std::vector<unsigned char> blindingFactorBytes(32);
 		std::vector<unsigned char> message(16);
 
-		secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 		int result = secp256k1_bulletproof_rangeproof_rewind(
 			m_pContext,
 			m_pGenerators,
@@ -181,7 +185,6 @@ std::unique_ptr<RewoundProof> Secp256k1Wrapper::RewindProof(const Commitment& co
 			0,
 			message.data()
 		);
-		secp256k1_scratch_space_destroy(pScratchSpace);
 		CleanupCommitments(commitmentPointers);
 
 		if (result == 1)
@@ -434,4 +437,18 @@ std::unique_ptr<Signature> Secp256k1Wrapper::AggregateSignatures(const std::vect
 	}
 
 	return std::unique_ptr<Signature>(nullptr);
+}
+
+std::unique_ptr<BlindingFactor> Secp256k1Wrapper::BlindSwitch(const BlindingFactor& blindingFactor, const uint64_t amount) const
+{
+	std::shared_lock<std::shared_mutex> writeLock(m_mutex);
+
+	std::vector<unsigned char> blindSwitch(32);
+	const int result = secp256k1_blind_switch(m_pContext, blindSwitch.data(), blindingFactor.GetBytes().GetData().data(), amount, &secp256k1_generator_const_h, &secp256k1_generator_const_g, &GENERATOR_J_PUB);
+	if (result == 1)
+	{
+		return std::make_unique<BlindingFactor>(BlindingFactor(CBigInteger<32>(std::move(blindSwitch))));
+	}
+
+	return std::unique_ptr<BlindingFactor>(nullptr);
 }

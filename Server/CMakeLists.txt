@@ -16,7 +16,8 @@ file(GLOB SERVER_SRC
 	"Node/API/Explorer/BlockInfoAPI.cpp"
 	"Wallet/WalletDaemon.cpp"
 	"Wallet/WalletRestServer.cpp"
-	"Wallet/API/OwnerAPI.cpp"
+	"Wallet/API/OwnerGetAPI.cpp"
+	"Wallet/API/OwnerPostAPI.cpp"
 )
 
 include_directories(civetweb/include)

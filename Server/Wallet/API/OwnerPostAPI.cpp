@@ -1,56 +1,12 @@
-#include "OwnerAPI.h"
-#include "../WalletContext.h"
+#include "OwnerPostAPI.h"
 #include "../../RestUtil.h"
+#include "SessionTokenUtil.h"
 
 #include <Core/Util/JsonUtil.h>
+#include <Wallet/WalletManager.h>
 #include <Wallet/SessionTokenException.h>
 
-/*
-	GET /v1/wallet/owner/node_height
-	GET /v1/wallet/owner/retrieve_summary_info?min_confirmations=10
-	GET /v1/wallet/owner/retrieve_outputs?refresh&show_spent&tx_id=x&tx_id=y
-	GET /v1/wallet/owner/retrieve_txs?refresh&id=x
-	GET /v1/wallet/owner/retrieve_stored_tx?id=x
-*/
-int OwnerAPI::HandleGET(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
-{
-	// GET /v1/wallet/owner/node_height
-	if (action == "node_height")
-	{
-		Json::Value rootJSON;
-		rootJSON["height"] = nodeClient.GetChainHeight();
-		return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
-	}
-
-	// GET /v1/wallet/owner/retrieve_summary_info?min_confirmations=10
-	if (action == "retrieve_summary_info")
-	{
-		const SessionToken token = GetSessionToken(pConnection);
-		return RetrieveSummaryInfo(pConnection, walletManager, token);
-	}
-
-	// GET /v1/wallet/owner/retrieve_outputs?refresh&show_spent&tx_id=x&tx_id=y
-	if (action == "retrieve_outputs")
-	{
-		// TODO: Implement
-	}
-
-	// GET /v1/wallet/owner/retrieve_txs?refresh&id=x
-	if (action == "retrieve_txs")
-	{
-		// TODO: Implement
-	}
-
-	// GET /v1/wallet/owner/retrieve_stored_tx?id=x
-	if (action == "retrieve_stored_tx")
-	{
-		// TODO: Implement
-	}
-
-	return RestUtil::BuildBadRequestResponse(pConnection, "GET /v1/wallet/owner/" + action + " not Supported");
-}
-
-int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
+int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
 {
 	if (action == "create_wallet")
 	{
@@ -62,13 +18,18 @@ int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, 
 	}
 	else if (action == "logout")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Logout(pConnection, walletManager, token);
 	}
 	else if (action == "update_wallet")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return UpdateWallet(pConnection, walletManager, token);
+	}
+	else if (action == "cancel_tx")
+	{
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return Cancel(pConnection, walletManager, token);
 	}
 
 	std::optional<Json::Value> requestBodyOpt = RestUtil::GetRequestBody(pConnection);
@@ -83,26 +44,22 @@ int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, 
 	}
 	else if (action == "issue_send_tx")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Send(pConnection, walletManager, token, requestBodyOpt.value());
 	}
 	else if (action == "receive_tx")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Receive(pConnection, walletManager, token, requestBodyOpt.value());
 	}
 	else if (action == "finalize_tx")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Finalize(pConnection, walletManager, token, requestBodyOpt.value());
-	}
-	else if (action == "cancel_tx")
-	{
-		// TODO: Implement
 	}
 	else if (action == "post_tx")
 	{
-		const SessionToken token = GetSessionToken(pConnection);
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return PostTx(pConnection, nodeClient, token, requestBodyOpt.value());
 	}
 	else if (action == "repost")
@@ -113,33 +70,7 @@ int OwnerAPI::HandlePOST(mg_connection* pConnection, const std::string& action, 
 	return RestUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
 }
 
-SessionToken OwnerAPI::GetSessionToken(mg_connection* pConnection)
-{
-	const std::optional<std::string> sessionTokenOpt = RestUtil::GetHeaderValue(pConnection, "session_token");
-	if (!sessionTokenOpt.has_value())
-	{
-		throw SessionTokenException();
-	}
-
-	try
-	{
-		return SessionToken::FromBase64(sessionTokenOpt.value());
-	}
-	catch (const DeserializationException&)
-	{
-		throw SessionTokenException();
-	}
-}
-
-// GET /v1/wallet/owner/retrieve_summary_info?min_confirmations=10
-int OwnerAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
-{
-	WalletSummary walletSummary = walletManager.GetWalletSummary(token);
-	
-	return RestUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
-}
-
-int OwnerAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walletManager)
+int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walletManager)
 {
 	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
@@ -168,7 +99,7 @@ int OwnerAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walletMan
 	}
 }
 
-int OwnerAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
+int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
 {
 	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
@@ -196,14 +127,14 @@ int OwnerAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
 	}
 }
 
-int OwnerAPI::Logout(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+int OwnerPostAPI::Logout(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
 	walletManager.Logout(token);
 
 	return RestUtil::BuildSuccessResponse(pConnection, "");
 }
 
-int OwnerAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
+int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
 {
 	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
@@ -237,7 +168,7 @@ int OwnerAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& walletMa
 	}
 }
 
-int OwnerAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
 	if (walletManager.CheckForOutputs(token))
 	{
@@ -249,7 +180,7 @@ int OwnerAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walletMan
 	}
 }
 
-int OwnerAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
 	const Json::Value amountJSON = json.get("amount", Json::nullValue);
 	if (amountJSON == Json::nullValue || !amountJSON.isUInt64())
@@ -282,7 +213,7 @@ int OwnerAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, co
 	}
 }
 
-int OwnerAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
 	Slate slate = Slate::FromJSON(json);
 
@@ -301,7 +232,7 @@ int OwnerAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager,
 	}
 }
 
-int OwnerAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
 	Slate slate = Slate::FromJSON(json);
 
@@ -316,7 +247,7 @@ int OwnerAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager
 	}
 }
 
-int OwnerAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)
 {
 	Transaction transaction = Transaction::FromJSON(json);
 
@@ -327,5 +258,38 @@ int OwnerAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const 
 	else
 	{
 		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+	}
+}
+
+int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+{
+	std::optional<std::string> idOpt = RestUtil::GetQueryParam(pConnection, "id");
+	if (idOpt.has_value())
+	{
+		bool canceled = false;
+
+		std::optional<uuids::uuid> txUUIDOpt = uuids::uuid::from_string(idOpt.value());
+		if (txUUIDOpt.has_value())
+		{
+			canceled = walletManager.CancelBySlateId(token, txUUIDOpt.value());
+		}
+		else
+		{
+			const uint32_t id = std::stoul(idOpt.value());
+			canceled = walletManager.CancelByTxId(token, id);
+		}
+
+		if (canceled)
+		{
+			return RestUtil::BuildSuccessResponse(pConnection, "");
+		}
+		else
+		{
+			return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		}
+	}
+	else
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "id missing");
 	}
 }

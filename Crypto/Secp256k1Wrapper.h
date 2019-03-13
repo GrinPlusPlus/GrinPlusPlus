@@ -30,6 +30,7 @@ public:
 	std::unique_ptr<RewoundProof> RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce) const;
 	std::unique_ptr<Signature> SignSingle(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message) const;
 	std::unique_ptr<Signature> AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces) const;
+	std::unique_ptr<BlindingFactor> BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount) const;
 
 	// Bulletproofs
 	bool VerifyBulletproofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs) const;

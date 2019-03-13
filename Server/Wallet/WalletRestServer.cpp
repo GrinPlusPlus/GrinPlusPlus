@@ -2,7 +2,8 @@
 #include "WalletContext.h"
 #include "../civetweb/include/civetweb.h"
 #include "../RestUtil.h"
-#include "API/OwnerAPI.h"
+#include "API/OwnerGetAPI.h"
+#include "API/OwnerPostAPI.h"
 
 #include <Wallet/SessionTokenException.h>
 
@@ -36,18 +37,17 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 {
 	WalletContext* pContext = (WalletContext*)pWalletContext;
 
-	const std::string action = RestUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
-	const EHTTPMethod method = RestUtil::GetHTTPMethod(pConnection);
-
 	try
 	{
+		const std::string action = RestUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
+		const EHTTPMethod method = RestUtil::GetHTTPMethod(pConnection);
 		if (method == EHTTPMethod::GET)
 		{
-			return OwnerAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+			return OwnerGetAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
 		}
 		else if (method == EHTTPMethod::POST)
 		{
-			return OwnerAPI::HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+			return OwnerPostAPI::HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
 		}
 	}
 	catch (const SessionTokenException&)

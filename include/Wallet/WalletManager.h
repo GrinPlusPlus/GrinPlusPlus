@@ -60,6 +60,10 @@ public:
 	virtual std::unique_ptr<Transaction> Finalize(const SessionToken& token, const Slate& slate) = 0;
 
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) = 0;
+
+	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
+
+	virtual bool CancelBySlateId(const SessionToken& token, const uuids::uuid& slateId) = 0;
 };
 
 namespace WalletAPI

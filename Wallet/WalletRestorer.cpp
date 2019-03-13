@@ -6,8 +6,8 @@
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
-WalletRestorer::WalletRestorer(const Config& config, const INodeClient& nodeClient)
-	: m_config(config), m_nodeClient(nodeClient)
+WalletRestorer::WalletRestorer(const Config& config, const INodeClient& nodeClient, const KeyChain& keyChain)
+	: m_config(config), m_nodeClient(nodeClient), m_keyChain(keyChain)
 {
 
 }
@@ -56,7 +56,7 @@ bool WalletRestorer::Restore(const CBigInteger<32>& masterSeed, Wallet& wallet) 
 
 std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const CBigInteger<32>& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
 {
-	std::unique_ptr<RewoundProof> pRewoundProof = KeyChain(m_config).RewindRangeProof(masterSeed, outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof());
+	std::unique_ptr<RewoundProof> pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof());
 	if (pRewoundProof != nullptr)
 	{
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(3)); // TODO: Always length 3 for now. Need to grind through in future.

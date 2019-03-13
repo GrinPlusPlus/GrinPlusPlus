@@ -37,6 +37,11 @@ public:
 	static CBigInteger<32> Blake2b(const std::vector<unsigned char>& input);
 
 	//
+	// Uses Blake2b to hash the given input into a 32 byte hash using a key.
+	//
+	static CBigInteger<32> Blake2b(const std::vector<unsigned char>& key, const std::vector<unsigned char>& input);
+
+	//
 	// Uses SHA256 to hash the given input into a 32 byte hash.
 	//
 	static CBigInteger<32> SHA256(const std::vector<unsigned char>& input);
@@ -116,9 +121,23 @@ public:
 	//
 	static std::unique_ptr<CBigInteger<33>> SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey);
 
+	//
+	//
+	//
 	static std::unique_ptr<CBigInteger<33>> AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys);
 
+	//
+	//
+	//
 	static std::unique_ptr<Signature> CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message);
 
+	//
+	//
+	//
 	static std::unique_ptr<Signature> AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces);
+
+	//
+	//
+	//
+	static std::unique_ptr<BlindingFactor> BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount);
 };

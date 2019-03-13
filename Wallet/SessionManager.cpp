@@ -37,6 +37,7 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 
 SessionToken SessionManager::Login(const std::string& username, const CBigInteger<32>& seed)
 {
+	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
 	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
 
 	const CBigInteger<32> hash = Crypto::SHA256(seed.GetData());

@@ -3,7 +3,7 @@
 #include "Keychain/KeyChain.h"
 
 Wallet::Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath)
-	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_keyChain(config), m_username(username), m_userPath(std::move(userPath))
+	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_username(username), m_userPath(std::move(userPath))
 {
 
 }
@@ -55,6 +55,8 @@ bool Wallet::AddOutputs(const CBigInteger<32>& masterSeed, const std::vector<Out
 
 std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
 {
+	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+
 	std::vector<WalletCoin> coins;
 
 	std::vector<Commitment> commitments;
@@ -63,7 +65,7 @@ std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 	{
 		if (output.GetStatus() == EOutputStatus::SPENDABLE)
 		{
-			BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, output.GetKeyChainPath())->ToBlindingFactor();
+			BlindingFactor blindingFactor = *keyChain.DerivePrivateKey(output.GetKeyChainPath(), output.GetAmount());
 			coins.emplace_back(WalletCoin(std::move(blindingFactor), OutputData(output)));
 		}
 	}
@@ -73,12 +75,14 @@ std::vector<WalletCoin> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 
 std::unique_ptr<WalletCoin> Wallet::CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount)
 {
+	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+
 	KeyChainPath keyChainPath = m_walletDB.GetNextChildPath(m_username, m_userPath);
-	BlindingFactor blindingFactor = m_keyChain.DerivePrivateKey(masterSeed, keyChainPath)->ToBlindingFactor();
+	BlindingFactor blindingFactor = *keyChain.DerivePrivateKey(keyChainPath, amount);
 	std::unique_ptr<Commitment> pCommitment = Crypto::CommitBlinded(amount, blindingFactor);
 	if (pCommitment != nullptr)
 	{
-		std::unique_ptr<RangeProof> pRangeProof = m_keyChain.GenerateRangeProof(masterSeed, keyChainPath, amount, *pCommitment, blindingFactor);
+		std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, *pCommitment, blindingFactor);
 		if (pRangeProof != nullptr)
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));

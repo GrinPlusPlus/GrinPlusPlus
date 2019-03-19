@@ -127,10 +127,13 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
 		if (outputPosOpt.has_value())
 		{
-			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
-			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
+			if (outputPosOpt.value().GetMMRIndex() < m_blockHeader.GetOutputMMRSize())
 			{
-				return false;
+				std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+				if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
+				{
+					return false;
+				}
 			}
 		}
 

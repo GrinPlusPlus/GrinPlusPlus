@@ -1,6 +1,5 @@
 #include "SlateBuilder.h"
 #include "WalletUtil.h"
-#include "WalletCoin.h"
 #include "TransactionBuilder.h"
 #include "SignatureUtil.h"
 #include "CoinSelection.h"
@@ -53,19 +52,19 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 	// Select inputs using desired selection strategy.
 	const uint64_t numOutputs = 2;
 	const uint64_t numKernels = 1;
-	const std::vector<WalletCoin> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
-	std::vector<WalletCoin> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy, numOutputs, numKernels);
+	const std::vector<OutputData> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
+	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy, numOutputs, numKernels);
 	
 	// Calculate sum inputs blinding factors xI.
-	auto getInputBlindingFactors = [wallet](WalletCoin& input) -> BlindingFactor { return input.GetBlindingFactor(); };
+	auto getInputBlindingFactors = [wallet](OutputData& input) -> BlindingFactor { return input.GetBlindingFactor(); };
 	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getInputBlindingFactors);
 	std::unique_ptr<BlindingFactor> pBlindingFactorSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
 	
 	// Calculate the fee
-	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), 2, 1);
+	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), numOutputs, numKernels);
 
 	// Create change output with blinding factor xC
-	std::unique_ptr<WalletCoin> pChangeOutput = CreateChangeOutput(wallet, masterSeed, inputs, amount, fee);
+	std::unique_ptr<OutputData> pChangeOutput = CreateChangeOutput(wallet, masterSeed, inputs, amount, fee);
 
 	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
 	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&pChangeOutput->GetBlindingFactor(), pBlindingFactorSum.get());
@@ -73,14 +72,21 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
 	BlindingFactor secretKey = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);
-	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
+	std::unique_ptr<PublicKey> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
 
 	// Select a random nonce kS
-	BlindingFactor secretNonce = RandomNumberGenerator::GenerateRandom32();
-	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
+	BlindingFactor secretNonce = *Crypto::GenerateSecureNonce();
+	std::unique_ptr<PublicKey> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
 
 	// Build Transaction
 	Transaction transaction = TransactionBuilder::BuildTransaction(inputs, *pChangeOutput, transactionOffset, fee, lockHeight);
+
+	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
+	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(SLATE_VERSION, 2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
+
+	ParticipantData participantData(0, *pPublicKey, *pPublicNonce);
+	// TODO: Add message signature
+	pSlate->AddParticpantData(participantData);
 
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slateId, masterSeed, SlateContext(std::move(secretKey), std::move(secretNonce))))
@@ -96,18 +102,22 @@ std::unique_ptr<Slate> SlateBuilder::BuildSendSlate(Wallet& wallet, const CBigIn
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
-	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
-	std::unique_ptr<Slate> pSlate = std::make_unique<Slate>(Slate(SLATE_VERSION, 2, std::move(slateId), std::move(transaction), amount, fee, lockHeight, lockHeight));
-
-	ParticipantData participantData(0, *pPublicKey, *pPublicNonce);
-	// TODO: Add message signature
-	pSlate->AddParticpantData(participantData);
+	if (!SaveWalletTx(masterSeed, wallet, *pSlate, EWalletTxType::SENDING_IN_PROGRESS))
+	{
+		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to create WalletTx");
+	}
 
 	return pSlate;
 }
 
 bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& masterSeed, Slate& slate, const std::optional<std::string>& messageOpt) const
 {
+	// Slate was already received.
+	if (wallet.GetSlateContext(slate.GetSlateId(), masterSeed) != nullptr)
+	{
+		return false;
+	}
+
 	// TODO: Verify fees
 
 	// Generate message
@@ -122,13 +132,13 @@ bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& master
 	const Hash message = kernel.GetSignatureMessage();
 
 	// Generate output
-	std::unique_ptr<WalletCoin> pWalletCoin = wallet.CreateBlindedOutput(masterSeed, slate.GetAmount());
+	std::unique_ptr<OutputData> pWalletCoin = wallet.CreateBlindedOutput(masterSeed, slate.GetAmount());
 	BlindingFactor secretKey = pWalletCoin->GetBlindingFactor();
-	std::unique_ptr<CBigInteger<33>> pPublicBlindExcess = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
+	std::unique_ptr<PublicKey> pPublicBlindExcess = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
 
 	// Generate nonce
-	BlindingFactor secretNonce = RandomNumberGenerator::GenerateRandom32();
-	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
+	BlindingFactor secretNonce = *Crypto::GenerateSecureNonce();
+	std::unique_ptr<PublicKey> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
 
 	// Build receiver's ParticipantData
 	ParticipantData receiverData(1, *pPublicBlindExcess, *pPublicNonce);
@@ -146,6 +156,25 @@ bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& master
 
 	receiverData.AddPartialSignature(*pPartialSignature);
 
+	// Add output to Transaction
+	slate.UpdateTransaction(TransactionBuilder::AddOutput(slate.GetTransaction(), pWalletCoin->GetOutput()));
+
+	// TODO: Add message signature
+
+	// Add receiver's ParticipantData to Slate
+	slate.AddParticpantData(receiverData);
+
+	if (!SignatureUtil::VerifyPartialSignatures(slate.GetParticipantData(), message))
+	{
+		return false;
+	}
+
+
+	if (!SaveWalletTx(masterSeed, wallet, slate, EWalletTxType::RECEIVING_IN_PROGRESS))
+	{
+		LoggerAPI::LogError("SlateBuilder::BuildSendSlate - Failed to create WalletTx");
+	}
+
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, SlateContext(std::move(secretKey), std::move(secretNonce))))
 	{
@@ -153,21 +182,31 @@ bool SlateBuilder::AddReceiverData(Wallet& wallet, const CBigInteger<32>& master
 		return false;
 	}
 
-	// Add output to Transaction
-	slate.UpdateTransaction(TransactionBuilder::AddOutput(slate.GetTransaction(), pWalletCoin->GetOutputData().GetOutput()));
-
-	// TODO: Add message signature
-
-	// Add receiver's ParticipantData to Slate
-	slate.AddParticpantData(receiverData);
-
 	return true;
 }
 
 std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, const Slate& slate) const
 {
-	// TODO: Verify partial signatures
-	if (!SignatureUtil::VerifyPartialSignatures(slate.GetParticipantData()))
+	// Generate message
+	const Transaction& transaction = slate.GetTransaction();
+	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
+	if (kernels.size() != 1)
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
+	const TransactionKernel& kernel = kernels.front();
+	const Hash message = kernel.GetSignatureMessage();
+
+	// Verify partial signatures
+	if (!SignatureUtil::VerifyPartialSignatures(slate.GetParticipantData(), message))
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
+	// Load WalletTx
+	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxBySlateId(masterSeed, slate.GetSlateId());
+	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_IN_PROGRESS)
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
@@ -180,21 +219,7 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 	}
 
 	const BlindingFactor& secretKey = pSlateContext->GetSecretKey();
-	std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(secretKey);
-
 	const BlindingFactor& secretNonce = pSlateContext->GetSecretNonce();
-	std::unique_ptr<CBigInteger<33>> pPublicNonce = Crypto::SECP256K1_CalculateCompressedPublicKey(secretNonce);
-
-	// Generate message
-	const Transaction& transaction = slate.GetTransaction();
-	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
-	if (kernels.size() != 1)
-	{
-		return std::unique_ptr<Transaction>(nullptr);
-	}
-
-	const TransactionKernel& kernel = kernels.front();
-	const Hash message = kernel.GetSignatureMessage();
 
 	// Generate partial signature
 	std::unique_ptr<Signature> pPartialSignature = SignatureUtil::GeneratePartialSignature(secretKey, secretNonce, slate.GetParticipantData(), message);
@@ -220,6 +245,11 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
+	if (!SignatureUtil::VerifyAggregateSignature(*pAggSignature, participants, message))
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
 	// Build the final excess based on final tx and offset
 	auto getInputCommitments = [](const TransactionInput& input) -> Commitment { return input.GetCommitment(); };
 	std::vector<Commitment> inputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetInputs(), getInputCommitments);
@@ -227,7 +257,7 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 
 	auto getOutputCommitments = [](const TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
 	std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetOutputs(), getOutputCommitments);
-	outputCommitments.emplace_back(*Crypto::CommitTransparent(slate.GetFee()));
+	outputCommitments.emplace_back(*Crypto::CommitTransparent(kernel.GetFee()));
 
 	std::unique_ptr<Commitment> pFinalExcess = Crypto::AddCommitments(outputCommitments, inputCommitments);
 
@@ -238,8 +268,16 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
-	Transaction finalTransaction = TransactionBuilder::AddKernel(slate.GetTransaction(), finalKernel);
+	Transaction finalTransaction = TransactionBuilder::AddKernel(slate.GetTransaction(), finalKernel); // TODO: Shouldn't add kernel. Should replace existing kernel.
 	if (!TransactionValidator().ValidateTransaction(finalTransaction))
+	{
+		return std::unique_ptr<Transaction>(nullptr);
+	}
+
+	// Update WalletTx
+	pWalletTx->SetType(EWalletTxType::SENT);
+	pWalletTx->SetTransaction(finalTransaction);
+	if (!wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ *pWalletTx })))
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
@@ -247,14 +285,33 @@ std::unique_ptr<Transaction> SlateBuilder::Finalize(Wallet& wallet, const CBigIn
 	return std::make_unique<Transaction>(std::move(finalTransaction));
 }
 
-std::unique_ptr<WalletCoin> SlateBuilder::CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const
+std::unique_ptr<OutputData> SlateBuilder::CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& inputs, const uint64_t amount, const uint64_t fee) const
 {
 	uint64_t inputTotal = 0;
-	for (const WalletCoin& input : inputs)
+	for (const OutputData& input : inputs)
 	{
-		inputTotal += input.GetOutputData().GetAmount();
+		inputTotal += input.GetAmount();
 	}
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 
 	return wallet.CreateBlindedOutput(masterSeed, changeAmount);
+}
+
+bool SlateBuilder::SaveWalletTx(const CBigInteger<32>& masterSeed, Wallet& wallet, const Slate& slate, const EWalletTxType type) const
+{
+	WalletTx walletTx(
+		wallet.GetNextWalletTxId(),
+		type,
+		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::chrono::system_clock::now(),
+		std::nullopt,
+		(uint32_t)slate.GetTransaction().GetBody().GetInputs().size(),
+		(uint32_t)slate.GetTransaction().GetBody().GetOutputs().size(),
+		slate.GetAmount(), // TODO: Check EWalletTxType to determine credited vs debited
+		0,
+		std::optional<uint64_t>(slate.GetFee()),
+		std::make_optional<Transaction>(Transaction(slate.GetTransaction())) // TODO: Should this be nullopt?
+	);
+
+	return wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx }));
 }

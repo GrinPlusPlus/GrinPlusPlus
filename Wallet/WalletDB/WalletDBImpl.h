@@ -41,7 +41,7 @@ private:
 	bool SaveMetadata(const std::string& username, const UserMetadata& userMetadata);
 
 	static std::string GetUsernamePrefix(const std::string& username);
-	static Slice CombineKeyWithUsername(const std::string& username, const std::string& key);
+	static std::string CombineKeyWithUsername(const std::string& username, const std::string& key);
 
 	static std::vector<unsigned char> Encrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes);
 	static std::vector<unsigned char> Decrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);

@@ -9,7 +9,6 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 {
 	Json::Value root;
 	WriteClientMode(root, config.GetClientMode());
-	WriteEnvironment(root, config.GetEnvironment());
 	WriteDataPath(root, config.GetDataDirectory());
 	WriteP2P(root, config.GetP2PConfig());
 	WriteDandelion(root, config.GetDandelionConfig());
@@ -48,24 +47,6 @@ void ConfigWriter::WriteClientMode(Json::Value& root, const EClientMode clientMo
 	const std::string modeComment = "/* Supported: FAST_SYNC, LIGHT_CLIENT, FULL_HISTORY */";
 	modeValue.setComment(modeComment, Json::commentBefore);
 	root[ConfigProps::CLIENT_MODE] = modeValue;
-}
-
-void ConfigWriter::WriteEnvironment(Json::Value& root, const Environment& environment) const
-{
-	Json::Value environmentValue = "FLOONET";
-
-	if (environment.IsMainnet())
-	{
-		environmentValue = "MAINNET";
-	}
-	else
-	{
-		environmentValue = "FLOONET";
-	}
-
-	const std::string environmentComment = "/* Supported: MAINNET, FLOONET */";
-	environmentValue.setComment(environmentComment, Json::commentBefore);
-	root[ConfigProps::ENVIRONMENT] = environmentValue;
 }
 
 void ConfigWriter::WriteDataPath(Json::Value& root, const std::string& dataPath) const

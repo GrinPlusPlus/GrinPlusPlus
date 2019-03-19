@@ -1,18 +1,11 @@
 #pragma once
 
+#include <Wallet/WalletTxType.h>
 #include <Core/Models/Transaction.h>
 #include <Common/Util/TimeUtil.h>
 #include <uuid.h>
 #include <chrono>
 #include <optional>
-
-enum EWalletTxType
-{
-	SENT = 1,
-	RECEIVED = 2,
-	SENT_CANCELED = 3,
-	RECEIVED_CANCELED = 4
-};
 
 static const uint8_t WALLET_TX_DATA_FORMAT = 0;
 
@@ -35,6 +28,7 @@ public:
 		: m_walletTxId(walletTxId),
 		m_type(type),
 		m_slateIdOpt(std::move(slateIdOpt)),
+		m_creationTime(creationTime),
 		m_confirmationTimeOpt(confirmationTimeOpt),
 		m_numInputs(numInputs),
 		m_numOutputs(numOutputs),
@@ -57,6 +51,9 @@ public:
 	inline uint64_t GetAmountDebited() const { return m_amountDebited; }
 	inline std::optional<uint64_t> GetFee() const { return m_feeOpt; }
 	inline const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
+
+	inline void SetType(const EWalletTxType type) { m_type = type; }
+	inline void SetTransaction(const Transaction& transaction) { m_transactionOpt = std::make_optional<Transaction>(Transaction(transaction)); }
 
 	void Serialize(Serializer& serializer) const
 	{

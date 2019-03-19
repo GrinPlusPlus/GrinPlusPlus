@@ -20,7 +20,8 @@ public:
 	std::unique_ptr<Transaction> Finalize(Wallet& wallet, const CBigInteger<32>& masterSeed, const Slate& slate) const;
 
 private:
-	std::unique_ptr<WalletCoin> CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<WalletCoin>& inputs, const uint64_t amount, const uint64_t fee) const;
+	std::unique_ptr<OutputData> CreateChangeOutput(Wallet& wallet, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& inputs, const uint64_t amount, const uint64_t fee) const;
+	bool SaveWalletTx(const CBigInteger<32>& masterSeed, Wallet& wallet, const Slate& slate, const EWalletTxType type) const;
 
 	const INodeClient& m_nodeClient;
 };

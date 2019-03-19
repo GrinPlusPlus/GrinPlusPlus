@@ -29,7 +29,7 @@ public:
 
 	static int64_t ToInt64(const std::chrono::system_clock::time_point& timePoint)
 	{
-		return timePoint.time_since_epoch().count();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(timePoint.time_since_epoch()).count();
 	}
 
 	static std::chrono::system_clock::time_point ToTimePoint(const int64_t millisSinceEpoch)

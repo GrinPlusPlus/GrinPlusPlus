@@ -14,6 +14,13 @@ public:
 
 	}
 
+	//
+	// Operators
+	//
+	inline bool operator<(const KeyChainPath& other) const { return GetKeyIndices() < other.GetKeyIndices(); }
+	inline bool operator==(const KeyChainPath& other) const { return GetKeyIndices() == other.GetKeyIndices(); }
+	inline bool operator!=(const KeyChainPath& other) const { return GetKeyIndices() != other.GetKeyIndices(); }
+
 	const std::vector<uint32_t>& GetKeyIndices() const { return m_keyIndices; }
 
 	std::string ToString() const

@@ -13,6 +13,7 @@
 #include <Wallet/SelectionStrategy.h>
 #include <Wallet/Slate.h>
 #include <Wallet/WalletSummary.h>
+#include <Wallet/WalletTx.h>
 #include <Common/Secure.h>
 
 #ifdef MW_WALLET
@@ -46,6 +47,8 @@ public:
 	virtual void Logout(const SessionToken& token) = 0;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) = 0;
+
+	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) = 0;
 
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.

@@ -48,10 +48,7 @@ bool WalletRestorer::Restore(const CBigInteger<32>& masterSeed, Wallet& wallet) 
 		return true;
 	}
 
-	// TODO: Restore nextChildIndices
-	// TODO: Create WalletTxs
-
-	return wallet.AddOutputs(masterSeed, walletOutputs);
+	return SaveWalletOutputs(masterSeed, wallet, walletOutputs);
 }
 
 std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const CBigInteger<32>& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
@@ -60,12 +57,13 @@ std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const CBigInteger<32
 	if (pRewoundProof != nullptr)
 	{
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(3)); // TODO: Always length 3 for now. Need to grind through in future.
+		BlindingFactor blindingFactor(pRewoundProof->GetBlindingFactor());
 		TransactionOutput txOutput(outputDisplayInfo.GetIdentifier().GetFeatures(), Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()), RangeProof(outputDisplayInfo.GetRangeProof()));
 		const uint64_t amount = pRewoundProof->GetAmount();
 		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
 		const uint64_t mmrIndex = outputDisplayInfo.GetLocation().GetMMRIndex();
 
-		return std::make_unique<OutputData>(OutputData(std::move(keyChainPath), std::move(txOutput), amount, status, std::make_optional<uint64_t>(mmrIndex)));
+		return std::make_unique<OutputData>(std::move(keyChainPath), std::move(blindingFactor), std::move(txOutput), amount, status, std::make_optional<uint64_t>(mmrIndex));
 	}
 
 	return std::unique_ptr<OutputData>(nullptr);
@@ -88,4 +86,50 @@ EOutputStatus WalletRestorer::DetermineStatus(const OutputDisplayInfo& outputDis
 	}
 
 	return EOutputStatus::SPENDABLE;
+}
+
+bool WalletRestorer::SaveWalletOutputs(const CBigInteger<32>& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs) const
+{
+	// TODO: Restore nextChildIndices
+	std::vector<OutputData> outputsToAdd;
+
+	const std::vector<OutputData> savedOutputs = wallet.RefreshOutputs(masterSeed);
+	for (const OutputData& output : outputs)
+	{
+		if (IsNewOutput(masterSeed, wallet, output, savedOutputs))
+		{
+			outputsToAdd.push_back(output);
+		}
+	}
+
+	return wallet.AddRestoredOutputs(masterSeed, outputsToAdd);
+}
+
+bool WalletRestorer::IsNewOutput(const CBigInteger<32>& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const
+{
+	for (const OutputData& existingOutput : existingOutputs)
+	{
+		if (existingOutput.GetKeyChainPath() == output.GetKeyChainPath())
+		{
+			if (existingOutput.GetMMRIndex().has_value())
+			{
+				if (existingOutput.GetMMRIndex().value() == output.GetMMRIndex().value())
+				{
+					return false;
+				}
+
+				continue;
+			}
+			else if (existingOutput.GetStatus() == EOutputStatus::SPENT)
+			{
+				continue;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

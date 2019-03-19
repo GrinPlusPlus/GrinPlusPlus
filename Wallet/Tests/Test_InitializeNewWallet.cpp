@@ -9,7 +9,7 @@
 
 TEST_CASE("WalletServer::InitiailizeNewWallet")
 {
-	Config config = ConfigManager::LoadConfig();
+	Config config = ConfigManager::LoadConfig(EEnvironmentType::MAINNET);
 	TestNodeClient nodeClient;
 	IWalletManager* pWalletManager = WalletAPI::StartWalletManager(config, nodeClient);
 

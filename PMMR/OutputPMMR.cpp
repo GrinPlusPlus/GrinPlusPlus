@@ -112,7 +112,10 @@ bool OutputPMMR::IsUnspent(const uint64_t mmrIndex) const
 {
 	if (MMRUtil::IsLeaf(mmrIndex))
 	{
-		return m_leafSet.Contains(mmrIndex);
+		if (mmrIndex < GetSize())
+		{
+			return m_leafSet.Contains(mmrIndex);
+		}
 	}
 
 	return false;

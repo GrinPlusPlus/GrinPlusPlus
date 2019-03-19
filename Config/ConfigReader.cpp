@@ -7,13 +7,13 @@
 #include <Common/Util/FileUtil.h>
 #include <filesystem>
 
-Config ConfigReader::ReadConfig(const Json::Value& root) const
+Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	// Read Mode
 	const EClientMode clientMode = ReadClientMode(root);
 
 	// Read Environment
-	const Environment environment = ReadEnvironment(root);
+	const Environment environment = ReadEnvironment(root, environmentType);
 
 	// Read Directories
 	const std::string dataPath = ReadDataPath(root, environment.GetEnvironmentType());
@@ -28,7 +28,7 @@ Config ConfigReader::ReadConfig(const Json::Value& root) const
 	const WalletConfig walletConfig = ReadWalletConfig(root, environment.GetEnvironmentType(), dataPath);
 
 	// Read Server Config
-	const ServerConfig serverConfig = ReadServerConfig(root);
+	const ServerConfig serverConfig = ReadServerConfig(root, environmentType);
 
 	// TODO: Mempool, mining, and logger settings
 	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig);
@@ -56,7 +56,7 @@ EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
 	return EClientMode::FAST_SYNC;
 }
 
-Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
+Environment ConfigReader::ReadEnvironment(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	const uint16_t MAINNET_PORT = 3414;
 	const uint16_t FLOONET_PORT = 13414;
@@ -64,20 +64,14 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root) const
 	const std::vector<unsigned char> MAINNET_MAGIC = { 97, 61 };
 	const std::vector<unsigned char> FLOONET_MAGIC = { 83, 59 };
 
-	if (root.isMember(ConfigProps::ENVIRONMENT))
+	if (environmentType == EEnvironmentType::MAINNET)
 	{
-		const std::string environment = root.get(ConfigProps::ENVIRONMENT, "MAINNET").asString();
-		if (environment == "MAINNET")
-		{
-			return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT);
-		}
-		else if (environment == "FLOONET")
-		{
-			return Environment(EEnvironmentType::FLOONET, Genesis::FLOONET_GENESIS, FLOONET_MAGIC, FLOONET_PORT);
-		}
+		return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT);
 	}
-
-	return Environment(EEnvironmentType::MAINNET, Genesis::MAINNET_GENESIS, MAINNET_MAGIC, MAINNET_PORT);
+	else                         
+	{
+		return Environment(EEnvironmentType::FLOONET, Genesis::FLOONET_GENESIS, FLOONET_MAGIC, FLOONET_PORT);
+	}
 }
 
 std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironmentType environmentType) const
@@ -154,8 +148,13 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 {
 	const std::string walletPath = dataPath + "WALLET/";
 
-	const uint32_t listenPort = 3415; // TODO: Read value
-	const uint32_t ownerPort = 3420; // TODO: Read value
+	uint32_t listenPort = 3415; // TODO: Read value
+	uint32_t ownerPort = 3420; // TODO: Read value
+	if (environmentType == EEnvironmentType::FLOONET)
+	{
+		listenPort = 13415;
+		ownerPort = 13420;
+	}
 
 	uint32_t privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3A, 0x10);
 	uint32_t publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3E, 0x4B);
@@ -170,16 +169,21 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion, minimumConfirmations);
 }
 
-ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root) const
+ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	uint32_t restAPIPort = 3413;
+	if (environmentType == EEnvironmentType::FLOONET)
+	{
+		restAPIPort = 13413;
+	}
+
 	if (root.isMember(ConfigProps::Server::SERVER))
 	{
 		const Json::Value& serverRoot = root[ConfigProps::Server::SERVER];
 
 		if (serverRoot.isMember(ConfigProps::Server::REST_API_PORT))
 		{
-			restAPIPort = serverRoot.get(ConfigProps::Server::REST_API_PORT, 3413).asInt();
+			restAPIPort = serverRoot.get(ConfigProps::Server::REST_API_PORT, restAPIPort).asInt();
 		}
 	}
 

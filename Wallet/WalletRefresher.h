@@ -18,6 +18,9 @@ public:
 	std::vector<OutputData> RefreshOutputs(const std::string& username, const CBigInteger<32>& masterSeed);
 
 private:
+	void RefreshTransactions(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& refreshedOutputs);
+	std::unique_ptr<OutputData> FindOutput(const std::vector<OutputData>& refreshedOutputs, const Commitment& commitment) const;
+
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
 	IWalletDB& m_walletDB;

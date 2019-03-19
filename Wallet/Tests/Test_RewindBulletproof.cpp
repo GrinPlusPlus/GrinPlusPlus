@@ -8,7 +8,7 @@
 
 TEST_CASE("REWIND_BULLETPROOF")
 {
-	Config config = ConfigManager::LoadConfig();
+	Config config = ConfigManager::LoadConfig(EEnvironmentType::MAINNET);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
 	const CBigInteger<32> masterSeed = RandomNumberGenerator::GenerateRandom32();

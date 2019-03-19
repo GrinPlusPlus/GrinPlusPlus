@@ -6,6 +6,7 @@
 #include "API/OwnerPostAPI.h"
 
 #include <Wallet/SessionTokenException.h>
+#include <Wallet/InsufficientFundsException.h>
 
 WalletRestServer::WalletRestServer(const Config& config, IWalletManager& walletManager, INodeClient& nodeClient)
 	: m_config(config), m_walletManager(walletManager)
@@ -57,6 +58,10 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 	catch (const DeserializationException&)
 	{
 		return RestUtil::BuildBadRequestResponse(pConnection, "Failed to deserialize one or more fields.");
+	}
+	catch (const InsufficientFundsException&)
+	{
+		return RestUtil::BuildConflictResponse(pConnection, "Insufficient funds available.");
 	}
 	catch (const std::exception&)
 	{

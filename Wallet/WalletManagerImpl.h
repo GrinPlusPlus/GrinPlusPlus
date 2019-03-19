@@ -21,6 +21,7 @@ public:
 	virtual void Logout(const SessionToken& token) override final;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
+	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) override final;
 	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) override final;

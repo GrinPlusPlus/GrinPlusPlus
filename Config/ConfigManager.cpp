@@ -9,10 +9,10 @@
 #include <filesystem>
 #include <fstream>
 
-Config ConfigManager::LoadConfig()
+Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 {
 	const std::string currentDir = std::filesystem::current_path().string();
-	const std::string configPath = currentDir + "/mainnet.json"; // TODO: Check for --floonet flag.
+	const std::string configPath = currentDir + (environment == EEnvironmentType::MAINNET ? "/mainnet.json" : "/floonet.json");
 
 	std::ifstream file(configPath, std::ifstream::binary);
 	if (file.is_open())
@@ -26,14 +26,14 @@ Config ConfigManager::LoadConfig()
 			LoggerAPI::LogWarning("ConfigManager::LoadConfig - Failed to parse config.json");
 		}
 
-		return ConfigReader().ReadConfig(root);
+		return ConfigReader().ReadConfig(root, environment);
 	}
 	else
 	{
 		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir));
 
 		Json::Value emptyRoot;
-		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot);
+		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);
 
 		ConfigWriter().SaveConfig(defaultConfig, configPath);
 

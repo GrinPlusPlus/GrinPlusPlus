@@ -9,15 +9,20 @@
 #include "hmac_sha512.h"
 #include "aes.h"
 #include "scrypt/crypto_scrypt.h"
-#include "Secp256k1Wrapper.h"
 #include "siphash.h"
+
+// Secp256k1
+#include "AggSig.h"
+#include "Bulletproofs.h"
+#include "Pedersen.h"
+#include "PublicKeys.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-BulletProofsCache BULLETPROOFS_CACHE;
+BulletProofsCache BULLETPROOFS_CACHE; // TODO: Belongs in Bulletproofs
 
 CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
 {
@@ -77,12 +82,12 @@ std::unique_ptr<Commitment> Crypto::CommitTransparent(const uint64_t value)
 {
 	const BlindingFactor blindingFactor(CBigInteger<32>::ValueOf(0));
 
-	return Secp256k1Wrapper::GetInstance().PedersenCommit(value, blindingFactor);
+	return Pedersen::GetInstance().PedersenCommit(value, blindingFactor);
 }
 
 std::unique_ptr<Commitment> Crypto::CommitBlinded(const uint64_t value, const BlindingFactor& blindingFactor)
 {
-	return Secp256k1Wrapper::GetInstance().PedersenCommit(value, blindingFactor);
+	return Pedersen::GetInstance().PedersenCommit(value, blindingFactor);
 }
 
 std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative)
@@ -107,7 +112,7 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 		}
 	}
 
-	return Secp256k1Wrapper::GetInstance().PedersenCommitSum(sanitizedPositive, sanitizedNegative);
+	return Pedersen::GetInstance().PedersenCommitSum(sanitizedPositive, sanitizedNegative);
 }
 
 std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
@@ -137,17 +142,22 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 		return std::make_unique<BlindingFactor>(zeroBlindingFactor);
 	}
 
-	return Secp256k1Wrapper::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
+	return Pedersen::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
+}
+
+std::unique_ptr<BlindingFactor> Crypto::BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount)
+{
+	return Pedersen::GetInstance().BlindSwitch(secretKey, amount);
 }
 
 std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage)
 {
-	return Secp256k1Wrapper::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
+	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
 }
 
 std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce)
 {
-	return Secp256k1Wrapper::GetInstance().RewindProof(commitment, rangeProof, nonce);
+	return Bulletproofs::GetInstance().RewindProof(commitment, rangeProof, nonce);
 }
 
 bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
@@ -166,7 +176,7 @@ bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProo
 		return true;
 	}
 
-	const bool verified = Secp256k1Wrapper::GetInstance().VerifyBulletproofs(filteredRangeProofs);
+	const bool verified = Bulletproofs::GetInstance().VerifyBulletproofs(filteredRangeProofs);
 	if (verified)
 	{
 		for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
@@ -176,11 +186,6 @@ bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProo
 	}
 
 	return verified;
-}
-
-bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
-{
-	return Secp256k1Wrapper::GetInstance().VerifySingleAggSig(signature, publicKey, message);
 }
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)
@@ -246,27 +251,42 @@ CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const st
 	return CBigInteger<64>();
 }
 
-std::unique_ptr<CBigInteger<33>> Crypto::SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey)
+std::unique_ptr<PublicKey> Crypto::SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey)
 {
-	return Secp256k1Wrapper::GetInstance().CalculatePublicKey(privateKey.GetBytes());
+	return PublicKeys::GetInstance().CalculatePublicKey(privateKey.GetBytes());
 }
 
-std::unique_ptr<CBigInteger<33>> Crypto::AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys)
+std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
 {
-	return Secp256k1Wrapper::GetInstance().PublicKeySum(publicKeys);
+	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }
 
-std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const CBigInteger<33>& sumPubKeys, const CBigInteger<33>& sumPubNonces, const Hash& message)
+std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
-	return Secp256k1Wrapper::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
+	return AggSig::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }
 
-std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const CBigInteger<33>& sumPubNonces)
+std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces)
 {
-	return Secp256k1Wrapper::GetInstance().AggregateSignatures(signatures, sumPubNonces);
+	return AggSig::GetInstance().AggregateSignatures(signatures, sumPubNonces);
 }
 
-std::unique_ptr<BlindingFactor> Crypto::BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount)
+bool Crypto::VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
-	return Secp256k1Wrapper::GetInstance().BlindSwitch(secretKey, amount);
+	return AggSig::GetInstance().VerifyPartialSignature(partialSignature, publicKey, sumPubKeys, sumPubNonces, message);
+}
+
+bool Crypto::VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey sumPubKeys, const Hash& message)
+{
+	return AggSig::GetInstance().VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
+}
+
+bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
+{
+	return AggSig::GetInstance().VerifyAggregateSignature(signature, publicKey, message);
+}
+
+std::unique_ptr<BlindingFactor> Crypto::GenerateSecureNonce()
+{
+	return AggSig::GetInstance().GenerateSecureNonce();
 }

@@ -79,6 +79,14 @@ WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
 	return wallet.GetWalletSummary(masterSeed);
 }
 
+std::vector<WalletTx> WalletManager::GetTransactions(const SessionToken& token)
+{
+	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
+	Wallet& wallet = m_sessionManager.GetWallet(token);
+
+	return wallet.GetTransactions(masterSeed);
+}
+
 std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy)
 {
 	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
@@ -116,7 +124,15 @@ bool WalletManager::PostTransaction(const SessionToken& token, const Transaction
 
 bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
 {
-	// TODO: Implement
+	const CBigInteger<32> masterSeed = m_sessionManager.GetSeed(token);
+	Wallet& wallet = m_sessionManager.GetWallet(token);
+
+	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxById(masterSeed, walletTxId);
+	if (pWalletTx != nullptr)
+	{
+		return wallet.CancelWalletTx(masterSeed, *pWalletTx);
+	}
+
 	return false;
 }
 

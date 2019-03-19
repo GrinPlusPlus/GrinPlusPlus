@@ -124,7 +124,8 @@ std::unique_ptr<EncryptedSeed> WalletDB::LoadWalletSeed(const std::string& usern
 KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyChainPath& parentPath)
 {
 	KeyChainPath nextChildPath = parentPath.GetFirstChild();
-	const Slice key(CombineKeyWithUsername(username, parentPath.ToString()));
+	const std::string keyWithUsername = CombineKeyWithUsername(username, parentPath.ToString());
+	const Slice key(keyWithUsername);
 
 	std::string value;
 	const Status readStatus = m_pDatabase->Get(ReadOptions(), m_pNextChildHandle, key, &value);
@@ -152,7 +153,8 @@ KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyCh
 std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId) const
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
-	const Slice key(CombineKeyWithUsername(username, slateIdStr));
+	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
+	const Slice key(keyWithUsername);
 
 	std::string value;
 	const Status readStatus = m_pDatabase->Get(ReadOptions(), m_pSlateHandle, key, &value);
@@ -168,7 +170,8 @@ std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& user
 bool WalletDB::SaveSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
-	const Slice key(CombineKeyWithUsername(username, slateIdStr));
+	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
+	const Slice key(keyWithUsername);
 
 	const std::vector<unsigned char> encrypted = slateContext.Encrypt(masterSeed, slateId);
 	const Slice value(std::string((const char*)encrypted.data(), encrypted.size()));
@@ -234,7 +237,8 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 
 bool WalletDB::AddTransaction(const std::string& username, const CBigInteger<32>& masterSeed, const WalletTx& walletTx)
 {
-	const Slice key(CombineKeyWithUsername(username, std::to_string(walletTx.GetId())));
+	const std::string keyWithUsername = CombineKeyWithUsername(username, std::to_string(walletTx.GetId()));
+	const Slice key(keyWithUsername);
 
 	Serializer serializer;
 	walletTx.Serialize(serializer);
@@ -347,9 +351,9 @@ std::string WalletDB::GetUsernamePrefix(const std::string& username)
 	return HexUtil::ConvertToHex(Crypto::Blake2b(usernameBytes).GetData());
 }
 
-Slice WalletDB::CombineKeyWithUsername(const std::string& username, const std::string& key)
+std::string WalletDB::CombineKeyWithUsername(const std::string& username, const std::string& key)
 {
-	return Slice(GetUsernamePrefix(username) + key);
+	return GetUsernamePrefix(username) + key;
 }
 
 std::vector<unsigned char> WalletDB::Encrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes)

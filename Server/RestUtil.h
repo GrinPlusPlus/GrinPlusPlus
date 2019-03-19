@@ -39,6 +39,24 @@ public:
 		return req_info->query_string;
 	}
 
+	static bool HasQueryParam(struct mg_connection* conn, const std::string& parameterName)
+	{
+		const std::string queryString = RestUtil::GetQueryString(conn);
+		if (!queryString.empty())
+		{
+			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
+			for (const std::string& token : tokens)
+			{
+				if (token == parameterName || StringUtil::StartsWith(token, parameterName + "="))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	static std::optional<std::string> GetQueryParam(struct mg_connection* conn, const std::string& parameterName)
 	{
 		const std::string queryString = RestUtil::GetQueryString(conn);
@@ -149,6 +167,22 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 400 Bad Request\r\n"
+			"Content-Length: %lu\r\n"
+			"Content-Type: text/plain\r\n"
+			"Connection: close\r\n\r\n",
+			len);
+
+		mg_write(conn, response.c_str(), len);
+
+		return 400;
+	}
+
+	static int BuildConflictResponse(struct mg_connection* conn, const std::string& response)
+	{
+		unsigned long len = (unsigned long)response.size();
+
+		mg_printf(conn,
+			"HTTP/1.1 409 Conflict\r\n"
 			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",

@@ -159,7 +159,7 @@ bool BlockSyncer::RequestBlocks()
 			RequestedBlock blockRequested;
 			blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
 			blockRequested.PEER_ID = mostWorkPeers[nextPeer];
-			blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
+			blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(8);
 
 			m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);
 		}

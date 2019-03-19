@@ -1,6 +1,8 @@
 #include "NodeRestServer.h"
 #include "NodeContext.h"
+#include "../ShutdownManager.h"
 #include "../civetweb/include/civetweb.h"
+#include "../RestUtil.h"
 
 #include "API/HeaderAPI.h"
 #include "API/BlockAPI.h"
@@ -24,6 +26,12 @@ NodeRestServer::NodeRestServer(const Config& config, IDatabase* pDatabase, TxHas
 NodeRestServer::~NodeRestServer()
 {
 	delete m_pNodeContext;
+}
+
+static int Shutdown_Handler(struct mg_connection* conn, void* pNodeContext)
+{
+	ShutdownManager::GetInstance().Shutdown();
+	return RestUtil::BuildSuccessResponse(conn, "");
 }
 
 bool NodeRestServer::Initialize()
@@ -54,6 +62,7 @@ bool NodeRestServer::Initialize()
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, m_pNodeContext);
+	mg_set_request_handler(m_pNodeCivetContext, "/v1/shutdown", Shutdown_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/", ServerAPI::V1_Handler, m_pNodeContext);
 
 	/*

@@ -40,7 +40,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 		return std::unique_ptr<PrivateExtKey>(nullptr);
 	}
 
-	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(pPublicKey->GetPublicKey().GetData()).GetData());
+	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(pPublicKey->GetPublicKey().GetCompressedBytes().GetData()).GetData());
 	const uint32_t parentFingerprint = BitUtil::ConvertToU32(parentIdentifier[0], parentIdentifier[1], parentIdentifier[2], parentIdentifier[3]);
 
 	Serializer serializer(37); // Reserve 37 bytes: 1 byte for 0x00 padding (hardened) or 0x02/0x03 point parity (normal), 32 bytes for private key (hardened) or public key X coord, 4 bytes for index.
@@ -54,10 +54,10 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 	else
 	{
 		// Generate a normal child key
-		serializer.AppendBigInteger<33>(pPublicKey->GetPublicKey());
+		serializer.AppendBigInteger<33>(pPublicKey->GetPublicKey().GetCompressedBytes());
 	}
 
-	serializer.Append<uint32_t>(EndianHelper::GetBigEndian32(childKeyIndex));
+	serializer.Append<uint32_t>(childKeyIndex);
 
 	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetData(), serializer.GetBytes());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();

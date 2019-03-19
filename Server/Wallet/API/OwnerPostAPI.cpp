@@ -236,9 +236,13 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 {
 	Slate slate = Slate::FromJSON(json);
 
+	const bool postTx = RestUtil::HasQueryParam(pConnection, "post");
+
 	std::unique_ptr<Transaction> pTransaction = walletManager.Finalize(token, slate);
 	if (pTransaction != nullptr)
 	{
+		walletManager.PostTransaction(token, *pTransaction);
+
 		return RestUtil::BuildSuccessResponse(pConnection, pTransaction->ToJSON().toStyledString());
 	}
 	else

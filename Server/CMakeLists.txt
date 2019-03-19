@@ -5,6 +5,7 @@ file(GLOB SERVER_SRC
     "civetweb/src/civetweb.c"
 	"Main.cpp"
 	"JSONFactory.cpp"
+	"ShutdownManager.cpp"
 	"Node/NodeDaemon.cpp"
 	"Node/NodeRestServer.cpp"
 	"Node/API/BlockAPI.cpp"

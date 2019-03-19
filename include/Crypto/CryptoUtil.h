@@ -29,9 +29,9 @@ public:
 		return *pBlindingFactor;
 	}
 
-	static CBigInteger<33> AddPublicKeys(const std::vector<CBigInteger<33>>& publicKeys)
+	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys)
 	{
-		std::unique_ptr<CBigInteger<33>> pPublicKey = Crypto::AddPublicKeys(publicKeys);
+		std::unique_ptr<PublicKey> pPublicKey = Crypto::AddPublicKeys(publicKeys);
 		if (pPublicKey == nullptr)
 		{
 			throw CryptoException();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Crypto/BigInteger.h>
+#include <Crypto/PublicKey.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 
@@ -10,7 +11,7 @@
 class IExtendedKey // TODO: Just make this abstract and have a PrivateExtKey and PublicExtKey derivation
 {
 public:
-	IExtendedKey(const uint32_t network, const uint8_t depth, const uint32_t parentFingerprint, const uint32_t childNumber, CBigInteger<32>&& chainCode, CBigInteger<33>&& keyBytes)
+	IExtendedKey(const uint32_t network, const uint8_t depth, const uint32_t parentFingerprint, const uint32_t childNumber, CBigInteger<32>&& chainCode, PublicKey&& keyBytes)
 		: m_network(network),
 		m_depth(depth),
 		m_parentFingerprint(parentFingerprint),
@@ -36,7 +37,7 @@ public:
 		serializer.Append<uint32_t>(m_parentFingerprint);
 		serializer.Append<uint32_t>(m_childNumber);
 		serializer.AppendBigInteger<32>(m_chainCode);
-		serializer.AppendBigInteger<33>(m_keyBytes);
+		m_keyBytes.Serialize(serializer);
 	}
 
 	inline uint32_t GetNetwork() const { return m_network; }
@@ -46,7 +47,7 @@ public:
 	inline const CBigInteger<32>& GetChainCode() const { return m_chainCode; }
 
 protected:
-	inline const CBigInteger<33>& GetKeyBytes() const { return m_keyBytes; }
+	inline const PublicKey& GetKeyBytes() const { return m_keyBytes; }
 
 private:
 	uint32_t m_network;
@@ -54,5 +55,5 @@ private:
 	uint32_t m_parentFingerprint;
 	uint32_t m_childNumber;
 	CBigInteger<32> m_chainCode;
-	CBigInteger<33> m_keyBytes;
+	PublicKey m_keyBytes;
 };

@@ -37,7 +37,8 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 	// GET /v1/wallet/owner/retrieve_txs?refresh&id=x
 	if (action == "retrieve_txs")
 	{
-		// TODO: Implement
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return RetrieveTransactions(pConnection, walletManager, token);
 	}
 
 	// GET /v1/wallet/owner/retrieve_stored_tx?id=x
@@ -64,4 +65,48 @@ int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager&
 	WalletSummary walletSummary = walletManager.GetWalletSummary(token);
 
 	return RestUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
+}
+
+// GET /v1/wallet/owner/retrieve_txs?refresh&id=x
+int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+{
+	Json::Value rootJSON;
+
+	const std::optional<std::string> txIdOpt = RestUtil::GetQueryParam(pConnection, "id");
+
+	if (txIdOpt.has_value())
+	{
+		// TODO: Implement this
+	}
+	else
+	{
+		Json::Value transactionsJSON = Json::arrayValue;
+		const std::vector<WalletTx> transactions = walletManager.GetTransactions(token);
+		for (const WalletTx& transaction : transactions)
+		{
+			Json::Value transactionJSON;
+			transactionJSON["id"] = transaction.GetId();
+			transactionJSON["type"] = WalletTxType::ToString(transaction.GetType());
+			transactionJSON["amount_credited"] = transaction.GetAmountCredited();
+			transactionJSON["amount_debited"] = transaction.GetAmountDebited();
+			transactionJSON["creation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(transaction.GetCreationTime().time_since_epoch()).count(); // TODO: Determine format
+
+			if (transaction.GetFee().has_value())
+			{
+				transactionJSON["fee"] = transaction.GetFee().value();
+			}
+
+			if (transaction.GetConfirmationTime().has_value())
+			{
+				transactionJSON["confirmation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(transaction.GetConfirmationTime().value().time_since_epoch()).count(); // TODO: Determine format
+			}
+
+			// TODO: Finish this
+			transactionsJSON.append(transactionJSON);
+		}
+
+		rootJSON["transactions"] = transactionsJSON;
+	}
+
+	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }

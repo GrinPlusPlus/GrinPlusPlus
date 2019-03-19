@@ -67,6 +67,51 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	}
 
 	m_walletDB.AddOutputs(username, masterSeed, outputsToUpdate);
+	RefreshTransactions(username, masterSeed, outputsToUpdate);
 
 	return outputs;
+}
+
+void WalletRefresher::RefreshTransactions(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& refreshedOutputs)
+{
+	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(username, masterSeed);
+	for (WalletTx& walletTx : transactions)
+	{
+		if (walletTx.GetTransaction().has_value())
+		{
+			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetBody().GetOutputs();
+			for (const TransactionOutput& output : outputs)
+			{
+				std::unique_ptr<OutputData> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
+				if (pOutputData != nullptr)
+				{
+					if (walletTx.GetType() == EWalletTxType::SENDING_IN_PROGRESS)
+					{
+						walletTx.SetType(EWalletTxType::SENT);
+						m_walletDB.AddTransaction(username, masterSeed, walletTx);
+					}
+					else if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
+					{
+						walletTx.SetType(EWalletTxType::RECEIVED);
+						m_walletDB.AddTransaction(username, masterSeed, walletTx);
+					}
+
+					break;
+				}
+			}
+		}
+	}
+}
+
+std::unique_ptr<OutputData> WalletRefresher::FindOutput(const std::vector<OutputData>& refreshedOutputs, const Commitment& commitment) const
+{
+	for (const OutputData& outputData : refreshedOutputs)
+	{
+		if (commitment == outputData.GetOutput().GetCommitment())
+		{
+			return std::make_unique<OutputData>(OutputData(outputData));
+		}
+	}
+
+	return std::unique_ptr<OutputData>(nullptr);
 }

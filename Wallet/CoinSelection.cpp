@@ -6,16 +6,16 @@
 
 // TODO: Apply Strategy instead of just selecting greatest number of outputs.
 // If strategy is "ALL", spend all available coins to reduce the fee.
-std::vector<WalletCoin> CoinSelection::SelectCoinsToSpend(const std::vector<WalletCoin>& availableCoins, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
+std::vector<OutputData> CoinSelection::SelectCoinsToSpend(const std::vector<OutputData>& availableCoins, const uint64_t amount, const uint64_t feeBase, const ESelectionStrategy& strategy, const int64_t numOutputs, const int64_t numKernels) const
 {
-	std::vector<WalletCoin> sortedCoins = availableCoins;
+	std::vector<OutputData> sortedCoins = availableCoins;
 	std::sort(sortedCoins.begin(), sortedCoins.end());
 
 	uint64_t amountFound = 0;
-	std::vector<WalletCoin> selectedCoins;
-	for (const WalletCoin& coin : sortedCoins)
+	std::vector<OutputData> selectedCoins;
+	for (const OutputData& coin : sortedCoins)
 	{
-		amountFound += coin.GetOutputData().GetAmount();
+		amountFound += coin.GetAmount();
 		selectedCoins.push_back(coin);
 
 		const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);

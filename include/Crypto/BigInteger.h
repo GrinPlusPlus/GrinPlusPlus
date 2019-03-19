@@ -65,6 +65,9 @@ public:
 	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex);
 	static CBigInteger<NUM_BYTES, ALLOC> GetMaximumValue();
 
+	inline size_t size() const { return NUM_BYTES; }
+	inline const unsigned char* data() const { return m_data.data(); }
+
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
 	std::string ToHex() const;
 

@@ -21,5 +21,5 @@ public:
 	//
 	// Loads and parses the config information from disk.
 	//
-	static Config LoadConfig();
+	static Config LoadConfig(const EEnvironmentType environment);
 };

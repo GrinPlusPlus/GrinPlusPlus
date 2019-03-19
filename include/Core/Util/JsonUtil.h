@@ -1,7 +1,9 @@
 #pragma once
 
+#include <Common/Util/HexUtil.h>
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Commitment.h>
+#include <Crypto/PublicKey.h>
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
 #include <Core/Serialization/DeserializationException.h>
@@ -22,6 +24,7 @@ public:
 		}
 
 		return node;
+		//return HexUtil::ConvertToHex(bytes);
 	}
 
 	static std::vector<unsigned char> ConvertToVector(const Json::Value& node, const size_t expectedSize)
@@ -44,6 +47,14 @@ public:
 		}
 
 		return bytes;
+
+		//std::vector<unsigned char> bytes = HexUtil::FromHex(node.asString());
+		//if (bytes.size() != expectedSize)
+		//{
+		//	throw DeserializationException();
+		//}
+
+		//return bytes;
 	}
 
 	static Json::Value GetRequiredField(const Json::Value& node, const std::string& key)
@@ -106,6 +117,24 @@ public:
 	static Commitment GetCommitment(const Json::Value& parentJSON, const std::string& key)
 	{
 		return ConvertToCommitment(GetRequiredField(parentJSON, key));
+	}
+
+	//
+	// PublicKeys
+	//
+	static Json::Value ConvertToJSON(const PublicKey& publicKey)
+	{
+		return ConvertToJSON(publicKey.GetCompressedBytes().GetData());
+	}
+
+	static PublicKey ConvertToPublicKey(const Json::Value& publicKeyJSON)
+	{
+		return PublicKey(CBigInteger<33>(ConvertToVector(publicKeyJSON, 33)));
+	}
+
+	static PublicKey GetPublicKey(const Json::Value& parentJSON, const std::string& key)
+	{
+		return ConvertToPublicKey(GetRequiredField(parentJSON, key));
 	}
 
 	//

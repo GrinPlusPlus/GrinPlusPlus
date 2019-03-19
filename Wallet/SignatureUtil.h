@@ -9,8 +9,8 @@ class SignatureUtil
 public:
 	static std::unique_ptr<Signature> GeneratePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message)
 	{
-		std::vector<CBigInteger<33>> pubKeys;
-		std::vector<CBigInteger<33>> pubNonces;
+		std::vector<PublicKey> pubKeys;
+		std::vector<PublicKey> pubNonces;
 
 		for (const ParticipantData& participantData : participants)
 		{
@@ -18,8 +18,8 @@ public:
 			pubNonces.push_back(participantData.GetPublicNonce());
 		}
 
-		const CBigInteger<33> sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
-		const CBigInteger<33> sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
+		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
 
 		return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 	}
@@ -27,7 +27,7 @@ public:
 	static std::unique_ptr<Signature> AggregateSignatures(const std::vector<ParticipantData>& participants)
 	{
 		std::vector<Signature> signatures;
-		std::vector<CBigInteger<33>> pubNonces;
+		std::vector<PublicKey> pubNonces;
 
 		for (const ParticipantData& participantData : participants)
 		{
@@ -39,21 +39,50 @@ public:
 			}
 		}
 
-		const CBigInteger<33> sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
 
 		return Crypto::AggregateSignatures(signatures, sumPubNonces);
 	}
 
-	static bool VerifyPartialSignatures(const std::vector<ParticipantData>& participants)
+	static bool VerifyPartialSignatures(const std::vector<ParticipantData>& participants, const Hash& message)
 	{
+		std::vector<PublicKey> pubKeys;
+		std::vector<PublicKey> pubNonces;
+
+		for (const ParticipantData& participantData : participants)
+		{
+			pubKeys.push_back(participantData.GetPublicBlindExcess());
+			pubNonces.push_back(participantData.GetPublicNonce());
+		}
+
+		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
+		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+
 		for (const ParticipantData& participant : participants)
 		{
 			if (participant.GetPartialSignature().has_value())
 			{
-				// TODO: Verify sig
+				if (!Crypto::VerifyPartialSignature(participant.GetPartialSignature().value(), participant.GetPublicBlindExcess(), sumPubKeys, sumPubNonces, message))
+				{
+					return false;
+				}
 			}
 		}
 
 		return true;
+	}
+
+	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const std::vector<ParticipantData>& participants, const Hash& message)
+	{
+		std::vector<PublicKey> pubKeys;
+
+		for (const ParticipantData& participantData : participants)
+		{
+			pubKeys.push_back(participantData.GetPublicBlindExcess());
+		}
+
+		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
+
+		return Crypto::VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 	}
 };

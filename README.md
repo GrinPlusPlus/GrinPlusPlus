@@ -23,6 +23,7 @@ Although CMake was chosen for future portability, the focus so far has been on W
 6. Generate CMake Cache and Build All from the CMake menu
 
 Replace `<CONFIG>` with `Debug` or `Release`
+
 **Command Line**:
 1. ```Open "Developer Command Prompt for Visual Studio 2017"```
 2. ```cd C:/Choose/A/Path```

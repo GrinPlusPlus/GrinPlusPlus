@@ -2,12 +2,8 @@
 ## A Windows-Compatible C++ Implementation of the Grin(MimbleWimble) Protocol
 
 ### Project Status
-#### Node
-The node has been released on 64-bit Windows for beta-testing! Since the wallet is not yet released, running Grin++ should not put any of your grins at risk.
-However, since it is only a beta release, it is not yet recommended for production environments. Additionally, expect that future releases could have backward-incompatible changes that may require deleting chain data and re-syncing.
-
-#### Wallet - In Progress
-The wallet is currently in progress, but is not expected to be ready for beta testing until mid-March.
+The node and wallet have been released on Floonet for 64-bit Windows beta-testing! 
+https://www.grin-forum.org/t/announcing-the-grin-wallet-finally/4546
 
 ### Build Instructions
 
@@ -36,4 +32,4 @@ Replace `<CONFIG>` with `Debug` or `Release`
 6. ```cmake -G "Visual Studio 15 2017 Win64" ..```
 7. ```cmake --build . --config <CONFIG>```
 
-Once your code is built, you can just open Server.exe from your bin folder.
+Once your code is built, you can just open GrinNode.exe from your bin folder.

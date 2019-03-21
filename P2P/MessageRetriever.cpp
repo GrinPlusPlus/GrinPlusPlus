@@ -16,16 +16,14 @@ MessageRetriever::MessageRetriever(const Config& config)
 
 std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
 {
-	SOCKET socket = connectedPeer.GetSocket();
-	if (retrievalMode == BLOCKING || HasMessageBeenReceived(socket))
+	Socket& socket = connectedPeer.GetSocket();
+	if (retrievalMode == BLOCKING || socket.HasReceivedData(10))
 	{
-		DWORD timeout = 3 * 1000;
-		setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+		socket.SetReceiveTimeout(5 * 1000);
 
 		std::vector<unsigned char> headerBuffer(11, 0);
-		int bytesReceived = recv(socket, (char*)&headerBuffer[0], 11, 0);
-
-		if (bytesReceived == 11)
+		const bool received = socket.Receive(11, headerBuffer);
+		if (received)
 		{
 			ByteBuffer byteBuffer(headerBuffer);
 			MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
@@ -37,63 +35,24 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 			else
 			{
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
-				const bool bPayloadRetrieved = RetrievePayload(socket, payload);
-
+				const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), payload);
 				if (bPayloadRetrieved)
 				{
 					connectedPeer.GetPeer().UpdateLastContactTime();
-
 					return std::make_unique<RawMessage>(std::move(RawMessage(std::move(messageHeader), payload)));
 				}
+				else
+				{
+					throw DeserializationException();
+				}
 			}
-		}
-		else
-		{
-			LogError();
 		}
 	}
 
 	return std::unique_ptr<RawMessage>(nullptr);
 }
 
-bool MessageRetriever::RetrievePayload(const SOCKET socket, std::vector<unsigned char>& payload) const
-{
-	const size_t payloadSize = payload.size();
-	size_t bytesReceived = 0;
-
-	while (bytesReceived < payloadSize)
-	{
-		const int newBytesReceived = recv(socket, (char*)&payload[bytesReceived], (int)(payloadSize - bytesReceived), 0);
-		if (newBytesReceived <= 0)
-		{
-			// TODO: Unexpected end of message. Throw exception?
-			return false;
-		}
-
-		bytesReceived += newBytesReceived;
-	}
-
-	return true;
-}
-
-bool MessageRetriever::HasMessageBeenReceived(const SOCKET socket) const
-{
-	fd_set readFDS;
-	readFDS.fd_count = 1;
-	readFDS.fd_array[0] = socket;
-	timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 10 * 1000; // 10ms
-
-	if (select(0, &readFDS, nullptr, nullptr, &timeout) > 0)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-void MessageRetriever::LogError() const
+/*void MessageRetriever::LogError() const
 {
 	const int lastError = WSAGetLastError();
 
@@ -105,4 +64,4 @@ void MessageRetriever::LogError() const
 	LoggerAPI::LogTrace(errorMessage);
 
 	LocalFree(s);
-}
+}*/

@@ -20,11 +20,5 @@ bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) 
 	serializer.Append<uint64_t>(bodySerializer.GetBytes().size());
 	serializer.AppendByteVector(bodySerializer.GetBytes());
 
-	const std::vector<unsigned char>& serializedMessage = serializer.GetBytes();
-	const int nSendBytes = send(connectedPeer.GetSocket(), (const char*)&serializedMessage[0], (int)serializedMessage.size(), 0);
-	// TODO: Handle when nSendBytes < serializedMessage.size()
-
-	// TODO: Update stats.
-
-	return nSendBytes != SOCKET_ERROR;
+	return connectedPeer.GetSocket().Send(serializer.GetBytes());
 }

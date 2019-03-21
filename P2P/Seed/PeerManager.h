@@ -1,8 +1,8 @@
 #pragma once
 
-#include <P2P/IPAddress.h>
+#include <Net/IPAddress.h>
+#include <Net/SocketAddress.h>
 #include <P2P/peer.h>
-#include <P2P/SocketAddress.h>
 #include <P2P/capabilities.h>
 #include <P2P/BanReason.h>
 #include <Database/PeerDB.h>

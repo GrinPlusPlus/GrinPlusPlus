@@ -1,6 +1,6 @@
 #pragma once
 
-#include <P2P/IPAddress.h>
+#include <Net/IPAddress.h>
 
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>

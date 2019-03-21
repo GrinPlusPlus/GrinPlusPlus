@@ -3,10 +3,9 @@
 #include "PeerManager.h"
 #include "../ConnectionManager.h"
 #include "../Messages/GetPeerAddressesMessage.h"
-#include "../SocketHelper.h"
 
 #include <P2P/capabilities.h>
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/ThreadManager.h>
@@ -116,17 +115,11 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("LISTENER_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - BEGIN");
 
-	const IPAddress localhost = IPAddress::FromIP(127, 0, 0, 1);
+	const IPAddress listenerAddress = IPAddress::FromIP(0, 0, 0, 0);
 	const uint16_t portNumber = seeder.m_config.GetEnvironment().GetP2PPort();
-	const std::optional<SOCKET> listenerSocketOpt = SocketHelper::CreateListener(localhost, portNumber);
+	const std::optional<Listener> listenerSocketOpt = Listener::Create(listenerAddress, portNumber);
 	if (!listenerSocketOpt.has_value())
 	{
-		int lastErr = WSAGetLastError();
-		if (lastErr != 7)
-		{
-			LoggerAPI::LogDebug(StringUtil::Format("FAILURE %d", lastErr));
-		}
-
 		LoggerAPI::LogError("Seeder::Thread_Listener() - Failed to create listener socket.");
 		return;
 	}
@@ -165,9 +158,7 @@ bool Seeder::SeedNewConnection()
 	}
 	else if (!m_usedDNS.exchange(true))
 	{
-		std::vector<SocketAddress> peerAddresses;
-		peerAddresses.emplace_back(IPAddress(EAddressFamily::IPv4, { 10, 0, 0, 7 }), m_config.GetEnvironment().GetP2PPort());
-		DNSSeeder(m_config).GetPeersFromDNS(peerAddresses);
+		std::vector<SocketAddress> peerAddresses = DNSSeeder(m_config).GetPeersFromDNS();
 
 		m_peerManager.AddPeerAddresses(peerAddresses);
 	}
@@ -177,23 +168,19 @@ bool Seeder::SeedNewConnection()
 	return false;
 }
 
-bool Seeder::ListenForConnections(const SOCKET& listenerSocket)
+bool Seeder::ListenForConnections(const Listener& listenerSocket)
 {
 	// TODO: Don't forget to check nonces.
-	const std::optional<SOCKET> socketOpt = SocketHelper::AcceptNewConnection(listenerSocket);
+	const std::optional<Socket> socketOpt = listenerSocket.AcceptNewConnection();
 	if (socketOpt.has_value())
 	{
-		const std::optional<SocketAddress> socketAddressOpt = SocketHelper::GetSocketAddress(socketOpt.value());
-		if (socketAddressOpt.has_value())
-		{
-			return ConnectToPeer(Peer(socketAddressOpt.value()), EDirection::INBOUND, socketOpt);
-		}
+		return ConnectToPeer(Peer(socketOpt.value().GetSocketAddress()), EDirection::INBOUND, socketOpt);
 	}
 
 	return false;
 }
 
-bool Seeder::ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<SOCKET>& socketOpt)
+bool Seeder::ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<Socket>& socketOpt)
 {
 	Connection* pConnection = m_connectionFactory.CreateConnection(peer, direction, socketOpt);
 	if (pConnection != nullptr)

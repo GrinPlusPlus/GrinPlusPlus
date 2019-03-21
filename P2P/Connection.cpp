@@ -49,7 +49,7 @@ bool Connection::IsConnectionActive() const
 	const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
 	const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
 	
-	return differenceInSeconds < 30.0;
+	return differenceInSeconds < 45.0;
 }
 
 void Connection::Disconnect()
@@ -120,5 +120,5 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 		}
 	}
 
-	closesocket(connection.GetConnectedPeer().GetSocket());
+	connection.GetConnectedPeer().GetSocket().CloseSocket();
 }

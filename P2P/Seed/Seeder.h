@@ -4,6 +4,7 @@
 
 #include <Config/Config.h>
 #include <P2P/Direction.h>
+#include <Net/Listener.h>
 #include <atomic>
 #include <thread>
 #include <optional>
@@ -12,7 +13,6 @@
 class ConnectionManager;
 class PeerManager;
 class IBlockChainServer;
-typedef UINT_PTR SOCKET;
 
 class Seeder
 {
@@ -27,8 +27,8 @@ private:
 	static void Thread_Listener(Seeder& seeder);
 
 	bool SeedNewConnection();
-	bool ListenForConnections(const SOCKET& listenerSocket);
-	bool ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<SOCKET>& socketOpt);
+	bool ListenForConnections(const Listener& listenerSocket);
+	bool ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<Socket>& socketOpt);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;

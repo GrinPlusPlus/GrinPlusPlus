@@ -4,14 +4,14 @@
 #include "../Messages/ShakeMessage.h"
 #include "../MessageRetriever.h"
 #include "../MessageSender.h"
-#include "../SocketHelper.h"
 #include "../ConnectionManager.h"
 #include "PeerManager.h"
 
-#include <ctime>
-#include <WS2tcpip.h>
+#include <Net/SocketFactory.h>
 #include <Common/Util/VectorUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Infrastructure/Logger.h>
+#include <ctime>
 #include <cstdlib>
 
 static const uint64_t NONCE = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
@@ -22,19 +22,21 @@ ConnectionFactory::ConnectionFactory(const Config& config, ConnectionManager& co
 
 }
 
-Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection direction, const std::optional<SOCKET>& socketOpt) const
+Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection direction, const std::optional<Socket>& socketOpt) const
 {
-	std::optional<SOCKET> socketOptional = socketOpt;
+	std::optional<Socket> socketOptional = socketOpt;
 	if (direction == EDirection::OUTBOUND)
 	{
-		socketOptional = SocketHelper::Connect(peer.GetIPAddress(), peer.GetPortNumber());
+		socketOptional = SocketFactory::Connect(peer.GetIPAddress(), peer.GetPortNumber());
 	}
 
 	if (socketOptional.has_value())
 	{
-		SOCKET socket = socketOptional.value();
+		Socket socket = socketOptional.value();
 		try
 		{
+			LoggerAPI::LogTrace("ConnectionFactory::CreateConnection - Performing handshake with " + socket.GetSocketAddress().Format());
+
 			Connection* pConnection = PerformHandshake(socket, peer, direction);
 			if (pConnection != nullptr)
 			{
@@ -49,13 +51,13 @@ Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection dir
 			// Do nothing
 		}
 
-		closesocket(socket);
+		socket.CloseSocket();
 	}
 
 	return nullptr;
 }
 
-Connection* ConnectionFactory::PerformHandshake(SOCKET connection, Peer& peer, const EDirection direction) const
+Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, const EDirection direction) const
 {
 	ConnectedPeer connectedPeer(connection, peer, direction);
 	if (direction == EDirection::OUTBOUND)
@@ -116,8 +118,7 @@ bool ConnectionFactory::TransmitHandMessage(ConnectedPeer& connectedPeer) const
 	std::vector<unsigned char> address = VectorUtil::MakeVector<unsigned char, 4>(localhostIP);
 	const IPAddress localHostIP(EAddressFamily::IPv4, address);
 
-	std::optional<uint16_t> portOptional = SocketHelper::GetPort(connectedPeer.GetSocket());
-	const uint16_t portNumber = portOptional.has_value() ? portOptional.value() : m_config.GetEnvironment().GetP2PPort();
+	const uint16_t portNumber = connectedPeer.GetSocket().GetPort();
 
 	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
@@ -134,8 +135,7 @@ bool ConnectionFactory::TransmitHandMessage(ConnectedPeer& connectedPeer) const
 
 bool ConnectionFactory::TransmitShakeMessage(ConnectedPeer& connectedPeer) const
 {
-	std::optional<uint16_t> portOptional = SocketHelper::GetPort(connectedPeer.GetSocket());
-	const uint16_t portNumber = portOptional.has_value() ? portOptional.value() : m_config.GetEnvironment().GetP2PPort();
+	const uint16_t portNumber = connectedPeer.GetSocket().GetPort();
 
 	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported

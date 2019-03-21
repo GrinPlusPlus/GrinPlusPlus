@@ -1,6 +1,6 @@
 #pragma once
 
-#include <P2P/IPAddress.h>
+#include <Net/IPAddress.h>
 
 // Forward Declarations
 struct in_addr;

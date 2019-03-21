@@ -1,7 +1,7 @@
 #pragma once
 
 #include <P2P/Peer.h>
-#include <P2P/IPAddress.h>
+#include <Net/IPAddress.h>
 #include <memory>
 #include <vector>
 #include <optional>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <Config/Config.h>
 
 #include <vector>
@@ -20,12 +20,8 @@ public:
 	//
 	// Connects to one of the "trusted" DNS seeds, and retrieves a collection of IP addresses to MimbleWimble nodes.
 	//
-	bool GetPeersFromDNS(std::vector<SocketAddress>& addresses) const;
+	std::vector<SocketAddress> GetPeersFromDNS() const;
 
 private:	
 	const Config& m_config;
-
-	bool GetAddressesFromDNSSeed(const std::string& dnsSeed, std::vector<SocketAddress>& addresses) const;
-	bool InitializeWinsock() const;
-	IPAddress ParseIPAddress(const in_addr& ipv4Address) const;
 };

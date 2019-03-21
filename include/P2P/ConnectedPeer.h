@@ -1,14 +1,13 @@
 #pragma once
 
+#include <Net/Socket.h>
 #include <P2P/peer.h>
 #include <P2P/Direction.h>
-
-typedef unsigned __int64 SOCKET;
 
 class ConnectedPeer
 {
 public:
-	ConnectedPeer(const SOCKET socket,  const Peer& peer, const EDirection direction)
+	ConnectedPeer(const Socket& socket,  const Peer& peer, const EDirection direction)
 		: m_socket(socket), m_peer(peer), m_direction(direction), m_height(0), m_totalDifficulty(0)
 	{
 
@@ -25,7 +24,7 @@ public:
 		m_height.exchange(height);
 	}
 
-	inline const SOCKET GetSocket() const { return m_socket; }
+	inline Socket& GetSocket() const { return m_socket; }
 	inline const Peer& GetPeer() const { return m_peer; }
 	inline Peer& GetPeer() { return m_peer; }
 	inline const EDirection GetDirection() const { return m_direction; }
@@ -37,9 +36,8 @@ public:
 	inline void UpdateUserAgent(const std::string& userAgent) { m_peer.UpdateUserAgent(userAgent); }
 	inline void UpdateLastContactTime() const { m_peer.UpdateLastContactTime(); }
 
-
 private:
-	SOCKET m_socket; // TODO: Socket belongs in Connection
+	mutable Socket m_socket; // TODO: Socket belongs in Connection
 	EDirection m_direction;
 	Peer m_peer;
 	std::atomic<uint64_t> m_totalDifficulty;

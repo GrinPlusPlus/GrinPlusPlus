@@ -4,7 +4,7 @@
 
 #include <P2P/peer.h>
 #include <P2P/Direction.h>
-#include <WinSock2.h>
+#include <Net/Socket.h>
 #include <memory>
 #include <Config/Config.h>
 #include <optional>
@@ -21,10 +21,10 @@ class ConnectionFactory
 public:
 	ConnectionFactory(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
 
-	Connection* CreateConnection(Peer& peer, const EDirection direction, const std::optional<SOCKET>& socketOpt) const;
+	Connection* CreateConnection(Peer& peer, const EDirection direction, const std::optional<Socket>& socketOpt) const;
 
 private:
-	Connection* PerformHandshake(SOCKET connection, Peer& peer, const EDirection direction) const;
+	Connection* PerformHandshake(Socket& connection, Peer& peer, const EDirection direction) const;
 	bool TransmitHandMessage(ConnectedPeer& connectedPeer) const;
 	bool TransmitShakeMessage(ConnectedPeer& connectedPeer) const;
 

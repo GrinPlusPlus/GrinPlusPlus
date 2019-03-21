@@ -11,7 +11,7 @@ PeerManager::PeerManager(const Config& config, IPeerDB& peerDB)
 
 void PeerManager::Initialize()
 {
-	std::unique_lock<std::shared_mutex> readLock(m_peersMutex);
+	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
 
 	const std::vector<Peer> peers = m_peerDB.LoadAllPeers();
 	for (const Peer& peer : peers)
@@ -63,7 +63,7 @@ std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::op
 
 std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
+	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
 
 	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, 1, true);
 	if (peers.empty())
@@ -182,7 +182,7 @@ std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapab
 		{
 			if (!connectingToPeer || !peerEntry.m_peerServed)
 			{
-				peerEntry.m_peerServed = connectingToPeer;
+				peerEntry.m_peerServed = (peerEntry.m_peerServed || connectingToPeer);
 
 				peersFound.push_back(peer);
 				if (peersFound.size() == maxPeers)

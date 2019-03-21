@@ -396,8 +396,8 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
 	MessageSender(m_config).Send(connectedPeer, archiveMessage);
 
-	unsigned long nonblocking = 0;
-	ioctlsocket(connectedPeer.GetSocket(), FIONBIO, &nonblocking);
+	connectedPeer.GetSocket().SetBlocking(false);
+
 	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	uint64_t totalBytesRead = 0;
 	while (totalBytesRead < fileSize)
@@ -405,15 +405,10 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		file.read((char*)&buffer[0], BUFFER_SIZE);
 		const uint64_t bytesRead = file.gcount();
 
-		uint64_t tempBytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[0], bytesRead, 0);
-		uint64_t intervalBytesSent = tempBytesSent;
-		while (tempBytesSent > 0 && intervalBytesSent < bytesRead)
-		{
-			tempBytesSent = send(connectedPeer.GetSocket(), (char*)&buffer[intervalBytesSent], bytesRead - intervalBytesSent, 0);
-			intervalBytesSent += tempBytesSent;
-		}
+		const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
+		const bool sent = connectedPeer.GetSocket().Send(bytesToSend);
 
-		if (intervalBytesSent < bytesRead || m_connectionManager.IsTerminating())
+		if (!sent || m_connectionManager.IsTerminating())
 		{
 			LoggerAPI::LogError("MessageProcessor::SendTxHashSet - Transmission ended abruptly.");
 			file.close();
@@ -424,6 +419,8 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 
 		totalBytesRead += bytesRead;
 	}
+
+	connectedPeer.GetSocket().SetBlocking(true);
 
 	file.close();
 	FileUtil::RemoveFile(zipFilePath);
@@ -439,10 +436,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	syncStatus.UpdateDownloaded(0);
 	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
-	const DWORD timeout = 10 * 1000;
-	setsockopt(connectedPeer.GetSocket(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
-	const int socketRcvBuff = BUFFER_SIZE;
-	setsockopt(connectedPeer.GetSocket(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
+	connectedPeer.GetSocket().SetReceiveTimeout(10 * 1000);
+	connectedPeer.GetSocket().SetReceiveBufferSize(BUFFER_SIZE);
 
 	const std::string hashStr = HexUtil::ConvertHash(txHashSetArchiveMessage.GetBlockHash());
 	const std::string txHashSetPath = m_config.GetTxHashSetDirectory() + StringUtil::Format("txhashset_%s.zip", hashStr.c_str());
@@ -453,9 +448,9 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 	{
-		const int expectedBytes = std::min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const int newBytesReceived = recv(connectedPeer.GetSocket(), (char*)&buffer[0], expectedBytes, 0);
-		if (newBytesReceived <= 0 || m_connectionManager.IsTerminating())
+		const int bytesToRead = std::min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
+		const bool received = connectedPeer.GetSocket().Receive(bytesToRead, buffer);
+		if (!received || m_connectionManager.IsTerminating())
 		{
 			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 
@@ -466,8 +461,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 			return EStatus::BAN_PEER;
 		}
 
-		fout.write((char*)&buffer[0], newBytesReceived);
-		bytesReceived += newBytesReceived;
+		fout.write((char*)&buffer[0], bytesToRead);
+		bytesReceived += bytesToRead;
 
 		syncStatus.UpdateDownloaded(bytesReceived);
 	}

@@ -36,6 +36,8 @@ public:
 	// TODO: Determine return value.
 	virtual bool CheckForOutputs(const SessionToken& token) = 0;
 
+	virtual std::vector<std::string> GetAllAccounts() const = 0;
+
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
@@ -58,15 +60,13 @@ public:
 	//
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) = 0;
 
-	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) = 0;
+	virtual std::unique_ptr<Slate> Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt) = 0;
 
-	virtual std::unique_ptr<Transaction> Finalize(const SessionToken& token, const Slate& slate) = 0;
+	virtual std::unique_ptr<Slate> Finalize(const SessionToken& token, const Slate& slate) = 0;
 
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) = 0;
 
 	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
-
-	virtual bool CancelBySlateId(const SessionToken& token, const uuids::uuid& slateId) = 0;
 };
 
 namespace WalletAPI

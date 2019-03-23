@@ -19,6 +19,7 @@
 #include <Crypto/RewoundProof.h>
 #include <Crypto/Hash.h>
 #include <Crypto/PublicKey.h>
+#include <Crypto/SecretKey.h>
 
 #ifdef MW_CRYPTO
 #define CRYPTO_API EXPORT
@@ -82,9 +83,9 @@ public:
 	//
 	static std::unique_ptr<BlindingFactor> AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
 
-	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage);
+	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage);
 
-	static std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce);
+	static std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce);
 
 	//
 	//
@@ -120,17 +121,21 @@ public:
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
 	//
-	static std::unique_ptr<PublicKey> SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey);
+	static std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey);
 
 	//
 	//
 	//
 	static std::unique_ptr<PublicKey> AddPublicKeys(const std::vector<PublicKey>& publicKeys);
 
+	static std::unique_ptr<Signature> SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message);
+
+	static bool VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message);
+
 	//
 	//
 	//
-	static std::unique_ptr<Signature> CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
+	static std::unique_ptr<Signature> CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 
 	//
 	//
@@ -140,9 +145,9 @@ public:
 	//
 	//
 	//
-	static std::unique_ptr<BlindingFactor> BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount);
+	static std::unique_ptr<SecretKey> BlindSwitch(const SecretKey& secretKey, const uint64_t amount);
 
 	static bool VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey sumPubKeys, const Hash& message);
-	static std::unique_ptr<BlindingFactor> GenerateSecureNonce();
+	static std::unique_ptr<SecretKey> GenerateSecureNonce();
 };

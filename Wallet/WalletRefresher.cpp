@@ -1,6 +1,6 @@
 #include "WalletRefresher.h"
-#include "WalletUtil.h"
 
+#include <Wallet/WalletUtil.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
 
@@ -10,7 +10,7 @@ WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeCl
 
 }
 
-std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const CBigInteger<32>& masterSeed)
+std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const SecretKey& masterSeed)
 {
 	std::vector<Commitment> commitments;
 
@@ -72,7 +72,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	return outputs;
 }
 
-void WalletRefresher::RefreshTransactions(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& refreshedOutputs)
+void WalletRefresher::RefreshTransactions(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& refreshedOutputs)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(username, masterSeed);
 	for (WalletTx& walletTx : transactions)
@@ -85,7 +85,7 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const CBi
 				std::unique_ptr<OutputData> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
 				if (pOutputData != nullptr)
 				{
-					if (walletTx.GetType() == EWalletTxType::SENDING_IN_PROGRESS)
+					if (walletTx.GetType() == EWalletTxType::SENDING_STARTED)
 					{
 						walletTx.SetType(EWalletTxType::SENT);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);

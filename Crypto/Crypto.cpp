@@ -145,17 +145,17 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 	return Pedersen::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
 }
 
-std::unique_ptr<BlindingFactor> Crypto::BlindSwitch(const BlindingFactor& secretKey, const uint64_t amount)
+std::unique_ptr<SecretKey> Crypto::BlindSwitch(const SecretKey& secretKey, const uint64_t amount)
 {
 	return Pedersen::GetInstance().BlindSwitch(secretKey, amount);
 }
 
-std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage)
+std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage)
 {
 	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
 }
 
-std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce)
+std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce)
 {
 	return Bulletproofs::GetInstance().RewindProof(commitment, rangeProof, nonce);
 }
@@ -236,7 +236,7 @@ std::vector<unsigned char> Crypto::AES256_Decrypt(const std::vector<unsigned cha
 	return plaintext;
 }
 
-CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt)
+CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt) // TODO: Use SecureVectors
 {
 	const uint32_t N = 16384;// TODO: Before releasing, use 65536 (2^16) at least. Could potentially calculate this dynamically.
 	const uint32_t r = 8;
@@ -251,9 +251,9 @@ CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const st
 	return CBigInteger<64>();
 }
 
-std::unique_ptr<PublicKey> Crypto::SECP256K1_CalculateCompressedPublicKey(const BlindingFactor& privateKey)
+std::unique_ptr<PublicKey> Crypto::CalculatePublicKey(const SecretKey& privateKey)
 {
-	return PublicKeys::GetInstance().CalculatePublicKey(privateKey.GetBytes());
+	return PublicKeys::GetInstance().CalculatePublicKey(privateKey);
 }
 
 std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
@@ -261,9 +261,19 @@ std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& p
 	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }
 
-std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+std::unique_ptr<Signature> Crypto::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)
 {
-	return AggSig::GetInstance().SignSingle(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
+	return AggSig::GetInstance().SignMessage(secretKey, publicKey, message);
+}
+
+bool Crypto::VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message)
+{
+	return AggSig::GetInstance().VerifyMessageSignature(signature, publicKey, message);
+}
+
+std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+{
+	return AggSig::GetInstance().CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }
 
 std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces)
@@ -286,7 +296,7 @@ bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment&
 	return AggSig::GetInstance().VerifyAggregateSignature(signature, publicKey, message);
 }
 
-std::unique_ptr<BlindingFactor> Crypto::GenerateSecureNonce()
+std::unique_ptr<SecretKey> Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
 }

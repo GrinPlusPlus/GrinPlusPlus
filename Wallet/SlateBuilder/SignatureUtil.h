@@ -7,7 +7,7 @@
 class SignatureUtil
 {
 public:
-	static std::unique_ptr<Signature> GeneratePartialSignature(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message)
+	static std::unique_ptr<Signature> GeneratePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message)
 	{
 		std::vector<PublicKey> pubKeys;
 		std::vector<PublicKey> pubNonces;

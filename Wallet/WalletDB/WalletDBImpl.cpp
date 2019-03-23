@@ -82,6 +82,19 @@ void WalletDB::Close()
 	delete m_pDatabase;
 }
 
+std::vector<std::string> WalletDB::GetAccounts() const
+{
+	std::vector<std::string> usernames;
+
+	auto iter = m_pDatabase->NewIterator(ReadOptions(), m_pSeedHandle);
+	for (iter->SeekToFirst(); iter->Valid(); iter->Next())
+	{
+		usernames.emplace_back(iter->key().ToString());
+	}
+
+	return usernames;
+}
+
 bool WalletDB::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
 	if (LoadWalletSeed(username) != nullptr)
@@ -150,7 +163,7 @@ KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyCh
 	return nextChildPath;
 }
 
-std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId) const
+std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId) const
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
 	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
@@ -167,7 +180,7 @@ std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& user
 	return std::unique_ptr<SlateContext>(nullptr);
 }
 
-bool WalletDB::SaveSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
+bool WalletDB::SaveSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
 	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
@@ -187,7 +200,7 @@ bool WalletDB::SaveSlateContext(const std::string& username, const CBigInteger<3
 	return false;
 }
 
-bool WalletDB::AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs)
+bool WalletDB::AddOutputs(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& outputs)
 {
 	WriteBatch batch;
 
@@ -212,7 +225,7 @@ bool WalletDB::AddOutputs(const std::string& username, const CBigInteger<32>& ma
 	return m_pDatabase->Write(WriteOptions(), &batch).ok();
 }
 
-std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const
+std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const SecretKey& masterSeed) const
 {
 	std::vector<OutputData> outputs;
 
@@ -235,7 +248,7 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 	return outputs;
 }
 
-bool WalletDB::AddTransaction(const std::string& username, const CBigInteger<32>& masterSeed, const WalletTx& walletTx)
+bool WalletDB::AddTransaction(const std::string& username, const SecretKey& masterSeed, const WalletTx& walletTx)
 {
 	const std::string keyWithUsername = CombineKeyWithUsername(username, std::to_string(walletTx.GetId()));
 	const Slice key(keyWithUsername);
@@ -256,7 +269,7 @@ bool WalletDB::AddTransaction(const std::string& username, const CBigInteger<32>
 	return false;
 }
 
-std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, const CBigInteger<32>& masterSeed) const
+std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, const SecretKey& masterSeed) const
 {
 	std::vector<WalletTx> walletTransactions;
 
@@ -356,13 +369,13 @@ std::string WalletDB::CombineKeyWithUsername(const std::string& username, const 
 	return GetUsernamePrefix(username) + key;
 }
 
-std::vector<unsigned char> WalletDB::Encrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes)
+std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes)
 {
 	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
 	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
 
 	Serializer keySerializer;
-	keySerializer.AppendBigInteger(masterSeed);
+	keySerializer.AppendBigInteger(masterSeed.GetBytes());
 	keySerializer.AppendVarStr(dataType);
 	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
 
@@ -375,7 +388,7 @@ std::vector<unsigned char> WalletDB::Encrypt(const CBigInteger<32>& masterSeed, 
 	return serializer.GetBytes();
 }
 
-std::vector<unsigned char> WalletDB::Decrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
+std::vector<unsigned char> WalletDB::Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
 {
 	ByteBuffer byteBuffer(encrypted);
 
@@ -389,7 +402,7 @@ std::vector<unsigned char> WalletDB::Decrypt(const CBigInteger<32>& masterSeed, 
 	const std::vector<unsigned char> encryptedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
 
 	Serializer keySerializer;
-	keySerializer.AppendBigInteger(masterSeed);
+	keySerializer.AppendBigInteger(masterSeed.GetBytes());
 	keySerializer.AppendVarStr(dataType);
 	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
 

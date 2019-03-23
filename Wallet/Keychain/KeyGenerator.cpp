@@ -13,11 +13,11 @@ KeyGenerator::KeyGenerator(const Config& config)
 
 }
 
-PrivateExtKey KeyGenerator::GenerateMasterKey(const CBigInteger<32>& seed) const
+PrivateExtKey KeyGenerator::GenerateMasterKey(const SecretKey& seed) const
 {
 	unsigned char key[] = { 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' };
 	std::vector<unsigned char> vchKey = VectorUtil::MakeVector<unsigned char, 12>(key);
-	const CBigInteger<64> hash = Crypto::HMAC_SHA512(vchKey, seed.GetData());
+	const CBigInteger<64> hash = Crypto::HMAC_SHA512(vchKey, seed.GetBytes().GetData());
 	const std::vector<unsigned char>& vchHash = hash.GetData();
 
 	CBigInteger<32> masterSecretKey(&vchHash[0]);
@@ -49,7 +49,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 	{
 		// Generate a hardened child key
 		serializer.Append<uint8_t>(0x00);
-		serializer.AppendBigInteger<32>(parentExtendedKey.GetPrivateKey());
+		serializer.AppendBigInteger<32>(parentExtendedKey.GetPrivateKey().GetBytes());
 	}
 	else
 	{
@@ -59,7 +59,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 
 	serializer.Append<uint32_t>(childKeyIndex);
 
-	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetData(), serializer.GetBytes());
+	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetBytes().GetData(), serializer.GetBytes());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();
 
 	std::vector<unsigned char> vchLeft;
@@ -71,7 +71,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 		throw std::out_of_range("The child key generated was invalid.");  // Less than 2^127 chance.
 	}
 
-	CBigInteger<32> childPrivateKey = left.addMod(parentExtendedKey.GetPrivateKey(), KeyDefs::SECP256K1_N);
+	CBigInteger<32> childPrivateKey = left.addMod(parentExtendedKey.GetPrivateKey().GetBytes(), KeyDefs::SECP256K1_N);
 	if (childPrivateKey == KeyDefs::BIG_INT_ZERO)
 	{
 		throw std::out_of_range("The child key generated was invalid."); // Less than 2^127 chance.

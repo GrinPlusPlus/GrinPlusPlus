@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/SecretKey.h>
 #include <Wallet/EncryptedSeed.h>
 #include <Common/Secure.h>
 #include <optional>
@@ -49,13 +49,13 @@ public:
 	//
 	// Encrypts the wallet seed using the password and a randomly generated salt.
 	//
-	EncryptedSeed EncryptWalletSeed(const CBigInteger<32>& walletSeed, const SecureString& password) const;
+	EncryptedSeed EncryptWalletSeed(const SecretKey& walletSeed, const SecureString& password) const;
 
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
-	std::optional<CBigInteger<32>> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
+	std::optional<SecretKey> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
 
 private:
-	 CBigInteger<32> CalculatePasswordHash(const SecureString& password, const CBigInteger<8>& salt) const;
+	SecretKey CalculatePasswordHash(const SecureString& password, const CBigInteger<8>& salt) const;
 };

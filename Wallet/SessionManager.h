@@ -2,7 +2,7 @@
 
 #include "Wallet.h"
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
@@ -17,10 +17,10 @@ public:
 	~SessionManager();
 
 	std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password);
-	SessionToken Login(const std::string& username, const CBigInteger<32>& seed);
+	SessionToken Login(const std::string& username, const SecretKey& seed);
 	void Logout(const SessionToken& token);
 
-	CBigInteger<32> GetSeed(const SessionToken& token) const;
+	SecretKey GetSeed(const SessionToken& token) const;
 	Wallet& GetWallet(const SessionToken& token);
 	const Wallet& GetWallet(const SessionToken& token) const;
 

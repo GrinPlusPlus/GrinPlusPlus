@@ -1,7 +1,7 @@
 #include "WalletRestorer.h"
 #include "Keychain/KeyChain.h"
-#include "WalletUtil.h"
 
+#include <Wallet/WalletUtil.h>
 #include <Consensus/BlockTime.h>
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
@@ -12,7 +12,7 @@ WalletRestorer::WalletRestorer(const Config& config, const INodeClient& nodeClie
 
 }
 
-bool WalletRestorer::Restore(const CBigInteger<32>& masterSeed, Wallet& wallet) const
+bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet) const
 {
 	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
 
@@ -51,13 +51,13 @@ bool WalletRestorer::Restore(const CBigInteger<32>& masterSeed, Wallet& wallet) 
 	return SaveWalletOutputs(masterSeed, wallet, walletOutputs);
 }
 
-std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const CBigInteger<32>& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const SecretKey& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
 {
 	std::unique_ptr<RewoundProof> pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof());
 	if (pRewoundProof != nullptr)
 	{
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(3)); // TODO: Always length 3 for now. Need to grind through in future.
-		BlindingFactor blindingFactor(pRewoundProof->GetBlindingFactor());
+		SecretKey blindingFactor(pRewoundProof->GetBlindingFactor());
 		TransactionOutput txOutput(outputDisplayInfo.GetIdentifier().GetFeatures(), Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()), RangeProof(outputDisplayInfo.GetRangeProof()));
 		const uint64_t amount = pRewoundProof->GetAmount();
 		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
@@ -88,7 +88,7 @@ EOutputStatus WalletRestorer::DetermineStatus(const OutputDisplayInfo& outputDis
 	return EOutputStatus::SPENDABLE;
 }
 
-bool WalletRestorer::SaveWalletOutputs(const CBigInteger<32>& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs) const
+bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs) const
 {
 	// TODO: Restore nextChildIndices
 	std::vector<OutputData> outputsToAdd;
@@ -105,7 +105,7 @@ bool WalletRestorer::SaveWalletOutputs(const CBigInteger<32>& masterSeed, Wallet
 	return wallet.AddRestoredOutputs(masterSeed, outputsToAdd);
 }
 
-bool WalletRestorer::IsNewOutput(const CBigInteger<32>& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const
+bool WalletRestorer::IsNewOutput(const SecretKey& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const
 {
 	for (const OutputData& existingOutput : existingOutputs)
 	{

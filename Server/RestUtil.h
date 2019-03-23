@@ -135,6 +135,14 @@ public:
 		return std::make_optional<Json::Value>(json);
 	}
 
+	static int BuildSuccessResponseJSON(struct mg_connection* conn, const Json::Value& json)
+	{
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = ""; // Removes whitespaces
+		const std::string output = Json::writeString(builder, json);
+		return RestUtil::BuildSuccessResponse(conn, output);
+	}
+
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)
 	{
 		unsigned long len = (unsigned long)response.size();

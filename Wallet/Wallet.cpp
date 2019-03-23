@@ -15,7 +15,7 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
-WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed)
+WalletSummary Wallet::GetWalletSummary(const SecretKey& masterSeed)
 {
 	uint64_t awaitingConfirmation = 0;
 	uint64_t immature = 0;
@@ -49,17 +49,17 @@ WalletSummary Wallet::GetWalletSummary(const CBigInteger<32>& masterSeed)
 	return WalletSummary(lastConfirmedHeight, m_config.GetWalletConfig().GetMinimumConfirmations(), total, awaitingConfirmation, immature, locked, spendable);
 }
 
-std::vector<WalletTx> Wallet::GetTransactions(const CBigInteger<32>& masterSeed)
+std::vector<WalletTx> Wallet::GetTransactions(const SecretKey& masterSeed)
 {
 	return m_walletDB.GetTransactions(m_username, masterSeed);
 }
 
-std::vector<OutputData> Wallet::RefreshOutputs(const CBigInteger<32>& masterSeed)
+std::vector<OutputData> Wallet::RefreshOutputs(const SecretKey& masterSeed)
 {
 	return WalletRefresher(m_config, m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed);
 }
 
-bool Wallet::AddRestoredOutputs(const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs)
+bool Wallet::AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputs)
 {
 	std::vector<WalletTx> transactions;
 	transactions.reserve(outputs.size());
@@ -88,7 +88,7 @@ uint32_t Wallet::GetNextWalletTxId()
 	return m_walletDB.GetNextTransactionId(m_username);
 }
 
-bool Wallet::AddWalletTxs(const CBigInteger<32>& masterSeed, const std::vector<WalletTx>& transactions)
+bool Wallet::AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletTx>& transactions)
 {
 	bool success = true;
 	for (const WalletTx& transaction : transactions)
@@ -99,7 +99,7 @@ bool Wallet::AddWalletTxs(const CBigInteger<32>& masterSeed, const std::vector<W
 	return success;
 }
 
-std::vector<OutputData> Wallet::GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const
+std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecretKey& masterSeed) const
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -111,7 +111,7 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 	{
 		if (output.GetStatus() == EOutputStatus::SPENDABLE)
 		{
-			BlindingFactor blindingFactor = *keyChain.DerivePrivateKey(output.GetKeyChainPath(), output.GetAmount());
+			SecretKey blindingFactor = *keyChain.DerivePrivateKey(output.GetKeyChainPath(), output.GetAmount());
 			coins.emplace_back(OutputData(output));
 		}
 	}
@@ -119,42 +119,43 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const CBigInteger<32>& mast
 	return coins;
 }
 
-std::unique_ptr<OutputData> Wallet::CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount)
+OutputData Wallet::CreateBlindedOutput(const SecretKey& masterSeed, const uint64_t amount)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
 	KeyChainPath keyChainPath = m_walletDB.GetNextChildPath(m_username, m_userPath);
-	BlindingFactor blindingFactor = *keyChain.DerivePrivateKey(keyChainPath, amount);
-	std::unique_ptr<Commitment> pCommitment = Crypto::CommitBlinded(amount, blindingFactor);
+	SecretKey blindingFactor = *keyChain.DerivePrivateKey(keyChainPath, amount);
+	std::unique_ptr<Commitment> pCommitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes())); // TODO: Creating a BlindingFactor here is unsafe. The memory may not get cleared.
 	if (pCommitment != nullptr)
 	{
 		std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, *pCommitment, blindingFactor);
 		if (pRangeProof != nullptr)
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
-			OutputData outputData(std::move(keyChainPath), std::move(blindingFactor), std::move(transactionOutput), amount, EOutputStatus::NO_CONFIRMATIONS);
-
-			if (m_walletDB.AddOutputs(m_username, masterSeed, std::vector<OutputData>({ outputData })))
-			{
-				return std::make_unique<OutputData>(std::move(outputData));
-			}
+			
+			return OutputData(std::move(keyChainPath), std::move(blindingFactor), std::move(transactionOutput), amount, EOutputStatus::NO_CONFIRMATIONS);
 		}
 	}
 
-	return std::unique_ptr<OutputData>(nullptr);
+	throw std::exception(); // TODO: Determine exception type
 }
 
-std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed) const
+bool Wallet::SaveOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputsToSave)
+{
+	return m_walletDB.AddOutputs(m_username, masterSeed, outputsToSave);
+}
+
+std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed) const
 {
 	return m_walletDB.LoadSlateContext(m_username, masterSeed, slateId);
 }
 
-bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed, const SlateContext& slateContext)
+bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed, const SlateContext& slateContext)
 {
 	return m_walletDB.SaveSlateContext(m_username, masterSeed, slateId, slateContext);
 }
 
-bool Wallet::LockCoins(const CBigInteger<32>& masterSeed, std::vector<OutputData>& coins)
+bool Wallet::LockCoins(const SecretKey& masterSeed, std::vector<OutputData>& coins)
 {
 	for (OutputData& coin : coins)
 	{
@@ -164,7 +165,7 @@ bool Wallet::LockCoins(const CBigInteger<32>& masterSeed, std::vector<OutputData
 	return m_walletDB.AddOutputs(m_username, masterSeed, coins);
 }
 
-std::unique_ptr<WalletTx> Wallet::GetTxById(const CBigInteger<32>& masterSeed, const uint32_t walletTxId)
+std::unique_ptr<WalletTx> Wallet::GetTxById(const SecretKey& masterSeed, const uint32_t walletTxId)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(m_username, masterSeed);
 	for (WalletTx& walletTx : transactions)
@@ -178,7 +179,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxById(const CBigInteger<32>& masterSeed, c
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 
-std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const CBigInteger<32>& masterSeed, const uuids::uuid& slateId)
+std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecretKey& masterSeed, const uuids::uuid& slateId)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(m_username, masterSeed);
 	for (WalletTx& walletTx : transactions)
@@ -193,14 +194,14 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const CBigInteger<32>& masterSe
 }
 
 
-bool Wallet::CancelWalletTx(const CBigInteger<32>& masterSeed, WalletTx& walletTx)
+bool Wallet::CancelWalletTx(const SecretKey& masterSeed, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
 	}
-	else if (type == EWalletTxType::SENDING_IN_PROGRESS)
+	else if (type == EWalletTxType::SENDING_STARTED)
 	{
 		walletTx.SetType(EWalletTxType::SENT_CANCELED);
 	}

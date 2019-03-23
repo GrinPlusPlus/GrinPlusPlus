@@ -3,7 +3,7 @@
 #include "secp256k1-zkp/include/secp256k1_aggsig.h"
 
 #include <Crypto/Commitment.h>
-#include <Crypto/BlindingFactor.h>
+#include <Crypto/SecretKey.h>
 #include <Crypto/Signature.h>
 #include <Crypto/PublicKey.h>
 #include <Crypto/Hash.h>
@@ -19,9 +19,12 @@ class AggSig
 public:
 	static AggSig& GetInstance();
 
-	std::unique_ptr<BlindingFactor> GenerateSecureNonce() const;
+	std::unique_ptr<SecretKey> GenerateSecureNonce() const;
 
-	std::unique_ptr<Signature> SignSingle(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const;
+	std::unique_ptr<Signature> SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message);
+	bool VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message) const;
+
+	std::unique_ptr<Signature> CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 	bool VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const;
 
 	std::unique_ptr<Signature> AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces) const;

@@ -74,10 +74,24 @@ struct secure_allocator : public std::allocator<T>
 		typedef secure_allocator<_Other> other;
 	};
 
+	T* allocate(std::size_t n, const void* hint = 0)
+	{
+		T* p = std::allocator<T>::allocate(n, hint);
+		if (p != NULL)
+		{
+			VirtualLock(p, sizeof(T) * n);
+		}
+
+		return p;
+	}
+
 	void deallocate(T* p, std::size_t n) noexcept
 	{
 		if (p != NULL)
+		{
 			cleanse(p, sizeof(T) * n);
+			VirtualUnlock(p, sizeof(T) * n);
+		}
 		std::allocator<T>::deallocate(p, n);
 	}
 };

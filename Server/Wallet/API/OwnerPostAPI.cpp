@@ -62,10 +62,6 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return PostTx(pConnection, nodeClient, token, requestBodyOpt.value());
 	}
-	else if (action == "repost")
-	{
-		// TODO: Implement
-	}
 
 	return RestUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
 }
@@ -205,7 +201,7 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountJSON.asUInt64(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()));
 	if (pSlate != nullptr)
 	{
-		return RestUtil::BuildSuccessResponse(pConnection, pSlate->ToJSON().toStyledString());
+		return RestUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());
 	}
 	else
 	{
@@ -219,12 +215,10 @@ int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletMana
 
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message"); // TODO: Handle this
 
-	if (walletManager.Receive(token, slate, messageOpt))
+	std::unique_ptr<Slate> pReceivedSlate = walletManager.Receive(token, slate, messageOpt);
+	if (pReceivedSlate != nullptr)
 	{
-		Json::StreamWriterBuilder builder;
-		builder["indentation"] = ""; // Removes whitespaces
-		const std::string output = Json::writeString(builder, slate.ToJSON());
-		return RestUtil::BuildSuccessResponse(pConnection, output);
+		return RestUtil::BuildSuccessResponseJSON(pConnection, pReceivedSlate->ToJSON());
 	}
 	else
 	{
@@ -238,12 +232,12 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 
 	const bool postTx = RestUtil::HasQueryParam(pConnection, "post");
 
-	std::unique_ptr<Transaction> pTransaction = walletManager.Finalize(token, slate);
-	if (pTransaction != nullptr)
+	std::unique_ptr<Slate> pFinalSlate = walletManager.Finalize(token, slate);
+	if (pFinalSlate != nullptr)
 	{
-		walletManager.PostTransaction(token, *pTransaction);
+		walletManager.PostTransaction(token, pFinalSlate->GetTransaction());
 
-		return RestUtil::BuildSuccessResponse(pConnection, pTransaction->ToJSON().toStyledString());
+		return RestUtil::BuildSuccessResponseJSON(pConnection, pFinalSlate->ToJSON());
 	}
 	else
 	{
@@ -270,20 +264,8 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	std::optional<std::string> idOpt = RestUtil::GetQueryParam(pConnection, "id");
 	if (idOpt.has_value())
 	{
-		bool canceled = false;
-
-		std::optional<uuids::uuid> txUUIDOpt = uuids::uuid::from_string(idOpt.value());
-		if (txUUIDOpt.has_value())
-		{
-			canceled = walletManager.CancelBySlateId(token, txUUIDOpt.value());
-		}
-		else
-		{
-			const uint32_t id = std::stoul(idOpt.value());
-			canceled = walletManager.CancelByTxId(token, id);
-		}
-
-		if (canceled)
+		const uint32_t id = std::stoul(idOpt.value());
+		if (walletManager.CancelByTxId(token, id))
 		{
 			return RestUtil::BuildSuccessResponse(pConnection, "");
 		}

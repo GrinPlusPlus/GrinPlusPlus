@@ -7,6 +7,7 @@
 #include <Wallet/OutputData.h>
 
 #include <Config/Config.h>
+#include <Crypto/SecretKey.h>
 #include <Crypto/BlindingFactor.h>
 #include <Common/Secure.h>
 #include <vector>
@@ -15,19 +16,19 @@ class KeyChain
 {
 public:
 	// TODO: Add FromMnemonic, FromRandom, ToMnemonic, and GetSeed methods
-	static KeyChain FromSeed(const Config& config, const CBigInteger<32>& masterSeed);
+	static KeyChain FromSeed(const Config& config, const SecretKey& masterSeed);
 
-	std::unique_ptr<BlindingFactor> DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
+	std::unique_ptr<SecretKey> DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 
 	std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof) const;
-	std::unique_ptr<RangeProof> GenerateRangeProof(const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const BlindingFactor& blindingFactor) const;
+	std::unique_ptr<RangeProof> GenerateRangeProof(const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const SecretKey& blindingFactor) const;
 
 private:
-	KeyChain(const Config& config, PrivateExtKey&& masterKey, BlindingFactor&& bulletProofNonce);
+	KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce);
 
-	CBigInteger<32> CreateNonce(const Commitment& commitment) const;
+	SecretKey CreateNonce(const Commitment& commitment) const;
 
 	const Config& m_config;
 	PrivateExtKey m_masterKey;
-	BlindingFactor m_bulletProofNonce;
+	SecretKey m_bulletProofNonce;
 };

@@ -18,19 +18,21 @@ public:
 	void Open();
 	void Close();
 
+	virtual std::vector<std::string> GetAccounts() const override final;
+
 	virtual bool CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) override final;
 
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const override final;
 	virtual KeyChainPath GetNextChildPath(const std::string& username, const KeyChainPath& parentPath) override final;
 
-	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId) const override final;
-	virtual bool SaveSlateContext(const std::string& username, const CBigInteger<32>& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) override final;
+	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId) const override final;
+	virtual bool SaveSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) override final;
 
-	virtual bool AddOutputs(const std::string& username, const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs) override final;
-	virtual std::vector<OutputData> GetOutputs(const std::string& username, const CBigInteger<32>& masterSeed) const override final;
+	virtual bool AddOutputs(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& outputs) override final;
+	virtual std::vector<OutputData> GetOutputs(const std::string& username, const SecretKey& masterSeed) const override final;
 
-	virtual bool AddTransaction(const std::string& username, const CBigInteger<32>& masterSeed, const WalletTx& walletTx) override final;
-	virtual std::vector<WalletTx> GetTransactions(const std::string& username, const CBigInteger<32>& masterSeed) const override final;
+	virtual bool AddTransaction(const std::string& username, const SecretKey& masterSeed, const WalletTx& walletTx) override final;
+	virtual std::vector<WalletTx> GetTransactions(const std::string& username, const SecretKey& masterSeed) const override final;
 
 	virtual uint32_t GetNextTransactionId(const std::string& username) override final;
 	virtual uint64_t GetRefreshBlockHeight(const std::string& username) const override final;
@@ -43,8 +45,8 @@ private:
 	static std::string GetUsernamePrefix(const std::string& username);
 	static std::string CombineKeyWithUsername(const std::string& username, const std::string& key);
 
-	static std::vector<unsigned char> Encrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes);
-	static std::vector<unsigned char> Decrypt(const CBigInteger<32>& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
+	static std::vector<unsigned char> Encrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes);
+	static std::vector<unsigned char> Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
 
 	const Config& m_config;
 

@@ -61,7 +61,7 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 	return result == 1;
 }
 
-std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amount, const BlindingFactor& key, const CBigInteger<32>& nonce, const ProofMessage& proofMessage) const
+std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage) const
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -97,7 +97,7 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 	 */
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 
-	std::vector<const unsigned char*> blindingFactors({ key.GetBytes().GetData().data() });
+	std::vector<const unsigned char*> blindingFactors({ key.data() });
 	int result = secp256k1_bulletproof_rangeproof_prove(
 		m_pContext,
 		pScratchSpace,
@@ -114,7 +114,7 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 		1,
 		&secp256k1_generator_const_h,
 		64,
-		nonce.GetData().data(),
+		nonce.data(),
 		NULL,
 		NULL,
 		0,
@@ -130,7 +130,7 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 	return std::unique_ptr<RangeProof>(nullptr);
 }
 
-std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const CBigInteger<32>& nonce) const
+std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -152,7 +152,7 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 			0,
 			commitmentPointers.front(),
 			&secp256k1_generator_const_h,
-			nonce.GetData().data(),
+			nonce.data(),
 			NULL,
 			0,
 			message.data()
@@ -161,7 +161,7 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 
 		if (result == 1)
 		{
-			return std::make_unique<RewoundProof>(RewoundProof(value, BlindingFactor(std::move(blindingFactorBytes)), ProofMessage(std::move(message))));
+			return std::make_unique<RewoundProof>(RewoundProof(value, SecretKey(std::move(blindingFactorBytes)), ProofMessage(std::move(message))));
 		}
 	}
 

@@ -4,10 +4,10 @@
 
 std::unique_ptr<PublicExtKey> PublicKeyCalculator::DeterminePublicKey(const PrivateExtKey& privateKey) const
 {
-	std::unique_ptr<PublicKey> pCompressedPublicKey = Crypto::SECP256K1_CalculateCompressedPublicKey(privateKey.ToBlindingFactor());
+	std::unique_ptr<PublicKey> pCompressedPublicKey = Crypto::CalculatePublicKey(privateKey.GetPrivateKey());
 	if (pCompressedPublicKey != nullptr)
 	{
-		CBigInteger<32> chainCode = privateKey.GetChainCode();
+		SecretKey chainCode = privateKey.GetChainCode();
 		PublicKey compressedBytes = *pCompressedPublicKey;
 		return std::make_unique<PublicExtKey>(privateKey.GetNetwork(), privateKey.GetDepth(), privateKey.GetParentFingerprint(), privateKey.GetChildNumber(), std::move(chainCode), std::move(compressedBytes));
 	}

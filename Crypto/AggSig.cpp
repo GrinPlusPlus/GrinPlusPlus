@@ -24,94 +24,46 @@ AggSig::~AggSig()
 	secp256k1_context_destroy(m_pContext);
 }
 
-std::unique_ptr<BlindingFactor> AggSig::GenerateSecureNonce() const
+std::unique_ptr<SecretKey> AggSig::GenerateSecureNonce() const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	std::vector<unsigned char> nonce(32);
-	const CBigInteger<32> seed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey seed = RandomNumberGenerator::GenerateRandom32();
 
 	const int result = secp256k1_aggsig_export_secnonce_single(m_pContext, nonce.data(), seed.data());
 	if (result == 1)
 	{
-		return std::make_unique<BlindingFactor>(CBigInteger<32>(std::move(nonce)));
+		return std::make_unique<SecretKey>(CBigInteger<32>(std::move(nonce)));
 	}
 
-	return std::unique_ptr<BlindingFactor>(nullptr);
+	return std::unique_ptr<SecretKey>(nullptr);
 }
 
-bool AggSig::VerifyAggregateSignature(const Signature& signature, const Commitment& commitment, const Hash& message) const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
-	secp256k1_pedersen_commitment parsedCommitment;
-	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment.GetCommitmentBytes().GetData().data());
-	if (commitmentResult == 1)
-	{
-		secp256k1_pubkey pubkey;
-		const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubkey, &parsedCommitment);
-		if (pubkeyResult == 1)
-		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().GetData().data(), message.GetData().data(), nullptr, &pubkey, &pubkey, nullptr, false);
-			if (verifyResult == 1)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-bool AggSig::VerifyAggregateSignature(const Signature& signature, const PublicKey& sumPubKeys, const Hash& message) const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
-	secp256k1_pubkey parsedPubKey;
-	const int parseResult = secp256k1_ec_pubkey_parse(m_pContext, &parsedPubKey, sumPubKeys.data(), sumPubKeys.size());
-	if (parseResult == 1)
-	{
-		//secp256k1_ecdsa_signature parsedSignature;
-		//const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &parsedSignature, signature.GetSignatureBytes().GetData().data());
-		//if (parseSignatureResult == 1)
-		//{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().GetData().data(), message.GetData().data(), nullptr, &parsedPubKey, &parsedPubKey, nullptr, false);
-			if (verifyResult == 1)
-			{
-				return true;
-			}
-		//}
-	}
-
-	return false;
-}
-
-
-std::unique_ptr<Signature> AggSig::SignSingle(const BlindingFactor& secretKey, const BlindingFactor& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const
+std::unique_ptr<Signature> AggSig::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
-	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	secp256k1_context_randomize(m_pContext, randomSeed.data());
 
-	secp256k1_pubkey pubKeyForE;
-	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, sumPubKeys.data(), sumPubKeys.size());
+	secp256k1_pubkey pubKey;
+	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKey, publicKey.data(), publicKey.size());
 
-	secp256k1_pubkey pubNoncesForE;
-	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNoncesForE, sumPubNonces.data(), sumPubNonces.size());
-
-	if (pubKeyParsed == 1 && noncesParsed == 1)
+	if (pubKeyParsed == 1)
 	{
 		secp256k1_ecdsa_signature signature;
 		const int signedResult = secp256k1_aggsig_sign_single(
 			m_pContext,
 			&signature.data[0],
-			&message.GetData()[0],
-			&secretKey.GetBytes().GetData()[0],
-			&secretNonce.GetBytes().GetData()[0],
+			message.data(),
+			secretKey.data(),
 			nullptr,
-			&pubNoncesForE,
-			&pubNoncesForE,
-			&pubKeyForE,
-			randomSeed.GetData().data()
+			nullptr,
+			nullptr,
+			nullptr,
+			&pubKey,
+			randomSeed.data()
 		);
 
 		if (signedResult == 1)
@@ -126,6 +78,103 @@ std::unique_ptr<Signature> AggSig::SignSingle(const BlindingFactor& secretKey, c
 	}
 
 	return std::unique_ptr<Signature>(nullptr);
+}
+
+bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	secp256k1_ecdsa_signature secpSig;
+	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &secpSig, signature.GetSignatureBytes().data());
+	if (parseSignatureResult == 1)
+	{
+		secp256k1_pubkey pubkey;
+		const int pubkeyResult = secp256k1_ec_pubkey_parse(m_pContext, &pubkey, publicKey.data(), publicKey.size());
+
+		if (pubkeyResult == 1)
+		{
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, secpSig.data, message.data(), nullptr, &pubkey, nullptr, nullptr, false);
+			if (verifyResult == 1)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+std::unique_ptr<Signature> AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+{
+	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
+
+	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	secp256k1_context_randomize(m_pContext, randomSeed.data());
+
+	secp256k1_pubkey pubKeyForE;
+	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, sumPubKeys.data(), sumPubKeys.size());
+
+	secp256k1_pubkey pubNoncesForE;
+	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNoncesForE, sumPubNonces.data(), sumPubNonces.size());
+
+	if (pubKeyParsed == 1 && noncesParsed == 1)
+	{
+		secp256k1_ecdsa_signature signature;
+		const int signedResult = secp256k1_aggsig_sign_single(
+			m_pContext,
+			&signature.data[0],
+			message.data(),
+			secretKey.data(),
+			secretNonce.data(),
+			nullptr,
+			&pubNoncesForE,
+			&pubNoncesForE,
+			&pubKeyForE,
+			randomSeed.data()
+		);
+
+		if (signedResult == 1)
+		{
+			std::vector<unsigned char> signatureBytes(64);
+			const int serializedResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, signatureBytes.data(), &signature);
+			if (serializedResult == 1)
+			{
+				return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
+			}
+		}
+	}
+
+	return std::unique_ptr<Signature>(nullptr);
+}
+
+bool AggSig::VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	secp256k1_ecdsa_signature signature;
+	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &signature, partialSignature.GetSignatureBytes().data());
+	if (parseSignatureResult == 1)
+	{
+		secp256k1_pubkey pubkey;
+		const int pubkeyResult = secp256k1_ec_pubkey_parse(m_pContext, &pubkey, publicKey.data(), publicKey.size());
+
+		secp256k1_pubkey sumPubKey;
+		const int sumPubkeysResult = secp256k1_ec_pubkey_parse(m_pContext, &sumPubKey, sumPubKeys.data(), sumPubKeys.size());
+
+		secp256k1_pubkey sumNoncesPubKey;
+		const int sumPubNonceKeyResult = secp256k1_ec_pubkey_parse(m_pContext, &sumNoncesPubKey, sumPubNonces.data(), sumPubNonces.size());
+
+		if (pubkeyResult == 1 && sumPubkeysResult == 1 && sumPubNonceKeyResult == 1)
+		{
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.data, message.data(), &sumNoncesPubKey, &pubkey, &sumPubKey, nullptr, true);
+			if (verifyResult == 1)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces) const
@@ -162,31 +211,47 @@ std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<Signatu
 	return std::unique_ptr<Signature>(nullptr);
 }
 
-bool AggSig::VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const
+bool AggSig::VerifyAggregateSignature(const Signature& signature, const Commitment& commitment, const Hash& message) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
-	secp256k1_ecdsa_signature signature;
-	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &signature, partialSignature.GetSignatureBytes().GetData().data());
-	if (parseSignatureResult == 1)
+	secp256k1_pedersen_commitment parsedCommitment;
+	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment.GetCommitmentBytes().data());
+	if (commitmentResult == 1)
 	{
 		secp256k1_pubkey pubkey;
-		const int pubkeyResult = secp256k1_ec_pubkey_parse(m_pContext, &pubkey, publicKey.data(), publicKey.size());
-
-		secp256k1_pubkey sumPubKey;
-		const int sumPubkeysResult = secp256k1_ec_pubkey_parse(m_pContext, &sumPubKey, sumPubKeys.data(), sumPubKeys.size());
-
-		secp256k1_pubkey sumNoncesPubKey;
-		const int sumPubNonceKeyResult = secp256k1_ec_pubkey_parse(m_pContext, &sumNoncesPubKey, sumPubNonces.data(), sumPubNonces.size());
-
-		if (pubkeyResult == 1 && sumPubkeysResult == 1 && sumPubNonceKeyResult == 1)
+		const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubkey, &parsedCommitment);
+		if (pubkeyResult == 1)
 		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.data, message.GetData().data(), &sumNoncesPubKey, &pubkey, &sumPubKey, nullptr, true);
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data(), message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
 			if (verifyResult == 1)
 			{
 				return true;
 			}
 		}
+	}
+
+	return false;
+}
+
+bool AggSig::VerifyAggregateSignature(const Signature& signature, const PublicKey& sumPubKeys, const Hash& message) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	secp256k1_pubkey parsedPubKey;
+	const int parseResult = secp256k1_ec_pubkey_parse(m_pContext, &parsedPubKey, sumPubKeys.data(), sumPubKeys.size());
+	if (parseResult == 1)
+	{
+		//secp256k1_ecdsa_signature parsedSignature;
+		//const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &parsedSignature, signature.GetSignatureBytes().data());
+		//if (parseSignatureResult == 1)
+		//{
+		const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data(), message.data(), nullptr, &parsedPubKey, &parsedPubKey, nullptr, false);
+		if (verifyResult == 1)
+		{
+			return true;
+		}
+		//}
 	}
 
 	return false;
@@ -198,7 +263,7 @@ std::vector<secp256k1_ecdsa_signature> AggSig::ParseSignatures(const std::vector
 	for (const Signature partialSignature : signatures)
 	{
 		secp256k1_ecdsa_signature signature;
-		const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &signature, partialSignature.GetSignatureBytes().GetData().data());
+		const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &signature, partialSignature.GetSignatureBytes().data());
 		if (parseSignatureResult == 1)
 		{
 			parsed.emplace_back(std::move(signature));

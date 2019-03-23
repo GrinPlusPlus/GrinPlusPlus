@@ -132,7 +132,7 @@ public:
 
 private:
 	uint32_t m_walletTxId;
-	EWalletTxType m_type;
+	EWalletTxType m_type; // TODO: Replace with direction & status
 	std::optional<uuids::uuid> m_slateIdOpt;
 	std::chrono::system_clock::time_point m_creationTime;
 	std::optional<std::chrono::system_clock::time_point> m_confirmationTimeOpt;

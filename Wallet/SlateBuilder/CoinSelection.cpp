@@ -1,6 +1,6 @@
 #include "CoinSelection.h"
-#include "WalletUtil.h"
 
+#include <Wallet/WalletUtil.h>
 #include <Wallet/InsufficientFundsException.h>
 #include <Infrastructure/Logger.h>
 

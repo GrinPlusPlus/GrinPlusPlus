@@ -19,17 +19,17 @@ public:
 
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
+	virtual std::vector<std::string> GetAllAccounts() const override final;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
 	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) override final;
-	virtual bool Receive(const SessionToken& token, Slate& slate, const std::optional<std::string>& messageOpt) override final;
-	virtual std::unique_ptr<Transaction> Finalize(const SessionToken& token, const Slate& slate) override final;
+	virtual std::unique_ptr<Slate> Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt) override final;
+	virtual std::unique_ptr<Slate> Finalize(const SessionToken& token, const Slate& slate) override final;
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) override final;
 
 	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
-	virtual bool CancelBySlateId(const SessionToken& token, const uuids::uuid& slateId) override final;
 
 private:
 	const Config& m_config;

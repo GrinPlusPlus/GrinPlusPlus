@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Crypto/SecretKey.h>
 #include <Crypto/PublicKey.h>
 #include <shared_mutex>
 
@@ -11,7 +12,7 @@ class PublicKeys
 public:
 	static PublicKeys& GetInstance();
 
-	std::unique_ptr<PublicKey> CalculatePublicKey(const CBigInteger<32>& privateKey) const;
+	std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey) const;
 	std::unique_ptr<PublicKey> PublicKeySum(const std::vector<PublicKey>& publicKeys) const;
 
 private:

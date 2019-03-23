@@ -98,18 +98,18 @@ std::unique_ptr<BlindingFactor> Pedersen::PedersenBlindSum(const std::vector<Bli
 	return std::unique_ptr<BlindingFactor>(nullptr);
 }
 
-std::unique_ptr<BlindingFactor> Pedersen::BlindSwitch(const BlindingFactor& blindingFactor, const uint64_t amount) const
+std::unique_ptr<SecretKey> Pedersen::BlindSwitch(const SecretKey& blindingFactor, const uint64_t amount) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	std::vector<unsigned char> blindSwitch(32);
-	const int result = secp256k1_blind_switch(m_pContext, blindSwitch.data(), blindingFactor.GetBytes().GetData().data(), amount, &secp256k1_generator_const_h, &secp256k1_generator_const_g, &GENERATOR_J_PUB);
+	const int result = secp256k1_blind_switch(m_pContext, blindSwitch.data(), blindingFactor.data(), amount, &secp256k1_generator_const_h, &secp256k1_generator_const_g, &GENERATOR_J_PUB);
 	if (result == 1)
 	{
-		return std::make_unique<BlindingFactor>(BlindingFactor(CBigInteger<32>(std::move(blindSwitch))));
+		return std::make_unique<SecretKey>(SecretKey(CBigInteger<32>(std::move(blindSwitch))));
 	}
 
-	return std::unique_ptr<BlindingFactor>(nullptr);
+	return std::unique_ptr<SecretKey>(nullptr);
 }
 
 std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const secp256k1_context& context, const std::vector<Commitment>& commitments)

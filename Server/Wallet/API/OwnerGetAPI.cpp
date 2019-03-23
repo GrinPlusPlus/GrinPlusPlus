@@ -15,6 +15,17 @@
 */
 int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
 {
+	if (action == "accounts")
+	{
+		Json::Value accountsNode;
+		std::vector<std::string> accounts = walletManager.GetAllAccounts();
+		for (std::string& account : accounts)
+		{
+			accountsNode.append(account);
+		}
+		return RestUtil::BuildSuccessResponse(pConnection, accountsNode.toStyledString());
+	}
+
 	// GET /v1/wallet/owner/node_height
 	if (action == "node_height")
 	{

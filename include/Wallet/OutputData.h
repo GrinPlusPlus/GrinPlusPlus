@@ -15,13 +15,13 @@ static const uint8_t OUTPUT_DATA_FORMAT = 0;
 class OutputData
 {
 public:
-	OutputData(KeyChainPath&& keyChainPath, BlindingFactor&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status)
+	OutputData(KeyChainPath&& keyChainPath, SecretKey&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status)
 		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(std::nullopt)
 	{
 
 	}
 
-	OutputData(KeyChainPath&& keyChainPath, BlindingFactor&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status, const std::optional<uint64_t>& mmrIndexOpt)
+	OutputData(KeyChainPath&& keyChainPath, SecretKey&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status, const std::optional<uint64_t>& mmrIndexOpt)
 		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(mmrIndexOpt)
 	{
 
@@ -31,7 +31,7 @@ public:
 	// Getters
 	//
 	inline const KeyChainPath& GetKeyChainPath() const { return m_keyChainPath; }
-	inline const BlindingFactor& GetBlindingFactor() const { return m_blindingFactor; }
+	inline const SecretKey& GetBlindingFactor() const { return m_blindingFactor; }
 	inline const TransactionOutput& GetOutput() const { return m_output; }
 	inline const uint64_t GetAmount() const { return m_amount; }
 	inline const EOutputStatus GetStatus() const { return m_status; }
@@ -73,7 +73,7 @@ public:
 		}
 
 		KeyChainPath keyChainPath = KeyChainPath::FromString(byteBuffer.ReadVarStr());
-		BlindingFactor blindingFactor = BlindingFactor::Deserialize(byteBuffer);
+		SecretKey blindingFactor = SecretKey::Deserialize(byteBuffer);
 		TransactionOutput output = TransactionOutput::Deserialize(byteBuffer);
 		uint64_t amount = byteBuffer.ReadU64();
 		EOutputStatus status = (EOutputStatus)byteBuffer.ReadU8();
@@ -84,7 +84,7 @@ public:
 
 private:
 	KeyChainPath m_keyChainPath;
-	BlindingFactor m_blindingFactor;
+	SecretKey m_blindingFactor;
 	TransactionOutput m_output;
 	uint64_t m_amount;
 	EOutputStatus m_status;

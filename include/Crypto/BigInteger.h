@@ -56,6 +56,14 @@ public:
 	//
 	~CBigInteger() = default;
 
+	void erase()
+	{
+		for (size_t i = 0; i < NUM_BYTES; i++)
+		{
+			m_data[i] = 0;
+		}
+	}
+
 	inline const std::vector<unsigned char, ALLOC>& GetData() const
 	{
 		return m_data;

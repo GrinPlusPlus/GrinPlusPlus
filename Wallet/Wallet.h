@@ -12,6 +12,7 @@
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Core/Models/TransactionOutput.h>
+#include <Crypto/SecretKey.h>
 
 class Wallet
 {
@@ -20,26 +21,27 @@ public:
 
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
-	WalletSummary GetWalletSummary(const CBigInteger<32>& masterSeed);
+	WalletSummary GetWalletSummary(const SecretKey& masterSeed);
 
-	std::vector<WalletTx> GetTransactions(const CBigInteger<32>& masterSeed);
-	std::unique_ptr<WalletTx> GetTxById(const CBigInteger<32>& masterSeed, const uint32_t walletTxId);
-	std::unique_ptr<WalletTx> GetTxBySlateId(const CBigInteger<32>& masterSeed, const uuids::uuid& slateId);
+	std::vector<WalletTx> GetTransactions(const SecretKey& masterSeed);
+	std::unique_ptr<WalletTx> GetTxById(const SecretKey& masterSeed, const uint32_t walletTxId);
+	std::unique_ptr<WalletTx> GetTxBySlateId(const SecretKey& masterSeed, const uuids::uuid& slateId);
 
-	std::vector<OutputData> RefreshOutputs(const CBigInteger<32>& masterSeed);
-	bool AddRestoredOutputs(const CBigInteger<32>& masterSeed, const std::vector<OutputData>& outputs);
+	std::vector<OutputData> RefreshOutputs(const SecretKey& masterSeed);
+	bool AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputs);
 
 	uint32_t GetNextWalletTxId();
-	bool AddWalletTxs(const CBigInteger<32>& masterSeed, const std::vector<WalletTx>& transactions);
+	bool AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletTx>& transactions);
 
-	std::vector<OutputData> GetAllAvailableCoins(const CBigInteger<32>& masterSeed) const;
-	std::unique_ptr<OutputData> CreateBlindedOutput(const CBigInteger<32>& masterSeed, const uint64_t amount);
+	std::vector<OutputData> GetAllAvailableCoins(const SecretKey& masterSeed) const;
+	OutputData CreateBlindedOutput(const SecretKey& masterSeed, const uint64_t amount);
+	bool SaveOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputsToSave);
 
-	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed) const;
-	bool SaveSlateContext(const uuids::uuid& slateId, const CBigInteger<32>& masterSeed, const SlateContext& slateContext);
-	bool LockCoins(const CBigInteger<32>& masterSeed, std::vector<OutputData>& coins);
+	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed) const;
+	bool SaveSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed, const SlateContext& slateContext);
+	bool LockCoins(const SecretKey& masterSeed, std::vector<OutputData>& coins);
 
-	bool CancelWalletTx(const CBigInteger<32>& masterSeed, WalletTx& walletTx);
+	bool CancelWalletTx(const SecretKey& masterSeed, WalletTx& walletTx);
 
 private:
 	const Config& m_config;

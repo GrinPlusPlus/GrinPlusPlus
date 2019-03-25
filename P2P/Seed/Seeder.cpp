@@ -8,6 +8,7 @@
 #include <Net/SocketAddress.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>
+#include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>
@@ -37,8 +38,6 @@ void Seeder::Start()
 	}
 
 	m_terminate = false;
-
-	m_peerManager.Initialize();
 
 	m_seedThread = std::thread(Thread_Seed, std::ref(*this));
 	m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
@@ -80,26 +79,27 @@ void Seeder::Thread_Seed(Seeder& seeder)
 			if (connectionsToAdd == 1)
 			{
 				seeder.SeedNewConnection();
-				continue;
 			}
-
-			// Using when_any to find task which finishes first
-			std::vector<async::task<void>> tasks;
-			for (size_t i = 0; i < connectionsToAdd; i++)
+			else
 			{
-				tasks.push_back(async::spawn([&seeder] { seeder.SeedNewConnection(); }));
+				// Using when_any to find task which finishes first
+				std::vector<async::task<void>> tasks;
+				for (size_t i = 0; i < connectionsToAdd; i++)
+				{
+					tasks.push_back(async::spawn([&seeder] { seeder.SeedNewConnection(); }));
+				}
+
+				for (auto& task : tasks)
+				{
+					task.wait();
+				}
 			}
 
-			for (auto& task : tasks)
-			{
-				task.wait();
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(100), seeder.m_terminate);
 		}
 		else
 		{
-			std::this_thread::sleep_for(std::chrono::seconds(1));
+			ThreadUtil::SleepFor(std::chrono::seconds(1), seeder.m_terminate);
 		}
 	}
 
@@ -136,7 +136,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 
 		if (!connectionAdded)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(30), seeder.m_terminate);
 		}
 	}
 
@@ -148,19 +148,13 @@ bool Seeder::SeedNewConnection()
 	std::unique_ptr<Peer> pPeer = m_peerManager.GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		bool connected = ConnectToPeer(*pPeer, EDirection::OUTBOUND, std::nullopt);
-		if (connected)
-		{
-			m_peerManager.UpdatePeer(*pPeer);
-		}
-
-		return connected;
+		return ConnectToPeer(*pPeer, EDirection::OUTBOUND, std::nullopt);
 	}
 	else if (!m_usedDNS.exchange(true))
 	{
 		std::vector<SocketAddress> peerAddresses = DNSSeeder(m_config).GetPeersFromDNS();
 
-		m_peerManager.AddPeerAddresses(peerAddresses);
+		m_peerManager.AddFreshPeers(peerAddresses);
 	}
 
 	// TODO: Request new peers
@@ -170,7 +164,6 @@ bool Seeder::SeedNewConnection()
 
 bool Seeder::ListenForConnections(const Listener& listenerSocket)
 {
-	// TODO: Don't forget to check nonces.
 	const std::optional<Socket> socketOpt = listenerSocket.AcceptNewConnection();
 	if (socketOpt.has_value())
 	{

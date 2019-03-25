@@ -6,6 +6,7 @@
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigManager.h>
 #include <Infrastructure/ThreadManager.h>
+#include <Common/Util/ThreadUtil.h>
 
 #include <windows.h> 
 #include <stdio.h> 
@@ -80,7 +81,7 @@ int main(int argc, char* argv[])
 			node.UpdateDisplay(secondsRunning);
 		}
 		
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		ThreadUtil::SleepFor(std::chrono::seconds(1), ShutdownManager::GetInstance().WasShutdownRequested());
 	}
 
 	if (!headless)

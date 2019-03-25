@@ -2,6 +2,7 @@
 
 #include <string>
 #include <chrono>
+#include <ctime>
 #include <stdint.h>
 
 class TimeUtil
@@ -35,5 +36,10 @@ public:
 	static std::chrono::system_clock::time_point ToTimePoint(const int64_t millisSinceEpoch)
 	{
 		return std::chrono::system_clock::time_point(std::chrono::milliseconds(millisSinceEpoch));
+	}
+
+	static std::time_t Now()
+	{
+		return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	}
 };

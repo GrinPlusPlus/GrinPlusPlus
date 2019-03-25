@@ -86,10 +86,11 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 	return std::nullopt;
 }
 
-void PeerDB::AddPeers(const std::vector<Peer>& peers)
+void PeerDB::SavePeers(const std::vector<Peer>& peers)
 {
-	LoggerAPI::LogTrace("PeerDB::AddPeers - Adding peers: " + std::to_string(peers.size()));
+	LoggerAPI::LogTrace("PeerDB::SavePeers - Saving peers: " + std::to_string(peers.size()));
 
+	WriteBatch writeBatch;
 	for (const Peer& peer : peers)
 	{
 		const IPAddress& address = peer.GetIPAddress();
@@ -102,6 +103,8 @@ void PeerDB::AddPeers(const std::vector<Peer>& peers)
 		peer.Serialize(peerSerializer);
 		Slice value((const char*)peerSerializer.GetBytes().data(), peerSerializer.GetBytes().size());
 
-		m_pDatabase->Put(WriteOptions(), key, value);
+		writeBatch.Put(key, value);
 	}
+
+	m_pDatabase->Write(WriteOptions(), &writeBatch);
 }

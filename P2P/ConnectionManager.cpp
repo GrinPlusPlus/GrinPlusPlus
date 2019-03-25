@@ -9,6 +9,7 @@
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
+#include <Common/Util/ThreadUtil.h>
 
 ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool)
 	: m_config(config), 
@@ -26,6 +27,7 @@ void ConnectionManager::Start()
 {
 	m_terminate = false;
 
+	m_peerManager.Start();
 	m_seeder.Start();
 	m_syncer.Start();
 	m_pipeline.Start();
@@ -54,6 +56,7 @@ void ConnectionManager::Stop()
 	}
 
 	PruneConnections(false);
+	m_peerManager.Stop();
 }
 
 void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
@@ -265,8 +268,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	{
 		pConnection->Disconnect();
 
-		m_peerManager.UpdatePeer(pConnection->GetPeer()); // TODO: Also save connection stats.
-
 		delete pConnection;
 	}
 
@@ -345,7 +346,7 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 		if (connectionManager.m_sendQueue.empty())
 		{
 			messageWriteLock.unlock();
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(100), connectionManager.m_terminate);
 			continue;
 		}
 

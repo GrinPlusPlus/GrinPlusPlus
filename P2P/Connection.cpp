@@ -5,6 +5,7 @@
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 
+#include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <thread>
@@ -74,6 +75,8 @@ void Connection::Send(const IMessage& message)
 //
 void Connection::Thread_ProcessConnection(Connection& connection)
 {
+	connection.m_peerManager.SetPeerConnected(connection.GetConnectedPeer().GetPeer(), true);
+
 	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
 	const MessageRetriever messageRetriever(connection.m_config);
 
@@ -116,9 +119,11 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 
 		if (!messageSentOrReceived)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5), connection.m_terminate);
 		}
 	}
 
 	connection.GetConnectedPeer().GetSocket().CloseSocket();
+
+	connection.m_peerManager.SetPeerConnected(connection.GetConnectedPeer().GetPeer(), false);
 }

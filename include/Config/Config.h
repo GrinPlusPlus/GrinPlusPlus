@@ -14,7 +14,7 @@ class Config
 {
 public:
 	Config(const EClientMode clientMode, const Environment& environment, const std::string& dataPath, const DandelionConfig& dandelionConfig, const P2PConfig& p2pConfig, const WalletConfig& walletConfig, const ServerConfig& serverConfig)
-		: m_clientMode(clientMode), m_environment(environment), m_dataPath(dataPath), m_dandelionConfig(dandelionConfig), m_p2pConfig(p2pConfig), m_walletConfig(walletConfig), m_serverConfig(serverConfig)
+		: m_clientMode(clientMode), m_environment(environment), m_dataPath(dataPath + "NODE/"), m_dandelionConfig(dandelionConfig), m_p2pConfig(p2pConfig), m_walletConfig(walletConfig), m_serverConfig(serverConfig)
 	{
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath);
 		std::filesystem::create_directories(m_dataPath + m_txHashSetPath + "kernel/");

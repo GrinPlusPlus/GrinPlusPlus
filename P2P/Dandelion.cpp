@@ -5,6 +5,7 @@
 #include "Messages/StemTransactionMessage.h"
 
 #include <Common/Util/StringUtil.h>
+#include <Common/Util/ThreadUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
@@ -60,7 +61,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 	{
 		// This is the patience timer, we loop every n secs.
 		const uint8_t patience = config.GetPatienceSeconds();
-		std::this_thread::sleep_for(std::chrono::seconds(patience));
+		ThreadUtil::SleepFor(std::chrono::seconds(patience), dandelion.m_terminate);
 
 		// Step 1: find all "ToStem" entries in stempool from last run.
 		// Aggregate them up to give a single (valid) aggregated tx and propagate it

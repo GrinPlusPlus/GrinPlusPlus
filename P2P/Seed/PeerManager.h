@@ -19,7 +19,8 @@ class PeerManager
 public:
 	PeerManager(const Config& config, IPeerDB& peerDB);
 	
-	void Initialize();
+	void Start();
+	void Stop();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
 
@@ -28,28 +29,41 @@ public:
 	std::vector<Peer> GetAllPeers() const;
 	std::vector<Peer> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
 
-	void AddPeerAddresses(const std::vector<SocketAddress>& peerAddresses);
-	bool UpdatePeer(const Peer& peer);
-	bool BanPeer(Peer& peer, const EBanReason banReason);
+	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
+	void SetPeerConnected(const Peer& peer, const bool connected);
+	void BanPeer(Peer& peer, const EBanReason banReason);
 	// TODO: RemovePeer
 
 private:
-	bool AddPeer(const Peer& peer, const bool served);
+	struct PeerEntry
+	{
+		PeerEntry(Peer&& peer)
+			: m_peer(std::move(peer)), m_lastAttempt(0), m_connected(false), m_dirty(false)
+		{
+
+		}
+
+		PeerEntry(const Peer& peer, const time_t& lastAttempt, const bool connected)
+			: m_peer(peer), m_lastAttempt(lastAttempt), m_connected(connected), m_dirty(true)
+		{
+
+		}
+
+		Peer m_peer;
+		time_t m_lastAttempt;
+		bool m_connected;
+		bool m_dirty;
+	};
+
+	static void Thread_ManagePeers(PeerManager& peerManager);
+
 	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
 	const Config& m_config;
 	IPeerDB& m_peerDB;
 
-	struct PeerEntry
-	{
-		PeerEntry(const Peer& peer)
-			: m_peer(peer), m_peerServed(false)
-		{
-
-		}
-		bool m_peerServed;
-		Peer m_peer;
-	};
+	std::atomic_bool m_terminate;
+	std::thread m_peerThread;
 
 	mutable std::shared_mutex m_peersMutex;
 	mutable std::unordered_set<IPAddress> m_peersServed;

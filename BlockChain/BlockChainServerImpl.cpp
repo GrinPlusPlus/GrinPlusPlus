@@ -113,7 +113,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 {
 	// TODO: Check horizon.
-	const std::string destination = m_config.GetDataDirectory() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
+	const std::string destination = std::filesystem::temp_directory_path().string() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
 	if (m_txHashSetManager.SaveSnapshot(blockHeader, destination))
 	{
 		return destination;

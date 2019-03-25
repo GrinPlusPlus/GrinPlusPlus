@@ -22,7 +22,7 @@ public:
 	virtual std::vector<Peer> LoadAllPeers() override final;
 	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) override final;
 
-	virtual void AddPeers(const std::vector<Peer>& peers) override final;
+	virtual void SavePeers(const std::vector<Peer>& peers) override final;
 
 private:
 	const Config& m_config;

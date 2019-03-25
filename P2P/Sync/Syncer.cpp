@@ -8,6 +8,7 @@
 #include <P2P/SyncStatus.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
+#include <Common/Util/ThreadUtil.h>
 
 Syncer::Syncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
 	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
@@ -50,7 +51,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 	while (!syncer.m_terminate)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
 		syncer.UpdateSyncStatus();
 
 		if (syncer.m_syncStatus.GetNumActiveConnections() >= 4)

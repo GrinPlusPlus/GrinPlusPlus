@@ -132,7 +132,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
 
 				LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Received %llu addresses from %s.", peerAddresses.size(), formattedIPAddress.c_str()));
-				m_peerManager.AddPeerAddresses(peerAddresses);
+				m_peerManager.AddFreshPeers(peerAddresses);
 
 				return EStatus::SUCCESS;
 			}

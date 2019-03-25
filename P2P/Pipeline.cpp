@@ -1,6 +1,7 @@
 #include "Pipeline.h"
 #include "ConnectionManager.h"
 
+#include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <async++.h>
@@ -105,7 +106,7 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 		
 		if (!pipeline.m_blockChainServer.ProcessNextOrphanBlock())
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(30));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(30), pipeline.m_terminate);
 		}
 	}
 
@@ -157,7 +158,7 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		}
 		else
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(30));
+			ThreadUtil::SleepFor(std::chrono::milliseconds(30), pipeline.m_terminate);
 		}
 	}
 

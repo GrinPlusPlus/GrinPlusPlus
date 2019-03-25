@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
+#include <Crypto/BlindingFactor.h>
 #include <Crypto/Hash.h>
-#include <Crypto/Crypto.h>
 #include <Crypto/BigInteger.h>
 #include <Core/Models/ProofOfWork.h>
 #include <Core/Serialization/ByteBuffer.h>

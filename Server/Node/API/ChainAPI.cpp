@@ -4,6 +4,7 @@
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
+#include <Crypto/Crypto.h>
 #include <json/json.h>
 #include <BlockChain/BlockChainServer.h>
 

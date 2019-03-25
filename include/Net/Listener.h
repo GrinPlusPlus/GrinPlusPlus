@@ -3,9 +3,6 @@
 #include <Net/Socket.h>
 #include <optional>
 
-// Forward Declarations
-typedef unsigned long long SOCKET;
-
 class Listener
 {
 public:

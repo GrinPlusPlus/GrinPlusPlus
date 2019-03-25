@@ -44,9 +44,10 @@ private:
 
 	static std::string GetUsernamePrefix(const std::string& username);
 	static std::string CombineKeyWithUsername(const std::string& username, const std::string& key);
+	static SecretKey CreateSecureKey(const SecretKey& masterSeed, const std::string& dataType);
 
-	static std::vector<unsigned char> Encrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes);
-	static std::vector<unsigned char> Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
+	static std::vector<unsigned char> Encrypt(const SecretKey& masterSeed, const std::string& dataType, const SecureVector& bytes);
+	static SecureVector Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
 
 	const Config& m_config;
 

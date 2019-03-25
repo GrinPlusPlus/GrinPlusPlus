@@ -2,7 +2,6 @@
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
-#include <WS2tcpip.h>
 
 Socket::Socket(const SOCKET& socket, const SocketAddress& address, const bool blocking, const unsigned long receiveTimeout, const unsigned long sendTimeout)
 	: m_socket(socket), m_address(address), m_blocking(blocking), m_receiveTimeout(receiveTimeout), m_sendTimeout(sendTimeout), m_receiveBufferSize(0)

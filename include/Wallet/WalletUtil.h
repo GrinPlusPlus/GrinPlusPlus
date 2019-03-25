@@ -28,6 +28,6 @@ public:
 private:
 	static uint64_t CalculateTxWeight(const int64_t numInputs, const int64_t numOutputs, const int64_t numKernels)
 	{
-		return std::max((-1 * numInputs) + (4 * numOutputs) + (1 * numKernels), (int64_t)1);
+		return (std::max)((-1 * numInputs) + (4 * numOutputs) + (1 * numKernels), (int64_t)1);
 	}
 };

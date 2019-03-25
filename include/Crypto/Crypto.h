@@ -7,6 +7,7 @@
 //
 
 #include <Common/ImportExport.h>
+#include <Common/Secure.h>
 #include <Crypto/BigInteger.h>
 #include <stdint.h>
 #include <vector>
@@ -105,18 +106,18 @@ public:
 	//
 	// Encrypts the input with AES256 using the given key.
 	//
-	static std::vector<unsigned char> AES256_Encrypt(const std::vector<unsigned char>& input, const CBigInteger<32>& key, const CBigInteger<16>& iv);
+	static std::vector<unsigned char> AES256_Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv);
 
 	//
 	// Decrypts the input with AES256 using the given key.
 	//
-	static std::vector<unsigned char> AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const CBigInteger<32>& key, const CBigInteger<16>& iv);
+	static SecureVector AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv);
 
 	//
 	// Uses Scrypt to hash the given input (usually the user's password) and salts the hash with the given salt.
 	// The returned hash will be 64 bytes.
 	//
-	static CBigInteger<64> Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt);
+	static CBigInteger<64> Scrypt(const SecureVector& input, const std::vector<unsigned char>& salt);
 
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "EndianHelper.h"
+#include <Common/Secure.h>
+#include <Core/Serialization/EndianHelper.h>
 #include <Crypto/BigInteger.h>
 
 #include <stdint.h>
@@ -69,6 +70,16 @@ public:
 	}
 
 	inline const std::vector<unsigned char>& GetBytes() const { return m_serialized; }
+
+	// WARNING: This will destroy the contents of m_serialized.
+	// TODO: Create a SecureSerializer instead.
+	SecureVector GetSecureBytes()
+	{
+		SecureVector secureBytes(m_serialized.begin(), m_serialized.end());
+		cleanse(m_serialized.data(), m_serialized.size());
+
+		return secureBytes;
+	}
 
 private:
 	std::vector<unsigned char> m_serialized;

@@ -34,29 +34,47 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 	const size_t numBits = 64;
 	const size_t proofLength = rangeProofs.front().second.GetProofBytes().size();
 
-	// array of generator multiplied by value in pedersen commitments (cannot be NULL)
-	std::vector<secp256k1_generator> valueGenerators;
-	for (size_t i = 0; i < rangeProofs.size(); i++)
-	{
-		valueGenerators.push_back(secp256k1_generator_const_h);
-	}
-
-	auto getCommitments = [](const std::pair<Commitment, RangeProof>& rangeProof) -> Commitment { return rangeProof.first; };
-	std::vector<Commitment> commitments = FunctionalUtil::map<std::vector<Commitment>>(rangeProofs, getCommitments);
-	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = Pedersen::ConvertCommitments(*m_pContext, commitments);
+	std::vector<Commitment> commitments;
+	commitments.reserve(rangeProofs.size());
 
 	std::vector<const unsigned char*> bulletproofPointers;
 	bulletproofPointers.reserve(rangeProofs.size());
 	for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
 	{
-		bulletproofPointers.emplace_back(rangeProof.second.GetProofBytes().data());
+		if (!m_cache.WasAlreadyVerified(rangeProof.first))
+		{
+			commitments.push_back(rangeProof.first);
+			bulletproofPointers.emplace_back(rangeProof.second.GetProofBytes().data());
+		}
 	}
 
+	if (commitments.empty())
+	{
+		return true;
+	}
+
+	// array of generator multiplied by value in pedersen commitments (cannot be NULL)
+	std::vector<secp256k1_generator> valueGenerators;
+	for (size_t i = 0; i < commitments.size(); i++)
+	{
+		valueGenerators.push_back(secp256k1_generator_const_h);
+	}
+
+	std::vector<secp256k1_pedersen_commitment*> commitmentPointers = Pedersen::ConvertCommitments(*m_pContext, commitments);
+
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
-	const int result = secp256k1_bulletproof_rangeproof_verify_multi(m_pContext, pScratchSpace, m_pGenerators, bulletproofPointers.data(), rangeProofs.size(), proofLength, NULL, commitmentPointers.data(), 1, numBits, valueGenerators.data(), NULL, NULL);
+	const int result = secp256k1_bulletproof_rangeproof_verify_multi(m_pContext, pScratchSpace, m_pGenerators, bulletproofPointers.data(), commitments.size(), proofLength, NULL, commitmentPointers.data(), 1, numBits, valueGenerators.data(), NULL, NULL);
 	secp256k1_scratch_space_destroy(pScratchSpace);
 
 	Pedersen::CleanupCommitments(commitmentPointers);
+
+	if (result == 1)
+	{
+		for (const Commitment& commitment : commitments)
+		{
+			m_cache.AddToCache(commitment);
+		}
+	}
 
 	return result == 1;
 }
@@ -124,6 +142,7 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 
 	if (result == 1)
 	{
+		proofBytes.resize(proofLen);
 		return std::make_unique<RangeProof>(RangeProof(std::move(proofBytes)));
 	}
 

@@ -1,7 +1,3 @@
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
 #include "WalletDBImpl.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
@@ -215,7 +211,7 @@ bool WalletDB::AddOutputs(const std::string& username, const SecretKey& masterSe
 
 		Serializer serializer;
 		output.Serialize(serializer);
-		const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "OUTPUT", serializer.GetBytes());
+		const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "OUTPUT", serializer.GetSecureBytes());
 
 		const Slice key(keyStr);
 		const Slice value((const char*)encrypted.data(), encrypted.size());
@@ -238,9 +234,10 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 		if (iter->key().starts_with(prefix))
 		{
 			const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
-			const std::vector<unsigned char> decrypted = Decrypt(masterSeed, "OUTPUT", encrypted);
+			const SecureVector decrypted = Decrypt(masterSeed, "OUTPUT", encrypted);
+			const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
 
-			ByteBuffer byteBuffer(decrypted);
+			ByteBuffer byteBuffer(decryptedUnsafe);
 			outputs.emplace_back(OutputData::Deserialize(byteBuffer));
 		}
 	}
@@ -255,7 +252,7 @@ bool WalletDB::AddTransaction(const std::string& username, const SecretKey& mast
 
 	Serializer serializer;
 	walletTx.Serialize(serializer);
-	const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "WALLET_TX", serializer.GetBytes());
+	const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "WALLET_TX", serializer.GetSecureBytes());
 	const Slice value((const char*)encrypted.data(), encrypted.size());
 
 	const Status updateStatus = m_pDatabase->Put(WriteOptions(), m_pTxHandle, key, value);
@@ -282,9 +279,10 @@ std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, con
 		if (iter->key().starts_with(prefix))
 		{
 			const std::vector<unsigned char> encrypted(iter->value().data(), iter->value().data() + iter->value().size());
-			const std::vector<unsigned char> decrypted = Decrypt(masterSeed, "WALLET_TX", encrypted);
+			const SecureVector decrypted = Decrypt(masterSeed, "WALLET_TX", encrypted);
+			const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
 
-			ByteBuffer byteBuffer(decrypted);
+			ByteBuffer byteBuffer(decryptedUnsafe);
 			walletTransactions.emplace_back(WalletTx::Deserialize(byteBuffer));
 		}
 	}
@@ -369,15 +367,22 @@ std::string WalletDB::CombineKeyWithUsername(const std::string& username, const 
 	return GetUsernamePrefix(username) + key;
 }
 
-std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& bytes)
+SecretKey WalletDB::CreateSecureKey(const SecretKey& masterSeed, const std::string& dataType)
+{
+	SecureVector seedWithNonce(masterSeed.data(), masterSeed.data() + masterSeed.size());
+
+	Serializer nonceSerializer;
+	nonceSerializer.AppendVarStr(dataType);
+	seedWithNonce.insert(seedWithNonce.end(), nonceSerializer.GetBytes().begin(), nonceSerializer.GetBytes().end());
+
+	return Crypto::Blake2b((const std::vector<unsigned char>&)seedWithNonce); // TODO: Does this actually work?
+}
+
+std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const std::string& dataType, const SecureVector& bytes)
 {
 	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
 	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
-
-	Serializer keySerializer;
-	keySerializer.AppendBigInteger(masterSeed.GetBytes());
-	keySerializer.AppendVarStr(dataType);
-	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
+	const SecretKey key = CreateSecureKey(masterSeed, dataType);
 
 	const std::vector<unsigned char> encryptedBytes = Crypto::AES256_Encrypt(bytes, key, iv);
 
@@ -388,7 +393,7 @@ std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const 
 	return serializer.GetBytes();
 }
 
-std::vector<unsigned char> WalletDB::Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
+SecureVector WalletDB::Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
 {
 	ByteBuffer byteBuffer(encrypted);
 
@@ -400,11 +405,7 @@ std::vector<unsigned char> WalletDB::Decrypt(const SecretKey& masterSeed, const 
 
 	const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
 	const std::vector<unsigned char> encryptedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
-
-	Serializer keySerializer;
-	keySerializer.AppendBigInteger(masterSeed.GetBytes());
-	keySerializer.AppendVarStr(dataType);
-	const Hash key = Crypto::Blake2b(keySerializer.GetBytes());
+	const SecretKey key = CreateSecureKey(masterSeed, dataType);
 
 	return Crypto::AES256_Decrypt(encryptedBytes, key, iv);
 }

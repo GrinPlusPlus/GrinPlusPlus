@@ -12,6 +12,7 @@ static const uint8_t WALLET_TX_DATA_FORMAT = 0;
 class WalletTx
 {
 public:
+	// TODO: Save Slate messages
 	WalletTx(
 		const uint32_t walletTxId,
 		const EWalletTxType type,

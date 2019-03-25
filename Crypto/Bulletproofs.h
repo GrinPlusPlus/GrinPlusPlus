@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BulletProofsCache.h"
+
 #include <Crypto/Commitment.h>
 #include <Crypto/RangeProof.h>
 #include <Crypto/BlindingFactor.h>
@@ -27,4 +29,5 @@ private:
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;
 	secp256k1_bulletproof_generators* m_pGenerators;
+	mutable BulletProofsCache m_cache;
 };

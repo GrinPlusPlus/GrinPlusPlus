@@ -3,10 +3,6 @@
 #include <Net/Socket.h>
 #include <optional>
 
-// Forward Declarations
-typedef unsigned long long SOCKET;
-typedef struct sockaddr SOCKADDR;
-
 class SocketFactory
 {
 public:

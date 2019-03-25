@@ -45,6 +45,13 @@ bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecretKey& mas
 		return false;
 	}
 
+	// Verify slate message signatures
+	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
+	{
+		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Failed to verify message signatures for slate " + uuids::to_string(slate.GetSlateId()));
+		return false;
+	}
+
 	// TODO: Verify fees
 
 	// Generate message

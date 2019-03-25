@@ -2,6 +2,7 @@
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/TimeUtil.h>
+#include <Crypto/Crypto.h>
 
 Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 {

@@ -1,6 +1,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
 #include <Config/Genesis.h>
+#include <Crypto/Crypto.h>
 
 TEST_CASE("Mainnet Genesis")
 {

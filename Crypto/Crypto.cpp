@@ -1,7 +1,6 @@
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
 
-#include "BulletProofsCache.h"
 #include "Blake2.h"
 #include "sha256.h"
 #include "ripemd160.h"
@@ -21,8 +20,6 @@
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "ws2_32.lib")
 #endif
-
-BulletProofsCache BULLETPROOFS_CACHE; // TODO: Belongs in Bulletproofs
 
 CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
 {
@@ -162,30 +159,7 @@ std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitm
 
 bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
 {
-	std::vector<std::pair<Commitment, RangeProof>> filteredRangeProofs;
-	for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
-	{
-		if (!BULLETPROOFS_CACHE.WasAlreadyVerified(rangeProof.first))
-		{
-			filteredRangeProofs.emplace_back(rangeProof);
-		}
-	}
-
-	if (filteredRangeProofs.empty())
-	{
-		return true;
-	}
-
-	const bool verified = Bulletproofs::GetInstance().VerifyBulletproofs(filteredRangeProofs);
-	if (verified)
-	{
-		for (const std::pair<Commitment, RangeProof>& rangeProof : rangeProofs)
-		{
-			BULLETPROOFS_CACHE.AddToCache(rangeProof.first);
-		}
-	}
-
-	return verified;
+	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);;
 }
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)
@@ -196,14 +170,14 @@ uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vect
 	return siphash24(&key[0], &data[0], data.size());
 }
 
-std::vector<unsigned char> Crypto::AES256_Encrypt(const std::vector<unsigned char>& input, const CBigInteger<32>& key, const CBigInteger<16>& iv)
+std::vector<unsigned char> Crypto::AES256_Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv)
 {   
 	std::vector<unsigned char> ciphertext;
 
 	// max ciphertext len for a n bytes of plaintext is n + AES_BLOCKSIZE bytes
 	ciphertext.resize(input.size() + AES_BLOCKSIZE);
 
-	AES256CBCEncrypt enc(key.GetData().data(), iv.GetData().data(), true);
+	AES256CBCEncrypt enc(key.data(), iv.GetData().data(), true);
 	const size_t nLen = enc.Encrypt(&input[0], input.size(), ciphertext.data());
 	if (nLen < input.size())
 	{
@@ -215,17 +189,17 @@ std::vector<unsigned char> Crypto::AES256_Encrypt(const std::vector<unsigned cha
 	return ciphertext ;
 }
 
-std::vector<unsigned char> Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const CBigInteger<32>& key, const CBigInteger<16>& iv)
+SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv)
 {    
-	std::vector<unsigned char> plaintext;
+	SecureVector plaintext;
 
 	// plaintext will always be equal to or lesser than length of ciphertext
 	size_t nLen = ciphertext.size();
 
 	plaintext.resize(nLen);
 
-	AES256CBCDecrypt dec(key.GetData().data(), iv.GetData().data(), true);
-	nLen = dec.Decrypt(ciphertext.data(), ciphertext.size(), &plaintext[0]);
+	AES256CBCDecrypt dec(key.data(), iv.GetData().data(), true);
+	nLen = dec.Decrypt(ciphertext.data(), ciphertext.size(), plaintext.data());
 	if (nLen == 0)
 	{
 		throw CryptoException();
@@ -236,14 +210,14 @@ std::vector<unsigned char> Crypto::AES256_Decrypt(const std::vector<unsigned cha
 	return plaintext;
 }
 
-CBigInteger<64> Crypto::Scrypt(const std::vector<unsigned char>& input, const std::vector<unsigned char>& salt) // TODO: Use SecureVectors
+CBigInteger<64> Crypto::Scrypt(const SecureVector& input, const std::vector<unsigned char>& salt) // TODO: Return SecureVector
 {
 	const uint32_t N = 16384;// TODO: Before releasing, use 65536 (2^16) at least. Could potentially calculate this dynamically.
 	const uint32_t r = 8;
 	const uint32_t p = 1;
 
 	std::vector<unsigned char> buffer(64);
-	if (crypto_scrypt(&input[0], input.size(), &salt[0], salt.size(), N, r, p, &buffer[0], buffer.size()) == 0)
+	if (crypto_scrypt(input.data(), input.size(), salt.data(), salt.size(), N, r, p, buffer.data(), buffer.size()) == 0)
 	{
 		return CBigInteger<64>(&buffer[0]);
 	}

@@ -72,6 +72,23 @@ public:
 		return true;
 	}
 
+	static bool VerifyMessageSignatures(const std::vector<ParticipantData>& participants)
+	{
+		for (const ParticipantData& participant : participants)
+		{
+			if (participant.GetMessageText().has_value())
+			{
+				const Hash message = Crypto::Blake2b(std::vector<unsigned char>(participant.GetMessageText().value().cbegin(), participant.GetMessageText().value().cend()));
+				if (!Crypto::VerifyMessageSignature(participant.GetMessageSignature().value(), participant.GetPublicBlindExcess(), message))
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
 	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const std::vector<ParticipantData>& participants, const Hash& message)
 	{
 		std::vector<PublicKey> pubKeys;

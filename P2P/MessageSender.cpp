@@ -1,8 +1,5 @@
 #include "MessageSender.h"
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <WinSock2.h>
-
 MessageSender::MessageSender(const Config& config)
 	: m_config(config)
 {

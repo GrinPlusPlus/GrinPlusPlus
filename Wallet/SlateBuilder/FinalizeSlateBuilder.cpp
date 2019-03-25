@@ -17,6 +17,13 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secr
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
+	// Verify slate message signatures
+	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
+	{
+		LoggerAPI::LogError("FinalizeSlateBuilder::Finalize - Failed to verify message signatures for slate " + uuids::to_string(slate.GetSlateId()));
+		return std::unique_ptr<Slate>(nullptr);
+	}
+
 	// Verify partial signatures
 	const Hash message = kernels.front().GetSignatureMessage();
 	if (!SignatureUtil::VerifyPartialSignatures(finalSlate.GetParticipantData(), message))

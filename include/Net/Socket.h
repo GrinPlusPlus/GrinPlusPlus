@@ -3,8 +3,7 @@
 #include <Net/SocketAddress.h>
 #include <inttypes.h>
 #include <vector>
-
-typedef unsigned __int64 SOCKET;
+#include <WinSock2.h>
 
 class Socket
 {

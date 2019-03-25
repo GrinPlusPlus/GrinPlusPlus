@@ -10,4 +10,4 @@ file(GLOB NET_SRC
 
 add_library(${TARGET_NAME} STATIC ${NET_SRC})
 
-target_link_libraries(${TARGET_NAME})
+target_link_libraries(${TARGET_NAME} ws2_32)

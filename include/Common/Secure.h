@@ -4,16 +4,8 @@
 #include <vector>
 
 #if defined(_MSC_VER)
-#ifndef NOMINMAX
-#define NOMINMAX
-#define NOMINMAX_DEFINED
-#endif
-
-#include <Windows.h> // For SecureZeroMemory.
-
-#ifdef NOMINMAX_DEFINED
-#undef NOMINMAX
-#endif
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #endif
 
 /* Compilers have a bad habit of removing "superfluous" memset calls that

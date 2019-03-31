@@ -8,6 +8,7 @@
 
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB)
@@ -25,10 +26,12 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 {
 	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
-	if (m_pWalletDB->CreateWallet(username, encryptedSeed))
+
+	const std::string usernameLower = StringUtil::ToLower(username);
+	if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 	{
 		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData(), std::make_optional(password));
-		SessionToken token = m_sessionManager.Login(username, walletSeed);
+		SessionToken token = m_sessionManager.Login(usernameLower, walletSeed);
 
 		return std::make_optional<std::pair<SecureString, SessionToken>>(std::make_pair<SecureString, SessionToken>(std::move(walletWords), std::move(token)));
 	}
@@ -45,9 +48,10 @@ std::optional<SessionToken> WalletManager::Restore(const std::string& username, 
 		{
 			const SecretKey walletSeed(entropyOpt.value());
 			const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
-			if (m_pWalletDB->CreateWallet(username, encryptedSeed))
+			const std::string usernameLower = StringUtil::ToLower(username);
+			if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 			{
-				return std::make_optional<SessionToken>(m_sessionManager.Login(username, walletSeed));
+				return std::make_optional<SessionToken>(m_sessionManager.Login(usernameLower, walletSeed));
 			}
 		}
 	}
@@ -71,7 +75,8 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
 {
-	std::unique_ptr<SessionToken> pToken = m_sessionManager.Login(username, password);
+	const std::string usernameLower = StringUtil::ToLower(username);
+	std::unique_ptr<SessionToken> pToken = m_sessionManager.Login(usernameLower, password);
 	if (pToken != nullptr)
 	{
 		//auto asyncCheckForOutputs =

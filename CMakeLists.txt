@@ -10,8 +10,8 @@ HunterGate(
 )
 
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 1)
-set(VERSION_REVISION 1)
+set(VERSION_MINOR 2)
+set(VERSION_REVISION 0)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
@@ -66,6 +66,15 @@ set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEB
 # OpenSSL
 hunter_add_package(OpenSSL)
 find_package(OpenSSL REQUIRED)
+
+#JsonCPP
+hunter_add_package(jsoncpp)
+find_package(jsoncpp CONFIG REQUIRED)
+set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
+
+#websocketpp
+hunter_add_package(websocketpp)
+find_package(websocketpp CONFIG REQUIRED)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

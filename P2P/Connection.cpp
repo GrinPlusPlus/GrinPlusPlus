@@ -85,16 +85,36 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 	{
 		std::unique_lock<std::mutex> lockGuard(connection.m_peerMutex);
 
-		bool messageSentOrReceived = false;
-
 		try
 		{
+			bool messageSentOrReceived = false;
+
 			// Check for received messages and if there is a new message, process it.
 			std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, MessageRetriever::NON_BLOCKING);
 			if (pRawMessage.get() != nullptr)
 			{
 				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
 				messageSentOrReceived = true;
+			}
+
+			// Send the next message in the queue, if one exists.
+			std::unique_lock<std::mutex> sendLockGuard(connection.m_sendMutex);
+			if (!connection.m_sendQueue.empty())
+			{
+				std::unique_ptr<IMessage> pMessageToSend(connection.m_sendQueue.front());
+				connection.m_sendQueue.pop();
+
+				MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
+
+				messageSentOrReceived = true;
+			}
+
+			sendLockGuard.unlock();
+			lockGuard.unlock();
+
+			if (!messageSentOrReceived)
+			{
+				ThreadUtil::SleepFor(std::chrono::milliseconds(5), connection.m_terminate);
 			}
 		}
 		catch (const DeserializationException&)
@@ -107,25 +127,10 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Socket exception occurred.");
 			break;
 		}
-
-		// Send the next message in the queue, if one exists.
-		std::unique_lock<std::mutex> sendLockGuard(connection.m_sendMutex);
-		if (!connection.m_sendQueue.empty())
+		catch (const std::exception& e)
 		{
-			std::unique_ptr<IMessage> pMessageToSend(connection.m_sendQueue.front());
-			connection.m_sendQueue.pop();
-
-			MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
-
-			messageSentOrReceived = true;
-		}
-
-		sendLockGuard.unlock();
-		lockGuard.unlock();
-
-		if (!messageSentOrReceived)
-		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(5), connection.m_terminate);
+			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Unknown exception occurred: " + std::string(e.what()));
+			break;
 		}
 	}
 

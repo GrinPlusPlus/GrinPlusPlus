@@ -14,7 +14,6 @@
 #include <Wallet/Slate.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
-#include <Wallet/Grinbox/GrinboxAddress.h>
 #include <Common/Secure.h>
 
 #ifdef MW_WALLET

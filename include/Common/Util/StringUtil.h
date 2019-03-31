@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdio>
 #include <vector>
+#include <locale>
 
 #pragma warning(disable : 4840)
 
@@ -61,5 +62,18 @@ namespace StringUtil
 		}
 
 		return tokens;
+	}
+
+	static std::string ToLower(const std::string& str)
+	{
+		std::locale loc;
+		std::string output = "";
+
+		for (auto elem : str)
+		{
+			output += std::tolower(elem, loc);
+		}
+
+		return output;
 	}
 }

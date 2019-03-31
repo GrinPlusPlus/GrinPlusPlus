@@ -12,18 +12,51 @@ WalletRestorer::WalletRestorer(const Config& config, const INodeClient& nodeClie
 
 }
 
-bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet) const
+bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
 
+	uint64_t nextLeafIndex = fromGenesis ? 0 : wallet.GetRestoreLeafIndex() + 1;
+
 	std::vector<OutputData> walletOutputs;
-	uint64_t nextLeafIndex = 0;
 	while (true)
 	{
+
+		//const std::vector<BlockWithOutputs> blocksWithOutputs = m_nodeClient.GetBlockOutputs(nextHeight, restoreHeight);
+		//if (blocksWithOutputs.empty())
+		//{
+		//	return false;
+		//}
+
+		//for (const BlockWithOutputs& block : blocksWithOutputs)
+		//{
+		//	for (const OutputDisplayInfo& output : block.GetOutputs())
+		//	{
+		//		std::unique_ptr<OutputData> pOutputData = GetWalletOutput(masterSeed, output, restoreHeight);
+		//		if (pOutputData != nullptr)
+		//		{
+		//			walletOutputs.emplace_back(*pOutputData);
+		//		}
+		//	}
+
+		//	nextHeight = block.GetBlockIdentifier().GetHeight() + 1;
+		//}
+
+		//if (nextHeight > restoreHeight)
+		//{
+		//	break;
+		//}
+
 		std::unique_ptr<OutputRange> pOutputRange = m_nodeClient.GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
 		if (pOutputRange == nullptr)
 		{
 			return false;
+		}
+
+		// No new outputs since last restore
+		if (pOutputRange->GetLastRetrievedIndex() == 0)
+		{
+			return true;
 		}
 
 		const std::vector<OutputDisplayInfo>& outputs = pOutputRange->GetOutputs();
@@ -45,10 +78,10 @@ bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet) const
 
 	if (walletOutputs.empty())
 	{
-		return true;
+		return wallet.SetRestoreLeafIndex(nextLeafIndex - 1);
 	}
 
-	return SaveWalletOutputs(masterSeed, wallet, walletOutputs);
+	return SaveWalletOutputs(masterSeed, wallet, walletOutputs, nextLeafIndex - 1);
 }
 
 std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const SecretKey& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
@@ -62,8 +95,9 @@ std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const SecretKey& mas
 		const uint64_t amount = pRewoundProof->GetAmount();
 		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
 		const uint64_t mmrIndex = outputDisplayInfo.GetLocation().GetMMRIndex();
+		const uint64_t blockHeight = outputDisplayInfo.GetLocation().GetBlockHeight();
 
-		return std::make_unique<OutputData>(std::move(keyChainPath), std::move(blindingFactor), std::move(txOutput), amount, status, std::make_optional<uint64_t>(mmrIndex));
+		return std::make_unique<OutputData>(std::move(keyChainPath), std::move(blindingFactor), std::move(txOutput), amount, status, std::make_optional<uint64_t>(mmrIndex), std::make_optional<uint64_t>(blockHeight));
 	}
 
 	return std::unique_ptr<OutputData>(nullptr);
@@ -88,7 +122,7 @@ EOutputStatus WalletRestorer::DetermineStatus(const OutputDisplayInfo& outputDis
 	return EOutputStatus::SPENDABLE;
 }
 
-bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs) const
+bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs, const uint64_t restoreLeafIndex) const
 {
 	// TODO: Restore nextChildIndices
 	std::vector<OutputData> outputsToAdd;
@@ -102,7 +136,13 @@ bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wall
 		}
 	}
 
-	return wallet.AddRestoredOutputs(masterSeed, outputsToAdd);
+	bool added = wallet.AddRestoredOutputs(masterSeed, outputsToAdd);
+	if (!added)
+	{
+		return false;
+	}
+
+	return wallet.SetRestoreLeafIndex(restoreLeafIndex);
 }
 
 bool WalletRestorer::IsNewOutput(const SecretKey& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const

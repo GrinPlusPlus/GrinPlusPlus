@@ -139,8 +139,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecretKey& master
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
 		std::chrono::system_clock::now(),
 		std::nullopt,
-		(uint32_t)slate.GetTransaction().GetBody().GetInputs().size(), // TODO: Why is this needed?
-		(uint32_t)slate.GetTransaction().GetBody().GetOutputs().size(), // TODO: Why is this needed?
+		std::nullopt,
 		slate.GetAmount(),
 		0,
 		std::optional<uint64_t>(slate.GetFee()),

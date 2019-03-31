@@ -10,7 +10,7 @@ class Logger
 public:
 	static Logger& GetInstance();
 
-	void StartLogger(const std::string& directory);
+	void StartLogger(const std::string& directory, const spdlog::level::level_enum& logLevel);
 	void Log(const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
 

@@ -1,5 +1,6 @@
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
+#include <Infrastructure/Logger.h>
 
 #include "Blake2.h"
 #include "sha256.h"
@@ -13,6 +14,7 @@
 // Secp256k1
 #include "AggSig.h"
 #include "Bulletproofs.h"
+#include "ECDH.h"
 #include "Pedersen.h"
 #include "PublicKeys.h"
 
@@ -210,24 +212,33 @@ SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext
 	return plaintext;
 }
 
-CBigInteger<64> Crypto::Scrypt(const SecureVector& input, const std::vector<unsigned char>& salt) // TODO: Return SecureVector
+SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned char>& salt)
 {
-	const uint32_t N = 16384;// TODO: Before releasing, use 65536 (2^16) at least. Could potentially calculate this dynamically.
-	const uint32_t r = 8;
-	const uint32_t p = 1;
+	const uint32_t N = 131072;
+	const uint32_t r = 16;
+	const uint32_t p = 2;
 
-	std::vector<unsigned char> buffer(64);
-	if (crypto_scrypt(input.data(), input.size(), salt.data(), salt.size(), N, r, p, buffer.data(), buffer.size()) == 0)
+	SecureVector buffer(64);
+	if (crypto_scrypt((const unsigned char*)password.data(), password.size(), salt.data(), salt.size(), N, r, p, buffer.data(), buffer.size()) == 0)
 	{
-		return CBigInteger<64>(&buffer[0]);
+		std::vector<unsigned char> tmp(32, 0);
+
+		blake2b(&tmp[0], 32, &buffer[0], buffer.size(), nullptr, 0);
+
+		return SecretKey(CBigInteger<32>(&tmp[0]));
 	}
 
-	return CBigInteger<64>();
+	throw CryptoException();
 }
 
 std::unique_ptr<PublicKey> Crypto::CalculatePublicKey(const SecretKey& privateKey)
 {
 	return PublicKeys::GetInstance().CalculatePublicKey(privateKey);
+}
+
+std::unique_ptr<SecretKey> Crypto::ECDH(const SecretKey& privateKey, const PublicKey& publicKey)
+{
+	return ECDH::GetInstance().CalculateSharedSecret(privateKey, publicKey);
 }
 
 std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)

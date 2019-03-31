@@ -44,7 +44,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
+			LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
 		}
 
 		return returnStatus;

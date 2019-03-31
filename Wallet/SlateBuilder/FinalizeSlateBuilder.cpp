@@ -68,7 +68,7 @@ bool FinalizeSlateBuilder::AddPartialSignature(Wallet& wallet, const SecretKey& 
 		return false;
 	}
 
-	std::vector<ParticipantData> participants = slate.GetParticipantData();
+	std::vector<ParticipantData>& participants = slate.GetParticipantData();
 	for (ParticipantData& participant : participants)
 	{
 		if (participant.GetParticipantId() == 0)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Wallet.h"
+#include "LockedWallet.h"
 
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
@@ -21,8 +22,8 @@ public:
 	void Logout(const SessionToken& token);
 
 	SecretKey GetSeed(const SessionToken& token) const;
-	Wallet& GetWallet(const SessionToken& token);
-	const Wallet& GetWallet(const SessionToken& token) const;
+	LockedWallet GetWallet(const SessionToken& token);
+	//const Wallet& GetWallet(const SessionToken& token) const;
 
 private:
 	struct LoggedInSession
@@ -38,6 +39,7 @@ private:
 			delete m_pWallet;
 		}
 
+		std::mutex m_mutex;
 		Wallet* m_pWallet;
 		std::vector<unsigned char> m_encryptedSeedWithCS;
 	};

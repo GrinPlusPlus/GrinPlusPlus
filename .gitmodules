@@ -20,3 +20,9 @@
 [submodule "include/thirdparty/lru-cache"]
 	path = include/thirdparty/lru-cache
 	url = https://github.com/goldsborough/lru-cache.git
+[submodule "Server/thirdparty/i2psam"]
+	path = Server/thirdparty/i2psam
+	url = https://github.com/i2p/i2psam.git
+[submodule "Crypto/balloon"]
+	path = Crypto/balloon
+	url = https://github.com/henrycg/balloon.git

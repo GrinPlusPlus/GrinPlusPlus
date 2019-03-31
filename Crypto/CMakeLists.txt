@@ -21,6 +21,7 @@ file(GLOB CRYPTO_SRC
     "Blake2b.cpp"
 	"Bulletproofs.cpp"
 	"Crypto.cpp"
+	"ECDH.cpp"
 	"sha256.cpp"
 	"sha512.cpp"
 	"hmac_sha256.cpp"
@@ -39,7 +40,7 @@ add_library(${TARGET_NAME} SHARED ${CRYPTO_SRC})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
 
 add_dependencies(${TARGET_NAME} Infrastructure)
-target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure)
+target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure OpenSSL::Crypto)
 
 # Tests
 file(GLOB CRYPTO_TESTS_SRC
@@ -49,4 +50,4 @@ file(GLOB CRYPTO_TESTS_SRC
 add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO)
 add_dependencies(${TEST_TARGET_NAME} Infrastructure)
-target_link_libraries(${TEST_TARGET_NAME} Infrastructure)
+target_link_libraries(${TEST_TARGET_NAME} Infrastructure OpenSSL::Crypto)

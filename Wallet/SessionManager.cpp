@@ -96,28 +96,28 @@ SecretKey SessionManager::GetSeed(const SessionToken& token) const
 	throw SessionTokenException();
 }
 
-Wallet& SessionManager::GetWallet(const SessionToken& token)
+LockedWallet SessionManager::GetWallet(const SessionToken& token)
 {
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
-		const LoggedInSession* pSession = iter->second;
+		LoggedInSession* pSession = iter->second;
 
-		return *(pSession->m_pWallet);
+		return LockedWallet(pSession->m_mutex, *(pSession->m_pWallet));
 	}
 
 	throw SessionTokenException();
 }
 
-const Wallet& SessionManager::GetWallet(const SessionToken& token) const
-{
-	auto iter = m_sessionsById.find(token.GetSessionId());
-	if (iter != m_sessionsById.end())
-	{
-		const LoggedInSession* pSession = iter->second;
-
-		return *(pSession->m_pWallet);
-	}
-
-	throw SessionTokenException();
-}
+//const Wallet& SessionManager::GetWallet(const SessionToken& token) const
+//{
+//	auto iter = m_sessionsById.find(token.GetSessionId());
+//	if (iter != m_sessionsById.end())
+//	{
+//		const LoggedInSession* pSession = iter->second;
+//
+//		return *(pSession->m_pWallet);
+//	}
+//
+//	throw SessionTokenException();
+//}

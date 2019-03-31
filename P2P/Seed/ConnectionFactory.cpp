@@ -40,6 +40,7 @@ Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection dir
 			Connection* pConnection = PerformHandshake(socket, peer, direction);
 			if (pConnection != nullptr)
 			{
+				LoggerAPI::LogDebug("ConnectionFactory::CreateConnection - Successfully connected to " + socket.GetSocketAddress().Format());
 				// This will start the message processing loop.
 				pConnection->Connect();
 
@@ -48,7 +49,7 @@ Connection* ConnectionFactory::CreateConnection(Peer& peer, const EDirection dir
 		}
 		catch (const DeserializationException&)
 		{
-			// Do nothing
+			LoggerAPI::LogDebug("ConnectionFactory::CreateConnection - Failed to deserialize handshake from " + socket.GetSocketAddress().Format());
 		}
 
 		socket.CloseSocket();
@@ -67,7 +68,7 @@ Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, 
 		if (bHandMessageSent)
 		{
 			// Get Shake Message
-			std::unique_ptr<RawMessage> receivedShakeMessage = MessageRetriever(m_config).RetrieveMessage(connectedPeer, MessageRetriever::BLOCKING);
+			std::unique_ptr<RawMessage> receivedShakeMessage = MessageRetriever(m_config, m_connectionManager).RetrieveMessage(connectedPeer, MessageRetriever::BLOCKING);
 
 			if (receivedShakeMessage.get() != nullptr && receivedShakeMessage->GetMessageHeader().GetMessageType() == MessageTypes::Shake)
 			{
@@ -81,12 +82,17 @@ Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, 
 
 				return new Connection(m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
 			}
+			else
+			{
+				LoggerAPI::LogDebug("ConnectionFactory::PerformHandshake - Shake message not received from " + connectedPeer.GetSocket().GetSocketAddress().Format());
+				return nullptr;
+			}
 		}
 	}
 	else
 	{
 		// Get Hand Message
-		std::unique_ptr<RawMessage> receivedHandMessage = MessageRetriever(m_config).RetrieveMessage(connectedPeer, MessageRetriever::BLOCKING);
+		std::unique_ptr<RawMessage> receivedHandMessage = MessageRetriever(m_config, m_connectionManager).RetrieveMessage(connectedPeer, MessageRetriever::BLOCKING);
 		if (receivedHandMessage != nullptr && receivedHandMessage->GetMessageHeader().GetMessageType() == MessageTypes::Hand)
 		{
 			ByteBuffer byteBuffer(receivedHandMessage->GetPayload());
@@ -104,11 +110,16 @@ Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, 
 				{
 					return new Connection(m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
 				}
+				else
+				{
+					LoggerAPI::LogDebug("ConnectionFactory::PerformHandshake - Failed to transmit shake message to " + connectedPeer.GetSocket().GetSocketAddress().Format());
+					return nullptr;
+				}
 			}
 		}
 	}
 
-
+	LoggerAPI::LogDebug("ConnectionFactory::PerformHandshake - Unable to connect to " + connectedPeer.GetSocket().GetSocketAddress().Format());
 	return nullptr;
 }
 

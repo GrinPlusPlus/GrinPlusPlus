@@ -26,5 +26,6 @@ private:
 	static int Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 	static int Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 	static int PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json);
+	static int Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 	static int Cancel(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 };

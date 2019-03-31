@@ -111,7 +111,7 @@ bool WalletDB::CreateWallet(const std::string& username, const EncryptedSeed& en
 		return false;
 	}
 
-	return SaveMetadata(username, UserMetadata(0, 0));
+	return SaveMetadata(username, UserMetadata(0, 0, 0));
 }
 
 std::unique_ptr<EncryptedSeed> WalletDB::LoadWalletSeed(const std::string& username) const
@@ -299,7 +299,7 @@ uint32_t WalletDB::GetNextTransactionId(const std::string& username)
 	}
 
 	const uint32_t nextTxId = pUserMetadata->GetNextTxId();
-	const UserMetadata updatedMetadata(nextTxId + 1, pUserMetadata->GetRefreshBlockHeight());
+	const UserMetadata updatedMetadata(nextTxId + 1, pUserMetadata->GetRefreshBlockHeight(), pUserMetadata->GetRestoreLeafIndex());
 	if (!SaveMetadata(username, updatedMetadata))
 	{
 		throw WalletStoreException();
@@ -327,7 +327,29 @@ bool WalletDB::UpdateRefreshBlockHeight(const std::string& username, const uint6
 		throw WalletStoreException();
 	}
 
-	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), refreshBlockHeight));
+	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), refreshBlockHeight, pUserMetadata->GetRestoreLeafIndex()));
+}
+
+uint64_t WalletDB::GetRestoreLeafIndex(const std::string& username) const
+{
+	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
+	if (pUserMetadata == nullptr)
+	{
+		throw WalletStoreException();
+	}
+
+	return pUserMetadata->GetRestoreLeafIndex();
+}
+
+bool WalletDB::UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex)
+{
+	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
+	if (pUserMetadata == nullptr)
+	{
+		throw WalletStoreException();
+	}
+
+	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), pUserMetadata->GetRefreshBlockHeight(), lastLeafIndex));
 }
 
 std::unique_ptr<UserMetadata> WalletDB::GetMetadata(const std::string& username) const

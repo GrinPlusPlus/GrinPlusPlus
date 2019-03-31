@@ -13,6 +13,7 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 	WriteP2P(root, config.GetP2PConfig());
 	WriteDandelion(root, config.GetDandelionConfig());
 	WriteServer(root, config.GetServerConfig());
+	WriteLogLevel(root, config.GetLogLevel());
 
 	std::ofstream file(configPath, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!file.is_open())
@@ -111,4 +112,16 @@ void ConfigWriter::WriteServer(Json::Value& root, const ServerConfig& serverConf
 	serverJSON[ConfigProps::Server::REST_API_PORT] = restAPIPortValue;
 
 	root[ConfigProps::Server::SERVER] = serverJSON;
+}
+
+void ConfigWriter::WriteLogLevel(Json::Value& root, const std::string& logLevel) const
+{
+	Json::Value loggerJSON;
+
+	Json::Value logLevelValue = Json::Value(logLevel);
+	const std::string logLevelComment = "/* Log level. */";
+	logLevelValue.setComment(logLevelComment, Json::commentBefore);
+	loggerJSON[ConfigProps::Logger::LOGGER] = logLevelValue;
+
+	root[ConfigProps::Logger::LOGGER] = loggerJSON;
 }

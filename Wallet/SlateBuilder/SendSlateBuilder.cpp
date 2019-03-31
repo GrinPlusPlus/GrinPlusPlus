@@ -144,8 +144,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(Wallet& wallet, const std::vector<Outpu
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
 		std::chrono::system_clock::now(),
 		std::nullopt,
-		(uint32_t)slate.GetTransaction().GetBody().GetInputs().size(), // TODO: Why is this needed?
-		(uint32_t)slate.GetTransaction().GetBody().GetOutputs().size(), // TODO: Why is this needed?
+		std::nullopt,
 		amountCredited,
 		amountDebited,
 		std::make_optional<uint64_t>(slate.GetFee()),

@@ -32,6 +32,7 @@ public:
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 
 	size_t GetNumberOfActiveConnections() const;
+	std::pair<size_t, size_t> GetNumConnectionsWithDirection() const;
 	bool IsConnected(const IPAddress& address) const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
 	std::vector<ConnectedPeer> GetConnectedPeers() const;

@@ -31,6 +31,11 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Cancel(pConnection, walletManager, token);
 	}
+	else if (action == "repost_tx")
+	{
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return Repost(pConnection, walletManager, token);
+	}
 
 	std::optional<Json::Value> requestBodyOpt = RestUtil::GetRequestBody(pConnection);
 	if (!requestBodyOpt.has_value())
@@ -166,7 +171,8 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 
 int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
-	if (walletManager.CheckForOutputs(token))
+	std::optional<std::string> fromGenesis = RestUtil::GetQueryParam(pConnection, "fromGenesis");
+	if (walletManager.CheckForOutputs(token, fromGenesis.has_value()))
 	{
 		return RestUtil::BuildSuccessResponse(pConnection, "");
 	}
@@ -198,7 +204,9 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 		return RestUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
-	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountJSON.asUInt64(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()));
+	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
+
+	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountJSON.asUInt64(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
 	if (pSlate != nullptr)
 	{
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());
@@ -256,6 +264,27 @@ int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, co
 	else
 	{
 		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+	}
+}
+
+int OwnerPostAPI::Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+{
+	std::optional<std::string> idOpt = RestUtil::GetQueryParam(pConnection, "id");
+	if (idOpt.has_value())
+	{
+		const uint32_t id = std::stoul(idOpt.value());
+		if (walletManager.RepostByTxId(token, id))
+		{
+			return RestUtil::BuildSuccessResponse(pConnection, "");
+		}
+		else
+		{
+			return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		}
+	}
+	else
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "id missing");
 	}
 }
 

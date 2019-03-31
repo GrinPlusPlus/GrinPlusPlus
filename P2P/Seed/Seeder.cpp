@@ -95,7 +95,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 				}
 			}
 
-			ThreadUtil::SleepFor(std::chrono::milliseconds(100), seeder.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(20), seeder.m_terminate);
 		}
 		else
 		{

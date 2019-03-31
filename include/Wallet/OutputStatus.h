@@ -6,5 +6,6 @@ enum EOutputStatus
 	IMMATURE = 1,
 	NO_CONFIRMATIONS = 2,
 	SPENT = 3,
-	LOCKED = 4
+	LOCKED = 4,
+	CANCELED = 5
 };

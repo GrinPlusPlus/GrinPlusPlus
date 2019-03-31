@@ -11,7 +11,7 @@
 
 namespace LoggerAPI
 {
-	LOGGER_API void Initialize(const std::string& directory); // TODO: LogLevel
+	LOGGER_API void Initialize(const std::string& directory, const std::string& logLevel);
 
 	LOGGER_API void LogTrace(const std::string& message);
 	LOGGER_API void LogDebug(const std::string& message);

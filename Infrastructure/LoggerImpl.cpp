@@ -15,7 +15,7 @@ Logger::Logger()
 {
 }
 
-void Logger::StartLogger(const std::string& directory)
+void Logger::StartLogger(const std::string& directory, const spdlog::level::level_enum& logLevel)
 {
 	const std::string logPath = directory + "GrinPlusPlus.log";
 
@@ -23,7 +23,7 @@ void Logger::StartLogger(const std::string& directory)
 	m_pLogger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(2));
 	if (m_pLogger != nullptr)
 	{
-		m_pLogger->set_level(spdlog::level::level_enum::debug); // TODO: Load from config.
+		m_pLogger->set_level(logLevel);
 	}
 }
 
@@ -57,9 +57,16 @@ void Logger::Flush()
 
 namespace LoggerAPI
 {
-	LOGGER_API void Initialize(const std::string& directory)
+	LOGGER_API void Initialize(const std::string& directory, const std::string& logLevel)
 	{
-		Logger::GetInstance().StartLogger(directory);
+		spdlog::level::level_enum logLevelEnum = spdlog::level::level_enum::debug;
+		if (logLevel == "TRACE")
+		{
+			logLevelEnum = spdlog::level::level_enum::trace;
+		}
+
+		// TODO: Finish this.
+		Logger::GetInstance().StartLogger(directory, logLevelEnum);
 	}
 
 	LOGGER_API void LogTrace(const std::string& message)

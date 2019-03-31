@@ -16,4 +16,5 @@ private:
 	DandelionConfig ReadDandelion(const Json::Value& root) const;
 	WalletConfig ReadWalletConfig(const Json::Value& root, const EEnvironmentType environmentType, const std::string& dataPath) const;
 	ServerConfig ReadServerConfig(const Json::Value& root, const EEnvironmentType environmentType) const;
+	std::string ReadLogLevel(const Json::Value& root) const;
 };

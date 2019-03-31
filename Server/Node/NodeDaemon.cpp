@@ -22,7 +22,7 @@ NodeDaemon::NodeDaemon(const Config& config)
 
 INodeClient* NodeDaemon::Initialize()
 {
-	LoggerAPI::Initialize(m_config.GetLogDirectory());
+	LoggerAPI::Initialize(m_config.GetLogDirectory(), m_config.GetLogLevel());
 	m_pDatabase = DatabaseAPI::OpenDatabase(m_config);
 	m_pTxHashSetManager = new TxHashSetManager(m_config, m_pDatabase->GetBlockDB());
 	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, *m_pTxHashSetManager, m_pDatabase->GetBlockDB());

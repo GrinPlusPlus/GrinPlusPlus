@@ -37,6 +37,8 @@ public:
 	virtual uint32_t GetNextTransactionId(const std::string& username) override final;
 	virtual uint64_t GetRefreshBlockHeight(const std::string& username) const override final;
 	virtual bool UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight) override final;
+	virtual uint64_t GetRestoreLeafIndex(const std::string& username) const override final;
+	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) override final;
 
 private:
 	std::unique_ptr<UserMetadata> GetMetadata(const std::string& username) const;

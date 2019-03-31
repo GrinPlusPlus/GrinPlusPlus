@@ -38,9 +38,9 @@ public:
 	virtual const SyncStatus& GetSyncStatus() const = 0;
 
 	//
-	// Returns the number of peers the client is currently connected to.
+	// Returns the number of peers the client is currently connected to (inbound, outbound).
 	//
-	virtual size_t GetNumberOfConnectedPeers() const = 0;
+	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const = 0;
 
 	virtual std::vector<Peer> GetAllPeers() const = 0;
 

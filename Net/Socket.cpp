@@ -1,4 +1,5 @@
 #include <Net/Socket.h>
+#include <Net/SocketException.h>
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
@@ -121,9 +122,14 @@ bool Socket::HasReceivedData(const long timeoutMillis) const
 	timeout.tv_sec = 0;
 	timeout.tv_usec = timeoutMillis * 1000;
 
-	if (select(0, &readFDS, nullptr, nullptr, &timeout) > 0)
+	const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
+	if (result > 0)
 	{
 		return true;
+	}
+	else if (result < 0)
+	{
+		throw SocketException();
 	}
 
 	return false;

@@ -29,6 +29,10 @@ public:
 
 	std::vector<OutputData> RefreshOutputs(const SecretKey& masterSeed);
 	bool AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputs);
+	uint64_t GetRefreshHeight() const;
+	bool SetRefreshHeight(const uint64_t blockHeight);
+	uint64_t GetRestoreLeafIndex() const;
+	bool SetRestoreLeafIndex(const uint64_t lastLeafIndex);
 
 	uint32_t GetNextWalletTxId();
 	bool AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletTx>& transactions);

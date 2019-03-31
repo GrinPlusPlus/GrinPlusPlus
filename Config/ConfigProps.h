@@ -32,4 +32,11 @@ namespace ConfigProps
 
 		static const std::string REST_API_PORT = "REST_API_PORT";
 	}
+
+	namespace Logger
+	{
+		static const std::string LOGGER = "LOGGER";
+
+		static const std::string LOG_LEVEL = "LOG_LEVEL";
+	}
 }

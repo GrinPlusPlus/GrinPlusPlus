@@ -16,13 +16,13 @@ class OutputData
 {
 public:
 	OutputData(KeyChainPath&& keyChainPath, SecretKey&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status)
-		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(std::nullopt)
+		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(std::nullopt), m_blockHeightOpt(std::nullopt)
 	{
 
 	}
 
-	OutputData(KeyChainPath&& keyChainPath, SecretKey&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status, const std::optional<uint64_t>& mmrIndexOpt)
-		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(mmrIndexOpt)
+	OutputData(KeyChainPath&& keyChainPath, SecretKey&& blindingFactor, TransactionOutput&& output, const uint64_t amount, const EOutputStatus status, const std::optional<uint64_t>& mmrIndexOpt, const std::optional<uint64_t>& blockHeightOpt)
+		: m_keyChainPath(std::move(keyChainPath)), m_blindingFactor(std::move(blindingFactor)), m_output(std::move(output)), m_amount(amount), m_status(status), m_mmrIndexOpt(mmrIndexOpt), m_blockHeightOpt(blockHeightOpt)
 	{
 
 	}
@@ -36,11 +36,13 @@ public:
 	inline const uint64_t GetAmount() const { return m_amount; }
 	inline const EOutputStatus GetStatus() const { return m_status; }
 	inline const std::optional<uint64_t>& GetMMRIndex() const { return m_mmrIndexOpt; }
+	inline const std::optional<uint64_t>& GetBlockHeight() const { return m_blockHeightOpt; }
 
 	//
 	// Setters
 	//
 	inline void SetStatus(const EOutputStatus status) { m_status = status; }
+	inline void SetBlockHeight(const uint64_t blockHeight) { m_blockHeightOpt = std::make_optional<uint64_t>(blockHeight); }
 
 	//
 	// Operators
@@ -59,6 +61,7 @@ public:
 		serializer.Append(m_amount);
 		serializer.Append((uint8_t)m_status);
 		serializer.Append<uint64_t>(m_mmrIndexOpt.value_or(0));
+		serializer.Append<uint64_t>(m_blockHeightOpt.value_or(0));
 	}
 
 	//
@@ -77,9 +80,14 @@ public:
 		TransactionOutput output = TransactionOutput::Deserialize(byteBuffer);
 		uint64_t amount = byteBuffer.ReadU64();
 		EOutputStatus status = (EOutputStatus)byteBuffer.ReadU8();
-		const uint64_t mmrIndex = byteBuffer.ReadU64();
 
-		return OutputData(std::move(keyChainPath), std::move(blindingFactor), std::move(output), amount, status, mmrIndex == 0 ? std::nullopt : std::make_optional<uint64_t>(mmrIndex));
+		const uint64_t mmrIndex = byteBuffer.ReadU64();
+		const std::optional<uint64_t> mmrIndexOpt = mmrIndex == 0 ? std::nullopt : std::make_optional<uint64_t>(mmrIndex);
+
+		const uint64_t blockHeight = byteBuffer.GetRemainingSize() != 0 ? byteBuffer.ReadU64() : 0;
+		const std::optional<uint64_t> blockHeightOpt = blockHeight == 0 ? std::nullopt : std::make_optional<uint64_t>(blockHeight);
+
+		return OutputData(std::move(keyChainPath), std::move(blindingFactor), std::move(output), amount, status, mmrIndexOpt, blockHeightOpt);
 	}
 
 private:
@@ -89,4 +97,5 @@ private:
 	uint64_t m_amount;
 	EOutputStatus m_status;
 	std::optional<uint64_t> m_mmrIndexOpt;
+	std::optional<uint64_t> m_blockHeightOpt;
 };

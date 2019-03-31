@@ -17,7 +17,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	std::vector<OutputData> outputs = m_walletDB.GetOutputs(username, masterSeed);
 	for (const OutputData& outputData : outputs)
 	{
-		if (outputData.GetStatus() != EOutputStatus::SPENT)
+		//if (outputData.GetStatus() != EOutputStatus::SPENT && outputData.GetStatus() != EOutputStatus::CANCELED)
 		{
 			// TODO: What if commitment has mmr_index?
 			commitments.push_back(outputData.GetOutput().GetCommitment());
@@ -31,7 +31,6 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	const std::map<Commitment, OutputLocation> outputLocations = m_nodeClient.GetOutputsByCommitment(commitments);
 	for (OutputData& outputData : outputs)
 	{
-		// TODO: Figure out how to tell the difference between spent and awaitingConfirmation
 		auto iter = outputLocations.find(outputData.GetOutput().GetCommitment());
 		if (iter != outputLocations.cend())
 		{
@@ -45,6 +44,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 				{
 					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
 					{
+						outputData.SetBlockHeight(outputBlockHeight);
 						outputData.SetStatus(EOutputStatus::IMMATURE);
 						outputsToUpdate.push_back(outputData);
 					}
@@ -53,6 +53,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 				{
 					if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
 					{
+						outputData.SetBlockHeight(outputBlockHeight);
 						outputData.SetStatus(EOutputStatus::SPENDABLE);
 						outputsToUpdate.push_back(outputData);
 					}
@@ -85,7 +86,12 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 				std::unique_ptr<OutputData> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
 				if (pOutputData != nullptr)
 				{
-					if (walletTx.GetType() == EWalletTxType::SENDING_STARTED)
+					if (pOutputData->GetBlockHeight().has_value())
+					{
+						walletTx.SetConfirmedHeight(pOutputData->GetBlockHeight().value());
+					}
+
+					if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 					{
 						walletTx.SetType(EWalletTxType::SENT);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);

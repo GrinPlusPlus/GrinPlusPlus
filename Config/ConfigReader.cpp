@@ -30,8 +30,11 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 	// Read Server Config
 	const ServerConfig serverConfig = ReadServerConfig(root, environmentType);
 
+	// Read LogLevel
+	const std::string logLevel = ReadLogLevel(root);
+
 	// TODO: Mempool, mining, and logger settings
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig);
+	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
@@ -77,7 +80,7 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root, const EEnviro
 std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	const std::string dataDirectory = environmentType == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET";
-	const std::string defaultPath = FileUtil::GetHomeDirectory() + "\\GrinPP\\" + dataDirectory  + "\\";
+	const std::string defaultPath = FileUtil::GetHomeDirectory() + "\\.GrinPP\\" + dataDirectory  + "\\";
 	if (root.isMember(ConfigProps::DATA_PATH))
 	{
 		return root.get(ConfigProps::DATA_PATH, defaultPath).asString();
@@ -188,4 +191,19 @@ ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root, const EEnvi
 	}
 
 	return ServerConfig(restAPIPort);
+}
+
+std::string ConfigReader::ReadLogLevel(const Json::Value& root) const
+{
+	if (root.isMember(ConfigProps::Logger::LOGGER))
+	{
+		const Json::Value& loggerRoot = root[ConfigProps::Logger::LOGGER];
+
+		if (loggerRoot.isMember(ConfigProps::Logger::LOG_LEVEL))
+		{
+			return loggerRoot.get(ConfigProps::Logger::LOG_LEVEL, "DEBUG").asString();
+		}
+	}
+
+	return "DEBUG";
 }

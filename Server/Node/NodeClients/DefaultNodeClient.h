@@ -41,6 +41,11 @@ public:
 		return outputs;
 	}
 
+	virtual std::vector<BlockWithOutputs> GetBlockOutputs(const uint64_t startHeight, const uint64_t maxHeight) const override final
+	{
+		return m_blockChainServer.GetOutputsByHeight(startHeight, maxHeight);
+	}
+
 	virtual std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final
 	{
 		const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();

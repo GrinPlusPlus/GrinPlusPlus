@@ -22,9 +22,9 @@ void P2PServer::StopServer()
 	m_connectionManager.Stop();
 }
 
-size_t P2PServer::GetNumberOfConnectedPeers() const
+std::pair<size_t, size_t> P2PServer::GetNumberOfConnectedPeers() const
 {
-	return m_connectionManager.GetNumberOfActiveConnections();
+	return m_connectionManager.GetNumConnectionsWithDirection();
 }
 
 const SyncStatus& P2PServer::GetSyncStatus() const

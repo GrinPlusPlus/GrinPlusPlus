@@ -43,8 +43,8 @@ private:
 
 		}
 
-		PeerEntry(const Peer& peer, const time_t& lastAttempt, const bool connected)
-			: m_peer(peer), m_lastAttempt(lastAttempt), m_connected(connected), m_dirty(true)
+		PeerEntry(const Peer& peer, const time_t& lastAttempt, const bool connected, const bool dirty)
+			: m_peer(peer), m_lastAttempt(lastAttempt), m_connected(connected), m_dirty(dirty)
 		{
 
 		}

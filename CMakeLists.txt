@@ -10,7 +10,7 @@ HunterGate(
 )
 
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 0)
+set(VERSION_MINOR 1)
 set(VERSION_REVISION 1)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
@@ -56,6 +56,16 @@ include_directories(
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Dependencies
+# Async++
+hunter_add_package(Async++)
+find_package(Async++ CONFIG REQUIRED)
+set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
+
+# OpenSSL
+hunter_add_package(OpenSSL)
+find_package(OpenSSL REQUIRED)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

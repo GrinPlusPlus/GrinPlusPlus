@@ -63,9 +63,9 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 	{
 		return RestUtil::BuildConflictResponse(pConnection, "Insufficient funds available.");
 	}
-	catch (const std::exception&)
+	catch (const std::exception& e)
 	{
-		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred." + std::string(e.what()));
 	}
 
 	return RestUtil::BuildBadRequestResponse(pConnection, "HTTPMethod not Supported");

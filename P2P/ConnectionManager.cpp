@@ -78,6 +78,27 @@ size_t ConnectionManager::GetNumberOfActiveConnections() const
 	return m_connections.size();
 }
 
+std::pair<size_t, size_t> ConnectionManager::GetNumConnectionsWithDirection() const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	size_t inbound = 0;
+	size_t outbound = 0;
+	for (Connection* pConnection : m_connections)
+	{
+		if (pConnection->GetConnectedPeer().GetDirection() == EDirection::INBOUND)
+		{
+			++inbound;
+		}
+		else
+		{
+			++outbound;
+		}
+	}
+
+	return std::pair<size_t, size_t>(inbound, outbound);
+}
+
 bool ConnectionManager::IsConnected(const IPAddress& address) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
@@ -236,7 +257,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		if (iter != m_peersToBan.end())
 		{
 			const EBanReason banReason = iter->second;
-			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::BanConnection() - Banning peer (%d) at (%s) for (%d).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str(), (int32_t)banReason));
+			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::PruneConnections() - Banning peer (%d) at (%s) for (%d).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str(), (int32_t)banReason));
 
 			pConnection->GetPeer().UpdateLastBanTime();
 			pConnection->GetPeer().UpdateBanReason(banReason);
@@ -249,6 +270,11 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 		if (!bInactiveOnly || !pConnection->IsConnectionActive())
 		{
+			if (pConnection->IsConnectionActive())
+			{
+				LoggerAPI::LogDebug(StringUtil::Format("ConnectionManager::PruneConnections() - Disconnecting from inactive peer (%d) at (%s)", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str()));
+			}
+
 			m_connectionsToClose.push_back(pConnection);
 			VectorUtil::Remove<Connection*>(m_connections, i);
 

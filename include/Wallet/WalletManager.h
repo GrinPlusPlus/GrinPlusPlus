@@ -14,6 +14,7 @@
 #include <Wallet/Slate.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
+#include <Wallet/Grinbox/GrinboxAddress.h>
 #include <Common/Secure.h>
 
 #ifdef MW_WALLET
@@ -34,7 +35,7 @@ public:
 	virtual std::optional<SessionToken> Restore(const std::string& username, const SecureString& password, const SecureString& walletWords) = 0;
 
 	// TODO: Determine return value.
-	virtual bool CheckForOutputs(const SessionToken& token) = 0;
+	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) = 0;
 
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
 
@@ -58,13 +59,15 @@ public:
 	// * SessionTokenException - If no matching session found, or if the token is invalid.
 	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
 	//
-	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy) = 0;
+	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) = 0;
 
 	virtual std::unique_ptr<Slate> Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt) = 0;
 
 	virtual std::unique_ptr<Slate> Finalize(const SessionToken& token, const Slate& slate) = 0;
 
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) = 0;
+
+	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
 
 	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
 };

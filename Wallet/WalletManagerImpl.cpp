@@ -8,6 +8,7 @@
 
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
+#include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB)
@@ -54,13 +55,13 @@ std::optional<SessionToken> WalletManager::Restore(const std::string& username, 
 	return std::nullopt;
 }
 
-bool WalletManager::CheckForOutputs(const SessionToken& token)
+bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGenesis)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
-	return WalletRestorer(m_config, m_nodeClient, keyChain).Restore(masterSeed, wallet);
+	return WalletRestorer(m_config, m_nodeClient, keyChain).Restore(masterSeed, wallet.GetWallet(), fromGenesis);
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const
@@ -70,7 +71,18 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
 {
-	return m_sessionManager.Login(username, password);
+	std::unique_ptr<SessionToken> pToken = m_sessionManager.Login(username, password);
+	if (pToken != nullptr)
+	{
+		//auto asyncCheckForOutputs =
+		//	[this](SessionToken token) -> void { this->CheckForOutputs(token); };
+
+		//std::thread thread(asyncCheckForOutputs, *pToken);
+		//thread.detach();
+		CheckForOutputs(*pToken, false);
+	}
+
+	return pToken;
 }
 
 void WalletManager::Logout(const SessionToken& token)
@@ -81,64 +93,80 @@ void WalletManager::Logout(const SessionToken& token)
 WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return wallet.GetWalletSummary(masterSeed);
+	return wallet.GetWallet().GetWalletSummary(masterSeed);
 }
 
 std::vector<WalletTx> WalletManager::GetTransactions(const SessionToken& token)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return wallet.GetTransactions(masterSeed);
+	return wallet.GetWallet().GetTransactions(masterSeed);
 }
 
-// TODO: Take in numOutputs
-std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy)
+std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return SendSlateBuilder(m_nodeClient).BuildSendSlate(wallet, masterSeed, amount, feeBase, 1, messageOpt, strategy);
+	return SendSlateBuilder(m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, messageOpt, strategy);
 }
 
 std::unique_ptr<Slate> WalletManager::Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return ReceiveSlateBuilder().AddReceiverData(wallet, masterSeed, slate, messageOpt);
+	return ReceiveSlateBuilder().AddReceiverData(wallet.GetWallet(), masterSeed, slate, messageOpt);
 }
 
-// TODO: Return Slate with Transaction instead
 std::unique_ptr<Slate> WalletManager::Finalize(const SessionToken& token, const Slate& slate)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return FinalizeSlateBuilder().Finalize(wallet, masterSeed, slate);
+	return FinalizeSlateBuilder().Finalize(wallet.GetWallet(), masterSeed, slate);
 }
 
 bool WalletManager::PostTransaction(const SessionToken& token, const Transaction& transaction)
 {
 	//const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	//Wallet& wallet = m_sessionManager.GetWallet(token);
+	//LockedWallet wallet = m_sessionManager.GetWallet(token);
 
 	// TODO: Save transaction(TxLogEntry)
 
 	return m_nodeClient.PostTransaction(transaction);
 }
 
+bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walletTxId)
+{
+	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
+
+	std::unique_ptr<WalletTx> pWalletTx = wallet.GetWallet().GetTxById(masterSeed, walletTxId);
+	if (pWalletTx != nullptr)
+	{
+		if (pWalletTx->GetTransaction().has_value())
+		{
+			// TODO: Validate tx first, and make sure it's not already confirmed.
+			return m_nodeClient.PostTransaction(pWalletTx->GetTransaction().value());
+		}
+	}
+
+	return false;
+}
+
 bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
 {
 	const SecretKey masterSeed = m_sessionManager.GetSeed(token);
-	Wallet& wallet = m_sessionManager.GetWallet(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxById(masterSeed, walletTxId);
+	std::unique_ptr<WalletTx> pWalletTx = wallet.GetWallet().GetTxById(masterSeed, walletTxId);
 	if (pWalletTx != nullptr)
 	{
-		return wallet.CancelWalletTx(masterSeed, *pWalletTx);
+		return wallet.GetWallet().CancelWalletTx(masterSeed, *pWalletTx);
 	}
 
 	return false;

@@ -40,6 +40,8 @@ public:
 	virtual uint32_t GetNextTransactionId(const std::string& username) = 0;
 	virtual uint64_t GetRefreshBlockHeight(const std::string& username) const = 0;
 	virtual bool UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight) = 0;
+	virtual uint64_t GetRestoreLeafIndex(const std::string& username) const = 0;
+	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) = 0;
 };
 
 namespace WalletDBAPI

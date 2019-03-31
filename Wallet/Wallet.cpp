@@ -46,7 +46,8 @@ WalletSummary Wallet::GetWalletSummary(const SecretKey& masterSeed)
 	}
 
 	const uint64_t total = awaitingConfirmation + immature + spendable;
-	return WalletSummary(lastConfirmedHeight, m_config.GetWalletConfig().GetMinimumConfirmations(), total, awaitingConfirmation, immature, locked, spendable);
+	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(m_username, masterSeed);
+	return WalletSummary(lastConfirmedHeight, m_config.GetWalletConfig().GetMinimumConfirmations(), total, awaitingConfirmation, immature, locked, spendable, std::move(transactions));
 }
 
 std::vector<WalletTx> Wallet::GetTransactions(const SecretKey& masterSeed)
@@ -76,11 +77,31 @@ bool Wallet::AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<O
 		const std::chrono::system_clock::time_point creationTime = std::chrono::system_clock::now(); // TODO: Determine this
 		const std::optional<std::chrono::system_clock::time_point> confirmationTimeOpt = std::make_optional<std::chrono::system_clock::time_point>(std::chrono::system_clock::now()); // TODO: Determine this
 
-		WalletTx walletTx(walletTxId, type, std::nullopt, creationTime, confirmationTimeOpt, 0, 1, output.GetAmount(), 0, std::nullopt, std::nullopt);
+		WalletTx walletTx(walletTxId, type, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
 		transactions.emplace_back(std::move(walletTx));
 	}
 
 	return AddWalletTxs(masterSeed, transactions) && m_walletDB.AddOutputs(m_username, masterSeed, outputs);
+}
+
+uint64_t Wallet::GetRefreshHeight() const
+{
+	return m_walletDB.GetRefreshBlockHeight(m_username);
+}
+
+bool Wallet::SetRefreshHeight(const uint64_t blockHeight)
+{
+	return m_walletDB.UpdateRefreshBlockHeight(m_username, blockHeight);
+}
+
+uint64_t Wallet::GetRestoreLeafIndex() const
+{
+	return m_walletDB.GetRestoreLeafIndex(m_username);
+}
+
+bool Wallet::SetRestoreLeafIndex(const uint64_t lastLeafIndex)
+{
+	return m_walletDB.UpdateRestoreLeafIndex(m_username, lastLeafIndex);
 }
 
 uint32_t Wallet::GetNextWalletTxId()
@@ -234,7 +255,7 @@ bool Wallet::CancelWalletTx(const SecretKey& masterSeed, WalletTx& walletTx)
 				const EOutputStatus status = output.GetStatus();
 				if (status == EOutputStatus::NO_CONFIRMATIONS)
 				{
-					output.SetStatus(EOutputStatus::SPENT); // TODO: Should probably add a 'Canceled' status.
+					output.SetStatus(EOutputStatus::CANCELED);
 					outputsToUpdate.push_back(output);
 				}
 				else if (status == EOutputStatus::LOCKED)

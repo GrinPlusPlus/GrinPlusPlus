@@ -468,7 +468,7 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator/(const int
 	for (int i = 0; i < NUM_BYTES; i++)
 	{
 		remainder = remainder * 256 + m_data[i];
-		quotient[i] = remainder / divisor;
+		quotient[i] = (unsigned char)(remainder / divisor);
 		remainder -= quotient[i] * divisor;
 	}
 

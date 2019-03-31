@@ -19,7 +19,7 @@ public:
 
 	virtual const SyncStatus& GetSyncStatus() const override final;
 
-	virtual size_t GetNumberOfConnectedPeers() const override final;
+	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const override final;
 	virtual std::vector<Peer> GetAllPeers() const override final;
 	virtual std::vector<ConnectedPeer> GetConnectedPeers() const override final;
 

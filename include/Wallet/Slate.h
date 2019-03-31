@@ -41,6 +41,7 @@ public:
 	inline uint64_t GetBlockHeight() const { return m_blockHeight; }
 	inline const Transaction& GetTransaction() const { return m_transaction; }
 	inline const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
+	inline std::vector<ParticipantData>& GetParticipantData() { return m_participantData; }
 
 	inline void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
 	inline void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }

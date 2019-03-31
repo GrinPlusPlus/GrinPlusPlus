@@ -5,6 +5,7 @@
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 
+#include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
@@ -78,7 +79,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 	connection.m_peerManager.SetPeerConnected(connection.GetConnectedPeer().GetPeer(), true);
 
 	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
-	const MessageRetriever messageRetriever(connection.m_config);
+	const MessageRetriever messageRetriever(connection.m_config, connection.m_connectionManager);
 
 	while (!connection.m_terminate)
 	{
@@ -99,6 +100,11 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 		catch (const DeserializationException&)
 		{
 			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Deserialization exception occurred.");
+			break;
+		}
+		catch (const SocketException&)
+		{
+			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Socket exception occurred.");
 			break;
 		}
 

@@ -202,7 +202,7 @@ void PeerManager::SetPeerConnected(const Peer& peer, const bool connected)
 	}
 	else
 	{
-		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), connected));
+		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), connected, true));
 	}
 }
 
@@ -223,7 +223,7 @@ void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 	}
 	else
 	{
-		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false));
+		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
 	}
 }
 

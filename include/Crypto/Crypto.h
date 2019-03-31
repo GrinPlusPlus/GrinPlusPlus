@@ -114,15 +114,17 @@ public:
 	static SecureVector AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv);
 
 	//
-	// Uses Scrypt to hash the given input (usually the user's password) and salts the hash with the given salt.
-	// The returned hash will be 64 bytes.
+	// Uses Scrypt to hash the given password and the given salt. It then blake2b hashes the output.
+	// The returned hash will be a 32 byte SecretKey.
 	//
-	static CBigInteger<64> Scrypt(const SecureVector& input, const std::vector<unsigned char>& salt);
+	static SecretKey PBKDF(const SecureString& password, const std::vector<unsigned char>& salt);
 
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
 	//
 	static std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey);
+
+	static std::unique_ptr<SecretKey> ECDH(const SecretKey& privateKey, const PublicKey& publicKey);
 
 	//
 	//

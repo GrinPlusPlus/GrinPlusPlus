@@ -65,14 +65,56 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	Json::Value statusNode;
 	statusNode["protocol_version"] = P2P::PROTOCOL_VERSION;
 	statusNode["user_agent"] = P2P::USER_AGENT;
-	statusNode["connections"] = pServer->m_pP2PServer->GetNumberOfConnectedPeers();
+
+	const SyncStatus& syncStatus = pServer->m_pP2PServer->GetSyncStatus();
+	statusNode["sync_status"] = GetStatusString(syncStatus);
+
+	Json::Value networkNode;
+	networkNode["height"] = syncStatus.GetNetworkHeight();
+	networkNode["total_difficulty"] = syncStatus.GetNetworkDifficulty();
+	const std::pair<size_t, size_t> numConnections = pServer->m_pP2PServer->GetNumberOfConnectedPeers();
+	networkNode["num_inbound"] = numConnections.first;
+	networkNode["num_outbound"] = numConnections.second;
+	statusNode["network"] = networkNode;
 
 	Json::Value tipNode;
 	tipNode["height"] = pTip->GetHeight();
-	tipNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData());
-	tipNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
+	tipNode["hash"] = HexUtil::ConvertToHex(pTip->GetHash().GetData());
+	tipNode["previous_hash"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
 	tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
-	statusNode["tip"] = tipNode;
+	statusNode["chain"] = tipNode;
 
 	return RestUtil::BuildSuccessResponse(conn, statusNode.toStyledString());
+}
+
+std::string ServerAPI::GetStatusString(const SyncStatus& syncStatus)
+{
+	const ESyncStatus status = syncStatus.GetStatus();
+	switch (status)
+	{
+		case ESyncStatus::SYNCING_HEADERS:
+		{
+			return "SYNCING_HEADERS";
+		}
+		case ESyncStatus::SYNCING_TXHASHSET:
+		case ESyncStatus::PROCESSING_TXHASHSET:
+		case ESyncStatus::TXHASHSET_SYNC_FAILED:
+		{
+			return "SYNCING_TXHASHSET";
+		}
+		case ESyncStatus::SYNCING_BLOCKS:
+		{
+			return "SYNCING_BLOCKS";
+		}
+		case ESyncStatus::WAITING_FOR_PEERS:
+		{
+			return "NOT_CONNECTED";
+		}
+		case ESyncStatus::NOT_SYNCING:
+		{
+			return "FULLY_SYNCED";
+		}
+	}
+
+	return "UNKNOWN";
 }

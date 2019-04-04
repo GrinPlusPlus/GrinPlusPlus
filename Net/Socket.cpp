@@ -15,6 +15,21 @@ bool Socket::CloseSocket()
 	return closesocket(m_socket) == 0;
 }
 
+bool Socket::IsConnected() const
+{
+	fd_set readFDS;
+	readFDS.fd_count = 1;
+	readFDS.fd_array[0] = m_socket;
+
+	timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 1000; // 1 ms
+
+	const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
+
+	return result != SOCKET_ERROR;
+}
+
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
 	if (m_receiveTimeout != milliseconds)

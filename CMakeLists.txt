@@ -5,13 +5,13 @@ set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
 set(HUNTER_STATUS_DEBUG TRUE)
 include("HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.83.tar.gz"
-    SHA1 "12dec078717539eb7b03e6d2a17797cba9be9ba9"
+    URL "https://github.com/ruslo/hunter/archive/v0.23.148.tar.gz"
+    SHA1 "39855eac4375c6fb1d42fd0f13f03040621cb7b6"
 )
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 2)
-set(VERSION_REVISION 0)
+set(VERSION_REVISION 1)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
@@ -64,17 +64,17 @@ find_package(Async++ CONFIG REQUIRED)
 set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 # OpenSSL
-hunter_add_package(OpenSSL)
-find_package(OpenSSL REQUIRED)
+#hunter_add_package(OpenSSL)
+#find_package(OpenSSL REQUIRED)
 
-#JsonCPP
+# JsonCPP
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
 set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
-#websocketpp
-hunter_add_package(websocketpp)
-find_package(websocketpp CONFIG REQUIRED)
+# websocketpp
+#hunter_add_package(websocketpp)
+#find_package(websocketpp CONFIG REQUIRED)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

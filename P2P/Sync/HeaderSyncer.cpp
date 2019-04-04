@@ -89,7 +89,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 	if (m_connectionId != 0)
 	{
 		LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Headers requested.");
-		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
+		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}
 

@@ -10,7 +10,7 @@ KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& 
 
 }
 
-KeyChain KeyChain::FromSeed(const Config& config, const SecretKey& masterSeed)
+KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed)
 {
 	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed);
 	SecretKey bulletProofNonce = *Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);

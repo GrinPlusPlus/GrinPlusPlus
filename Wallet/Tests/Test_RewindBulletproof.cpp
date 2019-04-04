@@ -11,11 +11,12 @@ TEST_CASE("REWIND_BULLETPROOF")
 	Config config = ConfigManager::LoadConfig(EEnvironmentType::MAINNET);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	const SecretKey masterSeed = RandomNumberGenerator::GenerateRandom32();
+	const CBigInteger<32> masterSeed = RandomNumberGenerator::GenerateRandom32();
+	const SecureVector masterSeedBytes(masterSeed.GetData().begin(), masterSeed.GetData().end());
 	const uint64_t amount = 45;
 	KeyChainPath keyId(std::vector<uint32_t>({ 1 }));
 
-	KeyChain keyChain = KeyChain::FromSeed(config, masterSeed);
+	KeyChain keyChain = KeyChain::FromSeed(config, masterSeedBytes);
 	SecretKey blindingFactor = *keyChain.DerivePrivateKey(keyId, amount);
 	Commitment commitment = *Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes()));
 

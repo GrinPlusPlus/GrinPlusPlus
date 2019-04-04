@@ -6,7 +6,7 @@
 #include <Wallet/SlateContext.h>
 #include <Infrastructure/Logger.h>
 
-std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, const SecretKey& masterSeed, const Slate& slate, const std::optional<std::string>& messageOpt) const
+std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const std::optional<std::string>& messageOpt) const
 {
 	Slate receiveSlate = slate;
 
@@ -36,7 +36,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 	return std::make_unique<Slate>(std::move(receiveSlate));
 }
 
-bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecretKey& masterSeed, const Slate& slate) const
+bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	// Slate was already received.
 	if (wallet.GetTxBySlateId(masterSeed, slate.GetSlateId()) != nullptr)
@@ -116,7 +116,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 }
 
 // TODO: Use a DB Batch
-bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecretKey& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context) const
+bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context) const
 {
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, context))

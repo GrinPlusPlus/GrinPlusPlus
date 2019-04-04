@@ -18,10 +18,10 @@ public:
 	~SessionManager();
 
 	std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password);
-	SessionToken Login(const std::string& username, const SecretKey& seed);
+	SessionToken Login(const std::string& username, const SecureVector& seed);
 	void Logout(const SessionToken& token);
 
-	SecretKey GetSeed(const SessionToken& token) const;
+	SecureVector GetSeed(const SessionToken& token) const;
 	LockedWallet GetWallet(const SessionToken& token);
 	//const Wallet& GetWallet(const SessionToken& token) const;
 

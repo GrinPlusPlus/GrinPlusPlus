@@ -239,14 +239,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_connectionsMutex);
 
-	bool pingConnections = false;
-	auto now = std::chrono::system_clock::now();
-	if (m_lastPingTime + std::chrono::seconds(10) < now)
-	{
-		m_lastPingTime = now;
-		pingConnections = true;
-	}
-
 	std::unique_lock<std::shared_mutex> disconnectLock(m_disconnectMutex);
 
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
@@ -281,11 +273,8 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			continue;
 		}
 
-		if (pingConnections)
-		{
-			const SyncStatus& syncStatus = m_syncer.GetSyncStatus();
-			pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
-		}
+		const SyncStatus& syncStatus = m_syncer.GetSyncStatus();
+		pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
 	}
 
 	writeLock.unlock();

@@ -53,7 +53,7 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy,
 }
 
 // TODO: Apply password
-std::optional<std::vector<unsigned char>> Mnemonic::ToEntropy(const SecureString& walletWords, const std::optional<SecureString>& password)
+std::optional<SecureVector> Mnemonic::ToEntropy(const SecureString& walletWords, const std::optional<SecureString>& password)
 {
 	const std::vector<std::string> words = StringUtil::Split(std::string(walletWords), " ");
 	const size_t numWords = words.size();
@@ -88,7 +88,7 @@ std::optional<std::vector<unsigned char>> Mnemonic::ToEntropy(const SecureString
 	const uint8_t expectedChecksum = ((uint8_t)wordIndices.back()) & mask;
 
 	const size_t dataLength = (((11 * numWords) - checksumBits) / 8) - 1;
-	std::vector<unsigned char> entropy(dataLength + 1, 0);
+	SecureVector entropy(dataLength + 1, 0);
 	entropy[dataLength] = (uint8_t)(wordIndices.back() >> checksumBits);
 
 	size_t loc = 11 - checksumBits;
@@ -104,11 +104,11 @@ std::optional<std::vector<unsigned char>> Mnemonic::ToEntropy(const SecureString
 		}
 	}
 
-	const uint32_t actualChecksum = (Crypto::SHA256(entropy)[0] >> (8 - checksumBits)) & mask;
+	const uint32_t actualChecksum = (Crypto::SHA256((const std::vector<unsigned char>&)entropy)[0] >> (8 - checksumBits)) & mask;
 	if (actualChecksum != expectedChecksum)
 	{
 		return std::nullopt;
 	}
 
-	return std::make_optional<std::vector<unsigned char>>(std::move(entropy));
+	return std::make_optional<SecureVector>(std::move(entropy));
 }

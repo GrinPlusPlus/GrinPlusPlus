@@ -11,6 +11,7 @@ public:
 	Socket(const SOCKET& socket, const SocketAddress& address, const bool blocking, const unsigned long receiveTimeout, const unsigned long sendTimeout);
 
 	bool CloseSocket();
+	bool IsConnected() const;
 
 	inline const SocketAddress& GetSocketAddress() const { return m_address; }
 	inline const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }

@@ -5,7 +5,7 @@
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
 
-std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const SecretKey& masterSeed, const Slate& slate) const
+std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	Slate finalSlate = slate;
 
@@ -52,7 +52,7 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secr
 	return std::make_unique<Slate>(std::move(finalSlate));
 }
 
-bool FinalizeSlateBuilder::AddPartialSignature(Wallet& wallet, const SecretKey& masterSeed, Slate& slate, const Hash& kernelMessage) const
+bool FinalizeSlateBuilder::AddPartialSignature(Wallet& wallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
 {
 	// Load secretKey and secretNonce
 	std::unique_ptr<SlateContext> pSlateContext = wallet.GetSlateContext(slate.GetSlateId(), masterSeed);
@@ -127,7 +127,7 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	return true;
 }
 
-bool FinalizeSlateBuilder::UpdateDatabase(Wallet& wallet, const SecretKey& masterSeed, Slate& finalSlate) const
+bool FinalizeSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, Slate& finalSlate) const
 {
 	// Load WalletTx
 	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxBySlateId(masterSeed, finalSlate.GetSlateId());

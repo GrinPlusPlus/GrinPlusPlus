@@ -10,7 +10,7 @@ WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeCl
 
 }
 
-std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const SecretKey& masterSeed)
+std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const SecureVector& masterSeed)
 {
 	std::vector<Commitment> commitments;
 
@@ -73,7 +73,7 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 	return outputs;
 }
 
-void WalletRefresher::RefreshTransactions(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& refreshedOutputs)
+void WalletRefresher::RefreshTransactions(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& refreshedOutputs)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(username, masterSeed);
 	for (WalletTx& walletTx : transactions)

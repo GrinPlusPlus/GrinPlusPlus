@@ -3,6 +3,7 @@
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/PublicExtKey.h>
 
+#include <Common/Secure.h>
 #include <Crypto/SecretKey.h>
 #include <Config/Config.h>
 
@@ -21,7 +22,7 @@ public:
 	//
 	// \return The generated master CExtendedPrivateKey.
 	//
-	PrivateExtKey GenerateMasterKey(const SecretKey& seed) const;
+	PrivateExtKey GenerateMasterKey(const SecureVector& seed) const;
 
 	//
 	// Generates an extended child private key from a parent extended key (for an HD wallet).

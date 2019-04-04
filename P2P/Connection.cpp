@@ -47,11 +47,16 @@ bool Connection::IsConnectionActive() const
 		return false;
 	}
 
+	if (!m_connectedPeer.GetSocket().IsConnected())
+	{
+		return false;
+	}
+
 	const time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
 	const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
 	
-	return differenceInSeconds < 45.0;
+	return differenceInSeconds < 120.0;
 }
 
 void Connection::Disconnect()

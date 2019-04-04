@@ -16,7 +16,7 @@ class KeyChain
 {
 public:
 	// TODO: Add FromMnemonic, FromRandom, ToMnemonic, and GetSeed methods
-	static KeyChain FromSeed(const Config& config, const SecretKey& masterSeed);
+	static KeyChain FromSeed(const Config& config, const SecureVector& masterSeed);
 
 	std::unique_ptr<SecretKey> DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 

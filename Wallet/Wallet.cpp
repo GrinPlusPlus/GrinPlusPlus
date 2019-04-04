@@ -15,7 +15,7 @@ Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, 
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
-WalletSummary Wallet::GetWalletSummary(const SecretKey& masterSeed)
+WalletSummary Wallet::GetWalletSummary(const SecureVector& masterSeed)
 {
 	uint64_t awaitingConfirmation = 0;
 	uint64_t immature = 0;
@@ -50,17 +50,17 @@ WalletSummary Wallet::GetWalletSummary(const SecretKey& masterSeed)
 	return WalletSummary(lastConfirmedHeight, m_config.GetWalletConfig().GetMinimumConfirmations(), total, awaitingConfirmation, immature, locked, spendable, std::move(transactions));
 }
 
-std::vector<WalletTx> Wallet::GetTransactions(const SecretKey& masterSeed)
+std::vector<WalletTx> Wallet::GetTransactions(const SecureVector& masterSeed)
 {
 	return m_walletDB.GetTransactions(m_username, masterSeed);
 }
 
-std::vector<OutputData> Wallet::RefreshOutputs(const SecretKey& masterSeed)
+std::vector<OutputData> Wallet::RefreshOutputs(const SecureVector& masterSeed)
 {
 	return WalletRefresher(m_config, m_nodeClient, m_walletDB).RefreshOutputs(m_username, masterSeed);
 }
 
-bool Wallet::AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputs)
+bool Wallet::AddRestoredOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
 {
 	std::vector<WalletTx> transactions;
 	transactions.reserve(outputs.size());
@@ -109,7 +109,7 @@ uint32_t Wallet::GetNextWalletTxId()
 	return m_walletDB.GetNextTransactionId(m_username);
 }
 
-bool Wallet::AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletTx>& transactions)
+bool Wallet::AddWalletTxs(const SecureVector& masterSeed, const std::vector<WalletTx>& transactions)
 {
 	bool success = true;
 	for (const WalletTx& transaction : transactions)
@@ -120,7 +120,7 @@ bool Wallet::AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletT
 	return success;
 }
 
-std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecretKey& masterSeed) const
+std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecureVector& masterSeed) const
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -140,7 +140,7 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecretKey& masterSeed
 	return coins;
 }
 
-OutputData Wallet::CreateBlindedOutput(const SecretKey& masterSeed, const uint64_t amount)
+OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -161,22 +161,22 @@ OutputData Wallet::CreateBlindedOutput(const SecretKey& masterSeed, const uint64
 	throw std::exception(); // TODO: Determine exception type
 }
 
-bool Wallet::SaveOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputsToSave)
+bool Wallet::SaveOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputsToSave)
 {
 	return m_walletDB.AddOutputs(m_username, masterSeed, outputsToSave);
 }
 
-std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed) const
+std::unique_ptr<SlateContext> Wallet::GetSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed) const
 {
 	return m_walletDB.LoadSlateContext(m_username, masterSeed, slateId);
 }
 
-bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed, const SlateContext& slateContext)
+bool Wallet::SaveSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed, const SlateContext& slateContext)
 {
 	return m_walletDB.SaveSlateContext(m_username, masterSeed, slateId, slateContext);
 }
 
-bool Wallet::LockCoins(const SecretKey& masterSeed, std::vector<OutputData>& coins)
+bool Wallet::LockCoins(const SecureVector& masterSeed, std::vector<OutputData>& coins)
 {
 	for (OutputData& coin : coins)
 	{
@@ -186,7 +186,7 @@ bool Wallet::LockCoins(const SecretKey& masterSeed, std::vector<OutputData>& coi
 	return m_walletDB.AddOutputs(m_username, masterSeed, coins);
 }
 
-std::unique_ptr<WalletTx> Wallet::GetTxById(const SecretKey& masterSeed, const uint32_t walletTxId)
+std::unique_ptr<WalletTx> Wallet::GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(m_username, masterSeed);
 	for (WalletTx& walletTx : transactions)
@@ -200,7 +200,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxById(const SecretKey& masterSeed, const u
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 
-std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecretKey& masterSeed, const uuids::uuid& slateId)
+std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId)
 {
 	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(m_username, masterSeed);
 	for (WalletTx& walletTx : transactions)
@@ -215,7 +215,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecretKey& masterSeed, co
 }
 
 
-bool Wallet::CancelWalletTx(const SecretKey& masterSeed, WalletTx& walletTx)
+bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)

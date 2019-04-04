@@ -19,7 +19,7 @@ SendSlateBuilder::SendSlateBuilder(const INodeClient& nodeClient)
 
 std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	Wallet& wallet, 
-	const SecretKey& masterSeed, 
+	const SecureVector& masterSeed, 
 	const uint64_t amount, 
 	const uint64_t feeBase,
 	const uint8_t numOutputs,
@@ -153,7 +153,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(Wallet& wallet, const std::vector<Outpu
 }
 
 // TODO: Use a DB Batch
-bool SendSlateBuilder::UpdateDatabase(Wallet& wallet, const SecretKey& masterSeed, const uuids::uuid& slateId, const SlateContext& context, const std::vector<OutputData>& changeOutputs, std::vector<OutputData>& coinsToLock, const WalletTx& walletTx) const
+bool SendSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& context, const std::vector<OutputData>& changeOutputs, std::vector<OutputData>& coinsToLock, const WalletTx& walletTx) const
 {
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slateId, masterSeed, context))

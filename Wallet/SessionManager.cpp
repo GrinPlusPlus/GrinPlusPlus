@@ -25,7 +25,7 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 	std::unique_ptr<EncryptedSeed> pSeed = m_walletDB.LoadWalletSeed(username);
 	if (pSeed != nullptr)
 	{
-		std::optional<SecretKey> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+		std::optional<SecureVector> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
 		if (decryptedSeedOpt.has_value())
 		{
 			return std::make_unique<SessionToken>(Login(username, decryptedSeedOpt.value()));
@@ -35,18 +35,19 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 	return std::unique_ptr<SessionToken>(nullptr);
 }
 
-SessionToken SessionManager::Login(const std::string& username, const SecretKey& seed)
+SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)
 {
 	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
 	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
 
-	const CBigInteger<32> hash = Crypto::SHA256(seed.GetBytes().GetData());
+	const CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
-	const std::vector<unsigned char> seedWithChecksum = VectorUtil::Concat(seed.GetBytes().GetData(), checksum);
+	SecureVector seedWithChecksum = SecureVector(seed.begin(), seed.end());
+	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
 
 	std::vector<unsigned char> tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
-	std::vector<unsigned char> encryptedSeedWithCS(36);
-	for (size_t i = 0; i < 36; i++)
+	std::vector<unsigned char> encryptedSeedWithCS(seedWithChecksum.size());
+	for (size_t i = 0; i < seedWithChecksum.size(); i++)
 	{
 		encryptedSeedWithCS[i] = seedWithChecksum[i] ^ tokenKey[i];
 	}
@@ -67,24 +68,24 @@ void SessionManager::Logout(const SessionToken& token)
 	}
 }
 
-SecretKey SessionManager::GetSeed(const SessionToken& token) const
+SecureVector SessionManager::GetSeed(const SessionToken& token) const
 {
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
 		const LoggedInSession* pSession = iter->second;
 		
-		std::vector<unsigned char> seedWithCS(36);
-		for (size_t i = 0; i < 36; i++)
+		std::vector<unsigned char> seedWithCS(pSession->m_encryptedSeedWithCS.size());
+		for (size_t i = 0; i < seedWithCS.size(); i++)
 		{
 			seedWithCS[i] = pSession->m_encryptedSeedWithCS[i] ^ token.GetTokenKey()[i];
 		}
 
-		SecretKey seed(std::vector<unsigned char>(seedWithCS.cbegin(), seedWithCS.cbegin() + 32));
-		CBigInteger<32> hash = Crypto::SHA256(seed.GetBytes().GetData());
+		SecureVector seed(seedWithCS.cbegin(), seedWithCS.cbegin() + seedWithCS.size() - 4);
+		CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
 		for (int i = 0; i < 4; i++)
 		{
-			if (seedWithCS[32 + i] != hash[i])
+			if (seedWithCS[(seedWithCS.size() - 4) + i] != hash[i])
 			{
 				throw SessionTokenException();
 			}

@@ -12,7 +12,7 @@ WalletRestorer::WalletRestorer(const Config& config, const INodeClient& nodeClie
 
 }
 
-bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet, const bool fromGenesis) const
+bool WalletRestorer::Restore(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
 
@@ -84,7 +84,7 @@ bool WalletRestorer::Restore(const SecretKey& masterSeed, Wallet& wallet, const 
 	return SaveWalletOutputs(masterSeed, wallet, walletOutputs, nextLeafIndex - 1);
 }
 
-std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const SecretKey& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputData> WalletRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
 {
 	std::unique_ptr<RewoundProof> pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof());
 	if (pRewoundProof != nullptr)
@@ -122,7 +122,7 @@ EOutputStatus WalletRestorer::DetermineStatus(const OutputDisplayInfo& outputDis
 	return EOutputStatus::SPENDABLE;
 }
 
-bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs, const uint64_t restoreLeafIndex) const
+bool WalletRestorer::SaveWalletOutputs(const SecureVector& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs, const uint64_t restoreLeafIndex) const
 {
 	// TODO: Restore nextChildIndices
 	std::vector<OutputData> outputsToAdd;
@@ -145,7 +145,7 @@ bool WalletRestorer::SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wall
 	return wallet.SetRestoreLeafIndex(restoreLeafIndex);
 }
 
-bool WalletRestorer::IsNewOutput(const SecretKey& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const
+bool WalletRestorer::IsNewOutput(const SecureVector& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const
 {
 	for (const OutputData& existingOutput : existingOutputs)
 	{

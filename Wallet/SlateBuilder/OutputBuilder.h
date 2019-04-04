@@ -8,7 +8,7 @@
 class OutputBuilder
 {
 public:
-	static std::vector<OutputData> CreateOutputs(Wallet& wallet, const SecretKey& masterSeed, const uint64_t totalAmount, const uint8_t numOutputs)
+	static std::vector<OutputData> CreateOutputs(Wallet& wallet, const SecureVector& masterSeed, const uint64_t totalAmount, const uint8_t numOutputs)
 	{
 		if (totalAmount < numOutputs)
 		{

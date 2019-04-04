@@ -1,8 +1,17 @@
 set(TARGET_NAME GrinNode)
 
+if(MSVC)
+    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+		string(REGEX REPLACE "/W[0-4]" "/W0 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    else()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0 /WX")
+    endif()
+endif()
+
 file(GLOB SERVER_SRC
     "civetweb/src/CivetServer.cpp"
     "civetweb/src/civetweb.c"
+	"thirdparty/i2psam/i2psam.cpp"
 	"Main.cpp"
 	"JSONFactory.cpp"
 	"ShutdownManager.cpp"
@@ -23,12 +32,8 @@ file(GLOB SERVER_SRC
 
 include_directories(civetweb/include)
 
-#JsonCPP
-hunter_add_package(jsoncpp)
-find_package(jsoncpp CONFIG REQUIRED)
-set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
-
 add_executable(${TARGET_NAME} ${SERVER_SRC})
 
 add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet)
+target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
 target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config jsoncpp_lib_static Wallet)

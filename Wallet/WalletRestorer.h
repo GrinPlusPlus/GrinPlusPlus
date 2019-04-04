@@ -14,14 +14,14 @@ class WalletRestorer
 public:
 	WalletRestorer(const Config& config, const INodeClient& nodeClient, const KeyChain& keyChain);
 
-	bool Restore(const SecretKey& masterSeed, Wallet& wallet, const bool fromGenesis) const;
+	bool Restore(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis) const;
 
 private:
-	std::unique_ptr<OutputData> GetWalletOutput(const SecretKey& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const;
+	std::unique_ptr<OutputData> GetWalletOutput(const SecureVector& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const;
 	EOutputStatus DetermineStatus(const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const;
 
-	bool SaveWalletOutputs(const SecretKey& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs, const uint64_t refreshHeight) const;
-	bool IsNewOutput(const SecretKey& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const;
+	bool SaveWalletOutputs(const SecureVector& masterSeed, Wallet& wallet, const std::vector<OutputData>& outputs, const uint64_t refreshHeight) const;
+	bool IsNewOutput(const SecureVector& masterSeed, Wallet& wallet, const OutputData& output, const std::vector<OutputData>& existingOutputs) const;
 
 	const Config& m_config;
 	const INodeClient& m_nodeClient;

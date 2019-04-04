@@ -21,31 +21,31 @@ public:
 
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
-	WalletSummary GetWalletSummary(const SecretKey& masterSeed);
+	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
 
-	std::vector<WalletTx> GetTransactions(const SecretKey& masterSeed);
-	std::unique_ptr<WalletTx> GetTxById(const SecretKey& masterSeed, const uint32_t walletTxId);
-	std::unique_ptr<WalletTx> GetTxBySlateId(const SecretKey& masterSeed, const uuids::uuid& slateId);
+	std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed);
+	std::unique_ptr<WalletTx> GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId);
+	std::unique_ptr<WalletTx> GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId);
 
-	std::vector<OutputData> RefreshOutputs(const SecretKey& masterSeed);
-	bool AddRestoredOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputs);
+	std::vector<OutputData> RefreshOutputs(const SecureVector& masterSeed);
+	bool AddRestoredOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs);
 	uint64_t GetRefreshHeight() const;
 	bool SetRefreshHeight(const uint64_t blockHeight);
 	uint64_t GetRestoreLeafIndex() const;
 	bool SetRestoreLeafIndex(const uint64_t lastLeafIndex);
 
 	uint32_t GetNextWalletTxId();
-	bool AddWalletTxs(const SecretKey& masterSeed, const std::vector<WalletTx>& transactions);
+	bool AddWalletTxs(const SecureVector& masterSeed, const std::vector<WalletTx>& transactions);
 
-	std::vector<OutputData> GetAllAvailableCoins(const SecretKey& masterSeed) const;
-	OutputData CreateBlindedOutput(const SecretKey& masterSeed, const uint64_t amount);
-	bool SaveOutputs(const SecretKey& masterSeed, const std::vector<OutputData>& outputsToSave);
+	std::vector<OutputData> GetAllAvailableCoins(const SecureVector& masterSeed) const;
+	OutputData CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount);
+	bool SaveOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputsToSave);
 
-	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed) const;
-	bool SaveSlateContext(const uuids::uuid& slateId, const SecretKey& masterSeed, const SlateContext& slateContext);
-	bool LockCoins(const SecretKey& masterSeed, std::vector<OutputData>& coins);
+	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed) const;
+	bool SaveSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed, const SlateContext& slateContext);
+	bool LockCoins(const SecureVector& masterSeed, std::vector<OutputData>& coins);
 
-	bool CancelWalletTx(const SecretKey& masterSeed, WalletTx& walletTx);
+	bool CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx);
 
 private:
 	const Config& m_config;

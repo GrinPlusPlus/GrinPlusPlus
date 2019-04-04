@@ -182,8 +182,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
-					blockChainServer.AddBlockHeaders(blockHeaders);
-					LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
+					blockChainServer.AddBlockHeaders(blockHeaders); // TODO: Handle failures
+					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
 
 				return EStatus::SUCCESS;

@@ -17,10 +17,10 @@ public:
 	//
 	// Encrypts the wallet seed using the password and a randomly generated salt.
 	//
-	EncryptedSeed EncryptWalletSeed(const SecretKey& walletSeed, const SecureString& password) const;
+	EncryptedSeed EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password) const;
 
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
-	std::optional<SecretKey> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
+	std::optional<SecureVector> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
 };

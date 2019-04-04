@@ -67,10 +67,17 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
 
+	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
+
 	const size_t minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
-		seeder.m_connectionManager.PruneConnections(true);
+		auto now = std::chrono::system_clock::now();
+		if (lastPingTime + std::chrono::seconds(10) < now)
+		{
+			seeder.m_connectionManager.PruneConnections(true);
+			lastPingTime = now;
+		}
 
 		const size_t numConnections = seeder.m_connectionManager.GetNumberOfActiveConnections();
 		if (numConnections < minimumConnections)

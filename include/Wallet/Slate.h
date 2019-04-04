@@ -71,7 +71,7 @@ public:
 
 	static Slate FromJSON(const Json::Value& slateNode)
 	{
-		const uint64_t version = JsonUtil::GetRequiredField(slateNode, "version").asUInt64();
+		const uint64_t version = slateNode.get("version", Json::Value(0)).asUInt64();
 		const uint64_t numParticipants = JsonUtil::GetRequiredField(slateNode, "num_participants").asUInt64();
 		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
 		if (!slateIdOpt.has_value())

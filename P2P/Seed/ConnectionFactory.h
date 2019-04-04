@@ -25,6 +25,8 @@ public:
 
 private:
 	Connection* PerformHandshake(Socket& connection, Peer& peer, const EDirection direction) const;
+	Connection* PerformOutboundHandshake(ConnectedPeer& connectedPeer) const;
+	Connection* PerformInboundHandshake(ConnectedPeer& connectedPeer) const;
 	bool TransmitHandMessage(ConnectedPeer& connectedPeer) const;
 	bool TransmitShakeMessage(ConnectedPeer& connectedPeer) const;
 

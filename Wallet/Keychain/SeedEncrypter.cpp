@@ -6,24 +6,20 @@
 #include <Common/Util/HexUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 
-std::optional<SecretKey> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
+std::optional<SecureVector> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
 {
 	try
 	{
 		SecretKey passwordHash = Crypto::PBKDF(password, encryptedSeed.GetSalt().GetData());
 		const SecureVector decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
-		if (decrypted.size() != 64)
-		{
-			return std::nullopt;
-		}
 
-		SecretKey walletSeed(&decrypted[0]);
+		SecureVector walletSeed(decrypted.begin(), decrypted.begin() + decrypted.size() - 32);
 
-		const CBigInteger<32> hash256 = Crypto::HMAC_SHA256(walletSeed.GetBytes().GetData(), passwordHash.GetBytes().GetData());
-		const CBigInteger<32> hash256Check(&decrypted[32]);
+		const CBigInteger<32> hash256 = Crypto::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetBytes().GetData());
+		const CBigInteger<32> hash256Check(&decrypted[walletSeed.size()]);
 		if (hash256 == hash256Check)
 		{
-			return std::make_optional<SecretKey>(std::move(walletSeed));
+			return std::make_optional<SecureVector>(std::move(walletSeed));
 		}
 	}
 	catch (CryptoException&)
@@ -34,7 +30,7 @@ std::optional<SecretKey> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& e
 	return std::nullopt;
 }
 
-EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecretKey& walletSeed, const SecureString& password) const
+EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password) const
 {
 	CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
 	CBigInteger<16> iv = CBigInteger<16>(&randomNumber.GetData()[0]);
@@ -42,13 +38,11 @@ EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecretKey& walletSeed, cons
 
 	SecretKey passwordHash = Crypto::PBKDF(password, salt.GetData());
 
-	const std::vector<unsigned char>& walletSeedBytes = walletSeed.GetBytes().GetData();
-
-	const CBigInteger<32> hash256 = Crypto::HMAC_SHA256(walletSeedBytes, passwordHash.GetBytes().GetData());
+	const CBigInteger<32> hash256 = Crypto::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetBytes().GetData());
 	const std::vector<unsigned char>& hash256Bytes = hash256.GetData();
 
 	SecureVector seedPlusHash;
-	seedPlusHash.insert(seedPlusHash.begin(), walletSeedBytes.cbegin(), walletSeedBytes.cend());
+	seedPlusHash.insert(seedPlusHash.begin(), walletSeed.cbegin(), walletSeed.cend());
 	seedPlusHash.insert(seedPlusHash.end(), hash256Bytes.cbegin(), hash256Bytes.cend());
 
 	std::vector<unsigned char> encrypted = Crypto::AES256_Encrypt(seedPlusHash, passwordHash, iv);

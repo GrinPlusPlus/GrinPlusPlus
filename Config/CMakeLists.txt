@@ -6,10 +6,6 @@ file(GLOB CONFIG_SRC
     "ConfigWriter.cpp"
 )
 
-hunter_add_package(jsoncpp)
-find_package(jsoncpp CONFIG REQUIRED)
-set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
-
 add_library(${TARGET_NAME} SHARED ${CONFIG_SRC})
 
 target_link_libraries(${TARGET_NAME} Core Infrastructure jsoncpp_lib_static)

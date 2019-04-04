@@ -84,6 +84,9 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
 	statusNode["chain"] = tipNode;
 
+	const uint64_t headerHeight = pServer->m_pBlockChainServer->GetHeight(EChainType::CANDIDATE);
+	statusNode["header_height"] = headerHeight;
+
 	return RestUtil::BuildSuccessResponse(conn, statusNode.toStyledString());
 }
 

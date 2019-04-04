@@ -159,7 +159,7 @@ KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyCh
 	return nextChildPath;
 }
 
-std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId) const
+std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId) const
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
 	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
@@ -176,7 +176,7 @@ std::unique_ptr<SlateContext> WalletDB::LoadSlateContext(const std::string& user
 	return std::unique_ptr<SlateContext>(nullptr);
 }
 
-bool WalletDB::SaveSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
+bool WalletDB::SaveSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
 {
 	const std::string slateIdStr = uuids::to_string(slateId);
 	const std::string keyWithUsername = CombineKeyWithUsername(username, slateIdStr);
@@ -196,7 +196,7 @@ bool WalletDB::SaveSlateContext(const std::string& username, const SecretKey& ma
 	return false;
 }
 
-bool WalletDB::AddOutputs(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& outputs)
+bool WalletDB::AddOutputs(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
 {
 	WriteBatch batch;
 
@@ -221,7 +221,7 @@ bool WalletDB::AddOutputs(const std::string& username, const SecretKey& masterSe
 	return m_pDatabase->Write(WriteOptions(), &batch).ok();
 }
 
-std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const SecretKey& masterSeed) const
+std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const SecureVector& masterSeed) const
 {
 	std::vector<OutputData> outputs;
 
@@ -245,7 +245,7 @@ std::vector<OutputData> WalletDB::GetOutputs(const std::string& username, const 
 	return outputs;
 }
 
-bool WalletDB::AddTransaction(const std::string& username, const SecretKey& masterSeed, const WalletTx& walletTx)
+bool WalletDB::AddTransaction(const std::string& username, const SecureVector& masterSeed, const WalletTx& walletTx)
 {
 	const std::string keyWithUsername = CombineKeyWithUsername(username, std::to_string(walletTx.GetId()));
 	const Slice key(keyWithUsername);
@@ -266,7 +266,7 @@ bool WalletDB::AddTransaction(const std::string& username, const SecretKey& mast
 	return false;
 }
 
-std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, const SecretKey& masterSeed) const
+std::vector<WalletTx> WalletDB::GetTransactions(const std::string& username, const SecureVector& masterSeed) const
 {
 	std::vector<WalletTx> walletTransactions;
 
@@ -389,7 +389,7 @@ std::string WalletDB::CombineKeyWithUsername(const std::string& username, const 
 	return GetUsernamePrefix(username) + key;
 }
 
-SecretKey WalletDB::CreateSecureKey(const SecretKey& masterSeed, const std::string& dataType)
+SecretKey WalletDB::CreateSecureKey(const SecureVector& masterSeed, const std::string& dataType)
 {
 	SecureVector seedWithNonce(masterSeed.data(), masterSeed.data() + masterSeed.size());
 
@@ -397,10 +397,10 @@ SecretKey WalletDB::CreateSecureKey(const SecretKey& masterSeed, const std::stri
 	nonceSerializer.AppendVarStr(dataType);
 	seedWithNonce.insert(seedWithNonce.end(), nonceSerializer.GetBytes().begin(), nonceSerializer.GetBytes().end());
 
-	return Crypto::Blake2b((const std::vector<unsigned char>&)seedWithNonce); // TODO: Does this actually work?
+	return Crypto::Blake2b((const std::vector<unsigned char>&)seedWithNonce);
 }
 
-std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const std::string& dataType, const SecureVector& bytes)
+std::vector<unsigned char> WalletDB::Encrypt(const SecureVector& masterSeed, const std::string& dataType, const SecureVector& bytes)
 {
 	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
 	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
@@ -415,7 +415,7 @@ std::vector<unsigned char> WalletDB::Encrypt(const SecretKey& masterSeed, const 
 	return serializer.GetBytes();
 }
 
-SecureVector WalletDB::Decrypt(const SecretKey& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
+SecureVector WalletDB::Decrypt(const SecureVector& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
 {
 	ByteBuffer byteBuffer(encrypted);
 

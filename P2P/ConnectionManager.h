@@ -57,7 +57,6 @@ private:
 	mutable std::shared_mutex m_connectionsMutex;
 	std::vector<Connection*> m_connections;
 	std::unordered_map<uint64_t, EBanReason> m_peersToBan;
-	std::chrono::system_clock::time_point m_lastPingTime;
 
 	mutable std::shared_mutex m_disconnectMutex;
 	std::vector<Connection*> m_connectionsToClose;

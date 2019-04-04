@@ -28,14 +28,14 @@ public:
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const = 0;
 	virtual KeyChainPath GetNextChildPath(const std::string& username, const KeyChainPath& parentPath) = 0;
 
-	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId) const = 0;
-	virtual bool SaveSlateContext(const std::string& username, const SecretKey& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) = 0;
+	virtual std::unique_ptr<SlateContext> LoadSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;
+	virtual bool SaveSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) = 0;
 
-	virtual bool AddOutputs(const std::string& username, const SecretKey& masterSeed, const std::vector<OutputData>& outputs) = 0;
-	virtual std::vector<OutputData> GetOutputs(const std::string& username, const SecretKey& masterSeed) const = 0;
+	virtual bool AddOutputs(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& outputs) = 0;
+	virtual std::vector<OutputData> GetOutputs(const std::string& username, const SecureVector& masterSeed) const = 0;
 
-	virtual bool AddTransaction(const std::string& username, const SecretKey& masterSeed, const WalletTx& walletTx) = 0;
-	virtual std::vector<WalletTx> GetTransactions(const std::string& username, const SecretKey& masterSeed) const = 0;
+	virtual bool AddTransaction(const std::string& username, const SecureVector& masterSeed, const WalletTx& walletTx) = 0;
+	virtual std::vector<WalletTx> GetTransactions(const std::string& username, const SecureVector& masterSeed) const = 0;
 
 	virtual uint32_t GetNextTransactionId(const std::string& username) = 0;
 	virtual uint64_t GetRefreshBlockHeight(const std::string& username) const = 0;

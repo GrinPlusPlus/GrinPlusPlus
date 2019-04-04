@@ -13,11 +13,11 @@ KeyGenerator::KeyGenerator(const Config& config)
 
 }
 
-PrivateExtKey KeyGenerator::GenerateMasterKey(const SecretKey& seed) const
+PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 {
 	unsigned char key[] = { 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' };
 	std::vector<unsigned char> vchKey = VectorUtil::MakeVector<unsigned char, 12>(key);
-	const CBigInteger<64> hash = Crypto::HMAC_SHA512(vchKey, seed.GetBytes().GetData());
+	const CBigInteger<64> hash = Crypto::HMAC_SHA512(vchKey, (const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char>& vchHash = hash.GetData();
 
 	CBigInteger<32> masterSecretKey(&vchHash[0]);

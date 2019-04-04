@@ -81,4 +81,55 @@ namespace MessageTypes
 
 		return 0;
 	}
+
+	static std::string ToString(const EMessageType messageType)
+	{
+		switch (messageType)
+		{
+			case Error:
+				return "Msg::Error";
+			case Hand:
+				return "Msg::Hand";
+			case Shake:
+				return "Msg::Shake";
+			case Ping:
+				return "Msg::Ping";
+			case Pong:
+				return "Msg::Pong";
+			case GetPeerAddrs:
+				return "Msg::GetPeerAddrs";
+			case PeerAddrs:
+				return "Msg::PeerAddrs";
+			case GetHeaders:
+				return "Msg::GetHeaders";
+			case Header:
+				return "Msg::Header";
+			case Headers:
+				return "Msg::Headers";
+			case GetBlock:
+				return "Msg::GetBlock";
+			case Block:
+				return "Msg::Block";
+			case GetCompactBlock:
+				return "Msg::GetCompactBlock";
+			case CompactBlockMsg:
+				return "Msg::CompactBlockMsg";
+			case StemTransaction:
+				return "Msg::StemTransaction";
+			case TransactionMsg:
+				return "Msg::TransactionMsg";
+			case TxHashSetRequest:
+				return "Msg::TxHashSetRequest";
+			case TxHashSetArchive:
+				return "Msg::TxHashSetArchive";
+			case BanReasonMsg:
+				return "Msg::BanReasonMsg";
+			case GetTransactionMsg:
+				return "Msg::GetTransactionMsg";
+			case TransactionKernelMsg:
+				return "Msg::TransactionKernelMsg";
+		}
+
+		return "UNKNOWN";
+	}
 }

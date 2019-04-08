@@ -20,6 +20,10 @@ public:
 		TransactionKernel kernel(kernelFeatures, fee, lockHeight, Commitment(CBigInteger<33>::ValueOf(0)), Signature(CBigInteger<64>::ValueOf(0)));
 		std::vector<TransactionKernel> kernels({ std::move(kernel) });
 
+		std::sort(transactionInputs.begin(), transactionInputs.end(), SortInputsByHash);
+		std::sort(transactionOutputs.begin(), transactionOutputs.end(), SortOutputsByHash);
+		std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
+
 		return Transaction(BlindingFactor(transactionOffset), TransactionBody(std::move(transactionInputs), std::move(transactionOutputs), std::move(kernels)));
 	}
 

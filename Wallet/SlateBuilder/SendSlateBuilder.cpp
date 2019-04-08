@@ -9,7 +9,7 @@
 #include <Infrastructure/Logger.h>
 #include <uuids.h>
 
-static const uint64_t SLATE_VERSION = 1;
+static const uint64_t SLATE_VERSION = 0;
 
 SendSlateBuilder::SendSlateBuilder(const INodeClient& nodeClient)
 	: m_nodeClient(nodeClient)

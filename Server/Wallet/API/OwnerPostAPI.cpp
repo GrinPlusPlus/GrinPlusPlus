@@ -4,7 +4,8 @@
 
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
-#include <Wallet/SessionTokenException.h>
+#include <Wallet/Exceptions/SessionTokenException.h>
+#include <Wallet/Exceptions/InvalidMnemonicException.h>
 
 int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
 {
@@ -156,16 +157,23 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 	const SecureString password(passwordOpt.value());
 	const SecureString walletWords(walletWordsJSON.asString());
 
-	std::optional<SessionToken> tokenOpt = walletManager.Restore(username, password, walletWords);
-	if (tokenOpt.has_value())
+	try
 	{
-		Json::Value responseJSON;
-		responseJSON["session_token"] = std::string(tokenOpt.value().ToBase64());
-		return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
+		std::optional<SessionToken> tokenOpt = walletManager.Restore(username, password, walletWords);
+		if (tokenOpt.has_value())
+		{
+			Json::Value responseJSON;
+			responseJSON["session_token"] = std::string(tokenOpt.value().ToBase64());
+			return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
+		}
+		else
+		{
+			return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		}
 	}
-	else
+	catch (const InvalidMnemonicException&)
 	{
-		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		return RestUtil::BuildBadRequestResponse(pConnection, "Mnemonic Invalid");
 	}
 }
 

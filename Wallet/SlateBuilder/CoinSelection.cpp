@@ -1,7 +1,7 @@
 #include "CoinSelection.h"
 
 #include <Wallet/WalletUtil.h>
-#include <Wallet/InsufficientFundsException.h>
+#include <Wallet/Exceptions/InsufficientFundsException.h>
 #include <Infrastructure/Logger.h>
 
 // TODO: Apply Strategy instead of just selecting greatest number of outputs.

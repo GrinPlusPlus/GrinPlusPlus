@@ -4,7 +4,7 @@
 
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
-#include <Wallet/SessionTokenException.h>
+#include <Wallet/Exceptions/SessionTokenException.h>
 
 /*
 	GET /v1/wallet/owner/node_height

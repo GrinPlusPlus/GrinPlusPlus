@@ -3,7 +3,7 @@
 #include "../Wallet.h"
 
 #include <Wallet/OutputData.h>
-#include <Wallet/InsufficientFundsException.h>
+#include <Wallet/Exceptions/InsufficientFundsException.h>
 
 class OutputBuilder
 {

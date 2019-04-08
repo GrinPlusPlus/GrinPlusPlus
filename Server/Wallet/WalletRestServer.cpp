@@ -5,8 +5,8 @@
 #include "API/OwnerGetAPI.h"
 #include "API/OwnerPostAPI.h"
 
-#include <Wallet/SessionTokenException.h>
-#include <Wallet/InsufficientFundsException.h>
+#include <Wallet/Exceptions/SessionTokenException.h>
+#include <Wallet/Exceptions/InsufficientFundsException.h>
 
 WalletRestServer::WalletRestServer(const Config& config, IWalletManager& walletManager, INodeClient& nodeClient)
 	: m_config(config), m_walletManager(walletManager)

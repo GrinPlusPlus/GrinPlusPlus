@@ -3,7 +3,7 @@
 
 #include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Wallet/SessionTokenException.h>
+#include <Wallet/Exceptions/SessionTokenException.h>
 #include <Common/Util/VectorUtil.h>
 
 SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)

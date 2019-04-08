@@ -4,7 +4,7 @@
 #include "../../RestUtil.h"
 
 #include <Wallet/SessionToken.h>
-#include <Wallet/SessionTokenException.h>
+#include <Wallet/Exceptions/SessionTokenException.h>
 
 class SessionTokenUtil
 {

@@ -7,9 +7,11 @@
 #include "WalletRestorer.h"
 //#include "Grinbox/GrinboxConnection.h"
 
+#include <Wallet/Exceptions/InvalidMnemonicException.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
+#include <Infrastructure/Logger.h>
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB)
@@ -25,6 +27,7 @@ WalletManager::~WalletManager()
 
 std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNewWallet(const std::string& username, const SecureString& password)
 {
+	LoggerAPI::LogInfo("Creating new wallet with username: " + username);
 	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const SecureVector walletSeedBytes(walletSeed.GetBytes().GetData().begin(), walletSeed.GetBytes().GetData().end());
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeedBytes, password);
@@ -32,6 +35,8 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 	const std::string usernameLower = StringUtil::ToLower(username);
 	if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 	{
+		LoggerAPI::LogInfo("Wallet created with username: " + username);
+
 		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData(), std::make_optional(password));
 		SessionToken token = m_sessionManager.Login(usernameLower, walletSeedBytes);
 
@@ -43,6 +48,7 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 
 std::optional<SessionToken> WalletManager::Restore(const std::string& username, const SecureString& password, const SecureString& walletWords)
 {
+	LoggerAPI::LogInfo("Attempting to restore account with username: " + username);
 	std::optional<SecureVector> entropyOpt = Mnemonic::ToEntropy(walletWords, std::make_optional<SecureString>(password));
 	if (entropyOpt.has_value())
 	{
@@ -50,8 +56,14 @@ std::optional<SessionToken> WalletManager::Restore(const std::string& username, 
 		const std::string usernameLower = StringUtil::ToLower(username);
 		if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 		{
+			LoggerAPI::LogInfo("Wallet restored for username: " + username);
 			return std::make_optional<SessionToken>(m_sessionManager.Login(usernameLower, entropyOpt.value()));
 		}
+	}
+	else
+	{
+		LoggerAPI::LogWarning("Mnemonic invalid for username: " + username);
+		throw InvalidMnemonicException();
 	}
 
 	return std::nullopt;
@@ -73,15 +85,14 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 
 std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, const SecureString& password)
 {
+	LoggerAPI::LogInfo("Attempting to login with username: " + username);
+
 	const std::string usernameLower = StringUtil::ToLower(username);
 	std::unique_ptr<SessionToken> pToken = m_sessionManager.Login(usernameLower, password);
 	if (pToken != nullptr)
 	{
-		//auto asyncCheckForOutputs =
-		//	[this](SessionToken token) -> void { this->CheckForOutputs(token); };
+		LoggerAPI::LogInfo("Login successful for username: " + username);
 
-		//std::thread thread(asyncCheckForOutputs, *pToken);
-		//thread.detach();
 		CheckForOutputs(*pToken, false);
 	}
 
@@ -135,11 +146,6 @@ std::unique_ptr<Slate> WalletManager::Finalize(const SessionToken& token, const 
 
 bool WalletManager::PostTransaction(const SessionToken& token, const Transaction& transaction)
 {
-	//const SecureVector masterSeed = m_sessionManager.GetSeed(token);
-	//LockedWallet wallet = m_sessionManager.GetWallet(token);
-
-	// TODO: Save transaction(TxLogEntry)
-
 	return m_nodeClient.PostTransaction(transaction);
 }
 
@@ -183,8 +189,6 @@ namespace WalletAPI
 	WALLET_API IWalletManager* StartWalletManager(const Config& config, INodeClient& nodeClient)
 	{
 		IWalletDB* pWalletDB = WalletDBAPI::OpenWalletDB(config);
-	//	GrinboxConnection* pConnection = new GrinboxConnection();
-		//pConnection->Connect();
 		return new WalletManager(config, nodeClient, pWalletDB);
 	}
 

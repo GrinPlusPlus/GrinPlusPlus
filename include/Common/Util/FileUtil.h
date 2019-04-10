@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <filesystem>
-
+#include <stdlib.h>
 
 class FileUtil
 {
@@ -103,11 +103,9 @@ public:
 
 		return std::string(&homeDriveBuf[0]) + std::string(&homePathBuf[0]);
 		#else
-		char homePathBuf[MAX_PATH_LEN];
-		size_t homePathLen = MAX_PATH_LEN;
-		getenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, "HOME");
+		char* pHomePath = getenv("HOME");
 
-		return std::string(&homePathBuf[0]);
+		return std::string(pHomePath);
 		#endif
 	}
 

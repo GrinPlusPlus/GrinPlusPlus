@@ -4,6 +4,7 @@ set(TEST_TARGET_NAME Crypto_Tests)
 add_definitions(-DHAVE_CONFIG_H -DHAVE_SCRYPT_CONFIG_H)
 include_directories(
 	${PROJECT_SOURCE_DIR}/Crypto/secp256k1-zkp
+	${PROJECT_SOURCE_DIR}/Crypto/secp256k1-zkp/src
 )
 
 if(MSVC)
@@ -20,7 +21,7 @@ file(GLOB CRYPTO_SRC
 	"aes.cpp"
 	"AggSig.cpp"
 	"ctaes/ctaes.c"
-    "Blake2b.cpp"
+	"Blake2b.cpp"
 	"Bulletproofs.cpp"
 	"Crypto.cpp"
 	"ECDH.cpp"
@@ -52,4 +53,4 @@ file(GLOB CRYPTO_TESTS_SRC
 add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO)
 add_dependencies(${TEST_TARGET_NAME} Infrastructure)
-target_link_libraries(${TEST_TARGET_NAME} Infrastructure)
+target_link_libraries(${TEST_TARGET_NAME} Infrastructure pthread)

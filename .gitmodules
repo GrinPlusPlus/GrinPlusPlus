@@ -4,24 +4,20 @@
 [submodule "Crypto/secp256k1-zkp"]
 	path = Crypto/secp256k1-zkp
 	url = https://github.com/mimblewimble/secp256k1-zkp.git
-
-[submodule "include/thirdparty/mio"]
-
-	path = include/thirdparty/mio
+[submodule "include/ThirdParty/mio"]
+	path = include/ThirdParty/mio
 	url = https://github.com/mandreyel/mio.git
-
 [submodule "PoW/cuckoo"]
-
 	path = PoW/cuckoo
 	url = https://github.com/GrinPlusPlus/cuckoo
-[submodule "include/thirdparty/stduuid"]
-	path = include/thirdparty/stduuid
+[submodule "include/ThirdParty/stduuid"]
+	path = include/ThirdParty/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
-[submodule "include/thirdparty/lru-cache"]
-	path = include/thirdparty/lru-cache
+[submodule "include/ThirdParty/lru-cache"]
+	path = include/ThirdParty/lru-cache
 	url = https://github.com/goldsborough/lru-cache.git
-[submodule "Server/thirdparty/i2psam"]
-	path = Server/thirdparty/i2psam
+[submodule "Server/ThirdParty/i2psam"]
+	path = Server/ThirdParty/i2psam
 	url = https://github.com/i2p/i2psam.git
 [submodule "Crypto/balloon"]
 	path = Crypto/balloon

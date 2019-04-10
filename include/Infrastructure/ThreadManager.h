@@ -5,9 +5,9 @@
 #include <Common/ImportExport.h>
 
 #ifdef MW_INFRASTRUCTURE
-#define THREAD_MANAGER_API __declspec(dllexport)
+#define THREAD_MANAGER_API EXPORT
 #else
-#define THREAD_MANAGER_API __declspec(dllimport)
+#define THREAD_MANAGER_API IMPORT
 #endif
 
 namespace ThreadManagerAPI

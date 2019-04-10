@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 #pragma warning(disable: 4505)
 
@@ -98,7 +99,7 @@ public:
 	CBigInteger operator/(const int divisor) const;
 	CBigInteger operator/(const CBigInteger& divisor) const;
 
-	CBigInteger operator^(const CBigInteger& xor) const;
+	CBigInteger operator^(const CBigInteger& rhs) const;
 
 	int operator%(const int modulo) const;
 	CBigInteger operator%(const CBigInteger& modulo) const;
@@ -220,6 +221,21 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::GetMaximumValue()
 	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
 }
 
+static unsigned char FromHexChar(const char value)
+{
+	if (value <= '9' && value >= 0)
+	{
+		return (unsigned char)(value - '0');
+	}
+
+	if (value >= 'a')
+	{
+		return (unsigned char)(10 + value - 'a');
+	}
+
+	return (unsigned char)(10 + value - 'A');
+}
+
 template<size_t NUM_BYTES, class ALLOC>
 CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::string& hex)
 {
@@ -246,21 +262,6 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::
 	}
 
 	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
-}
-
-static unsigned char FromHexChar(const char value)
-{
-	if (value <= '9' && value >= 0)
-	{
-		return (unsigned char)(value - '0');
-	}
-
-	if (value >= 'a')
-	{
-		return (unsigned char)(10 + value - 'a');
-	}
-
-	return (unsigned char)(10 + value - 'A');
 }
 
 template<size_t NUM_BYTES, class ALLOC>
@@ -544,12 +545,12 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator%(const CBi
 }
 
 template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator^(const CBigInteger<NUM_BYTES, ALLOC>& xor) const
+CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator^(const CBigInteger<NUM_BYTES, ALLOC>& rhs) const
 {
 	CBigInteger<NUM_BYTES, ALLOC> result = *this;
 	for (size_t i = 0; i < NUM_BYTES; i++)
 	{
-		result[i] ^= xor[i];
+		result[i] ^= rhs[i];
 	}
 
 	return result;

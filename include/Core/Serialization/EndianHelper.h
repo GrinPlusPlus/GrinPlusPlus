@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <cstring>
 
 //
 // A header-only utility for determining and changing endianness of data.

@@ -2,11 +2,30 @@
 
 #include <string>
 #include <vector>
+#include <cstring>
 
 #if defined(_MSC_VER)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
+
+static void LOCK_MEMORY(void* pMemory, size_t size)
+{
+#if defined(_MSC_VER)
+	VirtualLock(pMemory, size);
+#else
+// TODO: 
+#endif
+}
+
+static void UNLOCK_MEMORY(void* pMemory, size_t size)
+{
+#if defined(_MSC_VER)
+	VirtualUnlock(pMemory, size);
+#else
+// TODO: 
+#endif
+}
 
 /* Compilers have a bad habit of removing "superfluous" memset calls that
  * are trying to zero memory. For example, when memset()ing a buffer and
@@ -71,7 +90,7 @@ struct secure_allocator : public std::allocator<T>
 		T* p = std::allocator<T>::allocate(n, hint);
 		if (p != NULL)
 		{
-			VirtualLock(p, sizeof(T) * n);
+			LOCK_MEMORY(p, sizeof(T) * n);
 		}
 
 		return p;
@@ -82,7 +101,7 @@ struct secure_allocator : public std::allocator<T>
 		if (p != NULL)
 		{
 			cleanse(p, sizeof(T) * n);
-			VirtualUnlock(p, sizeof(T) * n);
+			UNLOCK_MEMORY(p, sizeof(T) * n);
 		}
 		std::allocator<T>::deallocate(p, n);
 	}

@@ -13,7 +13,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionBody.h>
 #include <Crypto/BlindingFactor.h>
-#include <Json/Json.h>
+#include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION

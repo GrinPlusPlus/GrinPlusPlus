@@ -11,7 +11,9 @@
 
 #include <vector>
 #include <string>
+#include <cstring>
 #include <stdint.h>
+#include <algorithm>
 
 #include <Crypto/BigInteger.h>
 

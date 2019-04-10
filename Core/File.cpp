@@ -2,10 +2,14 @@
 
 #include <Common/Util/FileUtil.h>
 #include <fstream>
+
+#if defined(WIN32)
 #include <Windows.h>
+#endif
 
 static bool TruncateFile(const std::string& filePath, const uint64_t size)
 {
+#if defined(WIN32)
 	HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	LARGE_INTEGER li;
@@ -15,6 +19,10 @@ static bool TruncateFile(const std::string& filePath, const uint64_t size)
 	CloseHandle(hFile);
 
 	return success;
+#else
+	// TODO: Implement
+	return true;
+#endif
 }
 
 File::File(const std::string& path)

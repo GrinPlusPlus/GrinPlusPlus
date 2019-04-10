@@ -16,4 +16,4 @@ find_package(jsoncpp CONFIG REQUIRED)
 set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 add_dependencies(${TARGET_NAME} Crypto)
-target_link_libraries(${TARGET_NAME} Crypto jsoncpp_lib_static)
+target_link_libraries(${TARGET_NAME} Crypto jsoncpp_lib_static pthread)

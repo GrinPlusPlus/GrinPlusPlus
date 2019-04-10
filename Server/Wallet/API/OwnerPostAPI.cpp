@@ -97,7 +97,7 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+		return RestUtil::BuildInternalErrorResponse(pConnection, "Username already exists.");
 	}
 }
 
@@ -168,7 +168,7 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 		}
 		else
 		{
-			return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
+			return RestUtil::BuildInternalErrorResponse(pConnection, "Username already exists.");
 		}
 	}
 	catch (const InvalidMnemonicException&)

@@ -198,7 +198,7 @@ public:
 
 		mg_write(conn, response.c_str(), len);
 
-		return 400;
+		return 409;
 	}
 
 	static int BuildUnauthorizedResponse(struct mg_connection* conn, const std::string& response)

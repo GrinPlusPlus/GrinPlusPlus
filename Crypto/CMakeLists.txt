@@ -50,7 +50,13 @@ file(GLOB CRYPTO_TESTS_SRC
 	"Tests/*.cpp"
 )
 
+if (WIN32)
+    set(OS_SPECIFIC_LIBS "")
+else(WIN32)
+    find_library(OS_SPECIFIC_LIBS pthread)
+endif(WIN32)
+
 add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO)
 add_dependencies(${TEST_TARGET_NAME} Infrastructure)
-target_link_libraries(${TEST_TARGET_NAME} Infrastructure pthread)
+target_link_libraries(${TEST_TARGET_NAME} ${OS_SPECIFIC_LIBS} Infrastructure)

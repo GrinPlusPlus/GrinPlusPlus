@@ -54,6 +54,11 @@ public:
 		m_serialized.insert(m_serialized.end(), vectorToAppend.cbegin(), vectorToAppend.cend());
 	}
 
+	void AppendByteVector(const SecureVector& vectorToAppend)
+	{
+		m_serialized.insert(m_serialized.end(), vectorToAppend.cbegin(), vectorToAppend.cend());
+	}
+
 	void AppendVarStr(const std::string& varString)
 	{
 		size_t stringLength = varString.length();

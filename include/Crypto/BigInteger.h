@@ -80,8 +80,6 @@ public:
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
 	std::string ToHex() const;
 
-	CBigInteger<NUM_BYTES, ALLOC>& ReverseByteOrder();
-
 	CBigInteger addMod(const CBigInteger& addend, const CBigInteger& mod) const;
 
 	//
@@ -274,13 +272,6 @@ std::string CBigInteger<NUM_BYTES, ALLOC>::ToHex() const
 	}
 
 	return stream.str();
-}
-
-template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC>& CBigInteger<NUM_BYTES, ALLOC>::ReverseByteOrder()
-{
-	std::reverse(m_data.begin(), m_data.end());
-	return *this;
 }
 
 template<size_t NUM_BYTES, class ALLOC>

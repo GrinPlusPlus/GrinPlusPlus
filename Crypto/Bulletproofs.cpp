@@ -83,8 +83,8 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
-	const CBigInteger<32> randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, &randomSeed.GetData()[0]);
+	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	secp256k1_context_randomize(m_pContext, randomSeed.data());
 
 	std::vector<unsigned char> proofBytes(MAX_PROOF_SIZE, 0);
 	size_t proofLen = MAX_PROOF_SIZE;

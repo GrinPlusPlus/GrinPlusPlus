@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/Base64.h>
+#include <Common/Secure.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <stdint.h>

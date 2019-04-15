@@ -22,14 +22,15 @@ public:
 	void Logout(const SessionToken& token);
 
 	SecureVector GetSeed(const SessionToken& token) const;
+	SecretKey GetGrinboxAddress(const SessionToken& token) const;
 	LockedWallet GetWallet(const SessionToken& token);
 	//const Wallet& GetWallet(const SessionToken& token) const;
 
 private:
 	struct LoggedInSession
 	{
-		LoggedInSession(Wallet* pWallet, std::vector<unsigned char>&& encryptedSeedWithCS)
-			: m_pWallet(pWallet), m_encryptedSeedWithCS(std::move(encryptedSeedWithCS))
+		LoggedInSession(Wallet* pWallet, std::vector<unsigned char>&& encryptedSeedWithCS, std::vector<unsigned char>&& encryptedGrinboxAddress)
+			: m_pWallet(pWallet), m_encryptedSeedWithCS(std::move(encryptedSeedWithCS)), m_encryptedGrinboxAddress(std::move(encryptedGrinboxAddress))
 		{
 
 		}
@@ -42,6 +43,7 @@ private:
 		std::mutex m_mutex;
 		Wallet* m_pWallet;
 		std::vector<unsigned char> m_encryptedSeedWithCS;
+		std::vector<unsigned char> m_encryptedGrinboxAddress;
 	};
 
 	std::map<uint64_t, LoggedInSession*> m_sessionsById;

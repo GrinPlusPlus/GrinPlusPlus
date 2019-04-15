@@ -13,11 +13,10 @@ KeyGenerator::KeyGenerator(const Config& config)
 
 }
 
-PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
+PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed, const EKeyChainType& keyChainType) const
 {
-	unsigned char key[] = { 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' };
-	std::vector<unsigned char> vchKey = VectorUtil::MakeVector<unsigned char, 12>(key);
-	const CBigInteger<64> hash = Crypto::HMAC_SHA512(vchKey, (const std::vector<unsigned char>&)seed);
+	const std::vector<unsigned char> key = GetSeed(keyChainType);
+	const CBigInteger<64> hash = Crypto::HMAC_SHA512(key, (const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char>& vchHash = hash.GetData();
 
 	CBigInteger<32> masterSecretKey(&vchHash[0]);
@@ -29,7 +28,14 @@ PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 
 	CBigInteger<32> masterChainCode(&vchHash[32]);
 
-	return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
+	if (keyChainType == EKeyChainType::GRINBOX)
+	{
+		return PrivateExtKey::Create(BitUtil::ConvertToU32(42, 1, 0, 42), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
+	}
+	else
+	{
+		return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
+	}
 }
 
 std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
@@ -87,4 +93,16 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 PublicExtKey KeyGenerator::GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const
 {
 	throw std::exception("Not implemented yet");
+}
+
+std::vector<unsigned char> KeyGenerator::GetSeed(const EKeyChainType& keyChainType) const
+{
+	if (keyChainType == EKeyChainType::GRINBOX)
+	{
+		return std::vector<unsigned char>({ 'G', 'r', 'i', 'n', 'b', 'o', 'x', '_', 's', 'e', 'e', 'd' });
+	}
+	else
+	{
+		return std::vector<unsigned char>({ 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' });
+	}
 }

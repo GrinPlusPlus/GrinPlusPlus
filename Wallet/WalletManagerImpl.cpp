@@ -5,7 +5,6 @@
 #include "SlateBuilder/SendSlateBuilder.h"
 #include "SlateBuilder/FinalizeSlateBuilder.h"
 #include "WalletRestorer.h"
-//#include "Grinbox/GrinboxConnection.h"
 
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 #include <Crypto/RandomNumberGenerator.h>
@@ -37,7 +36,7 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 	{
 		LoggerAPI::LogInfo("Wallet created with username: " + username);
 
-		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData(), std::make_optional(password));
+		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData());
 		SessionToken token = m_sessionManager.Login(usernameLower, walletSeedBytes);
 
 		return std::make_optional<std::pair<SecureString, SessionToken>>(std::make_pair<SecureString, SessionToken>(std::move(walletWords), std::move(token)));
@@ -49,7 +48,7 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 std::optional<SessionToken> WalletManager::Restore(const std::string& username, const SecureString& password, const SecureString& walletWords)
 {
 	LoggerAPI::LogInfo("Attempting to restore account with username: " + username);
-	std::optional<SecureVector> entropyOpt = Mnemonic::ToEntropy(walletWords, std::make_optional<SecureString>(password));
+	std::optional<SecureVector> entropyOpt = Mnemonic::ToEntropy(walletWords);
 	if (entropyOpt.has_value())
 	{
 		const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(entropyOpt.value(), password);
@@ -76,6 +75,11 @@ bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
 	return WalletRestorer(m_config, m_nodeClient, keyChain).Restore(masterSeed, wallet.GetWallet(), fromGenesis);
+}
+
+SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
+{
+	return m_sessionManager.GetGrinboxAddress(token);
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const

@@ -45,17 +45,26 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	SecureVector seedWithChecksum = SecureVector(seed.begin(), seed.end());
 	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
 
-	std::vector<unsigned char> tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
+	SecureVector tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
+
 	std::vector<unsigned char> encryptedSeedWithCS(seedWithChecksum.size());
 	for (size_t i = 0; i < seedWithChecksum.size(); i++)
 	{
 		encryptedSeedWithCS[i] = seedWithChecksum[i] ^ tokenKey[i];
 	}
 
-	const uint64_t sessionId = m_nextSessionId++;
-	m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS));
+	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
+	std::unique_ptr<SecretKey> pGrinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
+	std::vector<unsigned char> encryptedGrinboxAddress(32);
+	for (size_t i = 0; i < 32; i++)
+	{
+		encryptedGrinboxAddress[i] = pGrinboxAddress->GetBytes()[i] ^ hash[i];
+	}
 
-	return SessionToken(sessionId, std::move(tokenKey));
+	const uint64_t sessionId = m_nextSessionId++;
+	m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
+
+	return SessionToken(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 }
 
 void SessionManager::Logout(const SessionToken& token)
@@ -92,6 +101,27 @@ SecureVector SessionManager::GetSeed(const SessionToken& token) const
 		}
 
 		return seed;
+	}
+
+	throw SessionTokenException();
+}
+
+SecretKey SessionManager::GetGrinboxAddress(const SessionToken& token) const
+{
+	auto iter = m_sessionsById.find(token.GetSessionId());
+	if (iter != m_sessionsById.end())
+	{
+		const SecureVector seed = GetSeed(token);
+		const SecretKey hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
+
+		const LoggedInSession* pSession = iter->second;
+		SecureVector grinboxAddress(32);
+		for (size_t i = 0; i < 32; i++)
+		{
+			grinboxAddress[i] = pSession->m_encryptedGrinboxAddress[i] ^ hash.GetBytes()[i];
+		}
+
+		return SecretKey(CBigInteger<32>((const std::vector<unsigned char>&)grinboxAddress));
 	}
 
 	throw SessionTokenException();

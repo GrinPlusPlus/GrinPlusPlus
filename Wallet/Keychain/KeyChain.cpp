@@ -12,9 +12,34 @@ KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& 
 
 KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed)
 {
-	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed);
+	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed, EKeyChainType::DEFAULT);
 	SecretKey bulletProofNonce = *Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
 	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
+}
+
+KeyChain KeyChain::ForGrinbox(const Config& config, const SecureVector& masterSeed)
+{
+	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed, EKeyChainType::DEFAULT);
+	SecretKey rootKey = *Crypto::BlindSwitch(masterKey.GetPrivateKey(), 713);
+	masterKey = KeyGenerator(config).GenerateMasterKey(SecureVector(rootKey.data(), rootKey.data() + rootKey.size()), EKeyChainType::GRINBOX);
+	SecretKey bulletProofNonce = *Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
+	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
+}
+
+std::unique_ptr<SecretKey> KeyChain::DerivePrivateKey(const KeyChainPath& keyPath) const
+{
+	std::unique_ptr<PrivateExtKey> pPrivateKey = std::make_unique<PrivateExtKey>(PrivateExtKey(m_masterKey));
+	for (const uint32_t childIndex : keyPath.GetKeyIndices())
+	{
+		if (pPrivateKey == nullptr)
+		{
+			return std::unique_ptr<SecretKey>(nullptr);
+		}
+
+		pPrivateKey = KeyGenerator(m_config).GenerateChildPrivateKey(*pPrivateKey, childIndex);
+	}
+
+	return std::make_unique<SecretKey>(SecretKey(pPrivateKey->GetPrivateKey()));
 }
 
 std::unique_ptr<SecretKey> KeyChain::DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const

@@ -4,18 +4,18 @@
 
 CBigInteger<32> RandomNumberGenerator::GenerateRandom32()
 {
-	std::vector<unsigned char> randomBytes = GenerateRandomBytes(32);
-	return CBigInteger<32>(std::move(randomBytes));
+	const SecureVector randomBytes = GenerateRandomBytes(32);
+	return CBigInteger<32>(randomBytes.data());
 }
 
-std::vector<unsigned char> RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
+SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
 {
 	// TODO: Find a good CSPRNG
 	std::random_device randomDevice;
 	std::mt19937 rng(randomDevice());
 	std::uniform_int_distribution<unsigned short> uniformDistribution(0, 255);
 
-	std::vector<unsigned char> buffer(numBytes);
+	SecureVector buffer(numBytes);
 	for (uint8_t i = 0; i < numBytes; i++)
 	{
 		buffer[i] = (unsigned char)uniformDistribution(rng);

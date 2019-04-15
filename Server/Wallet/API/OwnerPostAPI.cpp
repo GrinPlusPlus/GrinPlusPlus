@@ -6,6 +6,7 @@
 #include <Wallet/WalletManager.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
+#include <Wallet/Grinbox/Base58.h>
 
 int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
 {
@@ -74,7 +75,6 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 
 int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walletManager)
 {
-	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
 	if (!usernameOpt.has_value())
 	{
@@ -93,6 +93,13 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		Json::Value responseJSON;
 		responseJSON["wallet_seed"] = std::string(walletOpt.value().first);
 		responseJSON["session_token"] = std::string(walletOpt.value().second.ToBase64());
+
+		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(walletOpt.value().second);
+		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
+
+		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
+		responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
+
 		return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
 	else
@@ -103,7 +110,6 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 
 int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
 {
-	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
 	if (!usernameOpt.has_value())
 	{
@@ -121,6 +127,12 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 	{
 		Json::Value responseJSON;
 		responseJSON["session_token"] = pSessionToken->ToBase64();
+
+		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(*pSessionToken);
+		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
+
+		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
+		responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
 		return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
 	else
@@ -138,7 +150,6 @@ int OwnerPostAPI::Logout(mg_connection* pConnection, IWalletManager& walletManag
 
 int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
 {
-	// TODO: Use MG auth handler?
 	const std::optional<std::string> usernameOpt = RestUtil::GetHeaderValue(pConnection, "username");
 	if (!usernameOpt.has_value())
 	{
@@ -164,6 +175,13 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 		{
 			Json::Value responseJSON;
 			responseJSON["session_token"] = std::string(tokenOpt.value().ToBase64());
+			
+			const SecretKey grinboxKey = walletManager.GetGrinboxAddress(tokenOpt.value());
+			responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
+
+			std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
+			responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
+
 			return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 		}
 		else

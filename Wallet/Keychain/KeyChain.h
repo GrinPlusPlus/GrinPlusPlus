@@ -17,8 +17,10 @@ class KeyChain
 public:
 	// TODO: Add FromMnemonic, FromRandom, ToMnemonic, and GetSeed methods
 	static KeyChain FromSeed(const Config& config, const SecureVector& masterSeed);
+	static KeyChain ForGrinbox(const Config& config, const SecureVector& masterSeed);
 
 	std::unique_ptr<SecretKey> DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
+	std::unique_ptr<SecretKey> DerivePrivateKey(const KeyChainPath& keyPath) const;
 
 	std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof) const;
 	std::unique_ptr<RangeProof> GenerateRangeProof(const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const SecretKey& blindingFactor) const;

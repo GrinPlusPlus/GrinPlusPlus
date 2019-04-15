@@ -67,18 +67,10 @@ hunter_add_package(Async++)
 find_package(Async++ CONFIG REQUIRED)
 set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
-# OpenSSL
-#hunter_add_package(OpenSSL)
-#find_package(OpenSSL REQUIRED)
-
 # JsonCPP
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
 set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
-
-# websocketpp
-#hunter_add_package(websocketpp)
-#find_package(websocketpp CONFIG REQUIRED)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

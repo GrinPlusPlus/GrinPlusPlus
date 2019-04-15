@@ -15,6 +15,7 @@
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Common/Secure.h>
+#include <Crypto/SecretKey.h>
 
 #ifdef MW_WALLET
 #define WALLET_API EXPORT
@@ -37,6 +38,8 @@ public:
 	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) = 0;
 
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
+
+	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.

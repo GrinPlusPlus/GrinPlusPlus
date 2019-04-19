@@ -2,8 +2,7 @@
 ## A Windows-Compatible C++ Implementation of the Grin(MimbleWimble) Protocol
 
 ### Project Status
-The node and wallet have been released on Floonet for 64-bit Windows beta-testing! 
-https://www.grin-forum.org/t/announcing-the-grin-wallet-finally/4546
+The node and wallet have been released on Mainnet for 64-bit Windows beta-testing! https://grinplusplus.github.io/
 
 ### Build Instructions
 
@@ -29,8 +28,9 @@ Replace `<CONFIG>` with `Debug` or `Release`
 2. ```cd C:/Choose/A/Path```
 3. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
 4. ```cd GrinPlusPlus```
-5. ```mkdir build & cd build```
-6. ```cmake -G "Visual Studio 15 2017 Win64" ..```
-7. ```cmake --build . --config <CONFIG>```
+5. ```git submodule update --init --recursive```
+6. ```mkdir build & cd build```
+7. ```cmake -G "Visual Studio 15 2017 Win64" ..```
+8. ```cmake --build . --config <CONFIG>```
 
 Once your code is built, you can just open GrinNode.exe from your bin folder.

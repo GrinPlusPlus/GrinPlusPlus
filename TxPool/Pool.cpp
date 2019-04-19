@@ -6,6 +6,7 @@
 #include <Infrastructure/Logger.h>
 #include <Core/Validation/TransactionValidator.h>
 #include <algorithm>
+#include <unordered_map>
 
 Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
 	: m_config(config), m_txHashSetManager(txHashSetManager), m_blockDB(blockDB)

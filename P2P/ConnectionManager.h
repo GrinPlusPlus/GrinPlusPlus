@@ -12,6 +12,7 @@
 #include <shared_mutex>
 #include <thread>
 #include <set>
+#include <unordered_map>
 
 // Forward Declarations
 class PeerManager;

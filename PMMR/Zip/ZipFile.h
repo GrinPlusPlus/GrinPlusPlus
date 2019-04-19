@@ -7,6 +7,7 @@
 	#define USEWIN32IOAPI
 #endif
 
+#include <string>
 #include <vector>
 
 enum class EZipFileStatus

@@ -16,6 +16,3 @@
 [submodule "include/ThirdParty/lru-cache"]
 	path = include/ThirdParty/lru-cache
 	url = https://github.com/goldsborough/lru-cache.git
-[submodule "Crypto/balloon"]
-	path = Crypto/balloon
-	url = https://github.com/henrycg/balloon.git

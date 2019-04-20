@@ -24,4 +24,5 @@ private:
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;
 	uint64_t m_connectionId;
+	bool m_retried;
 };

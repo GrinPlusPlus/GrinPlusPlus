@@ -99,6 +99,13 @@ std::pair<size_t, size_t> ConnectionManager::GetNumConnectionsWithDirection() co
 	return std::pair<size_t, size_t>(inbound, outbound);
 }
 
+bool ConnectionManager::IsConnected(const uint64_t connectionId) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
+
+	return GetConnectionById(connectionId) != nullptr;
+}
+
 bool ConnectionManager::IsConnected(const IPAddress& address) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);

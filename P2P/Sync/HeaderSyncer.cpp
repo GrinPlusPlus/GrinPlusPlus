@@ -12,6 +12,7 @@ HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServ
 	m_timeout = std::chrono::system_clock::now();
 	m_lastHeight = 0;
 	m_connectionId = 0;
+	m_retried = false;
 }
 
 bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
@@ -36,18 +37,32 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 	}
 
 	m_connectionId = 0;
+	m_retried = false;
 
 	return false;
 }
 
 bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 {
+	if (m_connectionId == 0)
+	{
+		return true;
+	}
+
 	const uint64_t height = syncStatus.GetHeaderHeight();
 
 	// Check if headers were received, and we're ready to request next batch.
 	if (height >= (m_lastHeight + P2P::MAX_BLOCK_HEADERS - 1))
 	{
 		LoggerAPI::LogTrace("HeaderSyncer::IsHeaderSyncDue() - Headers received. Requesting next batch.");
+		m_retried = false;
+		return true;
+	}
+
+	if (!m_connectionManager.IsConnected(m_connectionId))
+	{
+		LoggerAPI::LogTrace("HeaderSyncer::IsHeaderSyncDue() - Peer disconnected. Requesting from new peer.");
+		m_connectionId = 0;
 		return true;
 	}
 
@@ -58,10 +73,17 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 
 		if (m_connectionId != 0)
 		{
-			m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
+			if (m_retried)
+			{
+				m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
+				m_connectionId = 0;
+				m_retried = false;
+			}
+			else
+			{
+				m_retried = true;
+			}
 		}
-
-		m_connectionId = 0;
 
 		return true;
 	}
@@ -77,19 +99,21 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 
 	const GetHeadersMessage getHeadersMessage(std::move(locators));
 
-	if (m_connectionId == 0)
+	bool messageSent = false;
+	if (m_connectionId != 0)
+	{
+		messageSent = m_connectionManager.SendMessageToPeer(getHeadersMessage, m_connectionId);
+	}
+	
+	if (!messageSent)
 	{
 		m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(getHeadersMessage);
-	}
-	else
-	{
-		m_connectionManager.SendMessageToPeer(getHeadersMessage, m_connectionId);
 	}
 
 	if (m_connectionId != 0)
 	{
 		LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Headers requested.");
-		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
+		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(12);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}
 

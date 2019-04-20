@@ -6,6 +6,10 @@
 #include <filesystem>
 #include <stdlib.h>
 
+#if defined(WIN32)
+#include <Windows.h>
+#endif
+
 class FileUtil
 {
 public:
@@ -107,6 +111,24 @@ public:
 
 		return std::string(pHomePath);
 		#endif
+	}
+
+	static bool TruncateFile(const std::string& filePath, const uint64_t size)
+	{
+#if defined(WIN32)
+		HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		LARGE_INTEGER li;
+		li.QuadPart = size;
+		const bool success = SetFilePointerEx(hFile, li, NULL, FILE_BEGIN) && SetEndOfFile(hFile);
+
+		CloseHandle(hFile);
+
+		return success;
+#else
+		// TODO: Implement
+		return true;
+#endif
 	}
 
 private:

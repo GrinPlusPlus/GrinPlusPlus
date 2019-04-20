@@ -3,28 +3,6 @@
 #include <Common/Util/FileUtil.h>
 #include <fstream>
 
-#if defined(WIN32)
-#include <Windows.h>
-#endif
-
-static bool TruncateFile(const std::string& filePath, const uint64_t size)
-{
-#if defined(WIN32)
-	HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	LARGE_INTEGER li;
-	li.QuadPart = size;
-	const bool success = SetFilePointerEx(hFile, li, NULL, FILE_BEGIN) && SetEndOfFile(hFile);
-
-	CloseHandle(hFile);
-
-	return success;
-#else
-	// TODO: Implement
-	return true;
-#endif
-}
-
 File::File(const std::string& path)
 	: m_path(path),
 	m_bufferIndex(0),
@@ -70,7 +48,7 @@ bool File::Flush()
 
 	if (m_fileSize > m_bufferIndex)
 	{
-		TruncateFile(m_path, m_bufferIndex);
+		FileUtil::TruncateFile(m_path, m_bufferIndex);
 	}
 
 	if (!m_buffer.empty())

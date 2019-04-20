@@ -154,6 +154,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const HeaderMessage headerMessage = HeaderMessage::Deserialize(byteBuffer);
 				const BlockHeader& blockHeader = headerMessage.GetHeader();
 
+				if (blockHeader.GetTotalDifficulty() > connectedPeer.GetTotalDifficulty())
+				{
+					connectedPeer.UpdateTotals(blockHeader.GetTotalDifficulty(), blockHeader.GetHeight());
+				}
+
 				const EBlockChainStatus status = m_blockChainServer.AddBlockHeader(blockHeader);
 				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
 				{

@@ -280,6 +280,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			continue;
 		}
 
+		// TODO: Only ping if haven't heard from peer?
 		const SyncStatus& syncStatus = m_syncer.GetSyncStatus();
 		pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
 	}

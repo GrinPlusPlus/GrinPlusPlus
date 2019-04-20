@@ -82,7 +82,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 		const size_t numConnections = seeder.m_connectionManager.GetNumberOfActiveConnections();
 		if (numConnections < minimumConnections)
 		{
-			const size_t connectionsToAdd = std::min((size_t)8, (minimumConnections - numConnections));
+			const size_t connectionsToAdd = std::min((size_t)5, (minimumConnections - numConnections));
 			if (connectionsToAdd == 1)
 			{
 				seeder.SeedNewConnection();

@@ -1,5 +1,7 @@
 #include "MessageSender.h"
 
+#include <Infrastructure/Logger.h>
+
 MessageSender::MessageSender(const Config& config)
 	: m_config(config)
 {
@@ -16,6 +18,11 @@ bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) 
 	message.SerializeBody(bodySerializer);
 	serializer.Append<uint64_t>(bodySerializer.GetBytes().size());
 	serializer.AppendByteVector(bodySerializer.GetBytes());
+
+	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong)
+	{
+		LoggerAPI::LogTrace("Sending message " + MessageTypes::ToString(message.GetMessageType()) + " to " + connectedPeer.GetPeer().GetIPAddress().Format());
+	}
 
 	return connectedPeer.GetSocket().Send(serializer.GetBytes());
 }

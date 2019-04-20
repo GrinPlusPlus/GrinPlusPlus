@@ -20,7 +20,7 @@ void Logger::StartLogger(const std::string& directory, const spdlog::level::leve
 	const std::string logPath = directory + "GrinPlusPlus.log";
 
 	auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
-	m_pLogger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(2));
+	m_pLogger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 	if (m_pLogger != nullptr)
 	{
 		m_pLogger->set_level(logLevel);

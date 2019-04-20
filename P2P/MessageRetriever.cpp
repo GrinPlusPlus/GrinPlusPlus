@@ -54,6 +54,11 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 				}
 				else
 				{
+					if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
+					{
+						LoggerAPI::LogTrace("Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
+					}
+
 					std::vector<unsigned char> payload(messageHeader.GetMessageLength());
 					const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), payload);
 					if (bPayloadRetrieved)

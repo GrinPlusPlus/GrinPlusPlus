@@ -108,13 +108,17 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			{
 				std::unique_ptr<IMessage> pMessageToSend(connection.m_sendQueue.front());
 				connection.m_sendQueue.pop();
+				sendLockGuard.unlock();
 
 				MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
 
 				messageSentOrReceived = true;
 			}
+			else
+			{
+				sendLockGuard.unlock();
+			}
 
-			sendLockGuard.unlock();
 			lockGuard.unlock();
 
 			if (!messageSentOrReceived)

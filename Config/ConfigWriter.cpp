@@ -121,7 +121,7 @@ void ConfigWriter::WriteLogLevel(Json::Value& root, const std::string& logLevel)
 	Json::Value logLevelValue = Json::Value(logLevel);
 	const std::string logLevelComment = "/* Log level. */";
 	logLevelValue.setComment(logLevelComment, Json::commentBefore);
-	loggerJSON[ConfigProps::Logger::LOGGER] = logLevelValue;
+	loggerJSON[ConfigProps::Logger::LOG_LEVEL] = logLevelValue;
 
 	root[ConfigProps::Logger::LOGGER] = loggerJSON;
 }

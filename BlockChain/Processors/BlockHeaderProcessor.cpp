@@ -6,7 +6,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 
-static const size_t SYNC_BATCH_SIZE = 128;
+static const size_t SYNC_BATCH_SIZE = 32;
 
 BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, ChainState& chainState)
 	: m_config(config), m_chainState(chainState)

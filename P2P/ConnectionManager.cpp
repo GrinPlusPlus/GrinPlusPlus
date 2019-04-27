@@ -114,7 +114,7 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 	{
 		if (pConnection->GetConnectedPeer().GetPeer().GetIPAddress() == address)
 		{
-			return true;
+			return pConnection->GetConnectedPeer().GetSocket().IsConnected();
 		}
 	}
 
@@ -269,7 +269,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 		if (!bInactiveOnly || !pConnection->IsConnectionActive())
 		{
-			if (pConnection->IsConnectionActive())
+			if (!pConnection->IsConnectionActive())
 			{
 				LoggerAPI::LogDebug(StringUtil::Format("ConnectionManager::PruneConnections() - Disconnecting from inactive peer (%d) at (%s)", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str()));
 			}
@@ -279,10 +279,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 			continue;
 		}
-
-		// TODO: Only ping if haven't heard from peer?
-		const SyncStatus& syncStatus = m_syncer.GetSyncStatus();
-		pConnection->Send(PingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight()));
 	}
 
 	writeLock.unlock();

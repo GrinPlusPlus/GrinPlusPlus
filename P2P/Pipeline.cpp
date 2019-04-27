@@ -106,7 +106,7 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 		
 		if (!pipeline.m_blockChainServer.ProcessNextOrphanBlock())
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(30), pipeline.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
 		}
 	}
 
@@ -158,7 +158,7 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		}
 		else
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(30), pipeline.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
 		}
 	}
 

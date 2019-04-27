@@ -100,6 +100,14 @@ Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, 
 						return nullptr;
 					}
 				}
+				else if (handMessage.GetNonce() == NONCE)
+				{
+					LoggerAPI::LogDebug("ConnectionFactory::PerformHandshake - Connected to self(" + connectedPeer.GetSocket().GetSocketAddress().Format() + "). Nonce: " + std::to_string(NONCE));
+				}
+				else
+				{
+					LoggerAPI::LogDebug("ConnectionFactory::PerformHandshake - Already connected to " + peer.GetIPAddress().Format());
+				}
 			}
 			else
 			{
@@ -108,7 +116,6 @@ Connection* ConnectionFactory::PerformHandshake(Socket& connection, Peer& peer, 
 				return nullptr;
 			}
 		}
-
 	}
 
 	LoggerAPI::LogTrace("ConnectionFactory::PerformHandshake - Unable to connect to " + connectedPeer.GetSocket().GetSocketAddress().Format());

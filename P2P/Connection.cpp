@@ -4,6 +4,7 @@
 #include "MessageSender.h"
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
+#include "Messages/PingMessage.h"
 
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
@@ -52,11 +53,13 @@ bool Connection::IsConnectionActive() const
 		return false;
 	}
 
-	const time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
-	const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
-	
-	return differenceInSeconds < 120.0;
+	return true;
+
+	//const time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	//const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
+	//const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
+	//
+	//return differenceInSeconds < 120.0;
 }
 
 void Connection::Disconnect()
@@ -86,8 +89,22 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
 	const MessageRetriever messageRetriever(connection.m_config, connection.m_connectionManager);
 
+	const SyncStatus& syncStatus = connection.m_connectionManager.GetSyncStatus();
+
+	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point lastReceivedMessageTime = std::chrono::system_clock::now();
+
 	while (!connection.m_terminate)
 	{
+		auto now = std::chrono::system_clock::now();
+		if (lastPingTime + std::chrono::seconds(10) < now)
+		{
+			const PingMessage pingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight());
+			connection.Send(pingMessage);
+
+			lastPingTime = now;
+		}
+
 		std::unique_lock<std::mutex> lockGuard(connection.m_peerMutex);
 
 		try
@@ -99,6 +116,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 			if (pRawMessage.get() != nullptr)
 			{
 				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
+				lastReceivedMessageTime = std::chrono::system_clock::now();
 				messageSentOrReceived = true;
 			}
 
@@ -123,6 +141,11 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 
 			if (!messageSentOrReceived)
 			{
+				if ((lastReceivedMessageTime + std::chrono::seconds(30)) < std::chrono::system_clock::now())
+				{
+					break;
+				}
+
 				ThreadUtil::SleepFor(std::chrono::milliseconds(5), connection.m_terminate);
 			}
 		}
@@ -133,7 +156,17 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 		}
 		catch (const SocketException&)
 		{
-			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Socket exception occurred.");
+			const int lastError = WSAGetLastError();
+
+			TCHAR* s = NULL;
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
+
+			const std::string errorMessage = s;
+			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Socket exception occurred: " + errorMessage);
+
+			LocalFree(s);
+
 			break;
 		}
 		catch (const std::exception& e)

@@ -67,16 +67,16 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
 
-	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point lastPruneTime = std::chrono::system_clock::now();
 
 	const size_t minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
 		auto now = std::chrono::system_clock::now();
-		if (lastPingTime + std::chrono::seconds(10) < now)
+		if (lastPruneTime + std::chrono::milliseconds(250) < now)
 		{
 			seeder.m_connectionManager.PruneConnections(true);
-			lastPingTime = now;
+			lastPruneTime = now;
 		}
 
 		const size_t numConnections = seeder.m_connectionManager.GetNumberOfActiveConnections();
@@ -102,11 +102,11 @@ void Seeder::Thread_Seed(Seeder& seeder)
 				}
 			}
 
-			ThreadUtil::SleepFor(std::chrono::milliseconds(20), seeder.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(2), seeder.m_terminate);
 		}
 		else
 		{
-			ThreadUtil::SleepFor(std::chrono::seconds(1), seeder.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(25), seeder.m_terminate);
 		}
 	}
 
@@ -136,6 +136,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	{
 		bool connectionAdded = false;
 
+		// TODO: Always accept, but then send peers and immediately drop
 		if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
 		{
 			connectionAdded |= seeder.ListenForConnections(listenerSocketOpt.value());
@@ -143,7 +144,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 
 		if (!connectionAdded)
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(30), seeder.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
 		}
 	}
 

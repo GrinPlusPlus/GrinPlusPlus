@@ -20,63 +20,62 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 {
 	Socket& socket = connectedPeer.GetSocket();
 
-	try
+	bool hasReceivedData = socket.HasReceivedData(10);
+	if (retrievalMode == BLOCKING)
 	{
-		bool hasReceivedData = socket.HasReceivedData(10);
-		if (retrievalMode == BLOCKING)
+		std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
+		while (!hasReceivedData)
 		{
-			std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
-			while (!hasReceivedData)
+			if (std::chrono::system_clock::now() >= timeout || m_connectionManager.IsTerminating())
 			{
-				if (std::chrono::system_clock::now() >= timeout || m_connectionManager.IsTerminating())
+				return std::unique_ptr<RawMessage>(nullptr);
+			}
+
+			hasReceivedData = socket.HasReceivedData(10);
+		}
+	}
+
+	if (hasReceivedData)
+	{
+		//LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Received data from: " + connectedPeer.GetPeer().GetIPAddress().Format());
+		socket.SetReceiveTimeout(5 * 1000);
+		socket.SetBlocking(true);
+
+		std::vector<unsigned char> headerBuffer(11, 0);
+		const bool received = socket.Receive(11, headerBuffer);
+		if (received)
+		{
+			ByteBuffer byteBuffer(headerBuffer);
+			MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
+
+			if (!messageHeader.IsValid(m_config))
+			{
+				throw DeserializationException();
+			}
+			else
+			{
+				if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
 				{
-					return std::unique_ptr<RawMessage>(nullptr);
+					LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
 				}
 
-				hasReceivedData = socket.HasReceivedData(10);
-			}
-		}
-
-		if (hasReceivedData)
-		{
-			socket.SetReceiveTimeout(5 * 1000);
-
-			std::vector<unsigned char> headerBuffer(11, 0);
-			const bool received = socket.Receive(11, headerBuffer);
-			if (received)
-			{
-				ByteBuffer byteBuffer(headerBuffer);
-				MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
-
-				if (!messageHeader.IsValid(m_config))
+				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
+				const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), payload);
+				if (bPayloadRetrieved)
 				{
-					throw DeserializationException();
+					connectedPeer.GetPeer().UpdateLastContactTime();
+					return std::make_unique<RawMessage>(std::move(RawMessage(std::move(messageHeader), payload)));
 				}
 				else
 				{
-					if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
-					{
-						LoggerAPI::LogTrace("Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
-					}
-
-					std::vector<unsigned char> payload(messageHeader.GetMessageLength());
-					const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), payload);
-					if (bPayloadRetrieved)
-					{
-						connectedPeer.GetPeer().UpdateLastContactTime();
-						return std::make_unique<RawMessage>(std::move(RawMessage(std::move(messageHeader), payload)));
-					}
-					else
-					{
-						throw DeserializationException();
-					}
+					throw DeserializationException();
 				}
 			}
 		}
-	}
-	catch (const SocketException&)
-	{
-		LoggerAPI::LogDebug("MessageRetriever::RetrieveMessage - Socket exception occurred on socket " + socket.GetSocketAddress().Format());
+		else
+		{
+			LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Failed to receive message from: " + connectedPeer.GetPeer().GetIPAddress().Format());
+		}
 	}
 
 	return std::unique_ptr<RawMessage>(nullptr);

@@ -19,7 +19,6 @@ TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer
 
 }
 
-// TODO: Where do we validate the data in MMR actually hashes to HashFile's hash?
 std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
 {
 	const KernelMMR& kernelMMR = *txHashSet.GetKernelMMR();

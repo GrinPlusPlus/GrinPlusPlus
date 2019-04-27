@@ -36,6 +36,7 @@ public:
 private:
 	SOCKET m_socket;
 
+	bool m_socketOpen;
 	SocketAddress m_address;
 	bool m_blocking;
 	unsigned long m_receiveTimeout;

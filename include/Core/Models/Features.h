@@ -1,11 +1,9 @@
 #pragma once
 #pragma warning(disable: 4505) // Unreferenced local function has been removed
 
-//
-// This code is free for all purposes without any express guarantee it works.
-//
-// Author: David Burkett (davidburkett38@gmail.com)
-//
+// Copyright (c) 2018-2019 David Burkett
+// Distributed under the MIT software license, see the accompanying
+// file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
 #include <Core/Serialization/DeserializationException.h>

@@ -1,10 +1,8 @@
 #pragma once
 
-//
-// This code is free for all purposes without any express guarantee it works.
-//
-// Author: David Burkett (davidburkett38@gmail.com)
-//
+// Copyright (c) 2018-2019 David Burkett
+// Distributed under the MIT software license, see the accompanying
+// file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Crypto/BigInteger.h>
 #include <Core/Serialization/ByteBuffer.h>

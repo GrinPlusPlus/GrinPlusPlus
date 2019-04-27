@@ -5,41 +5,43 @@
 #include <WinSock2.h>
 
 Socket::Socket(const SOCKET& socket, const SocketAddress& address, const bool blocking, const unsigned long receiveTimeout, const unsigned long sendTimeout)
-	: m_socket(socket), m_address(address), m_blocking(blocking), m_receiveTimeout(receiveTimeout), m_sendTimeout(sendTimeout), m_receiveBufferSize(0)
+	: m_socket(socket), m_address(address), m_blocking(blocking), m_receiveTimeout(receiveTimeout), m_sendTimeout(sendTimeout), m_receiveBufferSize(0), m_socketOpen(true)
 {
 
 }
 
 bool Socket::CloseSocket()
 {
+	m_socketOpen = false;
 	return closesocket(m_socket) == 0;
 }
 
 bool Socket::IsConnected() const
 {
-	fd_set readFDS;
-	readFDS.fd_count = 1;
-	readFDS.fd_array[0] = m_socket;
+	return m_socketOpen;
+	//fd_set readFDS;
+	//readFDS.fd_count = 1;
+	//readFDS.fd_array[0] = m_socket;
 
-	timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 1000; // 1 ms
+	//timeval timeout;
+	//timeout.tv_sec = 0;
+	//timeout.tv_usec = 10;
 
-	const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
+	//const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
 
-	return result != SOCKET_ERROR;
+	//return result != SOCKET_ERROR;
 }
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
-	if (m_receiveTimeout != milliseconds)
-	{
+	//if (m_receiveTimeout != milliseconds)
+	//{
 		const int result = setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 		if (result == 0)
 		{
 			m_receiveTimeout = milliseconds;
 		}
-	}
+	//}
 
 	return m_receiveTimeout == milliseconds;
 }
@@ -75,15 +77,19 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
-	if (m_blocking != blocking)
-	{
+	//if (m_blocking != blocking)
+	//{
 		unsigned long blockingValue = (blocking ? 0 : 1);
 		const int result = ioctlsocket(m_socket, FIONBIO, &blockingValue);
 		if (result == 0)
 		{
 			m_blocking = blocking;
 		}
-	}
+		else
+		{
+			throw SocketException();
+		}
+	//}
 
 	return m_blocking == blocking;
 }
@@ -118,7 +124,7 @@ bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data) co
 		const int newBytesReceived = recv(m_socket, (char*)&data[totalReceived], (int)(numBytes - totalReceived), 0);
 		if (newBytesReceived <= 0)
 		{
-			return false;
+			throw SocketException();
 		}
 
 		totalReceived += newBytesReceived;
@@ -135,11 +141,12 @@ bool Socket::HasReceivedData(const long timeoutMillis) const
 
 	timeval timeout;
 	timeout.tv_sec = 0;
-	timeout.tv_usec = timeoutMillis * 1000;
+	timeout.tv_usec = timeoutMillis * ((long)1000);
 
 	const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
 	if (result > 0)
 	{
+		// TODO: MSG_PEEK and look for 11 bytes?
 		return true;
 	}
 	else if (result < 0)

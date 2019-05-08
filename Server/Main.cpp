@@ -8,27 +8,17 @@
 #include <Infrastructure/ThreadManager.h>
 #include <Common/Util/ThreadUtil.h>
 
-#include <windows.h> 
+#include <signal.h>
 #include <stdio.h> 
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <atomic>
 
-std::atomic_bool SHUTDOWN = false;
-
-BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+static void SigIntHandler(int signum)
 {
-	switch (fdwCtrlType)
-	{
-	case CTRL_C_EVENT:
-		printf("\n\nCtrl-C Pressed\n\n");
-		ShutdownManager::GetInstance().Shutdown();
-		return TRUE;
-
-	default:
-		return FALSE;
-	}
+	printf("\n\nCtrl-C Pressed\n\n");
+	ShutdownManager::GetInstance().Shutdown();
 }
 
 int main(int argc, char* argv[])
@@ -58,7 +48,7 @@ int main(int argc, char* argv[])
 	/* Initialize the civetweb library */
 	mg_init_library(0);
 
-	SetConsoleCtrlHandler(CtrlHandler, TRUE);
+	signal(SIGINT, SigIntHandler);
 
 	const Config config = ConfigManager::LoadConfig(environment);
 	NodeDaemon node(config);
@@ -86,7 +76,12 @@ int main(int argc, char* argv[])
 
 	if (!headless)
 	{
-		system("CLS");
+#ifdef _WIN32
+		std::system("cls");
+#else
+		std::system("clear");
+#endif
+
 		std::cout << "SHUTTING DOWN...";
 	}
 

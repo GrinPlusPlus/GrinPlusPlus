@@ -52,8 +52,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionOutput Deserialize(ByteBuffer& byteBuffer);
-	Json::Value ToJSON() const;
-	static TransactionOutput FromJSON(const Json::Value& transactionOutputJSON);
+	Json::Value ToJSON(const bool hex) const;
+	static TransactionOutput FromJSON(const Json::Value& transactionOutputJSON, const bool hex);
 
 	//
 	// Hashing

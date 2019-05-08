@@ -1,6 +1,8 @@
 #include "Wallet.h"
 #include "WalletRefresher.h"
 #include "Keychain/KeyChain.h"
+#include <Infrastructure/Logger.h>
+#include <Crypto/CryptoException.h>
 #include <unordered_set>
 
 Wallet::Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath)
@@ -77,7 +79,7 @@ bool Wallet::AddRestoredOutputs(const SecureVector& masterSeed, const std::vecto
 		const std::chrono::system_clock::time_point creationTime = std::chrono::system_clock::now(); // TODO: Determine this
 		const std::optional<std::chrono::system_clock::time_point> confirmationTimeOpt = std::make_optional<std::chrono::system_clock::time_point>(std::chrono::system_clock::now()); // TODO: Determine this
 
-		WalletTx walletTx(walletTxId, type, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
+		WalletTx walletTx(walletTxId, type, std::nullopt, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
 		transactions.emplace_back(std::move(walletTx));
 	}
 
@@ -158,7 +160,8 @@ OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uin
 		}
 	}
 
-	throw std::exception(); // TODO: Determine exception type
+	LoggerAPI::LogError("Wallet::CreateBlindedOutput - Failed to create output.");
+	throw CryptoException();
 }
 
 bool Wallet::SaveOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputsToSave)
@@ -197,6 +200,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxById(const SecureVector& masterSeed, cons
 		}
 	}
 
+	LoggerAPI::LogInfo("Wallet::GetTxById - Could not find transaction " + std::to_string(walletTxId));
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 
@@ -211,13 +215,14 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed,
 		}
 	}
 
+	LoggerAPI::LogInfo("Wallet::GetTxBySlateId - Could not find transaction " + uuids::to_string(slateId));
 	return std::unique_ptr<WalletTx>(nullptr);
 }
-
 
 bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
+	LoggerAPI::LogDebug("Wallet::CancelWalletTx - Canceling WalletTx (" + std::to_string(walletTx.GetId()) + ") of type " + WalletTxType::ToString(type));
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
@@ -228,6 +233,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 	}
 	else
 	{
+		LoggerAPI::LogError("Wallet::CancelWalletTx - WalletTx was not in a cancelable status.");
 		return false;
 	}
 
@@ -240,9 +246,12 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 			commitments.insert(output.GetCommitment());
 		}
 
-		for (const TransactionInput& input : transactionOpt.value().GetBody().GetInputs())
+		if (walletTx.GetType() == EWalletTxType::SENT_CANCELED)
 		{
-			commitments.insert(input.GetCommitment());
+			for (const TransactionInput& input : transactionOpt.value().GetBody().GetInputs())
+			{
+				commitments.insert(input.GetCommitment());
+			}
 		}
 
 		std::vector<OutputData> outputsToUpdate;
@@ -250,10 +259,13 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 		std::vector<OutputData> outputs = m_walletDB.GetOutputs(m_username, masterSeed);
 		for (OutputData& output : outputs)
 		{
-			if (commitments.find(output.GetOutput().GetCommitment()) != commitments.end())
+			const auto iter = commitments.find(output.GetOutput().GetCommitment());
+			if (iter != commitments.end())
 			{
 				const EOutputStatus status = output.GetStatus();
-				if (status == EOutputStatus::NO_CONFIRMATIONS)
+				LoggerAPI::LogDebug("Wallet::CancelWalletTx - Found output with status " + OutputStatus::ToString(status));
+
+				if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 				{
 					output.SetStatus(EOutputStatus::CANCELED);
 					outputsToUpdate.push_back(output);
@@ -265,6 +277,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 				}
 				else
 				{
+					LoggerAPI::LogError("Wallet::CancelWalletTx - Can't cancel output with status " + OutputStatus::ToString(status));
 					return false;
 				}
 			}

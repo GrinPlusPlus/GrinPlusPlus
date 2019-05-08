@@ -14,8 +14,13 @@
 class JsonUtil
 {
 public:
-	static Json::Value ConvertToJSON(const std::vector<unsigned char>& bytes)
+	static Json::Value ConvertToJSON(const std::vector<unsigned char>& bytes, const bool hex)
 	{
+		if (hex)
+		{
+			return Json::Value(HexUtil::ConvertToHex(bytes));
+		}
+
 		Json::Value node;
 
 		for (size_t i = 0; i < bytes.size(); i++)
@@ -24,14 +29,24 @@ public:
 		}
 
 		return node;
-		//return HexUtil::ConvertToHex(bytes);
 	}
 
-	static std::vector<unsigned char> ConvertToVector(const Json::Value& node, const size_t expectedSize)
+	static std::vector<unsigned char> ConvertToVector(const Json::Value& node, const size_t expectedSize, const bool hex)
 	{
 		if (node == Json::nullValue)
 		{
 			throw DeserializationException();
+		}
+
+		if (hex)
+		{
+			std::vector<unsigned char> bytes = HexUtil::FromHex(node.asString());
+			if (bytes.size() != expectedSize)
+			{
+				throw DeserializationException();
+			}
+
+			return bytes;
 		}
 
 		const size_t size = node.size();
@@ -47,14 +62,6 @@ public:
 		}
 
 		return bytes;
-
-		//std::vector<unsigned char> bytes = HexUtil::FromHex(node.asString());
-		//if (bytes.size() != expectedSize)
-		//{
-		//	throw DeserializationException();
-		//}
-
-		//return bytes;
 	}
 
 	static Json::Value GetRequiredField(const Json::Value& node, const std::string& key)
@@ -86,106 +93,106 @@ public:
 	//
 	// BlindingFactors
 	//
-	static Json::Value ConvertToJSON(const BlindingFactor& blindingFactor)
+	static Json::Value ConvertToJSON(const BlindingFactor& blindingFactor, const bool hex)
 	{
-		return ConvertToJSON(blindingFactor.GetBytes().GetData());
+		return ConvertToJSON(blindingFactor.GetBytes().GetData(), hex);
 	}
 
-	static BlindingFactor ConvertToBlindingFactor(const Json::Value& blindingFactorJSON)
+	static BlindingFactor ConvertToBlindingFactor(const Json::Value& blindingFactorJSON, const bool hex)
 	{
-		return BlindingFactor(CBigInteger<32>(ConvertToVector(blindingFactorJSON, 32)));
+		return BlindingFactor(CBigInteger<32>(ConvertToVector(blindingFactorJSON, 32, hex)));
 	}
 
-	static BlindingFactor GetBlindingFactor(const Json::Value& parentJSON, const std::string& key)
+	static BlindingFactor GetBlindingFactor(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToBlindingFactor(GetRequiredField(parentJSON, key));
+		return ConvertToBlindingFactor(GetRequiredField(parentJSON, key), hex);
 	}
 
 	//
 	// Commitments
 	//
-	static Json::Value ConvertToJSON(const Commitment& commitment)
+	static Json::Value ConvertToJSON(const Commitment& commitment, const bool hex)
 	{
-		return ConvertToJSON(commitment.GetCommitmentBytes().GetData());
+		return ConvertToJSON(commitment.GetCommitmentBytes().GetData(), hex);
 	}
 
-	static Commitment ConvertToCommitment(const Json::Value& commitmentJSON)
+	static Commitment ConvertToCommitment(const Json::Value& commitmentJSON, const bool hex)
 	{
-		return Commitment(CBigInteger<33>(ConvertToVector(commitmentJSON, 33)));
+		return Commitment(CBigInteger<33>(ConvertToVector(commitmentJSON, 33, hex)));
 	}
 
-	static Commitment GetCommitment(const Json::Value& parentJSON, const std::string& key)
+	static Commitment GetCommitment(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToCommitment(GetRequiredField(parentJSON, key));
+		return ConvertToCommitment(GetRequiredField(parentJSON, key), hex);
 	}
 
 	//
 	// PublicKeys
 	//
-	static Json::Value ConvertToJSON(const PublicKey& publicKey)
+	static Json::Value ConvertToJSON(const PublicKey& publicKey, const bool hex)
 	{
-		return ConvertToJSON(publicKey.GetCompressedBytes().GetData());
+		return ConvertToJSON(publicKey.GetCompressedBytes().GetData(), hex);
 	}
 
-	static PublicKey ConvertToPublicKey(const Json::Value& publicKeyJSON)
+	static PublicKey ConvertToPublicKey(const Json::Value& publicKeyJSON, const bool hex)
 	{
-		return PublicKey(CBigInteger<33>(ConvertToVector(publicKeyJSON, 33)));
+		return PublicKey(CBigInteger<33>(ConvertToVector(publicKeyJSON, 33, hex)));
 	}
 
-	static PublicKey GetPublicKey(const Json::Value& parentJSON, const std::string& key)
+	static PublicKey GetPublicKey(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToPublicKey(GetRequiredField(parentJSON, key));
+		return ConvertToPublicKey(GetRequiredField(parentJSON, key), hex);
 	}
 
 	//
 	// Signatures
 	//
-	static Json::Value ConvertToJSON(const Signature& signature)
+	static Json::Value ConvertToJSON(const Signature& signature, const bool hex)
 	{
-		return ConvertToJSON(signature.GetSignatureBytes().GetData());
+		return ConvertToJSON(signature.GetSignatureBytes().GetData(), hex);
 	}
 
-	static Signature ConvertToSignature(const Json::Value& signatureJSON)
+	static Signature ConvertToSignature(const Json::Value& signatureJSON, const bool hex)
 	{
-		return Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64)));
+		return Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
 	}
 
-	static Signature GetSignature(const Json::Value& parentJSON, const std::string& key)
+	static Signature GetSignature(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToSignature(GetRequiredField(parentJSON, key));
+		return ConvertToSignature(GetRequiredField(parentJSON, key), hex);
 	}
 
-	static Json::Value ConvertToJSON(const std::optional<Signature>& signatureOpt)
+	static Json::Value ConvertToJSON(const std::optional<Signature>& signatureOpt, const bool hex)
 	{
-		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value().GetSignatureBytes().GetData()) : Json::nullValue;
+		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value().GetSignatureBytes().GetData(), hex) : Json::nullValue;
 	}
 
-	static std::optional<Signature> ConvertToSignatureOpt(const Json::Value& signatureJSON)
+	static std::optional<Signature> ConvertToSignatureOpt(const Json::Value& signatureJSON, const bool hex)
 	{
-		return signatureJSON == Json::nullValue ? std::nullopt : std::make_optional<Signature>(Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64))));
+		return signatureJSON == Json::nullValue ? std::nullopt : std::make_optional<Signature>(Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex))));
 	}
 
-	static std::optional<Signature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key)
+	static std::optional<Signature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key));
+		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key), hex);
 	}
 
 	//
 	// RangeProofs
 	//
-	static Json::Value ConvertToJSON(const RangeProof& rangeProof)
+	static Json::Value ConvertToJSON(const RangeProof& rangeProof, const bool hex)
 	{
-		return ConvertToJSON(rangeProof.GetProofBytes());
+		return ConvertToJSON(rangeProof.GetProofBytes(), hex);
 	}
 
-	static RangeProof ConvertToRangeProof(const Json::Value& rangeProofJSON)
+	static RangeProof ConvertToRangeProof(const Json::Value& rangeProofJSON, const bool hex)
 	{
-		return RangeProof(ConvertToVector(rangeProofJSON, MAX_PROOF_SIZE));
+		return RangeProof(ConvertToVector(rangeProofJSON, MAX_PROOF_SIZE, hex));
 	}
 
-	static RangeProof GetRangeProof(const Json::Value& parentJSON, const std::string& key)
+	static RangeProof GetRangeProof(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToRangeProof(GetRequiredField(parentJSON, key));
+		return ConvertToRangeProof(GetRequiredField(parentJSON, key), hex);
 	}
 
 	//

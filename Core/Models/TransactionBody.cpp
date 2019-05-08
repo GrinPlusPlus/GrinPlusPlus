@@ -64,42 +64,42 @@ TransactionBody TransactionBody::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
 }
 
-Json::Value TransactionBody::ToJSON() const
+Json::Value TransactionBody::ToJSON(const bool hex) const
 {
 	Json::Value bodyNode;
 
 	Json::Value inputsNode;
 	for (const TransactionInput& input : GetInputs())
 	{
-		inputsNode.append(input.ToJSON());
+		inputsNode.append(input.ToJSON(hex));
 	}
 	bodyNode["inputs"] = inputsNode;
 
 	Json::Value outputsNode;
 	for (const TransactionOutput& output : GetOutputs())
 	{
-		outputsNode.append(output.ToJSON());
+		outputsNode.append(output.ToJSON(hex));
 	}
 	bodyNode["outputs"] = outputsNode;
 
 	Json::Value kernelsNode;
 	for (const TransactionKernel& kernel : GetKernels())
 	{
-		kernelsNode.append(kernel.ToJSON());
+		kernelsNode.append(kernel.ToJSON(hex));
 	}
 	bodyNode["kernels"] = kernelsNode;
 
 	return bodyNode;
 }
 
-TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON)
+TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON, const bool hex)
 {
 	// Deserialize inputs
 	const Json::Value inputsJSON = JsonUtil::GetRequiredField(transactionBodyJSON, "inputs");
 	std::vector<TransactionInput> inputs;
 	for (size_t i = 0; i < inputsJSON.size(); i++)
 	{
-		inputs.emplace_back(TransactionInput::FromJSON(inputsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
+		inputs.emplace_back(TransactionInput::FromJSON(inputsJSON.get(Json::ArrayIndex(i), Json::nullValue), hex));
 	}
 
 	// Deserialize outputs
@@ -107,7 +107,7 @@ TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON
 	std::vector<TransactionOutput> outputs;
 	for (size_t i = 0; i < outputsJSON.size(); i++)
 	{
-		outputs.emplace_back(TransactionOutput::FromJSON(outputsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
+		outputs.emplace_back(TransactionOutput::FromJSON(outputsJSON.get(Json::ArrayIndex(i), Json::nullValue), hex));
 	}
 
 	// Deserialize kernels
@@ -115,7 +115,7 @@ TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON
 	std::vector<TransactionKernel> kernels;
 	for (size_t i = 0; i < kernelsJSON.size(); i++)
 	{
-		kernels.emplace_back(TransactionKernel::FromJSON(kernelsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
+		kernels.emplace_back(TransactionKernel::FromJSON(kernelsJSON.get(Json::ArrayIndex(i), Json::nullValue), hex));
 	}
 
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));

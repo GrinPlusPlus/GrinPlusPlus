@@ -19,15 +19,15 @@ namespace Consensus
 		{
 			return version == 1;
 		}
-		/*else if (height < HARD_FORK_INTERVAL)
+		/*else if (height < 2 * HARD_FORK_INTERVAL)
 		{
 			return version == 2;
 		}
-		else if (height < 2 * HARD_FORK_INTERVAL)
+		else if (height < 3 * HARD_FORK_INTERVAL)
 		{
 			return version == 3;
 		} 
-		else if (height < 3 * HARD_FORK_INTERVAL)
+		else if (height < 4 * HARD_FORK_INTERVAL)
 		{
 			return version == 4;
 		}

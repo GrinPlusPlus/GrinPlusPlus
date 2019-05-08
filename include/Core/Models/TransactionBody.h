@@ -50,8 +50,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionBody Deserialize(ByteBuffer& byteBuffer);
-	Json::Value ToJSON() const;
-	static TransactionBody FromJSON(const Json::Value& transactionBodyJSON);
+	Json::Value ToJSON(const bool hex) const;
+	static TransactionBody FromJSON(const Json::Value& transactionBodyJSON, const bool hex);
 
 private:
 	// List of inputs spent by the transaction.

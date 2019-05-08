@@ -281,7 +281,7 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 
 int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)
 {
-	Transaction transaction = Transaction::FromJSON(json);
+	Transaction transaction = Transaction::FromJSON(json, true);
 
 	if (nodeClient.PostTransaction(transaction))
 	{

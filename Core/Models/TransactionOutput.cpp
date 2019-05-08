@@ -34,20 +34,20 @@ TransactionOutput TransactionOutput::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionOutput((EOutputFeatures)features, std::move(commitment), std::move(rangeProof));
 }
 
-Json::Value TransactionOutput::ToJSON() const
+Json::Value TransactionOutput::ToJSON(const bool hex) const
 {
 	Json::Value outputNode;
 	outputNode["features"] = OutputFeatures::ToString(GetFeatures());
-	outputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
-	outputNode["proof"] = JsonUtil::ConvertToJSON(GetRangeProof());
+	outputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment(), hex);
+	outputNode["proof"] = JsonUtil::ConvertToJSON(GetRangeProof(), hex);
 	return outputNode;
 }
 
-TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON)
+TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON, const bool hex)
 {
 	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionOutputJSON, "features").asString());
-	Commitment commitment = JsonUtil::ConvertToCommitment(JsonUtil::GetRequiredField(transactionOutputJSON, "commit"));
-	RangeProof rangeProof = JsonUtil::ConvertToRangeProof(JsonUtil::GetRequiredField(transactionOutputJSON, "proof"));
+	Commitment commitment = JsonUtil::GetCommitment(transactionOutputJSON, "commit", hex);
+	RangeProof rangeProof = JsonUtil::GetRangeProof(transactionOutputJSON, "proof", hex);
 	return TransactionOutput(features, std::move(commitment), std::move(rangeProof));
 }
 

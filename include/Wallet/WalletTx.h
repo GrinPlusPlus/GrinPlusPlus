@@ -8,21 +8,19 @@
 #include <chrono>
 #include <optional>
 
-static const uint8_t WALLET_TX_DATA_FORMAT = 0;
+static const uint8_t WALLET_TX_DATA_FORMAT = 1;
 
 class WalletTx
 {
 public:
-	// TODO: Save Slate messages
 	WalletTx(
 		const uint32_t walletTxId,
 		const EWalletTxType type,
 		std::optional<uuids::uuid>&& slateIdOpt,
+		std::optional<std::string>&& slateMessageOpt,
 		const std::chrono::system_clock::time_point& creationTime,
 		const std::optional<std::chrono::system_clock::time_point>& confirmationTimeOpt,
 		const std::optional<uint64_t>& confirmationHeightOpt,
-		//const uint32_t numInputs,
-		//const uint32_t numOutputs,
 		const uint64_t amountCredited,
 		const uint64_t amountDebited,
 		const std::optional<uint64_t>& feeOpt,
@@ -31,11 +29,10 @@ public:
 		: m_walletTxId(walletTxId),
 		m_type(type),
 		m_slateIdOpt(std::move(slateIdOpt)),
+		m_slateMessageOpt(std::move(slateMessageOpt)),
 		m_creationTime(creationTime),
 		m_confirmationTimeOpt(confirmationTimeOpt),
 		m_confirmedHeightOpt(confirmationHeightOpt),
-		//m_numInputs(numInputs),
-		//m_numOutputs(numOutputs),
 		m_amountCredited(amountCredited),
 		m_amountDebited(amountDebited),
 		m_feeOpt(feeOpt),
@@ -47,11 +44,10 @@ public:
 	inline uint32_t GetId() const { return m_walletTxId; }
 	inline EWalletTxType GetType() const { return m_type; }
 	inline const std::optional<uuids::uuid>& GetSlateId() const { return m_slateIdOpt; }
+	inline const std::optional<std::string>& GetSlateMessage() const { return m_slateMessageOpt; }
 	inline const std::chrono::system_clock::time_point& GetCreationTime() const { return m_creationTime; }
 	inline const std::optional<std::chrono::system_clock::time_point>& GetConfirmationTime() const { return m_confirmationTimeOpt; }
 	inline const std::optional<uint64_t>& GetConfirmationHeight() const { return m_confirmedHeightOpt; }
-	//inline uint32_t GetNumInputs() const { return m_numInputs; }
-	//inline uint32_t GetNumOutputs() const { return m_numOutputs; }
 	inline uint64_t GetAmountCredited() const { return m_amountCredited; }
 	inline uint64_t GetAmountDebited() const { return m_amountDebited; }
 	inline std::optional<uint64_t> GetFee() const { return m_feeOpt; }
@@ -67,11 +63,10 @@ public:
 		serializer.Append<uint32_t>(m_walletTxId);
 		serializer.Append<uint8_t>((uint8_t)m_type);
 		serializer.AppendVarStr(m_slateIdOpt.has_value() ? uuids::to_string(m_slateIdOpt.value()) : "");
+		serializer.AppendVarStr(m_slateMessageOpt.has_value() ? m_slateMessageOpt.value() : "");
 		serializer.Append<int64_t>(TimeUtil::ToInt64(m_creationTime));
 		serializer.Append<int64_t>((int64_t)(m_confirmationTimeOpt.has_value() ? TimeUtil::ToInt64(m_confirmationTimeOpt.value()) : 0));
 		serializer.Append<uint64_t>(m_confirmedHeightOpt.value_or(0));
-		//serializer.Append<uint32_t>(m_numInputs);
-		//serializer.Append<uint32_t>(m_numOutputs);
 		serializer.Append<uint64_t>(m_amountCredited);
 		serializer.Append<uint64_t>(m_amountDebited);
 
@@ -93,7 +88,8 @@ public:
 
 	static WalletTx Deserialize(ByteBuffer& byteBuffer)
 	{
-		if (byteBuffer.ReadU8() != WALLET_TX_DATA_FORMAT)
+		const uint8_t walletTxFormat = byteBuffer.ReadU8();
+		if (walletTxFormat > WALLET_TX_DATA_FORMAT)
 		{
 			throw DeserializationException();
 		}
@@ -106,6 +102,16 @@ public:
 		if (!slateIdStr.empty())
 		{
 			slateIdOpt = uuids::uuid::from_string(slateIdStr);
+		}
+
+		std::optional<std::string> slateMessageOpt = std::nullopt;
+		if (walletTxFormat >= 1)
+		{
+			std::string slateMessage = byteBuffer.ReadVarStr();
+			if (!slateMessage.empty())
+			{
+				slateMessageOpt = std::make_optional<std::string>(std::move(slateMessage));
+			}
 		}
 
 		std::chrono::system_clock::time_point creationTime = TimeUtil::ToTimePoint(byteBuffer.Read64());
@@ -124,8 +130,6 @@ public:
 			confirmedHeightOpt = std::make_optional<uint64_t>(blockHeight);
 		}
 
-		//const uint32_t numInputs = byteBuffer.ReadU32();
-		//const uint32_t numOutputs = byteBuffer.ReadU32();
 		const uint64_t amountCredited = byteBuffer.ReadU64();
 		const uint64_t amountDebited = byteBuffer.ReadU64();
 
@@ -141,7 +145,7 @@ public:
 			transactionOpt = std::make_optional<Transaction>(Transaction::Deserialize(byteBuffer));
 		}
 
-		return WalletTx(walletTxId, type, std::move(slateIdOpt), creationTime, confirmationTimeOpt, confirmedHeightOpt, amountCredited, amountDebited, feeOpt, std::move(transactionOpt));
+		return WalletTx(walletTxId, type, std::move(slateIdOpt), std::move(slateMessageOpt), creationTime, confirmationTimeOpt, confirmedHeightOpt, amountCredited, amountDebited, feeOpt, std::move(transactionOpt));
 	}
 
 	Json::Value ToJSON() const
@@ -152,6 +156,16 @@ public:
 		transactionJSON["amount_credited"] = GetAmountCredited();
 		transactionJSON["amount_debited"] = GetAmountDebited();
 		transactionJSON["creation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(GetCreationTime().time_since_epoch()).count(); // TODO: Determine format
+
+		if (GetSlateId().has_value())
+		{
+			transactionJSON["slate_id"] = uuids::to_string(GetSlateId().value());
+		}
+
+		if (GetSlateMessage().has_value())
+		{
+			transactionJSON["slate_message"] = GetSlateMessage().value();
+		}
 
 		if (GetFee().has_value())
 		{
@@ -175,11 +189,10 @@ private:
 	uint32_t m_walletTxId;
 	EWalletTxType m_type; // TODO: Replace with direction & status
 	std::optional<uuids::uuid> m_slateIdOpt;
+	std::optional<std::string> m_slateMessageOpt;
 	std::chrono::system_clock::time_point m_creationTime;
 	std::optional<std::chrono::system_clock::time_point> m_confirmationTimeOpt;
 	std::optional<uint64_t> m_confirmedHeightOpt;
-	//uint32_t m_numInputs;
-	//uint32_t m_numOutputs;
 	uint64_t m_amountCredited;
 	uint64_t m_amountDebited;
 	std::optional<uint64_t> m_feeOpt;

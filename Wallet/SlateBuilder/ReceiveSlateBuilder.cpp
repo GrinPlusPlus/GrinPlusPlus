@@ -28,7 +28,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, slateContext))
+	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, slateContext, messageOpt))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -39,7 +39,8 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	// Slate was already received.
-	if (wallet.GetTxBySlateId(masterSeed, slate.GetSlateId()) != nullptr)
+	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxBySlateId(masterSeed, slate.GetSlateId());
+	if (pWalletTx != nullptr && pWalletTx->GetType() != EWalletTxType::RECEIVED_CANCELED)
 	{
 		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Already received slate " + uuids::to_string(slate.GetSlateId()));
 		return false;
@@ -58,6 +59,7 @@ bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecureVector& 
 	const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetBody().GetKernels();
 	if (kernels.size() != 1)
 	{
+		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Slate " + uuids::to_string(slate.GetSlateId()) + " had " + std::to_string(kernels.size()) + " kernels.");
 		return false;
 	}
 
@@ -116,7 +118,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 }
 
 // TODO: Use a DB Batch
-bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context) const
+bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context, const std::optional<std::string>& messageOpt) const
 {
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, context))
@@ -137,13 +139,14 @@ bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& mas
 		wallet.GetNextWalletTxId(),
 		EWalletTxType::RECEIVING_IN_PROGRESS,
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::optional<std::string>(messageOpt),
 		std::chrono::system_clock::now(),
 		std::nullopt,
 		std::nullopt,
 		slate.GetAmount(),
 		0,
 		std::optional<uint64_t>(slate.GetFee()),
-		std::make_optional<Transaction>(Transaction(slate.GetTransaction())) // TODO: Should this be nullopt?
+		std::nullopt
 	);
 
 	if (!wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))

@@ -85,39 +85,31 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 
 	const std::optional<std::string> txIdOpt = RestUtil::GetQueryParam(pConnection, "id");
 
+	Json::Value transactionsJSON = Json::arrayValue;
+
 	if (txIdOpt.has_value())
 	{
-		// TODO: Implement this
-	}
-	else
-	{
-		Json::Value transactionsJSON = Json::arrayValue;
+		const uint64_t txId = std::stoull(txIdOpt.value());
+
+		// TODO: Filter in walletManager for better performance
 		const std::vector<WalletTx> transactions = walletManager.GetTransactions(token);
 		for (const WalletTx& transaction : transactions)
 		{
-			Json::Value transactionJSON;
-			transactionJSON["id"] = transaction.GetId();
-			transactionJSON["type"] = WalletTxType::ToString(transaction.GetType());
-			transactionJSON["amount_credited"] = transaction.GetAmountCredited();
-			transactionJSON["amount_debited"] = transaction.GetAmountDebited();
-			transactionJSON["creation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(transaction.GetCreationTime().time_since_epoch()).count(); // TODO: Determine format
-
-			if (transaction.GetFee().has_value())
+			if (transaction.GetId() == txId)
 			{
-				transactionJSON["fee"] = transaction.GetFee().value();
+				transactionsJSON.append(transaction.ToJSON());
 			}
-
-			if (transaction.GetConfirmationTime().has_value())
-			{
-				transactionJSON["confirmation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(transaction.GetConfirmationTime().value().time_since_epoch()).count(); // TODO: Determine format
-			}
-
-			// TODO: Finish this
-			transactionsJSON.append(transactionJSON);
 		}
-
-		rootJSON["transactions"] = transactionsJSON;
+	}
+	else
+	{
+		const std::vector<WalletTx> transactions = walletManager.GetTransactions(token);
+		for (const WalletTx& transaction : transactions)
+		{
+			transactionsJSON.append(transaction.ToJSON());
+		}
 	}
 
+	rootJSON["transactions"] = transactionsJSON;
 	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }

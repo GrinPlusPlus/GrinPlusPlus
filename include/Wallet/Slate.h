@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Wallet/Models/SlateVersionInfo.h>
 #include <Core/Models/Transaction.h>
 #include <Wallet/ParticipantData.h>
 #include <Core/Util/JsonUtil.h>
@@ -21,8 +22,8 @@
 class Slate
 {
 public:
-	Slate(const uint64_t version, const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
-		: m_version(version),
+	Slate(SlateVersionInfo&& versionInfo, const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
+		: m_versionInfo(versionInfo),
 		m_numParticipants(numParticipants),
 		m_slateId(std::move(slateId)),
 		m_transaction(std::move(transaction)),
@@ -50,19 +51,28 @@ public:
 	{
 		Json::Value slateNode;
 
-		slateNode["version"] = m_version;
+		const bool hex = m_versionInfo.GetVersion() >= 2;
+		if (m_versionInfo.GetVersion() <= 1)
+		{
+			slateNode["version"] = m_versionInfo.GetVersion();
+		}
+		else
+		{
+			slateNode["version_info"] = m_versionInfo.ToJSON();
+		}
+
 		slateNode["num_participants"] = m_numParticipants;
 		slateNode["id"] = uuids::to_string(m_slateId);
-		slateNode["amount"] = m_amount;
+		slateNode["amount"] = m_amount; // TODO: #[serde(with = "secp_ser::string_or_u64")]
 		slateNode["fee"] = m_fee;
 		slateNode["height"] = m_blockHeight;
 		slateNode["lock_height"] = m_lockHeight;
-		slateNode["tx"] = m_transaction.ToJSON();
+		slateNode["tx"] = m_transaction.ToJSON(hex);
 
 		Json::Value participantDataNode;
 		for (const ParticipantData& participant : m_participantData)
 		{
-			participantDataNode.append(participant.ToJSON());
+			participantDataNode.append(participant.ToJSON(hex));
 		}
 		slateNode["participant_data"] = participantDataNode;
 
@@ -71,7 +81,12 @@ public:
 
 	static Slate FromJSON(const Json::Value& slateNode)
 	{
-		const uint64_t version = slateNode.get("version", Json::Value(0)).asUInt64();
+		// Version info
+		const uint16_t version = (uint16_t)slateNode.get("version", Json::Value(0)).asUInt();
+		const Json::Value versionInfoJSON = slateNode.get("version_info", Json::nullValue);
+		SlateVersionInfo versionInfo = (versionInfoJSON != Json::nullValue) ? SlateVersionInfo::FromJSON(versionInfoJSON) : SlateVersionInfo(version);
+		const bool hex = versionInfo.GetVersion() >= 2;
+
 		const uint64_t numParticipants = JsonUtil::GetRequiredField(slateNode, "num_participants").asUInt64();
 		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
 		if (!slateIdOpt.has_value())
@@ -84,15 +99,15 @@ public:
 		const uint64_t height = JsonUtil::GetRequiredField(slateNode, "height").asUInt64();
 		const uint64_t lockHeight = JsonUtil::GetRequiredField(slateNode, "lock_height").asUInt64();
 
-		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"));
+		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"), hex);
 
-		Slate slate(version, numParticipants, std::move(slateIdOpt.value()), std::move(transaction), amount, fee, height, lockHeight);
+		Slate slate(std::move(versionInfo), numParticipants, std::move(slateIdOpt.value()), std::move(transaction), amount, fee, height, lockHeight);
 
 		const Json::Value participantDataNode = JsonUtil::GetRequiredField(slateNode, "participant_data");
 		for (size_t i = 0; i < participantDataNode.size(); i++)
 		{
 			const Json::Value participantJSON = participantDataNode.get(Json::ArrayIndex(i), Json::nullValue);
-			slate.AddParticpantData(ParticipantData::FromJSON(participantJSON));
+			slate.AddParticpantData(ParticipantData::FromJSON(participantJSON, hex));
 		}
 
 		return slate;
@@ -100,7 +115,7 @@ public:
 
 private:
 	// Slate format version
-	uint64_t m_version;
+	SlateVersionInfo m_versionInfo;
 	// The number of participants intended to take part in this transaction
 	uint64_t m_numParticipants;
 	// Unique transaction/slate ID, selected by sender

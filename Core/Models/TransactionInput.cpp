@@ -30,18 +30,18 @@ TransactionInput TransactionInput::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionInput((EOutputFeatures)features, std::move(commitment));
 }
 
-Json::Value TransactionInput::ToJSON() const
+Json::Value TransactionInput::ToJSON(const bool hex) const
 {
 	Json::Value inputNode;
 	inputNode["features"] = OutputFeatures::ToString(GetFeatures());
-	inputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
+	inputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment(), hex);
 	return inputNode;
 }
 
-TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJSON)
+TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJSON, const bool hex)
 {
 	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionInputJSON, "features").asString());
-	Commitment commitment = JsonUtil::ConvertToCommitment(JsonUtil::GetRequiredField(transactionInputJSON, "commit"));
+	Commitment commitment = JsonUtil::GetCommitment(transactionInputJSON, "commit", hex);
 	return TransactionInput(features, std::move(commitment));
 }
 

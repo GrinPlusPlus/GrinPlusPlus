@@ -8,7 +8,7 @@ MessageSender::MessageSender(const Config& config)
 
 }
 
-bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) const
+bool MessageSender::Send(Socket& socket, const IMessage& message) const
 {
 	Serializer serializer;
 	serializer.AppendByteVector(m_config.GetEnvironment().GetMagicBytes());
@@ -21,8 +21,8 @@ bool MessageSender::Send(ConnectedPeer& connectedPeer, const IMessage& message) 
 
 	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong)
 	{
-		LoggerAPI::LogTrace("Sending message " + MessageTypes::ToString(message.GetMessageType()) + " to " + connectedPeer.GetPeer().GetIPAddress().Format());
+		LoggerAPI::LogTrace("Sending message " + MessageTypes::ToString(message.GetMessageType()) + " to " + socket.GetSocketAddress().Format());
 	}
 
-	return connectedPeer.GetSocket().Send(serializer.GetBytes());
+	return socket.Send(serializer.GetBytes());
 }

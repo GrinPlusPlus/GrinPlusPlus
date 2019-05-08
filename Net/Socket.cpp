@@ -1,47 +1,148 @@
 #include <Net/Socket.h>
 #include <Net/SocketException.h>
+#include <Common/Util/ThreadUtil.h>
+#include <Infrastructure/Logger.h>
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <WinSock2.h>
+static unsigned long DEFAULT_TIMEOUT = 5 * 1000; // 5s
 
-Socket::Socket(const SOCKET& socket, const SocketAddress& address, const bool blocking, const unsigned long receiveTimeout, const unsigned long sendTimeout)
-	: m_socket(socket), m_address(address), m_blocking(blocking), m_receiveTimeout(receiveTimeout), m_sendTimeout(sendTimeout), m_receiveBufferSize(0), m_socketOpen(true)
+Socket::Socket(const SocketAddress& address)
+	: m_address(address), m_socketOpen(false), m_blocking(true), m_receiveBufferSize(0), m_receiveTimeout(DEFAULT_TIMEOUT), m_sendTimeout(DEFAULT_TIMEOUT)
 {
 
+}
+
+bool Socket::Connect(asio::io_context& context)
+{
+	asio::ip::tcp::endpoint endpoint(asio::ip::address(asio::ip::address_v4::from_string(m_address.GetIPAddress().Format())), m_address.GetPortNumber());
+
+	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
+	m_pSocket->async_connect(endpoint, [this](const asio::error_code & ec)
+		{
+			m_errorCode = ec;
+			if (!ec)
+			{
+				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
+				{
+					return false;
+				}
+
+				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
+				{
+					return false;
+				}
+
+				m_address = SocketAddress(m_address.GetIPAddress(), m_pSocket->remote_endpoint().port());
+				m_socketOpen = true;
+				return true;
+			}
+			else
+			{
+				asio::error_code ignoreError;
+				m_pSocket->close(ignoreError);
+				return false;
+			}
+		}
+	);
+
+	context.run();
+
+	auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
+	while (!m_errorCode && !m_socketOpen && std::chrono::system_clock::now() < timeout)
+	{
+		ThreadUtil::SleepFor(std::chrono::milliseconds(10), false);
+	}
+
+	return m_socketOpen;
+}
+
+bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
+{
+	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
+	acceptor.async_accept(*m_pSocket, [this, &context](const asio::error_code & ec)
+		{
+			m_errorCode = ec;
+			if (!ec)
+			{
+				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
+				{
+					return false;
+				}
+
+				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
+				{
+					return false;
+				}
+
+				const std::string address = m_pSocket->remote_endpoint().address().to_string();
+				m_address = SocketAddress(IPAddress::FromString(address), m_pSocket->remote_endpoint().port());
+				m_socketOpen = true;
+				return true;
+			}
+			else
+			{
+				asio::error_code ignoreError;
+				m_pSocket->close(ignoreError);
+				return false;
+			}
+		}
+	);
+
+	context.run();
+
+	while (!m_errorCode && !m_socketOpen)
+	{
+		if (terminate)
+		{
+			acceptor.cancel();
+		}
+
+		ThreadUtil::SleepFor(std::chrono::milliseconds(10), false);
+	}
+
+	context.reset();
+
+	return m_socketOpen;
 }
 
 bool Socket::CloseSocket()
 {
 	m_socketOpen = false;
-	return closesocket(m_socket) == 0;
+
+	asio::error_code error;
+	m_pSocket->shutdown(asio::socket_base::shutdown_both, error);
+	if (!error)
+	{
+		m_pSocket->close(error);
+	}
+
+	return !error;
 }
 
-bool Socket::IsConnected() const
+bool Socket::IsSocketOpen() const
 {
 	return m_socketOpen;
-	//fd_set readFDS;
-	//readFDS.fd_count = 1;
-	//readFDS.fd_array[0] = m_socket;
+}
 
-	//timeval timeout;
-	//timeout.tv_sec = 0;
-	//timeout.tv_usec = 10;
+bool Socket::IsActive() const
+{
+	if (m_socketOpen && !m_errorCode)
+	{
+		return true;
+	}
 
-	//const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
-
-	//return result != SOCKET_ERROR;
+	return false;
 }
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
-	//if (m_receiveTimeout != milliseconds)
-	//{
-		const int result = setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
+	if (m_receiveTimeout != milliseconds)
+	{
+		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 		if (result == 0)
 		{
 			m_receiveTimeout = milliseconds;
 		}
-	//}
+	}
 
 	return m_receiveTimeout == milliseconds;
 }
@@ -51,7 +152,7 @@ bool Socket::SetReceiveBufferSize(const int bufferSize)
 	if (m_receiveBufferSize != bufferSize)
 	{
 		const int socketRcvBuff = bufferSize;
-		const int result = setsockopt(m_socket, SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
+		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
 		if (result == 0)
 		{
 			m_receiveBufferSize = bufferSize;
@@ -65,7 +166,7 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 {
 	if (m_sendTimeout != milliseconds)
 	{
-		const int result = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
+		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 		if (result == 0)
 		{
 			m_sendTimeout = milliseconds;
@@ -77,82 +178,62 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
-	//if (m_blocking != blocking)
-	//{
+	if (m_blocking != blocking)
+	{
+		// TODO: Just change m_blocking value, and read it when using send/recieve?
 		unsigned long blockingValue = (blocking ? 0 : 1);
-		const int result = ioctlsocket(m_socket, FIONBIO, &blockingValue);
+		const int result = ioctlsocket(m_pSocket->native_handle(), FIONBIO, &blockingValue);
 		if (result == 0)
 		{
 			m_blocking = blocking;
 		}
 		else
 		{
+			int error = 0;
+			int size = sizeof(error);
+			getsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_ERROR, (char*)&error, &size);
+			WSASetLastError(error);
 			throw SocketException();
 		}
-	//}
+	}
 
 	return m_blocking == blocking;
 }
 
 bool Socket::Send(const std::vector<unsigned char>& message)
 {
-	size_t totalSent = 0;
-	while (totalSent < message.size())
+	const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(message.data(), message.size()), m_errorCode);
+	if (m_errorCode)
 	{
-		const int newBytesSent = send(m_socket, (const char*)&message[totalSent], (int)(message.size() - totalSent), 0);
-		if (newBytesSent <= 0)
-		{
-			return false;
-		}
-
-		totalSent += newBytesSent;
+		throw SocketException();
 	}
 
-	return true;
+	return bytesWritten == message.size();
 }
 
-bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data) const
+bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data)
 {
 	if (data.size() < numBytes)
 	{
 		data = std::vector<unsigned char>(numBytes);
 	}
 
-	size_t totalReceived = 0;
-	while (totalReceived < numBytes)
-	{
-		const int newBytesReceived = recv(m_socket, (char*)&data[totalReceived], (int)(numBytes - totalReceived), 0);
-		if (newBytesReceived <= 0)
-		{
-			throw SocketException();
-		}
-
-		totalReceived += newBytesReceived;
-	}
-
-	return true;
-}
-
-bool Socket::HasReceivedData(const long timeoutMillis) const
-{
-	fd_set readFDS;
-	readFDS.fd_count = 1;
-	readFDS.fd_array[0] = m_socket;
-
-	timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = timeoutMillis * ((long)1000);
-
-	const int result = select(0, &readFDS, nullptr, nullptr, &timeout);
-	if (result > 0)
-	{
-		// TODO: MSG_PEEK and look for 11 bytes?
-		return true;
-	}
-	else if (result < 0)
+	const size_t bytesRead = asio::read(*m_pSocket, asio::buffer(data.data(), numBytes), m_errorCode);
+	if (m_errorCode)
 	{
 		throw SocketException();
 	}
 
-	return false;
+	return bytesRead == numBytes;
+}
+
+bool Socket::HasReceivedData()
+{
+	const size_t available = m_pSocket->available(m_errorCode);
+	if (m_errorCode)
+	{
+		throw SocketException();
+	}
+	
+	return available >= 11;
 }

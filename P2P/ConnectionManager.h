@@ -32,6 +32,7 @@ public:
 	inline const SyncStatus& GetSyncStatus() const { return m_syncer.GetSyncStatus(); }
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 
+	inline size_t GetNumOutbound() const { return m_numOutbound; }
 	size_t GetNumberOfActiveConnections() const;
 	std::pair<size_t, size_t> GetNumConnectionsWithDirection() const;
 	bool IsConnected(const uint64_t connectionId) const;
@@ -85,4 +86,7 @@ private:
 	Seeder m_seeder;
 	Pipeline m_pipeline;
 	Dandelion m_dandelion;
+
+	std::atomic<size_t> m_numOutbound;
+	std::atomic<size_t> m_numInbound;
 };

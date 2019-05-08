@@ -8,7 +8,9 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
+#include <Net/Socket.h>
 #include <Net/SocketException.h>
+#include <Common/Util/ThreadUtil.h>
 
 MessageRetriever::MessageRetriever(const Config& config, const ConnectionManager& connectionManager)
 	: m_config(config), m_connectionManager(connectionManager)
@@ -16,11 +18,9 @@ MessageRetriever::MessageRetriever(const Config& config, const ConnectionManager
 
 }
 
-std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
+std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
 {
-	Socket& socket = connectedPeer.GetSocket();
-
-	bool hasReceivedData = socket.HasReceivedData(10);
+	bool hasReceivedData = socket.HasReceivedData();
 	if (retrievalMode == BLOCKING)
 	{
 		std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
@@ -31,7 +31,8 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 				return std::unique_ptr<RawMessage>(nullptr);
 			}
 
-			hasReceivedData = socket.HasReceivedData(10);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5), false);
+			hasReceivedData = socket.HasReceivedData();
 		}
 	}
 
@@ -39,7 +40,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(const ConnectedPee
 	{
 		//LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Received data from: " + connectedPeer.GetPeer().GetIPAddress().Format());
 		socket.SetReceiveTimeout(5 * 1000);
-		socket.SetBlocking(true);
+		//socket.SetBlocking(true);
 
 		std::vector<unsigned char> headerBuffer(11, 0);
 		const bool received = socket.Receive(11, headerBuffer);

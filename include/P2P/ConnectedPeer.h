@@ -7,13 +7,13 @@
 class ConnectedPeer
 {
 public:
-	ConnectedPeer(const Socket& socket,  const Peer& peer, const EDirection direction)
-		: m_socket(socket), m_peer(peer), m_direction(direction), m_height(0), m_totalDifficulty(0)
+	ConnectedPeer(const Peer& peer, const EDirection direction)
+		: m_peer(peer), m_direction(direction), m_height(0), m_totalDifficulty(0)
 	{
 
 	}
 	ConnectedPeer(const ConnectedPeer& peer)
-		: m_socket(peer.m_socket), m_peer(peer.m_peer), m_direction(peer.m_direction), m_height(peer.m_height.load()), m_totalDifficulty(peer.m_totalDifficulty.load())
+		: m_peer(peer.m_peer), m_direction(peer.m_direction), m_height(peer.m_height.load()), m_totalDifficulty(peer.m_totalDifficulty.load())
 	{
 
 	}
@@ -24,7 +24,6 @@ public:
 		m_height.exchange(height);
 	}
 
-	inline Socket& GetSocket() const { return m_socket; }
 	inline const Peer& GetPeer() const { return m_peer; }
 	inline Peer& GetPeer() { return m_peer; }
 	inline const EDirection GetDirection() const { return m_direction; }
@@ -37,7 +36,6 @@ public:
 	inline void UpdateLastContactTime() const { m_peer.UpdateLastContactTime(); }
 
 private:
-	mutable Socket m_socket; // TODO: Socket belongs in Connection
 	EDirection m_direction;
 	Peer m_peer;
 	std::atomic<uint64_t> m_totalDifficulty;

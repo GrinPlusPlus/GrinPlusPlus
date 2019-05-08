@@ -22,6 +22,8 @@ public:
 	//
 	std::vector<SocketAddress> GetPeersFromDNS() const;
 
-private:	
+private:
 	const Config& m_config;
+
+	std::vector<IPAddress> Resolve(const std::string& domainName) const;
 };

@@ -110,6 +110,11 @@ public:
 	}
 	inline std::string Format() const 
 	{
+		if (m_address.empty())
+		{
+			return "";
+		}
+
 		if (m_family == EAddressFamily::IPv4)
 		{
 			return std::to_string(m_address[0]) + "." + std::to_string(m_address[1]) + "." 

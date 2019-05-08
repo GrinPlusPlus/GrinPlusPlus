@@ -1,6 +1,6 @@
 #include "DNSSeeder.h"
 
-#include <Net/DNS.h>
+#include <asio.hpp>
 
 DNSSeeder::DNSSeeder(const Config& config)
 	: m_config(config)
@@ -37,11 +37,31 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 
 	for (auto seed : dnsSeeds)
 	{
-		const std::vector<IPAddress> ipAddresses = DNS::Resolve(seed);
+		const std::vector<IPAddress> ipAddresses = Resolve(seed);
 		for (const IPAddress ipAddress : ipAddresses)
 		{
 			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
 		}
+	}
+
+	return addresses;
+}
+
+std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
+{
+	asio::io_context context;
+	asio::ip::tcp::resolver resolver(context);
+	asio::ip::tcp::resolver::query query(domainName, "HTTP");
+	asio::error_code errorCode;
+	asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, errorCode);
+
+	std::vector<IPAddress> addresses;
+	if (!errorCode)
+	{
+		std::for_each(iter, {}, [&addresses](auto & it)
+			{
+				addresses.push_back(IPAddress::FromString(it.endpoint().address().to_string()));
+			});
 	}
 
 	return addresses;

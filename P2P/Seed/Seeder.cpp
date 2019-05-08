@@ -6,6 +6,7 @@
 
 #include <P2P/capabilities.h>
 #include <Net/SocketAddress.h>
+#include <Net/Socket.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
@@ -18,7 +19,7 @@ Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerM
 	: m_config(config), 
 	m_connectionManager(connectionManager), 
 	m_peerManager(peerManager), 
-	m_connectionFactory(config, connectionManager, peerManager, blockChainServer)
+	m_blockChainServer(blockChainServer)
 {
 
 }
@@ -67,47 +68,26 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("SEED_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
 
-	std::chrono::system_clock::time_point lastPruneTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(10);
 
 	const size_t minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
-		auto now = std::chrono::system_clock::now();
-		if (lastPruneTime + std::chrono::milliseconds(250) < now)
-		{
-			seeder.m_connectionManager.PruneConnections(true);
-			lastPruneTime = now;
-		}
+		seeder.m_connectionManager.PruneConnections(true);
 
-		const size_t numConnections = seeder.m_connectionManager.GetNumberOfActiveConnections();
-		if (numConnections < minimumConnections)
+		auto now = std::chrono::system_clock::now();
+		const size_t numOutbound = seeder.m_connectionManager.GetNumOutbound();
+		if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now)
 		{
-			const size_t connectionsToAdd = std::min((size_t)5, (minimumConnections - numConnections));
-			if (connectionsToAdd == 1)
+			lastConnectTime = now;
+			const size_t connectionsToAdd = std::min((size_t)15, (minimumConnections - numOutbound));
+			for (size_t i = 0; i < connectionsToAdd; i++)
 			{
 				seeder.SeedNewConnection();
 			}
-			else
-			{
-				// Using when_any to find task which finishes first
-				std::vector<async::task<void>> tasks;
-				for (size_t i = 0; i < connectionsToAdd; i++)
-				{
-					tasks.push_back(async::spawn([&seeder] { seeder.SeedNewConnection(); }));
-				}
-
-				for (auto& task : tasks)
-				{
-					task.wait();
-				}
-			}
-
-			ThreadUtil::SleepFor(std::chrono::milliseconds(2), seeder.m_terminate);
 		}
-		else
-		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(25), seeder.m_terminate);
-		}
+
+		ThreadUtil::SleepFor(std::chrono::milliseconds(250), seeder.m_terminate);
 	}
 
 	LoggerAPI::LogTrace("Seeder::Thread_Seed() - END");
@@ -122,41 +102,47 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("LISTENER_THREAD");
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - BEGIN");
 
-	const IPAddress listenerAddress = IPAddress::FromIP(0, 0, 0, 0);
 	const uint16_t portNumber = seeder.m_config.GetEnvironment().GetP2PPort();
-	const std::optional<Listener> listenerSocketOpt = Listener::Create(listenerAddress, portNumber);
-	if (!listenerSocketOpt.has_value())
+	asio::ip::tcp::acceptor acceptor(seeder.m_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
+	asio::error_code errorCode;
+	acceptor.listen(asio::socket_base::max_listen_connections, errorCode);
+
+	Socket socket(SocketAddress(IPAddress(), portNumber));
+	if (!errorCode)
 	{
-		LoggerAPI::LogError("Seeder::Thread_Listener() - Failed to create listener socket.");
-		return;
-	}
-
-	const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
-	while (!seeder.m_terminate)
-	{
-		bool connectionAdded = false;
-
-		// TODO: Always accept, but then send peers and immediately drop
-		if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
+		const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
+		while (!seeder.m_terminate)
 		{
-			connectionAdded |= seeder.ListenForConnections(listenerSocketOpt.value());
-		}
-
-		if (!connectionAdded)
-		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
+			// TODO: Always accept, but then send peers and immediately drop
+			if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
+			{
+				const bool connectionAdded = socket.Accept(seeder.m_context, acceptor, seeder.m_terminate);
+				if (connectionAdded)
+				{
+					Connection* pConnection = new Connection(std::move(socket), seeder.m_nextId++, seeder.m_config, seeder.m_connectionManager, seeder.m_peerManager, seeder.m_blockChainServer, ConnectedPeer(Peer(socket.GetSocketAddress()), EDirection::INBOUND));
+					pConnection->Connect();
+				}
+			}
+			else
+			{
+				ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
+			}
 		}
 	}
 
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - END");
 }
 
-bool Seeder::SeedNewConnection()
+Connection* Seeder::SeedNewConnection()
 {
 	std::unique_ptr<Peer> pPeer = m_peerManager.GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		return ConnectToPeer(*pPeer, EDirection::OUTBOUND, std::nullopt);
+		ConnectedPeer connectedPeer(*pPeer, EDirection::OUTBOUND);
+		Connection* pConnection = new Connection(Socket(SocketAddress(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort())), m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
+		pConnection->Connect();
+
+		return pConnection;
 	}
 	else if (!m_usedDNS.exchange(true))
 	{
@@ -167,35 +153,5 @@ bool Seeder::SeedNewConnection()
 
 	// TODO: Request new peers
 
-	return false;
-}
-
-bool Seeder::ListenForConnections(const Listener& listenerSocket)
-{
-	const std::optional<Socket> socketOpt = listenerSocket.AcceptNewConnection();
-	if (socketOpt.has_value())
-	{
-		return ConnectToPeer(Peer(socketOpt.value().GetSocketAddress()), EDirection::INBOUND, socketOpt);
-	}
-
-	return false;
-}
-
-bool Seeder::ConnectToPeer(Peer& peer, const EDirection& direction, const std::optional<Socket>& socketOpt)
-{
-	Connection* pConnection = m_connectionFactory.CreateConnection(peer, direction, socketOpt);
-	if (pConnection != nullptr)
-	{
-		if (m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
-		{
-			const Capabilities capabilites(Capabilities::ECapability::FAST_SYNC_NODE);
-			const GetPeerAddressesMessage getPeerAddressesMessage(capabilites);
-			pConnection->Send(getPeerAddressesMessage);
-		}
-
-		m_connectionManager.AddConnection(pConnection);
-		return true;
-	}
-
-	return false;
+	return nullptr;
 }

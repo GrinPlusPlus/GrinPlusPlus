@@ -49,11 +49,11 @@ MessageProcessor::MessageProcessor(const Config& config, ConnectionManager& conn
 
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connectionId, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
+MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
 {
 	try
 	{
-		return ProcessMessageInternal(connectionId, connectedPeer, rawMessage);
+		return ProcessMessageInternal(connectionId, socket, connectedPeer, rawMessage);
 	}
 	catch (const DeserializationException&)
 	{
@@ -65,7 +65,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connec
 	}
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_t connectionId, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
+MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
 {
 	const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
@@ -97,7 +97,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				const PongMessage pongMessage(m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED), m_blockChainServer.GetHeight(EChainType::CONFIRMED));
 
-				return MessageSender(m_config).Send(connectedPeer, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Pong:
 			{
@@ -123,7 +123,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu addresses to %s.", socketAddresses.size(), formattedIPAddress.c_str()));
 				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
 
-				return MessageSender(m_config).Send(connectedPeer, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case PeerAddrs:
 			{
@@ -146,7 +146,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const HeadersMessage headersMessage(std::move(blockHeaders));
 
 				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
-				return MessageSender(m_config).Send(connectedPeer, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:
 			{
@@ -167,7 +167,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					if (m_blockChainServer.GetBlockByHash(blockHeader.GetHash()) == nullptr)
 					{
 						const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
-						return MessageSender(m_config).Send(connectedPeer, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 					}
 				}
 				else
@@ -201,7 +201,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (pBlock != nullptr)
 				{
 					BlockMessage blockMessage(std::move(*pBlock));
-					return MessageSender(m_config).Send(connectedPeer, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -232,7 +232,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 						if (block.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetBlockHeader().GetPreviousBlockHash());
-							return MessageSender(m_config).Send(connectedPeer, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
 					else if (added == EBlockChainStatus::INVALID)
@@ -251,7 +251,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (pCompactBlock != nullptr)
 				{
 					const CompactBlockMessage compactBlockMessage(*pCompactBlock);
-					return MessageSender(m_config).Send(connectedPeer, compactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, compactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -272,7 +272,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
 				{
 					const GetBlockMessage getBlockMessage(compactBlock.GetHash());
-					return MessageSender(m_config).Send(connectedPeer, getBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, getBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 				else if (added == EBlockChainStatus::ORPHANED)
 				{
@@ -281,7 +281,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
-							return MessageSender(m_config).Send(connectedPeer, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
 				}
@@ -319,14 +319,14 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetRequestMessage txHashSetRequestMessage = TxHashSetRequestMessage::Deserialize(byteBuffer);
 
-				return SendTxHashSet(connectionId, connectedPeer, txHashSetRequestMessage);
+				return SendTxHashSet(connectionId, socket, connectedPeer, txHashSetRequestMessage);
 			}
 			case TxHashSetArchive:
 			{
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return ReceiveTxHashSet(connectionId, connectedPeer, txHashSetArchiveMessage);
+				return ReceiveTxHashSet(connectionId, socket, connectedPeer, txHashSetArchiveMessage);
 			}
 			case GetTransactionMsg:
 			{
@@ -338,7 +338,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (pTransaction == nullptr)
 				{
 					const TransactionMessage transactionMessage(*pTransaction);
-					return MessageSender(m_config).Send(connectedPeer, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -359,7 +359,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (pTransaction == nullptr)
 				{
 					const GetTransactionMessage getTransactionMessage(kernelHash);
-					return MessageSender(m_config).Send(connectedPeer, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -374,7 +374,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 	return EStatus::UNKNOWN_MESSAGE;
 }
 
-MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage)
+MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
 	LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::SendTxHashSet - Sending TxHashSet snapshot to %s.", connectedPeer.GetPeer().GetIPAddress().Format().c_str()));
 
@@ -399,9 +399,9 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 	const uint64_t fileSize = file.tellg();
 	file.seekg(0);
 	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-	MessageSender(m_config).Send(connectedPeer, archiveMessage);
+	MessageSender(m_config).Send(socket, archiveMessage);
 
-	connectedPeer.GetSocket().SetBlocking(false);
+	socket.SetBlocking(false);
 
 	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	uint64_t totalBytesRead = 0;
@@ -411,7 +411,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		const uint64_t bytesRead = file.gcount();
 
 		const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-		const bool sent = connectedPeer.GetSocket().Send(bytesToSend);
+		const bool sent = socket.Send(bytesToSend);
 
 		if (!sent || m_connectionManager.IsTerminating())
 		{
@@ -425,7 +425,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		totalBytesRead += bytesRead;
 	}
 
-	connectedPeer.GetSocket().SetBlocking(true);
+	socket.SetBlocking(true);
 
 	file.close();
 	FileUtil::RemoveFile(zipFilePath);
@@ -433,7 +433,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 	return EStatus::SUCCESS;
 }
 
-MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
+MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
 	LoggerAPI::LogInfo(StringUtil::Format("MessageProcessor::ReceiveTxHashSet - Downloading TxHashSet from %s.", connectedPeer.GetPeer().GetIPAddress().Format().c_str()));
 
@@ -441,8 +441,8 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	syncStatus.UpdateDownloaded(0);
 	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
-	connectedPeer.GetSocket().SetReceiveTimeout(10 * 1000);
-	connectedPeer.GetSocket().SetReceiveBufferSize(BUFFER_SIZE);
+	socket.SetReceiveTimeout(10 * 1000);
+	socket.SetReceiveBufferSize(BUFFER_SIZE);
 
 	const std::string hashStr = HexUtil::ConvertHash(txHashSetArchiveMessage.GetBlockHash());
 	const std::string txHashSetPath = m_config.GetTxHashSetDirectory() + StringUtil::Format("txhashset_%s.zip", hashStr.c_str());
@@ -454,7 +454,7 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 	{
 		const int bytesToRead = std::min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const bool received = connectedPeer.GetSocket().Receive(bytesToRead, buffer);
+		const bool received = socket.Receive(bytesToRead, buffer);
 		if (!received || m_connectionManager.IsTerminating())
 		{
 			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);

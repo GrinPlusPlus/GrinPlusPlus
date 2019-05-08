@@ -6,6 +6,7 @@
 #include <Config/Config.h>
 
 // Forward Declarations
+class Socket;
 class ConnectionManager;
 class IBlockChainServer;
 class ConnectedPeer;
@@ -30,12 +31,12 @@ public:
 
 	MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
 
-	EStatus ProcessMessage(const uint64_t connectionId, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
+	EStatus ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
 
 private:
-	EStatus ProcessMessageInternal(const uint64_t connectionId, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
-	EStatus SendTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage);
-	EStatus ReceiveTxHashSet(const uint64_t connectionId, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
+	EStatus ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
+	EStatus SendTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage);
+	EStatus ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;

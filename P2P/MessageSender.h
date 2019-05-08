@@ -2,7 +2,7 @@
 
 #include "Messages/Message.h"
 
-#include <P2P/ConnectedPeer.h>
+#include <Net/Socket.h>
 #include <Config/Config.h>
 
 class MessageSender
@@ -10,7 +10,7 @@ class MessageSender
 public:
 	MessageSender(const Config& config);
 
-	bool Send(ConnectedPeer& connectedPeer, const IMessage& message) const;
+	bool Send(Socket& socket, const IMessage& message) const;
 
 private:
 	const Config& m_config;

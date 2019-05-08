@@ -5,6 +5,8 @@
 #include "ConnectionManager.h"
 #include "Seed/PeerManager.h"
 #include "Messages/PingMessage.h"
+#include "Messages/GetPeerAddressesMessage.h"
+#include "Seed/HandShake.h"
 
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
@@ -14,8 +16,8 @@
 #include <chrono>
 #include <memory>
 
-Connection::Connection(const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer)
-	: m_connectionId(connectionId), m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_blockChainServer(blockChainServer), m_connectedPeer(connectedPeer)
+Connection::Connection(Socket&& socket, const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer)
+	: m_socket(std::move(socket)), m_connectionId(connectionId), m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_blockChainServer(blockChainServer), m_connectedPeer(connectedPeer)
 {
 
 }
@@ -35,7 +37,7 @@ bool Connection::Connect()
 
 	m_terminate = false;
 
-	m_connectionThread = std::thread(Thread_ProcessConnection, std::ref(*this));
+	m_connectionThread = std::thread(Thread_ProcessConnection, this);
 	ThreadManagerAPI::SetThreadName(m_connectionThread.get_id(), "PEER_CONNECTION");
 
 	return true;
@@ -48,18 +50,14 @@ bool Connection::IsConnectionActive() const
 		return false;
 	}
 
-	if (!m_connectedPeer.GetSocket().IsConnected())
-	{
-		return false;
-	}
-
-	return true;
-
+	// TODO: Check last contact
 	//const time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	//const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
 	//const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
 	//
 	//return differenceInSeconds < 120.0;
+
+	return m_socket.IsActive();
 }
 
 void Connection::Disconnect()
@@ -82,53 +80,95 @@ void Connection::Send(const IMessage& message)
 // Continuously checks for messages to send and/or receive until the connection is terminated.
 // This function runs in its own thread.
 //
-void Connection::Thread_ProcessConnection(Connection& connection)
+void Connection::Thread_ProcessConnection(Connection* pConnection)
 {
-	connection.m_peerManager.SetPeerConnected(connection.GetConnectedPeer().GetPeer(), true);
+	try
+	{
+		EDirection direction = EDirection::INBOUND;
+		bool connected = pConnection->GetSocket().IsSocketOpen();
+		if (!connected)
+		{
+			direction = EDirection::OUTBOUND;
+			connected = pConnection->m_socket.Connect(pConnection->m_context);
+		}
 
-	MessageProcessor messageProcessor(connection.m_config, connection.m_connectionManager, connection.m_peerManager, connection.m_blockChainServer);
-	const MessageRetriever messageRetriever(connection.m_config, connection.m_connectionManager);
+		bool handshakeSuccess = false;
+		if (connected)
+		{
+			HandShake handshake(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_blockChainServer);
+			handshakeSuccess = handshake.PerformHandshake(pConnection->m_socket, pConnection->m_connectedPeer, direction);
+		}
 
-	const SyncStatus& syncStatus = connection.m_connectionManager.GetSyncStatus();
+		if (handshakeSuccess)
+		{
+			pConnection->m_connectionManager.AddConnection(pConnection);
+			if (pConnection->m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
+			{
+				const Capabilities capabilites(Capabilities::ECapability::FAST_SYNC_NODE);
+				const GetPeerAddressesMessage getPeerAddressesMessage(capabilites);
+				pConnection->Send(getPeerAddressesMessage);
+			}
+		}
+		else
+		{
+			pConnection->m_socket.CloseSocket();
+			pConnection->m_terminate = true;
+			pConnection->m_connectionThread.detach();
+			delete pConnection;
+			return;
+		}
+	}
+	catch (std::exception & e)
+	{
+		delete pConnection;
+		return;
+	}
+
+	pConnection->m_peerManager.SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), true);
+
+	MessageProcessor messageProcessor(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_blockChainServer);
+	const MessageRetriever messageRetriever(pConnection->m_config, pConnection->m_connectionManager);
+
+	const SyncStatus& syncStatus = pConnection->m_connectionManager.GetSyncStatus();
 
 	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
 	std::chrono::system_clock::time_point lastReceivedMessageTime = std::chrono::system_clock::now();
 
-	while (!connection.m_terminate)
+	while (!pConnection->m_terminate)
 	{
 		auto now = std::chrono::system_clock::now();
 		if (lastPingTime + std::chrono::seconds(10) < now)
 		{
 			const PingMessage pingMessage(syncStatus.GetBlockDifficulty(), syncStatus.GetBlockHeight());
-			connection.Send(pingMessage);
+			pConnection->Send(pingMessage);
 
 			lastPingTime = now;
 		}
 
-		std::unique_lock<std::mutex> lockGuard(connection.m_peerMutex);
+		std::unique_lock<std::mutex> lockGuard(pConnection->m_peerMutex);
 
 		try
 		{
 			bool messageSentOrReceived = false;
 
 			// Check for received messages and if there is a new message, process it.
-			std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(connection.m_connectedPeer, MessageRetriever::NON_BLOCKING);
+			std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(pConnection->m_socket, pConnection->m_connectedPeer, MessageRetriever::NON_BLOCKING);
 			if (pRawMessage.get() != nullptr)
 			{
-				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(connection.m_connectionId, connection.m_connectedPeer, *pRawMessage);
+				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(pConnection->m_connectionId, pConnection->m_socket, pConnection->m_connectedPeer, *pRawMessage);
 				lastReceivedMessageTime = std::chrono::system_clock::now();
 				messageSentOrReceived = true;
 			}
 
 			// Send the next message in the queue, if one exists.
-			std::unique_lock<std::mutex> sendLockGuard(connection.m_sendMutex);
-			if (!connection.m_sendQueue.empty())
+			std::unique_lock<std::mutex> sendLockGuard(pConnection->m_sendMutex);
+			if (!pConnection->m_sendQueue.empty())
 			{
-				std::unique_ptr<IMessage> pMessageToSend(connection.m_sendQueue.front());
-				connection.m_sendQueue.pop();
+				std::unique_ptr<IMessage> pMessageToSend(pConnection->m_sendQueue.front());
+				pConnection->m_sendQueue.pop();
 				sendLockGuard.unlock();
 
-				MessageSender(connection.m_config).Send(connection.m_connectedPeer, *pMessageToSend);
+				MessageSender(pConnection->m_config).Send(pConnection->m_socket, *pMessageToSend);
 
 				messageSentOrReceived = true;
 			}
@@ -146,7 +186,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 					break;
 				}
 
-				ThreadUtil::SleepFor(std::chrono::milliseconds(5), connection.m_terminate);
+				ThreadUtil::SleepFor(std::chrono::milliseconds(5), pConnection->m_terminate);
 			}
 		}
 		catch (const DeserializationException&)
@@ -176,7 +216,7 @@ void Connection::Thread_ProcessConnection(Connection& connection)
 		}
 	}
 
-	connection.GetConnectedPeer().GetSocket().CloseSocket();
+	pConnection->GetSocket().CloseSocket();
 
-	connection.m_peerManager.SetPeerConnected(connection.GetConnectedPeer().GetPeer(), false);
+	pConnection->m_peerManager.SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), false);
 }

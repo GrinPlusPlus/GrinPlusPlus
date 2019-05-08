@@ -3,15 +3,20 @@
 #include <Net/SocketAddress.h>
 #include <inttypes.h>
 #include <vector>
-#include <WinSock2.h>
+#include <memory>
+#include <atomic>
+#include <asio.hpp>
 
 class Socket
 {
 public:
-	Socket(const SOCKET& socket, const SocketAddress& address, const bool blocking, const unsigned long receiveTimeout, const unsigned long sendTimeout);
+	Socket(const SocketAddress& address);
+	bool Connect(asio::io_context& context);
+	bool Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);
 
 	bool CloseSocket();
-	bool IsConnected() const;
+	bool IsSocketOpen() const;
+	bool IsActive() const;
 
 	inline const SocketAddress& GetSocketAddress() const { return m_address; }
 	inline const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }
@@ -30,11 +35,12 @@ public:
 
 	bool Send(const std::vector<unsigned char>& message);
 
-	bool HasReceivedData(const long timeoutMillis) const;
-	bool Receive(const size_t numBytes, std::vector<unsigned char>& data) const;
+	bool HasReceivedData();
+	bool Receive(const size_t numBytes, std::vector<unsigned char>& data);
 
 private:
-	SOCKET m_socket;
+	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
+	asio::error_code m_errorCode;
 
 	bool m_socketOpen;
 	SocketAddress m_address;

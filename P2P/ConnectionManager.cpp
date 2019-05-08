@@ -18,7 +18,9 @@ ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerMana
 	m_syncer(*this, blockChainServer), 
 	m_seeder(config, *this, peerManager, blockChainServer),
 	m_pipeline(config, *this, blockChainServer),
-	m_dandelion(config, *this, blockChainServer, transactionPool)
+	m_dandelion(config, *this, blockChainServer, transactionPool),
+	m_numOutbound(0),
+	m_numInbound(0)
 {
 
 }
@@ -114,7 +116,7 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 	{
 		if (pConnection->GetConnectedPeer().GetPeer().GetIPAddress() == address)
 		{
-			return pConnection->GetConnectedPeer().GetSocket().IsConnected();
+			return pConnection->GetSocket().IsActive();
 		}
 	}
 
@@ -248,6 +250,8 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 	std::unique_lock<std::shared_mutex> disconnectLock(m_disconnectMutex);
 
+	size_t numOutbound = 0;
+	size_t numInbound = 0;
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
 	{
 		Connection* pConnection = m_connections[i];
@@ -279,8 +283,20 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 			continue;
 		}
+
+		if (pConnection->GetConnectedPeer().GetDirection() == EDirection::INBOUND)
+		{
+			numInbound++;
+		}
+		else
+		{
+			numOutbound++;
+		}
 	}
 
+	m_numInbound = numInbound;
+	m_numOutbound = numOutbound;
+	m_peersToBan.clear();
 	writeLock.unlock();
 
 	for (Connection* pConnection : m_connectionsToClose)

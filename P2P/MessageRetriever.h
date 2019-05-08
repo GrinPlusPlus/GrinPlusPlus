@@ -8,6 +8,7 @@
 #include <string>
 
 // Forward Declarations
+class Socket;
 class ConnectedPeer;
 class ConnectionManager;
 
@@ -22,7 +23,7 @@ public:
 		NON_BLOCKING
 	};
 
-	std::unique_ptr<RawMessage> RetrieveMessage(const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const;
+	std::unique_ptr<RawMessage> RetrieveMessage(Socket& socket, const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const;
 
 private:
 	const Config& m_config;

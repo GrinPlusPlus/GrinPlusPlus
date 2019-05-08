@@ -49,12 +49,14 @@ add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
 add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+add_definitions(-DASIO_STANDALONE)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/mio/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/stduuid/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru-cache/include
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/asio/asio/include
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

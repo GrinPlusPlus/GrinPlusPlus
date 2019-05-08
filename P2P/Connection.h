@@ -2,6 +2,7 @@
 
 #include "Messages/Message.h"
 
+#include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 #include <mutex>
@@ -22,7 +23,7 @@ class PeerManager;
 class Connection
 {
 public:
-	Connection(const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer);
+	Connection(Socket&& socket, const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer);
 
 	inline uint64_t GetId() const { return m_connectionId; }
 	bool Connect();
@@ -31,6 +32,7 @@ public:
 
 	void Send(const IMessage& message);
 
+	inline Socket& GetSocket() const { return m_socket; }
 	inline Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
 	inline const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
 	inline const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
@@ -39,7 +41,7 @@ public:
 	inline Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
 
 private:
-	static void Thread_ProcessConnection(Connection& connection);
+	static void Thread_ProcessConnection(Connection* pConnection);
 
 	const Config& m_config;
 	IBlockChainServer& m_blockChainServer;
@@ -51,6 +53,9 @@ private:
 
 	mutable std::mutex m_peerMutex;
 	ConnectedPeer m_connectedPeer;
+
+	asio::io_context m_context;
+	mutable Socket m_socket;
 
 	mutable std::mutex m_sendMutex;
 	std::queue<IMessage*> m_sendQueue;

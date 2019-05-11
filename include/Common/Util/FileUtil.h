@@ -112,8 +112,14 @@ public:
 		return std::string(&homeDriveBuf[0]) + std::string(&homePathBuf[0]);
 		#else
 		char* pHomePath = getenv("HOME");
-
-		return std::string(pHomePath);
+		if (pHomePath != nullptr)
+		{
+			return std::string(pHomePath);
+		}
+		else
+		{
+			return "~";
+		}
 		#endif
 	}
 

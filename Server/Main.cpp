@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	}
 
 	/* Initialize the civetweb library */
-	//mg_init_library(0);
+	mg_init_library(0);
 
 	signal(SIGINT, SigIntHandler);
 
@@ -87,11 +87,10 @@ int main(int argc, char* argv[])
 	}
 
 	//wallet.Shutdown();
-	delete pNodeClient;
 	node.Shutdown();
 
 	/* Un-initialize the civetweb library */
-	//mg_exit_library();
+	mg_exit_library();
 
 	return 0;
 }

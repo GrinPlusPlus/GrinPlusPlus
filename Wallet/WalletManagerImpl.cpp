@@ -236,6 +236,6 @@ namespace WalletAPI
 	//
 	WALLET_API void ShutdownWalletManager(IWalletManager* pWalletManager)
 	{
-		delete pWalletManager;
+		delete (WalletManager*)pWalletManager;
 	}
 }

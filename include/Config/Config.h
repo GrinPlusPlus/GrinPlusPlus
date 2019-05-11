@@ -8,7 +8,7 @@
 #include <Config/WalletConfig.h>
 #include <Config/ServerConfig.h>
 #include <string>
-#include <filesystem>
+#include <filesystem.hpp>
 #include <Common/Util/FileUtil.h>
 
 class Config
@@ -33,13 +33,13 @@ public:
 		m_serverConfig(serverConfig),
 		m_logLevel(logLevel)
 	{
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath);
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "kernel/");
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "output/");
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "rangeproof/");
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath);
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath);
-		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory);
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath);
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "kernel/");
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "output/");
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "rangeproof/");
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath);
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath);
+		ghc::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory);
 	}
 
 	inline const std::string& GetDataDirectory() const { return m_dataPath; }

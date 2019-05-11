@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <filesystem>
+#include <filesystem.hpp>
 #include <stdlib.h>
 
 #if defined(_WIN32)
@@ -19,7 +19,7 @@ class FileUtil
 public:
 	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
 	{
-		if (!std::filesystem::exists(std::filesystem::path(filePath)))
+		if (!ghc::filesystem::exists(ghc::filesystem::path(filePath)))
 		{
 			return false;
 		}
@@ -42,15 +42,15 @@ public:
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
 	{
-		const std::filesystem::path destinationPath(destination);
-		if (std::filesystem::exists(destinationPath))
+		const ghc::filesystem::path destinationPath(destination);
+		if (ghc::filesystem::exists(destinationPath))
 		{
-			std::filesystem::remove(destinationPath);
+			ghc::filesystem::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const std::filesystem::path sourcePath(source);
-		std::filesystem::rename(sourcePath, destinationPath, error);
+		const ghc::filesystem::path sourcePath(source);
+		ghc::filesystem::rename(sourcePath, destinationPath, error);
 
 		return !error;
 	}
@@ -73,9 +73,9 @@ public:
 	static bool RemoveFile(const std::string& filePath)
 	{
 		std::error_code ec;
-		if (std::filesystem::exists(filePath, ec))
+		if (ghc::filesystem::exists(filePath, ec))
 		{
-			const uintmax_t removed = std::filesystem::remove_all(filePath, ec);
+			const uintmax_t removed = ghc::filesystem::remove_all(filePath, ec);
 
 			return removed > 0 && ec.value() == 0;
 		}
@@ -86,14 +86,14 @@ public:
 	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
 	{
 		std::error_code ec;
-		std::filesystem::create_directories(destDir, ec);
+		ghc::filesystem::create_directories(destDir, ec);
 
-		if (!std::filesystem::exists(sourceDir, ec) || !std::filesystem::exists(destDir, ec))
+		if (!ghc::filesystem::exists(sourceDir, ec) || !ghc::filesystem::exists(destDir, ec))
 		{
 			return false;
 		}
 
-		std::filesystem::copy(sourceDir, destDir, std::filesystem::copy_options::recursive, ec);
+		ghc::filesystem::copy(sourceDir, destDir, ghc::filesystem::copy_options::recursive, ec);
 
 		return ec.value() == 0;
 	}

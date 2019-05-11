@@ -5,7 +5,6 @@
 #include <Config/Genesis.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/FileUtil.h>
-#include <filesystem>
 
 Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType environmentType) const
 {

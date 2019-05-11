@@ -11,6 +11,7 @@
 #include <Crypto/Crypto.h>
 #include <PMMR/TxHashSet.h>
 #include <Consensus/BlockTime.h>
+#include <filesystem.hpp>
 #include <algorithm>
 
 BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
@@ -113,7 +114,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 {
 	// TODO: Check horizon.
-	const std::string destination = std::filesystem::temp_directory_path().string() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
+	const std::string destination = ghc::filesystem::temp_directory_path().string() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
 	if (m_txHashSetManager.SaveSnapshot(blockHeader, destination))
 	{
 		return destination;

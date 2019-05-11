@@ -75,7 +75,7 @@ bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader, const std::s
 	// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
 	const std::string txHashSetDirectory = m_config.GetTxHashSetDirectory();
 
-	const std::string snapshotDir = std::filesystem::temp_directory_path().string() + "Snapshots/" + blockHeader.FormatHash() + "/";
+	const std::string snapshotDir = ghc::filesystem::temp_directory_path().string() + "Snapshots/" + blockHeader.FormatHash() + "/";
 	if (!FileUtil::CopyDirectory(txHashSetDirectory, snapshotDir))
 	{
 		pTxHashSet->Unlock();

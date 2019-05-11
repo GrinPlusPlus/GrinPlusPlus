@@ -9,7 +9,7 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Database/BlockDb.h>
 #include <Infrastructure/Logger.h>
-#include <async++.h>
+#include <thread>
 
 TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader)
 	: m_blockDB(blockDB), m_pKernelMMR(pKernelMMR), m_pOutputPMMR(pOutputPMMR), m_pRangeProofPMMR(pRangeProofPMMR), m_blockHeader(blockHeader), m_blockHeaderBackup(blockHeader)
@@ -290,14 +290,17 @@ bool TxHashSet::Commit()
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
 
-	async::task<bool> kernelTask = async::spawn([this] { return this->m_pKernelMMR->Flush(); });
-	async::task<bool> outputTask = async::spawn([this] { return this->m_pOutputPMMR->Flush(); });
-	async::task<bool> rangeProofTask = async::spawn([this] { return this->m_pRangeProofPMMR->Flush(); });
-
-	const bool flushed = async::when_all(kernelTask, outputTask, rangeProofTask).then(
-		[](std::tuple<async::task<bool>, async::task<bool>, async::task<bool>> results) -> bool {
-		return std::get<0>(results).get() && std::get<1>(results).get() && std::get<2>(results).get();
-	}).get();
+	std::vector<std::thread> threads;
+	threads.emplace_back(std::thread([this] { this->m_pKernelMMR->Flush(); }));
+	threads.emplace_back(std::thread([this] { this->m_pOutputPMMR->Flush(); }));
+	threads.emplace_back(std::thread([this] { this->m_pRangeProofPMMR->Flush(); }));
+	for (auto& thread : threads)
+	{
+		if (thread.joinable())
+		{
+			thread.join();
+		}
+	}
 
 	m_blockHeaderBackup = m_blockHeader;
 	return true;

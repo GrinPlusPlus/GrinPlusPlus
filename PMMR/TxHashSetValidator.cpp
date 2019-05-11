@@ -11,7 +11,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
-#include <async++.h>
+#include <thread>
 
 TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer)
 	: m_blockChainServer(blockChainServer)
@@ -33,15 +33,20 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	}
 
 	// Validate MMR hashes in parallel
-	async::task<bool> kernelTask = async::spawn([this, &kernelMMR] { return this->ValidateMMRHashes(kernelMMR); });
-	async::task<bool> outputTask = async::spawn([this, &outputPMMR] { return this->ValidateMMRHashes(outputPMMR); });
-	async::task<bool> rangeProofTask = async::spawn([this, &rangeProofPMMR] { return this->ValidateMMRHashes(rangeProofPMMR); });
+	std::vector<std::thread> threads;
+	std::atomic_bool mmrHashesValidated = true;
+	threads.emplace_back(std::thread([this, &kernelMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(kernelMMR)) { mmrHashesValidated = false; }}));
+	threads.emplace_back(std::thread([this, &outputPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(outputPMMR)) { mmrHashesValidated = false; }}));
+	threads.emplace_back(std::thread([this, &rangeProofPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(rangeProofPMMR)) { mmrHashesValidated = false; }}));
 
-	const bool mmrHashesValidated = async::when_all(kernelTask, outputTask, rangeProofTask).then(
-		[](std::tuple<async::task<bool>, async::task<bool>, async::task<bool>> results) -> bool {
-		return std::get<0>(results).get() && std::get<1>(results).get() && std::get<2>(results).get();
-	}).get();
-	
+	for (auto& thread : threads)
+	{
+		if (thread.joinable())
+		{
+			thread.join();
+		}
+	}
+
 	if (!mmrHashesValidated)
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR hashes.");

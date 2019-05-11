@@ -5,7 +5,7 @@
 #include <Common/Util/StringUtil.h>
 #include <utility>
 #include <string>
-#include <filesystem>
+#include <filesystem.hpp>
 
 static ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 static ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
@@ -33,7 +33,7 @@ void BlockDB::OpenDB()
 
 	// open DB
 	const std::string dbPath = m_config.GetDatabaseDirectory() + "CHAIN/";
-	std::filesystem::create_directories(dbPath);
+	ghc::filesystem::create_directories(dbPath);
 
 	std::vector<std::string> columnFamilies;
 	DB::ListColumnFamilies(options, dbPath, &columnFamilies);

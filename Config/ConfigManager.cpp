@@ -6,12 +6,12 @@
 #include <json/json.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <filesystem>
+#include <filesystem.hpp>
 #include <fstream>
 
 Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 {
-	const std::string currentDir = std::filesystem::current_path().string();
+	const std::string currentDir = ghc::filesystem::current_path().string();
 	const std::string configPath = currentDir + (environment == EEnvironmentType::MAINNET ? "/mainnet.json" : "/floonet.json");
 
 	std::ifstream file(configPath, std::ifstream::binary);

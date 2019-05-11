@@ -58,7 +58,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/mio/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/stduuid/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru-cache/include
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/asio/asio/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
 )

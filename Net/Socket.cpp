@@ -5,6 +5,10 @@
 
 static unsigned long DEFAULT_TIMEOUT = 5 * 1000; // 5s
 
+#ifndef _WIN32
+#define SOCKET_ERROR -1
+#endif
+
 Socket::Socket(const SocketAddress& address)
 	: m_address(address), m_socketOpen(false), m_blocking(true), m_receiveBufferSize(0), m_receiveTimeout(DEFAULT_TIMEOUT), m_sendTimeout(DEFAULT_TIMEOUT)
 {
@@ -20,10 +24,11 @@ bool Socket::Connect(asio::io_context& context)
 		{
 			m_errorCode = ec;
 			if (!ec)
-			{
-				asio::socket_base::receive_buffer_size option(32768);
-				m_pSocket->set_option(option);
-
+            {
+                asio::socket_base::receive_buffer_size option(32768);
+                m_pSocket->set_option(option);
+                
+				#ifdef _WIN32
 				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
 				{
 					return false;
@@ -33,6 +38,7 @@ bool Socket::Connect(asio::io_context& context)
 				{
 					return false;
 				}
+				#endif
 
 				m_address = SocketAddress(m_address.GetIPAddress(), m_pSocket->remote_endpoint().port());
 				m_socketOpen = true;
@@ -61,7 +67,7 @@ bool Socket::Connect(asio::io_context& context)
 bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
 {
 	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
-	acceptor.async_accept(*m_pSocket, [this, &context, &acceptor, &terminate](const asio::error_code & ec)
+	acceptor.async_accept(*m_pSocket, [this, &context](const asio::error_code & ec)
 		{
 			m_errorCode = ec;
 			if (!ec)
@@ -181,6 +187,7 @@ bool Socket::SetBlocking(const bool blocking)
 {
 	if (m_blocking != blocking)
 	{
+		#ifdef _WIN32
 		// TODO: Just change m_blocking value, and read it when using send/recieve?
 		unsigned long blockingValue = (blocking ? 0 : 1);
 		const int result = ioctlsocket(m_pSocket->native_handle(), FIONBIO, &blockingValue);
@@ -196,6 +203,9 @@ bool Socket::SetBlocking(const bool blocking)
 			WSASetLastError(error);
 			throw SocketException();
 		}
+		#else
+		m_blocking = blocking;
+		#endif
 	}
 
 	return m_blocking == blocking;

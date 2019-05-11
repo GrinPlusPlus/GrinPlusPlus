@@ -29,29 +29,48 @@ INodeClient* NodeDaemon::Initialize()
 	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager, *m_pTransactionPool);
 	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase, *m_pTransactionPool);
 
-	m_pNodeRestServer = new NodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
-	m_pNodeRestServer->Initialize();
+	//m_pNodeRestServer = new NodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
+	//m_pNodeRestServer->Initialize();
 
 	return new DefaultNodeClient(*m_pBlockChainServer, m_pDatabase->GetBlockDB(), *m_pTxHashSetManager, *m_pTransactionPool);
 }
 
 void NodeDaemon::Shutdown()
 {
-	m_pNodeRestServer->Shutdown();
+	//m_pNodeRestServer->Shutdown();
+	try
+	{
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		P2PAPI::ShutdownP2PServer(m_pP2PServer);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		delete m_pTxHashSetManager;
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//DatabaseAPI::CloseDatabase(m_pDatabase);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		LoggerAPI::Flush();
+	}
+	catch(const std::system_error& e)
+	{
+		std::cerr << e.what() << '\n';
+		std::cerr << "FAILURE" << '\n';
+	}
 
-	P2PAPI::ShutdownP2PServer(m_pP2PServer);
-	TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
-	BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
-	delete m_pTxHashSetManager;
-	DatabaseAPI::CloseDatabase(m_pDatabase);
-	LoggerAPI::Flush();
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)
 {
 	const SyncStatus& syncStatus = m_pP2PServer->GetSyncStatus();
 
-	system("CLS");
+#ifdef _WIN32
+		std::system("cls");
+#else
+		std::system("clear");
+#endif
+
 	std::cout << "Time Running: " << secondsRunning << "s";
 
 	const ESyncStatus status = syncStatus.GetStatus();

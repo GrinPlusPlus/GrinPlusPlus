@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Net/Socket.h>
-#include <P2P/peer.h>
+#include <P2P/Peer.h>
 #include <P2P/Direction.h>
 
 class ConnectedPeer

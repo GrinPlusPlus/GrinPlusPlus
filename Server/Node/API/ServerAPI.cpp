@@ -73,8 +73,8 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	networkNode["height"] = syncStatus.GetNetworkHeight();
 	networkNode["total_difficulty"] = syncStatus.GetNetworkDifficulty();
 	const std::pair<size_t, size_t> numConnections = pServer->m_pP2PServer->GetNumberOfConnectedPeers();
-	networkNode["num_inbound"] = numConnections.first;
-	networkNode["num_outbound"] = numConnections.second;
+	networkNode["num_inbound"] = Json::UInt64(numConnections.first);
+	networkNode["num_outbound"] = Json::UInt64(numConnections.second);
 	statusNode["network"] = networkNode;
 
 	Json::Value tipNode;

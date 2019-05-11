@@ -30,7 +30,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 	}
 	else
 	{
-		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir));
+		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir.c_str()));
 
 		Json::Value emptyRoot;
 		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);

@@ -5,7 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/ImportExport.h>
-#include <Database/BlockDB.h>
+#include <Database/BlockDb.h>
 #include <Database/PeerDB.h>
 #include <Core/Models/BlockHeader.h>
 #include <Crypto/BigInteger.h>
@@ -17,9 +17,9 @@
 class Config;
 
 #ifdef MW_DATABASE
-#define DATABASE_API __declspec(dllexport)
+#define DATABASE_API EXPORT
 #else
-#define DATABASE_API __declspec(dllimport)
+#define DATABASE_API IMPORT
 #endif
 
 class IDatabase

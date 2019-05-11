@@ -6,5 +6,5 @@
 class CompactBlockFactory
 {
 public:
-	static CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block);
+	static CompactBlock CreateCompactBlock(const FullBlock& block);
 };

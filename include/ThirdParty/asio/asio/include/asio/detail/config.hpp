@@ -11,6 +11,10 @@
 #ifndef ASIO_DETAIL_CONFIG_HPP
 #define ASIO_DETAIL_CONFIG_HPP
 
+#ifndef IP_TTL
+#define IP_TTL 7
+#endif
+
 // boostify: non-boost code starts here
 #if !defined(ASIO_STANDALONE)
 # if !defined(ASIO_ENABLE_BOOST)

@@ -33,25 +33,25 @@ void Seeder::Start()
 		m_seedThread.join();
 	}
 
-	if (m_listenerThread.joinable())
+	/*if (m_listenerThread.joinable())
 	{
 		m_listenerThread.join();
-	}
+	}*/
 
 	m_terminate = false;
 
 	m_seedThread = std::thread(Thread_Seed, std::ref(*this));
-	m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
+	//m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
 }
 
 void Seeder::Stop()
 {
 	m_terminate = true;
 
-	if (m_listenerThread.joinable())
+	/*if (m_listenerThread.joinable())
 	{
 		m_listenerThread.join();
-	}
+	}*/
 
 	if (m_seedThread.joinable())
 	{

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <Common/Util/FileUtil.h>
+#include <Infrastructure/Logger.h>
 #include <vector>
 #include <map>
 
@@ -24,23 +25,27 @@ bool ChainStore::Load()
 
 	m_loaded = true;
 
+	LoggerAPI::LogTrace("ChainStore::Load - Loading Chain");
 	bool success = true;
 	if (!m_syncChain.Load(*this))
 	{
+		LoggerAPI::LogInfo("ChainStore::Load - Failed to load sync chain");
 		success = false;
 	}
 	
 	if (!m_candidateChain.Load(*this))
 	{
+		LoggerAPI::LogInfo("ChainStore::Load - Failed to load candidate chain");
 		success = false;
 	}
 
 	if (!m_confirmedChain.Load(*this))
 	{
+		LoggerAPI::LogInfo("ChainStore::Load - Failed to load confirmed chain");
 		success = false;
 	}
 
-	return false;
+	return success;
 }
 
 bool ChainStore::Flush()

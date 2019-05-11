@@ -6,8 +6,12 @@
 #include <filesystem>
 #include <stdlib.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <Windows.h>
+#define SEPARATOR "\\"
+#else
+#include <unistd.h>
+#define SEPARATOR "/"
 #endif
 
 class FileUtil
@@ -126,8 +130,7 @@ public:
 
 		return success;
 #else
-		// TODO: Implement
-		return true;
+		return truncate(filePath.c_str(), size) == 0;
 #endif
 	}
 

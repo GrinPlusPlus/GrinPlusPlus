@@ -9,6 +9,7 @@
 #include <Config/ServerConfig.h>
 #include <string>
 #include <filesystem>
+#include <Common/Util/FileUtil.h>
 
 class Config
 {
@@ -32,20 +33,20 @@ public:
 		m_serverConfig(serverConfig),
 		m_logLevel(logLevel)
 	{
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_txHashSetPath);
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_txHashSetPath + "kernel/");
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_txHashSetPath + "output/");
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_txHashSetPath + "rangeproof/");
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_chainPath);
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_databasePath);
-		std::filesystem::create_directories(m_dataPath + "NODE\\" + m_logDirectory);
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath);
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "kernel/");
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "output/");
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "rangeproof/");
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath);
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath);
+		std::filesystem::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory);
 	}
 
 	inline const std::string& GetDataDirectory() const { return m_dataPath; }
-	inline const std::string GetLogDirectory() const { return m_dataPath + "NODE\\" + m_logDirectory; }
-	inline const std::string GetChainDirectory() const { return m_dataPath + "NODE\\" + m_chainPath; }
-	inline const std::string GetDatabaseDirectory() const { return m_dataPath + "NODE\\" + m_databasePath; }
-	inline const std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE\\" + m_txHashSetPath; }
+	inline const std::string GetLogDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory; }
+	inline const std::string GetChainDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath; }
+	inline const std::string GetDatabaseDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath; }
+	inline const std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath; }
 
 	inline const Environment& GetEnvironment() const { return m_environment; }
 	inline const DandelionConfig& GetDandelionConfig() const { return m_dandelionConfig; }

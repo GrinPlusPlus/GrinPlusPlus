@@ -35,7 +35,6 @@ void BlockDB::OpenDB()
 	const std::string dbPath = m_config.GetDatabaseDirectory() + "CHAIN/";
 	std::filesystem::create_directories(dbPath);
 
-
 	std::vector<std::string> columnFamilies;
 	DB::ListColumnFamilies(options, dbPath, &columnFamilies);
 
@@ -132,6 +131,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 
 void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 {
+	LoggerAPI::LogTrace("BlockDB::AddBlockHeader - Adding header");
 	const std::vector<unsigned char>& hash = blockHeader.GetHash().GetData();
 
 	Serializer serializer;
@@ -163,6 +163,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 
 void BlockDB::AddBlock(const FullBlock& block)
 {
+	LoggerAPI::LogTrace("BlockDB::AddBlock - Adding block");
 	const std::vector<unsigned char>& hash = block.GetHash().GetData();
 
 	Serializer serializer;

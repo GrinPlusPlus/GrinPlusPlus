@@ -46,7 +46,11 @@ public:
 		uint32_t byte2;
 		uint32_t byte3;
 		uint32_t byte4;
+		#ifdef _WIN32
 		sscanf_s(addressStr.c_str(), "%u.%u.%u.%u", &byte1, &byte2, &byte3, &byte4);
+		#else
+		sscanf(addressStr.c_str(), "%u.%u.%u.%u", &byte1, &byte2, &byte3, &byte4);
+		#endif
 
 		return FromIP((uint8_t)byte1, (uint8_t)byte2, (uint8_t)byte3, (uint8_t)byte4);
 	}

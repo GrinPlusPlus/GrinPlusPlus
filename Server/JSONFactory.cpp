@@ -177,9 +177,9 @@ Json::Value JSONFactory::BuildPeerJSON(const Peer& peer)
 
 	peerNode["user_agent"] = peer.GetUserAgent();
 	peerNode["flags"] = peer.IsBanned() ? "Banned" : "Healthy";
-	peerNode["last_banned"] = peer.GetLastBanTime();
+	peerNode["last_banned"] = Json::UInt64(peer.GetLastBanTime());
 	peerNode["ban_reason"] = BanReason::Format(peer.GetBanReason());
-	peerNode["last_connected"] = peer.GetLastContactTime();
+	peerNode["last_connected"] = Json::UInt64(peer.GetLastContactTime());
 
 	return peerNode;
 }

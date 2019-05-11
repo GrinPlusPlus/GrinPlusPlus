@@ -15,6 +15,10 @@
 # pragma once
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
+#ifndef SO_NOSIGPIPE
+#define SO_NOSIGPIPE 0
+#endif
+
 #include "asio/detail/config.hpp"
 
 #include <cctype>

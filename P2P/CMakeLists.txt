@@ -22,4 +22,4 @@ add_library(${TARGET_NAME} SHARED ${P2P_SRC})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_P2P)
 
 add_dependencies(${TARGET_NAME} Infrastructure Core Crypto Database Net)
-target_link_libraries(${TARGET_NAME} Infrastructure Core Crypto Database Net Async++::Async++ ws2_32)
+target_link_libraries(${TARGET_NAME} Infrastructure Core Crypto Database Net Async++::Async++)

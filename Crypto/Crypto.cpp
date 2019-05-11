@@ -20,7 +20,6 @@
 
 #ifdef _WIN32
 #pragma comment(lib, "crypt32")
-#pragma comment(lib, "ws2_32.lib")
 #endif
 
 CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)

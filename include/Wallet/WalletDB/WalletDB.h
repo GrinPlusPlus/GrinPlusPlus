@@ -7,15 +7,15 @@
 #include <Config/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Wallet/EncryptedSeed.h>
-#include <Wallet/KeychainPath.h>
+#include <Wallet/KeyChainPath.h>
 #include <Wallet/SlateContext.h>
 #include <Wallet/OutputData.h>
 #include <Wallet/WalletTx.h>
 
 #ifdef MW_WalletDB
-#define WALLET_DB_API __declspec(dllexport)
+#define WALLET_DB_API EXPORT
 #else
-#define WALLET_DB_API __declspec(dllimport)
+#define WALLET_DB_API IMPORT
 #endif
 
 class IWalletDB

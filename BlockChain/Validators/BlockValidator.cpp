@@ -32,7 +32,7 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block)
 			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
 			{
 				LoggerAPI::LogInfo("BlockValidator::ValidateBlock - Coinbase not mature: " + HexUtil::ConvertHash(block.GetHash()));
-				return false;
+				return std::unique_ptr<BlockSums>(nullptr);
 			}
 		}
 	}

@@ -19,6 +19,7 @@
 #include <Crypto/Hash.h>
 #include <Crypto/PublicKey.h>
 #include <Crypto/SecretKey.h>
+#include <Crypto/ScryptParameters.h>
 
 #ifdef MW_CRYPTO
 #define CRYPTO_API EXPORT
@@ -115,7 +116,7 @@ public:
 	// Uses Scrypt to hash the given password and the given salt. It then blake2b hashes the output.
 	// The returned hash will be a 32 byte SecretKey.
 	//
-	static SecretKey PBKDF(const SecureString& password, const std::vector<unsigned char>& salt);
+	static SecretKey PBKDF(const SecureString& password, const std::vector<unsigned char>& salt, const ScryptParameters& parameters);
 
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.

@@ -170,7 +170,7 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 
 	try
 	{
-		std::optional<SessionToken> tokenOpt = walletManager.Restore(username, password, walletWords);
+		std::optional<SessionToken> tokenOpt = walletManager.RestoreFromSeed(username, password, walletWords);
 		if (tokenOpt.has_value())
 		{
 			Json::Value responseJSON;

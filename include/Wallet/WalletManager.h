@@ -30,7 +30,11 @@ public:
 	//
 	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) = 0;
 
-	virtual std::optional<SessionToken> Restore(const std::string& username, const SecureString& password, const SecureString& walletWords) = 0;
+	//
+	// Creates a wallet from existing wallet words (BIP39 mnemonics).
+	// Restoring outputs must be done separately.
+	//
+	virtual std::optional<SessionToken> RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords) = 0;
 
 	// TODO: Determine return value.
 	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) = 0;

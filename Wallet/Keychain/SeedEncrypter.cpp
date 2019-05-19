@@ -10,7 +10,7 @@ std::optional<SecureVector> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed
 {
 	try
 	{
-		SecretKey passwordHash = Crypto::PBKDF(password, encryptedSeed.GetSalt().GetData());
+		SecretKey passwordHash = Crypto::PBKDF(password, encryptedSeed.GetSalt().GetData(), encryptedSeed.GetScryptParameters());
 		const SecureVector decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
 
 		SecureVector walletSeed(decrypted.begin(), decrypted.begin() + decrypted.size() - 32);
@@ -36,7 +36,8 @@ EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, c
 	CBigInteger<16> iv = CBigInteger<16>(&randomNumber.GetData()[0]);
 	CBigInteger<8> salt(std::vector<unsigned char>(randomNumber.GetData().cbegin() + 16, randomNumber.GetData().cbegin() + 24));
 
-	SecretKey passwordHash = Crypto::PBKDF(password, salt.GetData());
+	ScryptParameters parameters(32768, 8, 1);
+	SecretKey passwordHash = Crypto::PBKDF(password, salt.GetData(), parameters);
 
 	const CBigInteger<32> hash256 = Crypto::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetBytes().GetData());
 	const std::vector<unsigned char>& hash256Bytes = hash256.GetData();
@@ -47,5 +48,5 @@ EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, c
 
 	std::vector<unsigned char> encrypted = Crypto::AES256_Encrypt(seedPlusHash, passwordHash, iv);
 
-	return EncryptedSeed(std::move(iv), std::move(salt), std::move(encrypted));
+	return EncryptedSeed(std::move(iv), std::move(salt), std::move(encrypted), std::move(parameters));
 }

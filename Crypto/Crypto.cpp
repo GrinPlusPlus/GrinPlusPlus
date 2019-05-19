@@ -212,14 +212,10 @@ SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext
 	return plaintext;
 }
 
-SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned char>& salt)
+SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned char>& salt, const ScryptParameters& parameters)
 {
-	const uint32_t N = 131072;
-	const uint32_t r = 16;
-	const uint32_t p = 2;
-
 	SecureVector buffer(64);
-	if (crypto_scrypt((const unsigned char*)password.data(), password.size(), salt.data(), salt.size(), N, r, p, buffer.data(), buffer.size()) == 0)
+	if (crypto_scrypt((const unsigned char*)password.data(), password.size(), salt.data(), salt.size(), parameters.N, parameters.r, parameters.p, buffer.data(), buffer.size()) == 0)
 	{
 		std::vector<unsigned char> tmp(32, 0);
 

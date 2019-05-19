@@ -45,7 +45,7 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 	return std::nullopt;
 }
 
-std::optional<SessionToken> WalletManager::Restore(const std::string& username, const SecureString& password, const SecureString& walletWords)
+std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords)
 {
 	LoggerAPI::LogInfo("Attempting to restore account with username: " + username);
 	std::optional<SecureVector> entropyOpt = Mnemonic::ToEntropy(walletWords);

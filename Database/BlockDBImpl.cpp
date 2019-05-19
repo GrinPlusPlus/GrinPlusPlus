@@ -227,7 +227,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location)
 {
 	const std::string outputHex = HexUtil::ConvertToHex(outputCommitment.GetCommitmentBytes().GetData());
-	LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) at height (%llu) for output (%s).", location.GetMMRIndex(), location.GetBlockHeight(), outputHex.c_str()));
+	//LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) at height (%llu) for output (%s).", location.GetMMRIndex(), location.GetBlockHeight(), outputHex.c_str()));
 
 	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
 

@@ -210,8 +210,8 @@ int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walle
 
 int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	const Json::Value amountJSON = json.get("amount", Json::nullValue);
-	if (amountJSON == Json::nullValue || !amountJSON.isUInt64())
+	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
+	if (!amountOpt.has_value())
 	{
 		return RestUtil::BuildBadRequestResponse(pConnection, "amount missing");
 	}
@@ -232,7 +232,7 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 
 	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
 
-	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountJSON.asUInt64(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
+	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
 	if (pSlate != nullptr)
 	{
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());

@@ -87,17 +87,17 @@ public:
 		SlateVersionInfo versionInfo = (versionInfoJSON != Json::nullValue) ? SlateVersionInfo::FromJSON(versionInfoJSON) : SlateVersionInfo(version);
 		const bool hex = versionInfo.GetVersion() >= 2;
 
-		const uint64_t numParticipants = JsonUtil::GetRequiredField(slateNode, "num_participants").asUInt64();
+		const uint64_t numParticipants = JsonUtil::GetRequiredUInt64(slateNode, "num_participants");
 		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
 		if (!slateIdOpt.has_value())
 		{
 			throw DeserializationException();
 		}
 
-		const uint64_t amount = JsonUtil::GetRequiredField(slateNode, "amount").asUInt64();
-		const uint64_t fee = JsonUtil::GetRequiredField(slateNode, "fee").asUInt64();
-		const uint64_t height = JsonUtil::GetRequiredField(slateNode, "height").asUInt64();
-		const uint64_t lockHeight = JsonUtil::GetRequiredField(slateNode, "lock_height").asUInt64();
+		const uint64_t amount = JsonUtil::GetRequiredUInt64(slateNode, "amount");
+		const uint64_t fee = JsonUtil::GetRequiredUInt64(slateNode, "fee");
+		const uint64_t height = JsonUtil::GetRequiredUInt64(slateNode, "height");
+		const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(slateNode, "lock_height");
 
 		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"), hex);
 

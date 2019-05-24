@@ -51,7 +51,7 @@ public:
 
 	static ParticipantData FromJSON(const Json::Value& participantJSON, const bool hex)
 	{
-		const uint64_t participantId = JsonUtil::GetRequiredField(participantJSON, "id").asUInt64();
+		const uint64_t participantId = JsonUtil::GetRequiredUInt64(participantJSON, "id");
 		PublicKey publicBlindExcess = JsonUtil::GetPublicKey(participantJSON, "public_blind_excess", hex);
 		PublicKey publicNonce = JsonUtil::GetPublicKey(participantJSON, "public_nonce", hex);
 		std::optional<Signature> partialSigOpt = JsonUtil::GetSignatureOpt(participantJSON, "part_sig", hex);

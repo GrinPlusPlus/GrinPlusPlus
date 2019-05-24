@@ -66,8 +66,8 @@ Json::Value TransactionKernel::ToJSON(const bool hex) const
 TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKernelJSON, const bool hex)
 {
 	const EKernelFeatures features = KernelFeatures::FromString(JsonUtil::GetRequiredField(transactionKernelJSON, "features").asString());
-	const uint64_t fee = JsonUtil::GetRequiredField(transactionKernelJSON, "fee").asUInt64();
-	const uint64_t lockHeight = JsonUtil::GetRequiredField(transactionKernelJSON, "lock_height").asUInt64();
+	const uint64_t fee = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "fee");
+	const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "lock_height");
 	Commitment excessCommitment = JsonUtil::GetCommitment(transactionKernelJSON, "excess", hex);
 	Signature excessSignature = JsonUtil::GetSignature(transactionKernelJSON, "excess_sig", hex);
 

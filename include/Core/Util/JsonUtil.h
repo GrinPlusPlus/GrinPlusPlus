@@ -212,4 +212,42 @@ public:
 	{
 		return ConvertToStringOpt(GetOptionalField(parentJSON, key));
 	}
+
+	//
+	// UInt64
+	//
+	static uint64_t ConvertToUInt64(const Json::Value& uint64JSON)
+	{
+		if (uint64JSON.isUInt64())
+		{
+			return uint64JSON.asUInt64();
+		}
+		else if (uint64JSON.isString())
+		{
+			return std::stoull(uint64JSON.asString());
+		}
+		else
+		{
+			throw DeserializationException();
+		}
+	}
+
+	static uint64_t GetRequiredUInt64(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return ConvertToUInt64(value);
+	}
+
+	static std::optional<uint64_t> GetUInt64Opt(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetOptionalField(parentJSON, key);
+		if (value.isNull())
+		{
+			return std::nullopt;
+		}
+		else
+		{
+			return ConvertToUInt64(value);
+		}
+	}
 };

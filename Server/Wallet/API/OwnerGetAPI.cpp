@@ -45,6 +45,13 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		// TODO: Implement
 	}
 
+	// GET /v1/wallet/owner/estimate_fee
+	if (action == "estimate_fee")
+	{
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return EstimateFee(pConnection, walletManager, token);
+	}
+
 	// GET /v1/wallet/owner/retrieve_txs?refresh&id=x
 	if (action == "retrieve_txs")
 	{
@@ -76,6 +83,47 @@ int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager&
 	WalletSummary walletSummary = walletManager.GetWalletSummary(token);
 
 	return RestUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
+}
+
+// GET /v1/wallet/owner/estimate_fee
+int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+{
+	std::optional<Json::Value> requestBodyOpt = RestUtil::GetRequestBody(pConnection);
+	if (!requestBodyOpt.has_value())
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "Request body not found.");
+	}
+
+	const Json::Value& json = requestBodyOpt.value();
+
+	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
+	if (!amountOpt.has_value())
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "amount missing");
+	}
+
+	const Json::Value feeBaseJSON = json.get("fee_base", Json::nullValue);
+	if (feeBaseJSON == Json::nullValue || !feeBaseJSON.isUInt64())
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
+	}
+
+	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
+
+	const std::optional<std::string> selectionStrategyOpt = JsonUtil::GetStringOpt(json, "selection_strategy");
+	if (!selectionStrategyOpt.has_value())
+	{
+		return RestUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
+	}
+
+	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
+
+	const uint64_t estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
+
+	Json::Value rootJSON;
+	rootJSON["estimated_fee"] = estimatedFee;
+
+	return RestUtil::BuildSuccessResponseJSON(pConnection, rootJSON);
 }
 
 // GET /v1/wallet/owner/retrieve_txs?refresh&id=x

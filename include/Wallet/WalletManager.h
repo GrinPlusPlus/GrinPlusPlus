@@ -57,6 +57,8 @@ public:
 
 	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) = 0;
 
+	virtual uint64_t EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) = 0;
+
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.
 	// Exceptions thrown:

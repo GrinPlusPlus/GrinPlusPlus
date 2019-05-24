@@ -5,7 +5,9 @@
 #include "SlateBuilder/SendSlateBuilder.h"
 #include "SlateBuilder/FinalizeSlateBuilder.h"
 #include "WalletRestorer.h"
+#include "SlateBuilder/CoinSelection.h"
 
+#include <Wallet/WalletUtil.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
@@ -122,6 +124,21 @@ std::vector<WalletTx> WalletManager::GetTransactions(const SessionToken& token)
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
 	return wallet.GetWallet().GetTransactions(masterSeed);
+}
+
+uint64_t WalletManager::EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)
+{
+	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
+
+	// Select inputs using desired selection strategy.
+	const uint8_t totalNumOutputs = numChangeOutputs + 1;
+	const uint64_t numKernels = 1;
+	const std::vector<OutputData> availableCoins = wallet.GetWallet().GetAllAvailableCoins(masterSeed);
+	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amountToSend, feeBase, strategy, totalNumOutputs, numKernels);
+
+	// Calculate the fee
+	return WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
 }
 
 std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)

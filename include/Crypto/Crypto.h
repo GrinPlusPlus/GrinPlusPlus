@@ -95,6 +95,11 @@ public:
 	//
 	//
 	//
+	static bool VerifyKernelSignatures(const std::vector<const Signature*>& signatures, const std::vector<const Commitment*>& publicKeys, const std::vector<const Hash*>& messages);
+
+	//
+	//
+	//
 	static bool VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message);
 
 	//

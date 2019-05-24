@@ -285,6 +285,11 @@ bool Crypto::VerifyAggregateSignature(const Signature& aggregateSignature, const
 	return AggSig::GetInstance().VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 }
 
+bool Crypto::VerifyKernelSignatures(const std::vector<const Signature*>& signatures, const std::vector<const Commitment*>& publicKeys, const std::vector<const Hash*>& messages)
+{
+	return AggSig::GetInstance().VerifyAggregateSignatures(signatures, publicKeys, messages);
+}
+
 bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
 {
 	return AggSig::GetInstance().VerifyAggregateSignature(signature, publicKey, message);

@@ -1,7 +1,7 @@
 set(TARGET_NAME Crypto)
 set(TEST_TARGET_NAME Crypto_Tests)
 
-add_definitions(-DHAVE_CONFIG_H -DHAVE_SCRYPT_CONFIG_H)
+add_definitions(-DHAVE_CONFIG_H -DHAVE_SCRYPT_CONFIG_H -DSECP256K1_BUILD)
 include_directories(
 	${PROJECT_SOURCE_DIR}/Crypto/secp256k1-zkp
 	${PROJECT_SOURCE_DIR}/Crypto/secp256k1-zkp/src

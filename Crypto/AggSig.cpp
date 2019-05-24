@@ -3,10 +3,14 @@
 #include "secp256k1-zkp/include/secp256k1_generator.h"
 #include "secp256k1-zkp/include/secp256k1_aggsig.h"
 #include "secp256k1-zkp/include/secp256k1_commitment.h"
+#include "secp256k1-zkp/include/secp256k1_schnorrsig.h"
 #include "Pedersen.h"
 
 #include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
+
+const uint64_t MAX_WIDTH = 1 << 20;
+const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH; // TODO: Determine actual size
 
 AggSig& AggSig::GetInstance()
 {
@@ -209,6 +213,82 @@ std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<Signatu
 	}
 
 	return std::unique_ptr<Signature>(nullptr);
+}
+
+bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& signatures, const std::vector<const Commitment*>& commitments, const std::vector<const Hash*>& messages) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	std::vector<secp256k1_pubkey> parsedPubKeys;
+	for (const Commitment* commitment : commitments)
+	{
+		secp256k1_pedersen_commitment parsedCommitment;
+		const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment->GetCommitmentBytes().data());
+		if (commitmentResult == 1)
+		{
+			secp256k1_pubkey pubKey;
+			const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubKey, &parsedCommitment);
+			if (pubkeyResult == 1)
+			{
+				parsedPubKeys.emplace_back(std::move(pubKey));
+			}
+			else
+			{
+				LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to convert commitment to pubkey: " + commitment->GetCommitmentBytes().ToHex());
+				return false;
+			}
+		}
+		else
+		{
+			LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to parse commitment " + commitment->GetCommitmentBytes().ToHex());
+			return false;
+		}
+	}
+
+	std::vector<secp256k1_pubkey*> pubKeyPtrs(parsedPubKeys.size());
+	for (size_t i = 0; i < parsedPubKeys.size(); i++)
+	{
+		pubKeyPtrs[i] = &parsedPubKeys[i];
+	}
+
+	std::vector<secp256k1_schnorrsig> parsedSignatures;
+	for (const Signature* signature : signatures)
+	{
+		secp256k1_schnorrsig parsedSig;
+		if (secp256k1_schnorrsig_parse(m_pContext, &parsedSig, signature->GetSignatureBytes().data()) == 0)
+		{
+			return false;
+		}
+
+		parsedSignatures.emplace_back(std::move(parsedSig));
+	}
+
+	std::vector<const secp256k1_schnorrsig*> signaturePtrs;
+	for (secp256k1_schnorrsig& parsedSig : parsedSignatures)
+	{
+		signaturePtrs.push_back(&parsedSig);
+	}
+
+	std::vector<const unsigned char*> messageData;
+	for (const Hash* message : messages)
+	{
+		messageData.emplace_back(message->data());
+	}
+
+	// TODO: Aggregate messages.
+	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE); // TODO: Delete
+	const int verifyResult = secp256k1_schnorrsig_verify_batch(m_pContext, pScratchSpace, signaturePtrs.data(), messageData.data(), pubKeyPtrs.data(), signatures.size());
+	//const int verifyResult = secp256k1_aggsig_verify_multi(m_pContext, signaturePtrs.data(), messageData.data(), pubKeyPtrs.data(), signatures.size());
+	//const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signaturePtrs.data()[0], messageData.data()[0], nullptr, &parsedPubKeys.data()[0], &parsedPubKeys.data()[0], nullptr, false);
+	if (verifyResult == 1)
+	{
+		return true;
+	}
+	else
+	{
+		LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Signature failed to verify.");
+		return false;
+	}
 }
 
 bool AggSig::VerifyAggregateSignature(const Signature& signature, const Commitment& commitment, const Hash& message) const

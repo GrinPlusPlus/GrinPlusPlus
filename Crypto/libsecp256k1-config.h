@@ -134,6 +134,7 @@ used */
 #define ENABLE_MODULE_GENERATOR 1
 #define ENABLE_MODULE_BULLETPROOF 1
 #define ENABLE_MODULE_AGGSIG 1
+#define ENABLE_MODULE_SCHNORRSIG 1
 
 /* Version number of package */
 #define VERSION "0.1"

@@ -149,6 +149,19 @@ std::unique_ptr<SecretKey> Crypto::BlindSwitch(const SecretKey& secretKey, const
 	return Pedersen::GetInstance().BlindSwitch(secretKey, amount);
 }
 
+SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& secretKey2)
+{
+	secp256k1_context* pContext = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+
+	CBigInteger<32> result(secretKey1.GetBytes().GetData());
+	if (secp256k1_ec_privkey_tweak_add(pContext, (unsigned char*)result.data(), secretKey2.data()) == 1)
+	{
+		return SecretKey(std::move(result));
+	}
+
+	throw CryptoException("secp256k1_ec_privkey_tweak_add failed");
+}
+
 std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage)
 {
 	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);

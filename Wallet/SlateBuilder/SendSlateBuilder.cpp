@@ -30,7 +30,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const uint64_t blockHeight = m_nodeClient.GetChainHeight() + 1;
 
 	// Select inputs using desired selection strategy.
-	const uint64_t totalNumOutputs = numOutputs + 1;
+	const uint8_t totalNumOutputs = numOutputs + 1;
 	const uint64_t numKernels = 1;
 	const std::vector<OutputData> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
 	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy, totalNumOutputs, numKernels);

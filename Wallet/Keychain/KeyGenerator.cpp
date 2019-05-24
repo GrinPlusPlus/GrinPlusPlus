@@ -70,22 +70,13 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 
 	std::vector<unsigned char> vchLeft;
 	vchLeft.insert(vchLeft.begin(), hmacSha512Vector.cbegin(), hmacSha512Vector.cbegin() + 32);
-	const CBigInteger<32> left(std::move(vchLeft));
+	SecretKey left(std::move(vchLeft));
 
-	if (left >= KeyDefs::SECP256K1_N)
-	{
-		throw std::out_of_range("The child key generated was invalid.");  // Less than 2^127 chance.
-	}
-
-	CBigInteger<32> childPrivateKey = left.addMod(parentExtendedKey.GetPrivateKey().GetBytes(), KeyDefs::SECP256K1_N);
-	if (childPrivateKey == KeyDefs::BIG_INT_ZERO)
-	{
-		throw std::out_of_range("The child key generated was invalid."); // Less than 2^127 chance.
-	}
+	SecretKey childPrivateKey = Crypto::AddPrivateKeys(left, parentExtendedKey.GetPrivateKey());
 
 	std::vector<unsigned char> vchRight;
 	vchRight.insert(vchRight.begin(), hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64);
-	CBigInteger<32> childChainCode(&vchRight[0]);
+	CBigInteger<32> childChainCode(vchRight);
 
 	return std::make_unique<PrivateExtKey>(PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), parentExtendedKey.GetDepth() + 1, parentFingerprint, childKeyIndex, std::move(childChainCode), std::move(childPrivateKey)));
 }

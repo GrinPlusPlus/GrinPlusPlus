@@ -275,7 +275,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 					output.SetStatus(EOutputStatus::SPENDABLE);
 					outputsToUpdate.push_back(output);
 				}
-				else
+				else if (walletTx.GetType() != EWalletTxType::SENT_CANCELED)
 				{
 					LoggerAPI::LogError("Wallet::CancelWalletTx - Can't cancel output with status " + OutputStatus::ToString(status));
 					return false;

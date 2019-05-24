@@ -85,7 +85,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 			syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);
 		}
-		else
+		else if (syncer.m_syncStatus.GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
 		{
 			syncer.m_syncStatus.UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
 		}

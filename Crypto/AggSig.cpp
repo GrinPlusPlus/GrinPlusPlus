@@ -93,7 +93,7 @@ bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey&
 
 		if (pubkeyResult == 1)
 		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, secpSig.data, message.data(), nullptr, &pubkey, nullptr, nullptr, false);
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data()/*secpSig.data*/, message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
 			if (verifyResult == 1)
 			{
 				return true;

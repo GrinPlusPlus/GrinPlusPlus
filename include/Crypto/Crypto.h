@@ -149,6 +149,8 @@ public:
 	//
 	static std::unique_ptr<SecretKey> BlindSwitch(const SecretKey& secretKey, const uint64_t amount);
 
+	static SecretKey AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& secretKey2);
+
 	static bool VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey sumPubKeys, const Hash& message);
 	static std::unique_ptr<SecretKey> GenerateSecureNonce();

@@ -6,7 +6,6 @@
 #include <Config/ConfigManager.h>
 #include <uuid.h>
 
-
 TEST_CASE("WalletServer::InitiailizeNewWallet")
 {
 	Config config = ConfigManager::LoadConfig(EEnvironmentType::MAINNET);

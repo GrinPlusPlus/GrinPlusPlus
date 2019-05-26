@@ -107,12 +107,12 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	asio::error_code errorCode;
 	acceptor.listen(asio::socket_base::max_listen_connections, errorCode);
 
-	Socket socket(SocketAddress(IPAddress(), portNumber));
 	if (!errorCode)
 	{
 		const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
 		while (!seeder.m_terminate)
 		{
+			Socket socket(SocketAddress(IPAddress(), portNumber));
 			// TODO: Always accept, but then send peers and immediately drop
 			if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
 			{
@@ -128,6 +128,8 @@ void Seeder::Thread_Listener(Seeder& seeder)
 				ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
 			}
 		}
+
+		acceptor.cancel();
 	}
 
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - END");

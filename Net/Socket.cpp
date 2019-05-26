@@ -21,6 +21,9 @@ bool Socket::Connect(asio::io_context& context)
 			m_errorCode = ec;
 			if (!ec)
 			{
+				asio::socket_base::receive_buffer_size option(32768);
+				m_pSocket->set_option(option);
+
 				if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)& DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR)
 				{
 					return false;
@@ -58,7 +61,7 @@ bool Socket::Connect(asio::io_context& context)
 bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
 {
 	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
-	acceptor.async_accept(*m_pSocket, [this, &context](const asio::error_code & ec)
+	acceptor.async_accept(*m_pSocket, [this, &context, &acceptor, &terminate](const asio::error_code & ec)
 		{
 			m_errorCode = ec;
 			if (!ec)
@@ -87,16 +90,14 @@ bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor
 		}
 	);
 
-	context.run();
-
 	while (!m_errorCode && !m_socketOpen)
 	{
 		if (terminate)
 		{
-			acceptor.cancel();
+			break;
 		}
 
-		ThreadUtil::SleepFor(std::chrono::milliseconds(10), false);
+		context.run_one_for(std::chrono::milliseconds(100));
 	}
 
 	context.reset();

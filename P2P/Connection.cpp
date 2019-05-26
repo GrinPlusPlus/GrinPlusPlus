@@ -120,6 +120,8 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 	}
 	catch (std::exception & e)
 	{
+		pConnection->m_terminate = true;
+		pConnection->m_connectionThread.detach();
 		delete pConnection;
 		return;
 	}

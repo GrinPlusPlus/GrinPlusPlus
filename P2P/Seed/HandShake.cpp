@@ -24,7 +24,11 @@ bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, c
 {
 	try
 	{
-		LoggerAPI::LogTrace("HandShake::PerformHandshake - Performing handshake with " + socket.GetSocketAddress().Format());
+		LoggerAPI::LogTrace("HandShake::PerformHandshake - Performing handshake with " 
+			+ socket.GetSocketAddress().Format() 
+			+ std::string(" - direction: ")
+			+ (direction == EDirection::INBOUND ? "inbound" : "outbound")
+		);
 
 		if (direction == EDirection::OUTBOUND)
 		{
@@ -76,12 +80,20 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
 
-				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Ban message received from " + socket.GetSocketAddress().Format() + " with reason: " + std::to_string(banReasonMessage.GetBanReason()));
+				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Ban message received from " 
+					+ socket.GetSocketAddress().Format() 
+					+ " with reason: " 
+					+ std::to_string(banReasonMessage.GetBanReason())
+				);
 				return false;
 			}
 			else
 			{
-				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Expected shake from " + socket.GetSocketAddress().Format() + " but received " + MessageTypes::ToString(messageType));
+				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Expected shake from " 
+					+ socket.GetSocketAddress().Format() 
+					+ " but received " 
+					+ MessageTypes::ToString(messageType)
+				);
 				return false;
 			}
 		}

@@ -145,7 +145,19 @@ public:
 			transactionOpt = std::make_optional<Transaction>(Transaction::Deserialize(byteBuffer));
 		}
 
-		return WalletTx(walletTxId, type, std::move(slateIdOpt), std::move(slateMessageOpt), creationTime, confirmationTimeOpt, confirmedHeightOpt, amountCredited, amountDebited, feeOpt, std::move(transactionOpt));
+		return WalletTx(
+			walletTxId, 
+			type, 
+			std::move(slateIdOpt), 
+			std::move(slateMessageOpt), 
+			creationTime,
+			confirmationTimeOpt, 
+			confirmedHeightOpt, 
+			amountCredited, 
+			amountDebited, 
+			feeOpt, 
+			std::move(transactionOpt)
+		);
 	}
 
 	Json::Value ToJSON() const

@@ -132,7 +132,7 @@ std::unique_ptr<EncryptedSeed> WalletDB::LoadWalletSeed(const std::string& usern
 
 KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyChainPath& parentPath)
 {
-	KeyChainPath nextChildPath = parentPath.GetFirstChild();
+	KeyChainPath nextChildPath = parentPath.GetRandomChild();
 	const std::string keyWithUsername = CombineKeyWithUsername(username, parentPath.ToString());
 	const Slice key(keyWithUsername);
 

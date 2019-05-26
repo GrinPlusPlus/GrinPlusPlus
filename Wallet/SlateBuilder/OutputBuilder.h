@@ -8,7 +8,7 @@
 class OutputBuilder
 {
 public:
-	static std::vector<OutputData> CreateOutputs(Wallet& wallet, const SecureVector& masterSeed, const uint64_t totalAmount, const uint8_t numOutputs)
+	static std::vector<OutputData> CreateOutputs(Wallet& wallet, const SecureVector& masterSeed, const uint64_t totalAmount, const uint32_t walletTxId, const uint8_t numOutputs)
 	{
 		if (totalAmount < numOutputs)
 		{
@@ -25,7 +25,7 @@ public:
 				coinAmount += (totalAmount % numOutputs);
 			}
 
-			outputs.emplace_back(wallet.CreateBlindedOutput(masterSeed, coinAmount));
+			outputs.emplace_back(wallet.CreateBlindedOutput(masterSeed, coinAmount, walletTxId));
 		}
 
 		return outputs;

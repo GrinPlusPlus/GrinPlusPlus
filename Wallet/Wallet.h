@@ -21,13 +21,15 @@ public:
 
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
+	inline const std::string& GetUsername() const { return m_username; }
+
 	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
 
 	std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed);
 	std::unique_ptr<WalletTx> GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId);
 	std::unique_ptr<WalletTx> GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId);
 
-	std::vector<OutputData> RefreshOutputs(const SecureVector& masterSeed);
+	std::vector<OutputData> RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis);
 	bool AddRestoredOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs);
 	uint64_t GetRefreshHeight() const;
 	bool SetRefreshHeight(const uint64_t blockHeight);
@@ -37,8 +39,8 @@ public:
 	uint32_t GetNextWalletTxId();
 	bool AddWalletTxs(const SecureVector& masterSeed, const std::vector<WalletTx>& transactions);
 
-	std::vector<OutputData> GetAllAvailableCoins(const SecureVector& masterSeed) const;
-	OutputData CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount);
+	std::vector<OutputData> GetAllAvailableCoins(const SecureVector& masterSeed);
+	OutputData CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId);
 	bool SaveOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputsToSave);
 
 	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed) const;

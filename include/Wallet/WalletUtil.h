@@ -17,11 +17,11 @@ public:
 	{
 		if (features == COINBASE_OUTPUT)
 		{
-			return (outputBlockHeight + Consensus::COINBASE_MATURITY) > currentBlockHeight;
+			return (outputBlockHeight + Consensus::COINBASE_MATURITY) >= currentBlockHeight;
 		}
 		else
 		{
-			return (outputBlockHeight + minimumConfirmations) > currentBlockHeight;
+			return (outputBlockHeight + minimumConfirmations) >= currentBlockHeight;
 		}
 	}
 

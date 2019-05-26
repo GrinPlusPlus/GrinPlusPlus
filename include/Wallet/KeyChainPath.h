@@ -1,9 +1,12 @@
 #pragma once
 
 #include <Core/Serialization/DeserializationException.h>
+#include <Crypto/RandomNumberGenerator.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
+
+static const uint32_t MINIMUM_HARDENED_INDEX = 2147483648;
 
 class KeyChainPath
 {
@@ -38,6 +41,13 @@ public:
 	{
 		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;
 		keyIndicesCopy.push_back(0);
+		return KeyChainPath(std::move(keyIndicesCopy));
+	}
+
+	KeyChainPath GetRandomChild() const
+	{
+		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;
+		keyIndicesCopy.push_back((uint32_t)RandomNumberGenerator::GenerateRandom(0, MINIMUM_HARDENED_INDEX - 1));
 		return KeyChainPath(std::move(keyIndicesCopy));
 	}
 

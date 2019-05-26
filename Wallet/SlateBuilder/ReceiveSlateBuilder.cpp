@@ -17,7 +17,8 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 	}
 
 	// Generate output
-	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount());
+	const uint32_t walletTxId = wallet.GetNextWalletTxId();
+	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = *Crypto::GenerateSecureNonce();
 
@@ -28,7 +29,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, slateContext, messageOpt))
+	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, walletTxId, slateContext, messageOpt))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -118,7 +119,14 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 }
 
 // TODO: Use a DB Batch
-bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context, const std::optional<std::string>& messageOpt) const
+bool ReceiveSlateBuilder::UpdateDatabase(
+	Wallet& wallet, 
+	const SecureVector& masterSeed, 
+	const Slate& slate, 
+	const OutputData& outputData, 
+	const uint32_t walletTxId, 
+	const SlateContext& context, 
+	const std::optional<std::string>& messageOpt) const
 {
 	// Save secretKey and secretNonce
 	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, context))
@@ -136,7 +144,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& mas
 
 	// Save WalletTx
 	WalletTx walletTx(
-		wallet.GetNextWalletTxId(),
+		walletTxId,
 		EWalletTxType::RECEIVING_IN_PROGRESS,
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
 		std::optional<std::string>(messageOpt),

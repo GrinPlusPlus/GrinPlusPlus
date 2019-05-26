@@ -1,5 +1,7 @@
 #include "WalletRefresher.h"
+#include "OutputRestorer.h"
 
+#include <Infrastructure/Logger.h>
 #include <Wallet/WalletUtil.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
@@ -10,26 +12,98 @@ WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeCl
 
 }
 
-std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& username, const SecureVector& masterSeed)
-{
-	std::vector<Commitment> commitments;
+// TODO: Rewrite this
+// 0. Initial login after upgrade - for every output, find matching WalletTx and update OutputData TxId. If none found, create new WalletTx.
+//
+// 1. Check for own outputs in new blocks.
+// 2. For each output, look for OutputData with matching commitment. If no output found, create new WalletTx and OutputData.
+// 3. Refresh status for all OutputData by calling m_nodeClient.GetOutputsByCommitment
+// 4. For all OutputData, update matching WalletTx status.
 
-	std::vector<OutputData> outputs = m_walletDB.GetOutputs(username, masterSeed);
-	for (const OutputData& outputData : outputs)
+std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis)
+{
+	std::vector<OutputData> walletOutputs = m_walletDB.GetOutputs(wallet.GetUsername(), masterSeed);
+	std::vector<WalletTx> walletTransactions = m_walletDB.GetTransactions(wallet.GetUsername(), masterSeed);
+
+	// 1. Check for own outputs in new blocks.
+	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	std::vector<OutputData> restoredOutputs = OutputRestorer(m_config, m_nodeClient, keyChain).FindAndRewindOutputs(masterSeed, wallet, fromGenesis);
+
+	// 2. For each restored output, look for OutputData with matching commitment.
+	for (OutputData& restoredOutput : restoredOutputs)
 	{
-		//if (outputData.GetStatus() != EOutputStatus::SPENT && outputData.GetStatus() != EOutputStatus::CANCELED)
+		LoggerAPI::LogInfo("WalletRefresher::Refresh - Output found at index " + std::to_string(restoredOutput.GetMMRIndex().value_or(0)));
+
+		if (restoredOutput.GetStatus() != EOutputStatus::SPENT)
 		{
-			// TODO: What if commitment has mmr_index?
-			commitments.push_back(outputData.GetOutput().GetCommitment());
+			const Commitment& commitment = restoredOutput.GetOutput().GetCommitment();
+			std::unique_ptr<OutputData> pExistingOutput = FindOutput(walletOutputs, commitment);
+			if (pExistingOutput == nullptr)
+			{
+				LoggerAPI::LogInfo("WalletRefresher::Refresh - Restoring unknown output with commitment: " +
+					HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+
+				// If no output found, create new WalletTx and OutputData.
+				const uint32_t walletTxId = wallet.GetNextWalletTxId();
+				WalletTx walletTx(
+					walletTxId,
+					EWalletTxType::RECEIVED,
+					std::nullopt,
+					std::nullopt,
+					std::chrono::system_clock::now(),
+					std::nullopt,
+					std::nullopt,
+					restoredOutput.GetAmount(),
+					0,
+					std::nullopt,
+					std::nullopt
+				);
+
+				restoredOutput.SetWalletTxId(walletTxId);
+				m_walletDB.AddOutputs(wallet.GetUsername(), masterSeed, std::vector<OutputData>({ restoredOutput }));
+				m_walletDB.AddTransaction(wallet.GetUsername(), masterSeed, walletTx);
+
+				walletOutputs.push_back(restoredOutput);
+				walletTransactions.emplace_back(std::move(walletTx));
+			}
 		}
 	}
 
+	// 3. Refresh status for all OutputData by calling m_nodeClient.GetOutputsByCommitment
+	RefreshOutputs(masterSeed, wallet, walletOutputs);
+
+	// 4. For all OutputData, update matching WalletTx status.
+	RefreshTransactions(wallet.GetUsername(), masterSeed, walletOutputs, walletTransactions);
+
+	return walletOutputs;
+}
+
+void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wallet, std::vector<OutputData>& walletOutputs)
+{
+	std::vector<Commitment> commitments;
+
+	for (const OutputData& outputData : walletOutputs)
+	{
+		const Commitment& commitment = outputData.GetOutput().GetCommitment();
+
+		if (outputData.GetStatus() == EOutputStatus::SPENT || outputData.GetStatus() == EOutputStatus::CANCELED)
+		{
+			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " +
+				HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+			continue;
+		}
+
+		// TODO: What if commitment has mmr_index?
+		LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " +
+			HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+		commitments.push_back(commitment);		
+	}
+
 	const uint64_t lastConfirmedHeight = m_nodeClient.GetChainHeight();
-	m_walletDB.UpdateRefreshBlockHeight(username, lastConfirmedHeight);
 
 	std::vector<OutputData> outputsToUpdate;
 	const std::map<Commitment, OutputLocation> outputLocations = m_nodeClient.GetOutputsByCommitment(commitments);
-	for (OutputData& outputData : outputs)
+	for (OutputData& outputData : walletOutputs)
 	{
 		auto iter = outputLocations.find(outputData.GetOutput().GetCommitment());
 		if (iter != outputLocations.cend())
@@ -49,14 +123,11 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 						outputsToUpdate.push_back(outputData);
 					}
 				}
-				else
+				else if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
 				{
-					if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
-					{
-						outputData.SetBlockHeight(outputBlockHeight);
-						outputData.SetStatus(EOutputStatus::SPENDABLE);
-						outputsToUpdate.push_back(outputData);
-					}
+					outputData.SetBlockHeight(outputBlockHeight);
+					outputData.SetStatus(EOutputStatus::SPENDABLE);
+					outputsToUpdate.push_back(outputData);
 				}
 			}
 		}
@@ -67,18 +138,49 @@ std::vector<OutputData> WalletRefresher::RefreshOutputs(const std::string& usern
 		}
 	}
 
-	m_walletDB.AddOutputs(username, masterSeed, outputsToUpdate);
-	RefreshTransactions(username, masterSeed, outputsToUpdate);
-
-	return outputs;
+	m_walletDB.AddOutputs(wallet.GetUsername(), masterSeed, outputsToUpdate);
+	m_walletDB.UpdateRefreshBlockHeight(wallet.GetUsername(), lastConfirmedHeight);
 }
 
-void WalletRefresher::RefreshTransactions(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& refreshedOutputs)
+void WalletRefresher::RefreshTransactions(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
 {
-	std::vector<WalletTx> transactions = m_walletDB.GetTransactions(username, masterSeed);
-	for (WalletTx& walletTx : transactions)
+	std::unordered_map<uint32_t, WalletTx> walletTransactionsById;
+	for (WalletTx& walletTx : walletTransactions)
 	{
-		if (walletTx.GetTransaction().has_value())
+		walletTransactionsById.insert({ walletTx.GetId(), walletTx });
+	}
+
+	for (const OutputData& output : refreshedOutputs)
+	{
+		if (output.GetWalletTxId().has_value())
+		{
+			auto iter = walletTransactionsById.find(output.GetWalletTxId().value());
+			if (iter != walletTransactionsById.cend())
+			{
+				WalletTx walletTx = iter->second;
+
+				if (output.GetBlockHeight().has_value())
+				{
+					walletTx.SetConfirmedHeight(output.GetBlockHeight().value());
+
+					if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
+					{
+						walletTx.SetType(EWalletTxType::RECEIVED);
+						m_walletDB.AddTransaction(username, masterSeed, walletTx);
+					}
+					else if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
+					{
+						walletTx.SetType(EWalletTxType::SENT);
+						m_walletDB.AddTransaction(username, masterSeed, walletTx);
+					}
+				}
+			}
+		}
+	}
+
+	for (WalletTx& walletTx : walletTransactions)
+	{
+		if (walletTx.GetTransaction().has_value() && walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 		{
 			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetBody().GetOutputs();
 			for (const TransactionOutput& output : outputs)
@@ -86,19 +188,9 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 				std::unique_ptr<OutputData> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
 				if (pOutputData != nullptr)
 				{
-					if (pOutputData->GetBlockHeight().has_value())
-					{
-						walletTx.SetConfirmedHeight(pOutputData->GetBlockHeight().value());
-					}
-
-					if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
+					if (pOutputData->GetStatus() == EOutputStatus::SPENT)
 					{
 						walletTx.SetType(EWalletTxType::SENT);
-						m_walletDB.AddTransaction(username, masterSeed, walletTx);
-					}
-					else if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
-					{
-						walletTx.SetType(EWalletTxType::RECEIVED);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);
 					}
 
@@ -109,9 +201,9 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 	}
 }
 
-std::unique_ptr<OutputData> WalletRefresher::FindOutput(const std::vector<OutputData>& refreshedOutputs, const Commitment& commitment) const
+std::unique_ptr<OutputData> WalletRefresher::FindOutput(const std::vector<OutputData>& walletOutputs, const Commitment& commitment) const
 {
-	for (const OutputData& outputData : refreshedOutputs)
+	for (const OutputData& outputData : walletOutputs)
 	{
 		if (commitment == outputData.GetOutput().GetCommitment())
 		{

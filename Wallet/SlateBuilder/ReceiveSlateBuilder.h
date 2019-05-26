@@ -14,5 +14,13 @@ public:
 private:
 	bool VerifySlateStatus(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const;
 	void AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
-	bool UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const OutputData& outputData, const SlateContext& context, const std::optional<std::string>& messageOpt) const;
+	bool UpdateDatabase(
+		Wallet& wallet, 
+		const SecureVector& masterSeed, 
+		const Slate& slate, 
+		const OutputData& outputData, 
+		const uint32_t walletTxId, 
+		const SlateContext& context, 
+		const std::optional<std::string>& messageOpt
+	) const;
 };

@@ -4,7 +4,6 @@
 #include "SlateBuilder/ReceiveSlateBuilder.h"
 #include "SlateBuilder/SendSlateBuilder.h"
 #include "SlateBuilder/FinalizeSlateBuilder.h"
-#include "WalletRestorer.h"
 #include "SlateBuilder/CoinSelection.h"
 
 #include <Wallet/WalletUtil.h>
@@ -74,9 +73,10 @@ bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
-	return WalletRestorer(m_config, m_nodeClient, keyChain).Restore(masterSeed, wallet.GetWallet(), fromGenesis);
+	wallet.GetWallet().RefreshOutputs(masterSeed, fromGenesis);
+
+	return true;
 }
 
 SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const

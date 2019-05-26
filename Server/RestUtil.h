@@ -65,6 +65,11 @@ public:
 			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
 			for (const std::string& token : tokens)
 			{
+				if (token == parameterName)
+				{
+					return std::make_optional<std::string>("");
+				}
+
 				if (StringUtil::StartsWith(token, parameterName + "="))
 				{
 					std::vector<std::string> parameterTokens = StringUtil::Split(token, "=");

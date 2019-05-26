@@ -11,7 +11,7 @@ file(GLOB Wallet_SRC
 	"WalletRefresher.cpp"
 	"SessionManager.cpp"
 	"WalletManagerImpl.cpp"
-	"WalletRestorer.cpp"
+	"OutputRestorer.cpp"
 )
 
 remove_definitions(-DNOMINMAX)

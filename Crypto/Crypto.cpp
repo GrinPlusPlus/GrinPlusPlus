@@ -299,3 +299,13 @@ std::unique_ptr<SecretKey> Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
 }
+
+Signature Crypto::ConvertToRaw(const Signature& signature)
+{
+	return AggSig::GetInstance().ConvertToRaw(signature);
+}
+
+Signature Crypto::ConvertToCompressed(const Signature& signature)
+{
+	return AggSig::GetInstance().ConvertToCompressed(signature);
+}

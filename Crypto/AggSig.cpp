@@ -8,6 +8,7 @@
 
 #include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH; // TODO: Determine actual size
@@ -156,6 +157,7 @@ bool AggSig::VerifyPartialSignature(const Signature& partialSignature, const Pub
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	secp256k1_ecdsa_signature signature;
+	
 	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &signature, partialSignature.GetSignatureBytes().data());
 	if (parseSignatureResult == 1)
 	{
@@ -367,4 +369,28 @@ std::unique_ptr<Signature> AggSig::SerializeSignature(const secp256k1_ecdsa_sign
 	}
 
 	return std::unique_ptr<Signature>(nullptr);
+}
+
+Signature AggSig::ConvertToRaw(const Signature& compressed) const
+{
+	std::vector<unsigned char> raw(64);
+	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, (secp256k1_ecdsa_signature*)raw.data(), compressed.GetSignatureBytes().data());
+	if (parseSignatureResult == 1)
+	{
+		return Signature(CBigInteger<64>(std::move(raw)));
+	}
+
+	throw CryptoException();
+}
+
+Signature AggSig::ConvertToCompressed(const Signature& raw) const
+{
+	std::vector<unsigned char> compressed(64);
+	const int parseSignatureResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, compressed.data(), (secp256k1_ecdsa_signature*)raw.GetSignatureBytes().data());
+	if (parseSignatureResult == 1)
+	{
+		return Signature(CBigInteger<64>(std::move(compressed)));
+	}
+
+	throw CryptoException();
 }

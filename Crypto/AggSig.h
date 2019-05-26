@@ -32,6 +32,9 @@ public:
 	bool VerifyAggregateSignature(const Signature& signature, const Commitment& commitment, const Hash& message) const;
 	bool VerifyAggregateSignature(const Signature& signature, const PublicKey& sumPubKeys, const Hash& message) const;
 
+	Signature ConvertToRaw(const Signature& compressed) const;
+	Signature ConvertToCompressed(const Signature& raw) const;
+
 private:
 	AggSig();
 	~AggSig();

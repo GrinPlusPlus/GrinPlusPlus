@@ -159,4 +159,7 @@ public:
 	static bool VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey sumPubKeys, const Hash& message);
 	static std::unique_ptr<SecretKey> GenerateSecureNonce();
+
+	static Signature ConvertToRaw(const Signature& signature);
+	static Signature ConvertToCompressed(const Signature& signature);
 };

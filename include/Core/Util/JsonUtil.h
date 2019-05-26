@@ -153,7 +153,7 @@ public:
 		if (hex)
 		{
 			Signature raw = Crypto::ConvertToRaw(signature);
-			return ConvertToJSON(raw.GetSignatureBytes().GetData(), false);
+			return ConvertToJSON(raw.GetSignatureBytes().GetData(), true);
 		}
 		else
 		{
@@ -163,7 +163,15 @@ public:
 
 	static Signature ConvertToSignature(const Json::Value& signatureJSON, const bool hex)
 	{
-		return Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
+		Signature signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
+		if (hex)
+		{
+			return Crypto::ConvertToCompressed(signature);
+		}
+		else
+		{
+			return signature;
+		}
 	}
 
 	static Signature GetSignature(const Json::Value& parentJSON, const std::string& key, const bool hex)
@@ -173,7 +181,7 @@ public:
 
 	static Json::Value ConvertToJSON(const std::optional<Signature>& signatureOpt, const bool hex)
 	{
-		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value().GetSignatureBytes().GetData(), hex) : Json::nullValue;
+		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value(), hex) : Json::nullValue;
 	}
 
 	static std::optional<Signature> ConvertToSignatureOpt(const Json::Value& signatureJSON, const bool hex)

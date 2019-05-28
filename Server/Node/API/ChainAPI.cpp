@@ -109,7 +109,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 			Json::Value outputNode;
 			const EOutputFeatures features = output.GetIdentifier().GetFeatures();
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
-			outputNode["commit"] = HexUtil::ConvertToHex(output.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData());
+			outputNode["commit"] = output.GetIdentifier().GetCommitment().ToHex();
 			outputNode["spent"] = false;
 			outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
 

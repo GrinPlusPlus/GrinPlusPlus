@@ -159,8 +159,8 @@ Json::Value JSONFactory::BuildTransactionKernelJSON(const TransactionKernel& ker
 
 	kernelNode["fee"] = kernel.GetFee();
 	kernelNode["lock_height"] = kernel.GetLockHeight();
-	kernelNode["excess"] = HexUtil::ConvertToHex(kernel.GetExcessCommitment().GetCommitmentBytes().GetData());
-	kernelNode["excess_sig"] = HexUtil::ConvertToHex(kernel.GetExcessSignature().GetSignatureBytes().GetData());
+	kernelNode["excess"] = kernel.GetExcessCommitment().ToHex();
+	kernelNode["excess_sig"] = kernel.GetExcessSignature().ToHex();
 
 	return kernelNode;
 }

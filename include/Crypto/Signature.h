@@ -51,6 +51,11 @@ public:
 		return Signature(byteBuffer.ReadBigInteger<64>());
 	}
 
+	std::string ToHex() const
+	{
+		return HexUtil::ConvertToHex(m_signatureBytes.GetData());
+	}
+
 private:
 	// The 64 byte Signature.
 	CBigInteger<64> m_signatureBytes;

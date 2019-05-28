@@ -98,7 +98,7 @@ bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey&
 
 		if (pubkeyResult == 1)
 		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data()/*secpSig.data*/, message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, /*signature.GetSignatureBytes().data()*/secpSig.data, message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
 			if (verifyResult == 1)
 			{
 				return true;
@@ -236,13 +236,13 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 			}
 			else
 			{
-				LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to convert commitment to pubkey: " + commitment->GetCommitmentBytes().ToHex());
+				LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to convert commitment to pubkey: " + commitment->ToHex());
 				return false;
 			}
 		}
 		else
 		{
-			LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to parse commitment " + commitment->GetCommitmentBytes().ToHex());
+			LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to parse commitment " + commitment->ToHex());
 			return false;
 		}
 	}

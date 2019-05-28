@@ -227,7 +227,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 			Json::Value outputNode;
 			const EOutputFeatures features = info.GetIdentifier().GetFeatures();
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
-			outputNode["commit"] = HexUtil::ConvertToHex(info.GetIdentifier().GetCommitment().GetCommitmentBytes().GetData());
+			outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
 			outputNode["spent"] = info.IsSpent();
 			outputNode["proof"] = HexUtil::ConvertToHex(info.GetRangeProof().GetProofBytes());
 

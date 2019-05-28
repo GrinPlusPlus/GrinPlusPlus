@@ -280,4 +280,16 @@ public:
 			return ConvertToUInt64(value);
 		}
 	}
+
+	//
+	// Optional
+	//
+	template<class T>
+	static void AddOptionalField(Json::Value& json, const std::string& fieldName, const std::optional<T>& opt)
+	{
+		if (opt.has_value())
+		{
+			json[fieldName] = opt.value();
+		}
+	}
 };

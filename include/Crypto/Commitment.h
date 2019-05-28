@@ -6,6 +6,7 @@
 
 #include <Crypto/BigInteger.h>
 #include <Common/Util/BitUtil.h>
+#include <Common/Util/HexUtil.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -58,6 +59,11 @@ public:
 	static Commitment Deserialize(ByteBuffer& byteBuffer)
 	{
 		return Commitment(byteBuffer.ReadBigInteger<33>());
+	}
+
+	std::string ToHex() const
+	{
+		return HexUtil::ConvertToHex(m_commitmentBytes.GetData());
 	}
 
 private:

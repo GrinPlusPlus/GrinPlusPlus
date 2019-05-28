@@ -50,7 +50,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
-			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()) + " not found at mmrIndex " + std::to_string(outputPosOpt.value().GetMMRIndex()));
+			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + commitment.ToHex() + " not found at mmrIndex " + std::to_string(outputPosOpt.value().GetMMRIndex()));
 			return false;
 		}
 	}
@@ -99,7 +99,7 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
 		if (!outputPosOpt.has_value())
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Output position not found for commitment: " + HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()) + " in block: " + std::to_string(block.GetBlockHeader().GetHeight()));
+			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Output position not found for commitment: " + commitment.ToHex() + " in block: " + std::to_string(block.GetBlockHeader().GetHeight()));
 			return false;
 		}
 

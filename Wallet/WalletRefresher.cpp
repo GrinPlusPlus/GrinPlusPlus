@@ -40,8 +40,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 			std::unique_ptr<OutputData> pExistingOutput = FindOutput(walletOutputs, commitment);
 			if (pExistingOutput == nullptr)
 			{
-				LoggerAPI::LogInfo("WalletRefresher::Refresh - Restoring unknown output with commitment: " +
-					HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+				LoggerAPI::LogInfo("WalletRefresher::Refresh - Restoring unknown output with commitment: " + commitment.ToHex());
 
 				// If no output found, create new WalletTx and OutputData.
 				const uint32_t walletTxId = wallet.GetNextWalletTxId();
@@ -88,14 +87,12 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 
 		if (outputData.GetStatus() == EOutputStatus::SPENT || outputData.GetStatus() == EOutputStatus::CANCELED)
 		{
-			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " +
-				HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " + commitment.ToHex());
 			continue;
 		}
 
 		// TODO: What if commitment has mmr_index?
-		LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " +
-			HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData()));
+		LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " + commitment.ToHex());
 		commitments.push_back(commitment);		
 	}
 

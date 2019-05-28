@@ -33,6 +33,11 @@ public:
 		return std::chrono::duration_cast<std::chrono::milliseconds>(timePoint.time_since_epoch()).count();
 	}
 
+	static int64_t ToSeconds(const std::chrono::system_clock::time_point& timePoint)
+	{
+		return std::chrono::duration_cast<std::chrono::seconds>(timePoint.time_since_epoch()).count();
+	}
+
 	static std::chrono::system_clock::time_point ToTimePoint(const int64_t millisSinceEpoch)
 	{
 		return std::chrono::system_clock::time_point(std::chrono::milliseconds(millisSinceEpoch));

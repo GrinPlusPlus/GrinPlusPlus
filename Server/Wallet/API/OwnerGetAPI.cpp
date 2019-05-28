@@ -140,8 +140,8 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 		const uint64_t txId = std::stoull(txIdOpt.value());
 
 		// TODO: Filter in walletManager for better performance
-		const std::vector<WalletTx> transactions = walletManager.GetTransactions(token);
-		for (const WalletTx& transaction : transactions)
+		const std::vector<WalletTxDTO> transactions = walletManager.GetTransactions(token);
+		for (const WalletTxDTO& transaction : transactions)
 		{
 			if (transaction.GetId() == txId)
 			{
@@ -151,8 +151,8 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 	}
 	else
 	{
-		const std::vector<WalletTx> transactions = walletManager.GetTransactions(token);
-		for (const WalletTx& transaction : transactions)
+		const std::vector<WalletTxDTO> transactions = walletManager.GetTransactions(token);
+		for (const WalletTxDTO& transaction : transactions)
 		{
 			transactionsJSON.append(transaction.ToJSON());
 		}

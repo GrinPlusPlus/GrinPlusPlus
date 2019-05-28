@@ -118,12 +118,30 @@ WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
 	return wallet.GetWallet().GetWalletSummary(masterSeed);
 }
 
-std::vector<WalletTx> WalletManager::GetTransactions(const SessionToken& token)
+std::vector<WalletTxDTO> WalletManager::GetTransactions(const SessionToken& token)
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return wallet.GetWallet().GetTransactions(masterSeed);
+	std::vector<OutputData> outputs = m_pWalletDB->GetOutputs(wallet.GetWallet().GetUsername(), masterSeed);
+	std::vector<WalletTx> walletTransactions = wallet.GetWallet().GetTransactions(masterSeed);
+
+	std::vector<WalletTxDTO> walletTxDTOs;
+	for (const WalletTx& walletTx : walletTransactions)
+	{
+		std::vector<WalletOutputDTO> outputDTOs;
+		for (const OutputData& output : outputs)
+		{
+			if (output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId())
+			{
+				outputDTOs.emplace_back(WalletOutputDTO(output));
+			}
+		}
+
+		walletTxDTOs.emplace_back(WalletTxDTO(walletTx, outputDTOs));
+	}
+
+	return walletTxDTOs;
 }
 
 uint64_t WalletManager::EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)

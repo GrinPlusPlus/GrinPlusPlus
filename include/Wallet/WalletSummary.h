@@ -2,6 +2,7 @@
 
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletTx.h>
+#include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <json/json.h>
 #include <stdint.h>
 #include <vector>
@@ -46,7 +47,7 @@ public:
 		Json::Value transactionsJSON;
 		for (const WalletTx& transaction : m_transactions)
 		{
-			transactionsJSON.append(transaction.ToJSON());
+			transactionsJSON.append(WalletTxDTO(transaction, std::vector<WalletOutputDTO>()).ToJSON());
 		}
 		summaryJSON["transactions"] = transactionsJSON;
 

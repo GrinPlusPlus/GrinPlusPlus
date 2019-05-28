@@ -160,43 +160,6 @@ public:
 		);
 	}
 
-	Json::Value ToJSON() const
-	{
-		Json::Value transactionJSON;
-		transactionJSON["id"] = GetId();
-		transactionJSON["type"] = WalletTxType::ToString(GetType());
-		transactionJSON["amount_credited"] = GetAmountCredited();
-		transactionJSON["amount_debited"] = GetAmountDebited();
-		transactionJSON["creation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(GetCreationTime().time_since_epoch()).count(); // TODO: Determine format
-
-		if (GetSlateId().has_value())
-		{
-			transactionJSON["slate_id"] = uuids::to_string(GetSlateId().value());
-		}
-
-		if (GetSlateMessage().has_value())
-		{
-			transactionJSON["slate_message"] = GetSlateMessage().value();
-		}
-
-		if (GetFee().has_value())
-		{
-			transactionJSON["fee"] = GetFee().value();
-		}
-
-		if (GetConfirmationTime().has_value())
-		{
-			transactionJSON["confirmation_date_time"] = std::chrono::duration_cast<std::chrono::seconds>(GetConfirmationTime().value().time_since_epoch()).count(); // TODO: Determine format
-		}
-
-		if (m_confirmedHeightOpt.has_value())
-		{
-			transactionJSON["confirmed_height"] = m_confirmedHeightOpt.value();
-		}
-
-		return transactionJSON;
-	}
-
 private:
 	uint32_t m_walletTxId;
 	EWalletTxType m_type; // TODO: Replace with direction & status

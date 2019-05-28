@@ -12,6 +12,7 @@
 #include <Wallet/Slate.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
+#include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Common/Secure.h>
 #include <Crypto/SecretKey.h>
 
@@ -55,7 +56,7 @@ public:
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) = 0;
 
-	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) = 0;
+	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) = 0;
 
 	virtual uint64_t EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) = 0;
 

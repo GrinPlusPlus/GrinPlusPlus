@@ -23,7 +23,7 @@ public:
 	virtual std::vector<std::string> GetAllAccounts() const override final;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
-	virtual std::vector<WalletTx> GetTransactions(const SessionToken& token) override final;
+	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) override final;
 
 	virtual uint64_t EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) override final;
 	virtual std::unique_ptr<Slate> Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) override final;

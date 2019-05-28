@@ -1,5 +1,5 @@
 ![Grin++](https://github.com/GrinPlusPlus/GrinPlusPlus/blob/master/Logo.png "Grin++")
-## A Windows-Compatible C++ Implementation of the Grin(MimbleWimble) Protocol
+## A Windows-Compatible C++ Implementation of Grin(MimbleWimble)
 
 Website: https://grinplusplus.github.io/
 Wiki: https://github.com/GrinPlusPlus/GrinPlusPlus/wiki

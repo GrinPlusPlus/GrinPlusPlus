@@ -116,17 +116,22 @@ bool WalletDB::CreateWallet(const std::string& username, const EncryptedSeed& en
 
 std::unique_ptr<EncryptedSeed> WalletDB::LoadWalletSeed(const std::string& username) const
 {
+	LoggerAPI::LogTrace("WalletDB::LoadWalletSeed - Loading wallet seed for " + username);
+
 	const Slice key(username);
 
 	std::string value;
 	const Status readStatus = m_pDatabase->Get(ReadOptions(), m_pSeedHandle, key, &value);
 	if (readStatus.ok())
 	{
+		LoggerAPI::LogTrace("WalletDB::LoadWalletSeed - Wallet seed loaded: " + value);
+
 		const std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
 		ByteBuffer byteBuffer(bytes);
 		return std::make_unique<EncryptedSeed>(EncryptedSeed::Deserialize(byteBuffer));
 	}
 
+	LoggerAPI::LogError("WalletDB::LoadWalletSeed - Wallet seed not found for " + username);
 	return std::unique_ptr<EncryptedSeed>(nullptr);
 }
 

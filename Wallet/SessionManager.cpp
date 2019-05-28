@@ -5,6 +5,7 @@
 #include <Crypto/RandomNumberGenerator.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Common/Util/VectorUtil.h>
+#include <Infrastructure/Logger.h>
 
 SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)
@@ -22,28 +23,37 @@ SessionManager::~SessionManager()
 
 std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username, const SecureString& password)
 {
+	LoggerAPI::LogDebug("SessionManager::Login - Logging in with username: " + username);
 	std::unique_ptr<EncryptedSeed> pSeed = m_walletDB.LoadWalletSeed(username);
 	if (pSeed != nullptr)
 	{
 		std::optional<SecureVector> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
 		if (decryptedSeedOpt.has_value())
 		{
+			LoggerAPI::LogInfo("SessionManager::Login - Valid password provided. Logging in now.");
 			return std::make_unique<SessionToken>(Login(username, decryptedSeedOpt.value()));
 		}
+
+		LoggerAPI::LogError("SessionManager::Login - Wallet seed not decrypted. Wrong password?");
 	}
 
+	LoggerAPI::LogError("SessionManager::Login - Wallet seed not found.");
 	return std::unique_ptr<SessionToken>(nullptr);
 }
 
 SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)
 {
 	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
+	LoggerAPI::LogTrace("SessionManager::Login - KeyChain loaded successfully from seed.");
+
 	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
+	LoggerAPI::LogTrace("SessionManager::Login - Wallet loaded successfully.");
 
 	const CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
 	SecureVector seedWithChecksum = SecureVector(seed.begin(), seed.end());
 	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
+	LoggerAPI::LogTrace("SessionManager::Login - seedWithChecksum calculated.");
 
 	SecureVector tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
 
@@ -54,6 +64,8 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	}
 
 	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
+	LoggerAPI::LogTrace("SessionManager::Login - Grinbox keychain loaded successfully.");
+
 	std::unique_ptr<SecretKey> pGrinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
 	std::vector<unsigned char> encryptedGrinboxAddress(32);
 	for (size_t i = 0; i < 32; i++)
@@ -63,6 +75,7 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 
 	const uint64_t sessionId = m_nextSessionId++;
 	m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
+	LoggerAPI::LogDebug("SessionManager::Login - Session created successfully.");
 
 	return SessionToken(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 }

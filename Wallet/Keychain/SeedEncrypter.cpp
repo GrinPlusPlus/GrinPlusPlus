@@ -5,25 +5,37 @@
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Infrastructure/Logger.h>
 
 std::optional<SecureVector> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
 {
 	try
 	{
+		LoggerAPI::LogDebug("SeedEncrypter::DecryptWalletSeed - Hashing password.");
 		SecretKey passwordHash = Crypto::PBKDF(password, encryptedSeed.GetSalt().GetData(), encryptedSeed.GetScryptParameters());
+
+		LoggerAPI::LogDebug("SeedEncrypter::DecryptWalletSeed - Decrypting with AES256.");
 		const SecureVector decrypted = Crypto::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
 
 		SecureVector walletSeed(decrypted.begin(), decrypted.begin() + decrypted.size() - 32);
 
 		const CBigInteger<32> hash256 = Crypto::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetBytes().GetData());
 		const CBigInteger<32> hash256Check(&decrypted[walletSeed.size()]);
+
+		LoggerAPI::LogDebug("SeedEncrypter::DecryptWalletSeed - Comparing HMAC.");
 		if (hash256 == hash256Check)
 		{
+			LoggerAPI::LogDebug("SeedEncrypter::DecryptWalletSeed - HMAC valid.");
 			return std::make_optional<SecureVector>(std::move(walletSeed));
+		}
+		else
+		{
+			LoggerAPI::LogError("SeedEncrypter::DecryptWalletSeed - HMAC invalid.");
 		}
 	}
 	catch (CryptoException&)
 	{
+		LoggerAPI::LogError("SeedEncrypter::DecryptWalletSeed - Crypto exception occurred.");
 		return std::nullopt;
 	}
 

@@ -47,7 +47,7 @@ public:
 	KeyChainPath GetRandomChild() const
 	{
 		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;
-		keyIndicesCopy.push_back((uint32_t)RandomNumberGenerator::GenerateRandom(0, MINIMUM_HARDENED_INDEX - 1));
+		keyIndicesCopy.push_back((uint32_t)RandomNumberGenerator::GenerateRandom(0, MINIMUM_HARDENED_INDEX - 1000000));
 		return KeyChainPath(std::move(keyIndicesCopy));
 	}
 

@@ -277,11 +277,10 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 		messageData.emplace_back(message->data());
 	}
 
-	// TODO: Aggregate messages.
-	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE); // TODO: Delete
+	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 	const int verifyResult = secp256k1_schnorrsig_verify_batch(m_pContext, pScratchSpace, signaturePtrs.data(), messageData.data(), pubKeyPtrs.data(), signatures.size());
-	//const int verifyResult = secp256k1_aggsig_verify_multi(m_pContext, signaturePtrs.data(), messageData.data(), pubKeyPtrs.data(), signatures.size());
-	//const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signaturePtrs.data()[0], messageData.data()[0], nullptr, &parsedPubKeys.data()[0], &parsedPubKeys.data()[0], nullptr, false);
+	secp256k1_scratch_space_destroy(pScratchSpace);
+
 	if (verifyResult == 1)
 	{
 		return true;

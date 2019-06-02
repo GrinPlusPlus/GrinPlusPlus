@@ -6,7 +6,6 @@
 #include <Crypto/PublicKey.h>
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
-#include <Crypto/Crypto.h>
 #include <Core/Serialization/DeserializationException.h>
 #include <json/json.h>
 #include <optional>
@@ -150,28 +149,12 @@ public:
 	//
 	static Json::Value ConvertToJSON(const Signature& signature, const bool hex)
 	{
-		if (hex)
-		{
-			Signature raw = Crypto::ConvertToRaw(signature);
-			return ConvertToJSON(raw.GetSignatureBytes().GetData(), true);
-		}
-		else
-		{
-			return ConvertToJSON(signature.GetSignatureBytes().GetData(), false);
-		}
+		return ConvertToJSON(signature.GetSignatureBytes().GetData(), hex);
 	}
 
 	static Signature ConvertToSignature(const Json::Value& signatureJSON, const bool hex)
 	{
-		Signature signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
-		if (hex)
-		{
-			return Crypto::ConvertToCompressed(signature);
-		}
-		else
-		{
-			return signature;
-		}
+		return Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
 	}
 
 	static Signature GetSignature(const Json::Value& parentJSON, const std::string& key, const bool hex)
@@ -191,15 +174,7 @@ public:
 			return std::nullopt;
 		}
 
-		Signature signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
-		if (hex)
-		{
-			return std::make_optional<Signature>(Crypto::ConvertToCompressed(signature));
-		}
-		else
-		{
-			return std::make_optional<Signature>(std::move(signature));
-		}
+		return std::make_optional<Signature>(Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex))));
 	}
 
 	static std::optional<Signature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)

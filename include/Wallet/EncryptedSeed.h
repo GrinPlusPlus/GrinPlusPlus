@@ -35,10 +35,6 @@ public:
 	static EncryptedSeed Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint8_t version = byteBuffer.ReadU8();
-		if (version > ENCRYPTED_SEED_FORMAT)
-		{
-			throw DeserializationException();
-		}
 
 		CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
 		CBigInteger<8> salt = byteBuffer.ReadBigInteger<8>();

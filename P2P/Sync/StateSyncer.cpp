@@ -24,7 +24,7 @@ bool StateSyncer::SyncState(const SyncStatus& syncStatus)
 	}
 
 	// If state sync is still in progress, return true to delay block sync.
-	if (syncStatus.GetBlockHeight() < m_requestedHeight)
+	if (syncStatus.GetBlockHeight() < (syncStatus.GetHeaderHeight() - Consensus::CUT_THROUGH_HORIZON))
 	{
 		return true;
 	}
@@ -64,12 +64,6 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 	if (m_requestedHeight == 0)
 	{
 		return true;
-	}
-
-	// If state sync has already occurred, just rely on block sync.
-	if (blockHeight >= m_requestedHeight)
-	{
-		return false;
 	}
 
 	// If TxHashSet download timed out, request it from another peer.

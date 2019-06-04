@@ -54,9 +54,9 @@ int main(int argc, char* argv[])
 	const Config config = ConfigManager::LoadConfig(environment);
 	NodeDaemon node(config);
 	INodeClient* pNodeClient = node.Initialize();
-
-	//WalletDaemon wallet(config, *pNodeClient);
-	//wallet.Initialize();
+	
+	WalletDaemon wallet(config, *pNodeClient);
+	wallet.Initialize();
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	while (true)
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 		std::cout << "SHUTTING DOWN...";
 	}
 
-	//wallet.Shutdown();
+	wallet.Shutdown();
 	node.Shutdown();
 
 	/* Un-initialize the civetweb library */

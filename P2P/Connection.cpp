@@ -101,6 +101,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 
 		if (handshakeSuccess)
 		{
+			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Successful Handshake");
 			pConnection->m_connectionManager.AddConnection(pConnection);
 			if (pConnection->m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
 			{

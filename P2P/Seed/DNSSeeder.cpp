@@ -38,9 +38,11 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 
 	for (auto seed : dnsSeeds)
 	{
+		LoggerAPI::LogTrace("DNSSeeder::GetPeersFromDNS - Checking seed: " + seed);
 		const std::vector<IPAddress> ipAddresses = Resolve(seed);
 		for (const IPAddress ipAddress : ipAddresses)
 		{
+			LoggerAPI::LogTrace("DNSSeeder::GetPeersFromDNS - IP Address: " + ipAddress.Format());
 			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
 		}
 	}

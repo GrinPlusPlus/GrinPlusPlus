@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 # HunterGate Package Manager
+set(HUNTER_CONFIGURATION_TYPES Release)
 set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
 set(HUNTER_STATUS_DEBUG TRUE)
 include("HunterGate.cmake")

@@ -5,6 +5,7 @@
 #include <Wallet/WalletUtil.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
+#include <unordered_map>
 
 WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
 	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)

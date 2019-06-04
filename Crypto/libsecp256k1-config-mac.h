@@ -14,6 +14,8 @@
 /* Define this symbol to enable the Grin Aggsig module */
 #define ENABLE_MODULE_AGGSIG 1
 
+#define ENABLE_MODULE_SCHNORRSIG 1
+
 /* Define this symbol to enable the Pedersen / zero knowledge bulletproof
    module */
 #define ENABLE_MODULE_BULLETPROOF 1

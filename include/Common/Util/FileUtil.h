@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <filesystem.hpp>
+#include <filesystem.h>
 #include <stdlib.h>
 
 #if defined(_WIN32)
@@ -19,7 +19,7 @@ class FileUtil
 public:
 	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
 	{
-		if (!ghc::filesystem::exists(ghc::filesystem::path(filePath)))
+		if (!fs::exists(fs::path(filePath)))
 		{
 			return false;
 		}
@@ -42,15 +42,15 @@ public:
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
 	{
-		const ghc::filesystem::path destinationPath(destination);
-		if (ghc::filesystem::exists(destinationPath))
+		const fs::path destinationPath(destination);
+		if (fs::exists(destinationPath))
 		{
-			ghc::filesystem::remove(destinationPath);
+			fs::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const ghc::filesystem::path sourcePath(source);
-		ghc::filesystem::rename(sourcePath, destinationPath, error);
+		const fs::path sourcePath(source);
+		fs::rename(sourcePath, destinationPath, error);
 
 		return !error;
 	}
@@ -73,9 +73,9 @@ public:
 	static bool RemoveFile(const std::string& filePath)
 	{
 		std::error_code ec;
-		if (ghc::filesystem::exists(filePath, ec))
+		if (fs::exists(filePath, ec))
 		{
-			const uintmax_t removed = ghc::filesystem::remove_all(filePath, ec);
+			const uintmax_t removed = fs::remove_all(filePath, ec);
 
 			return removed > 0 && ec.value() == 0;
 		}
@@ -86,14 +86,14 @@ public:
 	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
 	{
 		std::error_code ec;
-		ghc::filesystem::create_directories(destDir, ec);
+		fs::create_directories(destDir, ec);
 
-		if (!ghc::filesystem::exists(sourceDir, ec) || !ghc::filesystem::exists(destDir, ec))
+		if (!fs::exists(sourceDir, ec) || !fs::exists(destDir, ec))
 		{
 			return false;
 		}
 
-		ghc::filesystem::copy(sourceDir, destDir, ghc::filesystem::copy_options::recursive, ec);
+		fs::copy(sourceDir, destDir, fs::copy_options::recursive, ec);
 
 		return ec.value() == 0;
 	}

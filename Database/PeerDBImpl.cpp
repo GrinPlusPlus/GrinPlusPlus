@@ -5,7 +5,7 @@
 #include <Common/Util/StringUtil.h>
 #include <utility>
 #include <string>
-#include <filesystem.hpp>
+#include <filesystem.h>
 
 PeerDB::PeerDB(const Config& config)
 	: m_config(config)
@@ -30,7 +30,7 @@ void PeerDB::OpenDB()
 
 	// open DB
 	const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
-	ghc::filesystem::create_directories(dbPath);
+	fs::create_directories(dbPath);
 
 	Status s = DB::Open(options, dbPath, &m_pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
 }

@@ -11,7 +11,7 @@
 #include <Crypto/Crypto.h>
 #include <PMMR/TxHashSet.h>
 #include <Consensus/BlockTime.h>
-#include <filesystem.hpp>
+#include <filesystem.h>
 #include <algorithm>
 
 BlockChainServer::BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
@@ -114,7 +114,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 {
 	// TODO: Check horizon.
-	const std::string destination = ghc::filesystem::temp_directory_path().string() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
+	const std::string destination = fs::temp_directory_path().string() + "Snapshots/TxHashSet." + blockHeader.FormatHash() + ".zip";
 	if (m_txHashSetManager.SaveSnapshot(blockHeader, destination))
 	{
 		return destination;
@@ -228,7 +228,7 @@ std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHeight(const uint64_t hei
 
 std::vector<BlockWithOutputs> BlockChainServer::GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const
 {
-	const uint64_t highestHeight = std::min(m_pChainState->GetHeight(EChainType::CONFIRMED), maxHeight);
+	const uint64_t highestHeight = (std::min)(m_pChainState->GetHeight(EChainType::CONFIRMED), maxHeight);
 
 	std::vector<BlockWithOutputs> blocksWithOutputs;
 	blocksWithOutputs.reserve(highestHeight - startHeight + 1);

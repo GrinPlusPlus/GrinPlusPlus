@@ -1,5 +1,4 @@
 #include "ChainStore.h"
-#include <filesystem.hpp>
 #include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
 #include <vector>
@@ -80,7 +79,7 @@ BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChai
 	Chain& chain1 = GetChain(chainType1);
 	Chain& chain2 = GetChain(chainType2);
 
-	uint64_t height = std::min(chain1.GetTip()->GetHeight(), chain2.GetTip()->GetHeight());
+	uint64_t height = (std::min)(chain1.GetTip()->GetHeight(), chain2.GetTip()->GetHeight());
 	BlockIndex* pChain1Index = chain1.GetByHeight(height);
 	BlockIndex* pChain2Index = chain2.GetByHeight(height);
 

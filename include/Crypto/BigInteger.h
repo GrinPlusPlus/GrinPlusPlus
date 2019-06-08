@@ -78,8 +78,6 @@ public:
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
 	std::string ToHex() const;
 
-	CBigInteger addMod(const CBigInteger& addend, const CBigInteger& mod) const;
-
 	//
 	// Operators
 	//
@@ -98,7 +96,7 @@ public:
 	CBigInteger operator^(const CBigInteger& rhs) const;
 
 	int operator%(const int modulo) const;
-	CBigInteger operator%(const CBigInteger& modulo) const;
+	//CBigInteger operator%(const CBigInteger& modulo) const;
 
 	unsigned char& operator[] (const size_t x) { return m_data[x]; }
 	const unsigned char& operator[] (const size_t x) const { return m_data[x]; }
@@ -272,113 +270,65 @@ std::string CBigInteger<NUM_BYTES, ALLOC>::ToHex() const
 	return stream.str();
 }
 
-template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::addMod(const CBigInteger<NUM_BYTES, ALLOC>& addend, const CBigInteger<NUM_BYTES, ALLOC>& mod) const
-{
-	return *this + addend; // TODO: Handle mod
-	//std::vector<unsigned char, ALLOC> zeroVector(NUM_BYTES, 0);
-	//std::vector<unsigned char, ALLOC> totalSum(NUM_BYTES);
-
-	//int carry = 0;
-
-	//for (int i = NUM_BYTES - 1; i >= 1; i--)
-	//{
-	//	int digit1 = m_data[i];
-	//	int digit2 = addend.GetData()[i];
-
-	//	int sum = digit1 + digit2 + carry;
-
-	//	if (sum > 255)
-	//	{
-	//		carry = 1;
-	//		sum -= 256;
-	//	}
-	//	else
-	//	{
-	//		carry = 0;
-	//	}
-
-	//	totalSum[i] = sum;
-	//}
-
-	//int digit1 = m_data[0];
-	//int digit2 = addend.GetData()[0];
-	//int sum = digit1 + digit2 + carry;
-
-	//while (sum > 255)
-	//{
-	//	totalSum[0] = 255;
-	//	int remainder = sum - 255;
-	//	CBigInteger<NUM_BYTES, ALLOC> sum(&totalSum[0]);
-
-	//	CBigInteger<NUM_BYTES, ALLOC> mod = sum % mod;
-	//	totalSum = mod.GetData();
-
-	//	sum = totalSum[0] +
-	//}
-
-	//return CBigInteger<NUM_BYTES, ALLOC>(&totalSum[0]);
-}
-
-template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator*(const CBigInteger<NUM_BYTES, ALLOC>& A) const
-{
-	const CBigInteger<NUM_BYTES, ALLOC> ZERO = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(0);
-	if (A == ZERO)
-	{
-		return ZERO;
-	}
-
-	CBigInteger<NUM_BYTES, ALLOC> multiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(1);
-	CBigInteger<NUM_BYTES, ALLOC> nextMultiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(2);
-	CBigInteger<NUM_BYTES, ALLOC> product = *this;
-
-	while (nextMultiplier <= A)
-	{
-		multiplier = nextMultiplier;
-
-		Double(product);
-		Double(nextMultiplier);
-	}
-
-	CBigInteger<NUM_BYTES, ALLOC> remaining = A - multiplier;
-
-	if (remaining > ZERO)
-	{
-		product = product + (*this * remaining);
-	}
-
-	return product;
-
-
-	//// TODO: This math is all wrong
-	//std::vector<unsigned char, ALLOC> tempNUM_BYTES;
-
-	//int result = 0;
-	//int k = 0;
-	//for (int i = 0; i < A.NUM_BYTES; i++)
-	//{
-	//	k = i;
-	//	int carry = 0;
-
-	//	for (int j = 0; j < this->NUM_BYTES; j++)
-	//	{
-	//		result = A.m_data[i] * this->m_data[j] + temp[k];
-	//		temp[k] = (result + carry) % 256;
-	//		carry = (result + carry) / 256;
-	//		k++;
-	//	}
-
-	//	if (carry != 0)
-	//	{
-	//		temp[k] = temp[k] + carry;
-	//		k++;
-	//	}
-	//}
-
-	//CBigInteger<NUM_BYTES, ALLOC> product(&temp[0]);
-	//return product;
-}
+//template<size_t NUM_BYTES, class ALLOC>
+//CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator*(const CBigInteger<NUM_BYTES, ALLOC>& A) const
+//{
+//	const CBigInteger<NUM_BYTES, ALLOC> ZERO = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(0);
+//	if (A == ZERO)
+//	{
+//		return ZERO;
+//	}
+//
+//	CBigInteger<NUM_BYTES, ALLOC> multiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(1);
+//	CBigInteger<NUM_BYTES, ALLOC> nextMultiplier = CBigInteger<NUM_BYTES, ALLOC>::ValueOf(2);
+//	CBigInteger<NUM_BYTES, ALLOC> product = *this;
+//
+//	while (nextMultiplier <= A)
+//	{
+//		multiplier = nextMultiplier;
+//
+//		Double(product);
+//		Double(nextMultiplier);
+//	}
+//
+//	CBigInteger<NUM_BYTES, ALLOC> remaining = A - multiplier;
+//
+//	if (remaining > ZERO)
+//	{
+//		product = product + (*this * remaining);
+//	}
+//
+//	return product;
+//
+//
+//	//// TODO: This math is all wrong
+//	//std::vector<unsigned char, ALLOC> tempNUM_BYTES;
+//
+//	//int result = 0;
+//	//int k = 0;
+//	//for (int i = 0; i < A.NUM_BYTES; i++)
+//	//{
+//	//	k = i;
+//	//	int carry = 0;
+//
+//	//	for (int j = 0; j < this->NUM_BYTES; j++)
+//	//	{
+//	//		result = A.m_data[i] * this->m_data[j] + temp[k];
+//	//		temp[k] = (result + carry) % 256;
+//	//		carry = (result + carry) / 256;
+//	//		k++;
+//	//	}
+//
+//	//	if (carry != 0)
+//	//	{
+//	//		temp[k] = temp[k] + carry;
+//	//		k++;
+//	//	}
+//	//}
+//
+//	//CBigInteger<NUM_BYTES, ALLOC> product(&temp[0]);
+//	//return product;
+//}
 
 template<size_t NUM_BYTES, class ALLOC>
 CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator+(const CBigInteger<NUM_BYTES, ALLOC>& addend) const
@@ -521,17 +471,17 @@ int CBigInteger<NUM_BYTES, ALLOC>::operator%(const int modulo) const
 
 	return modResult.m_data[NUM_BYTES - 1];
 }
-
-template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator%(const CBigInteger<NUM_BYTES, ALLOC>& modulo) const
-{
-	CBigInteger<NUM_BYTES, ALLOC> quotient = *this / modulo;
-
-	CBigInteger<NUM_BYTES, ALLOC> product = quotient * modulo;
-	CBigInteger<NUM_BYTES, ALLOC> modResult = *this - product;
-
-	return modResult;
-}
+//
+//template<size_t NUM_BYTES, class ALLOC>
+//CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator%(const CBigInteger<NUM_BYTES, ALLOC>& modulo) const
+//{
+//	CBigInteger<NUM_BYTES, ALLOC> quotient = *this / modulo;
+//
+//	CBigInteger<NUM_BYTES, ALLOC> product = quotient * modulo;
+//	CBigInteger<NUM_BYTES, ALLOC> modResult = *this - product;
+//
+//	return modResult;
+//}
 
 template<size_t NUM_BYTES, class ALLOC>
 CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::operator^(const CBigInteger<NUM_BYTES, ALLOC>& rhs) const

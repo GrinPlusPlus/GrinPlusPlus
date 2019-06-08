@@ -31,7 +31,7 @@ void WalletDB::Open()
 
 	// open DB // TODO: Create one DB per username?
 	const std::string dbPath = m_config.GetWalletConfig().GetWalletDirectory();
-	ghc::filesystem::create_directories(dbPath);
+	fs::create_directories(dbPath);
 
 	std::vector<std::string> columnFamilies;
 	Status listStatus = DB::ListColumnFamilies(options, dbPath, &columnFamilies);

@@ -4,7 +4,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
-#include <filesystem.hpp>
+#include <filesystem.h>
 
 TxHashSetZip::TxHashSetZip(const Config& config)
 	: m_config(config)
@@ -49,16 +49,16 @@ bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) c
 bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 {
 	const std::string kernelDir = m_config.GetTxHashSetDirectory() + "kernel";
-	const ghc::filesystem::path kernelPath(kernelDir);
-	if (ghc::filesystem::exists(kernelPath))
+	const fs::path kernelPath(kernelDir);
+	if (fs::exists(kernelPath))
 	{
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractKernelFolder - Kernel folder exists. Deleting its contents now.");
 		std::error_code errorCode;
-		const uint64_t removedFiles = ghc::filesystem::remove_all(kernelPath, errorCode);
+		const uint64_t removedFiles = fs::remove_all(kernelPath, errorCode);
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractKernelFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
-	const bool kernelDirCreated = ghc::filesystem::create_directories(kernelPath);
+	const bool kernelDirCreated = fs::create_directories(kernelPath);
 	if (!kernelDirCreated)
 	{
 		LoggerAPI::LogError("TxHashSetZip::ExtractKernelFolder - Failed to create Kernel folder.");
@@ -82,16 +82,16 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
 	const std::string outputDir = m_config.GetTxHashSetDirectory() + "output";
-	const ghc::filesystem::path outputPath(outputDir);
-	if (ghc::filesystem::exists(outputPath))
+	const fs::path outputPath(outputDir);
+	if (fs::exists(outputPath))
 	{
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractOutputFolder - Output folder exists. Deleting its contents now.");
 		std::error_code errorCode;
-		const uint64_t removedFiles = ghc::filesystem::remove_all(outputPath, errorCode);
+		const uint64_t removedFiles = fs::remove_all(outputPath, errorCode);
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractOutputFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
-	const bool outputDirCreated = ghc::filesystem::create_directories(outputPath);
+	const bool outputDirCreated = fs::create_directories(outputPath);
 	if (!outputDirCreated)
 	{
 		LoggerAPI::LogError("TxHashSetZip::ExtractOutputFolder - Failed to create Output folder.");
@@ -117,16 +117,16 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
 	const std::string rangeProofDir = m_config.GetTxHashSetDirectory() + "rangeproof";
-	const ghc::filesystem::path rangeProofPath(rangeProofDir);
-	if (ghc::filesystem::exists(rangeProofPath))
+	const fs::path rangeProofPath(rangeProofDir);
+	if (fs::exists(rangeProofPath))
 	{
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractRangeProofFolder - RangeProof folder exists. Deleting its contents now.");
 		std::error_code errorCode;
-		const uint64_t removedFiles = ghc::filesystem::remove_all(rangeProofPath, errorCode);
+		const uint64_t removedFiles = fs::remove_all(rangeProofPath, errorCode);
 		LoggerAPI::LogDebug("TxHashSetZip::ExtractRangeProofFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
-	const bool rangeProofDirCreated = ghc::filesystem::create_directories(rangeProofPath);
+	const bool rangeProofDirCreated = fs::create_directories(rangeProofPath);
 	if (!rangeProofDirCreated)
 	{
 		LoggerAPI::LogError("TxHashSetZip::ExtractRangeProofFolder - Failed to create RangeProof folder.");

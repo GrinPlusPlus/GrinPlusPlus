@@ -4,7 +4,6 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
-#include <async++.h>
 
 Pipeline::Pipeline(const Config& config, ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
 	: m_config(config), m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
@@ -77,11 +76,11 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 			else
 			{
 				// Using when_any to find task which finishes first
-				std::vector<async::task<void>> tasks;
+				std::vector<std::thread> tasks;
 				for (size_t i = 0; i < blocksToProcess; i++)
 				{
 					const BlockEntry& blockEntry = pipeline.m_blocksToProcess.at(i);
-					tasks.push_back(async::spawn([&pipeline, blockEntry] 
+					tasks.push_back(std::thread([&pipeline, blockEntry] 
 					{
 						const EBlockChainStatus status = pipeline.m_blockChainServer.AddBlock(blockEntry.block);
 						if (status == EBlockChainStatus::INVALID)
@@ -93,7 +92,10 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 
 				for (auto& task : tasks)
 				{
-					task.wait();
+					if (task.joinable())
+					{
+						task.join();
+					}
 				}
 
 				std::unique_lock<std::shared_mutex> writeLock(pipeline.m_blockMutex);

@@ -83,7 +83,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 
 PublicExtKey KeyGenerator::GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const
 {
-	throw std::exception("Not implemented yet");
+	throw std::exception();
 }
 
 std::vector<unsigned char> KeyGenerator::GetSeed(const EKeyChainType& keyChainType) const

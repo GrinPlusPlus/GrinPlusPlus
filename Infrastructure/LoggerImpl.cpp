@@ -3,7 +3,6 @@
 
 #include <Infrastructure/Logger.h>
 #include <fstream>
-#include <filesystem>
 
 Logger& Logger::GetInstance()
 {

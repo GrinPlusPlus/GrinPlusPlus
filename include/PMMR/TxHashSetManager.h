@@ -6,9 +6,9 @@
 #include <Database/BlockDb.h>
 
 #ifdef MW_PMMR
-#define TXHASHSET_API __declspec(dllexport)
+#define TXHASHSET_API EXPORT
 #else
-#define TXHASHSET_API __declspec(dllimport)
+#define TXHASHSET_API IMPORT
 #endif
 
 class TXHASHSET_API TxHashSetManager

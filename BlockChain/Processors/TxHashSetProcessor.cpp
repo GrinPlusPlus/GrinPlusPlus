@@ -18,7 +18,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	std::unique_ptr<BlockHeader> pHeader = m_chainState.GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
 	{
-		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Header not found for hash %s.", HexUtil::ConvertHash(blockHash)));
+		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Header not found for hash %s.", HexUtil::ConvertHash(blockHash).c_str()));
 		return false;
 	}
 

@@ -10,6 +10,7 @@ class IP2PServer;
 class NodeRestServer;
 class TxHashSetManager;
 class ITransactionPool;
+class DefaultNodeClient;
 
 class NodeDaemon
 {
@@ -29,4 +30,5 @@ private:
 	IP2PServer* m_pP2PServer;
 
 	NodeRestServer* m_pNodeRestServer;
+	DefaultNodeClient* m_pNodeClient;
 };

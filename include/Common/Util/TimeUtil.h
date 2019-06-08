@@ -12,7 +12,11 @@ public:
 	{
 		std::time_t time(timestamp);
 		std::tm tm;
+		#ifdef _WIN32
 		localtime_s(&tm, &time);
+		#else
+		tm = *localtime(&time);
+		#endif
 		char buffer[32];
 		std::strftime(buffer, 32, format.c_str(), &tm);
 		return std::string(buffer);
@@ -22,7 +26,11 @@ public:
 	{
 		std::time_t time(timestamp);
 		std::tm tm;
+		#ifdef _WIN32
 		localtime_s(&tm, &time);
+		#else
+		tm = *localtime(&time);
+		#endif
 		char buffer[32];
 		std::strftime(buffer, 32, format.c_str(), &tm);
 		return std::string(buffer);

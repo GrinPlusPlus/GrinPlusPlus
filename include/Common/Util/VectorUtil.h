@@ -14,7 +14,7 @@ namespace VectorUtil
 	template <typename T>
 	static void Remove(std::vector<T>& vec, const size_t pos)
 	{
-		std::vector<T>::iterator it = vec.begin();
+		auto it = vec.begin();
 		std::advance(it, pos);
 		vec.erase(it);
 	}

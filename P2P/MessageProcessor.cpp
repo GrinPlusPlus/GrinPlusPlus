@@ -35,9 +35,8 @@
 #include <Common/Util/FileUtil.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
-#include <async++.h>
+#include <thread>
 #include <fstream>
-#include <filesystem>
 
 static const int BUFFER_SIZE = 256 * 1024;
 
@@ -180,7 +179,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			case Headers:
 			{
 				IBlockChainServer& blockChainServer = m_blockChainServer;
-				async::spawn([&blockChainServer, rawMessage, formattedIPAddress] {
+				std::thread processHeaders([&blockChainServer, rawMessage, formattedIPAddress] {
 					ByteBuffer byteBuffer(rawMessage.GetPayload());
 					const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
 					const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
@@ -190,6 +189,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					blockChainServer.AddBlockHeaders(blockHeaders); // TODO: Handle failures
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
+				processHeaders.detach();
 
 				return EStatus::SUCCESS;
 			}

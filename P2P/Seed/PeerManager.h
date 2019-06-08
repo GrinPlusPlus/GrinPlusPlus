@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <memory>
 #include <shared_mutex>
+#include <thread>
 
 class PeerManager
 {

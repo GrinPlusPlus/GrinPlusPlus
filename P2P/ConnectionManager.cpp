@@ -47,18 +47,30 @@ void ConnectionManager::Stop()
 {
 	m_terminate = true;
 
-	m_seeder.Stop();
-	m_syncer.Stop();
-	m_pipeline.Stop();
-	m_dandelion.Stop();
-
-	if (m_broadcastThread.joinable())
+	try
 	{
-		m_broadcastThread.join();
-	}
+		m_seeder.Stop();
+		m_syncer.Stop();
+		m_pipeline.Stop();
+		m_dandelion.Stop();
 
-	PruneConnections(false);
-	m_peerManager.Stop();
+		if (m_broadcastThread.joinable())
+		{
+			m_broadcastThread.join();
+		}
+
+		PruneConnections(false);
+		m_peerManager.Stop();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		LoggerAPI::LogError("ConnectionManager::Stop - " + std::string(e.what()));
+	}
+	catch (...)
+	{
+		LoggerAPI::LogError("ConnectionManager::Stop - Unknown exception thrown");
+	}
 }
 
 void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
@@ -301,9 +313,15 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 	for (Connection* pConnection : m_connectionsToClose)
 	{
-		pConnection->Disconnect();
-
-		delete pConnection;
+		try
+		{
+			pConnection->Disconnect();
+			delete pConnection;
+		}
+		catch (std::exception& e)
+		{
+			LoggerAPI::LogError("ConnectionManager::PruneConnections - Error disconnecting: " + std::string(e.what()));
+		}
 	}
 
 	m_connectionsToClose.clear();

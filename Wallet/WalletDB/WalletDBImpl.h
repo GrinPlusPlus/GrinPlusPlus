@@ -53,7 +53,7 @@ private:
 
 	const Config& m_config;
 
-	DB* m_pDatabase;
+	DB* m_pDatabase = { nullptr };
 	ColumnFamilyHandle* m_pDefaultHandle;
 	ColumnFamilyHandle* m_pSeedHandle;
 	ColumnFamilyHandle* m_pNextChildHandle;

@@ -31,16 +31,15 @@ void WalletDB::Open()
 
 	// open DB // TODO: Create one DB per username?
 	const std::string dbPath = m_config.GetWalletConfig().GetWalletDirectory();
-	std::filesystem::create_directories(dbPath);
+	fs::create_directories(dbPath);
 
 	std::vector<std::string> columnFamilies;
-	DB::ListColumnFamilies(options, dbPath, &columnFamilies);
-
-	if (columnFamilies.size() <= 1)
+	Status listStatus = DB::ListColumnFamilies(options, dbPath, &columnFamilies);
+	if (!listStatus.ok() || columnFamilies.size() <= 1)
 	{
 		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor() });
 		std::vector<ColumnFamilyHandle*> columnHandles;
-		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
+		DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
 
 		m_pDefaultHandle = columnHandles[0];
 		m_pDatabase->CreateColumnFamily(SEED_COLUMN.options, SEED_COLUMN.name, &m_pSeedHandle);
@@ -456,6 +455,6 @@ namespace WalletDBAPI
 	WALLET_DB_API void CloseWalletDB(IWalletDB* pWalletDB)
 	{
 		((WalletDB*)pWalletDB)->Close();
-		delete pWalletDB;
+		delete (WalletDB*)pWalletDB;
 	}
 }

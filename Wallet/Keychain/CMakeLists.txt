@@ -8,7 +8,12 @@ file(GLOB Keychain_SRC
 	"PublicKeyCalculator.cpp"
 	"Mnemonic.cpp"
 )
+if (WIN32)
+    set(OS_LIBS "")
+else(WIN32)
+	set(OS_LIBS "-framework CoreFoundation")
+endif(WIN32)
 
 add_library(${TARGET_NAME} STATIC ${Keychain_SRC})
 add_dependencies(${TARGET_NAME} Infrastructure Crypto Core)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core)
+target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core ${OS_LIBS})

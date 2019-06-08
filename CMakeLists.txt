@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 # HunterGate Package Manager
+set(HUNTER_CONFIGURATION_TYPES Release)
 set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
 set(HUNTER_STATUS_DEBUG TRUE)
 include("HunterGate.cmake")
@@ -39,8 +40,10 @@ if(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /OPT:REF /INCREMENTAL:NO")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]") #Case insensitive match
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17 -stdlib=libc++")
+else ()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -56,8 +59,9 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/mio/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/stduuid/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru-cache/include
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/asio/asio/include
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -65,15 +69,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 # Dependencies
-# Async++
-hunter_add_package(Async++)
-find_package(Async++ CONFIG REQUIRED)
-set_target_properties(Async++::Async++ PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
-
 # JsonCPP
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
-set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
+#set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

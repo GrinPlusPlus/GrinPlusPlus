@@ -15,6 +15,11 @@
 # pragma once
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
+#ifndef NI_MAXHOST
+#define	NI_MAXHOST	1025
+#define	NI_MAXSERV	32
+#endif
+
 #include "asio/detail/config.hpp"
 #include "asio/error.hpp"
 #include "asio/ip/basic_resolver_results.hpp"
@@ -25,6 +30,7 @@
 #include "asio/detail/memory.hpp"
 #include "asio/detail/resolve_op.hpp"
 #include "asio/detail/socket_ops.hpp"
+
 
 #if defined(ASIO_HAS_IOCP)
 # include "asio/detail/win_iocp_io_context.hpp"

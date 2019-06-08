@@ -101,6 +101,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 
 		if (handshakeSuccess)
 		{
+			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Successful Handshake");
 			pConnection->m_connectionManager.AddConnection(pConnection);
 			if (pConnection->m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
 			{
@@ -118,9 +119,10 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 			return;
 		}
 	}
-	catch (std::exception & e)
+	catch (...)
 	{
-		pConnection->m_terminate = true;
+        LoggerAPI::LogError("Connection::Thread_ProcessConnection - Exception caught");
+        pConnection->m_terminate = true;
 		pConnection->m_connectionThread.detach();
 		delete pConnection;
 		return;
@@ -198,6 +200,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 		}
 		catch (const SocketException&)
 		{
+			#ifdef _WIN32
 			const int lastError = WSAGetLastError();
 
 			TCHAR* s = NULL;
@@ -208,7 +211,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Socket exception occurred: " + errorMessage);
 
 			LocalFree(s);
-
+			#endif
 			break;
 		}
 		catch (const std::exception& e)

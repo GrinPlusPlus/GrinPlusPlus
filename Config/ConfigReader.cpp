@@ -5,7 +5,6 @@
 #include <Config/Genesis.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/FileUtil.h>
-#include <filesystem>
 
 Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType environmentType) const
 {
@@ -80,7 +79,7 @@ Environment ConfigReader::ReadEnvironment(const Json::Value& root, const EEnviro
 std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironmentType environmentType) const
 {
 	const std::string dataDirectory = environmentType == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET";
-	const std::string defaultPath = FileUtil::GetHomeDirectory() + "\\.GrinPP\\" + dataDirectory  + "\\";
+	const std::string defaultPath = FileUtil::GetHomeDirectory() + "/.GrinPP/" + dataDirectory + "/"; //+ SEPARATOR + ".GrinPP" + SEPARATOR + dataDirectory  + SEPARATOR;
 	if (root.isMember(ConfigProps::DATA_PATH))
 	{
 		return root.get(ConfigProps::DATA_PATH, defaultPath).asString();

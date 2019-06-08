@@ -3,11 +3,15 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <filesystem>
+#include <filesystem.h>
 #include <stdlib.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <Windows.h>
+#define SEPARATOR "\\"
+#else
+#include <unistd.h>
+#define SEPARATOR "/"
 #endif
 
 class FileUtil
@@ -15,7 +19,7 @@ class FileUtil
 public:
 	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
 	{
-		if (!std::filesystem::exists(std::filesystem::path(filePath)))
+		if (!fs::exists(fs::path(filePath)))
 		{
 			return false;
 		}
@@ -38,15 +42,15 @@ public:
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
 	{
-		const std::filesystem::path destinationPath(destination);
-		if (std::filesystem::exists(destinationPath))
+		const fs::path destinationPath(destination);
+		if (fs::exists(destinationPath))
 		{
-			std::filesystem::remove(destinationPath);
+			fs::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const std::filesystem::path sourcePath(source);
-		std::filesystem::rename(sourcePath, destinationPath, error);
+		const fs::path sourcePath(source);
+		fs::rename(sourcePath, destinationPath, error);
 
 		return !error;
 	}
@@ -69,9 +73,9 @@ public:
 	static bool RemoveFile(const std::string& filePath)
 	{
 		std::error_code ec;
-		if (std::filesystem::exists(filePath, ec))
+		if (fs::exists(filePath, ec))
 		{
-			const uintmax_t removed = std::filesystem::remove_all(filePath, ec);
+			const uintmax_t removed = fs::remove_all(filePath, ec);
 
 			return removed > 0 && ec.value() == 0;
 		}
@@ -82,14 +86,14 @@ public:
 	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
 	{
 		std::error_code ec;
-		std::filesystem::create_directories(destDir, ec);
+		fs::create_directories(destDir, ec);
 
-		if (!std::filesystem::exists(sourceDir, ec) || !std::filesystem::exists(destDir, ec))
+		if (!fs::exists(sourceDir, ec) || !fs::exists(destDir, ec))
 		{
 			return false;
 		}
 
-		std::filesystem::copy(sourceDir, destDir, std::filesystem::copy_options::recursive, ec);
+		fs::copy(sourceDir, destDir, fs::copy_options::recursive, ec);
 
 		return ec.value() == 0;
 	}
@@ -108,8 +112,14 @@ public:
 		return std::string(&homeDriveBuf[0]) + std::string(&homePathBuf[0]);
 		#else
 		char* pHomePath = getenv("HOME");
-
-		return std::string(pHomePath);
+		if (pHomePath != nullptr)
+		{
+			return std::string(pHomePath);
+		}
+		else
+		{
+			return "~";
+		}
 		#endif
 	}
 
@@ -126,8 +136,7 @@ public:
 
 		return success;
 #else
-		// TODO: Implement
-		return true;
+		return truncate(filePath.c_str(), size) == 0;
 #endif
 	}
 

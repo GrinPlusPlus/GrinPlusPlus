@@ -1,7 +1,7 @@
 #include "Zipper.h"
 
 #include <fstream>
-#include <filesystem>
+#include <filesystem.h>
 
 bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std::string>& paths)
 {
@@ -14,7 +14,7 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	bool _return = true;
 	for (size_t i = 0; i < paths.size(); i++)
 	{
-		if (std::filesystem::is_directory(std::filesystem::path(paths[i])))
+		if (fs::is_directory(fs::path(paths[i])))
 		{
 			const std::string destinationPath = paths[i].substr(std::max(paths[i].rfind('\\'), paths[i].rfind('/')) + 1);
 			if (!AddDirectory(zf, paths[i], destinationPath))
@@ -38,11 +38,11 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	return _return;
 }
 
-bool Zipper::AddDirectory(zipFile zf, const std::filesystem::path& sourceDir, const std::string& destDir)
+bool Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const std::string& destDir)
 {
-	for (const auto& entry : std::filesystem::directory_iterator(sourceDir))
+	for (const auto& entry : fs::directory_iterator(sourceDir))
 	{
-		if (std::filesystem::is_directory(entry))
+		if (fs::is_directory(entry))
 		{
 			if (!AddDirectory(zf, entry, destDir + "/" + entry.path().filename().string()))
 			{

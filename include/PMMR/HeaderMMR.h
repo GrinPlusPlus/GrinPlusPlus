@@ -9,9 +9,9 @@
 #include <vector>
 
 #ifdef MW_PMMR
-#define PMMR_API __declspec(dllexport)
+#define PMMR_API EXPORT
 #else
-#define PMMR_API __declspec(dllimport)
+#define PMMR_API IMPORT
 #endif
 
 // Forward Declarations

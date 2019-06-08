@@ -18,6 +18,7 @@
 static void SigIntHandler(int signum)
 {
 	printf("\n\nCtrl-C Pressed\n\n");
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	ShutdownManager::GetInstance().Shutdown();
 }
 
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
 	const Config config = ConfigManager::LoadConfig(environment);
 	NodeDaemon node(config);
 	INodeClient* pNodeClient = node.Initialize();
-
+	
 	WalletDaemon wallet(config, *pNodeClient);
 	wallet.Initialize();
 
@@ -86,7 +87,6 @@ int main(int argc, char* argv[])
 	}
 
 	wallet.Shutdown();
-	delete pNodeClient;
 	node.Shutdown();
 
 	/* Un-initialize the civetweb library */

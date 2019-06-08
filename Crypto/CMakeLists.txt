@@ -9,13 +9,18 @@ include_directories(
 
 if(MSVC)
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-		string(REGEX REPLACE "/W[0-4]" "/W2 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+			string(REGEX REPLACE "/W[0-4]" "/W2 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2 /WX")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2 /WX")
     endif()
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsecp256k1-config.h ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1-zkp/src/libsecp256k1-config.h COPYONLY)
+if(WIN32)
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsecp256k1-config.h ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1-zkp/src/libsecp256k1-config.h COPYONLY)
+else()
+		include_directories(${GOBJECT_INCLUDE_DIR})
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsecp256k1-config-mac.h ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1-zkp/src/libsecp256k1-config.h COPYONLY)
+endif()
 
 file(GLOB CRYPTO_SRC
 	"aes.cpp"
@@ -53,7 +58,7 @@ file(GLOB CRYPTO_TESTS_SRC
 if (WIN32)
     set(OS_SPECIFIC_LIBS "")
 else(WIN32)
-    find_library(OS_SPECIFIC_LIBS pthread)
+    find_library(OS_SPECIFIC_LIBS pthread GMP)
 endif(WIN32)
 
 add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})

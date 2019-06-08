@@ -6,12 +6,12 @@
 #include <json/json.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <filesystem>
+#include <filesystem.h>
 #include <fstream>
 
 Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 {
-	const std::string currentDir = std::filesystem::current_path().string();
+	const std::string currentDir = fs::current_path().string();
 	const std::string configPath = currentDir + (environment == EEnvironmentType::MAINNET ? "/mainnet.json" : "/floonet.json");
 
 	std::ifstream file(configPath, std::ifstream::binary);
@@ -30,7 +30,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 	}
 	else
 	{
-		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir));
+		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir.c_str()));
 
 		Json::Value emptyRoot;
 		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);

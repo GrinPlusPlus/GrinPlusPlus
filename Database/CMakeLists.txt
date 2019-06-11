@@ -12,7 +12,9 @@ set_target_properties(RocksDB::rocksdb PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEB
 if (WIN32)
     set(OS_LIBS "")
 else(WIN32)
+	hunter_add_package(gflags)
 	find_package(gflags CONFIG REQUIRED)
+
 	set(OS_LIBS gflags)
 endif(WIN32)
 

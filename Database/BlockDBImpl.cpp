@@ -26,6 +26,8 @@ void BlockDB::OpenDB()
 	Options options;
 	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
 	options.IncreaseParallelism();
+	options.max_open_files = 25;
+
 	//options.OptimizeLevelStyleCompaction();
 	// create the DB if it's not already present
 	options.create_if_missing = true;

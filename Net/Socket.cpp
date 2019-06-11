@@ -142,7 +142,11 @@ bool Socket::IsActive() const
 		return true;
 	}
 
-	LoggerAPI::LogInfo("Socket::IsActive() - Connection not active. Error: " + m_errorCode.message());
+	if (m_errorCode)
+	{
+		LoggerAPI::LogInfo("Socket::IsActive() - Connection with " + m_address.Format() + " not active. Error: " + m_errorCode.message());
+	}
+	
 	return false;
 }
 
@@ -235,13 +239,28 @@ bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data)
 		data = std::vector<unsigned char>(numBytes);
 	}
 
-	const size_t bytesRead = asio::read(*m_pSocket, asio::buffer(data.data(), numBytes), m_errorCode);
-	if (m_errorCode && m_errorCode.value() != EAGAIN)
+	size_t numTries = 0;
+	size_t bytesRead = 0;
+	while (numTries++ < 3)
 	{
-		throw SocketException();
+		bytesRead += asio::read(*m_pSocket, asio::buffer(data.data() + bytesRead, numBytes - bytesRead), m_errorCode);
+		if (m_errorCode && m_errorCode.value() != EAGAIN)
+		{
+			throw SocketException();
+		}
+
+		if (bytesRead == numBytes)
+		{
+			return true;
+		}
+		else if (m_errorCode.value() == EAGAIN)
+		{
+			LoggerAPI::LogDebug("Socket::Receive - EAGAIN error returned. Pausing briefly, and then trying again.");
+			std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		}
 	}
 
-	return bytesRead == numBytes;
+	return false;
 }
 
 bool Socket::HasReceivedData()

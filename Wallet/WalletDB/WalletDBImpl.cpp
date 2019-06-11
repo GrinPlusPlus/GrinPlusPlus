@@ -24,6 +24,7 @@ void WalletDB::Open()
 	Options options;
 	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
 	options.IncreaseParallelism();
+	options.max_open_files = 10;
 
 	// create the DB if it's not already present
 	options.create_if_missing = true;
@@ -157,6 +158,7 @@ KeyChainPath WalletDB::GetNextChildPath(const std::string& username, const KeyCh
 	const Status updateStatus = m_pDatabase->Put(WriteOptions(), m_pNextChildHandle, key, newValue);
 	if (!updateStatus.ok())
 	{
+		LoggerAPI::LogError("WalletDB::GetNextChildPath - Failed to update.");
 		throw WalletStoreException();
 	}
 
@@ -299,6 +301,7 @@ uint32_t WalletDB::GetNextTransactionId(const std::string& username)
 	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
 	if (pUserMetadata == nullptr)
 	{
+		LoggerAPI::LogError("WalletDB::GetNextTransactionId - User metadata null.");
 		throw WalletStoreException();
 	}
 
@@ -306,6 +309,7 @@ uint32_t WalletDB::GetNextTransactionId(const std::string& username)
 	const UserMetadata updatedMetadata(nextTxId + 1, pUserMetadata->GetRefreshBlockHeight(), pUserMetadata->GetRestoreLeafIndex());
 	if (!SaveMetadata(username, updatedMetadata))
 	{
+		LoggerAPI::LogError("WalletDB::GetNextTransactionId - Failed to update user metadata.");
 		throw WalletStoreException();
 	}
 
@@ -317,6 +321,7 @@ uint64_t WalletDB::GetRefreshBlockHeight(const std::string& username) const
 	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
 	if (pUserMetadata == nullptr)
 	{
+		LoggerAPI::LogError("WalletDB::GetRefreshBlockHeight - User metadata null.");
 		throw WalletStoreException();
 	}
 
@@ -328,6 +333,7 @@ bool WalletDB::UpdateRefreshBlockHeight(const std::string& username, const uint6
 	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
 	if (pUserMetadata == nullptr)
 	{
+		LoggerAPI::LogError("WalletDB::UpdateRefreshBlockHeight - User metadata null.");
 		throw WalletStoreException();
 	}
 
@@ -339,6 +345,7 @@ uint64_t WalletDB::GetRestoreLeafIndex(const std::string& username) const
 	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
 	if (pUserMetadata == nullptr)
 	{
+		LoggerAPI::LogError("WalletDB::GetRestoreLeafIndex - User metadata null.");
 		throw WalletStoreException();
 	}
 
@@ -350,6 +357,7 @@ bool WalletDB::UpdateRestoreLeafIndex(const std::string& username, const uint64_
 	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
 	if (pUserMetadata == nullptr)
 	{
+		LoggerAPI::LogError("WalletDB::UpdateRestoreLeafIndex - User metadata null.");
 		throw WalletStoreException();
 	}
 
@@ -358,11 +366,16 @@ bool WalletDB::UpdateRestoreLeafIndex(const std::string& username, const uint64_
 
 std::unique_ptr<UserMetadata> WalletDB::GetMetadata(const std::string& username) const
 {
-	const Slice key(GetUsernamePrefix(username));
+	const std::string usernamePrefix = GetUsernamePrefix(username);
+	LoggerAPI::LogDebug("WalletDB::GetMetadata - Looking up user metadata for key: " + usernamePrefix);
+
+	const Slice key(usernamePrefix);
 	std::string value;
 	Status readStatus = m_pDatabase->Get(ReadOptions(), m_pUserMetadataHandle, key, &value);
 	if (readStatus.ok())
 	{
+		LoggerAPI::LogDebug("WalletDB::GetMetadata - UserMetadata found. Deserializing now.");
+
 		const std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
 		ByteBuffer byteBuffer(bytes);
 		return std::make_unique<UserMetadata>(UserMetadata::Deserialize(byteBuffer));
@@ -373,7 +386,10 @@ std::unique_ptr<UserMetadata> WalletDB::GetMetadata(const std::string& username)
 
 bool WalletDB::SaveMetadata(const std::string& username, const UserMetadata& userMetadata)
 {
-	const Slice key(GetUsernamePrefix(username));
+	const std::string usernamePrefix = GetUsernamePrefix(username);
+	LoggerAPI::LogDebug("WalletDB::SaveMetadata - Saving user metadata with key: " + usernamePrefix);
+
+	const Slice key(usernamePrefix);
 
 	Serializer serializer;
 	userMetadata.Serialize(serializer);

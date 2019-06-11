@@ -5,6 +5,7 @@
 
 #include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
+#include <Infrastructure/Logger.h>
 
 StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
 	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
@@ -46,6 +47,7 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 
 	if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
 	{
+		LoggerAPI::LogWarning("StateSyncer::IsStateSyncDue - TxHashSet sync failed.");
 		return true;
 	}
 
@@ -63,12 +65,14 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 
 	if (m_requestedHeight == 0)
 	{
+		LoggerAPI::LogInfo("StateSyncer::IsStateSyncDue - Requesting TxHashSet for the first time.");
 		return true;
 	}
 
 	// If TxHashSet download timed out, request it from another peer.
-	if ((m_timeRequested + std::chrono::minutes(10)) < std::chrono::system_clock::now())
+	if ((m_timeRequested + std::chrono::minutes(20)) < std::chrono::system_clock::now())
 	{
+		LoggerAPI::LogWarning("StateSyncer::IsStateSyncDue - Download timed out.");
 		return true;
 	}
 
@@ -78,8 +82,15 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 		const uint64_t downloaded = syncStatus.GetDownloaded();
 		if (downloaded == 0)
 		{
+			LoggerAPI::LogWarning("StateSyncer::IsStateSyncDue - 30 seconds elapsed and download still not started.");
 			return true;
 		}
+	}
+
+	if (m_connectionId > 0 && !m_connectionManager.IsConnected(m_connectionId))
+	{
+		LoggerAPI::LogWarning("StateSyncer::IsStateSyncDue - Sync peer no longer connected.");
+		return true;
 	}
 
 	return false;
@@ -92,6 +103,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 	if (m_connectionId > 0)
 	{
+		LoggerAPI::LogWarning("StateSyncer::RequestState - Banning peer " + std::to_string(m_connectionId));
 		m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
 	}
 

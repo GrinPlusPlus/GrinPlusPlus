@@ -71,10 +71,18 @@ std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& us
 
 bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGenesis)
 {
-	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
-	LockedWallet wallet = m_sessionManager.GetWallet(token);
+	try
+	{
+		const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+		LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	wallet.GetWallet().RefreshOutputs(masterSeed, fromGenesis);
+		wallet.GetWallet().RefreshOutputs(masterSeed, fromGenesis);
+	}
+	catch(const std::exception& e)
+	{
+		LoggerAPI::LogError("WalletManager::CheckForOutputs - Exception thrown: " + std::string(e.what()));
+	}
+	
 
 	return true;
 }

@@ -47,6 +47,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 
 	// 5. Add Output positions to DB
 	{
+		LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Saving output positions.");
 		LockedChainState lockedState = m_chainState.GetLocked();
 		Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 
@@ -64,10 +65,12 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 6. Store TxHashSet
+	LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Using TxHashSet.");
 	LockedChainState lockedState = m_chainState.GetLocked();
 	lockedState.m_txHashSetManager.SetTxHashSet(pTxHashSet);
 
-	// 6. Update confirmed chain
+	// 7. Update confirmed chain
+	LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Updating confirmed chain.");
 	if (!UpdateConfirmedChain(lockedState, *pHeader))
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Failed to update confirmed chain for %s.", path.c_str()));

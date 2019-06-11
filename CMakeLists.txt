@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
+if(APPLE)
+		set(CMAKE_INSTALL_NAME_DIR "@executable_path")
+		set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
+set(BUILD_STATIC_LIBS ON)
+add_definitions(-DNDEBUG)
+
 # HunterGate Package Manager
 set(HUNTER_CONFIGURATION_TYPES Release)
 set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
@@ -12,9 +20,13 @@ HunterGate(
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 5)
-set(VERSION_REVISION 3)
+set(VERSION_REVISION 4)
 
+if(APPLE)
+project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.1)
+else()
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
+endif()
 
 message("Grin++ Version: ${PROJECT_VERSION}")
 

@@ -31,14 +31,14 @@ public:
 			messages.push_back(&msgs[i]);
 		}
 
-		LoggerAPI::LogDebug("KernelSignatureValidator::VerifyKernelSignatures - Start verify");
+		LoggerAPI::LogTrace("KernelSignatureValidator::VerifyKernelSignatures - Start verify");
 		if (!Crypto::VerifyKernelSignatures(signatures, commitments, messages))
 		{
 			LoggerAPI::LogError("KernelSignatureValidator::VerifyKernelSignatures - Failed to verify kernels.");
 			return false;
 		}
 
-		LoggerAPI::LogDebug("KernelSignatureValidator::VerifyKernelSignatures - Verify success");
+		LoggerAPI::LogTrace("KernelSignatureValidator::VerifyKernelSignatures - Verify success");
 		return true;
 	}
 };

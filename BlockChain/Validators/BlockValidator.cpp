@@ -23,7 +23,7 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block)
 	}
 
 	// Verify coinbase maturity
-	const uint64_t maximumBlockHeight = std::max(block.GetBlockHeader().GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+	const uint64_t maximumBlockHeight = (std::max)(block.GetBlockHeader().GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
 		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)

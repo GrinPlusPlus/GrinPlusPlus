@@ -453,7 +453,7 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 	{
-		const int bytesToRead = std::min((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
+		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 		const bool received = socket.Receive(bytesToRead, buffer);
 		if (!received || m_connectionManager.IsTerminating())
 		{

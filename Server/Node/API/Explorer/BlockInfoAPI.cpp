@@ -46,7 +46,7 @@ int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& se
 		Json::Value rootNode;
 
 		Json::Value blocksNode;
-		numBlocks = (int)std::min((uint64_t)numBlocks, tipHeight + 1);
+		numBlocks = (int)(std::min)((uint64_t)numBlocks, tipHeight + 1);
 		for (int i = 0; i < numBlocks; i++)
 		{
 			std::unique_ptr<BlockHeader> pBlockHeader = server.m_pBlockChainServer->GetBlockHeaderByHeight(tipHeight - i, EChainType::CONFIRMED);

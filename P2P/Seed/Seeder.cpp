@@ -32,25 +32,25 @@ void Seeder::Start()
 		m_seedThread.join();
 	}
 
-	/*if (m_listenerThread.joinable())
+	if (m_listenerThread.joinable())
 	{
 		m_listenerThread.join();
-	}*/
+	}
 
 	m_terminate = false;
 
 	m_seedThread = std::thread(Thread_Seed, std::ref(*this));
-	//m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
+	m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
 }
 
 void Seeder::Stop()
 {
 	m_terminate = true;
 
-	/*if (m_listenerThread.joinable())
+	if (m_listenerThread.joinable())
 	{
 		m_listenerThread.join();
-	}*/
+	}
 
 	if (m_seedThread.joinable())
 	{
@@ -79,7 +79,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 		if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now)
 		{
 			lastConnectTime = now;
-			const size_t connectionsToAdd = std::min((size_t)15, (minimumConnections - numOutbound));
+			const size_t connectionsToAdd = (std::min)((size_t)15, (minimumConnections - numOutbound));
 			for (size_t i = 0; i < connectionsToAdd; i++)
 			{
 				seeder.SeedNewConnection();

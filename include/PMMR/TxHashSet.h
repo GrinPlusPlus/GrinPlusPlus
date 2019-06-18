@@ -15,6 +15,7 @@ class OutputIdentifier;
 class IBlockChainServer;
 class IBlockDB;
 class Transaction;
+class SyncStatus;
 
 class ITxHashSet
 {
@@ -23,7 +24,7 @@ public:
 	// Validates all hashes, signatures, etc in the entire TxHashSet.
 	// This is typically only used during initial sync.
 	//
-	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer) = 0;
+	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus) = 0;
 
 	//
 	// Saves the commitments, MMR indices, and block height for all unspent outputs in the block.

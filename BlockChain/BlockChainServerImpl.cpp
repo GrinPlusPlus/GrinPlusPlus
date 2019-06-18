@@ -123,9 +123,9 @@ std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 	return "";
 }
 
-EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path)
+EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
 {
-	const bool success = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path);
+	const bool success = TxHashSetProcessor(m_config, *this, *m_pChainState, m_database.GetBlockDB()).ProcessTxHashSet(blockHash, path, syncStatus);
 
 	return success ? EBlockChainStatus::SUCCESS : EBlockChainStatus::INVALID;
 }

@@ -23,7 +23,7 @@ public:
 
 	virtual bool IsUnspent(const OutputLocation& location) const override final;
 	virtual bool IsValid(const Transaction& transaction) const override final;
-	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer) override final;
+	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus) override final;
 	virtual bool ApplyBlock(const FullBlock& block) override final;
 	virtual bool ValidateRoots(const BlockHeader& blockHeader) const override final;
 	virtual bool SaveOutputPositions(const BlockHeader& blockHeader, const uint64_t firstOutputIndex) override final;

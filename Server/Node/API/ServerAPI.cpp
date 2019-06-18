@@ -69,6 +69,12 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	const SyncStatus& syncStatus = pServer->m_pP2PServer->GetSyncStatus();
 	statusNode["sync_status"] = GetStatusString(syncStatus);
 
+	Json::Value stateNode;
+	stateNode["downloaded"] = syncStatus.GetDownloaded();
+	stateNode["download_size"] = syncStatus.GetDownloadSize();
+	stateNode["processing_status"] = syncStatus.GetProcessingStatus();
+	statusNode["state"] = stateNode;
+
 	Json::Value networkNode;
 	networkNode["height"] = syncStatus.GetNetworkHeight();
 	networkNode["total_difficulty"] = syncStatus.GetNetworkDifficulty();
@@ -100,10 +106,13 @@ std::string ServerAPI::GetStatusString(const SyncStatus& syncStatus)
 			return "SYNCING_HEADERS";
 		}
 		case ESyncStatus::SYNCING_TXHASHSET:
-		case ESyncStatus::PROCESSING_TXHASHSET:
 		case ESyncStatus::TXHASHSET_SYNC_FAILED:
 		{
-			return "SYNCING_TXHASHSET";
+			return "DOWNLOADING_TXHASHSET";
+		}
+		case ESyncStatus::PROCESSING_TXHASHSET:
+		{
+			return "PROCESSING_TXHASHSET";
 		}
 		case ESyncStatus::SYNCING_BLOCKS:
 		{

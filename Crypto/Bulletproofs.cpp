@@ -159,11 +159,10 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 	{
 		uint64_t value;
 		std::vector<unsigned char> blindingFactorBytes(32);
-		std::vector<unsigned char> message(16);
+		std::vector<unsigned char> message(20, 0);
 
 		int result = secp256k1_bulletproof_rangeproof_rewind(
 			m_pContext,
-			m_pGenerators,
 			&value,
 			blindingFactorBytes.data(),
 			rangeProof.GetProofBytes().data(),
@@ -180,7 +179,7 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 
 		if (result == 1)
 		{
-			return std::make_unique<RewoundProof>(RewoundProof(value, SecretKey(std::move(blindingFactorBytes)), ProofMessage(std::move(message))));
+			return std::make_unique<RewoundProof>(RewoundProof(value, std::make_unique<SecretKey>(SecretKey(std::move(blindingFactorBytes))), ProofMessage(std::move(message))));
 		}
 	}
 

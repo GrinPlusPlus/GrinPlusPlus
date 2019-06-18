@@ -9,6 +9,7 @@
 #include <PMMR/HeaderMMR.h>
 #include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
+#include <P2P/SyncStatus.h>
 #include <stdint.h>
 #include <mutex>
 
@@ -36,7 +37,7 @@ public:
 	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) override final;
 
 	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) override final;
-	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) override final;
+	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) override final;
 	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) override final;
 	virtual std::unique_ptr<Transaction> GetTransactionByKernelHash(const Hash& kernelHash) const override final;
 

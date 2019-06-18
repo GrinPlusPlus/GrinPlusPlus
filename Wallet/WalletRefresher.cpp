@@ -23,6 +23,8 @@ WalletRefresher::WalletRefresher(const Config& config, const INodeClient& nodeCl
 
 std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis)
 {
+	LoggerAPI::LogInfo("WalletRefresher::Refresh - Refreshing wallet for user: " + wallet.GetUsername());
+
 	std::vector<OutputData> walletOutputs = m_walletDB.GetOutputs(wallet.GetUsername(), masterSeed);
 	std::vector<WalletTx> walletTransactions = m_walletDB.GetTransactions(wallet.GetUsername(), masterSeed);
 
@@ -86,14 +88,14 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 	{
 		const Commitment& commitment = outputData.GetOutput().GetCommitment();
 
-		if (outputData.GetStatus() == EOutputStatus::SPENT || outputData.GetStatus() == EOutputStatus::CANCELED)
+		if (outputData.GetStatus() == EOutputStatus::SPENT/* || outputData.GetStatus() == EOutputStatus::CANCELED*/)
 		{
 			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " + commitment.ToHex());
 			continue;
 		}
 
 		// TODO: What if commitment has mmr_index?
-		LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " + commitment.ToHex());
+		LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " + commitment.ToHex());
 		commitments.push_back(commitment);		
 	}
 
@@ -116,6 +118,8 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 				{
 					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
 					{
+						LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Marking output as immature: " + outputData.GetOutput().GetCommitment().ToHex());
+
 						outputData.SetBlockHeight(outputBlockHeight);
 						outputData.SetStatus(EOutputStatus::IMMATURE);
 						outputsToUpdate.push_back(outputData);
@@ -123,14 +127,18 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 				}
 				else if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
 				{
+					LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Marking output as spendable: " + outputData.GetOutput().GetCommitment().ToHex());
+
 					outputData.SetBlockHeight(outputBlockHeight);
 					outputData.SetStatus(EOutputStatus::SPENDABLE);
 					outputsToUpdate.push_back(outputData);
 				}
 			}
 		}
-		else if (outputData.GetStatus() != EOutputStatus::NO_CONFIRMATIONS)
+		else if (outputData.GetStatus() != EOutputStatus::NO_CONFIRMATIONS && outputData.GetStatus() != EOutputStatus::CANCELED)
 		{
+			LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Marking output as spent: " + outputData.GetOutput().GetCommitment().ToHex());
+
 			outputData.SetStatus(EOutputStatus::SPENT);
 			outputsToUpdate.push_back(outputData);
 		}
@@ -163,11 +171,15 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 
 					if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
 					{
+						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as received: " + walletTx.GetId());
+
 						walletTx.SetType(EWalletTxType::RECEIVED);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);
 					}
 					else if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 					{
+						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as sent: " + walletTx.GetId());
+
 						walletTx.SetType(EWalletTxType::SENT);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);
 					}
@@ -188,6 +200,8 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 				{
 					if (pOutputData->GetStatus() == EOutputStatus::SPENT)
 					{
+						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Output is spent. Marking transaction as sent: " + walletTx.GetId());
+
 						walletTx.SetType(EWalletTxType::SENT);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);
 					}

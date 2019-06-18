@@ -27,7 +27,8 @@ public:
 		m_blockHeight(0),
 		m_blockDifficulty(0),
 		m_txHashSetDownloaded(0),
-		m_txHashSetTotalSize(0)
+		m_txHashSetTotalSize(0),
+		m_txHashSetProcessingStatus(0)
 	{
 
 	}
@@ -41,7 +42,8 @@ public:
 		m_blockHeight(other.m_blockHeight.load()),
 		m_blockDifficulty(other.m_blockDifficulty.load()),
 		m_txHashSetDownloaded(other.m_txHashSetDownloaded.load()),
-		m_txHashSetTotalSize(other.m_txHashSetTotalSize.load())
+		m_txHashSetTotalSize(other.m_txHashSetTotalSize.load()),
+		m_txHashSetProcessingStatus(other.m_txHashSetProcessingStatus.load())
 	{
 
 	}
@@ -57,6 +59,7 @@ public:
 	inline uint64_t GetBlockDifficulty() const { return m_blockDifficulty; }
 	inline uint64_t GetDownloaded() const { return m_txHashSetDownloaded; }
 	inline uint64_t GetDownloadSize() const { return m_txHashSetTotalSize; }
+	inline uint8_t GetProcessingStatus() const { return m_txHashSetProcessingStatus; }
 
 	inline void UpdateStatus(const ESyncStatus syncStatus) { m_syncStatus = syncStatus; }
 
@@ -81,6 +84,7 @@ public:
 
 	inline void UpdateDownloaded(const uint64_t downloaded) { m_txHashSetDownloaded = downloaded; }
 	inline void UpdateDownloadSize(const uint64_t downloadSize) { m_txHashSetTotalSize = downloadSize; }
+	inline void UpdateProcessingStatus(const uint8_t processingStatus) { m_txHashSetProcessingStatus = processingStatus; }
 
 private:
 	std::atomic<ESyncStatus> m_syncStatus;
@@ -93,4 +97,5 @@ private:
 	std::atomic<uint64_t> m_blockDifficulty;
 	std::atomic<uint64_t> m_txHashSetDownloaded;
 	std::atomic<uint64_t> m_txHashSetTotalSize;
+	std::atomic<uint8_t> m_txHashSetProcessingStatus;
 };

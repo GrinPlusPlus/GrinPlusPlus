@@ -61,7 +61,17 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 	if (pRewoundProof != nullptr)
 	{
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(3)); // TODO: Always length 3 for now. Need to grind through in future.
-		SecretKey blindingFactor(pRewoundProof->GetBlindingFactor());
+		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
+		CBigInteger<32> blindingFactor;
+		if (pBlindingFactor != nullptr)
+		{
+			blindingFactor = pBlindingFactor->GetBytes();
+		}
+		else
+		{
+			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath)->GetBytes();
+		}
+
 		TransactionOutput txOutput(outputDisplayInfo.GetIdentifier().GetFeatures(), Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()), RangeProof(outputDisplayInfo.GetRangeProof()));
 		const uint64_t amount = pRewoundProof->GetAmount();
 		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
@@ -70,7 +80,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 		return std::make_unique<OutputData>(
 			std::move(keyChainPath), 
-			std::move(blindingFactor), 
+			SecretKey(std::move(blindingFactor)), 
 			std::move(txOutput), 
 			amount, 
 			status, 

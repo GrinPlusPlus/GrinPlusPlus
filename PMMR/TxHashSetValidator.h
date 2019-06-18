@@ -2,6 +2,7 @@
 
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/BlockSums.h>
+#include <P2P/SyncStatus.h>
 
 // Forward Declarations
 class HashFile;
@@ -16,7 +17,7 @@ class TxHashSetValidator
 public:
 	TxHashSetValidator(const IBlockChainServer& blockChainServer);
 
-	std::unique_ptr<BlockSums> Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
+	std::unique_ptr<BlockSums> Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
 
 private:
 	bool ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;

@@ -13,7 +13,7 @@ TxHashSetProcessor::TxHashSetProcessor(const Config& config, IBlockChainServer& 
 
 }
 
-bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path)
+bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
 {
 	std::unique_ptr<BlockHeader> pHeader = m_chainState.GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
@@ -34,7 +34,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 3. Validate entire TxHashSet
-	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer);
+	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
 	if (pBlockSums == nullptr)
 	{
 		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Validation of %s failed.", path.c_str()));

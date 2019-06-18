@@ -24,6 +24,7 @@ class Config;
 class IDatabase;
 class TxHashSetManager;
 class ITransactionPool;
+class SyncStatus;
 
 #ifdef MW_BLOCK_CHAIN
 #define BLOCK_CHAIN_API EXPORT
@@ -46,7 +47,7 @@ public:
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& compactBlock) = 0;
 
 	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) = 0;
-	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path) = 0;
+	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) = 0;
 	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) = 0;
 	virtual std::unique_ptr<Transaction> GetTransactionByKernelHash(const Hash& kernelHash) const = 0;
 

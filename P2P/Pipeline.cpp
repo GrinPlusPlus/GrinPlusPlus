@@ -201,9 +201,10 @@ void Pipeline::Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connec
 
 	SyncStatus& syncStatus = pipeline.m_connectionManager.GetSyncStatus();
 
+	syncStatus.UpdateProcessingStatus(0);
 	syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
 
-	const EBlockChainStatus processStatus = pipeline.m_blockChainServer.ProcessTransactionHashSet(blockHash, path);
+	const EBlockChainStatus processStatus = pipeline.m_blockChainServer.ProcessTransactionHashSet(blockHash, path, syncStatus);
 	if (processStatus == EBlockChainStatus::INVALID)
 	{
 		syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);

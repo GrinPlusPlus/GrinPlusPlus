@@ -9,6 +9,7 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Database/BlockDb.h>
 #include <Infrastructure/Logger.h>
+#include <P2P/SyncStatus.h>
 #include <thread>
 
 TxHashSet::TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader)
@@ -72,12 +73,12 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	return true;
 }
 
-std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer)
+std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus)
 {
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
 	LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
-	std::unique_ptr<BlockSums> pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header);
+	std::unique_ptr<BlockSums> pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
 	if (pBlockSums != nullptr)
 	{
 		LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Successfully validated TxHashSet.");

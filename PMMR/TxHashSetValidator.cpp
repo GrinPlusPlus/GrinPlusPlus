@@ -19,7 +19,7 @@ TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer
 
 }
 
-std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
+std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
 {
 	const KernelMMR& kernelMMR = *txHashSet.GetKernelMMR();
 	const OutputPMMR& outputPMMR = *txHashSet.GetOutputPMMR();
@@ -31,6 +31,8 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR size.");
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
+
+	syncStatus.UpdateProcessingStatus(5);
 
 	// Validate MMR hashes in parallel
 	std::vector<std::thread> threads;
@@ -53,12 +55,16 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
+	syncStatus.UpdateProcessingStatus(10);
+
 	// Validate root for each MMR matches blockHeader
 	if (!txHashSet.ValidateRoots(blockHeader))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid MMR roots.");
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
+
+	syncStatus.UpdateProcessingStatus(15);
 
 	// Validate the full kernel history (kernel MMR root for every block header).
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel history.");
@@ -67,6 +73,8 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel history.");
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
+
+	syncStatus.UpdateProcessingStatus(25);
 
 	// Validate kernel sums
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel sums.");
@@ -77,6 +85,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
+	syncStatus.UpdateProcessingStatus(40);
 
 	// Validate the rangeproof associated with each unspent output.
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating range proofs.");
@@ -86,6 +95,8 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
+	syncStatus.UpdateProcessingStatus(70);
+
 	// Validate kernel signatures
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel signatures.");
 	if (!ValidateKernelSignatures(*txHashSet.GetKernelMMR()))
@@ -93,6 +104,8 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 		LoggerAPI::LogError("TxHashSetValidator::ValidateKernelSignatures - Failed to verify kernel signatures.");
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
+
+	syncStatus.UpdateProcessingStatus(100);
 
 	return pBlockSums;
 }

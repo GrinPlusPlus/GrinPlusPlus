@@ -51,7 +51,7 @@ void NodeDaemon::Shutdown()
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		delete m_pTxHashSetManager;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//DatabaseAPI::CloseDatabase(m_pDatabase);
+		DatabaseAPI::CloseDatabase(m_pDatabase);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		LoggerAPI::Flush();
 	}

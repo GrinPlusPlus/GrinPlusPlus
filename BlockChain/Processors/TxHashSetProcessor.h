@@ -5,6 +5,7 @@
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
 #include <Crypto/Hash.h>
+#include <P2P/SyncStatus.h>
 #include <string>
 
 // Forward Declarations
@@ -17,7 +18,7 @@ class TxHashSetProcessor
 public:
 	TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, ChainState& chainState, IBlockDB& blockDB);
 
-	bool ProcessTxHashSet(const Hash& blockHash, const std::string& path);
+	bool ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus);
 
 private:
 	bool UpdateConfirmedChain(LockedChainState& lockedState, const BlockHeader& blockHeader);

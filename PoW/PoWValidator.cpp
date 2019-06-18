@@ -3,6 +3,7 @@
 #include "DifficultyCalculator.h"
 #include "PoWUtil.h"
 #include "Cuckaroo.h"
+#include "Cuckarood.h"
 #include "Cuckatoo.h"
 
 #include <Consensus/BlockTime.h>
@@ -41,29 +42,24 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 		return false;
 	}
 
-
 	const ProofOfWork& proofOfWork = header.GetProofOfWork();
-	const EPoWType powType = PoWUtil(m_config).DeterminePoWType(proofOfWork.GetEdgeBits());
+	const EPoWType powType = PoWUtil(m_config).DeterminePoWType(header.GetVersion(), proofOfWork.GetEdgeBits());
 	if (powType == EPoWType::CUCKAROO)
 	{
-		if (!Cuckaroo::Validate(header))
-		{
-			return false;
-		}
+		return Cuckaroo::Validate(header);
+	}
+	else if (powType == EPoWType::CUCKAROOD)
+	{
+		return Cuckarood::Validate(header);
 	}
 	else if (powType == EPoWType::CUCKATOO)
 	{
-		if (!Cuckatoo::Validate(header))
-		{
-			return false;
-		}
+		return Cuckatoo::Validate(header);
 	}
 	else
 	{
 		return false;
 	}
-
-	return true;
 }
 
 // Maximum difficulty this proof of work can achieve

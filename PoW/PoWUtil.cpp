@@ -6,12 +6,19 @@ PoWUtil::PoWUtil(const Config& config)
 
 }
 
-EPoWType PoWUtil::DeterminePoWType(const uint8_t edgeBits) const
+EPoWType PoWUtil::DeterminePoWType(const uint64_t headerVersion, const uint8_t edgeBits) const
 {
 	// MAINNET: Check environment
 	if (edgeBits == 29)
 	{
-		return EPoWType::CUCKAROO;
+		if (headerVersion == 1)
+		{
+			return EPoWType::CUCKAROO;
+		}
+		else
+		{
+			return EPoWType::CUCKAROOD;
+		}
 	}
 	else
 	{

@@ -10,7 +10,7 @@ class PoWUtil
 public:
 	PoWUtil(const Config& config);
 
-	EPoWType DeterminePoWType(const uint8_t edgeBits) const;
+	EPoWType DeterminePoWType(const uint64_t headerVersion, const uint8_t edgeBits) const;
 
 private:
 	const Config& m_config;

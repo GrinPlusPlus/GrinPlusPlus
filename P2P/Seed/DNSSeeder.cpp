@@ -45,6 +45,11 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 			LoggerAPI::LogTrace("DNSSeeder::GetPeersFromDNS - IP Address: " + ipAddress.Format());
 			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
 		}
+
+		if (!m_config.GetEnvironment().IsMainnet())
+		{
+			addresses.emplace_back(SocketAddress::SocketAddress(IPAddress::FromString("100.26.68.39"), 13414));
+		}
 	}
 
 	return addresses;

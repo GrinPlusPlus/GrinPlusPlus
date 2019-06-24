@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Net/IPAddress.h>
-#include <Net/SocketAddress.h>
+#include <P2P/IPAddress.h>
+#include <P2P/SocketAddress.h>
 #include <P2P/peer.h>
 #include <P2P/capabilities.h>
 #include <P2P/BanReason.h>
@@ -33,6 +33,7 @@ public:
 	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
 	void SetPeerConnected(const Peer& peer, const bool connected);
 	void BanPeer(Peer& peer, const EBanReason banReason);
+	void UnbanPeer(const IPAddress& address);
 	// TODO: RemovePeer
 
 private:

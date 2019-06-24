@@ -7,7 +7,7 @@
 #include "../MessageSender.h"
 #include "../ConnectionManager.h"
 
-#include <Net/SocketException.h>
+#include <P2P/SocketException.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/VectorUtil.h>

@@ -32,6 +32,7 @@ public:
 	virtual std::vector<Hash> GetLastOutputHashes(const uint64_t numberOfOutputs) const override final;
 	virtual std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const override final;
 	virtual OutputRange GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
+	virtual std::vector<OutputDisplayInfo> GetOutputsByMMRIndex(const uint64_t startIndex, const uint64_t lastIndex) const override final;
 
 	virtual bool Rewind(const BlockHeader& header) override final;
 	virtual bool Commit() override final;

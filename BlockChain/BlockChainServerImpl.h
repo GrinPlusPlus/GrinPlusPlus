@@ -25,6 +25,7 @@ public:
 	//
 	void Initialize();
 	void Shutdown();
+	virtual bool ResyncChain() override final;
 
 	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const override final;
 	virtual uint64_t GetHeight(const EChainType chainType) const override final;

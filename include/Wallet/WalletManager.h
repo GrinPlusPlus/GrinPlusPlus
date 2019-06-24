@@ -58,6 +58,8 @@ public:
 
 	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) = 0;
 
+	virtual std::vector<WalletOutputDTO> GetOutputs(const SessionToken& token, const bool includeSpent, const bool includeCanceled) = 0;
+
 	virtual uint64_t EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs) = 0;
 
 	//

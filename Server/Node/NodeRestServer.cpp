@@ -49,6 +49,7 @@ bool NodeRestServer::Initialize()
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/explorer/blockinfo/", BlockInfoAPI::GetBlockInfo_Handler, m_pNodeContext);
 
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/status", ServerAPI::GetStatus_Handler, m_pNodeContext);
+	mg_set_request_handler(m_pNodeCivetContext, "/v1/resync", ServerAPI::ResyncChain_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pNodeContext);
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, m_pNodeContext);

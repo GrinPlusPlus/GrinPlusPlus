@@ -80,13 +80,29 @@ bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t
 		Peer peer = peerOpt.value();
 		if (peer.IsBanned())
 		{
-			peer.Unban();
+			const IPAddress& address = peer.GetIPAddress();
+			m_peerManager.UnbanPeer(address);
 		}
 
 		return true;
 	}
 
 	return false;
+}
+
+bool P2PServer::UnbanAllPeers()
+{
+	std::vector<Peer> peers = m_peerManager.GetAllPeers();
+	for (const Peer& peer : peers)
+	{
+		if (peer.IsBanned())
+		{
+			const IPAddress& address = peer.GetIPAddress();
+			m_peerManager.UnbanPeer(address);
+		}
+	}
+
+	return true;
 }
 
 namespace P2PAPI

@@ -152,6 +152,32 @@ std::vector<WalletTxDTO> WalletManager::GetTransactions(const SessionToken& toke
 	return walletTxDTOs;
 }
 
+std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token, const bool includeSpent, const bool includeCanceled)
+{
+	std::vector<WalletOutputDTO> outputDTOs;
+
+	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
+
+	std::vector<OutputData> outputs = m_pWalletDB->GetOutputs(wallet.GetWallet().GetUsername(), masterSeed);
+	for (const OutputData& output : outputs)
+	{
+		if (output.GetStatus() == EOutputStatus::SPENT && !includeSpent)
+		{
+			continue;
+		}
+
+		if (output.GetStatus() == EOutputStatus::CANCELED && !includeCanceled)
+		{
+			continue;
+		}
+
+		outputDTOs.emplace_back(WalletOutputDTO(output));
+	}
+
+	return outputDTOs;
+}
+
 uint64_t WalletManager::EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);

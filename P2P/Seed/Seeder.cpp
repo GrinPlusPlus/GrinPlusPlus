@@ -3,10 +3,10 @@
 #include "PeerManager.h"
 #include "../ConnectionManager.h"
 #include "../Messages/GetPeerAddressesMessage.h"
+#include "../Socket.h"
 
 #include <P2P/capabilities.h>
-#include <Net/SocketAddress.h>
-#include <Net/Socket.h>
+#include <P2P/SocketAddress.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>

@@ -26,6 +26,7 @@ public:
 	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
 	virtual bool BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason) override final;
 	virtual bool UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) override final;
+	virtual bool UnbanAllPeers() override final;
 
 private:
 	PeerManager m_peerManager;

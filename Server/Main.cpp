@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 		{
 			environment = EEnvironmentType::FLOONET;
 		}
-		else if (std::string(argv[i]) == "--headless")
+		if (std::string(argv[i]) == "--headless")
 		{
 			headless = true;
 		}

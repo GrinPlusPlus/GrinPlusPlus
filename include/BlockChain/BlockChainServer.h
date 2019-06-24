@@ -39,6 +39,8 @@ class SyncStatus;
 class IBlockChainServer
 {
 public:
+	virtual bool ResyncChain() = 0;
+
 	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const = 0;
 	virtual uint64_t GetHeight(const EChainType chainType) const = 0;
 	virtual uint64_t GetTotalDifficulty(const EChainType chainType) const = 0;

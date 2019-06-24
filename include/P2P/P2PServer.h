@@ -50,6 +50,8 @@ public:
 	virtual bool BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason) = 0;
 
 	virtual bool UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) = 0;
+
+	virtual bool UnbanAllPeers() = 0;
 };
 
 namespace P2PAPI

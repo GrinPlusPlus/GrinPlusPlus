@@ -260,6 +260,29 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const ui
 	return OutputRange(maxLeafIndex, lastRetrievedIndex, std::move(outputs));
 }
 
+std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(const uint64_t startIndex, const uint64_t lastIndex) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
+
+	std::vector<OutputDisplayInfo> outputs;
+	uint64_t mmrIndex = startIndex;
+	while (mmrIndex <= lastIndex)
+	{
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
+		if (pOutput != nullptr)
+		{
+			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
+			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
+
+			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
+		}
+
+		++mmrIndex;
+	}
+
+	return outputs;
+}
+
 bool TxHashSet::Rewind(const BlockHeader& header)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);

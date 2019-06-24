@@ -130,3 +130,13 @@ std::string ServerAPI::GetStatusString(const SyncStatus& syncStatus)
 
 	return "UNKNOWN";
 }
+
+int ServerAPI::ResyncChain_Handler(struct mg_connection* conn, void* pNodeContext)
+{
+	NodeContext* pServer = (NodeContext*)pNodeContext;
+
+	pServer->m_pBlockChainServer->ResyncChain();
+	pServer->m_pP2PServer->UnbanAllPeers();
+
+	return RestUtil::BuildSuccessResponse(conn, "");
+}

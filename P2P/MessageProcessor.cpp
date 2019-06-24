@@ -169,6 +169,10 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 					}
 				}
+				else if (status == EBlockChainStatus::INVALID)
+				{
+					return EStatus::BAN_PEER;
+				}
 				else
 				{
 					LoggerAPI::LogTrace(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Header %s from %s not needed.", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str()));
@@ -186,7 +190,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - %lld headers received from %s.", blockHeaders.size(), formattedIPAddress.c_str()));
 
-					blockChainServer.AddBlockHeaders(blockHeaders); // TODO: Handle failures
+					const EBlockChainStatus status = blockChainServer.AddBlockHeaders(blockHeaders); // TODO: Handle failures
 					LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Headers message from %s finished processing.", formattedIPAddress.c_str()));
 				});
 				processHeaders.detach();

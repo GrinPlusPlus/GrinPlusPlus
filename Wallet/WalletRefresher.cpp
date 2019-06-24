@@ -25,6 +25,12 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 {
 	LoggerAPI::LogInfo("WalletRefresher::Refresh - Refreshing wallet for user: " + wallet.GetUsername());
 
+	if (m_nodeClient.GetChainHeight() < m_walletDB.GetRefreshBlockHeight(wallet.GetUsername()))
+	{
+		LoggerAPI::LogInfo("WalletRefresher::Refresh - Skipping refresh since node is resyncing.");
+		return std::vector<OutputData>();
+	}
+
 	std::vector<OutputData> walletOutputs = m_walletDB.GetOutputs(wallet.GetUsername(), masterSeed);
 	std::vector<WalletTx> walletTransactions = m_walletDB.GetTransactions(wallet.GetUsername(), masterSeed);
 
@@ -68,6 +74,10 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 				walletOutputs.push_back(restoredOutput);
 				walletTransactions.emplace_back(std::move(walletTx));
 			}
+			//else if (pExistingOutput->GetStatus() == EOutputStatus::SPENT || pExistingOutput->GetStatus() == EOutputStatus::CANCELED)
+			//{
+
+			//}
 		}
 	}
 
@@ -88,11 +98,11 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 	{
 		const Commitment& commitment = outputData.GetOutput().GetCommitment();
 
-		if (outputData.GetStatus() == EOutputStatus::SPENT/* || outputData.GetStatus() == EOutputStatus::CANCELED*/)
+		/*if (outputData.GetStatus() == EOutputStatus::SPENT)// || outputData.GetStatus() == EOutputStatus::CANCELED)
 		{
 			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " + commitment.ToHex());
 			continue;
-		}
+		}*/
 
 		// TODO: What if commitment has mmr_index?
 		LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Refreshing output with commitment: " + commitment.ToHex());
@@ -135,8 +145,12 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 				}
 			}
 		}
-		else if (outputData.GetStatus() != EOutputStatus::NO_CONFIRMATIONS && outputData.GetStatus() != EOutputStatus::CANCELED)
+		else if (
+			outputData.GetStatus() != EOutputStatus::NO_CONFIRMATIONS && 
+			outputData.GetStatus() != EOutputStatus::SPENT && 
+			outputData.GetStatus() != EOutputStatus::CANCELED)
 		{
+			// TODO: Check if (lastConfirmedHeight > outputData.GetConfirmedHeight)
 			LoggerAPI::LogDebug("WalletRefresher::RefreshOutputs - Marking output as spent: " + outputData.GetOutput().GetCommitment().ToHex());
 
 			outputData.SetStatus(EOutputStatus::SPENT);

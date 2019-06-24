@@ -6,6 +6,7 @@
 #include "Processors/BlockHeaderProcessor.h"
 #include "Processors/TxHashSetProcessor.h"
 #include "Processors/BlockProcessor.h"
+#include "ChainResyncer.h"
 
 #include <Config/Config.h>
 #include <Crypto/Crypto.h>
@@ -64,6 +65,11 @@ void BlockChainServer::Shutdown()
 		HeaderMMRAPI::CloseHeaderMMR(m_pHeaderMMR);
 		m_pHeaderMMR = nullptr;
 	}
+}
+
+bool BlockChainServer::ResyncChain()
+{
+	return ChainResyncer(*m_pChainState).ResyncChain();
 }
 
 void BlockChainServer::UpdateSyncStatus(SyncStatus& syncStatus) const

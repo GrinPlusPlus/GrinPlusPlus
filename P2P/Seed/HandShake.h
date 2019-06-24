@@ -4,6 +4,7 @@
 #include <P2P/ConnectedPeer.h>
 
 // Forward Declarations
+class Socket;
 class PeerManager;
 class IBlockChainServer;
 class ConnectionManager;

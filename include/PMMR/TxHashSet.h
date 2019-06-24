@@ -76,6 +76,11 @@ public:
 	//
 	virtual OutputRange GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const = 0;
 
+	//
+	// Get outputs by leaf/insertion index.
+	//
+	virtual std::vector<OutputDisplayInfo> GetOutputsByMMRIndex(const uint64_t startIndex, const uint64_t lastIndex) const = 0;
+
 
 
 	//

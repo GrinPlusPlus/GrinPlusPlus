@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Messages/Message.h"
+#include "Socket.h"
 
-#include <Net/Socket.h>
 #include <Config/Config.h>
 
 class MessageSender

@@ -1,5 +1,6 @@
-#include <Net/Socket.h>
-#include <Net/SocketException.h>
+#include "Socket.h"
+
+#include <P2P/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/Logger.h>
 

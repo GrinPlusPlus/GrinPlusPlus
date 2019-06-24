@@ -62,6 +62,6 @@ else(WIN32)
 endif(WIN32)
 
 add_executable(${TEST_TARGET_NAME} ${CRYPTO_SRC} ${CRYPTO_TESTS_SRC})
-target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO)
+target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_CRYPTO INCLUDE_TEST_MATH)
 add_dependencies(${TEST_TARGET_NAME} Infrastructure)
 target_link_libraries(${TEST_TARGET_NAME} ${OS_SPECIFIC_LIBS} Infrastructure)

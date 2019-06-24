@@ -39,10 +39,11 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		return RetrieveSummaryInfo(pConnection, walletManager, token);
 	}
 
-	// GET /v1/wallet/owner/retrieve_outputs?refresh&show_spent&tx_id=x&tx_id=y
+	// GET /v1/wallet/owner/retrieve_outputs?show_spent&show_canceled
 	if (action == "retrieve_outputs")
 	{
-		// TODO: Implement
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return RetrieveOutputs(pConnection, walletManager, token);
 	}
 
 	// GET /v1/wallet/owner/estimate_fee
@@ -57,12 +58,6 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 	{
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return RetrieveTransactions(pConnection, walletManager, token);
-	}
-
-	// GET /v1/wallet/owner/retrieve_stored_tx?id=x
-	if (action == "retrieve_stored_tx")
-	{
-		// TODO: Implement
 	}
 
 	return RestUtil::BuildBadRequestResponse(pConnection, "GET /v1/wallet/owner/" + action + " not Supported");
@@ -159,5 +154,25 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 	}
 
 	rootJSON["transactions"] = transactionsJSON;
+	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
+}
+
+// GET /v1/wallet/owner/retrieve_outputs?show_spent&show_canceled
+int OwnerGetAPI::RetrieveOutputs(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+{
+	Json::Value rootJSON;
+
+	Json::Value outputsJSON = Json::arrayValue;
+
+	const bool includeSpent = RestUtil::HasQueryParam(pConnection, "show_spent");
+	const bool includeCanceled = RestUtil::HasQueryParam(pConnection, "show_canceled");
+
+	const std::vector<WalletOutputDTO> outputs = walletManager.GetOutputs(token, includeSpent, includeCanceled);
+	for (const WalletOutputDTO& output : outputs)
+	{
+		outputsJSON.append(output.ToJSON());
+	}
+
+	rootJSON["outputs"] = outputsJSON;
 	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }

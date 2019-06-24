@@ -227,6 +227,18 @@ void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 	}
 }
 
+void PeerManager::UnbanPeer(const IPAddress& address)
+{
+	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
+
+	auto iter = m_peersByAddress.find(address);
+	if (iter != m_peersByAddress.end())
+	{
+		iter->second.m_peer.Unban();
+		iter->second.m_dirty = true;
+	}
+}
+
 std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
 {
 	std::vector<Peer> peersFound;

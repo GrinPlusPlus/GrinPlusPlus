@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Net/Socket.h>
 #include <P2P/Peer.h>
 #include <P2P/Direction.h>
 

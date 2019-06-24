@@ -6,7 +6,6 @@
 #include <Wallet/WalletManager.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
-#include <Wallet/Grinbox/Base58.h>
 
 int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
 {
@@ -98,7 +97,7 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
 		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-		responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
+		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
 
 		return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
@@ -132,7 +131,7 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
 		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-		responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
+		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
 		return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
 	else
@@ -180,7 +179,7 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 			responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
 			std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-			responseJSON["grinbox_address"] = Base58().EncodeBase58Check(pPublicKey->GetCompressedBytes(), std::vector<unsigned char>({ 1, 11 }));
+			responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
 
 			return RestUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 		}

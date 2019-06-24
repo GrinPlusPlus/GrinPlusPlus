@@ -13,6 +13,7 @@
 #include <PMMR/TxHashSetManager.h>
 
 #include <iostream>
+#include <thread>
 
 NodeDaemon::NodeDaemon(const Config& config)
 	: m_config(config)

@@ -68,7 +68,7 @@ namespace Consensus
 		const uint64_t expiry_height = (((uint64_t)1) << bits_over_min) * YEAR_HEIGHT;
 
 		uint64_t xpr_edge_bits = (uint64_t)edge_bits;
-		if (height >= expiry_height)
+		if (edge_bits < 32 && height >= expiry_height)
 		{
 			xpr_edge_bits = xpr_edge_bits -= (std::min)(xpr_edge_bits, 1 + (height - expiry_height) / WEEK_HEIGHT);
 		}

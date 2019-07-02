@@ -224,6 +224,8 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 {
 	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 
+	size_t i = 0;
+	LoggerAPI::LogInfo("TxHashSetValidator::ValidateRangeProofs - BEGIN");
 	for (uint64_t mmrIndex = 0; mmrIndex < txHashSet.GetOutputPMMR()->GetSize(); mmrIndex++)
 	{
 		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetOutputAt(mmrIndex);
@@ -237,6 +239,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 			}
 
 			rangeProofs.emplace_back(std::make_pair<Commitment, RangeProof>(Commitment(pOutput->GetCommitment()), RangeProof(*pRangeProof)));
+			++i;
 
 			if (rangeProofs.size() >= 1000)
 			{
@@ -257,7 +260,8 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 			return false;
 		}
 	}
-	
+
+	LoggerAPI::LogInfo("TxHashSetValidator::ValidateRangeProofs - SUCCESS " + std::to_string(i));
 	return true;
 }
 

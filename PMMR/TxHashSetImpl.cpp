@@ -77,11 +77,20 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 {
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
-	LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
-	std::unique_ptr<BlockSums> pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
-	if (pBlockSums != nullptr)
+	std::unique_ptr<BlockSums> pBlockSums = nullptr;
+
+	try
 	{
-		LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Successfully validated TxHashSet.");
+		LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
+		pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
+		if (pBlockSums != nullptr)
+		{
+			LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Successfully validated TxHashSet.");
+		}
+	}
+	catch (std::exception& e)
+	{
+		LoggerAPI::LogError("TxHashSet::ValidateTxHashSet - Exception thrown while processing TxHashSet.");
 	}
 
 	return pBlockSums;

@@ -41,3 +41,8 @@ ShortId ShortId::Deserialize(ByteBuffer& byteBuffer)
 
 	return ShortId(std::move(id));
 }
+
+Hash ShortId::GetHash() const
+{
+	return Crypto::Blake2b(m_id.GetData());
+}

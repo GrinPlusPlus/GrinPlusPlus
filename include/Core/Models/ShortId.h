@@ -44,6 +44,19 @@ public:
 	void Serialize(Serializer& serializer) const;
 	static ShortId Deserialize(ByteBuffer& byteBuffer);
 
+	//
+	// Hashing
+	//
+	Hash GetHash() const;
+
 private:
 	CBigInteger<6> m_id;
 };
+
+static struct
+{
+	bool operator()(const ShortId& a, const ShortId& b) const
+	{
+		return a.GetHash() < b.GetHash();
+	}
+} SortShortIdsByHash;

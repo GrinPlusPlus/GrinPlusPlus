@@ -8,7 +8,7 @@
 #include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 
-static const uint64_t SLATE_VERSION = 1;
+static const uint64_t SLATE_VERSION = 2;
 
 SendSlateBuilder::SendSlateBuilder(const INodeClient& nodeClient)
 	: m_nodeClient(nodeClient)

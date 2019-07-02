@@ -52,7 +52,7 @@ HeaderInfo DifficultyCalculator::CalculateNextDifficulty(const BlockHeader& head
 	const uint64_t adj_ts = Clamp(actual, BLOCK_TIME_WINDOW, CLAMP_FACTOR);
 
 	// minimum difficulty avoids getting stuck due to dampening
-	const uint64_t difficulty = std::max(MIN_DIFFICULTY, difficultySum * BLOCK_TIME_SEC / adj_ts);
+	const uint64_t difficulty = (std::max)(MIN_DIFFICULTY, difficultySum * BLOCK_TIME_SEC / adj_ts);
 
 	return HeaderInfo::FromDiffAndScaling(difficulty, sec_pow_scaling);
 }
@@ -98,8 +98,8 @@ uint32_t DifficultyCalculator::SecondaryPOWScaling(const uint64_t height, const 
 	// Get the secondary count across the window, adjusting count toward goal
 	// subject to dampening and clamping.
 	const uint64_t adj_count = Clamp(actual, target_count, CLAMP_FACTOR);
-	const uint64_t scale = scale_sum * target_pct / std::max((uint64_t)1, adj_count);
+	const uint64_t scale = scale_sum * target_pct / (std::max)((uint64_t)1, adj_count);
 
 	// minimum AR scale avoids getting stuck due to dampening
-	return (uint32_t)std::max(MIN_AR_SCALE, scale);
+	return (uint32_t)(std::max)(MIN_AR_SCALE, scale);
 }

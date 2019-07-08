@@ -79,40 +79,20 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 	return result == 1;
 }
 
-std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage) const
+std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage) const
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, randomSeed.data());
+	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
+	if (randomizeResult != 1)
+	{
+		return std::unique_ptr<RangeProof>(nullptr);
+	}
 
 	std::vector<unsigned char> proofBytes(MAX_PROOF_SIZE, 0);
 	size_t proofLen = MAX_PROOF_SIZE;
 
-	/** Produces an aggregate Bulletproof rangeproof for a set of Pedersen commitments
-	 *  Returns: 1: rangeproof was successfully created
-	 *           0: rangeproof could not be created, or out of memory
-	 *  Args:       ctx: pointer to a context object initialized for signing and verification (cannot be NULL)
-	 *          scratch: scratch space with enough memory for verification (cannot be NULL)
-	 *             gens: generator set with at least 2*nbits*n_commits many generators (cannot be NULL)
-	 *  Out:      proof: byte-serialized rangeproof (cannot be NULL)
-	 *  In/out:    plen: pointer to size of `proof`, to be replaced with actual length of proof (cannot be NULL)
-	 *            tau_x: only for multi-party; 32-byte, output in second step or input in final step
-	 *            t_one: only for multi-party; public key, output in first step or input for the others
-	 *            t_two: only for multi-party; public key, output in first step or input for the others
-	 *  In:       value: array of values committed by the Pedersen commitments (cannot be NULL)
-	 *        min_value: array of minimum values to prove ranges above, or NULL for all-zeroes
-	 *            blind: array of blinding factors of the Pedersen commitments (cannot be NULL)
-	 *          commits: only for multi-party; array of pointers to commitments
-	 *        n_commits: number of entries in the `value` and `blind` arrays
-	 *        value_gen: generator multiplied by value in pedersen commitments (cannot be NULL)
-	 *            nbits: number of bits proven for each range
-	 *            nonce: random 32-byte seed used to derive blinding factors (cannot be NULL)
-	 *    private_nonce: only for multi-party; random 32-byte seed used to derive private blinding factors
-	 *     extra_commit: additonal data committed to by the rangeproof
-	 * extra_commit_len: length of additional data
-	 *          message: optional 16 bytes of message that can be recovered by rewinding with the correct nonce
-	 */
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 
 	std::vector<const unsigned char*> blindingFactors({ key.data() });
@@ -132,8 +112,8 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 		1,
 		&secp256k1_generator_const_h,
 		64,
-		nonce.data(),
-		NULL,
+		rewindNonce.data(),
+		privateNonce.data(),
 		NULL,
 		0,
 		proofMessage.GetBytes().GetData().data()

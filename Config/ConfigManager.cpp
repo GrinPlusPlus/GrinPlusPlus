@@ -6,19 +6,21 @@
 #include <json/json.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <filesystem.h>
+#include <Core/Util/JsonUtil.h>
 #include <fstream>
 
 Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 {
-	const std::string currentDir = fs::current_path().string();
-	const std::string configPath = currentDir + (environment == EEnvironmentType::MAINNET ? "/mainnet.json" : "/floonet.json");
+	const std::string dataDirectory = (environment == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET");
+	const std::string configPath = FileUtil::GetHomeDirectory() + "/.GrinPP/" + dataDirectory + "/";
+	const std::string configFile = configPath + "server_config.json";
 
-	std::ifstream file(configPath, std::ifstream::binary);
+	std::ifstream file(configFile, std::ifstream::binary);
 	if (file.is_open())
 	{
 		Json::Value root;
-		const bool jsonParsed = Json::Reader().parse(file, root, false);
+		std::string errors;
+		const bool jsonParsed = Json::parseFromStream(Json::CharReaderBuilder(), file, &root, &errors);
 		file.close();
 
 		if (!jsonParsed)
@@ -30,12 +32,12 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 	}
 	else
 	{
-		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - config.json not found in %s. Creating config.json with defaults.", currentDir.c_str()));
+		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - server_config.json not found in %s. Creating server_config.json with defaults.", configPath.c_str()));
 
 		Json::Value emptyRoot;
 		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);
 
-		ConfigWriter().SaveConfig(defaultConfig, configPath);
+		ConfigWriter().SaveConfig(defaultConfig, configFile);
 
 		return defaultConfig;
 	}

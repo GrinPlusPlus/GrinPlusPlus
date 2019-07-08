@@ -2,6 +2,7 @@
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
+#include <Common/Exceptions/UnimplementedException.h>
 #include <Common/Util/VectorUtil.h>
 
 KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce)
@@ -59,21 +60,63 @@ std::unique_ptr<SecretKey> KeyChain::DerivePrivateKey(const KeyChainPath& keyPat
 	return Crypto::BlindSwitch(pPrivateKey->GetPrivateKey(), amount);
 }
 
-std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof) const
+std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const EBulletproofType& bulletproofType) const
 {
-	const SecretKey nonce = CreateNonce(commitment);
-	return Crypto::RewindRangeProof(commitment, rangeProof, nonce);
+	if (bulletproofType == EBulletproofType::ORIGINAL)
+	{
+		const SecretKey nonce = CreateNonce(commitment, m_bulletProofNonce);
+		return Crypto::RewindRangeProof(commitment, rangeProof, nonce);
+	}
+	else if (bulletproofType == EBulletproofType::ENHANCED)
+	{
+		std::unique_ptr<PublicKey> pMasterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey()); // TODO: Cache this
+		if (pMasterPublicKey == nullptr)
+		{
+			return std::unique_ptr<RewoundProof>(nullptr);
+		}
+
+		const SecretKey rewindNonceHash = Crypto::Blake2b(pMasterPublicKey->GetCompressedBytes().GetData());
+
+		return Crypto::RewindRangeProof(commitment, rangeProof, CreateNonce(commitment, rewindNonceHash));
+	}
+
+	throw UNIMPLEMENTED_EXCEPTION;
 }
 
-std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(const KeyChainPath& keyChainPath, const uint64_t amount, const Commitment& commitment, const SecretKey& blindingFactor) const
+std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(
+	const KeyChainPath& keyChainPath, 
+	const uint64_t amount, 
+	const Commitment& commitment, 
+	const SecretKey& blindingFactor, 
+	const EBulletproofType& bulletproofType) const
 {
-	const SecretKey nonce = CreateNonce(commitment);
-	const ProofMessage proofMessage = ProofMessage::FromKeyIndices(keyChainPath.GetKeyIndices());
+	const ProofMessage proofMessage = ProofMessage::FromKeyIndices(keyChainPath.GetKeyIndices(), bulletproofType);
 
-	return Crypto::GenerateRangeProof(amount, blindingFactor, nonce, proofMessage);
+	if (bulletproofType == EBulletproofType::ORIGINAL)
+	{
+		const SecretKey nonce = CreateNonce(commitment, m_bulletProofNonce);
+
+		return Crypto::GenerateRangeProof(amount, blindingFactor, nonce, nonce, proofMessage);
+	}
+	else if (bulletproofType == EBulletproofType::ENHANCED)
+	{
+		const SecretKey privateNonceHash = Crypto::Blake2b(m_masterKey.GetPrivateKey().GetBytes().GetData());
+
+		std::unique_ptr<PublicKey> pMasterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey()); // TODO: Cache this
+		if (pMasterPublicKey == nullptr)
+		{
+			return std::unique_ptr<RangeProof>(nullptr);
+		}
+
+		const SecretKey rewindNonceHash = Crypto::Blake2b(pMasterPublicKey->GetCompressedBytes().GetData());
+
+		return Crypto::GenerateRangeProof(amount, blindingFactor, CreateNonce(commitment, privateNonceHash), CreateNonce(commitment, rewindNonceHash), proofMessage);
+	}
+	
+	throw UNIMPLEMENTED_EXCEPTION;
 }
 
-SecretKey KeyChain::CreateNonce(const Commitment& commitment) const
+SecretKey KeyChain::CreateNonce(const Commitment& commitment, const SecretKey& nonceHash) const
 {
-	return Crypto::Blake2b(commitment.GetCommitmentBytes().GetData(), m_bulletProofNonce.GetBytes().GetData());
+	return Crypto::Blake2b(commitment.GetCommitmentBytes().GetData(), nonceHash.GetBytes().GetData());
 }

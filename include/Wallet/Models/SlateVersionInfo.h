@@ -21,7 +21,7 @@ public:
 
 	inline const uint16_t GetVersion() const { return m_version; }
 	inline const uint16_t GetOriginalVersion() const { return m_originalVersion; }
-	inline const uint16_t GetMinimumCompatibleVersion() const { return m_blockHeaderVersion; }
+	inline const uint16_t GetBlockHeaderVersion() const { return m_blockHeaderVersion; }
 
 	Json::Value ToJSON() const
 	{

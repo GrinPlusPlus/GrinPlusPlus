@@ -39,4 +39,11 @@ namespace ConfigProps
 
 		static const std::string LOG_LEVEL = "LOG_LEVEL";
 	}
+
+	namespace Wallet
+	{
+		static const std::string WALLET = "WALLET";
+
+		static const std::string DATABASE = "DATABASE";
+	}
 }

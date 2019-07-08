@@ -90,8 +90,8 @@ std::string ConfigReader::ReadDataPath(const Json::Value& root, const EEnvironme
 
 P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 {
-	int maxPeers = 30;
-	int minPeers = 20;
+	int maxPeers = 50;
+	int minPeers = 15;
 
 	if (root.isMember(ConfigProps::P2P::P2P))
 	{
@@ -99,12 +99,12 @@ P2PConfig ConfigReader::ReadP2P(const Json::Value& root) const
 
 		if (p2pRoot.isMember(ConfigProps::P2P::MAX_PEERS))
 		{
-			maxPeers = p2pRoot.get(ConfigProps::P2P::MAX_PEERS, 30).asInt();
+			maxPeers = p2pRoot.get(ConfigProps::P2P::MAX_PEERS, 50).asInt();
 		}
 
 		if (p2pRoot.isMember(ConfigProps::P2P::MIN_PEERS))
 		{
-			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 20).asInt();
+			minPeers = p2pRoot.get(ConfigProps::P2P::MIN_PEERS, 15).asInt();
 		}
 	}
 
@@ -150,6 +150,16 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 {
 	const std::string walletPath = dataPath + "WALLET/";
 
+	std::string databaseType = "ROCKSDB";
+	if (root.isMember(ConfigProps::Wallet::WALLET))
+	{
+		const Json::Value& walletRoot = root[ConfigProps::Wallet::WALLET];
+		if (walletRoot.isMember(ConfigProps::Wallet::DATABASE))
+		{
+			databaseType = walletRoot.get(ConfigProps::Wallet::DATABASE, "ROCKSDB").asString();
+		}
+	}
+
 	uint32_t listenPort = 3415; // TODO: Read value
 	uint32_t ownerPort = 3420; // TODO: Read value
 	if (environmentType == EEnvironmentType::FLOONET)
@@ -168,7 +178,7 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 
 	const uint32_t minimumConfirmations = 10; // TODO: Read value
 
-	return WalletConfig(walletPath, listenPort, ownerPort, publicKeyVersion, privateKeyVersion, minimumConfirmations);
+	return WalletConfig(walletPath, databaseType, listenPort, ownerPort, publicKeyVersion, privateKeyVersion, minimumConfirmations);
 }
 
 ServerConfig ConfigReader::ReadServerConfig(const Json::Value& root, const EEnvironmentType environmentType) const

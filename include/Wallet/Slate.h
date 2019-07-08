@@ -36,6 +36,7 @@ public:
 	}
 
 	inline const uuids::uuid& GetSlateId() const { return m_slateId; }
+	inline const SlateVersionInfo& GetVersionInfo() const { return m_versionInfo; }
 	inline uint64_t GetAmount() const { return m_amount; }
 	inline uint64_t GetFee() const { return m_fee; }
 	inline uint64_t GetLockHeight() const { return m_lockHeight; }

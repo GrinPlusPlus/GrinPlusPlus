@@ -40,7 +40,7 @@ public:
 
 		if (hex)
 		{
-			std::vector<unsigned char> bytes = HexUtil::FromHex(node.asString());
+			std::vector<unsigned char> bytes = HexUtil::FromHex(std::string(node.asString()));
 			if (bytes.size() != expectedSize)
 			{
 				throw DeserializationException();
@@ -266,5 +266,13 @@ public:
 		{
 			json[fieldName] = opt.value();
 		}
+	}
+
+	// Parse
+	static bool Parse(const std::string& input, Json::Value& outputJSON)
+	{
+		std::string errors;
+		std::istringstream inputStream(input);
+		return Json::parseFromStream(Json::CharReaderBuilder(), inputStream, &outputJSON, &errors);
 	}
 };

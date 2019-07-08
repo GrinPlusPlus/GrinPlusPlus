@@ -10,16 +10,17 @@
 
 using namespace rocksdb;
 
-class WalletDB : public IWalletDB
+class WalletRocksDB : public IWalletDB
 {
 public:
-	WalletDB(const Config& config);
+	WalletRocksDB(const Config& config);
 
 	void Open();
 	void Close();
 
 	virtual std::vector<std::string> GetAccounts() const override final;
 
+	virtual bool OpenWallet(const std::string& username) override final;
 	virtual bool CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) override final;
 
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const override final;

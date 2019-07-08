@@ -31,6 +31,8 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 		if (decryptedSeedOpt.has_value())
 		{
 			LoggerAPI::LogInfo("SessionManager::Login - Valid password provided. Logging in now.");
+
+			m_walletDB.OpenWallet(username);
 			return std::make_unique<SessionToken>(Login(username, decryptedSeedOpt.value()));
 		}
 

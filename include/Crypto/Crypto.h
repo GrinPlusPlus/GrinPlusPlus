@@ -83,7 +83,7 @@ public:
 	//
 	static std::unique_ptr<BlindingFactor> AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative);
 
-	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage);
+	static std::unique_ptr<RangeProof> GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage);
 
 	static std::unique_ptr<RewoundProof> RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce);
 

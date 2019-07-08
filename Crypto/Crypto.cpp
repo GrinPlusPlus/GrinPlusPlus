@@ -161,9 +161,9 @@ SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& s
 	throw CryptoException("secp256k1_ec_privkey_tweak_add failed");
 }
 
-std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& nonce, const ProofMessage& proofMessage)
+std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage)
 {
-	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, nonce, proofMessage);
+	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, privateNonce, rewindNonce, proofMessage);
 }
 
 std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce)

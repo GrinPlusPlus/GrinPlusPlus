@@ -134,7 +134,6 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecureVector& masterS
 	{
 		if (output.GetStatus() == EOutputStatus::SPENDABLE)
 		{
-			SecretKey blindingFactor = *keyChain.DerivePrivateKey(output.GetKeyChainPath(), output.GetAmount());
 			coins.emplace_back(OutputData(output));
 		}
 	}
@@ -142,7 +141,7 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecureVector& masterS
 	return coins;
 }
 
-OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId)
+OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId, const EBulletproofType& bulletproofType)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -151,7 +150,7 @@ OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uin
 	std::unique_ptr<Commitment> pCommitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes())); // TODO: Creating a BlindingFactor here is unsafe. The memory may not get cleared.
 	if (pCommitment != nullptr)
 	{
-		std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, *pCommitment, blindingFactor);
+		std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, *pCommitment, blindingFactor, bulletproofType);
 		if (pRangeProof != nullptr)
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
@@ -283,7 +282,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 				output.SetStatus(EOutputStatus::CANCELED);
 				outputsToUpdate.push_back(output);
 			}
-			else
+			else if (status != EOutputStatus::CANCELED)
 			{
 				LoggerAPI::LogError("Wallet::CancelWalletTx - Can't cancel output with status " + OutputStatus::ToString(status));
 				return false;

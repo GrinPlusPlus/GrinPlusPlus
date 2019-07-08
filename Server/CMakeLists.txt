@@ -36,4 +36,4 @@ add_executable(${TARGET_NAME} ${SERVER_SRC})
 
 add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet)
 target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
-target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config jsoncpp_lib_static Wallet)
+target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet)

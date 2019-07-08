@@ -13,6 +13,7 @@
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Crypto/SecretKey.h>
+#include <Crypto/BulletproofType.h>
 
 class Wallet
 {
@@ -40,7 +41,7 @@ public:
 	bool AddWalletTxs(const SecureVector& masterSeed, const std::vector<WalletTx>& transactions);
 
 	std::vector<OutputData> GetAllAvailableCoins(const SecureVector& masterSeed);
-	OutputData CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId);
+	OutputData CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId, const EBulletproofType& bulletproofType);
 	bool SaveOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputsToSave);
 
 	std::unique_ptr<SlateContext> GetSlateContext(const uuids::uuid& slateId, const SecureVector& masterSeed) const;

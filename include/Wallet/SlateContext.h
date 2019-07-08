@@ -46,7 +46,6 @@ public:
 		return SlateContext(SecretKey(std::move(decryptedBlind)), SecretKey(std::move(decryptedNonce)));
 	}
 
-private:
 	static Hash DeriveXORKey(const SecureVector& masterSeed, const uuids::uuid& slateId, const std::string& extra)
 	{
 		Serializer serializer;
@@ -57,6 +56,7 @@ private:
 		return Crypto::Blake2b(serializer.GetBytes());
 	}
 
+private:
 	SecretKey m_secretKey;
 	SecretKey m_secretNonce;
 };

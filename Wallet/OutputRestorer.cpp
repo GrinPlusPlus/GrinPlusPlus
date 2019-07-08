@@ -3,6 +3,7 @@
 
 #include <Wallet/WalletUtil.h>
 #include <Consensus/BlockTime.h>
+#include <Consensus/HardForks.h>
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
@@ -57,19 +58,31 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 
 std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
 {
-	std::unique_ptr<RewoundProof> pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof());
+	EBulletproofType type = EBulletproofType::ORIGINAL;
+	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;
+	if (Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), ((std::max)(currentBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
+	{
+		pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof(), EBulletproofType::ORIGINAL);
+	}
+
+	if (pRewoundProof == nullptr)
+	{
+		type = EBulletproofType::ENHANCED;
+		pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof(), EBulletproofType::ENHANCED);
+	}
+
 	if (pRewoundProof != nullptr)
 	{
-		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(3)); // TODO: Always length 3 for now. Need to grind through in future.
+		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
 		CBigInteger<32> blindingFactor;
-		if (pBlindingFactor != nullptr)
+		if (pBlindingFactor != nullptr && type == EBulletproofType::ORIGINAL)
 		{
 			blindingFactor = pBlindingFactor->GetBytes();
 		}
 		else
 		{
-			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath)->GetBytes();
+			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath, pRewoundProof->GetAmount())->GetBytes();
 		}
 
 		TransactionOutput txOutput(outputDisplayInfo.GetIdentifier().GetFeatures(), Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()), RangeProof(outputDisplayInfo.GetRangeProof()));

@@ -1,9 +1,9 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
-#include "../secp256k1-zkp/include/secp256k1_commitment.h"
-#include "../secp256k1-zkp/include/secp256k1_generator.h"
-#include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+//#include "../secp256k1-zkp/include/secp256k1_commitment.h"
+//#include "../secp256k1-zkp/include/secp256k1_generator.h"
+//#include <Crypto/Crypto.h>
+//#include <Crypto/RandomNumberGenerator.h>
 
 TEST_CASE("AggSig Interaction")
 {

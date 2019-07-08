@@ -18,7 +18,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 
 	// Generate output
 	const uint32_t walletTxId = wallet.GetNextWalletTxId();
-	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId);
+	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId, EBulletproofType::ENHANCED);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = *Crypto::GenerateSecureNonce();
 

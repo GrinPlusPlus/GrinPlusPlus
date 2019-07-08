@@ -198,7 +198,7 @@ std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return SendSlateBuilder(m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, messageOpt, strategy);
+	return SendSlateBuilder(m_config, m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, messageOpt, strategy);
 }
 
 std::unique_ptr<Slate> WalletManager::Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt)

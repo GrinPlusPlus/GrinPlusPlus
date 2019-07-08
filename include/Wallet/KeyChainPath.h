@@ -51,6 +51,13 @@ public:
 		return KeyChainPath(std::move(keyIndicesCopy));
 	}
 
+	KeyChainPath GetChild(const uint32_t childIndex) const
+	{
+		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;
+		keyIndicesCopy.push_back(childIndex);
+		return KeyChainPath(std::move(keyIndicesCopy));
+	}
+
 	static KeyChainPath FromString(const std::string& path)
 	{
 		if (path.empty() || path.at(0) != 'm')

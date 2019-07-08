@@ -7,11 +7,12 @@
 #include <Crypto/CryptoUtil.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
+#include <Consensus/HardForks.h>
 
 static const uint64_t SLATE_VERSION = 2;
 
-SendSlateBuilder::SendSlateBuilder(const INodeClient& nodeClient)
-	: m_nodeClient(nodeClient)
+SendSlateBuilder::SendSlateBuilder(const Config& config, const INodeClient& nodeClient)
+	: m_config(config), m_nodeClient(nodeClient)
 {
 
 }
@@ -27,6 +28,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 {
 	// Set lock_height for transaction kernel (current chain height).
 	const uint64_t blockHeight = m_nodeClient.GetChainHeight() + 1;
+	const uint16_t headerVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), blockHeight);
 
 	// Select inputs using desired selection strategy.
 	const uint8_t totalNumOutputs = numOutputs + 1;
@@ -46,7 +48,8 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 
 	const uint32_t walletTxId = wallet.GetNextWalletTxId();
 	const uint64_t changeAmount = inputTotal - (amount + fee);
-	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(wallet, masterSeed, changeAmount, walletTxId, numOutputs);
+	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
+	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(wallet, masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType);
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
@@ -59,7 +62,8 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	Transaction transaction = TransactionBuilder::BuildTransaction(inputs, changeOutputs, transactionOffset, fee, 0);
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
-	Slate slate(SLATE_VERSION, 2, uuids::uuid_system_generator()(), std::move(transaction), amount, fee, blockHeight, 0);
+	SlateVersionInfo slateVersionInfo(SLATE_VERSION, SLATE_VERSION, headerVersion);
+	Slate slate(std::move(slateVersionInfo), 2, uuids::uuid_system_generator()(), std::move(transaction), amount, fee, blockHeight, 0);
 	AddSenderInfo(slate, secretKey, secretNonce, messageOpt);
 
 	const WalletTx walletTx = BuildWalletTx(wallet, walletTxId, inputs, changeOutputs, slate, messageOpt);

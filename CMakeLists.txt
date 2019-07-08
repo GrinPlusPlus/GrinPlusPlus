@@ -14,13 +14,13 @@ set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
 set(HUNTER_STATUS_DEBUG TRUE)
 include("HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.148.tar.gz"
-    SHA1 "39855eac4375c6fb1d42fd0f13f03040621cb7b6"
+    URL "https://github.com/ruslo/hunter/archive/v0.23.198.tar.gz"
+    SHA1 "f44b698691eedfe9d1ee6763a6fb9b4af7756c24"
 )
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
-set(VERSION_REVISION 0)
+set(VERSION_REVISION 1)
 
 if(APPLE)
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.1)
@@ -74,6 +74,8 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/asio/asio/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/rocksdb/include
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/jsoncpp
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -82,9 +84,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 
 # Dependencies
 # JsonCPP
-hunter_add_package(jsoncpp)
-find_package(jsoncpp CONFIG REQUIRED)
-#set_target_properties(jsoncpp_lib_static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
+
+# RocksDB
+set(WITH_TESTS FALSE)
+include_directories(include/ThirdParty/rocksdb)
+add_subdirectory(include/ThirdParty/rocksdb)
+
+# SQLite3
+add_subdirectory(include/ThirdParty/libsqlite3)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

@@ -98,6 +98,23 @@ public:
 		return ec.value() == 0;
 	}
 
+	static bool CreateDirectories(const std::string& directory)
+	{
+		std::error_code ec;
+		return fs::create_directories(directory, ec);
+	}
+
+	static bool Exists(const std::string& path)
+	{
+		std::error_code ec;
+		if (fs::exists(path, ec))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	static std::string GetHomeDirectory()
 	{
 		#ifdef _WIN32

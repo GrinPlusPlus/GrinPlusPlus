@@ -17,6 +17,34 @@ namespace Consensus
 	// Floonet-only first hardfork
 	static const uint64_t FLOONET_FIRST_HARD_FORK = 185040;
 
+	static uint16_t GetHeaderVersion(const EEnvironmentType& environment, const uint64_t height)
+	{
+		if (environment == EEnvironmentType::FLOONET)
+		{
+			if (height < FLOONET_FIRST_HARD_FORK)
+			{
+				return 1;
+			}
+			else if (height < 2 * HARD_FORK_INTERVAL)
+			{
+				return 2;
+			}
+		}
+		else
+		{
+			if (height < HARD_FORK_INTERVAL)
+			{
+				return 1;
+			}
+			else if (height < 2 * HARD_FORK_INTERVAL)
+			{
+				return 2;
+			}
+		}
+
+		throw std::exception();
+	}
+
 	// Check whether the block version is valid at a given height. Implements 6 months interval scheduled hard forks for the first 2 years.
 	static bool IsValidHeaderVersion(const EEnvironmentType& environment, const uint64_t height, const uint16_t version)
 	{

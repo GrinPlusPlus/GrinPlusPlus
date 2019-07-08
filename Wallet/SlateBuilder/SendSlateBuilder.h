@@ -2,6 +2,7 @@
 
 #include "../Wallet.h"
 
+#include <Config/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/NodeClient.h>
@@ -12,7 +13,7 @@
 class SendSlateBuilder
 {
 public:
-	SendSlateBuilder(const INodeClient& nodeClient);
+	SendSlateBuilder(const Config& config, const INodeClient& nodeClient);
 
 	//
 	// Creates a slate for sending grins from the provided wallet.
@@ -33,5 +34,6 @@ private:
 
 	bool UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& context, const std::vector<OutputData>& changeOutputs, std::vector<OutputData>& coinsToLock, const WalletTx& walletTx) const;
 
+	const Config& m_config;
 	const INodeClient& m_nodeClient;
 };

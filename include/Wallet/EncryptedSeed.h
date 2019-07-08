@@ -32,6 +32,17 @@ public:
 		serializer.AppendByteVector(m_encryptedSeedBytes);
 	}
 
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["version"] = ENCRYPTED_SEED_FORMAT;
+		json["iv"] = m_iv.ToHex();
+		json["salt"] = m_salt.ToHex();
+		json["scrypt"] = m_scryptParameters.ToJSON();
+		json["seed"] = HexUtil::ConvertToHex(m_encryptedSeedBytes);
+		return json;
+	}
+
 	static EncryptedSeed Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint8_t version = byteBuffer.ReadU8();
@@ -49,6 +60,19 @@ public:
 		}
 
 		std::vector<unsigned char> encryptedSeedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
+
+		return EncryptedSeed(std::move(iv), std::move(salt), std::move(encryptedSeedBytes), std::move(parameters));
+	}
+
+	static EncryptedSeed FromJSON(const Json::Value& json)
+	{
+		CBigInteger<16> iv = CBigInteger<16>::FromHex(JsonUtil::GetRequiredField(json, "iv").asString());
+		CBigInteger<8> salt = CBigInteger<8>::FromHex(JsonUtil::GetRequiredField(json, "salt").asString());
+
+		Json::Value scryptJSON = JsonUtil::GetRequiredField(json, "scrypt");
+		ScryptParameters parameters = ScryptParameters::FromJSON(scryptJSON);
+
+		std::vector<unsigned char> encryptedSeedBytes = HexUtil::FromHex(JsonUtil::GetRequiredField(json, "seed").asString());
 
 		return EncryptedSeed(std::move(iv), std::move(salt), std::move(encryptedSeedBytes), std::move(parameters));
 	}

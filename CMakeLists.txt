@@ -83,8 +83,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 # Dependencies
-# JsonCPP
-
 # RocksDB
 set(WITH_TESTS FALSE)
 include_directories(include/ThirdParty/rocksdb)
@@ -92,6 +90,9 @@ add_subdirectory(include/ThirdParty/rocksdb)
 
 # SQLite3
 add_subdirectory(include/ThirdParty/libsqlite3)
+
+# ZLib
+add_subdirectory(include/ThirdParty/zlib)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

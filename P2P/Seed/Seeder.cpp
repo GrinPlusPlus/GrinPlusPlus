@@ -5,7 +5,7 @@
 #include "../Messages/GetPeerAddressesMessage.h"
 #include "../Socket.h"
 
-#include <P2P/capabilities.h>
+#include <P2P/Capabilities.h>
 #include <P2P/SocketAddress.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>

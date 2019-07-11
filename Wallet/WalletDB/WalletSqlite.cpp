@@ -132,7 +132,7 @@ std::unique_ptr<EncryptedSeed> WalletSqlite::LoadWalletSeed(const std::string& u
 	if (!FileUtil::Exists(seedPath))
 	{
 		LoggerAPI::LogWarning("Wallet not found for user: " + username);
-		return false;
+		return std::unique_ptr<EncryptedSeed>(nullptr);
 	}
 
 	std::vector<unsigned char> seedBytes;

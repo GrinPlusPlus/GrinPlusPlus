@@ -24,7 +24,7 @@ static void SigIntHandler(int signum)
 
 int main(int argc, char* argv[])
 {
-#ifndef WIN32
+#ifdef __APPLE__
 	// Set the max number of open files.
 	struct rlimit nofiles;
 	if (getrlimit(RLIMIT_NOFILE, &nofiles) == 0)

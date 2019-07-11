@@ -34,7 +34,7 @@ EZipFileStatus ZipFile::ExtractFile(const std::string& path, const std::string& 
 		return EZipFileStatus::NOT_OPEN;
 	}
 
-	if (unzLocateFile(m_unzFile, path.c_str(), (unzFileNameComparer)0) != UNZ_OK)
+	if (unzLocateFile(m_unzFile, path.c_str(), 0) != UNZ_OK)
 	{
 		LoggerAPI::LogInfo("ZipFile::ExtractFile - Path (" + path + ") in zip file (" + m_zipFilePath + ") was not found.");
 		return EZipFileStatus::NOT_FOUND;

@@ -48,7 +48,7 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 
 		if (!m_config.GetEnvironment().IsMainnet())
 		{
-			addresses.emplace_back(SocketAddress::SocketAddress(IPAddress::FromString("100.26.68.39"), 13414));
+			addresses.emplace_back(SocketAddress(IPAddress::FromString("100.26.68.39"), 13414));
 		}
 	}
 

@@ -1,4 +1,4 @@
-#include <thirdparty/Catch2/catch.hpp>
+#include <ThirdParty/Catch2/catch.hpp>
 
 #include "../Keychain/KeyChain.h"
 #include "../Keychain/KeyGenerator.h"

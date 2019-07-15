@@ -872,7 +872,7 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   )
 endif()
 
-option(WITH_TESTS "build with tests" ON)
+option(WITH_TESTS "build with tests" OFF)
 if(WITH_TESTS)
   add_subdirectory(third-party/gtest-1.7.0/fused-src/gtest)
   set(TESTS

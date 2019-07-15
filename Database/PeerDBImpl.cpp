@@ -39,7 +39,7 @@ void PeerDB::OpenDB()
 
 void PeerDB::CloseDB()
 {
-	//delete m_pDatabase;
+	delete m_pDatabase;
 }
 
 std::vector<Peer> PeerDB::LoadAllPeers()

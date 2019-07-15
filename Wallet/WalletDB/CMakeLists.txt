@@ -19,4 +19,4 @@ add_library(${TARGET_NAME} SHARED ${WalletDB_SRC})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_WalletDB)
 
 add_dependencies(${TARGET_NAME} sqlite3)
-target_link_libraries(${TARGET_NAME} Core rocksdb${ARTIFACT_SUFFIX} sqlite3 ${OS_LIBS})
+target_link_libraries(${TARGET_NAME} Core rocksdb-shared${ARTIFACT_SUFFIX} sqlite3 ${OS_LIBS})

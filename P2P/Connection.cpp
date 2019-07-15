@@ -219,6 +219,11 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Unknown exception occurred: " + std::string(e.what()));
 			break;
 		}
+		catch (...)
+		{
+			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Unknown error occurred.");
+			break;
+		}
 	}
 
 	pConnection->GetSocket().CloseSocket();

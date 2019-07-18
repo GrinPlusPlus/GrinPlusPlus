@@ -9,11 +9,15 @@ if(MSVC)
     endif()
 endif()
 
-hunter_add_package(minizip)
-hunter_add_package(ZLIB)
+#hunter_add_package(minizip)
+#hunter_add_package(ZLIB)
 
-find_package(minizip CONFIG REQUIRED)
-find_package(ZLIB CONFIG REQUIRED)
+#find_package(minizip CONFIG REQUIRED)
+#find_package(ZLIB CONFIG REQUIRED)
+
+include_directories(
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib/contrib
+)
 
 # PMMR
 file(GLOB PMMR_SRC
@@ -22,17 +26,22 @@ file(GLOB PMMR_SRC
     "OutputPMMR.cpp"
     "RangeProofPMMR.cpp"
     "TxHashSetImpl.cpp"
-	"TxHashSetManager.cpp"
+    "TxHashSetManager.cpp"
     "TxHashSetValidator.cpp"
-	"Common/*.cpp"
-	"Common/CRoaring/*.c"
-	"Zip/*.cpp"
+    "Common/*.cpp"
+    "Common/CRoaring/*.c"
+    "Zip/*.cpp"
+    "../include/ThirdParty/zlib/contrib/minizip/ioapi.c"
+    "../include/ThirdParty/zlib/contrib/minizip/zip.c"
+    "../include/ThirdParty/zlib/contrib/minizip/unzip.c"
+    #"../include/ThirdParty/zlib/contrib/minizip/mztools.c"
 )
+
 
 add_library(${TARGET_NAME} SHARED ${PMMR_SRC})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
 add_dependencies(${TARGET_NAME} Infrastructure Crypto Core)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core minizip::minizip ZLIB::zlib)
+target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core zlib)
 
 # Tests
 file(GLOB PMMR_TESTS_SRC
@@ -42,4 +51,4 @@ file(GLOB PMMR_TESTS_SRC
 add_executable(${TEST_TARGET_NAME} ${PMMR_SRC} ${PMMR_TESTS_SRC})
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_PMMR)
 add_dependencies(${TEST_TARGET_NAME} Infrastructure Crypto Core)
-target_link_libraries(${TEST_TARGET_NAME} Infrastructure Crypto Core minizip::minizip ZLIB::zlib)
+target_link_libraries(${TEST_TARGET_NAME} Infrastructure Crypto Core zlib)

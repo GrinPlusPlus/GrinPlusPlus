@@ -2,8 +2,8 @@
 
 #include <P2P/IPAddress.h>
 #include <P2P/SocketAddress.h>
-#include <P2P/peer.h>
-#include <P2P/capabilities.h>
+#include <P2P/Peer.h>
+#include <P2P/Capabilities.h>
 #include <P2P/BanReason.h>
 #include <Database/PeerDB.h>
 #include <Config/Config.h>

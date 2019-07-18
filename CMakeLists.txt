@@ -1,32 +1,24 @@
 cmake_minimum_required(VERSION 3.1)
 
-if(APPLE)
-		set(CMAKE_INSTALL_NAME_DIR "@executable_path")
-		set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+if(UNIX AND NOT APPLE)
+	set(LINUX TRUE)
 endif()
 
-set(BUILD_STATIC_LIBS ON)
-add_definitions(-DNDEBUG)
+if(APPLE)
+	set(CMAKE_INSTALL_NAME_DIR "@executable_path")
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+elseif(LINUX)
+	set(CMAKE_INSTALL_RPATH "$ORIGIN")
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
 
-# HunterGate Package Manager
-set(HUNTER_CONFIGURATION_TYPES Release)
-set(HUNTER_ROOT ${CMAKE_BINARY_DIR})
-set(HUNTER_STATUS_DEBUG TRUE)
-include("HunterGate.cmake")
-HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.198.tar.gz"
-    SHA1 "f44b698691eedfe9d1ee6763a6fb9b4af7756c24"
-)
+#set(BUILD_STATIC_LIBS ON)
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
 set(VERSION_REVISION 1)
 
-if(APPLE)
-project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.1)
-else()
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
-endif()
 
 message("Grin++ Version: ${PROJECT_VERSION}")
 
@@ -60,12 +52,21 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(WITH_GFLAGS OFF)
+add_definitions(-DNDEBUG)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
 add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 add_definitions(-DASIO_STANDALONE)
-add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
+
+#if(APPLE)
+#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-MAC")
+#elseif(LINUX)
+#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-LINUX")
+#else()
+	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
+#endif()
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
@@ -76,6 +77,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/rocksdb/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/jsoncpp
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -83,15 +85,22 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 # Dependencies
-# JsonCPP
-
 # RocksDB
 set(WITH_TESTS FALSE)
 include_directories(include/ThirdParty/rocksdb)
 add_subdirectory(include/ThirdParty/rocksdb)
 
+if(APPLE)
+	set(ROCKS_DB_LIB rocksdb-shared${ARTIFACT_SUFFIX})
+else()
+	set(ROCKS_DB_LIB rocksdb${ARTIFACT_SUFFIX})
+endif()
+
 # SQLite3
 add_subdirectory(include/ThirdParty/libsqlite3)
+
+# ZLib
+add_subdirectory(include/ThirdParty/zlib)
 
 # Grin++ Projects
 add_subdirectory(Infrastructure)

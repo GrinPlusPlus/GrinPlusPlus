@@ -1,6 +1,6 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
-#include "../KeyChain/KeyChain.h"
+#include "../Keychain/KeyChain.h"
 #include <Config/ConfigManager.h>
 
 TEST_CASE("KeyChain::KeyDerivation")

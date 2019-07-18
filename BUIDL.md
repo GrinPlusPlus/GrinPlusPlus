@@ -1,8 +1,6 @@
 ## Build Instructions
 
 ### Windows
-Although CMake was chosen for future portability, the focus so far has been on Windows-only. Visual Studio 2017 or later is required to build.
-
 #### Prerequisites
 * A recent version of CMake
 * Visual Studio 2017+ 64-bit with C++ 2017 Support
@@ -29,3 +27,16 @@ Replace `<CONFIG>` with `Debug` or `Release`
 8. ```cmake --build . --config <CONFIG>```
 
 Once your code is built, you can just open GrinNode.exe from your bin folder.
+
+### Linux
+#### Prerequisites
+* CMake
+* gcc 7.x.x (Tested on gcc 7.4.0)
+
+1. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
+2. ```cd GrinPlusPlus```
+3. ```git submodule update --init --recursive```
+4. ```mkdir build```
+5. ```cd build```
+6. ```cmake ..```
+7. ```cmake --build .```

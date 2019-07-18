@@ -7,7 +7,7 @@
 
 #include <Core/DataFile.h>
 #include <Core/Models/OutputIdentifier.h>
-#include <Database/BlockDB.h>
+#include <Database/BlockDb.h>
 #include <Crypto/Hash.h>
 #include <Core/CRoaring/roaring.hh>
 

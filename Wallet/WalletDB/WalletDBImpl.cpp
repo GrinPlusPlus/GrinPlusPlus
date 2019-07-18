@@ -1,6 +1,9 @@
 #include <Wallet/WalletDB/WalletDB.h>
 
+#ifndef __linux__ 
 #include "WalletRocksDB.h"
+#endif
+
 #include "WalletSqlite.h"
 
 namespace WalletDBAPI
@@ -10,6 +13,12 @@ namespace WalletDBAPI
 	//
 	WALLET_DB_API IWalletDB* OpenWalletDB(const Config& config)
 	{
+#ifdef __linux__
+		WalletSqlite* pWalletDB = new WalletSqlite(config);
+		pWalletDB->Open();
+
+		return pWalletDB;
+#else
 		if (config.GetWalletConfig().GetDatabaseType() == "SQLITE")
 		{
 			WalletSqlite* pWalletDB = new WalletSqlite(config);
@@ -24,6 +33,7 @@ namespace WalletDBAPI
 
 			return pWalletDB;
 		}
+#endif
 	}
 
 	//
@@ -31,6 +41,10 @@ namespace WalletDBAPI
 	//
 	WALLET_DB_API void CloseWalletDB(IWalletDB* pWalletDB)
 	{
+#ifdef __linux__
+		((WalletSqlite*)pWalletDB)->Close();
+		delete (WalletSqlite*)pWalletDB;
+#else
 		WalletRocksDB* pRocksDB = dynamic_cast<WalletRocksDB*>(pWalletDB);
 		if (pRocksDB != nullptr)
 		{
@@ -42,5 +56,6 @@ namespace WalletDBAPI
 			((WalletSqlite*)pWalletDB)->Close();
 			delete (WalletSqlite*)pWalletDB;
 		}
+#endif
 	}
 }

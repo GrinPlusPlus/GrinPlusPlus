@@ -7,14 +7,6 @@
 #include <string>
 #include <filesystem.h>
 
-static ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-static ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-static ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-static ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-static ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-
-std::string kDBPath = "/tmp/rocksdb_simple_example";
-
 BlockDB::BlockDB(const Config& config)
 	: m_config(config)
 {
@@ -26,7 +18,7 @@ void BlockDB::OpenDB()
 	Options options;
 	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
 	options.IncreaseParallelism();
-	options.max_open_files = 25;
+	//options.max_open_files = 25;
 
 	//options.OptimizeLevelStyleCompaction();
 	// create the DB if it's not already present
@@ -36,6 +28,12 @@ void BlockDB::OpenDB()
 	// open DB
 	const std::string dbPath = m_config.GetDatabaseDirectory() + "CHAIN/";
 	fs::create_directories(dbPath);
+
+	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 	std::vector<std::string> columnFamilies;
 	DB::ListColumnFamilies(options, dbPath, &columnFamilies);
@@ -81,11 +79,14 @@ void BlockDB::OpenDB()
 
 void BlockDB::CloseDB()
 {
-	delete m_pDefaultHandle;
+	
+
+	//delete m_pDefaultHandle;
 	delete m_pBlockHandle;
 	delete m_pHeaderHandle;
 	delete m_pBlockSumsHandle;
 	delete m_pOutputPosHandle;
+	delete m_pInputBitmapHandle;
 	delete m_pDatabase;
 }
 

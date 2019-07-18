@@ -13,6 +13,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 {
 	const std::string dataDirectory = (environment == EEnvironmentType::MAINNET ? "MAINNET" : "FLOONET");
 	const std::string configPath = FileUtil::GetHomeDirectory() + "/.GrinPP/" + dataDirectory + "/";
+	FileUtil::CreateDirectories(configPath);
 	const std::string configFile = configPath + "server_config.json";
 
 	std::ifstream file(configFile, std::ifstream::binary);
@@ -28,7 +29,11 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 			LoggerAPI::LogWarning("ConfigManager::LoadConfig - Failed to parse config.json");
 		}
 
-		return ConfigReader().ReadConfig(root, environment);
+		const Config config = ConfigReader().ReadConfig(root, environment);
+
+		ConfigWriter().SaveConfig(config, configFile);
+
+		return config;
 	}
 	else
 	{

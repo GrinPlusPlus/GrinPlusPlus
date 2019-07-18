@@ -184,30 +184,6 @@ public:
 		return *this > rhs || *this == rhs;
 	}
 
-	inline CBigInteger operator+=(const CBigInteger& rhs)
-	{
-		*this = *this + rhs;
-		return *this;
-	}
-
-	inline CBigInteger operator-=(const CBigInteger& rhs)
-	{
-		*this = *this - rhs;
-		return *this;
-	}
-
-	inline CBigInteger operator*=(const CBigInteger& rhs)
-	{
-		*this = *this * rhs;
-		return *this;
-	}
-
-	inline CBigInteger operator/=(const CBigInteger& rhs)
-	{
-		*this = *this / rhs;
-		return *this;
-	}
-
 	inline CBigInteger operator^=(const CBigInteger& rhs)
 	{
 		*this = *this ^ rhs;

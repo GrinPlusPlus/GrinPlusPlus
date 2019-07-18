@@ -46,17 +46,31 @@ bool WalletSqlite::OpenWallet(const std::string& username)
 
 	const std::string userDBPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username;
 	const std::string dbFile = userDBPath + "/wallet.db";
-	sqlite3* pDatabase = nullptr;
-	if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
+	if (FileUtil::Exists(dbFile))
 	{
-		LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to open wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
-		sqlite3_close(pDatabase);
-		FileUtil::RemoveFile(userDBPath);
+		sqlite3* pDatabase = nullptr;
+		if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
+		{
+			LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to open wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
+			sqlite3_close(pDatabase);
 
-		throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
+			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
+		}
+
+		m_userDBs[username] = pDatabase;
+	}
+	else
+	{
+		sqlite3* pDatabase = CreateWalletDB(username);
+		if (pDatabase == nullptr)
+		{
+			LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to create wallet.db for user: " + username);
+			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
+		}
+
+		m_userDBs[username] = pDatabase;
 	}
 
-	m_userDBs[username] = pDatabase;
 
 	return true;
 }
@@ -64,7 +78,8 @@ bool WalletSqlite::OpenWallet(const std::string& username)
 bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
 	const std::string userDBPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username;
-	if (FileUtil::Exists(userDBPath))
+	const std::string seedFile = userDBPath + "/seed.json";
+	if (FileUtil::Exists(seedFile))
 	{
 		LoggerAPI::LogWarning("WalletSqlite::CreateWallet - Wallet already exists for user: " + username);
 		return false;
@@ -78,45 +93,18 @@ bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed
 
 	const std::string seedJSON = encryptedSeed.ToJSON().toStyledString();
 	const std::vector<unsigned char> seedBytes(seedJSON.data(), seedJSON.data() + seedJSON.size());
-	const std::string seedFile = userDBPath + "/seed.json";
 	if (!FileUtil::SafeWriteToFile(seedFile, seedBytes))
 	{
 		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create seed.json for user: " + username);
 		throw WALLET_STORE_EXCEPTION("Failed to create seed.json");
 	}
-
-	const std::string dbFile = userDBPath + "/wallet.db";
-	sqlite3* pDatabase = nullptr;
-	if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
+	
+	sqlite3* pDatabase = CreateWalletDB(username);
+	if (pDatabase == nullptr)
 	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
-		sqlite3_close(pDatabase);
+		LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to create wallet.db for user: " + username);
 		FileUtil::RemoveFile(userDBPath);
-
 		throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
-	}
-
-	std::string tableCreation = "create table metadata(id INTEGER PRIMARY KEY, next_tx_id INTEGER NOT NULL, refresh_block_height INTEGER NOT NULL, restore_leaf_index INTEGER NOT NULL);";
-	tableCreation += "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
-	//tableCreation += "create table transactions(id INTEGER PRIMARY KEY, type INTEGER NOT NULL, slate_id TEXT, slate_message TEXT, creation_time DATETIME NOT NULL, confirmation_time DATETIME, confirmation_height INTEGER, amount_credited INTEGER NOT NULL, amount_debited INTEGER NOT NULL, fee INTEGER, tx_data BLOB);";
-	tableCreation += "create table transactions(id INTEGER PRIMARY KEY, slate_id TEXT, encrypted BLOB NOT NULL);";
-	tableCreation += "create table outputs(keychain_path TEXT PRIMARY KEY, status INTEGER NOT NULL, transaction_id INTEGER, encrypted BLOB NOT NULL);";
-	tableCreation += "create table slate_contexts(slate_id TEXT PRIMARY KEY, enc_blind BLOB NOT NULL, enc_nonce BLOB NOT NULL);";
-	// TODO: Add indices
-
-	KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
-	tableCreation += "insert into accounts values('m/0/0','DEFAULT'," + std::to_string(nextChildPath.GetKeyIndices().back()) + ");";
-	tableCreation += "insert into metadata values(1, 0, 0, 0);";
-
-	char* error = nullptr;
-	if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
-	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create DB tables for user: " + username);
-		sqlite3_free(error);
-		sqlite3_close(pDatabase);
-		FileUtil::RemoveFile(userDBPath);
-
-		throw WALLET_STORE_EXCEPTION("Failed to create DB tables");
 	}
 
 	m_userDBs[username] = pDatabase;
@@ -686,4 +674,42 @@ SecureVector WalletSqlite::Decrypt(const SecureVector& masterSeed, const std::st
 	const SecretKey key = CreateSecureKey(masterSeed, dataType);
 
 	return Crypto::AES256_Decrypt(encryptedBytes, key, iv);
+}
+
+sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
+{
+	const std::string walletDBFile = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username + "/wallet.db";
+	sqlite3* pDatabase = nullptr;
+	if (sqlite3_open(walletDBFile.c_str(), &pDatabase) != SQLITE_OK)
+	{
+		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
+		sqlite3_close(pDatabase);
+		FileUtil::RemoveFile(walletDBFile);
+
+		return nullptr;
+	}
+
+	std::string tableCreation = "create table metadata(id INTEGER PRIMARY KEY, next_tx_id INTEGER NOT NULL, refresh_block_height INTEGER NOT NULL, restore_leaf_index INTEGER NOT NULL);";
+	tableCreation += "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
+	tableCreation += "create table transactions(id INTEGER PRIMARY KEY, slate_id TEXT, encrypted BLOB NOT NULL);";
+	tableCreation += "create table outputs(keychain_path TEXT PRIMARY KEY, status INTEGER NOT NULL, transaction_id INTEGER, encrypted BLOB NOT NULL);";
+	tableCreation += "create table slate_contexts(slate_id TEXT PRIMARY KEY, enc_blind BLOB NOT NULL, enc_nonce BLOB NOT NULL);";
+	// TODO: Add indices
+
+	KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
+	tableCreation += "insert into accounts values('m/0/0','DEFAULT'," + std::to_string(nextChildPath.GetKeyIndices().back()) + ");";
+	tableCreation += "insert into metadata values(1, 0, 0, 0);";
+
+	char* error = nullptr;
+	if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
+	{
+		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create DB tables for user: " + username);
+		sqlite3_free(error);
+		sqlite3_close(pDatabase);
+		FileUtil::RemoveFile(walletDBFile);
+
+		return nullptr;
+	}
+
+	return pDatabase;
 }

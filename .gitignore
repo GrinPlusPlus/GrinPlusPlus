@@ -323,3 +323,4 @@ cmake_install.cmake
 *.vcxproj.filters
 *generate.stamp
 *generate.stamp.depend
+include/ThirdParty/zlib/zconf.h

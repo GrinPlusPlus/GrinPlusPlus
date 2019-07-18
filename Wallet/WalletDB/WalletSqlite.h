@@ -38,6 +38,8 @@ public:
 	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) override final;
 
 private:
+	sqlite3* CreateWalletDB(const std::string& username);
+
 	std::unique_ptr<UserMetadata> GetMetadata(const std::string& username) const;
 	bool SaveMetadata(const std::string& username, const UserMetadata& userMetadata);
 

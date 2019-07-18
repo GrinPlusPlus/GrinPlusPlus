@@ -50,7 +50,12 @@ std::unique_ptr<Signature> AggSig::SignMessage(const SecretKey& secretKey, const
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
 	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, randomSeed.data());
+	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
+	if (randomizeResult != 1)
+    {
+	    LoggerAPI::LogError("AggSig::SignMessage - Context randomization failed.");
+        return std::unique_ptr<Signature>(nullptr);
+    }
 
 	secp256k1_pubkey pubKey;
 	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKey, publicKey.data(), publicKey.size());
@@ -114,7 +119,12 @@ std::unique_ptr<Signature> AggSig::CalculatePartialSignature(const SecretKey& se
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
 	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
-	secp256k1_context_randomize(m_pContext, randomSeed.data());
+	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
+    if (randomizeResult != 1)
+    {
+        LoggerAPI::LogError("AggSig::SignMessage - Context randomization failed.");
+        return std::unique_ptr<Signature>(nullptr);
+    }
 
 	secp256k1_pubkey pubKeyForE;
 	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, sumPubKeys.data(), sumPubKeys.size());

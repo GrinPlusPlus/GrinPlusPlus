@@ -18,13 +18,7 @@ set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
 set(VERSION_REVISION 1)
 
-if(APPLE)
-	project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}-MAC)
-elseif(LINUX)
-	project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}-LINUX)
-else()
-	project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}-WIN)
-endif()
+project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
 message("Grin++ Version: ${PROJECT_VERSION}")
 
@@ -65,7 +59,14 @@ add_definitions(-DNOMINMAX)
 add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 add_definitions(-DASIO_STANDALONE)
-add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
+
+#if(APPLE)
+#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-MAC")
+#elseif(LINUX)
+#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-LINUX")
+#else()
+	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
+#endif()
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
@@ -76,6 +77,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/rocksdb/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/jsoncpp
+	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -87,6 +89,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(WITH_TESTS FALSE)
 include_directories(include/ThirdParty/rocksdb)
 add_subdirectory(include/ThirdParty/rocksdb)
+
+if(APPLE)
+	set(ROCKS_DB_LIB rocksdb-shared${ARTIFACT_SUFFIX})
+else()
+	set(ROCKS_DB_LIB rocksdb${ARTIFACT_SUFFIX})
+endif()
 
 # SQLite3
 add_subdirectory(include/ThirdParty/libsqlite3)

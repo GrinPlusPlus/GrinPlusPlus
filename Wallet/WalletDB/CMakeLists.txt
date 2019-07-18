@@ -7,7 +7,7 @@ if(LINUX)
     set(OS_LIBS "")
 else(LINUX)
     set(ROCKS_SRC "WalletRocksDB.cpp")
-    set(OS_LIBS rocksdb-shared${ARTIFACT_SUFFIX})
+    set(OS_LIBS ${ROCKS_DB_LIB})
 endif(LINUX)
 
 file(GLOB WalletDB_SRC

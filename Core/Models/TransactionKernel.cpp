@@ -56,8 +56,8 @@ Json::Value TransactionKernel::ToJSON(const bool hex) const
 {
 	Json::Value kernelNode;
 	kernelNode["features"] = KernelFeatures::ToString(GetFeatures());
-	kernelNode["fee"] = GetFee();
-	kernelNode["lock_height"] = GetLockHeight();
+	kernelNode["fee"] = std::to_string(GetFee());
+	kernelNode["lock_height"] = std::to_string(GetLockHeight());
 	kernelNode["excess"] = JsonUtil::ConvertToJSON(GetExcessCommitment(), hex);
 	kernelNode["excess_sig"] = JsonUtil::ConvertToJSON(GetExcessSignature(), hex);
 	return kernelNode;

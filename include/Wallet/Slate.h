@@ -64,10 +64,10 @@ public:
 
 		slateNode["num_participants"] = m_numParticipants;
 		slateNode["id"] = uuids::to_string(m_slateId);
-		slateNode["amount"] = m_amount; // TODO: #[serde(with = "secp_ser::string_or_u64")]
-		slateNode["fee"] = m_fee;
-		slateNode["height"] = m_blockHeight;
-		slateNode["lock_height"] = m_lockHeight;
+		slateNode["amount"] = std::to_string(m_amount);
+		slateNode["fee"] = std::to_string(m_fee);
+		slateNode["height"] = std::to_string(m_blockHeight);
+		slateNode["lock_height"] = std::to_string(m_lockHeight);
 		slateNode["tx"] = m_transaction.ToJSON(hex);
 
 		Json::Value participantDataNode;

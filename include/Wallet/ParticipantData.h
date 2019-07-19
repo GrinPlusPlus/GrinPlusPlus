@@ -40,7 +40,7 @@ public:
 	inline Json::Value ToJSON(const bool hex) const
 	{
 		Json::Value participantJSON;
-		participantJSON["id"] = GetParticipantId();
+		participantJSON["id"] = std::to_string(GetParticipantId());
 		participantJSON["public_blind_excess"] = JsonUtil::ConvertToJSON(GetPublicBlindExcess().GetCompressedBytes().GetData(), hex);
 		participantJSON["public_nonce"] = JsonUtil::ConvertToJSON(GetPublicNonce().GetCompressedBytes().GetData(), hex);
 		participantJSON["part_sig"] = JsonUtil::ConvertToJSON(GetPartialSignature(), hex);

@@ -5,7 +5,8 @@
 
 enum class ESelectionStrategy
 {
-	ALL
+	ALL,
+	CUSTOM
 };
 
 namespace SelectionStrategy
@@ -15,6 +16,10 @@ namespace SelectionStrategy
 		if (input == "ALL")
 		{
 			return ESelectionStrategy::ALL;
+		}
+		else if (input == "CUSTOM")
+		{
+			return ESelectionStrategy::CUSTOM;
 		}
 
 		throw DeserializationException();

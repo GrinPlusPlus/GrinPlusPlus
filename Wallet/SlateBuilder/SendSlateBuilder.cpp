@@ -24,7 +24,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const uint64_t feeBase,
 	const uint8_t numOutputs,
 	const std::optional<std::string>& messageOpt, 
-	const ESelectionStrategy& strategy) const
+	const SelectionStrategyDTO& strategy) const
 {
 	// Set lock_height for transaction kernel (current chain height).
 	const uint64_t blockHeight = m_nodeClient.GetChainHeight() + 1;
@@ -34,7 +34,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const uint8_t totalNumOutputs = numOutputs + 1;
 	const uint64_t numKernels = 1;
 	const std::vector<OutputData> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
-	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy, totalNumOutputs, numKernels);
+	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
 
 	// Calculate the fee
 	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);

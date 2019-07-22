@@ -6,7 +6,7 @@
 #include <Crypto/SecretKey.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/NodeClient.h>
-#include <Wallet/SelectionStrategy.h>
+#include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
 #include <Wallet/Slate.h>
 #include <optional>
 
@@ -25,7 +25,7 @@ public:
 		const uint64_t feeBase, 
 		const uint8_t numOutputs, 
 		const std::optional<std::string>& messageOpt, 
-		const ESelectionStrategy& strategy) const;
+		const SelectionStrategyDTO& strategy) const;
 
 private:
 	SecretKey CalculatePrivateKey(const BlindingFactor& transactionOffset, const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs) const;

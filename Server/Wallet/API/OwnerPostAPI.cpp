@@ -223,15 +223,16 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
 
-	const std::optional<std::string> selectionStrategyOpt = JsonUtil::GetStringOpt(json, "selection_strategy");
-	if (!selectionStrategyOpt.has_value())
+	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
+	if (selectionStrategyJSON == Json::nullValue)
 	{
 		return RestUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
 	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
 
-	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), messageOpt, SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
+	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), messageOpt, selectionStrategy, numOutputs);
 	if (pSlate != nullptr)
 	{
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());

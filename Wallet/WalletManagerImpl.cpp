@@ -178,7 +178,12 @@ std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token
 	return outputDTOs;
 }
 
-uint64_t WalletManager::EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)
+FeeEstimateDTO WalletManager::EstimateFee(
+	const SessionToken& token, 
+	const uint64_t amountToSend, 
+	const uint64_t feeBase, 
+	const SelectionStrategyDTO& strategy, 
+	const uint8_t numChangeOutputs)
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
@@ -187,13 +192,27 @@ uint64_t WalletManager::EstimateFee(const SessionToken& token, const uint64_t am
 	const uint8_t totalNumOutputs = numChangeOutputs + 1;
 	const uint64_t numKernels = 1;
 	const std::vector<OutputData> availableCoins = wallet.GetWallet().GetAllAvailableCoins(masterSeed);
-	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amountToSend, feeBase, strategy, totalNumOutputs, numKernels);
+	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amountToSend, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
+	
+	std::vector<WalletOutputDTO> inputDTOs;
+	for (const OutputData& input : inputs)
+	{
+		inputDTOs.emplace_back(WalletOutputDTO(input));
+	}
 
 	// Calculate the fee
-	return WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
+	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
+
+	return FeeEstimateDTO(fee, std::move(inputDTOs));
 }
 
-std::unique_ptr<Slate> WalletManager::Send(const SessionToken& token, const uint64_t amount, const uint64_t feeBase, const std::optional<std::string>& messageOpt, const ESelectionStrategy& strategy, const uint8_t numChangeOutputs)
+std::unique_ptr<Slate> WalletManager::Send(
+	const SessionToken& token, 
+	const uint64_t amount,
+	const uint64_t feeBase, 
+	const std::optional<std::string>& messageOpt, 
+	const SelectionStrategyDTO& strategy, 
+	const uint8_t numChangeOutputs)
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);

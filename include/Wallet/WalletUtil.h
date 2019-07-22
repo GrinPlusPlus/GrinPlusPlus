@@ -21,7 +21,7 @@ public:
 		}
 		else
 		{
-			return (outputBlockHeight + minimumConfirmations) >= currentBlockHeight;
+			return (outputBlockHeight + minimumConfirmations) > currentBlockHeight;
 		}
 	}
 

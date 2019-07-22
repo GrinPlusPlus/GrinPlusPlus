@@ -68,7 +68,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate the full kernel history (kernel MMR root for every block header).
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel history.");
-	if (!ValidateKernelHistory(*txHashSet.GetKernelMMR(), blockHeader))
+	if (!ValidateKernelHistory(*txHashSet.GetKernelMMR(), blockHeader, syncStatus))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::Validate - Invalid kernel history.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -89,7 +89,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate the rangeproof associated with each unspent output.
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating range proofs.");
-	if (!ValidateRangeProofs(txHashSet, blockHeader))
+	if (!ValidateRangeProofs(txHashSet, blockHeader, syncStatus))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -99,7 +99,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate kernel signatures
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel signatures.");
-	if (!ValidateKernelSignatures(*txHashSet.GetKernelMMR()))
+	if (!ValidateKernelSignatures(*txHashSet.GetKernelMMR(), syncStatus))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::ValidateKernelSignatures - Failed to verify kernel signatures.");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -167,9 +167,10 @@ bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
 	return true;
 }
 
-bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader) const
+bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
 {
-	for (uint64_t height = 0; height <= blockHeader.GetHeight(); height++)
+	const uint64_t totalHeight = blockHeader.GetHeight();
+	for (uint64_t height = 0; height <= totalHeight; height++)
 	{
 		std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 		if (pHeader == nullptr)
@@ -182,6 +183,11 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 		{
 			LoggerAPI::LogError("TxHashSetValidator::ValidateKernelHistory - Kernel root not matching for header at height " + std::to_string(height));
 			return false;
+		}
+
+		if (height % 1000 == 0)
+		{
+			syncStatus.UpdateProcessingStatus((uint8_t)(15 + ((10.0 * height) / totalHeight)));
 		}
 	}
 
@@ -220,13 +226,14 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 	return KernelSumValidator::ValidateKernelSums(std::vector<Commitment>(), outputCommitments, excessCommitments, overage, blockHeader.GetTotalKernelOffset(), std::nullopt);
 }
 
-bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
+bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
 {
 	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 
 	size_t i = 0;
 	LoggerAPI::LogInfo("TxHashSetValidator::ValidateRangeProofs - BEGIN");
-	for (uint64_t mmrIndex = 0; mmrIndex < txHashSet.GetOutputPMMR()->GetSize(); mmrIndex++)
+	const uint64_t outputMMRSize = txHashSet.GetOutputPMMR()->GetSize();
+	for (uint64_t mmrIndex = 0; mmrIndex < outputMMRSize; mmrIndex++)
 	{
 		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetOutputAt(mmrIndex);
 		if (pOutput != nullptr)
@@ -249,6 +256,8 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 				}
 
 				rangeProofs.clear();
+
+				syncStatus.UpdateProcessingStatus((uint8_t)(40 + ((30.0 * mmrIndex) / outputMMRSize)));
 			}
 		}
 	}
@@ -265,7 +274,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 	return true;
 }
 
-bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR) const
+bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR, SyncStatus& syncStatus) const
 {
 	std::vector<TransactionKernel> kernels;
 
@@ -286,6 +295,8 @@ bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR) co
 				}
 
 				kernels.clear();
+
+				syncStatus.UpdateProcessingStatus((uint8_t)(70 + ((30.0 * i) / mmrSize)));
 			}
 		}
 	}

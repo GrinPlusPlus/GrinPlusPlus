@@ -105,20 +105,17 @@ int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletM
 
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
 
-	const std::optional<std::string> selectionStrategyOpt = JsonUtil::GetStringOpt(json, "selection_strategy");
-	if (!selectionStrategyOpt.has_value())
+	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
+	if (selectionStrategyJSON == Json::nullValue)
 	{
 		return RestUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
 	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
+	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
 
-	const uint64_t estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), SelectionStrategy::FromString(selectionStrategyOpt.value()), numOutputs);
-
-	Json::Value rootJSON;
-	rootJSON["estimated_fee"] = estimatedFee;
-
-	return RestUtil::BuildSuccessResponseJSON(pConnection, rootJSON);
+	return RestUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
 }
 
 // GET /v1/wallet/owner/retrieve_txs?refresh&id=x

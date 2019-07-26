@@ -29,11 +29,8 @@ void WalletSqlite::Close()
 
 std::vector<std::string> WalletSqlite::GetAccounts() const
 {
-	std::vector<std::string> usernames;
-
 	// TODO: Implement
-
-	return usernames;
+	return FileUtil::GetSubDirectories(m_config.GetWalletConfig().GetWalletDirectory());
 }
 
 bool WalletSqlite::OpenWallet(const std::string& username)

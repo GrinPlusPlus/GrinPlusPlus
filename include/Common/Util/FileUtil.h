@@ -157,6 +157,49 @@ public:
 #endif
 	}
 
+	static std::vector<std::string> GetSubDirectories(const std::string& filePath)
+	{
+		std::vector<std::string> listOfFiles;
+		try {
+			// Check if given path exists and points to a directory
+			if (fs::exists(filePath) && fs::is_directory(filePath))
+			{
+				// Create a Recursive Directory Iterator object and points to the starting of directory
+				fs::recursive_directory_iterator iter(filePath);
+
+				// Create a Recursive Directory Iterator object pointing to end.
+				fs::recursive_directory_iterator end;
+
+				// Iterate till end
+				while (iter != end)
+				{
+					// Check if current entry is a directory and if exists in skip list
+					if (fs::is_directory(iter->path()))
+					{
+						// Skip the iteration of current directory pointed by iterator
+						// c++17 fstem API to skip current directory iteration
+						iter.disable_recursion_pending();
+						listOfFiles.push_back(iter->path().filename().string());
+					}
+
+					std::error_code ec;
+					// Increment the iterator to point to next entry in recursive iteration
+					iter.increment(ec);
+					if (ec)
+					{
+						//std::cerr << "Error While Accessing : " << iter->path().string() << " :: " << ec.message() << '\n';
+					}
+				}
+			}
+		}
+		catch (std::system_error&)
+		{
+			//std::cerr << "Exception :: " << e.what();
+		}
+
+		return listOfFiles;
+	}
+
 private:
 	static const size_t MAX_PATH_LEN = 260;
 };

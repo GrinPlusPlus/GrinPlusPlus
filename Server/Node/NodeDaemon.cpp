@@ -43,11 +43,17 @@ void NodeDaemon::Shutdown()
 	{
 		delete m_pNodeClient;
 		m_pNodeRestServer->Shutdown();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		P2PAPI::ShutdownP2PServer(m_pP2PServer);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		delete m_pTxHashSetManager;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		DatabaseAPI::CloseDatabase(m_pDatabase);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		LoggerAPI::Flush();
 	}
 	catch(const std::system_error& e)

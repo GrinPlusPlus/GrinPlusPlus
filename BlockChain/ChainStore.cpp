@@ -8,7 +8,7 @@ ChainStore::ChainStore(const Config& config, BlockIndex* pGenesisIndex)
 	: m_config(config),
 	m_confirmedChain(EChainType::CONFIRMED, config.GetChainDirectory() + "confirmed.chain", pGenesisIndex),
 	m_candidateChain(EChainType::CANDIDATE, config.GetChainDirectory() + "candidate.chain", pGenesisIndex),
-	m_syncChain(EChainType::SYNC, config.GetChainDirectory() + "candidate.chain", pGenesisIndex),
+	m_syncChain(EChainType::SYNC, config.GetChainDirectory() + "sync.chain", pGenesisIndex),
 	m_loaded(false)
 {
 
@@ -48,7 +48,7 @@ bool ChainStore::Load()
 
 bool ChainStore::Flush()
 {
-	return /*m_syncChain.Flush() &&*/ m_candidateChain.Flush() && m_confirmedChain.Flush();
+	return m_syncChain.Flush() && m_candidateChain.Flush() && m_confirmedChain.Flush();
 }
 
 BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)

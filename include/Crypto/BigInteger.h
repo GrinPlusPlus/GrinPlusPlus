@@ -195,7 +195,7 @@ private:
 	std::vector<unsigned char, ALLOC> m_data;
 };
 
-static unsigned char FromHexChar(const char value)
+static inline unsigned char FromHexChar(const char value)
 {
 	if (value <= '9' && value >= 0)
 	{

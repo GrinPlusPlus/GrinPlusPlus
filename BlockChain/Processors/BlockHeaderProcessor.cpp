@@ -205,6 +205,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 	if (CheckAndAcceptSyncChain(lockedState))
 	{
 		headerMMR.Commit();
+		lockedState.m_chainStore.Flush();
 	}
 	else
 	{

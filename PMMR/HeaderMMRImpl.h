@@ -10,6 +10,7 @@ class HeaderMMR : public IHeaderMMR
 {
 public:
 	HeaderMMR(const std::string& path);
+    virtual ~HeaderMMR() = default;
 
 	bool Load();
 	virtual bool Commit() override final;

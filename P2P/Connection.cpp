@@ -160,7 +160,12 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 			if (pRawMessage.get() != nullptr)
 			{
 				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(pConnection->m_connectionId, pConnection->m_socket, pConnection->m_connectedPeer, *pRawMessage);
-				lastReceivedMessageTime = std::chrono::system_clock::now();
+                if (status == MessageProcessor::EStatus::BAN_PEER)
+                {
+                    pConnection->m_connectionManager.BanConnection(pConnection->m_connectionId, EBanReason::BadBlock); // TODO: Determine real reason.
+                }
+                
+                lastReceivedMessageTime = std::chrono::system_clock::now();
 				messageSentOrReceived = true;
 			}
 

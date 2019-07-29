@@ -57,7 +57,7 @@ public:
 			throw DeserializationException();
 		}
 
-		return RangeProof(std::move(byteBuffer.ReadVector(proofSize)));
+		return RangeProof(byteBuffer.ReadVector(proofSize));
 	}
 
 private:

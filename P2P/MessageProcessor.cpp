@@ -142,10 +142,10 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const std::vector<CBigInteger<32>>& hashes = getHeadersMessage.GetHashes();
 
 				std::vector<BlockHeader> blockHeaders = BlockLocator(m_blockChainServer).LocateHeaders(hashes);
+                LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
+                
 				const HeadersMessage headersMessage(std::move(blockHeaders));
-
-				LoggerAPI::LogDebug(StringUtil::Format("MessageProcessor::ProcessMessageInternal - Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str()));
-				return MessageSender(m_config).Send(socket, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+                return MessageSender(m_config).Send(socket, HeadersMessage(std::move(blockHeaders))) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:
 			{

@@ -14,7 +14,7 @@ class TxHashSet : public ITxHashSet
 {
 public:
 	TxHashSet(IBlockDB& blockDB, KernelMMR* pKernelMMR, OutputPMMR* pOutputPMMR, RangeProofPMMR* pRangeProofPMMR, const BlockHeader& blockHeader);
-	~TxHashSet();
+	virtual ~TxHashSet();
 
 	inline void ReadLock() { m_txHashSetMutex.lock_shared(); }
 	inline void Unlock() { m_txHashSetMutex.unlock_shared(); }

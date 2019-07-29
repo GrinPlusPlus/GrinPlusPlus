@@ -31,7 +31,7 @@ RangeProofPMMR* RangeProofPMMR::Load(const std::string& txHashSetDirectory)
 	LeafSet leafSet(txHashSetDirectory + "rangeproof/pmmr_leaf.bin");
 	leafSet.Load();
 
-	PruneList pruneList(std::move(PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin")));
+	PruneList pruneList(PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin"));
 
 	DataFile<RANGE_PROOF_SIZE>* pDataFile = new DataFile<RANGE_PROOF_SIZE>(txHashSetDirectory + "rangeproof/pmmr_data.bin");
 	pDataFile->Load();

@@ -17,7 +17,7 @@ class BlockChainServer : public IBlockChainServer
 {
 public:
 	BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool);
-	~BlockChainServer();
+	virtual ~BlockChainServer();
 
 	//
 	// Initializes the blockchain by loading the previously downloaded and verified blocks from the database.

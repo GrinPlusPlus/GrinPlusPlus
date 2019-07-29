@@ -23,7 +23,7 @@ PruneList PruneList::Load(const std::string& filePath)
 	}
 	else
 	{
-		return PruneList(filePath, std::move(Roaring()));
+		return PruneList(filePath, Roaring());
 	}
 }
 

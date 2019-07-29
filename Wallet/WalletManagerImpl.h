@@ -11,7 +11,7 @@ class WalletManager : public IWalletManager
 {
 public:
 	WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB);
-	~WalletManager();
+	virtual ~WalletManager();
 
 	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) override final;
 	virtual std::optional<SessionToken> RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords) override final;

@@ -14,6 +14,8 @@ public:
 	{
 
 	}
+    
+    virtual ~DefaultNodeClient() = default;
 
 	virtual uint64_t GetChainHeight() const override final
 	{

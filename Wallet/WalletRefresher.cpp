@@ -185,14 +185,14 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 
 					if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
 					{
-						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as received: " + walletTx.GetId());
+						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as received: " + std::to_string(walletTx.GetId()));
 
 						walletTx.SetType(EWalletTxType::RECEIVED);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);
 					}
 					else if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 					{
-						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as sent: " + walletTx.GetId());
+						LoggerAPI::LogDebug("WalletRefresher::RefreshTransactions - Marking transaction as sent: " + std::to_string(walletTx.GetId()));
 
 						walletTx.SetType(EWalletTxType::SENT);
 						m_walletDB.AddTransaction(username, masterSeed, walletTx);

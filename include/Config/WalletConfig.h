@@ -14,13 +14,13 @@ public:
 		const uint32_t publicKeyVersion, 
 		const uint32_t privateKeyVersion, 
 		const uint32_t minimumConfirmations)
-		: m_walletDirectory(walletDirectory), 
+        : m_walletDirectory(walletDirectory),
+        m_databaseType(databaseType),
 		m_listenPort(listenPort), 
 		m_ownerPort(ownerPort), 
 		m_publicKeyVersion(publicKeyVersion), 
 		m_privateKeyVersion(privateKeyVersion),
-		m_minimumConfirmations(minimumConfirmations),
-		m_databaseType(databaseType)
+		m_minimumConfirmations(minimumConfirmations)
 	{
 
 	}

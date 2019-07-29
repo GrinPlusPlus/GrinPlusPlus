@@ -12,6 +12,7 @@ class TransactionPool : public ITransactionPool
 {
 public:
 	TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
+    virtual ~TransactionPool() = default;
 
 	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
 	virtual bool AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final; // TODO: Take in last block or BlockSums so we can verify kernel sums

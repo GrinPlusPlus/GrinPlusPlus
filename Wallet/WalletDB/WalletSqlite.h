@@ -10,6 +10,7 @@ class WalletSqlite : public IWalletDB
 {
 public:
 	WalletSqlite(const Config& config);
+    virtual ~WalletSqlite() = default;
 
 	void Open();
 	void Close();

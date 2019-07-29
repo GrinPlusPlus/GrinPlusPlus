@@ -78,6 +78,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate kernel sums
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel sums.");
+	LoggerAPI::Flush();
 	std::unique_ptr<BlockSums> pBlockSums = ValidateKernelSums(txHashSet, blockHeader);
 	if (pBlockSums == nullptr)
 	{
@@ -89,6 +90,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate the rangeproof associated with each unspent output.
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating range proofs.");
+	LoggerAPI::Flush();
 	if (!ValidateRangeProofs(txHashSet, blockHeader, syncStatus))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::ValidateRangeProofs - Failed to verify rangeproofs.");
@@ -99,11 +101,15 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 
 	// Validate kernel signatures
 	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Validating kernel signatures.");
+	LoggerAPI::Flush();
 	if (!ValidateKernelSignatures(*txHashSet.GetKernelMMR(), syncStatus))
 	{
 		LoggerAPI::LogError("TxHashSetValidator::ValidateKernelSignatures - Failed to verify kernel signatures.");
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
+
+	LoggerAPI::LogDebug("TxHashSetValidator::Validate - Success");
+	LoggerAPI::Flush();
 
 	syncStatus.UpdateProcessingStatus(100);
 

@@ -17,7 +17,7 @@ class OutputPMMR : public MMR
 {
 public:
 	static OutputPMMR* Load(const std::string& txHashSetDirectory, IBlockDB& blockDB);
-	~OutputPMMR();
+	virtual ~OutputPMMR();
 
 	bool Append(const OutputIdentifier& output, const uint64_t blockHeight);
 	bool Remove(const uint64_t mmrIndex);

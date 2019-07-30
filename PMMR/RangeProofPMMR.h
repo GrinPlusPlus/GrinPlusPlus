@@ -17,7 +17,7 @@ class RangeProofPMMR : public MMR
 {
 public:
 	static RangeProofPMMR* Load(const std::string& txHashSetDirectory);
-	~RangeProofPMMR();
+	virtual ~RangeProofPMMR();
 
 	bool Append(const RangeProof& rangeProof);
 	bool Remove(const uint64_t mmrIndex);

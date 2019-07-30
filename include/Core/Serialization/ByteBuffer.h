@@ -19,7 +19,7 @@ class ByteBuffer
 {
 public:
 	ByteBuffer(const std::vector<unsigned char>& bytes)
-		: m_bytes(bytes), m_index(0)
+		: m_index(0), m_bytes(bytes)
 	{
 
 	}

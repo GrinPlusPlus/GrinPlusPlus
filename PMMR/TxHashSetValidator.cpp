@@ -285,7 +285,6 @@ bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR, Sy
 	std::vector<TransactionKernel> kernels;
 
 	const uint64_t mmrSize = kernelMMR.GetSize();
-	const uint64_t numKernels = MMRUtil::GetNumLeaves(mmrSize);
 	for (uint64_t i = 0; i < mmrSize; i++)
 	{
 		std::unique_ptr<TransactionKernel> pKernel = kernelMMR.GetKernelAt(i);

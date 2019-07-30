@@ -24,20 +24,6 @@ static void SigIntHandler(int signum)
 
 int main(int argc, char* argv[])
 {
-#ifdef __APPLE__
-	// Set the max number of open files.
-	struct rlimit nofiles;
-	if (getrlimit(RLIMIT_NOFILE, &nofiles) == 0)
-	{
-		if (nofiles.rlim_cur < 4096 || nofiles.rlim_max < 4096)
-		{
-			nofiles.rlim_cur = (nofiles.rlim_cur < 4096) ? 4096 : nofiles.rlim_cur;
-			nofiles.rlim_max = (nofiles.rlim_max < 4096) ? 4096 : nofiles.rlim_max;
-			setrlimit(RLIMIT_NOFILE, &nofiles);
-		}
-	}
-#endif
-	
 	ThreadManagerAPI::SetCurrentThreadName("MAIN THREAD");
 
 	EEnvironmentType environment = EEnvironmentType::MAINNET;

@@ -211,8 +211,8 @@ typedef sockaddr_un sockaddr_un_type;
 
 typedef ::linger linger_type;
 typedef unsigned long ioctl_arg_type;
-typedef u_long u_long_type;
-typedef u_short u_short_type;
+typedef unsigned long u_long_type;
+typedef unsigned short u_short_type;
 typedef int signed_size_type;
 # define ASIO_OS_DEF(c) ASIO_OS_DEF_##c
 # define ASIO_OS_DEF_AF_UNSPEC 0

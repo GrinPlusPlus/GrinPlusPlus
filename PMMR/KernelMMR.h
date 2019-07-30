@@ -14,7 +14,7 @@ class KernelMMR : public MMR
 {
 public:
 	static KernelMMR* Load(const std::string& txHashSetDirectory);
-	~KernelMMR();
+	virtual ~KernelMMR();
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
 	bool Rewind(const uint64_t size);

@@ -269,7 +269,10 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 	std::unique_ptr<Slate> pFinalSlate = walletManager.Finalize(token, slate);
 	if (pFinalSlate != nullptr)
 	{
-		walletManager.PostTransaction(token, pFinalSlate->GetTransaction());
+        if (postTx)
+        {
+            walletManager.PostTransaction(token, pFinalSlate->GetTransaction());
+        }
 
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pFinalSlate->ToJSON());
 	}

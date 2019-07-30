@@ -179,11 +179,8 @@ bool HandShake::TransmitHandMessage(Socket & socket) const
 
 bool HandShake::TransmitShakeMessage(Socket & socket) const
 {
-	const uint16_t portNumber = socket.GetPort();
-
 	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
-	const uint64_t nonce = rand();
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
 	const uint64_t totalDifficulty = m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED);
 	const std::string& userAgent = P2P::USER_AGENT;

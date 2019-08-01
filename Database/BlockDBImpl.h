@@ -33,10 +33,10 @@ public:
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const override final;
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) override final;
-	virtual std::optional<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const override final;
+	virtual std::unique_ptr<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const override final;
 
 	virtual void AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap) override final;
-	virtual std::optional<Roaring> GetBlockInputBitmap(const Hash& blockHash) const override final;
+	virtual std::unique_ptr<Roaring> GetBlockInputBitmap(const Hash& blockHash) const override final;
 
 private:
 	const Config& m_config;

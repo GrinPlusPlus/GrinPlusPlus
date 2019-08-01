@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
 SET(CMAKE_BUILD_TYPE RelWithDebInfo) 
@@ -15,8 +15,6 @@ elseif(LINUX)
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
-#set(BUILD_STATIC_LIBS ON)
-
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
 set(VERSION_REVISION 2)
@@ -24,8 +22,6 @@ set(VERSION_REVISION 2)
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
 message("Grin++ Version: ${PROJECT_VERSION}")
-
-#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -63,14 +59,7 @@ add_definitions(-DNOMINMAX)
 add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 add_definitions(-DASIO_STANDALONE)
-
-#if(APPLE)
-#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-MAC")
-#elseif(LINUX)
-#	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}-LINUX")
-#else()
-	add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
-#endif()
+add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include

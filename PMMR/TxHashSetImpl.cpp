@@ -42,16 +42,16 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
-		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
-		if (!outputPosOpt.has_value())
+		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(commitment);
+		if (pOutputPosition == nullptr)
 		{
 			return false;
 		}
 
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
-			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + commitment.ToHex() + " not found at mmrIndex " + std::to_string(outputPosOpt.value().GetMMRIndex()));
+			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + commitment.ToHex() + " not found at mmrIndex " + std::to_string(pOutputPosition->GetMMRIndex()));
 			return false;
 		}
 	}
@@ -59,10 +59,10 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	// Validate outputs
 	for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
 	{
-		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
-		if (outputPosOpt.has_value())
+		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(output.GetCommitment());
+		if (pOutputPosition != nullptr)
 		{
-			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
 			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 			{
 				return false;
@@ -106,14 +106,14 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
-		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(commitment);
-		if (!outputPosOpt.has_value())
+		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(commitment);
+		if (pOutputPosition == nullptr)
 		{
 			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Output position not found for commitment: " + commitment.ToHex() + " in block: " + std::to_string(block.GetBlockHeader().GetHeight()));
 			return false;
 		}
 
-		const uint64_t mmrIndex = outputPosOpt.value().GetMMRIndex();
+		const uint64_t mmrIndex = pOutputPosition->GetMMRIndex();
 		if (!m_pOutputPMMR->Remove(mmrIndex))
 		{
 			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove output at position:" + std::to_string(mmrIndex));
@@ -134,12 +134,12 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 	// Append new outputs
 	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
 	{
-		std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(output.GetCommitment());
-		if (outputPosOpt.has_value())
+		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(output.GetCommitment());
+		if (pOutputPosition != nullptr)
 		{
-			if (outputPosOpt.value().GetMMRIndex() < m_blockHeader.GetOutputMMRSize())
+			if (pOutputPosition->GetMMRIndex() < m_blockHeader.GetOutputMMRSize())
 			{
-				std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(outputPosOpt.value().GetMMRIndex());
+				std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
 				if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 				{
 					return false;
@@ -253,13 +253,13 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const ui
 		if (pOutput != nullptr)
 		{
 			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
-			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
-			if (pRangeProof == nullptr || !locationOpt.has_value() || locationOpt.value().GetMMRIndex() != mmrIndex)
+			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
+			if (pRangeProof == nullptr || pOutputPosition == nullptr || pOutputPosition->GetMMRIndex() != mmrIndex)
 			{
-				return OutputRange(0, 0, std::vector<OutputDisplayInfo>());
+				return OutputRange(0, 0, std::vector<OutputDisplayInfo>()); // TODO: Throw exception
 			}
 
-			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
+			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, *pOutputPosition, *pRangeProof));
 		}
 	}
 
@@ -281,9 +281,9 @@ std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(const uint64_t st
 		if (pOutput != nullptr)
 		{
 			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
-			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
+			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
 
-			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, locationOpt.value(), *pRangeProof));
+			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, *pOutputPosition, *pRangeProof));
 		}
 
 		++mmrIndex;
@@ -299,10 +299,10 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 	Roaring leavesToAdd;
 	while (m_blockHeader != header)
 	{
-		std::optional<Roaring> blockInputBitmapOpt = m_blockDB.GetBlockInputBitmap(m_blockHeader.GetHash());
-		if (blockInputBitmapOpt.has_value())
+		std::unique_ptr<Roaring> pBlockInputBitmap = m_blockDB.GetBlockInputBitmap(m_blockHeader.GetHash());
+		if (pBlockInputBitmap != nullptr)
 		{
-			leavesToAdd |= blockInputBitmapOpt.value();
+			leavesToAdd |= *pBlockInputBitmap;
 		}
 		else
 		{

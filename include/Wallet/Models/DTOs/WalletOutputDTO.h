@@ -24,6 +24,7 @@ public:
 		JsonUtil::AddOptionalField(outputJSON, "mmr_index", m_outputData.GetMMRIndex());
 		JsonUtil::AddOptionalField(outputJSON, "block_height", m_outputData.GetBlockHeight());
 		JsonUtil::AddOptionalField(outputJSON, "transaction_id", m_outputData.GetWalletTxId());
+		JsonUtil::AddOptionalField(outputJSON, "message", m_outputData.GetSlateMessage());
 
 		return outputJSON;
 	}

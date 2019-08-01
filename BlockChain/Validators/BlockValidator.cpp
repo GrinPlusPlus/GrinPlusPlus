@@ -28,8 +28,8 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block)
 	{
 		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
 		{
-			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment());
-			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
+			const std::unique_ptr<OutputLocation> pOutputLocation = m_blockDB.GetOutputPosition(input.GetCommitment());
+			if (pOutputLocation == nullptr || pOutputLocation->GetBlockHeight() > maximumBlockHeight)
 			{
 				LoggerAPI::LogInfo("BlockValidator::ValidateBlock - Coinbase not mature: " + HexUtil::ConvertHash(block.GetHash()));
 				return std::unique_ptr<BlockSums>(nullptr);

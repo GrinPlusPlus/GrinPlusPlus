@@ -33,10 +33,10 @@ public:
 		std::map<Commitment, OutputLocation> outputs;
 		for (const Commitment& commitment : commitments)
 		{
-			std::optional<OutputLocation> locationOpt = m_blockDB.GetOutputPosition(commitment);
-			if (locationOpt.has_value() && pTxHashSet->IsUnspent(locationOpt.value()))
+			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(commitment);
+			if (pOutputPosition != nullptr && pTxHashSet->IsUnspent(*pOutputPosition))
 			{
-				outputs.insert(std::make_pair<Commitment, OutputLocation>(Commitment(commitment), OutputLocation(locationOpt.value())));
+				outputs.insert(std::make_pair<Commitment, OutputLocation>(Commitment(commitment), OutputLocation(*pOutputPosition)));
 			}
 		}
 

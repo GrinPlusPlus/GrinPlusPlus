@@ -113,10 +113,10 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commit
 
 	std::unique_ptr<BlockHeader> pHeader(nullptr);
 
-	std::optional<OutputLocation> outputLocationOpt = m_blockStore.GetBlockDB().GetOutputPosition(outputCommitment);
-	if (outputLocationOpt.has_value())
+	std::unique_ptr<OutputLocation> pOutputLocation = m_blockStore.GetBlockDB().GetOutputPosition(outputCommitment);
+	if (pOutputLocation != nullptr)
 	{
-		BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetByHeight(outputLocationOpt.value().GetBlockHeight());
+		BlockIndex* pBlockIndex = m_chainStore.GetChain(EChainType::CONFIRMED).GetByHeight(pOutputLocation->GetBlockHeight());
 		if (pBlockIndex != nullptr)
 		{
 			return m_blockStore.GetBlockHeaderByHash(pBlockIndex->GetHash());
@@ -177,11 +177,11 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 			const std::vector<TransactionOutput>& outputs = pBlock->GetTransactionBody().GetOutputs();
 			for (const TransactionOutput& output : outputs)
 			{
-				std::optional<OutputLocation> locationOpt = m_blockStore.GetBlockDB().GetOutputPosition(output.GetCommitment());
-				if (locationOpt.has_value())
+				std::unique_ptr<OutputLocation> pOutputLocation = m_blockStore.GetBlockDB().GetOutputPosition(output.GetCommitment());
+				if (pOutputLocation != nullptr)
 				{
-					const bool spent = !pTxHashSet->IsUnspent(locationOpt.value());
-					outputsFound.emplace_back(OutputDisplayInfo(spent, OutputIdentifier::FromOutput(output), locationOpt.value(), output.GetRangeProof()));
+					const bool spent = !pTxHashSet->IsUnspent(*pOutputLocation);
+					outputsFound.emplace_back(OutputDisplayInfo(spent, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
 				}
 			}
 

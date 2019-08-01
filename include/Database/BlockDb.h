@@ -10,10 +10,8 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
-#include <BlockChain/ChainType.h>
 #include <Core/Models/OutputLocation.h>
 #include <memory>
-#include <optional>
 
 class IBlockDB
 {
@@ -31,8 +29,8 @@ public:
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const = 0;
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) = 0;
-	virtual std::optional<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
+	virtual std::unique_ptr<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
 
 	virtual void AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap) = 0;
-	virtual std::optional<Roaring> GetBlockInputBitmap(const Hash& blockHash) const = 0;
+	virtual std::unique_ptr<Roaring> GetBlockInputBitmap(const Hash& blockHash) const = 0;
 };

@@ -14,7 +14,8 @@ public:
 		const uint64_t totalAmount, 
 		const uint32_t walletTxId, 
 		const uint8_t numOutputs,
-		const EBulletproofType& bulletproofType)
+		const EBulletproofType& bulletproofType,
+		const std::optional<std::string>& messageOpt)
 	{
 		if (totalAmount < numOutputs)
 		{
@@ -31,7 +32,7 @@ public:
 				coinAmount += (totalAmount % numOutputs);
 			}
 
-			outputs.emplace_back(wallet.CreateBlindedOutput(masterSeed, coinAmount, walletTxId, bulletproofType));
+			outputs.emplace_back(wallet.CreateBlindedOutput(masterSeed, coinAmount, walletTxId, bulletproofType, messageOpt));
 		}
 
 		return outputs;

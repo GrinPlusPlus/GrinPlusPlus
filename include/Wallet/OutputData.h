@@ -10,7 +10,7 @@
 #include <Crypto/RandomNumberGenerator.h>
 #include <optional>
 
-static const uint8_t OUTPUT_DATA_FORMAT = 0;
+static const uint8_t OUTPUT_DATA_FORMAT = 1;
 
 class OutputData
 {
@@ -21,7 +21,8 @@ public:
 		TransactionOutput&& output, 
 		const uint64_t amount, 
 		const EOutputStatus status,
-		const std::optional<uint32_t>& walletTxIdOpt
+		const std::optional<uint32_t>& walletTxIdOpt,
+		const std::optional<std::string>& messageOpt
 	)
 		: m_keyChainPath(std::move(keyChainPath)),
 		m_blindingFactor(std::move(blindingFactor)),
@@ -30,7 +31,8 @@ public:
 		m_status(status), 
 		m_mmrIndexOpt(std::nullopt),
 		m_blockHeightOpt(std::nullopt),
-		m_walletTxIdOpt(walletTxIdOpt)
+		m_walletTxIdOpt(walletTxIdOpt),
+		m_messageOpt(messageOpt)
 	{
 
 	}
@@ -43,7 +45,8 @@ public:
 		const EOutputStatus status,
 		const std::optional<uint64_t>& mmrIndexOpt,
 		const std::optional<uint64_t>& blockHeightOpt,
-		const std::optional<uint32_t>& walletTxIdOpt
+		const std::optional<uint32_t>& walletTxIdOpt,
+		const std::optional<std::string>& messageOpt
 	)
 		: m_keyChainPath(std::move(keyChainPath)),
 		m_blindingFactor(std::move(blindingFactor)),
@@ -52,7 +55,8 @@ public:
 		m_status(status),
 		m_mmrIndexOpt(mmrIndexOpt),
 		m_blockHeightOpt(blockHeightOpt),
-		m_walletTxIdOpt(walletTxIdOpt)
+		m_walletTxIdOpt(walletTxIdOpt),
+		m_messageOpt(messageOpt)
 	{
 
 	}
@@ -68,6 +72,7 @@ public:
 	inline const std::optional<uint64_t>& GetMMRIndex() const { return m_mmrIndexOpt; }
 	inline const std::optional<uint64_t>& GetBlockHeight() const { return m_blockHeightOpt; }
 	inline const std::optional<uint32_t>& GetWalletTxId() const { return m_walletTxIdOpt; }
+	inline const std::optional<std::string>& GetSlateMessage() const { return m_messageOpt; }
 
 	//
 	// Setters
@@ -94,6 +99,7 @@ public:
 		serializer.Append((uint8_t)m_status);
 		serializer.Append<uint64_t>(m_mmrIndexOpt.value_or(0));
 		serializer.Append<uint64_t>(m_blockHeightOpt.value_or(0));
+		serializer.AppendVarStr(m_messageOpt.has_value() ? m_messageOpt.value() : "");
 
 		if (m_walletTxIdOpt.has_value())
 		{
@@ -124,13 +130,33 @@ public:
 		const uint64_t blockHeight = byteBuffer.GetRemainingSize() != 0 ? byteBuffer.ReadU64() : 0;
 		const std::optional<uint64_t> blockHeightOpt = blockHeight == 0 ? std::nullopt : std::make_optional<uint64_t>(blockHeight);
 
+		std::optional<std::string> messageOpt = std::nullopt;
+		if (formatVersion >= 1)
+		{
+			std::string message = byteBuffer.ReadVarStr();
+			if (!message.empty())
+			{
+				messageOpt = std::make_optional<std::string>(std::move(message));
+			}
+		}
+
 		std::optional<uint32_t> walletTxIdOpt = std::nullopt;
 		if (byteBuffer.GetRemainingSize() != 0)
 		{
 			walletTxIdOpt = std::make_optional<uint32_t>(byteBuffer.ReadU32());
 		}
 
-		return OutputData(std::move(keyChainPath), std::move(blindingFactor), std::move(output), amount, status, mmrIndexOpt, blockHeightOpt, walletTxIdOpt);
+		return OutputData(
+			std::move(keyChainPath),
+			std::move(blindingFactor),
+			std::move(output),
+			amount,
+			status,
+			mmrIndexOpt,
+			blockHeightOpt,
+			walletTxIdOpt,
+			messageOpt
+		);
 	}
 
 private:
@@ -142,4 +168,5 @@ private:
 	std::optional<uint64_t> m_mmrIndexOpt;
 	std::optional<uint64_t> m_blockHeightOpt;
 	std::optional<uint32_t> m_walletTxIdOpt;
+	std::optional<std::string> m_messageOpt;
 };

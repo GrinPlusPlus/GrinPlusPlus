@@ -5,16 +5,11 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/ImportExport.h>
-#include <Database/BlockDb.h>
-#include <Database/PeerDB.h>
-#include <Core/Models/BlockHeader.h>
-#include <Crypto/BigInteger.h>
-
-#include <vector>
-#include <memory>
 
 // Forward Declarations
 class Config;
+class IBlockDB;
+class IPeerDB;
 
 #ifdef MW_DATABASE
 #define DATABASE_API EXPORT

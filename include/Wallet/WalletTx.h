@@ -3,12 +3,13 @@
 #include <Wallet/WalletTxType.h>
 #include <Core/Models/Transaction.h>
 #include <Common/Util/TimeUtil.h>
+#include <Crypto/Signature.h>
 #include <json/json.h>
 #include <uuid.h>
 #include <chrono>
 #include <optional>
 
-static const uint8_t WALLET_TX_DATA_FORMAT = 1;
+static const uint8_t WALLET_TX_DATA_FORMAT = 2;
 
 class WalletTx
 {
@@ -17,6 +18,7 @@ public:
 		const uint32_t walletTxId,
 		const EWalletTxType type,
 		std::optional<uuids::uuid>&& slateIdOpt,
+		std::optional<std::string>&& addressOpt,
 		std::optional<std::string>&& slateMessageOpt,
 		const std::chrono::system_clock::time_point& creationTime,
 		const std::optional<std::chrono::system_clock::time_point>& confirmationTimeOpt,
@@ -29,6 +31,7 @@ public:
 		: m_walletTxId(walletTxId),
 		m_type(type),
 		m_slateIdOpt(std::move(slateIdOpt)),
+		m_addressOpt(std::move(addressOpt)),
 		m_slateMessageOpt(std::move(slateMessageOpt)),
 		m_creationTime(creationTime),
 		m_confirmationTimeOpt(confirmationTimeOpt),
@@ -44,6 +47,7 @@ public:
 	inline uint32_t GetId() const { return m_walletTxId; }
 	inline EWalletTxType GetType() const { return m_type; }
 	inline const std::optional<uuids::uuid>& GetSlateId() const { return m_slateIdOpt; }
+	inline const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
 	inline const std::optional<std::string>& GetSlateMessage() const { return m_slateMessageOpt; }
 	inline const std::chrono::system_clock::time_point& GetCreationTime() const { return m_creationTime; }
 	inline const std::optional<std::chrono::system_clock::time_point>& GetConfirmationTime() const { return m_confirmationTimeOpt; }
@@ -63,6 +67,7 @@ public:
 		serializer.Append<uint32_t>(m_walletTxId);
 		serializer.Append<uint8_t>((uint8_t)m_type);
 		serializer.AppendVarStr(m_slateIdOpt.has_value() ? uuids::to_string(m_slateIdOpt.value()) : "");
+		serializer.AppendVarStr(m_addressOpt.has_value() ? m_addressOpt.value() : "");
 		serializer.AppendVarStr(m_slateMessageOpt.has_value() ? m_slateMessageOpt.value() : "");
 		serializer.Append<int64_t>(TimeUtil::ToInt64(m_creationTime));
 		serializer.Append<int64_t>((int64_t)(m_confirmationTimeOpt.has_value() ? TimeUtil::ToInt64(m_confirmationTimeOpt.value()) : 0));
@@ -102,6 +107,16 @@ public:
 		if (!slateIdStr.empty())
 		{
 			slateIdOpt = uuids::uuid::from_string(slateIdStr);
+		}
+
+		std::optional<std::string> addressOpt = std::nullopt;
+		if (walletTxFormat >= 2)
+		{
+			std::string address = byteBuffer.ReadVarStr();
+			if (!address.empty())
+			{
+				addressOpt = std::make_optional<std::string>(std::move(address));
+			}
 		}
 
 		std::optional<std::string> slateMessageOpt = std::nullopt;
@@ -149,6 +164,7 @@ public:
 			walletTxId, 
 			type, 
 			std::move(slateIdOpt), 
+			std::move(addressOpt),
 			std::move(slateMessageOpt), 
 			creationTime,
 			confirmationTimeOpt, 
@@ -164,7 +180,8 @@ private:
 	uint32_t m_walletTxId;
 	EWalletTxType m_type; // TODO: Replace with direction & status
 	std::optional<uuids::uuid> m_slateIdOpt;
-	std::optional<std::string> m_slateMessageOpt;
+	std::optional<std::string> m_addressOpt;
+	std::optional<std::string> m_slateMessageOpt; // TODO: Also include other party's message & signature. Need object for this.
 	std::chrono::system_clock::time_point m_creationTime;
 	std::optional<std::chrono::system_clock::time_point> m_confirmationTimeOpt;
 	std::optional<uint64_t> m_confirmedHeightOpt;

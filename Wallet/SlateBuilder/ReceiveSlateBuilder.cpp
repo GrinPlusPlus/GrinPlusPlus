@@ -6,7 +6,12 @@
 #include <Wallet/SlateContext.h>
 #include <Infrastructure/Logger.h>
 
-std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate, const std::optional<std::string>& messageOpt) const
+std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
+	Wallet& wallet,
+	const SecureVector& masterSeed,
+	const Slate& slate,
+	const std::optional<std::string>& addressOpt,
+	const std::optional<std::string>& messageOpt) const
 {
 	Slate receiveSlate = slate;
 
@@ -18,7 +23,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 
 	// Generate output
 	const uint32_t walletTxId = wallet.GetNextWalletTxId();
-	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId, EBulletproofType::ENHANCED);
+	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId, EBulletproofType::ENHANCED, messageOpt);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = *Crypto::GenerateSecureNonce();
 
@@ -29,7 +34,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(Wallet& wallet, cons
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, walletTxId, slateContext, messageOpt))
+	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, walletTxId, slateContext, addressOpt, messageOpt))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -120,12 +125,13 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 
 // TODO: Use a DB Batch
 bool ReceiveSlateBuilder::UpdateDatabase(
-	Wallet& wallet, 
-	const SecureVector& masterSeed, 
-	const Slate& slate, 
-	const OutputData& outputData, 
-	const uint32_t walletTxId, 
-	const SlateContext& context, 
+	Wallet& wallet,
+	const SecureVector& masterSeed,
+	const Slate& slate,
+	const OutputData& outputData,
+	const uint32_t walletTxId,
+	const SlateContext& context,
+	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt) const
 {
 	// Save secretKey and secretNonce
@@ -147,6 +153,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 		walletTxId,
 		EWalletTxType::RECEIVING_IN_PROGRESS,
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::optional<std::string>(addressOpt),
 		std::optional<std::string>(messageOpt),
 		std::chrono::system_clock::now(),
 		std::nullopt,

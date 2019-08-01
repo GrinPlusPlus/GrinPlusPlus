@@ -79,7 +79,7 @@ bool Wallet::AddRestoredOutputs(const SecureVector& masterSeed, const std::vecto
 		const std::chrono::system_clock::time_point creationTime = std::chrono::system_clock::now(); // TODO: Determine this
 		const std::optional<std::chrono::system_clock::time_point> confirmationTimeOpt = std::make_optional<std::chrono::system_clock::time_point>(std::chrono::system_clock::now()); // TODO: Determine this
 
-		WalletTx walletTx(walletTxId, type, std::nullopt, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
+		WalletTx walletTx(walletTxId, type, std::nullopt, std::nullopt, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
 		transactions.emplace_back(std::move(walletTx));
 	}
 
@@ -141,7 +141,12 @@ std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecureVector& masterS
 	return coins;
 }
 
-OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uint64_t amount, const uint32_t walletTxId, const EBulletproofType& bulletproofType)
+OutputData Wallet::CreateBlindedOutput(
+	const SecureVector& masterSeed,
+	const uint64_t amount,
+	const uint32_t walletTxId,
+	const EBulletproofType& bulletproofType,
+	const std::optional<std::string>& messageOpt)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -155,7 +160,15 @@ OutputData Wallet::CreateBlindedOutput(const SecureVector& masterSeed, const uin
 		{
 			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
 			
-			return OutputData(std::move(keyChainPath), std::move(blindingFactor), std::move(transactionOutput), amount, EOutputStatus::NO_CONFIRMATIONS, std::make_optional<uint32_t>(walletTxId));
+			return OutputData(
+				std::move(keyChainPath),
+				std::move(blindingFactor),
+				std::move(transactionOutput),
+				amount,
+				EOutputStatus::NO_CONFIRMATIONS,
+				std::make_optional<uint32_t>(walletTxId),
+				messageOpt
+			);
 		}
 	}
 

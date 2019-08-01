@@ -24,13 +24,22 @@ public:
 		const uint64_t amount, 
 		const uint64_t feeBase, 
 		const uint8_t numOutputs, 
+		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt, 
 		const SelectionStrategyDTO& strategy) const;
 
 private:
 	SecretKey CalculatePrivateKey(const BlindingFactor& transactionOffset, const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs) const;
 	void AddSenderInfo(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
-	WalletTx BuildWalletTx(Wallet& wallet, const uint32_t walletTxId, const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs, const Slate& slate, const std::optional<std::string>& messageOpt) const;
+	WalletTx BuildWalletTx(
+		Wallet& wallet,
+		const uint32_t walletTxId,
+		const std::vector<OutputData>& inputs,
+		const std::vector<OutputData>& changeOutputs,
+		const Slate& slate,
+		const std::optional<std::string>& addressOpt,
+		const std::optional<std::string>& messageOpt
+	) const;
 
 	bool UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& context, const std::vector<OutputData>& changeOutputs, std::vector<OutputData>& coinsToLock, const WalletTx& walletTx) const;
 

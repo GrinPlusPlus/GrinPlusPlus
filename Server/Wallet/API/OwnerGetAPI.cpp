@@ -26,6 +26,15 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		return RestUtil::BuildSuccessResponse(pConnection, accountsNode.toStyledString());
 	}
 
+	if (action == "retrieve_mnemonic")
+	{
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		Json::Value json;
+		SecureString walletWords = walletManager.GetSeedWords(token);
+		json["mnemonic"] = (std::string)walletWords;
+		return RestUtil::BuildSuccessResponse(pConnection, json.toStyledString());
+	}
+
 	// GET /v1/wallet/owner/node_height
 	if (action == "node_height")
 	{

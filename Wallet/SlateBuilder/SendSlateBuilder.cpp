@@ -23,6 +23,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const uint64_t amount, 
 	const uint64_t feeBase,
 	const uint8_t numOutputs,
+	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt, 
 	const SelectionStrategyDTO& strategy) const
 {
@@ -49,7 +50,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const uint32_t walletTxId = wallet.GetNextWalletTxId();
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
-	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(wallet, masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType);
+	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(wallet, masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType, messageOpt);
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
@@ -66,7 +67,7 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	Slate slate(std::move(slateVersionInfo), 2, uuids::uuid_system_generator()(), std::move(transaction), amount, fee, blockHeight, 0);
 	AddSenderInfo(slate, secretKey, secretNonce, messageOpt);
 
-	const WalletTx walletTx = BuildWalletTx(wallet, walletTxId, inputs, changeOutputs, slate, messageOpt);
+	const WalletTx walletTx = BuildWalletTx(wallet, walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
 	if (!UpdateDatabase(wallet, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx))
@@ -128,7 +129,14 @@ void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, c
 	slate.AddParticpantData(participantData);
 }
 
-WalletTx SendSlateBuilder::BuildWalletTx(Wallet& wallet, const uint32_t walletTxId, const std::vector<OutputData>& inputs, const std::vector<OutputData>& outputs, const Slate& slate, const std::optional<std::string>& messageOpt) const
+WalletTx SendSlateBuilder::BuildWalletTx(
+	Wallet& wallet,
+	const uint32_t walletTxId,
+	const std::vector<OutputData>& inputs,
+	const std::vector<OutputData>& outputs,
+	const Slate& slate,
+	const std::optional<std::string>& addressOpt,
+	const std::optional<std::string>& messageOpt) const
 {
 	uint64_t amountDebited = 0;
 	for (const OutputData& input : inputs)
@@ -146,6 +154,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(Wallet& wallet, const uint32_t walletTx
 		walletTxId,
 		EWalletTxType::SENDING_STARTED, // TODO: Change EWalletTxType to EWalletTxStatus
 		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::optional<std::string>(addressOpt),
 		std::optional<std::string>(messageOpt),
 		std::chrono::system_clock::now(),
 		std::nullopt,

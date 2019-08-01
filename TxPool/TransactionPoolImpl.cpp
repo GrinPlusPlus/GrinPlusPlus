@@ -44,13 +44,13 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	}
 
 	// Verify coinbase maturity
-	const uint64_t maximumBlockHeight = std::max(lastConfirmedBlock.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+	const uint64_t maximumBlockHeight = (std::max)(lastConfirmedBlock.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
 		{
-			const std::optional<OutputLocation> outputPosOpt = m_blockDB.GetOutputPosition(input.GetCommitment()); // TODO: Already loaded during pTxHashSet-IsValid. Combine for efficiency
-			if (!outputPosOpt.has_value() || outputPosOpt.value().GetBlockHeight() > maximumBlockHeight)
+			const std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(input.GetCommitment()); // TODO: Already loaded during pTxHashSet-IsValid. Combine for efficiency
+			if (pOutputPosition == nullptr || pOutputPosition->GetBlockHeight() > maximumBlockHeight)
 			{
 				LoggerAPI::LogInfo("TransactionPool::AddTransaction - Coinbase not mature: " + HexUtil::ConvertHash(transaction.GetHash()));
 				return false;

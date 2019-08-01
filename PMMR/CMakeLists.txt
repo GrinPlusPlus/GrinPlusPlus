@@ -9,12 +9,6 @@ if(MSVC)
     endif()
 endif()
 
-#hunter_add_package(minizip)
-#hunter_add_package(ZLIB)
-
-#find_package(minizip CONFIG REQUIRED)
-#find_package(ZLIB CONFIG REQUIRED)
-
 include_directories(
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib/contrib
 )

@@ -25,7 +25,7 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 		std::unique_ptr<OutputRange> pOutputRange = m_nodeClient.GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
 		if (pOutputRange == nullptr)
 		{
-			return std::vector<OutputData>();
+			return std::vector<OutputData>(); // TODO: Throw exception
 		}
 
 		// No new outputs since last restore
@@ -99,6 +99,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 			status, 
 			std::make_optional<uint64_t>(mmrIndex), 
 			std::make_optional<uint64_t>(blockHeight),
+			std::nullopt,
 			std::nullopt
 		);
 	}

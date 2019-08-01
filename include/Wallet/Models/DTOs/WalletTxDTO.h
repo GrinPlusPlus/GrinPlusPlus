@@ -25,6 +25,7 @@ public:
 		transactionJSON["amount_debited"] = m_walletTx.GetAmountDebited();
 		transactionJSON["creation_date_time"] = TimeUtil::ToSeconds(m_walletTx.GetCreationTime());
 
+		JsonUtil::AddOptionalField(transactionJSON, "address", m_walletTx.GetAddress());
 		JsonUtil::AddOptionalField(transactionJSON, "slate_message", m_walletTx.GetSlateMessage());
 		JsonUtil::AddOptionalField(transactionJSON, "fee", m_walletTx.GetFee());
 		JsonUtil::AddOptionalField(transactionJSON, "confirmed_height", m_walletTx.GetConfirmationHeight());

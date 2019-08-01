@@ -162,13 +162,13 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 	for (const std::string& id : ids)
 	{
 		Commitment commitment(CBigInteger<33>::FromHex(id));
-		std::optional<OutputLocation> locationOpt = blockDB.GetOutputPosition(commitment);
-		if (locationOpt.has_value())
+		std::unique_ptr<OutputLocation> pOutputPosition = blockDB.GetOutputPosition(commitment);
+		if (pOutputPosition != nullptr)
 		{
 			Json::Value outputNode;
 			outputNode["commit"] = HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData());
-			outputNode["height"] = locationOpt.value().GetBlockHeight();
-			outputNode["mmr_index"] = locationOpt.value().GetMMRIndex() + 1;
+			outputNode["height"] = pOutputPosition->GetBlockHeight();
+			outputNode["mmr_index"] = pOutputPosition->GetMMRIndex() + 1;
 
 			rootNode.append(outputNode);
 		}

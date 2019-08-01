@@ -10,6 +10,7 @@
 #include <Database/BlockDb.h>
 #include <Crypto/Hash.h>
 #include <Core/CRoaring/roaring.hh>
+#include <optional>
 
 #define OUTPUT_SIZE 34
 

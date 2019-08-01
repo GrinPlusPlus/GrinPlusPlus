@@ -46,6 +46,11 @@ public:
 		const SecureString& walletWords
 	) = 0;
 
+	//
+	// Returns the logged in user's wallet words.
+	//
+	virtual SecureString GetSeedWords(const SessionToken& token) = 0;
+
 	// TODO: Determine return value.
 	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) = 0;
 
@@ -91,6 +96,7 @@ public:
 		const SessionToken& token,
 		const uint64_t amount,
 		const uint64_t feeBase,
+		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt,
 		const SelectionStrategyDTO& strategy,
 		const uint8_t numChangeOutputs
@@ -99,6 +105,7 @@ public:
 	virtual std::unique_ptr<Slate> Receive(
 		const SessionToken& token,
 		const Slate& slate,
+		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt
 	) = 0;
 

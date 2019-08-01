@@ -69,6 +69,12 @@ std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& us
 	return std::nullopt;
 }
 
+SecureString WalletManager::GetSeedWords(const SessionToken& token)
+{
+	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+	return Mnemonic::CreateMnemonic((const std::vector<unsigned char>&)masterSeed);
+}
+
 bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGenesis)
 {
 	try
@@ -209,7 +215,8 @@ FeeEstimateDTO WalletManager::EstimateFee(
 std::unique_ptr<Slate> WalletManager::Send(
 	const SessionToken& token, 
 	const uint64_t amount,
-	const uint64_t feeBase, 
+	const uint64_t feeBase,
+	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt, 
 	const SelectionStrategyDTO& strategy, 
 	const uint8_t numChangeOutputs)
@@ -217,15 +224,19 @@ std::unique_ptr<Slate> WalletManager::Send(
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return SendSlateBuilder(m_config, m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, messageOpt, strategy);
+	return SendSlateBuilder(m_config, m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, addressOpt, messageOpt, strategy);
 }
 
-std::unique_ptr<Slate> WalletManager::Receive(const SessionToken& token, const Slate& slate, const std::optional<std::string>& messageOpt)
+std::unique_ptr<Slate> WalletManager::Receive(
+	const SessionToken& token,
+	const Slate& slate,
+	const std::optional<std::string>& addressOpt,
+	const std::optional<std::string>& messageOpt)
 {
 	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
 	LockedWallet wallet = m_sessionManager.GetWallet(token);
 
-	return ReceiveSlateBuilder().AddReceiverData(wallet.GetWallet(), masterSeed, slate, messageOpt);
+	return ReceiveSlateBuilder().AddReceiverData(wallet.GetWallet(), masterSeed, slate, addressOpt, messageOpt);
 }
 
 std::unique_ptr<Slate> WalletManager::Finalize(const SessionToken& token, const Slate& slate)

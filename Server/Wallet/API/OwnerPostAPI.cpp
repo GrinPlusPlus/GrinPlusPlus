@@ -221,6 +221,7 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 		return RestUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
 	}
 
+	const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
 
 	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
@@ -232,7 +233,7 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
 	const uint8_t numOutputs = json.get("change_outputs", Json::Value(1)).asUInt();
 
-	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), messageOpt, selectionStrategy, numOutputs);
+	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), addressOpt, messageOpt, selectionStrategy, numOutputs);
 	if (pSlate != nullptr)
 	{
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());
@@ -245,11 +246,13 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 
 int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	Slate slate = Slate::FromJSON(json);
+	Json::Value slateJSON = JsonUtil::GetRequiredField(json, "slate");
+	Slate slate = Slate::FromJSON(slateJSON);
 
+	const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message"); // TODO: Handle this
 
-	std::unique_ptr<Slate> pReceivedSlate = walletManager.Receive(token, slate, messageOpt);
+	std::unique_ptr<Slate> pReceivedSlate = walletManager.Receive(token, slate, addressOpt, messageOpt);
 	if (pReceivedSlate != nullptr)
 	{
 		return RestUtil::BuildSuccessResponseJSON(pConnection, pReceivedSlate->ToJSON());

@@ -58,6 +58,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 					EWalletTxType::RECEIVED,
 					std::nullopt,
 					std::nullopt,
+					std::nullopt,
 					std::chrono::system_clock::now(),
 					std::nullopt, // TODO: Lookup block time
 					restoredOutput.GetBlockHeight(),

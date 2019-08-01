@@ -79,8 +79,6 @@ void BlockDB::OpenDB()
 
 void BlockDB::CloseDB()
 {
-	
-
 	//delete m_pDefaultHandle;
 	delete m_pBlockHandle;
 	delete m_pHeaderHandle;
@@ -233,7 +231,7 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const Output
 	const std::string outputHex = outputCommitment.ToHex();
 	//LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) at height (%llu) for output (%s).", location.GetMMRIndex(), location.GetBlockHeight(), outputHex.c_str()));
 
-	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
+	Slice key((const char*)outputCommitment.GetCommitmentBytes().data(), 32); // TODO: This should be 33 bytes. Need to find a good way to fix this.
 
 	// Serializes the output position
 	Serializer serializer;
@@ -244,11 +242,11 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const Output
 	m_pDatabase->Put(WriteOptions(), m_pOutputPosHandle, key, value);
 }
 
-std::optional<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
+std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
 {
-	std::optional<OutputLocation> outputPosition = std::nullopt;
+	std::unique_ptr<OutputLocation> pOutputPosition = nullptr;
 
-	Slice key((const char*)&outputCommitment.GetCommitmentBytes()[0], 32);
+	Slice key((const char*)outputCommitment.GetCommitmentBytes().data(), 32); // TODO: This should be 33 bytes. Need to find a good way to fix this.
 
 	// Read from DB
 	std::string value;
@@ -258,10 +256,10 @@ std::optional<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outpu
 		// Deserialize result
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
 		ByteBuffer byteBuffer(data);
-		outputPosition = std::make_optional<OutputLocation>(OutputLocation::Deserialize(byteBuffer));
+		pOutputPosition = std::make_unique<OutputLocation>(OutputLocation::Deserialize(byteBuffer));
 	}
 
-	return outputPosition;
+	return pOutputPosition;
 }
 
 void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
@@ -279,9 +277,9 @@ void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 	m_pDatabase->Put(WriteOptions(), m_pInputBitmapHandle, key, value);
 }
 
-std::optional<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) const
+std::unique_ptr<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) const
 {
-	std::optional<Roaring> blockInputBitmap = std::nullopt;
+	std::unique_ptr<Roaring> blockInputBitmap = nullptr;
 
 	Slice key((const char*)&blockHash[0], 32);
 
@@ -291,7 +289,7 @@ std::optional<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) const
 	if (s.ok())
 	{
 		// Deserialize result
-		blockInputBitmap = std::make_optional<Roaring>(Roaring::readSafe(value.data(), value.size()));
+		blockInputBitmap = std::make_unique<Roaring>(Roaring::readSafe(value.data(), value.size()));
 	}
 
 	return blockInputBitmap;

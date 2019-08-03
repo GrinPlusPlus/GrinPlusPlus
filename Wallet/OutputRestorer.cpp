@@ -4,6 +4,7 @@
 #include <Wallet/WalletUtil.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>
+#include <Infrastructure/Logger.h>
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
@@ -60,7 +61,8 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 {
 	EBulletproofType type = EBulletproofType::ORIGINAL;
 	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;
-	if (Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), ((std::max)(currentBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
+	const uint64_t outputBlockHeight = outputDisplayInfo.GetLocation().GetBlockHeight();
+	if (Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), ((std::max)(outputBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
 	{
 		pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof(), EBulletproofType::ORIGINAL);
 	}
@@ -73,6 +75,8 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 	if (pRewoundProof != nullptr)
 	{
+		LoggerAPI::LogInfo("OutputRestorer::GetWalletOutput - Found own output: " + outputDisplayInfo.GetIdentifier().GetCommitment().ToHex());
+
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
 		CBigInteger<32> blindingFactor;

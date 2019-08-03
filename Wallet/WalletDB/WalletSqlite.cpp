@@ -1,4 +1,10 @@
 #include "WalletSqlite.h"
+#include "WalletEncryptionUtil.h"
+#include "SqliteTransaction.h"
+#include "Tables/VersionTable.h"
+#include "Tables/OutputsTable.h"
+#include "Tables/TransactionsTable.h"
+#include "Tables/MetadataTable.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Common/Util/FileUtil.h>
@@ -6,6 +12,7 @@
 #include <Infrastructure/Logger.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
+static const int LATEST_SCHEMA_VERSION = 1;
 
 WalletSqlite::WalletSqlite(const Config& config)
 	: m_config(config)
@@ -29,11 +36,10 @@ void WalletSqlite::Close()
 
 std::vector<std::string> WalletSqlite::GetAccounts() const
 {
-	// TODO: Implement
 	return FileUtil::GetSubDirectories(m_config.GetWalletConfig().GetWalletDirectory());
 }
 
-bool WalletSqlite::OpenWallet(const std::string& username)
+bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& masterSeed)
 {
 	if (m_userDBs.find(username) != m_userDBs.end())
 	{
@@ -54,6 +60,23 @@ bool WalletSqlite::OpenWallet(const std::string& username)
 			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
 		}
 
+		const int version = VersionTable::GetCurrentVersion(*pDatabase);
+		if (version == 0)
+		{
+			SqliteTransaction transaction(*pDatabase);
+			transaction.Begin();
+
+			VersionTable::CreateTable(*pDatabase);
+			OutputsTable::UpdateSchema(*pDatabase, masterSeed, version);
+			MetadataTable::UpdateSchema(*pDatabase, version);
+
+			transaction.Commit();
+		}
+		else if (version > LATEST_SCHEMA_VERSION)
+		{
+			throw WALLET_STORE_EXCEPTION("Sqlite database has higher version than supported.");
+		}
+
 		m_userDBs[username] = pDatabase;
 	}
 	else
@@ -68,7 +91,6 @@ bool WalletSqlite::OpenWallet(const std::string& username)
 		m_userDBs[username] = pDatabase;
 	}
 
-
 	return true;
 }
 
@@ -78,7 +100,8 @@ bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed
 	const std::string seedFile = userDBPath + "/seed.json";
 	if (FileUtil::Exists(seedFile))
 	{
-		LoggerAPI::LogWarning("WalletSqlite::CreateWallet - Wallet already exists for user: " + username);
+		LOG_WARNING("Wallet already exists for user: " + username);
+		//LoggerAPI::LogWarning("WalletSqlite::CreateWallet - Wallet already exists for user: " + username);
 		return false;
 	}
 
@@ -281,11 +304,6 @@ bool WalletSqlite::SaveSlateContext(const std::string& username, const SecureVec
 	return true;
 }
 
-// TABLE: outputs
-// keychain_path: TEXT PRIMARY KEY
-// status: INTEGER NOT NULL
-// transaction_id: INTEGER
-// encrypted: BLOB NOT NULL
 bool WalletSqlite::AddOutputs(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
@@ -296,48 +314,7 @@ bool WalletSqlite::AddOutputs(const std::string& username, const SecureVector& m
 
 	// TODO: Batch write as a transaction
 
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	for (const OutputData& output : outputs)
-	{
-		sqlite3_stmt* stmt = nullptr;
-		std::string insert = "insert into outputs(keychain_path, status, transaction_id, encrypted) values(?, ?, ?, ?)";
-		insert += " ON CONFLICT(keychain_path) DO UPDATE SET status=excluded.status, transaction_id=excluded.transaction_id, encrypted=excluded.encrypted";
-		if (sqlite3_prepare_v2(pDatabase, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
-		{
-			LoggerAPI::LogError(StringUtil::Format("WalletSqlite::AddOutputs - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
-			sqlite3_finalize(stmt);
-			throw WALLET_STORE_EXCEPTION("Error compiling statement.");
-		}
-
-		const std::string keychainPath = output.GetKeyChainPath().ToString();
-		sqlite3_bind_text(stmt, 1, keychainPath.c_str(), (int)keychainPath.size(), NULL);
-
-		sqlite3_bind_int(stmt, 2, (int)output.GetStatus());
-
-		if (output.GetWalletTxId().has_value())
-		{
-			sqlite3_bind_int(stmt, 3, (int)output.GetWalletTxId().value());
-		}
-		else
-		{
-			sqlite3_bind_null(stmt, 3);
-		}
-
-		Serializer serializer;
-		output.Serialize(serializer);
-		const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "OUTPUT", serializer.GetSecureBytes());
-		sqlite3_bind_blob(stmt, 4, (const void*)encrypted.data(), (int)encrypted.size(), NULL);
-
-		sqlite3_step(stmt);
-
-		if (sqlite3_finalize(stmt) != SQLITE_OK)
-		{
-			LoggerAPI::LogError(StringUtil::Format("WalletSqlite::AddOutputs - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
-			throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-		}
-	}
-
+	OutputsTable::AddOutputs(*m_userDBs.at(username), masterSeed, outputs);
 	return true;
 }
 
@@ -349,50 +326,9 @@ std::vector<OutputData> WalletSqlite::GetOutputs(const std::string& username, co
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	sqlite3_stmt* stmt = nullptr;
-	const std::string query = "select encrypted from outputs";
-	if (sqlite3_prepare_v2(m_userDBs.at(username), query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetOutputs - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
-		sqlite3_finalize(stmt);
-		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
-	}
-
-	std::vector<OutputData> outputs;
-
-	int ret_code = 0;
-	while ((ret_code = sqlite3_step(stmt)) == SQLITE_ROW)
-	{
-		const int encryptedSize = sqlite3_column_bytes(stmt, 0);
-		const unsigned char* pEncrypted = (const unsigned char*)sqlite3_column_blob(stmt, 0);
-		std::vector<unsigned char> encrypted(pEncrypted, pEncrypted + encryptedSize);
-		const SecureVector decrypted = Decrypt(masterSeed, "OUTPUT", encrypted);
-		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
-
-		ByteBuffer byteBuffer(decryptedUnsafe);
-		outputs.emplace_back(OutputData::Deserialize(byteBuffer));
-	}
-
-	if (ret_code != SQLITE_DONE)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetOutputs - Error while performing sql: %s", sqlite3_errmsg(m_userDBs.at(username))));
-	}
-
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetOutputs - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
-		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-	}
-
-	return outputs;
+	return OutputsTable::GetOutputs(*m_userDBs.at(username), masterSeed);
 }
 
-// TABLE: transactions
-// id: INTEGER PRIMARY KEY
-// slate_id: TEXT
-// encrypted: BLOB NOT NULL
 bool WalletSqlite::AddTransaction(const std::string& username, const SecureVector& masterSeed, const WalletTx& walletTx)
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
@@ -401,44 +337,7 @@ bool WalletSqlite::AddTransaction(const std::string& username, const SecureVecto
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
-	// TODO: What if transaction already exists?
-
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	sqlite3_stmt* stmt = nullptr;
-	std::string insert = "insert or replace into transactions values(?, ?, ?)";
-	if (sqlite3_prepare_v2(pDatabase, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::AddTransaction - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
-		sqlite3_finalize(stmt);
-		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
-	}
-
-	sqlite3_bind_int(stmt, 1, (int)walletTx.GetId());
-
-	if (walletTx.GetSlateId().has_value())
-	{
-		const std::string slateId = uuids::to_string(walletTx.GetSlateId().value());
-		sqlite3_bind_text(stmt, 2, slateId.c_str(), (int)slateId.size(), NULL);
-	}
-	else
-	{
-		sqlite3_bind_null(stmt, 2);
-	}
-
-	Serializer serializer;
-	walletTx.Serialize(serializer);
-	const std::vector<unsigned char> encrypted = Encrypt(masterSeed, "WALLET_TX", serializer.GetSecureBytes());
-	sqlite3_bind_blob(stmt, 3, (const void*)encrypted.data(), (int)encrypted.size(), NULL);
-
-	sqlite3_step(stmt);
-
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::AddTransaction - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
-		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-	}
-
+	TransactionsTable::AddTransactions(*m_userDBs.at(username), masterSeed, std::vector<WalletTx>({ walletTx }));
 	return true;
 }
 
@@ -450,156 +349,57 @@ std::vector<WalletTx> WalletSqlite::GetTransactions(const std::string& username,
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	sqlite3_stmt* stmt = nullptr;
-	const std::string query = "select encrypted from transactions";
-	if (sqlite3_prepare_v2(m_userDBs.at(username), query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetTransactions - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
-		sqlite3_finalize(stmt);
-		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
-	}
-
-	std::vector<WalletTx> transactions;
-
-	int ret_code = 0;
-	while ((ret_code = sqlite3_step(stmt)) == SQLITE_ROW)
-	{
-		const int encryptedSize = sqlite3_column_bytes(stmt, 0);
-		const unsigned char* pEncrypted = (const unsigned char*)sqlite3_column_blob(stmt, 0);
-		std::vector<unsigned char> encrypted(pEncrypted, pEncrypted + encryptedSize);
-		const SecureVector decrypted = Decrypt(masterSeed, "WALLET_TX", encrypted);
-		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
-
-		ByteBuffer byteBuffer(decryptedUnsafe);
-		transactions.emplace_back(WalletTx::Deserialize(byteBuffer));
-	}
-
-	if (ret_code != SQLITE_DONE)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetTransactions - Error while performing sql: %s", sqlite3_errmsg(m_userDBs.at(username))));
-	}
-
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetTransactions - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
-		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-	}
-
-	return transactions;
+	return TransactionsTable::GetTransactions(*m_userDBs.at(username), masterSeed);
 }
 
 uint32_t WalletSqlite::GetNextTransactionId(const std::string& username)
 {
-	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
-	if (pUserMetadata == nullptr)
-	{
-		LoggerAPI::LogError("WalletSqlite::GetNextTransactionId - User metadata not found for user: " + username);
-		throw WALLET_STORE_EXCEPTION("User metadata not found.");
-	}
+	UserMetadata metadata = GetMetadata(username);
 
-	const uint32_t nextTxId = pUserMetadata->GetNextTxId();
-	const UserMetadata updatedMetadata(nextTxId + 1, pUserMetadata->GetRefreshBlockHeight(), pUserMetadata->GetRestoreLeafIndex());
-	if (!SaveMetadata(username, updatedMetadata))
-	{
-		LoggerAPI::LogError("WalletSqlite::GetNextTransactionId - Failed to update user metadata for user: " + username);
-		throw WALLET_STORE_EXCEPTION("Failed to update user metadata.");
-	}
+	const uint32_t nextTxId = metadata.GetNextTxId();
+	const UserMetadata updatedMetadata(nextTxId + 1, metadata.GetRefreshBlockHeight(), metadata.GetRestoreLeafIndex());
+	SaveMetadata(username, updatedMetadata);
 
 	return nextTxId;
 }
 
 uint64_t WalletSqlite::GetRefreshBlockHeight(const std::string& username) const
 {
-	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
-	if (pUserMetadata == nullptr)
-	{
-		LoggerAPI::LogError("WalletSqlite::GetRefreshBlockHeight - User metadata not found for user: " + username);
-		throw WALLET_STORE_EXCEPTION("User metadata not found.");
-	}
+	UserMetadata metadata = GetMetadata(username);
 
-	return pUserMetadata->GetRefreshBlockHeight();
+	return metadata.GetRefreshBlockHeight();
 }
 
 bool WalletSqlite::UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight)
 {
-	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
-	if (pUserMetadata == nullptr)
-	{
-		LoggerAPI::LogError("WalletSqlite::UpdateRefreshBlockHeight - User metadata not found for user: " + username);
-		throw WALLET_STORE_EXCEPTION("User metadata not found.");
-	}
+	UserMetadata metadata = GetMetadata(username);
 
-	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), refreshBlockHeight, pUserMetadata->GetRestoreLeafIndex()));
+	return SaveMetadata(username, UserMetadata(metadata.GetNextTxId(), refreshBlockHeight, metadata.GetRestoreLeafIndex()));
 }
 
 uint64_t WalletSqlite::GetRestoreLeafIndex(const std::string& username) const
 {
-	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
-	if (pUserMetadata == nullptr)
-	{
-		LoggerAPI::LogError("WalletSqlite::GetRestoreLeafIndex - User metadata not found for user: " + username);
-		throw WALLET_STORE_EXCEPTION("User metadata not found.");
-	}
+	UserMetadata metadata = GetMetadata(username);
 
-	return pUserMetadata->GetRestoreLeafIndex();
+	return metadata.GetRestoreLeafIndex();
 }
 
 bool WalletSqlite::UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex)
 {
-	std::unique_ptr<UserMetadata> pUserMetadata = GetMetadata(username);
-	if (pUserMetadata == nullptr)
-	{
-		LoggerAPI::LogError("WalletSqlite::UpdateRestoreLeafIndex - User metadata not found for user: " + username);
-		throw WALLET_STORE_EXCEPTION("User metadata not found.");
-	}
+	UserMetadata metadata = GetMetadata(username);
 
-	return SaveMetadata(username, UserMetadata(pUserMetadata->GetNextTxId(), pUserMetadata->GetRefreshBlockHeight(), lastLeafIndex));
+	return SaveMetadata(username, UserMetadata(metadata.GetNextTxId(), metadata.GetRefreshBlockHeight(), lastLeafIndex));
 }
 
-std::unique_ptr<UserMetadata> WalletSqlite::GetMetadata(const std::string& username) const
+UserMetadata WalletSqlite::GetMetadata(const std::string& username) const
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::GetNextChildPath - Database not open for user: " + username);
+		LoggerAPI::LogError("WalletSqlite::GetMetadata - Database not open for user: " + username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	std::unique_ptr<UserMetadata> pUserMetadata = nullptr;
-
-	sqlite3_stmt* stmt;
-
-	if (sqlite3_prepare_v2(pDatabase, "SELECT next_tx_id, refresh_block_height, restore_leaf_index FROM metadata WHERE ID=1", -1, &stmt, NULL) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetMetadata - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
-		sqlite3_finalize(stmt);
-		return pUserMetadata;
-	}
-
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-	{
-		const uint32_t nextTxId = (uint32_t)sqlite3_column_int(stmt, 0);
-		const uint64_t refreshBlockHeight = (uint64_t)sqlite3_column_int64(stmt, 1);
-		const uint64_t restoreLeafIndex = (uint64_t)sqlite3_column_int64(stmt, 2);
-
-		pUserMetadata = std::make_unique<UserMetadata>(UserMetadata(nextTxId, refreshBlockHeight, restoreLeafIndex));
-	}
-	else
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetMetadata - Error while performing sql: %s", sqlite3_errmsg(pDatabase)));
-	}
-
-
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetMetadata - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
-		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-	}
-
-	return pUserMetadata;
+	return MetadataTable::GetMetadata(*m_userDBs.at(username));
 }
 
 bool WalletSqlite::SaveMetadata(const std::string& username, const UserMetadata& userMetadata)
@@ -610,67 +410,8 @@ bool WalletSqlite::SaveMetadata(const std::string& username, const UserMetadata&
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
-	sqlite3* pDatabase = m_userDBs.at(username);
-
-	std::string update = StringUtil::Format(
-		"update metadata set next_tx_id=%llu, refresh_block_height=%llu, restore_leaf_index=%llu where id=1;", 
-		userMetadata.GetNextTxId(), 
-		userMetadata.GetRefreshBlockHeight(), 
-		userMetadata.GetRestoreLeafIndex()
-	);
-
-	char* error = nullptr;
-	if (sqlite3_exec(pDatabase, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
-	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::SaveMetadata - Failed to save metadata for user: %s. Error: %s", username.c_str(), error));
-		sqlite3_free(error);
-		return false;
-	}
-
+	MetadataTable::SaveMetadata(*m_userDBs.at(username), userMetadata);
 	return true;
-}
-
-SecretKey WalletSqlite::CreateSecureKey(const SecureVector& masterSeed, const std::string& dataType)
-{
-	SecureVector seedWithNonce(masterSeed.data(), masterSeed.data() + masterSeed.size());
-
-	Serializer nonceSerializer;
-	nonceSerializer.AppendVarStr(dataType);
-	seedWithNonce.insert(seedWithNonce.end(), nonceSerializer.GetBytes().begin(), nonceSerializer.GetBytes().end());
-
-	return Crypto::Blake2b((const std::vector<unsigned char>&)seedWithNonce);
-}
-
-std::vector<unsigned char> WalletSqlite::Encrypt(const SecureVector& masterSeed, const std::string& dataType, const SecureVector& bytes)
-{
-	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
-	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
-	const SecretKey key = CreateSecureKey(masterSeed, dataType);
-
-	const std::vector<unsigned char> encryptedBytes = Crypto::AES256_Encrypt(bytes, key, iv);
-
-	Serializer serializer;
-	serializer.Append<uint8_t>(ENCRYPTION_FORMAT);
-	serializer.AppendBigInteger(iv);
-	serializer.AppendByteVector(encryptedBytes);
-	return serializer.GetBytes();
-}
-
-SecureVector WalletSqlite::Decrypt(const SecureVector& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted)
-{
-	ByteBuffer byteBuffer(encrypted);
-
-	const uint8_t formatVersion = byteBuffer.ReadU8();
-	if (formatVersion != ENCRYPTION_FORMAT)
-	{
-		throw DeserializationException();
-	}
-
-	const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
-	const std::vector<unsigned char> encryptedBytes = byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
-	const SecretKey key = CreateSecureKey(masterSeed, dataType);
-
-	return Crypto::AES256_Decrypt(encryptedBytes, key, iv);
 }
 
 sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
@@ -686,22 +427,34 @@ sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
 		return nullptr;
 	}
 
-	std::string tableCreation = "create table metadata(id INTEGER PRIMARY KEY, next_tx_id INTEGER NOT NULL, refresh_block_height INTEGER NOT NULL, restore_leaf_index INTEGER NOT NULL);";
-	tableCreation += "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
-	tableCreation += "create table transactions(id INTEGER PRIMARY KEY, slate_id TEXT, encrypted BLOB NOT NULL);";
-	tableCreation += "create table outputs(keychain_path TEXT PRIMARY KEY, status INTEGER NOT NULL, transaction_id INTEGER, encrypted BLOB NOT NULL);";
-	tableCreation += "create table slate_contexts(slate_id TEXT PRIMARY KEY, enc_blind BLOB NOT NULL, enc_nonce BLOB NOT NULL);";
-	// TODO: Add indices
-
-	KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
-	tableCreation += "insert into accounts values('m/0/0','DEFAULT'," + std::to_string(nextChildPath.GetKeyIndices().back()) + ");";
-	tableCreation += "insert into metadata values(1, 0, 0, 0);";
-
-	char* error = nullptr;
-	if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
+	try
 	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create DB tables for user: " + username);
-		sqlite3_free(error);
+		SqliteTransaction transaction(*pDatabase);
+		transaction.Begin();
+
+		VersionTable::CreateTable(*pDatabase);
+		OutputsTable::CreateTable(*pDatabase);
+		TransactionsTable::CreateTable(*pDatabase);
+		MetadataTable::CreateTable(*pDatabase);
+
+		std::string tableCreation = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
+		tableCreation += "create table slate_contexts(slate_id TEXT PRIMARY KEY, enc_blind BLOB NOT NULL, enc_nonce BLOB NOT NULL);";
+		// TODO: Add indices
+
+		KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
+		tableCreation += "insert into accounts values('m/0/0','DEFAULT'," + std::to_string(nextChildPath.GetKeyIndices().back()) + ");";
+
+		char* error = nullptr;
+		if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
+		{
+			LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create DB tables for user: " + username);
+			sqlite3_free(error);
+		}
+
+		transaction.Commit();
+	}
+	catch (WalletStoreException&)
+	{
 		sqlite3_close(pDatabase);
 		FileUtil::RemoveFile(walletDBFile);
 

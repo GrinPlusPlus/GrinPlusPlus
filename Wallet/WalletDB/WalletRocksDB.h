@@ -20,7 +20,7 @@ public:
 
 	virtual std::vector<std::string> GetAccounts() const override final;
 
-	virtual bool OpenWallet(const std::string& username) override final;
+	virtual bool OpenWallet(const std::string& username, const SecureVector& masterSeed) override final;
 	virtual bool CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) override final;
 
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const override final;

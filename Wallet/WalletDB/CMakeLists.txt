@@ -13,6 +13,11 @@ endif(LINUX)
 file(GLOB WalletDB_SRC
     "WalletDBImpl.cpp"
     "WalletSqlite.cpp"
+	"WalletEncryptionUtil.cpp"
+	"Tables/VersionTable.cpp"
+	"Tables/OutputsTable.cpp"
+	"Tables/TransactionsTable.cpp"
+	"Tables/MetadataTable.cpp"
     ${ROCKS_SRC}
 )
 

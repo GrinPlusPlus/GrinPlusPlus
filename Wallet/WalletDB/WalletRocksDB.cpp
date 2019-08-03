@@ -91,7 +91,7 @@ std::vector<std::string> WalletRocksDB::GetAccounts() const
 	return usernames;
 }
 
-bool WalletRocksDB::OpenWallet(const std::string& username)
+bool WalletRocksDB::OpenWallet(const std::string& username, const SecureVector& masterSeed)
 {
 	return true;
 }

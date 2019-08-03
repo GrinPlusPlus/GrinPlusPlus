@@ -97,4 +97,35 @@ namespace LoggerAPI
 	{
 		Logger::GetInstance().Flush();
 	}
+
+
+	LOGGER_API void LogTrace(const std::string& function, const size_t line, const std::string& message)
+	{
+		const std::string formatted = function + ":" + std::to_string(line) + " - " + message;
+		Logger::GetInstance().Log(spdlog::level::level_enum::trace, message);
+	}
+
+	LOGGER_API void LogDebug(const std::string& function, const size_t line, const std::string& message)
+	{
+		const std::string formatted = function + ":" + std::to_string(line) + " - " + message;
+		Logger::GetInstance().Log(spdlog::level::level_enum::debug, message);
+	}
+
+	LOGGER_API void LogInfo(const std::string& function, const size_t line, const std::string& message)
+	{
+		const std::string formatted = function + ":" + std::to_string(line) + " - " + message;
+		Logger::GetInstance().Log(spdlog::level::level_enum::info, message);
+	}
+
+	LOGGER_API void LogWarning(const std::string& function, const size_t line, const std::string& message)
+	{
+		const std::string formatted = function + ":" + std::to_string(line) + " - " + message;
+		Logger::GetInstance().Log(spdlog::level::level_enum::warn, message);
+	}
+
+	LOGGER_API void LogError(const std::string& function, const size_t line, const std::string& message)
+	{
+		const std::string formatted = function + ":" + std::to_string(line) + " - " + message;
+		Logger::GetInstance().Log(spdlog::level::level_enum::err, message);
+	}
 }

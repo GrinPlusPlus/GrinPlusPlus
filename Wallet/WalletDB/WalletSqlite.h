@@ -17,7 +17,7 @@ public:
 
 	virtual std::vector<std::string> GetAccounts() const override final;
 
-	virtual bool OpenWallet(const std::string& username) override final;
+	virtual bool OpenWallet(const std::string& username, const SecureVector& masterSeed) override final;
 	virtual bool CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) override final;
 
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const override final;
@@ -41,12 +41,8 @@ public:
 private:
 	sqlite3* CreateWalletDB(const std::string& username);
 
-	std::unique_ptr<UserMetadata> GetMetadata(const std::string& username) const;
+	UserMetadata GetMetadata(const std::string& username) const;
 	bool SaveMetadata(const std::string& username, const UserMetadata& userMetadata);
-
-	static SecretKey CreateSecureKey(const SecureVector& masterSeed, const std::string& dataType);
-	static std::vector<unsigned char> Encrypt(const SecureVector& masterSeed, const std::string& dataType, const SecureVector& bytes);
-	static SecureVector Decrypt(const SecureVector& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
 
 	const Config& m_config;
 

@@ -23,7 +23,7 @@ class IWalletDB
 public:
 	virtual std::vector<std::string> GetAccounts() const = 0;
 
-	virtual bool OpenWallet(const std::string& username) = 0;
+	virtual bool OpenWallet(const std::string& username, const SecureVector& masterSeed) = 0;
 	virtual bool CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) = 0;
 
 	virtual std::unique_ptr<EncryptedSeed> LoadWalletSeed(const std::string& username) const = 0;

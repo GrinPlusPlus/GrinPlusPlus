@@ -5,6 +5,7 @@
 #include "API/OwnerGetAPI.h"
 #include "API/OwnerPostAPI.h"
 
+#include <Wallet/WalletDB/WalletStoreException.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
 
@@ -62,6 +63,10 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 	catch (const InsufficientFundsException&)
 	{
 		return RestUtil::BuildConflictResponse(pConnection, "Insufficient funds available.");
+	}
+	catch (const WalletStoreException& e)
+	{
+		return RestUtil::BuildInternalErrorResponse(pConnection, std::string(e.what()));
 	}
 	catch (const std::exception& e)
 	{

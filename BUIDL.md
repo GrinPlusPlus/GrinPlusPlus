@@ -2,7 +2,7 @@
 
 ### Windows
 #### Prerequisites
-* A recent version of CMake
+* CMake 3.8+
 * Visual Studio 2017+ 64-bit with C++ 2017 Support
 * OPTIONAL: Visual C++ Tools for CMake
 
@@ -29,7 +29,7 @@ Once your code is built, you can just open GrinNode.exe from your bin folder.
 
 ### Linux/Mac
 #### Prerequisites
-* CMake
+* CMake 3.8+
 * gcc 7.x.x (Tested on gcc 7.4.0)
 * uuid-dev
 

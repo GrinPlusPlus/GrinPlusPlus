@@ -83,14 +83,14 @@ bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 		LockedWallet wallet = m_sessionManager.GetWallet(token);
 
 		wallet.GetWallet().RefreshOutputs(masterSeed, fromGenesis);
+		return true;
 	}
 	catch(const std::exception& e)
 	{
 		LoggerAPI::LogError("WalletManager::CheckForOutputs - Exception thrown: " + std::string(e.what()));
 	}
-	
 
-	return true;
+	return false;
 }
 
 SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
@@ -122,6 +122,23 @@ std::unique_ptr<SessionToken> WalletManager::Login(const std::string& username, 
 void WalletManager::Logout(const SessionToken& token)
 {
 	m_sessionManager.Logout(token);
+}
+
+bool WalletManager::DeleteWallet(const std::string& username, const SecureString& password)
+{
+	LoggerAPI::LogInfo("Attempting to delete wallet with username: " + username);
+
+	const std::string usernameLower = StringUtil::ToLower(username);
+	std::unique_ptr<SessionToken> pToken = m_sessionManager.Login(usernameLower, password);
+	if (pToken != nullptr)
+	{
+		m_sessionManager.Logout(*pToken);
+
+		// TODO: Delete wallet folder.
+		return true;
+	}
+
+	return false;
 }
 
 WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)

@@ -21,7 +21,7 @@ std::string ThreadManager::GetCurrentThreadName() const
 	}
 
 	std::stringstream ss;
-	ss << "THREAD(ID:" << threadId << ")";
+	ss << "[THREAD:" << threadId << "]";
 	return ss.str();
 }
 
@@ -30,7 +30,7 @@ void ThreadManager::SetThreadName(const std::thread::id& threadId, const std::st
 	std::unique_lock<std::shared_mutex> lockGuard(m_threadNamesMutex);
 
 	std::stringstream ss;
-	ss << threadName << "(ID:" << threadId << ")";
+	ss << "[" << threadName << ":" << threadId << "]";
 	m_threadNamesById[threadId] = ss.str();
 }
 
@@ -39,7 +39,7 @@ void ThreadManager::SetCurrentThreadName(const std::string& threadName)
 	std::unique_lock<std::shared_mutex> lockGuard(m_threadNamesMutex);
 
 	std::stringstream ss;
-	ss << threadName << "(ID:" << std::this_thread::get_id() << ")";
+	ss << "[" << threadName << ":" << std::this_thread::get_id() << "]";
 	m_threadNamesById[std::this_thread::get_id()] = ss.str();
 }
 

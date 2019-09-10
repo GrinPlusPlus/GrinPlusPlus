@@ -4,7 +4,6 @@
 
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
-#include <Core/Validation/TransactionValidator.h>
 #include <algorithm>
 #include <unordered_map>
 
@@ -14,8 +13,6 @@ Pool::Pool(const Config& config, const TxHashSetManager& txHashSetManager, const
 
 }
 
-// Query the tx pool for all known txs based on kernel short_ids from the provided compact_block.
-// Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
 std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_transactionsMutex);
@@ -41,22 +38,13 @@ std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const 
 	return transactionsFound;
 }
 
-bool Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus status)
+void Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus status)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
-	if (TransactionValidator().ValidateTransaction(transaction))
-	{
-		LoggerAPI::LogDebug("Pool::AddTransaction - Transaction added: " + HexUtil::ConvertHash(transaction.GetHash()));
+	LOG_DEBUG("Transaction added: " + transaction.GetHash().ToHex());
 
-		m_transactions.emplace_back(TxPoolEntry(transaction, status, std::time_t()));
-		return true;
-	}
-	else
-	{
-		LoggerAPI::LogInfo("Pool::AddTransaction - Transaction Invalid: " + HexUtil::ConvertHash(transaction.GetHash()));
-		return false;
-	}
+	m_transactions.emplace_back(TxPoolEntry(transaction, status, std::time_t()));
 }
 
 bool Pool::ContainsTransaction(const Transaction& transaction) const
@@ -189,11 +177,28 @@ void Pool::ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transact
 
 	m_transactions.clear();
 
-	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(filteredTransactions, pMemPoolAggTx, block.GetBlockHeader());
+	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_txHashSetManager).FindValidTransactions(filteredTransactions, pMemPoolAggTx);
 	for (auto& transaction : validTransactions)
 	{
 		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(transaction.GetHash());
 		m_transactions.push_back(txPoolEntry);
+	}
+}
+
+void Pool::ChangeStatus(const std::vector<Transaction>& transactions, const EDandelionStatus status)
+{
+	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
+
+	for (auto& txPoolEntry : m_transactions)
+	{
+		for (auto& transaction : transactions)
+		{
+			if (txPoolEntry.GetTransaction() == transaction)
+			{
+				txPoolEntry.SetStatus(status);
+				break;
+			}
+		}
 	}
 }
 
@@ -234,11 +239,5 @@ std::unique_ptr<Transaction> Pool::Aggregate() const
 		transactions.push_back(entry.GetTransaction());
 	}
 
-	std::unique_ptr<Transaction> pAggregateTransaction = TransactionAggregator::Aggregate(transactions);
-	if (pAggregateTransaction != nullptr)
-	{
-		// TODO: tx.validate(self.verifier_cache.clone()) ? ;
-	}
-
-	return pAggregateTransaction;
+	return TransactionAggregator::Aggregate(transactions);
 }

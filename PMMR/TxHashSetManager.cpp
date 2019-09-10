@@ -40,7 +40,7 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 	const TxHashSetZip zip(config);
 	if (zip.Extract(zipFilePath, blockHeader))
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("TxHashSetAPI::LoadFromZip - %s extracted successfully.", zipFilePath.c_str()));
+		LOG_INFO_F("%s extracted successfully", zipFilePath.c_str());
 		FileUtil::RemoveFile(zipFilePath);
 
 		KernelMMR* pKernelMMR = KernelMMR::Load(config.GetTxHashSetDirectory());

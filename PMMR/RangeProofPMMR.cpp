@@ -59,17 +59,17 @@ bool RangeProofPMMR::Append(const RangeProof& rangeProof)
 
 bool RangeProofPMMR::Remove(const uint64_t mmrIndex)
 {
-	LoggerAPI::LogTrace("RangeProofPMMR::Remove - Spending rangeproof at index " + std::to_string(mmrIndex));
+	LOG_TRACE_F("Spending rangeproof at index (%llu)", mmrIndex);
 
 	if (!MMRUtil::IsLeaf(mmrIndex))
 	{
-		LoggerAPI::LogWarning("RangeProofPMMR::Remove - RangeProof is not a leaf " + std::to_string(mmrIndex));
+		LOG_WARNING_F("RangeProof is not a leaf (%llu)", mmrIndex);
 		return false;
 	}
 
 	if (!m_leafSet.Contains(mmrIndex))
 	{
-		LoggerAPI::LogWarning("RangeProofPMMR::Remove - LeafSet does not contain output " + std::to_string(mmrIndex));
+		LOG_WARNING_F("LeafSet does not contain output (%llu)", mmrIndex);
 		return false;
 	}
 
@@ -145,7 +145,7 @@ bool RangeProofPMMR::Rewind(const uint64_t size, const std::optional<Roaring>& l
 
 bool RangeProofPMMR::Flush()
 {
-	LoggerAPI::LogTrace(StringUtil::Format("RangeProofPMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LOG_TRACE_F("Flushing with size (%llu)", GetSize());
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
@@ -155,7 +155,7 @@ bool RangeProofPMMR::Flush()
 
 bool RangeProofPMMR::Discard()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("RangeProofPMMR::Discard - Discarding changes since last flush."));
+	LOG_INFO("Discarding changes since last flush");
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
 	m_leafSet.Discard();

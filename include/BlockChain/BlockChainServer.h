@@ -129,7 +129,12 @@ namespace BlockChainAPI
 	//
 	// Creates a new instance of the BlockChain server.
 	//
-	BLOCK_CHAIN_API IBlockChainServer* StartBlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool);
+	BLOCK_CHAIN_API IBlockChainServer* StartBlockChainServer(
+		const Config& config,
+		IDatabase& database,
+		TxHashSetManager& txHashSetManager,
+		ITransactionPool& transactionPool
+	);
 
 	//
 	// Stops the BlockChain server and clears up its memory usage.

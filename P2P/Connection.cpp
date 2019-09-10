@@ -38,7 +38,7 @@ bool Connection::Connect()
 	m_terminate = false;
 
 	m_connectionThread = std::thread(Thread_ProcessConnection, this);
-	ThreadManagerAPI::SetThreadName(m_connectionThread.get_id(), "PEER_CONNECTION");
+	ThreadManagerAPI::SetThreadName(m_connectionThread.get_id(), "PEER");
 
 	return true;
 }
@@ -76,6 +76,12 @@ void Connection::Send(const IMessage& message)
 	m_sendQueue.emplace(message.Clone());
 }
 
+bool Connection::ExceedsRateLimit() const
+{
+	// TODO: Implement
+	return false;
+}
+
 //
 // Continuously checks for messages to send and/or receive until the connection is terminated.
 // This function runs in its own thread.
@@ -101,7 +107,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 
 		if (handshakeSuccess)
 		{
-			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Successful Handshake");
+			LOG_DEBUG("Successful Handshake");
 			pConnection->m_connectionManager.AddConnection(pConnection);
 			if (pConnection->m_peerManager.ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
 			{
@@ -121,7 +127,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 	}
 	catch (...)
 	{
-        LoggerAPI::LogError("Connection::Thread_ProcessConnection - Exception caught");
+        LOG_ERROR("Exception caught");
         pConnection->m_terminate = true;
 		pConnection->m_connectionThread.detach();
 		delete pConnection;
@@ -200,7 +206,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 		}
 		catch (const DeserializationException&)
 		{
-			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Deserialization exception occurred.");
+			LOG_ERROR("Deserialization exception occurred");
 			break;
 		}
 		catch (const SocketException&)
@@ -213,7 +219,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 				NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
 
 			const std::string errorMessage = s;
-			LoggerAPI::LogDebug("Connection::Thread_ProcessConnection - Socket exception occurred: " + errorMessage);
+			LOG_DEBUG("Socket exception occurred: " + errorMessage);
 
 			LocalFree(s);
 			#endif
@@ -221,12 +227,12 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 		}
 		catch (const std::exception& e)
 		{
-			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Unknown exception occurred: " + std::string(e.what()));
+			LOG_ERROR("Unknown exception occurred: " + std::string(e.what()));
 			break;
 		}
 		catch (...)
 		{
-			LoggerAPI::LogError("Connection::Thread_ProcessConnection - Unknown error occurred.");
+			LOG_ERROR("Unknown error occurred.");
 			break;
 		}
 	}

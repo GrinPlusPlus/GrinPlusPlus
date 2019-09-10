@@ -24,7 +24,7 @@ static void SigIntHandler(int signum)
 
 int main(int argc, char* argv[])
 {
-	ThreadManagerAPI::SetCurrentThreadName("MAIN THREAD");
+	ThreadManagerAPI::SetCurrentThreadName("MAIN");
 
 	EEnvironmentType environment = EEnvironmentType::MAINNET;
 	bool headless = false;

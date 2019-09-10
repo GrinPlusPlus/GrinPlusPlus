@@ -30,19 +30,31 @@ class IBlockDB;
 class ITransactionPool
 {
 public:
-	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const = 0;
-	virtual bool AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) = 0;
+	//
+	// Retrieves txs from the mempool based on kernel short_ids from the compact block.
+	// Note: does not validate that we return the full set of required txs.
+	// The caller will need to validate that themselves.
+	//
+	virtual std::vector<Transaction> GetTransactionsByShortId(
+		const Hash& hash,
+		const uint64_t nonce,
+		const std::set<ShortId>& missingShortIds
+	) const = 0;
+
+	virtual bool AddTransaction(
+		const Transaction& transaction,
+		const EPoolType poolType,
+		const BlockHeader& lastConfirmedBlock
+	) = 0;
+
 	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
 	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const = 0;
-	//virtual std::vector<Transaction> FindTransactionsByStatus(const EDandelionStatus status, const EPoolType poolType) const = 0;
 	virtual void ReconcileBlock(const FullBlock& block) = 0;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(const BlockHeader& lastConfirmedHeader) = 0;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(const BlockHeader& lastConfirmedHeader) = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToStem() = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToFluff() = 0;
 	virtual std::vector<Transaction> GetExpiredTransactions() const = 0;
-
-	// TODO: Prepare Mineable Transactions
 };
 
 namespace TxPoolAPI
@@ -50,7 +62,11 @@ namespace TxPoolAPI
 	//
 	// Creates a new instance of the Transaction Pool.
 	//
-	TX_POOL_API ITransactionPool* CreateTransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
+	TX_POOL_API ITransactionPool* CreateTransactionPool(
+		const Config& config,
+		const TxHashSetManager& txHashSetManager,
+		const IBlockDB& blockDB
+	);
 
 	//
 	// Destroys the instance of the Transaction Pool

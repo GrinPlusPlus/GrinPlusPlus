@@ -20,10 +20,11 @@ class Pool
 public:
 	Pool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB);
 
-	bool AddTransaction(const Transaction& transaction, const EDandelionStatus status);
+	void AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	bool ContainsTransaction(const Transaction& transaction) const;
 	void RemoveTransaction(const Transaction& transaction);
 	void ReconcileBlock(const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx);
+	void ChangeStatus(const std::vector<Transaction>& transactions, const EDandelionStatus status);
 
 	std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const;
 	std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;

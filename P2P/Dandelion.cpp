@@ -53,8 +53,8 @@ void Dandelion::Stop()
 // In that case  the transaction will be sent in fluff phase (to multiple peers) instead of sending only to the peer relay.
 void Dandelion::Thread_Monitor(Dandelion& dandelion)
 {
-	ThreadManagerAPI::SetCurrentThreadName("DANDELION_THREAD");
-	LoggerAPI::LogDebug("Dandelion::Thread_Monitor() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("DANDELION");
+	LOG_DEBUG("BEGIN");
 
 	const DandelionConfig& config = dandelion.m_config.GetDandelionConfig();
 	while (!dandelion.m_terminate)
@@ -68,7 +68,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 		// to the next Dandelion relay along the stem.
 		if (!dandelion.ProcessStemPhase())
 		{
-			LoggerAPI::LogError("Dandelion::Thread_Monitor() - Problem with stem phase.");
+			LOG_ERROR("Problem with stem phase");
 		}
 
 		// Step 2: find all "ToFluff" entries in stempool from last run.
@@ -76,17 +76,17 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 		// to our pool with stem=false (which will then broadcast it).
 		if (!dandelion.ProcessFluffPhase())
 		{
-			LoggerAPI::LogError("Dandelion::Thread_Monitor() - Problem with fluff phase.");
+			LOG_ERROR("Problem with fluff phase");
 		}
 
 		// Step 3: now find all expired entries based on embargo timer.
 		if (!dandelion.ProcessExpiredEntries())
 		{
-			LoggerAPI::LogError("Dandelion::Thread_Monitor() - Problem processing expired pool entries.");
+			LOG_ERROR("Problem processing expired pool entries");
 		}
 	}
 
-	LoggerAPI::LogDebug("Dandelion::Thread_Monitor() - END");
+	LOG_DEBUG("END");
 }
 
 bool Dandelion::ProcessStemPhase()
@@ -105,11 +105,10 @@ bool Dandelion::ProcessStemPhase()
 		m_relayNodeId = mostWorkPeers[index];
 	}
 
-	std::unique_ptr<BlockHeader> pConfirmedTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);
-	std::unique_ptr<Transaction> pTransactionToStem = m_transactionPool.GetTransactionToStem(*pConfirmedTipHeader);
+	std::unique_ptr<Transaction> pTransactionToStem = m_transactionPool.GetTransactionToStem();
 	if (pTransactionToStem != nullptr)
 	{
-		LoggerAPI::LogDebug("Dandelion::ProcessStemPhase() - Stemming transaction.");
+		LOG_DEBUG("Stemming transaction");
 
 		// Send Transaction to next Dandelion Relay.
 		const StemTransactionMessage stemTransactionMessage(*pTransactionToStem);
@@ -118,7 +117,7 @@ bool Dandelion::ProcessStemPhase()
 		// If failed to send, fluff instead.
 		if (!success)
 		{
-			LoggerAPI::LogWarning("Dandelion::ProcessStemPhase() - Failed to stem. Fluffing instead.");
+			LOG_WARNING("Failed to stem, fluffing instead");
 			const bool added = m_blockChainServer.AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 			if (added)
 			{
@@ -133,11 +132,10 @@ bool Dandelion::ProcessStemPhase()
 
 bool Dandelion::ProcessFluffPhase()
 {
-	std::unique_ptr<BlockHeader> pConfirmedTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);
-	std::unique_ptr<Transaction> pTransactionToFluff = m_transactionPool.GetTransactionToFluff(*pConfirmedTipHeader);
+	std::unique_ptr<Transaction> pTransactionToFluff = m_transactionPool.GetTransactionToFluff();
 	if (pTransactionToFluff != nullptr)
 	{
-		LoggerAPI::LogDebug("Dandelion::ProcessFluffPhase() - Fluffing transaction.");
+		LOG_DEBUG("Fluffing transaction");
 		const bool added = m_blockChainServer.AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 		if (added)
 		{
@@ -154,7 +152,7 @@ bool Dandelion::ProcessExpiredEntries()
 	const std::vector<Transaction> expiredTransactions = m_transactionPool.GetExpiredTransactions();
 	if (!expiredTransactions.empty())
 	{
-		LoggerAPI::LogInfo(StringUtil::Format("Dandelion::ProcessExpiredEntries() - %ull transactions expired. Fluffing now.", expiredTransactions.size()));
+		LOG_INFO_F("%ull transactions expired, fluffing now", expiredTransactions.size());
 		for (const Transaction& transaction : expiredTransactions)
 		{
 			if (m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
@@ -167,50 +165,3 @@ bool Dandelion::ProcessExpiredEntries()
 
 	return true;
 }
-
-/*
-fn process_expired_entries(
-	dandelion_config: DandelionConfig,
-	tx_pool: Arc<RwLock<TransactionPool>>,
-) -> Result<(), PoolError> {
-	let now = Utc::now().timestamp();
-	let embargo_sec = dandelion_config.embargo_secs.unwrap() + thread_rng().gen_range(0, 31);
-	let cutoff = now - embargo_sec as i64;
-
-	let mut expired_entries = vec![];
-	{
-		let tx_pool = tx_pool.read();
-		for entry in tx_pool
-			.stempool
-			.entries
-			.iter()
-			.filter(|x| x.tx_at.timestamp() < cutoff)
-		{
-			debug!("dand_mon: Embargo timer expired for {:?}", entry.tx.hash());
-			expired_entries.push(entry.clone());
-		}
-	}
-
-	if expired_entries.len() > 0 {
-		debug!("dand_mon: Found {} expired txs.", expired_entries.len());
-
-		{
-			let mut tx_pool = tx_pool.write();
-			let header = tx_pool.chain_head()?;
-
-			for entry in expired_entries {
-				let src = TxSource {
-					debug_name: "embargo_expired".to_string(),
-					identifier: "?.?.?.?".to_string(),
-				};
-				match tx_pool.add_to_pool(src, entry.tx, false, &header) {
-					Ok(_) => debug!("dand_mon: embargo expired, fluffed tx successfully."),
-					Err(e) => debug!("dand_mon: Failed to fluff expired tx - {:?}", e),
-				};
-			}
-		}
-	}
-	Ok(())
-}
-
-*/

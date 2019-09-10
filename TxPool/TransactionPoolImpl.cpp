@@ -6,6 +6,8 @@
 #include <Consensus/BlockTime.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Infrastructure/Logger.h>
+#include <Core/Util/FeeUtil.h>
+#include <Core/Validation/TransactionValidator.h>
 
 TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
 	: m_config(config), 
@@ -17,88 +19,90 @@ TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& t
 
 }
 
-// Query the tx pool for all known txs based on kernel short_ids from the provided compact_block.
-// Note: does not validate that we return the full set of required txs. The caller will need to validate that themselves.
 std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
 bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(transaction))
 	{
+		LOG_TRACE("Duplicate transaction " + transaction.GetHash().ToHex());
 		return false;
 	}
 
-	// TODO: Verify fee meets minimum
+	// Verify fee meets minimum
+	const uint64_t feeBase = 1000000; // TODO: Read from config.
+	if (FeeUtil::CalculateMinimumFee(feeBase, transaction) > FeeUtil::CalculateActualFee(transaction))
+	{
+		LOG_WARNING("Fee too low for transaction " + transaction.GetHash().ToHex());
+		return false;
+	}
 	
 	// Verify lock time
 	for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
 	{
 		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
 		{
-			LoggerAPI::LogInfo("TransactionPool::AddTransaction - Invalid lock height: " + HexUtil::ConvertHash(transaction.GetHash()));
+			LOG_INFO("Invalid lock height: " + transaction.GetHash().ToHex());
 			return false;
 		}
 	}
 
-	// Verify coinbase maturity
-	const uint64_t maximumBlockHeight = (std::max)(lastConfirmedBlock.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
-	for (const TransactionInput& input : transaction.GetBody().GetInputs())
+	if (!TransactionValidator().ValidateTransaction(transaction))
 	{
-		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
-		{
-			const std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(input.GetCommitment()); // TODO: Already loaded during pTxHashSet-IsValid. Combine for efficiency
-			if (pOutputPosition == nullptr || pOutputPosition->GetBlockHeight() > maximumBlockHeight)
-			{
-				LoggerAPI::LogInfo("TransactionPool::AddTransaction - Coinbase not mature: " + HexUtil::ConvertHash(transaction.GetHash()));
-				return false;
-			}
-		}
+		// TODO: Ban peer
+		LOG_WARNING("Invalid transaction " + transaction.GetHash().ToHex());
+		return false;
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
 	const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
 	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(transaction))
 	{
-		LoggerAPI::LogInfo("TransactionPool::AddTransaction - Transaction inputs/outputs not valid: " + HexUtil::ConvertHash(transaction.GetHash()));
+		LOG_WARNING("Transaction inputs/outputs not valid: " + transaction.GetHash().ToHex());
 		return false;
 	}
 
 	if (poolType == EPoolType::MEMPOOL)
 	{
-		// TODO: Load BlockSums?
-		const bool added = m_memPool.AddTransaction(transaction, EDandelionStatus::FLUFFED);
-		if (added)
-		{
-			m_stemPool.RemoveTransaction(transaction);
-			return true;
-		}
+		m_memPool.AddTransaction(transaction, EDandelionStatus::FLUFFED);
+		m_stemPool.RemoveTransaction(transaction);
 	}
 	else if (poolType == EPoolType::STEMPOOL)
 	{
 		const uint8_t random = (uint8_t)RandomNumberGenerator::GenerateRandom(0, 100);
 		if (random <= m_config.GetDandelionConfig().GetStemProbability())
 		{
-			return m_stemPool.AddTransaction(transaction, EDandelionStatus::TO_STEM);
+			LOG_INFO("Stemming transaction " + transaction.GetHash().ToHex());
+			m_stemPool.AddTransaction(transaction, EDandelionStatus::TO_STEM);
 		}
 		else
 		{
-			return m_stemPool.AddTransaction(transaction, EDandelionStatus::TO_FLUFF);
+			LOG_INFO("Fluffing transaction " + transaction.GetHash().ToHex());
+			m_stemPool.AddTransaction(transaction, EDandelionStatus::TO_FLUFF);
 		}
 	}
 
-	return false;
+	return true;
 }
 
 std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	return m_memPool.FindTransactionsByKernel(kernels);
 }
 
 std::unique_ptr<Transaction> TransactionPool::FindTransactionByKernelHash(const Hash& kernelHash) const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	std::unique_ptr<Transaction> pTransaction = m_memPool.FindTransactionByKernelHash(kernelHash);
 	if (pTransaction == nullptr)
 	{
@@ -110,6 +114,8 @@ std::unique_ptr<Transaction> TransactionPool::FindTransactionByKernelHash(const 
 
 void TransactionPool::ReconcileBlock(const FullBlock& block)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	// First reconcile the txpool.
 	m_memPool.ReconcileBlock(block, std::unique_ptr<Transaction>(nullptr));
 
@@ -118,8 +124,10 @@ void TransactionPool::ReconcileBlock(const FullBlock& block)
 	m_stemPool.ReconcileBlock(block, pMemPoolAggTx);
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(const BlockHeader& lastConfirmedBlock)
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	const std::vector<Transaction> transactionsToStem = m_stemPool.FindTransactionsByStatus(EDandelionStatus::TO_STEM);
 	if (transactionsToStem.empty())
 	{
@@ -128,25 +136,25 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(const BlockHe
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToStem, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager).FindValidTransactions(transactionsToStem, pMemPoolAggTx);
 	if (validTransactionsToStem.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
-	// TODO: tx_pool.stempool.transition_to_state(&stem_txs, PoolEntryState::Stemmed);
-
 	std::unique_ptr<Transaction> pTransactionToStem = TransactionAggregator::Aggregate(validTransactionsToStem);
 	if (pTransactionToStem != nullptr)
 	{
-		// TODO: agg_tx.validate(verifier_cache.clone()) ? ;
+		m_stemPool.ChangeStatus(validTransactionsToStem, EDandelionStatus::STEMMED);
 	}
 
 	return pTransactionToStem;
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockHeader& lastConfirmedBlock)
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	const std::vector<Transaction> transactionsToFluff = m_stemPool.FindTransactionsByStatus(EDandelionStatus::TO_FLUFF);
 	if (transactionsToFluff.empty())
 	{
@@ -155,18 +163,20 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockH
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager, m_blockDB).FindValidTransactions(transactionsToFluff, pMemPoolAggTx, lastConfirmedBlock);
+	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager).FindValidTransactions(transactionsToFluff, pMemPoolAggTx);
 	if (validTransactionsToFluff.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
-	// TODO: tx_pool.stempool.transition_to_state(&stem_txs, PoolEntryState::Fluffed);
-
 	std::unique_ptr<Transaction> pTransactionToFluff = TransactionAggregator::Aggregate(validTransactionsToFluff);
 	if (pTransactionToFluff != nullptr)
 	{
-		// TODO: agg_tx.validate(verifier_cache.clone()) ? ;
+		m_memPool.AddTransaction(*pTransactionToFluff, EDandelionStatus::FLUFFED);
+		for (const Transaction& transaction : validTransactionsToFluff)
+		{
+			m_stemPool.RemoveTransaction(transaction);
+		}
 	}
 
 	return pTransactionToFluff;
@@ -174,13 +184,18 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(const BlockH
 
 std::vector<Transaction> TransactionPool::GetExpiredTransactions() const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	const uint16_t embargoSeconds = m_config.GetDandelionConfig().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
 }
 
 namespace TxPoolAPI
 {
-	TX_POOL_API ITransactionPool* CreateTransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
+	TX_POOL_API ITransactionPool* CreateTransactionPool(
+		const Config& config,
+		const TxHashSetManager& txHashSetManager,
+		const IBlockDB& blockDB)
 	{
 		return new TransactionPool(config, txHashSetManager, blockDB);
 	}

@@ -71,7 +71,7 @@ bool KernelMMR::Rewind(const uint64_t size)
 
 bool KernelMMR::Flush()
 {
-	LoggerAPI::LogTrace(StringUtil::Format("KernelMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LOG_TRACE_F("Flushing with size (%llu)", GetSize());
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 
@@ -80,7 +80,7 @@ bool KernelMMR::Flush()
 
 bool KernelMMR::Discard()
 {
-	LoggerAPI::LogDebug(StringUtil::Format("KernelMMR::Discard - Discarding changes since last flush."));
+	LOG_DEBUG("Discarding changes since last flush");
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
 

@@ -62,7 +62,7 @@ bool FinalizeSlateBuilder::AddPartialSignature(Wallet& wallet, const SecureVecto
 	}
 
 	// Generate partial signature
-	std::unique_ptr<Signature> pPartialSignature = SignatureUtil::GeneratePartialSignature(pSlateContext->GetSecretKey(), pSlateContext->GetSecretNonce(), slate.GetParticipantData(), kernelMessage);
+	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(pSlateContext->GetSecretKey(), pSlateContext->GetSecretNonce(), slate.GetParticipantData(), kernelMessage);
 	if (pPartialSignature == nullptr)
 	{
 		return false;
@@ -117,7 +117,7 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	}
 
 	const Transaction finalTransaction = TransactionBuilder::ReplaceKernel(slate.GetTransaction(), finalKernel);
-	if (!TransactionValidator().ValidateTransaction(finalTransaction))
+	if (!TransactionValidator().ValidateTransaction(finalTransaction)) // TODO: Check if inputs unspent(txHashSet->Validate())?
 	{
 		return false;
 	}

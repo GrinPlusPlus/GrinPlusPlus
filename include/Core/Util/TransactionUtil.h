@@ -34,6 +34,7 @@ public:
 				++inputIter;
 			}
 		}
+
 		auto outputIter = outputs.begin();
 		while (outputIter != outputs.end())
 		{

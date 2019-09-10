@@ -24,7 +24,6 @@ public:
 	SecureVector GetSeed(const SessionToken& token) const;
 	SecretKey GetGrinboxAddress(const SessionToken& token) const;
 	LockedWallet GetWallet(const SessionToken& token);
-	//const Wallet& GetWallet(const SessionToken& token) const;
 
 private:
 	struct LoggedInSession

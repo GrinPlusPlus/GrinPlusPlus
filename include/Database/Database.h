@@ -17,6 +17,10 @@ class IPeerDB;
 #define DATABASE_API IMPORT
 #endif
 
+//
+// Entrypoint for the Database module.
+// Use DatabaseAPI::OpenDatabase to retrieve an instance of IDatabase.
+//
 class IDatabase
 {
 public:

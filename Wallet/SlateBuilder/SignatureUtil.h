@@ -7,7 +7,7 @@
 class SignatureUtil
 {
 public:
-	static std::unique_ptr<Signature> GeneratePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message)
+	static std::unique_ptr<CompactSignature> GeneratePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const std::vector<ParticipantData>& participants, const Hash& message)
 	{
 		std::vector<PublicKey> pubKeys;
 		std::vector<PublicKey> pubNonces;
@@ -26,7 +26,7 @@ public:
 
 	static std::unique_ptr<Signature> AggregateSignatures(const std::vector<ParticipantData>& participants)
 	{
-		std::vector<Signature> signatures;
+		std::vector<CompactSignature> signatures;
 		std::vector<PublicKey> pubNonces;
 
 		for (const ParticipantData& participantData : participants)
@@ -78,8 +78,8 @@ public:
 		{
 			if (participant.GetMessageText().has_value())
 			{
-				const Hash message = Crypto::Blake2b(std::vector<unsigned char>(participant.GetMessageText().value().cbegin(), participant.GetMessageText().value().cend()));
-				if (!Crypto::VerifyMessageSignature(participant.GetMessageSignature().value(), participant.GetPublicBlindExcess(), message))
+				// TODO: Limit message length
+				if (!Crypto::VerifyMessageSignature(participant.GetMessageSignature().value(), participant.GetPublicBlindExcess(), participant.GetMessageText().value()))
 				{
 					return false;
 				}

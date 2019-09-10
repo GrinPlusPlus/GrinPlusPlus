@@ -25,7 +25,7 @@ public:
 	//
 	// Destructor
 	//
-	~Signature() = default;
+	virtual ~Signature() = default;
 
 	//
 	// Operators
@@ -60,3 +60,17 @@ private:
 	// The 64 byte Signature.
 	CBigInteger<64> m_signatureBytes;
 };
+
+class CompactSignature : public Signature
+{
+public:
+	CompactSignature(CBigInteger<64> && signatureBytes)
+		: Signature(std::move(signatureBytes))
+	{
+
+	}
+
+	virtual ~CompactSignature() = default;
+};
+
+// TODO: Create RawSignature

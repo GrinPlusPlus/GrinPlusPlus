@@ -13,21 +13,42 @@ public:
 	WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB);
 	virtual ~WalletManager();
 
-	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(const std::string& username, const SecureString& password) override final;
-	virtual std::optional<SessionToken> RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords) override final;
+	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(
+		const std::string& username,
+		const SecureString& password
+	) override final;
+
+	virtual std::optional<SessionToken> RestoreFromSeed(
+		const std::string& username,
+		const SecureString& password,
+		const SecureString& walletWords
+	) override final;
+
 	virtual SecureString GetSeedWords(const SessionToken& token) override final;
 	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
 
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
+	virtual bool DeleteWallet(const std::string& username, const SecureString& password) override final;
 	virtual std::vector<std::string> GetAllAccounts() const override final;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
 	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) override final;
-	virtual std::vector<WalletOutputDTO> GetOutputs(const SessionToken& token, const bool includeSpent, const bool includeCanceled) override final;
+	virtual std::vector<WalletOutputDTO> GetOutputs(
+		const SessionToken& token,
+		const bool includeSpent,
+		const bool includeCanceled
+	) override final;
 
-	virtual FeeEstimateDTO EstimateFee(const SessionToken& token, const uint64_t amountToSend, const uint64_t feeBase, const SelectionStrategyDTO& strategy, const uint8_t numChangeOutputs) override final;
+	virtual FeeEstimateDTO EstimateFee(
+		const SessionToken& token,
+		const uint64_t amountToSend,
+		const uint64_t feeBase,
+		const SelectionStrategyDTO& strategy,
+		const uint8_t numChangeOutputs
+	) override final;
+
 	virtual std::unique_ptr<Slate> Send(
 		const SessionToken& token,
 		const uint64_t amount,

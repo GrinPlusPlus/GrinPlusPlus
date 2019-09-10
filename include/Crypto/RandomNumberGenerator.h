@@ -23,7 +23,6 @@ class CRYPTO_API RandomNumberGenerator
 public:
 	//
 	// Generates a cryptographically-strong pseudo-random 32-byte number.
-	// TODO: Create a dynamically-sized big integer to allow any sized random number.
 	//
 	static CBigInteger<32> GenerateRandom32();
 

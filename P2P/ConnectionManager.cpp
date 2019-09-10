@@ -65,11 +65,11 @@ void ConnectionManager::Stop()
 	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
-		LoggerAPI::LogError("ConnectionManager::Stop - " + std::string(e.what()));
+		LOG_ERROR(std::string(e.what()));
 	}
 	catch (...)
 	{
-		LoggerAPI::LogError("ConnectionManager::Stop - Unknown exception thrown");
+		LOG_ERROR("Unknown exception thrown");
 	}
 }
 
@@ -267,12 +267,19 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
 	{
 		Connection* pConnection = m_connections[i];
+		const uint64_t connectionId = pConnection->GetId();
 
-		auto iter = m_peersToBan.find(pConnection->GetId());
+		auto iter = m_peersToBan.find(connectionId);
+		if (iter == m_peersToBan.end() && pConnection->ExceedsRateLimit())
+		{
+			m_peersToBan.insert(std::pair<uint64_t, EBanReason>(connectionId, EBanReason::Abusive));
+			iter = m_peersToBan.find(connectionId);
+		}
+
 		if (iter != m_peersToBan.end())
 		{
 			const EBanReason banReason = iter->second;
-			LoggerAPI::LogWarning(StringUtil::Format("ConnectionManager::PruneConnections() - Banning peer (%d) at (%s) for (%d).", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str(), (int32_t)banReason));
+			LOG_WARNING_F("Banning peer (%d) at (%s) for (%s).", connectionId, pConnection->GetPeer().GetIPAddress().Format().c_str(), BanReason::Format(banReason).c_str());
 
 			pConnection->GetPeer().UpdateLastBanTime();
 			pConnection->GetPeer().UpdateBanReason(banReason);
@@ -287,7 +294,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		{
 			if (!pConnection->IsConnectionActive())
 			{
-				LoggerAPI::LogDebug(StringUtil::Format("ConnectionManager::PruneConnections() - Disconnecting from inactive peer (%d) at (%s)", pConnection->GetId(), pConnection->GetPeer().GetIPAddress().Format().c_str()));
+				LOG_DEBUG_F("Disconnecting from inactive peer (%d) at (%s)", connectionId, pConnection->GetPeer().GetIPAddress().Format().c_str());
 			}
 
 			m_connectionsToClose.push_back(pConnection);
@@ -320,7 +327,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		}
 		catch (std::exception& e)
 		{
-			LoggerAPI::LogError("ConnectionManager::PruneConnections - Error disconnecting: " + std::string(e.what()));
+			LOG_ERROR("Error disconnecting: " + std::string(e.what()));
 		}
 	}
 

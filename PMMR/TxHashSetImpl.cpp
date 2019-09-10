@@ -39,6 +39,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
 	// Validate inputs
+	const uint64_t maximumBlockHeight = (std::max)(m_blockHeader.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
@@ -51,8 +52,17 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
-			LoggerAPI::LogDebug("TxHashSet::IsValid - Output " + commitment.ToHex() + " not found at mmrIndex " + std::to_string(pOutputPosition->GetMMRIndex()));
+			LOG_DEBUG_F("Output (%s) not found at mmrIndex (%llu)",  commitment.ToHex().c_str(), pOutputPosition->GetMMRIndex());
 			return false;
+		}
+
+		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
+		{
+			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight)
+			{
+				LOG_INFO_F("Coinbase (%s) not mature", transaction.GetHash().ToHex().c_str());
+				return false;
+			}
 		}
 	}
 
@@ -81,16 +91,16 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 	try
 	{
-		LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_INFO("Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
 		pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
 		if (pBlockSums != nullptr)
 		{
-			LoggerAPI::LogInfo("TxHashSet::ValidateTxHashSet - Successfully validated TxHashSet.");
+			LOG_INFO("Successfully validated TxHashSet");
 		}
 	}
 	catch (std::exception& e)
 	{
-		LoggerAPI::LogError("TxHashSet::ValidateTxHashSet - Exception thrown while processing TxHashSet.");
+		LOG_ERROR("Exception thrown while processing TxHashSet");
 	}
 
 	return pBlockSums;
@@ -109,20 +119,20 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(commitment);
 		if (pOutputPosition == nullptr)
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Output position not found for commitment: " + commitment.ToHex() + " in block: " + std::to_string(block.GetBlockHeader().GetHeight()));
+			LOG_WARNING_F("Output position not found for commitment (%s) in block (%llu)", commitment.ToHex().c_str(), block.GetBlockHeader().GetHeight());
 			return false;
 		}
 
 		const uint64_t mmrIndex = pOutputPosition->GetMMRIndex();
 		if (!m_pOutputPMMR->Remove(mmrIndex))
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove output at position:" + std::to_string(mmrIndex));
+			LOG_WARNING_F("Failed to remove output at position (%llu)", mmrIndex);
 			return false;
 		}
 
 		if (!m_pRangeProofPMMR->Remove(mmrIndex))
 		{
-			LoggerAPI::LogWarning("TxHashSet::ApplyBlock - Failed to remove rangeproof at position:" + std::to_string(mmrIndex));
+			LOG_WARNING_F("Failed to remove rangeproof at position (%llu)", mmrIndex);
 			return false;
 		}
 
@@ -175,19 +185,19 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 
 	if (m_pKernelMMR->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
 	{
-		LoggerAPI::LogError("TxHashSet::ValidateRoots - Kernel root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
+		LOG_ERROR_F("Kernel root not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
 		return false;
 	}
 
 	if (m_pOutputPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetOutputRoot())
 	{
-		LoggerAPI::LogError("TxHashSet::ValidateRoots - Output root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
+		LOG_ERROR_F("Output root not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
 		return false;
 	}
 
 	if (m_pRangeProofPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetRangeProofRoot())
 	{
-		LoggerAPI::LogError("TxHashSet::ValidateRoots - RangeProof root not matching for header " + HexUtil::ConvertHash(blockHeader.GetHash()));
+		LOG_ERROR_F("RangeProof root not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
 		return false;
 	}
 

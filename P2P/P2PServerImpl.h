@@ -11,7 +11,12 @@
 class P2PServer : public IP2PServer
 {
 public:
-	P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool);
+	P2PServer(
+		const Config& config,
+		IBlockChainServer& blockChainServer,
+		IDatabase& database,
+		ITransactionPool& transactionPool
+	);
 	virtual ~P2PServer() = default;
 
 	void StartServer();
@@ -23,9 +28,22 @@ public:
 	virtual std::vector<Peer> GetAllPeers() const override final;
 	virtual std::vector<ConnectedPeer> GetConnectedPeers() const override final;
 
-	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
-	virtual bool BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason) override final;
-	virtual bool UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) override final;
+	virtual std::optional<Peer> GetPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt
+	) const override final;
+
+	virtual bool BanPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt,
+		const EBanReason banReason
+	) override final;
+
+	virtual bool UnbanPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt
+	) override final;
+
 	virtual bool UnbanAllPeers() override final;
 
 private:

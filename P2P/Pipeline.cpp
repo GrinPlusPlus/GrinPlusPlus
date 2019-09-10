@@ -1,5 +1,6 @@
 #include "Pipeline.h"
 #include "ConnectionManager.h"
+#include "Messages/TransactionKernelMessage.h"
 
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
@@ -52,14 +53,14 @@ void Pipeline::Stop()
 
 void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 {
-	ThreadManagerAPI::SetCurrentThreadName("BLOCK_PIPE_THREAD");
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("BLOCK_PIPE");
+	LOG_TRACE("BEGIN");
 
 	while (!pipeline.m_terminate)
 	{
 		if (pipeline.m_blocksToProcess.size() > 0)
 		{
-			const size_t blocksToProcess = std::min((size_t)8, pipeline.m_blocksToProcess.size());
+			const size_t blocksToProcess = (std::min)((size_t)8, pipeline.m_blocksToProcess.size());
 			if (blocksToProcess == 1)
 			{
 				const BlockEntry& blockEntry = pipeline.m_blocksToProcess.front();
@@ -112,7 +113,7 @@ void Pipeline::Thread_ProcessBlocks(Pipeline& pipeline)
 		}
 	}
 
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - END");
+	LOG_TRACE("END");
 }
 
 bool Pipeline::AddBlockToProcess(const uint64_t connectionId, const FullBlock& block)
@@ -144,8 +145,8 @@ bool Pipeline::IsProcessingBlock(const Hash& hash) const
 
 void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 {
-	ThreadManagerAPI::SetCurrentThreadName("TXN_PIPE_THREAD");
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTransactions() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("TXN_PIPE");
+	LOG_TRACE("BEGIN");
 
 	while (!pipeline.m_terminate)
 	{
@@ -153,7 +154,17 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		{
 			const TxEntry& txEntry = pipeline.m_transactionsToProcess.front();
 
-			pipeline.m_blockChainServer.AddTransaction(txEntry.transaction, txEntry.poolType);
+			const bool success = (pipeline.m_blockChainServer.AddTransaction(txEntry.transaction, txEntry.poolType) == EBlockChainStatus::SUCCESS);
+			if (success && txEntry.poolType == EPoolType::MEMPOOL)
+			{
+				// Broacast TransactionKernelMsg
+				const std::vector<TransactionKernel>& kernels = txEntry.transaction.GetBody().GetKernels();
+				for (auto& kernel : kernels)
+				{
+					const TransactionKernelMessage message(kernel.GetHash());
+					pipeline.m_connectionManager.BroadcastMessage(message, txEntry.connectionId);
+				}
+			}
 
 			std::unique_lock<std::shared_mutex> writeLock(pipeline.m_transactionMutex);
 			pipeline.m_transactionsToProcess.pop_front();
@@ -164,7 +175,7 @@ void Pipeline::Thread_ProcessTransactions(Pipeline& pipeline)
 		}
 	}
 
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTransactions() - END");
+	LOG_TRACE("END");
 }
 
 bool Pipeline::AddTransactionToProcess(const uint64_t connectionId, const Transaction& transaction, const EPoolType poolType)
@@ -196,8 +207,8 @@ bool Pipeline::IsProcessingTransaction(const Hash& hash) const
 
 void Pipeline::Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connectionId, const Hash blockHash, const std::string path)
 {
-	ThreadManagerAPI::SetCurrentThreadName("TXHASHSET_PIPE_THREAD");
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessTxHashSet() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("TXHASHSET_PIPE");
+	LOG_TRACE("BEGIN");
 
 	SyncStatus& syncStatus = pipeline.m_connectionManager.GetSyncStatus();
 
@@ -215,7 +226,7 @@ void Pipeline::Thread_ProcessTxHashSet(Pipeline& pipeline, const uint64_t connec
 		syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
 	}
 
-	LoggerAPI::LogTrace("Pipeline::Thread_ProcessBlocks() - END");
+	LOG_TRACE("END");
 }
 
 bool Pipeline::AddTxHashSetToProcess(const uint64_t connectionId, const Hash& blockHash, const std::string& path)

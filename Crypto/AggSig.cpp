@@ -45,7 +45,7 @@ std::unique_ptr<SecretKey> AggSig::GenerateSecureNonce() const
 	return std::unique_ptr<SecretKey>(nullptr);
 }
 
-std::unique_ptr<Signature> AggSig::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)
+std::unique_ptr<CompactSignature> AggSig::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
@@ -54,7 +54,7 @@ std::unique_ptr<Signature> AggSig::SignMessage(const SecretKey& secretKey, const
 	if (randomizeResult != 1)
     {
 	    LoggerAPI::LogError("AggSig::SignMessage - Context randomization failed.");
-        return std::unique_ptr<Signature>(nullptr);
+        return std::unique_ptr<CompactSignature>(nullptr);
     }
 
 	secp256k1_pubkey pubKey;
@@ -82,15 +82,15 @@ std::unique_ptr<Signature> AggSig::SignMessage(const SecretKey& secretKey, const
 			const int serializedResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, signatureBytes.data(), &signature);
 			if (serializedResult == 1)
 			{
-				return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
+				return std::make_unique<CompactSignature>(CompactSignature(CBigInteger<64>(std::move(signatureBytes))));
 			}
 		}
 	}
 
-	return std::unique_ptr<Signature>(nullptr);
+	return std::unique_ptr<CompactSignature>(nullptr);
 }
 
-bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message) const
+bool AggSig::VerifyMessageSignature(const CompactSignature& signature, const PublicKey& publicKey, const Hash& message) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -103,7 +103,7 @@ bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey&
 
 		if (pubkeyResult == 1)
 		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, /*signature.GetSignatureBytes().data()*/secpSig.data, message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
+			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, secpSig.data, message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
 			if (verifyResult == 1)
 			{
 				return true;
@@ -114,7 +114,7 @@ bool AggSig::VerifyMessageSignature(const Signature& signature, const PublicKey&
 	return false;
 }
 
-std::unique_ptr<Signature> AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+std::unique_ptr<CompactSignature> AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
@@ -122,8 +122,8 @@ std::unique_ptr<Signature> AggSig::CalculatePartialSignature(const SecretKey& se
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
     if (randomizeResult != 1)
     {
-        LoggerAPI::LogError("AggSig::SignMessage - Context randomization failed.");
-        return std::unique_ptr<Signature>(nullptr);
+		LOG_ERROR("Context randomization failed");
+        return std::unique_ptr<CompactSignature>(nullptr);
     }
 
 	secp256k1_pubkey pubKeyForE;
@@ -154,15 +154,15 @@ std::unique_ptr<Signature> AggSig::CalculatePartialSignature(const SecretKey& se
 			const int serializedResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, signatureBytes.data(), &signature);
 			if (serializedResult == 1)
 			{
-				return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
+				return std::make_unique<CompactSignature>(CompactSignature(CBigInteger<64>(std::move(signatureBytes))));
 			}
 		}
 	}
 
-	return std::unique_ptr<Signature>(nullptr);
+	return std::unique_ptr<CompactSignature>(nullptr);
 }
 
-bool AggSig::VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const
+bool AggSig::VerifyPartialSignature(const CompactSignature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -193,37 +193,40 @@ bool AggSig::VerifyPartialSignature(const Signature& partialSignature, const Pub
 	return false;
 }
 
-std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces) const
+std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<CompactSignature>& signatures, const PublicKey& sumPubNonces) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	secp256k1_pubkey pubNonces;
-	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNonces, sumPubNonces.data(), sumPubNonces.size());
-	if (noncesParsed != 1)
+	const int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNonces, sumPubNonces.data(), sumPubNonces.size());
+	if (noncesParsed == 1)
 	{
-		return std::unique_ptr<Signature>();
+		std::vector<secp256k1_ecdsa_signature> parsedSignatures = ParseCompactSignatures(signatures);
+		if (!parsedSignatures.empty())
+		{
+			std::vector<secp256k1_ecdsa_signature*> signaturePointers;
+			for (secp256k1_ecdsa_signature& parsedSignature : parsedSignatures)
+			{
+				signaturePointers.push_back(&parsedSignature);
+			}
+
+			secp256k1_ecdsa_signature aggregatedSignature;
+			const int result = secp256k1_aggsig_add_signatures_single(
+				m_pContext, 
+				aggregatedSignature.data, 
+				(const unsigned char**)signaturePointers.data(), 
+				signaturePointers.size(), 
+				&pubNonces
+			);
+
+			if (result == 1)
+			{
+				return std::make_unique<Signature>(Signature(CBigInteger<64>(aggregatedSignature.data)));
+			}
+		}
 	}
 
-	std::vector<secp256k1_ecdsa_signature> parsedSignatures = ParseSignatures(signatures);
-	if (parsedSignatures.empty())
-	{
-		return std::unique_ptr<Signature>();
-	}
-
-	std::vector<secp256k1_ecdsa_signature*> signaturePointers;
-	for (secp256k1_ecdsa_signature& parsedSignature : parsedSignatures)
-	{
-		signaturePointers.push_back(&parsedSignature);
-	}
-
-	secp256k1_ecdsa_signature aggregatedSignature;
-	const int result = secp256k1_aggsig_add_signatures_single(m_pContext, aggregatedSignature.data, (const unsigned char**)signaturePointers.data(), signaturePointers.size(), &pubNonces);
-	if (result == 1)
-	{
-		return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(aggregatedSignature.data))));
-		//return SerializeSignature(aggregatedSignature);
-	}
-
+	LOG_ERROR("Failed to aggregate signatures");
 	return std::unique_ptr<Signature>(nullptr);
 }
 
@@ -302,29 +305,6 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 	}
 }
 
-bool AggSig::VerifyAggregateSignature(const Signature& signature, const Commitment& commitment, const Hash& message) const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
-	secp256k1_pedersen_commitment parsedCommitment;
-	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment.GetCommitmentBytes().data());
-	if (commitmentResult == 1)
-	{
-		secp256k1_pubkey pubkey;
-		const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubkey, &parsedCommitment);
-		if (pubkeyResult == 1)
-		{
-			const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data(), message.data(), nullptr, &pubkey, &pubkey, nullptr, false);
-			if (verifyResult == 1)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
 bool AggSig::VerifyAggregateSignature(const Signature& signature, const PublicKey& sumPubKeys, const Hash& message) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
@@ -333,22 +313,17 @@ bool AggSig::VerifyAggregateSignature(const Signature& signature, const PublicKe
 	const int parseResult = secp256k1_ec_pubkey_parse(m_pContext, &parsedPubKey, sumPubKeys.data(), sumPubKeys.size());
 	if (parseResult == 1)
 	{
-		//secp256k1_ecdsa_signature parsedSignature;
-		//const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, &parsedSignature, signature.GetSignatureBytes().data());
-		//if (parseSignatureResult == 1)
-		//{
 		const int verifyResult = secp256k1_aggsig_verify_single(m_pContext, signature.GetSignatureBytes().data(), message.data(), nullptr, &parsedPubKey, &parsedPubKey, nullptr, false);
 		if (verifyResult == 1)
 		{
 			return true;
 		}
-		//}
 	}
 
 	return false;
 }
 
-std::vector<secp256k1_ecdsa_signature> AggSig::ParseSignatures(const std::vector<Signature>& signatures) const
+std::vector<secp256k1_ecdsa_signature> AggSig::ParseCompactSignatures(const std::vector<CompactSignature>& signatures) const
 {
 	std::vector<secp256k1_ecdsa_signature> parsed;
 	for (const Signature partialSignature : signatures)
@@ -378,28 +353,4 @@ std::unique_ptr<Signature> AggSig::SerializeSignature(const secp256k1_ecdsa_sign
 	}
 
 	return std::unique_ptr<Signature>(nullptr);
-}
-
-Signature AggSig::ConvertToRaw(const Signature& compressed) const
-{
-	std::vector<unsigned char> raw(64);
-	const int parseSignatureResult = secp256k1_ecdsa_signature_parse_compact(m_pContext, (secp256k1_ecdsa_signature*)raw.data(), compressed.GetSignatureBytes().data());
-	if (parseSignatureResult == 1)
-	{
-		return Signature(CBigInteger<64>(std::move(raw)));
-	}
-
-	throw CryptoException();
-}
-
-Signature AggSig::ConvertToCompressed(const Signature& raw) const
-{
-	std::vector<unsigned char> compressed(64);
-	const int parseSignatureResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, compressed.data(), (secp256k1_ecdsa_signature*)raw.GetSignatureBytes().data());
-	if (parseSignatureResult == 1)
-	{
-		return Signature(CBigInteger<64>(std::move(compressed)));
-	}
-
-	throw CryptoException();
 }

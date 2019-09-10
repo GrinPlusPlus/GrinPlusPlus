@@ -48,8 +48,8 @@ void PeerManager::Stop()
 
 void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 {
-	ThreadManagerAPI::SetCurrentThreadName("PEER_MANAGER_THREAD");
-	LoggerAPI::LogTrace("PeerManager::Thread_ManagePeers() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("PEER_MANAGER");
+	LOG_TRACE("BEGIN");
 
 	while (!peerManager.m_terminate)
 	{
@@ -73,7 +73,7 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 		peerManager.m_peerDB.SavePeers(peersToUpdate);
 	}
 
-	LoggerAPI::LogTrace("PeerManager::Thread_ManagePeers() - END");
+	LOG_TRACE("END");
 }
 
 bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const

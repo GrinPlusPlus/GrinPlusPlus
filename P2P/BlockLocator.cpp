@@ -68,7 +68,7 @@ std::vector<BlockHeader> BlockLocator::LocateHeaders(const std::vector<CBigInteg
 	{
 		const uint64_t totalHeight = m_blockChainServer.GetHeight(EChainType::SYNC);
 		const uint64_t headerHeight = pCommonHeader->GetHeight();
-		const uint64_t numHeadersToSend = std::min(totalHeight - headerHeight, (uint64_t)P2P::MAX_BLOCK_HEADERS);
+		const uint64_t numHeadersToSend = (std::min)(totalHeight - headerHeight, (uint64_t)P2P::MAX_BLOCK_HEADERS);
 
 		for (int i = 1; i <= numHeadersToSend; i++)
 		{

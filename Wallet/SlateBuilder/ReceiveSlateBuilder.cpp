@@ -90,7 +90,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	std::vector<ParticipantData> participants = slate.GetParticipantData();
 	participants.emplace_back(receiverData);
 
-	std::unique_ptr<Signature> pPartialSignature = SignatureUtil::GeneratePartialSignature(secretKey, secretNonce, participants, kernelMessage);
+	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(secretKey, secretNonce, participants, kernelMessage);
 	if (pPartialSignature == nullptr)
 	{
 		LoggerAPI::LogError("SlateBuilder::AddParticipantData - Failed to generate signature for slate " + uuids::to_string(slate.GetSlateId()));
@@ -102,8 +102,8 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	// Add message signature
 	if (messageOpt.has_value())
 	{
-		const Hash message = Crypto::Blake2b(std::vector<unsigned char>(messageOpt.value().cbegin(), messageOpt.value().cend()));
-		std::unique_ptr<Signature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, message);
+		// TODO: Limit message length
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
 			LoggerAPI::LogError("SlateBuilder::AddParticipantData - Failed to sign message for slate " + uuids::to_string(slate.GetSlateId()));

@@ -23,7 +23,7 @@ public:
 		std::unique_ptr<BlindingFactor> pBlindingFactor = Crypto::AddBlindingFactors(positive, negative);
 		if (pBlindingFactor == nullptr)
 		{
-			throw CryptoException();
+			throw CryptoException("Failed to add blinding factors");
 		}
 
 		return *pBlindingFactor;
@@ -34,7 +34,7 @@ public:
 		std::unique_ptr<PublicKey> pPublicKey = Crypto::AddPublicKeys(publicKeys);
 		if (pPublicKey == nullptr)
 		{
-			throw CryptoException();
+			throw CryptoException("Failed to add public keys");
 		}
 
 		return *pPublicKey;

@@ -68,17 +68,17 @@ bool OutputPMMR::Append(const OutputIdentifier& output, const uint64_t blockHeig
 
 bool OutputPMMR::Remove(const uint64_t mmrIndex)
 {
-	LoggerAPI::LogTrace("OutputPMMR::Remove - Spending output at index " + std::to_string(mmrIndex));
+	LOG_TRACE_F("Spending output at index (%llu)", mmrIndex);
 
 	if (!MMRUtil::IsLeaf(mmrIndex))
 	{
-		LoggerAPI::LogWarning("OutputPMMR::Remove - Output is not a leaf " + std::to_string(mmrIndex));
+		LOG_WARNING_F("Output is not a leaf (%llu)", mmrIndex);
 		return false;
 	}
 
 	if (!m_leafSet.Contains(mmrIndex))
 	{
-		LoggerAPI::LogWarning("OutputPMMR::Remove - LeafSet does not contain output " + std::to_string(mmrIndex));
+		LOG_WARNING_F("LeafSet does not contain output (%llu)", mmrIndex);
 		return false;
 	}
 
@@ -163,7 +163,7 @@ bool OutputPMMR::Rewind(const uint64_t size, const std::optional<Roaring>& leave
 
 bool OutputPMMR::Flush()
 {
-	LoggerAPI::LogTrace(StringUtil::Format("OutputPMMR::Flush - Flushing with size (%llu)", GetSize()));
+	LOG_TRACE_F("Flushing with size (%llu)", GetSize());
 	const bool hashFlush = m_pHashFile->Flush();
 	const bool dataFlush = m_pDataFile->Flush();
 	const bool leafSetFlush = m_leafSet.Flush();
@@ -174,7 +174,7 @@ bool OutputPMMR::Flush()
 
 bool OutputPMMR::Discard()
 {
-	LoggerAPI::LogInfo(StringUtil::Format("OutputPMMR::Discard - Discarding changes since last flush."));
+	LOG_INFO("Discarding changes since last flush");
 	const bool hashDiscard = m_pHashFile->Discard();
 	const bool dataDiscard = m_pDataFile->Discard();
 	m_leafSet.Discard();

@@ -154,16 +154,3 @@ LockedWallet SessionManager::GetWallet(const SessionToken& token)
 
 	throw SessionTokenException();
 }
-
-//const Wallet& SessionManager::GetWallet(const SessionToken& token) const
-//{
-//	auto iter = m_sessionsById.find(token.GetSessionId());
-//	if (iter != m_sessionsById.end())
-//	{
-//		const LoggedInSession* pSession = iter->second;
-//
-//		return *(pSession->m_pWallet);
-//	}
-//
-//	throw SessionTokenException();
-//}

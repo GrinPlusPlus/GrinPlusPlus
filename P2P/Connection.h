@@ -40,6 +40,8 @@ public:
 	inline uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
 	inline Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
 
+	bool ExceedsRateLimit() const;
+
 private:
 	static void Thread_ProcessConnection(Connection* pConnection);
 

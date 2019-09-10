@@ -254,27 +254,29 @@ std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& p
 	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }
 
-std::unique_ptr<Signature> Crypto::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)
+std::unique_ptr<CompactSignature> Crypto::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const std::string& message)
 {
-	return AggSig::GetInstance().SignMessage(secretKey, publicKey, message);
+	const Hash messageHash = Crypto::Blake2b(std::vector<unsigned char>(message.cbegin(), message.cend()));
+	return AggSig::GetInstance().SignMessage(secretKey, publicKey, messageHash);
 }
 
-bool Crypto::VerifyMessageSignature(const Signature& signature, const PublicKey& publicKey, const Hash& message)
+bool Crypto::VerifyMessageSignature(const CompactSignature& signature, const PublicKey& publicKey, const std::string& message)
 {
-	return AggSig::GetInstance().VerifyMessageSignature(signature, publicKey, message);
+	const Hash messageHash = Crypto::Blake2b(std::vector<unsigned char>(message.cbegin(), message.cend()));
+	return AggSig::GetInstance().VerifyMessageSignature(signature, publicKey, messageHash);
 }
 
-std::unique_ptr<Signature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+std::unique_ptr<CompactSignature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }
 
-std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Signature>& signatures, const PublicKey& sumPubNonces)
+std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<CompactSignature>& signatures, const PublicKey& sumPubNonces)
 {
 	return AggSig::GetInstance().AggregateSignatures(signatures, sumPubNonces);
 }
 
-bool Crypto::VerifyPartialSignature(const Signature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+bool Crypto::VerifyPartialSignature(const CompactSignature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().VerifyPartialSignature(partialSignature, publicKey, sumPubKeys, sumPubNonces, message);
 }
@@ -289,22 +291,7 @@ bool Crypto::VerifyKernelSignatures(const std::vector<const Signature*>& signatu
 	return AggSig::GetInstance().VerifyAggregateSignatures(signatures, publicKeys, messages);
 }
 
-bool Crypto::VerifyKernelSignature(const Signature& signature, const Commitment& publicKey, const Hash& message)
-{
-	return AggSig::GetInstance().VerifyAggregateSignature(signature, publicKey, message);
-}
-
 std::unique_ptr<SecretKey> Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
-}
-
-Signature Crypto::ConvertToRaw(const Signature& signature)
-{
-	return AggSig::GetInstance().ConvertToRaw(signature);
-}
-
-Signature Crypto::ConvertToCompressed(const Signature& signature)
-{
-	return AggSig::GetInstance().ConvertToCompressed(signature);
 }

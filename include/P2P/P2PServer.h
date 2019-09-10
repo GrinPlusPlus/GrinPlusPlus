@@ -45,11 +45,21 @@ public:
 	virtual std::vector<ConnectedPeer> GetConnectedPeers() const = 0;
 
 
-	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const = 0;
+	virtual std::optional<Peer> GetPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt
+	) const = 0;
 
-	virtual bool BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason) = 0;
+	virtual bool BanPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt,
+		const EBanReason banReason
+	) = 0;
 
-	virtual bool UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) = 0;
+	virtual bool UnbanPeer(
+		const IPAddress& address,
+		const std::optional<uint16_t>& portOpt
+	) = 0;
 
 	virtual bool UnbanAllPeers() = 0;
 };
@@ -59,7 +69,12 @@ namespace P2PAPI
 	//
 	// Creates a new instance of the P2P Server.
 	//
-	P2P_API IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool);
+	P2P_API IP2PServer* StartP2PServer(
+		const Config& config,
+		IBlockChainServer& blockChainServer,
+		IDatabase& database,
+		ITransactionPool& transactionPool
+	);
 
 	//
 	// Stops the P2P Server and clears up its memory usage.

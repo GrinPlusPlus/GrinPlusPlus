@@ -167,17 +167,17 @@ public:
 		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value(), hex) : Json::nullValue;
 	}
 
-	static std::optional<Signature> ConvertToSignatureOpt(const Json::Value& signatureJSON, const bool hex)
+	static std::optional<CompactSignature> ConvertToSignatureOpt(const Json::Value& signatureJSON, const bool hex)
 	{
 		if (signatureJSON == Json::nullValue)
 		{
 			return std::nullopt;
 		}
 
-		return std::make_optional<Signature>(Signature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex))));
+		return std::make_optional<CompactSignature>(CompactSignature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex))));
 	}
 
-	static std::optional<Signature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)
+	static std::optional<CompactSignature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
 		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key), hex);
 	}

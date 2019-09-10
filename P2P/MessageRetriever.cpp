@@ -37,7 +37,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 
 	if (hasReceivedData)
 	{
-		//LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Received data from: " + connectedPeer.GetPeer().GetIPAddress().Format());
+		//LOG_TRACE("Received data from: " + connectedPeer.GetPeer().GetIPAddress().Format());
 		socket.SetReceiveTimeout(5 * 1000);
 		//socket.SetBlocking(true);
 
@@ -56,7 +56,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 			{
 				if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
 				{
-					LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
+					LOG_TRACE("Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
 				}
 
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
@@ -74,7 +74,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		}
 		else
 		{
-			LoggerAPI::LogTrace("MessageRetriever::RetrieveMessage - Failed to receive message from: " + connectedPeer.GetPeer().GetIPAddress().Format());
+			LOG_TRACE("Failed to receive message from: " + connectedPeer.GetPeer().GetIPAddress().Format());
 		}
 	}
 

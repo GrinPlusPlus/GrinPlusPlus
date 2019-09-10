@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/ImportExport.h>
+#include <Common/Util/StringUtil.h>
 #include <string>
 
 #ifdef MW_INFRASTRUCTURE
@@ -35,3 +36,9 @@ namespace LoggerAPI
 #define LOG_INFO(message) LoggerAPI::LogInfo(__FUNCTION__, __LINE__, message)
 #define LOG_WARNING(message) LoggerAPI::LogWarning(__FUNCTION__, __LINE__, message)
 #define LOG_ERROR(message) LoggerAPI::LogError(__FUNCTION__, __LINE__, message)
+
+#define LOG_TRACE_F(message, ...) LoggerAPI::LogTrace(__FUNCTION__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+#define LOG_DEBUG_F(message, ...) LoggerAPI::LogDebug(__FUNCTION__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+#define LOG_INFO_F(message, ...) LoggerAPI::LogInfo(__FUNCTION__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+#define LOG_WARNING_F(message, ...) LoggerAPI::LogWarning(__FUNCTION__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+#define LOG_ERROR_F(message, ...) LoggerAPI::LogError(__FUNCTION__, __LINE__, StringUtil::Format(message, __VA_ARGS__))

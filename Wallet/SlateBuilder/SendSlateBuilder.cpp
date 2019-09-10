@@ -115,8 +115,8 @@ void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, c
 	// Add message signature
 	if (messageOpt.has_value())
 	{
-		const Hash message = Crypto::Blake2b(std::vector<unsigned char>(messageOpt.value().cbegin(), messageOpt.value().cend()));
-		std::unique_ptr<Signature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, message);
+		// TODO: Limit message length
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
 			LoggerAPI::LogError("SendSlateBuilder::AddSenderInfo - Failed to sign message for slate " + uuids::to_string(slate.GetSlateId()));

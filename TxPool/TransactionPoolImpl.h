@@ -6,6 +6,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Models/ShortId.h>
 #include <Crypto/Hash.h>
+#include <shared_mutex>
 #include <set>
 
 class TransactionPool : public ITransactionPool
@@ -22,14 +23,15 @@ public:
 	virtual void ReconcileBlock(const FullBlock& block) override final;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(const BlockHeader& lastConfirmedBlock) override final;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(const BlockHeader& lastConfirmedBlock) override final;
+	virtual std::unique_ptr<Transaction> GetTransactionToStem() override final;
+	virtual std::unique_ptr<Transaction> GetTransactionToFluff() override final;
 	virtual std::vector<Transaction> GetExpiredTransactions() const override final;
 
 private:
 	const Config& m_config;
 	const TxHashSetManager& m_txHashSetManager;
 	const IBlockDB& m_blockDB;
+	mutable std::shared_mutex m_mutex;
 
 	Pool m_memPool;
 	Pool m_stemPool;

@@ -40,9 +40,8 @@ void Syncer::Stop()
 
 void Syncer::Thread_Sync(Syncer& syncer)
 {
-	ThreadManagerAPI::SetCurrentThreadName("SYNC_THREAD");
-
-	LoggerAPI::LogInfo("Syncer::Thread_Sync() - BEGIN");
+	ThreadManagerAPI::SetCurrentThreadName("SYNC");
+	LOG_DEBUG("BEGIN");
 
 	HeaderSyncer headerSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
 	StateSyncer stateSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
@@ -91,7 +90,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 		}
 	}
 
-	LoggerAPI::LogInfo("Syncer::Thread_Sync() - END");
+	LOG_DEBUG("END");
 }
 
 void Syncer::UpdateSyncStatus()

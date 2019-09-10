@@ -11,6 +11,7 @@ class Socket
 {
 public:
 	Socket(const SocketAddress& address);
+
 	bool Connect(asio::io_context& context);
 	bool Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);
 
@@ -29,6 +30,7 @@ public:
 	inline unsigned long GetSendTimeout() const { return m_sendTimeout; }
 
 	bool SetReceiveBufferSize(const int size);
+	inline int GetReceiveBufferSize() const { return m_receiveBufferSize; }
 
 	bool SetBlocking(const bool blocking);
 	inline bool IsBlocking() const { return m_blocking; }
@@ -49,5 +51,4 @@ private:
 	unsigned long m_sendTimeout;
 	int m_receiveBufferSize;
 	// TODO: Connection stats
-	// TODO: Cache IP address, port, timeouts, blocking, etc.
 };

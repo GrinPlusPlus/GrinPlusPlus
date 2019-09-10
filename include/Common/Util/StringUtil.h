@@ -9,10 +9,11 @@
 
 #pragma warning(disable : 4840)
 
-namespace StringUtil
+class StringUtil
 {
+public:
 	template<typename ... Args>
-	std::string Format(const std::string& format, Args ... args)
+	static std::string Format(const std::string& format, Args ... args)
 	{
 		size_t size = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
 		std::unique_ptr<char[]> buf(new char[size]);
@@ -20,7 +21,7 @@ namespace StringUtil
 		return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 	}
 
-	inline bool StartsWith(const std::string& value, const std::string& beginning)
+	static bool StartsWith(const std::string& value, const std::string& beginning)
 	{
 		if (beginning.size() > value.size())
 		{
@@ -30,7 +31,7 @@ namespace StringUtil
 		return std::equal(beginning.begin(), beginning.end(), value.begin());
 	}
 
-	inline bool EndsWith(const std::string& value, const std::string& ending)
+	static bool EndsWith(const std::string& value, const std::string& ending)
 	{
 		if (ending.size() > value.size())
 		{
@@ -76,4 +77,4 @@ namespace StringUtil
 
 		return output;
 	}
-}
+};

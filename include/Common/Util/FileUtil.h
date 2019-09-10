@@ -5,6 +5,7 @@
 #include <vector>
 #include <filesystem.h>
 #include <stdlib.h>
+#include <Common/Util/StringUtil.h>
 
 #if defined(_WIN32)
 #include <Windows.h>
@@ -157,7 +158,7 @@ public:
 #endif
 	}
 
-	static std::vector<std::string> GetSubDirectories(const std::string& filePath)
+	static std::vector<std::string> GetSubDirectories(const std::string& filePath, const bool includeHidden)
 	{
 		std::vector<std::string> listOfFiles;
 		try {
@@ -179,7 +180,11 @@ public:
 						// Skip the iteration of current directory pointed by iterator
 						// c++17 fstem API to skip current directory iteration
 						iter.disable_recursion_pending();
-						listOfFiles.push_back(iter->path().filename().string());
+						std::string filename = iter->path().filename().string();
+						if (includeHidden || !StringUtil::StartsWith(filename, "."))
+						{
+							listOfFiles.push_back(filename);
+						}
 					}
 
 					std::error_code ec;

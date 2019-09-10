@@ -24,6 +24,7 @@
 #define WALLET_API IMPORT
 #endif
 
+// TODO: Document exceptions thrown from each method.
 class IWalletManager
 {
 public:
@@ -51,8 +52,10 @@ public:
 	//
 	virtual SecureString GetSeedWords(const SessionToken& token) = 0;
 
-	// TODO: Determine return value.
-	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) = 0;
+	virtual bool CheckForOutputs(
+		const SessionToken& token,
+		const bool fromGenesis
+	) = 0;
 
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
 
@@ -61,12 +64,24 @@ public:
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
-	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) = 0;
+	virtual std::unique_ptr<SessionToken> Login(
+		const std::string& username,
+		const SecureString& password
+	) = 0;
 
 	//
 	// Deletes the session information.
 	//
 	virtual void Logout(const SessionToken& token) = 0;
+
+	//
+	// Validates the password and then deletes the wallet.
+	// Returns true if the wallet is deleted successfully.
+	//
+	virtual bool DeleteWallet(
+		const std::string& username,
+		const SecureString& password
+	) = 0;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) = 0;
 
@@ -109,24 +124,36 @@ public:
 		const std::optional<std::string>& messageOpt
 	) = 0;
 
-	virtual std::unique_ptr<Slate> Finalize(const SessionToken& token, const Slate& slate) = 0;
+	virtual std::unique_ptr<Slate> Finalize(
+		const SessionToken& token,
+		const Slate& slate
+	) = 0;
 
-	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) = 0;
+	virtual bool PostTransaction(
+		const SessionToken& token,
+		const Transaction& transaction
+	) = 0;
 
-	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
+	virtual bool RepostByTxId(
+		const SessionToken& token,
+		const uint32_t walletTxId
+	) = 0;
 
-	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) = 0;
+	virtual bool CancelByTxId(
+		const SessionToken& token,
+		const uint32_t walletTxId
+	) = 0;
 };
 
 namespace WalletAPI
 {
 	//
-	// Creates a new instance of the Wallet server.
+	// Creates a new instance of the Wallet manager.
 	//
 	WALLET_API IWalletManager* StartWalletManager(const Config& config, INodeClient& nodeClient);
 
 	//
-	// Stops the Wallet server and clears up its memory usage.
+	// Stops the Wallet manager and clears up its memory usage.
 	//
 	WALLET_API void ShutdownWalletManager(IWalletManager* pWalletManager);
 }

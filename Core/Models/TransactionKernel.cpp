@@ -89,9 +89,7 @@ Hash TransactionKernel::GetSignatureMessage() const
 		serializer.Append<uint64_t>(GetLockHeight());
 	}
 
-	const std::vector<unsigned char>& message = serializer.GetBytes();
-
-	return Crypto::Blake2b(message);
+	return Crypto::Blake2b(serializer.GetBytes());
 }
 
 const Hash& TransactionKernel::GetHash() const

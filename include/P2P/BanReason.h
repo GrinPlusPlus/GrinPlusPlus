@@ -11,7 +11,8 @@ enum EBanReason
 	BadTxHashSet = 4,
 	ManualBan = 5,
 	FraudHeight = 6,
-	BadHandshake = 7
+	BadHandshake = 7,
+	Abusive = 8
 };
 
 namespace BanReason
@@ -36,6 +37,8 @@ namespace BanReason
 				return "FraudHeight";
 			case BadHandshake:
 				return "BadHandshake";
+			case Abusive:
+				return "Abusive";
 		}
 
 		return "";

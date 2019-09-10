@@ -19,24 +19,23 @@ Replace `<CONFIG>` with `Debug` or `Release`
 **Command Line**:
 1. ```Open "Developer Command Prompt for Visual Studio 2017"```
 2. ```cd C:/Choose/A/Path```
-3. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
+3. ```git clone --recursive https://github.com/GrinPlusPlus/GrinPlusPlus.git```
 4. ```cd GrinPlusPlus```
-5. ```git submodule update --init --recursive```
-6. ```mkdir build & cd build```
-7. ```cmake -G "Visual Studio 15 2017 Win64" ..```
-8. ```cmake --build . --config <CONFIG>```
+5. ```mkdir build & cd build```
+6. ```cmake -G "Visual Studio 15 2017 Win64" ..```
+7. ```cmake --build . --config <CONFIG>```
 
 Once your code is built, you can just open GrinNode.exe from your bin folder.
 
-### Linux
+### Linux/Mac
 #### Prerequisites
 * CMake
 * gcc 7.x.x (Tested on gcc 7.4.0)
+* uuid-dev
 
-1. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
+1. ```git clone --recursive https://github.com/GrinPlusPlus/GrinPlusPlus.git```
 2. ```cd GrinPlusPlus```
-3. ```git submodule update --init --recursive```
-4. ```mkdir build```
-5. ```cd build```
-6. ```cmake ..```
-7. ```cmake --build .```
+3. ```mkdir build```
+4. ```cd build```
+5. ```cmake ..```
+6. ```cmake --build .```

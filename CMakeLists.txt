@@ -71,6 +71,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/rocksdb/include
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/jsoncpp
 	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib
+	${CMAKE_CURRENT_BINARY_DIR}/include/ThirdParty/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})

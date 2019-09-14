@@ -1,7 +1,7 @@
 #include "BlockInfoAPI.h"
-#include "../../RestUtil.h"
-#include "../../JSONFactory.h"
-#include "../../NodeContext.h"
+#include <RestUtil.h>
+#include <JSONFactory.h>
+#include <Node/NodeContext.h>
 
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>

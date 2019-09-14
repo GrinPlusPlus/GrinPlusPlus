@@ -27,7 +27,7 @@ file(GLOB SOURCE_CODE
 	"Wallet/API/OwnerPostAPI.cpp"
 )
 
-include_directories(civetweb/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 

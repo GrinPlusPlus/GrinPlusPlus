@@ -63,15 +63,17 @@ add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/mio/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/stduuid/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/lru
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/asio/asio/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/ghc
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/rocksdb/include
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/jsoncpp
-	${PROJECT_SOURCE_DIR}/include/ThirdParty/zlib
-	${CMAKE_CURRENT_BINARY_DIR}/include/ThirdParty/zlib
+	${PROJECT_SOURCE_DIR}/deps
+	${PROJECT_SOURCE_DIR}/deps/mio/include
+	${PROJECT_SOURCE_DIR}/deps/stduuid/include
+	${PROJECT_SOURCE_DIR}/deps/lru
+	${PROJECT_SOURCE_DIR}/deps/asio/asio/include
+	${PROJECT_SOURCE_DIR}/deps/ghc
+	${PROJECT_SOURCE_DIR}/deps/rocksdb/include
+	${PROJECT_SOURCE_DIR}/deps/jsoncpp
+	${PROJECT_SOURCE_DIR}/deps/zlib
+	${PROJECT_SOURCE_DIR}/deps/Catch2
+	${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -79,35 +81,42 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 # Dependencies
-# RocksDB
-set(WITH_TESTS FALSE)
-include_directories(include/ThirdParty/rocksdb)
-add_subdirectory(include/ThirdParty/rocksdb)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if(APPLE)
-	set(ROCKS_DB_LIB rocksdb-shared${ARTIFACT_SUFFIX})
-else()
-	set(ROCKS_DB_LIB rocksdb${ARTIFACT_SUFFIX})
-endif()
-
-# SQLite3
-add_subdirectory(include/ThirdParty/libsqlite3)
-
-# ZLib
-add_subdirectory(include/ThirdParty/zlib)
+include(sqlite3)
+include(minizip)
+include(jsoncpp)
+include(zlib)
+include(rocksdb)
+include(croaring)
+include(civetweb)
+include(uint128)
+add_subdirectory(deps/cuckoo)
 
 # Grin++ Projects
-add_subdirectory(Infrastructure)
-add_subdirectory(Crypto)
-add_subdirectory(Core)
-add_subdirectory(Config)
-add_subdirectory(PMMR)
-add_subdirectory(PoW)
-add_subdirectory(Database)
-add_subdirectory(BlockChain)
-add_subdirectory(TxPool)
-add_subdirectory(P2P)
-add_subdirectory(Wallet)
-add_subdirectory(Server)
+set(GRINPP_TESTS false)
+set(GRINPP_STATIC true)
+if(GRINPP_STATIC)
+	add_definitions(-DGRINPP_STATIC)
+endif(GRINPP_STATIC)
 
-add_executable(RunAllTests RunAllTests.cpp)
+add_subdirectory(src/Infrastructure)
+add_subdirectory(src/Crypto)
+add_subdirectory(src/Core)
+add_subdirectory(src/Config)
+add_subdirectory(src/PMMR)
+add_subdirectory(src/PoW)
+add_subdirectory(src/Database)
+add_subdirectory(src/BlockChain)
+add_subdirectory(src/TxPool)
+add_subdirectory(src/P2P)
+add_subdirectory(src/Wallet)
+add_subdirectory(src/Server)
+
+if(GRINPP_TESTS)
+	add_subdirectory(tests/Core)
+	add_subdirectory(tests/Crypto)
+	add_subdirectory(tests/PMMR)
+	add_subdirectory(tests/Wallet)
+	add_executable(RunAllTests tests/RunAllTests.cpp)
+endif(GRINPP_TESTS)

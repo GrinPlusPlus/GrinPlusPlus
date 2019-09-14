@@ -4,7 +4,7 @@
 #pragma warning(disable:4018)
 #pragma warning(disable:4127)
 #pragma warning(disable:4244)
-#include <Core/CRoaring/roaring.hh>
+#include <CRoaring/roaring.hh>
 #pragma warning(pop)
 
 #include <Core/Models/BlockHeader.h>

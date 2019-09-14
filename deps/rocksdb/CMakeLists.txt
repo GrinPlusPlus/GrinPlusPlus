@@ -768,18 +768,18 @@ if(WIN32)
   set(SYSTEM_LIBS ${SYSTEM_LIBS} Shlwapi.lib Rpcrt4.lib)
   set(LIBS ${ROCKSDB_STATIC_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
 else()
-  set(SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
-  set(LIBS ${ROCKSDB_SHARED_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  #set(SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
+  #set(LIBS ${ROCKSDB_SHARED_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
 
-  add_library(${ROCKSDB_SHARED_LIB} SHARED ${SOURCES})
-  target_link_libraries(${ROCKSDB_SHARED_LIB}
-    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
-  set_target_properties(${ROCKSDB_SHARED_LIB} PROPERTIES
-                        LINKER_LANGUAGE CXX
-                        VERSION ${ROCKSDB_VERSION}
-                        SOVERSION ${ROCKSDB_VERSION_MAJOR}
-                        CXX_STANDARD 11
-                        OUTPUT_NAME "rocksdb")
+  #add_library(${ROCKSDB_SHARED_LIB} SHARED ${SOURCES})
+  #target_link_libraries(${ROCKSDB_SHARED_LIB}
+  #  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  #set_target_properties(${ROCKSDB_SHARED_LIB} PROPERTIES
+  #                      LINKER_LANGUAGE CXX
+  #                      VERSION ${ROCKSDB_VERSION}
+  #                      SOVERSION ${ROCKSDB_VERSION_MAJOR}
+  #                      CXX_STANDARD 11
+  #                      OUTPUT_NAME "rocksdb")
 endif()
 
 add_library(${ROCKSDB_STATIC_LIB} STATIC ${SOURCES})
@@ -787,16 +787,16 @@ target_link_libraries(${ROCKSDB_STATIC_LIB}
   ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
 
 if(WIN32)
-  add_library(${ROCKSDB_IMPORT_LIB} SHARED ${SOURCES})
-  target_link_libraries(${ROCKSDB_IMPORT_LIB}
-    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
-  set_target_properties(${ROCKSDB_IMPORT_LIB} PROPERTIES
-    COMPILE_DEFINITIONS "ROCKSDB_DLL;ROCKSDB_LIBRARY_EXPORTS")
+  #add_library(${ROCKSDB_IMPORT_LIB} SHARED ${SOURCES})
+  #target_link_libraries(${ROCKSDB_IMPORT_LIB}
+  #  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
+  #set_target_properties(${ROCKSDB_IMPORT_LIB} PROPERTIES
+  #  COMPILE_DEFINITIONS "ROCKSDB_DLL;ROCKSDB_LIBRARY_EXPORTS")
   if(MSVC)
     set_target_properties(${ROCKSDB_STATIC_LIB} PROPERTIES
       COMPILE_FLAGS "/Fd${CMAKE_CFG_INTDIR}/${ROCKSDB_STATIC_LIB}.pdb")
-    set_target_properties(${ROCKSDB_IMPORT_LIB} PROPERTIES
-      COMPILE_FLAGS "/Fd${CMAKE_CFG_INTDIR}/${ROCKSDB_IMPORT_LIB}.pdb")
+  #  set_target_properties(${ROCKSDB_IMPORT_LIB} PROPERTIES
+  #    COMPILE_FLAGS "/Fd${CMAKE_CFG_INTDIR}/${ROCKSDB_IMPORT_LIB}.pdb")
   endif()
 endif()
 

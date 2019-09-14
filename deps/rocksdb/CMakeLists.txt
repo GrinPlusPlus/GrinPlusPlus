@@ -1062,22 +1062,22 @@ if(WITH_TESTS)
   # Tests are excluded from Release builds
   set(TEST_EXES ${TESTS})
 
-  foreach(sourcefile ${TEST_EXES})
-      get_filename_component(exename ${sourcefile} NAME_WE)
-      add_executable(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX} ${sourcefile}
-        $<TARGET_OBJECTS:testharness>)
-      set_target_properties(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX}
-        PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD_RELEASE 1
-        EXCLUDE_FROM_DEFAULT_BUILD_MINRELEASE 1
-        EXCLUDE_FROM_DEFAULT_BUILD_RELWITHDEBINFO 1
-        OUTPUT_NAME ${exename}${ARTIFACT_SUFFIX}
-        )
-      target_link_libraries(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX} testutillib${ARTIFACT_SUFFIX} gtest ${LIBS})
-      if(NOT "${exename}" MATCHES "db_sanity_test")
-        add_test(NAME ${exename} COMMAND ${exename}${ARTIFACT_SUFFIX})
-        add_dependencies(check ${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX})
-      endif()
-  endforeach(sourcefile ${TEST_EXES})
+  #foreach(sourcefile ${TEST_EXES})
+  #    get_filename_component(exename ${sourcefile} NAME_WE)
+  #    add_executable(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX} ${sourcefile}
+  #      $<TARGET_OBJECTS:testharness>)
+  #    set_target_properties(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX}
+  #      PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD_RELEASE 1
+  #      EXCLUDE_FROM_DEFAULT_BUILD_MINRELEASE 1
+  #      EXCLUDE_FROM_DEFAULT_BUILD_RELWITHDEBINFO 1
+  #      OUTPUT_NAME ${exename}${ARTIFACT_SUFFIX}
+  #      )
+  #    target_link_libraries(${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX} testutillib${ARTIFACT_SUFFIX} gtest ${LIBS})
+  #    if(NOT "${exename}" MATCHES "db_sanity_test")
+  #      add_test(NAME ${exename} COMMAND ${exename}${ARTIFACT_SUFFIX})
+  #      add_dependencies(check ${CMAKE_PROJECT_NAME}_${exename}${ARTIFACT_SUFFIX})
+  #    endif()
+  #endforeach(sourcefile ${TEST_EXES})
 
   # C executables must link to a shared object
   set(C_TESTS db/c_test.c)
@@ -1098,7 +1098,7 @@ if(WITH_TESTS)
   endforeach(sourcefile ${C_TEST_EXES})
 endif()
 
-option(WITH_TOOLS "build with tools" ON)
+option(WITH_TOOLS "build with tools" OFF)
 if(WITH_TOOLS)
-  add_subdirectory(tools)
+  #add_subdirectory(tools)
 endif()

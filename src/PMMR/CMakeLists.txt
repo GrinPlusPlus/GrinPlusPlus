@@ -36,16 +36,3 @@ endif(GRINPP_STATIC)
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
 add_dependencies(${TARGET_NAME} Infrastructure Crypto Core Minizip jsoncpp)
 target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core zlibstatic Minizip jsoncpp)
-
-if(GRINPP_TESTS)
-	set(TEST_TARGET_NAME PMMR_Tests)
-
-	file(GLOB PMMR_TESTS_SRC
-		"Tests/*.cpp"
-	)
-
-	add_executable(${TEST_TARGET_NAME} ${PMMR_SRC} ${PMMR_TESTS_SRC})
-	target_compile_definitions(${TEST_TARGET_NAME} PRIVATE MW_PMMR)
-	add_dependencies(${TEST_TARGET_NAME} Infrastructure Crypto Core Minizip jsoncpp)
-	target_link_libraries(${TEST_TARGET_NAME} Infrastructure Crypto Core zlibstatic Minizip jsoncpp)
-endif(GRINPP_TESTS)

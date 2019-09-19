@@ -210,7 +210,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 	std::vector<Commitment> outputCommitments;
 	for (uint64_t i = 0; i < blockHeader.GetOutputMMRSize(); i++)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetOutputAt(i);
+		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetAt(i);
 		if (pOutput != nullptr)
 		{
 			outputCommitments.push_back(pOutput->GetCommitment());
@@ -241,10 +241,10 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 	const uint64_t outputMMRSize = txHashSet.GetOutputPMMR()->GetSize();
 	for (uint64_t mmrIndex = 0; mmrIndex < outputMMRSize; mmrIndex++)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetOutputAt(mmrIndex);
+		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetAt(mmrIndex);
 		if (pOutput != nullptr)
 		{
-			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetRangeProofAt(mmrIndex);
+			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetAt(mmrIndex);
 			if (pRangeProof == nullptr)
 			{
 				LOG_ERROR_F("No rangeproof found at mmr index (%llu)", mmrIndex);

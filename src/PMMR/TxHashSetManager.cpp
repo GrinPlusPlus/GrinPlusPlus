@@ -19,7 +19,7 @@ ITxHashSet* TxHashSetManager::Open(const BlockHeader& confirmedTip)
 	Close();
 
 	KernelMMR* pKernelMMR = KernelMMR::Load(m_config.GetTxHashSetDirectory());
-	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetDirectory(), m_blockDB);
+	OutputPMMR* pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetDirectory());
 	RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetDirectory());
 
 	m_pTxHashSet = new TxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, confirmedTip);
@@ -47,12 +47,12 @@ ITxHashSet* TxHashSetManager::LoadFromZip(const Config& config, IBlockDB& blockD
 		pKernelMMR->Rewind(blockHeader.GetKernelMMRSize());
 		pKernelMMR->Flush();
 
-		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory(), blockDB);
-		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), std::nullopt);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory());
+		pOutputPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pOutputPMMR->Flush();
 
 		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(config.GetTxHashSetDirectory());
-		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), std::nullopt);
+		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pRangeProofPMMR->Flush();
 
 		return new TxHashSet(blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, blockHeader);
@@ -90,7 +90,7 @@ bool TxHashSetManager::SaveSnapshot(const BlockHeader& blockHeader, const std::s
 	{
 		// 4. Load Snapshot TxHashSet
 		KernelMMR* pKernelMMR = KernelMMR::Load(snapshotDir);
-		OutputPMMR* pOutputPMMR = OutputPMMR::Load(snapshotDir, m_blockDB);
+		OutputPMMR* pOutputPMMR = OutputPMMR::Load(snapshotDir);
 		RangeProofPMMR* pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
 		TxHashSet snapshotTxHashSet(m_blockDB, pKernelMMR, pOutputPMMR, pRangeProofPMMR, flushedBlockHeader);
 

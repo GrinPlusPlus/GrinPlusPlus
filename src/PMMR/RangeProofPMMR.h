@@ -1,42 +1,36 @@
 #pragma once
 
-#include "Common/MMR.h"
-#include "Common/LeafSet.h"
-#include "Common/PruneList.h"
-#include "Common/HashFile.h"
+#include "Common/PruneableMMR.h"
 
-#include <optional>
-#include <Crypto/Hash.h>
-#include <Core/DataFile.h>
 #include <Crypto/RangeProof.h>
-#include <CRoaring/roaring.hh>
 
 #define RANGE_PROOF_SIZE 683
 
-class RangeProofPMMR : public MMR
+class RangeProofPMMR : public PruneableMMR<RANGE_PROOF_SIZE, RangeProof>
 {
 public:
-	static RangeProofPMMR* Load(const std::string& txHashSetDirectory);
-	virtual ~RangeProofPMMR();
+	static RangeProofPMMR* Load(const std::string& txHashSetDirectory)
+	{
+		HashFile* pHashFile = new HashFile(txHashSetDirectory + "rangeproof/pmmr_hash.bin");
+		pHashFile->Load();
 
-	bool Append(const RangeProof& rangeProof);
-	bool Remove(const uint64_t mmrIndex);
-	bool Rewind(const uint64_t size, const std::optional<Roaring>& leavesToAddOpt);
+		LeafSet leafSet(txHashSetDirectory + "rangeproof/pmmr_leaf.bin");
+		leafSet.Load();
 
-	virtual Hash Root(const uint64_t mmrIndex) const override final;
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
-	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
-	std::unique_ptr<RangeProof> GetRangeProofAt(const uint64_t mmrIndex) const;
-	virtual uint64_t GetSize() const override final;
+		PruneList pruneList(PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin"));
 
-	virtual bool Flush() override final;
-	virtual bool Discard() override final;
+		DataFile<RANGE_PROOF_SIZE>* pDataFile = new DataFile<RANGE_PROOF_SIZE>(txHashSetDirectory + "rangeproof/pmmr_data.bin");
+		pDataFile->Load();
+
+		return new RangeProofPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+	}
+
+	virtual ~RangeProofPMMR() = default;
 
 private:
-	RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile);
+	RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile)
+		: PruneableMMR<RANGE_PROOF_SIZE, RangeProof>(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile)
+	{
 
-	HashFile* m_pHashFile;
-	LeafSet m_leafSet;
-	PruneList m_pruneList;
-	DataFile<RANGE_PROOF_SIZE>* m_pDataFile;
+	}
 };

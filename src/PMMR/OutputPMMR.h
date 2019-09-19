@@ -1,50 +1,36 @@
 #pragma once
 
-#include "Common/MMR.h"
-#include "Common/LeafSet.h"
-#include "Common/PruneList.h"
-#include "Common/HashFile.h"
+#include "Common/PruneableMMR.h"
 
-#include <Core/DataFile.h>
 #include <Core/Models/OutputIdentifier.h>
-#include <Database/BlockDb.h>
-#include <Crypto/Hash.h>
-#include <CRoaring/roaring.hh>
-#include <optional>
 
 #define OUTPUT_SIZE 34
 
-class OutputPMMR : public MMR
+class OutputPMMR : public PruneableMMR<OUTPUT_SIZE, OutputIdentifier>
 {
 public:
-	static OutputPMMR* Load(const std::string& txHashSetDirectory, IBlockDB& blockDB);
-	virtual ~OutputPMMR();
+	static OutputPMMR* Load(const std::string& txHashSetDirectory)
+	{
+		HashFile* pHashFile = new HashFile(txHashSetDirectory + "output/pmmr_hash.bin");
+		pHashFile->Load();
 
-	bool Append(const OutputIdentifier& output, const uint64_t blockHeight);
-	bool Remove(const uint64_t mmrIndex);
-	bool Rewind(const uint64_t size, const std::optional<Roaring>& leavesToAddOpt);
+		LeafSet leafSet(txHashSetDirectory + "output/pmmr_leaf.bin");
+		leafSet.Load();
 
-	virtual Hash Root(const uint64_t mmrIndex) const override final;
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final;
-	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
-	virtual uint64_t GetSize() const override final;
+		PruneList pruneList(PruneList::Load(txHashSetDirectory + "output/pmmr_prun.bin"));
 
-	virtual bool Flush() override final;
-	virtual bool Discard() override final;
+		DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(txHashSetDirectory + "output/pmmr_data.bin");
+		pDataFile->Load();
 
-	bool IsUnspent(const uint64_t mmrIndex) const;
-	std::unique_ptr<OutputIdentifier> GetOutputAt(const uint64_t mmrIndex) const;
+		return new OutputPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+	}
+
+	virtual ~OutputPMMR() = default;
 
 private:
-	OutputPMMR(IBlockDB& blockDB, HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile);
+	OutputPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)
+		: PruneableMMR<OUTPUT_SIZE, OutputIdentifier>(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile)
+	{
 
-	Roaring DetermineLeavesToRemove(const uint64_t cutoffSize, const Roaring& rewindRmPos) const;
-	Roaring DetermineNodesToRemove(const Roaring& leavesToRemove) const;
-
-	IBlockDB& m_blockDB;
-
-	HashFile* m_pHashFile;
-	LeafSet m_leafSet;
-	PruneList m_pruneList;
-	DataFile<OUTPUT_SIZE>* m_pDataFile;
+	}
 };

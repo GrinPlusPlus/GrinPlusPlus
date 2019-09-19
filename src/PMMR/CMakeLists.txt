@@ -1,17 +1,5 @@
 set(TARGET_NAME PMMR)
 
-if(MSVC)
-    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-		string(REGEX REPLACE "/W[0-4]" "/W2 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2 /WX")
-    endif()
-endif()
-
-include_directories(
-	${PROJECT_SOURCE_DIR}/deps/zlib/contrib
-)
-
 # PMMR
 file(GLOB SOURCE_CODE
     "HeaderMMRImpl.cpp"
@@ -21,9 +9,14 @@ file(GLOB SOURCE_CODE
     "TxHashSetImpl.cpp"
     "TxHashSetManager.cpp"
     "TxHashSetValidator.cpp"
-    "Common/*.cpp"
-    "Common/CRoaring/*.c"
-    "Zip/*.cpp"
+    "Common/HashFile.cpp"
+    "Common/LeafSet.cpp"
+    "Common/MMRHashUtil.cpp"
+    "Common/MMRUtil.cpp"
+    "Common/PruneList.cpp"
+    "Zip/TxHashSetZip.cpp"
+    "Zip/ZipFile.cpp"
+    "Zip/Zipper.cpp"
 )
 
 

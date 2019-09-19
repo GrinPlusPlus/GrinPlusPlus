@@ -31,7 +31,7 @@ bool TxHashSet::IsUnspent(const OutputLocation& location) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
 
-	return m_pOutputPMMR->IsUnspent(location.GetMMRIndex());
+	return m_pOutputPMMR->IsUnpruned(location.GetMMRIndex());
 }
 
 bool TxHashSet::IsValid(const Transaction& transaction) const
@@ -49,7 +49,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 			return false;
 		}
 
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
 			LOG_DEBUG_F("Output (%s) not found at mmrIndex (%llu)",  commitment.ToHex().c_str(), pOutputPosition->GetMMRIndex());
@@ -72,7 +72,7 @@ bool TxHashSet::IsValid(const Transaction& transaction) const
 		std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(output.GetCommitment());
 		if (pOutputPosition != nullptr)
 		{
-			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
+			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
 			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 			{
 				return false;
@@ -91,14 +91,14 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 	try
 	{
-		LOG_INFO("Validating TxHashSet for block " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_INFO("Validating TxHashSet for block " + header.GetHash().ToHex());
 		pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
 		if (pBlockSums != nullptr)
 		{
 			LOG_INFO("Successfully validated TxHashSet");
 		}
 	}
-	catch (std::exception& e)
+	catch (...)
 	{
 		LOG_ERROR("Exception thrown while processing TxHashSet");
 	}
@@ -149,7 +149,7 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		{
 			if (pOutputPosition->GetMMRIndex() < m_blockHeader.GetOutputMMRSize())
 			{
-				std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(pOutputPosition->GetMMRIndex());
+				std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
 				if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 				{
 					return false;
@@ -157,7 +157,9 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 			}
 		}
 
-		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output), block.GetBlockHeader().GetHeight()))
+		const uint64_t mmrIndex = m_pOutputPMMR->GetSize();
+		const uint64_t blockHeight = block.GetBlockHeader().GetHeight();
+		if (!m_pOutputPMMR->Append(OutputIdentifier::FromOutput(output)))
 		{
 			return false;
 		}
@@ -166,6 +168,8 @@ bool TxHashSet::ApplyBlock(const FullBlock& block)
 		{
 			return false;
 		}
+
+		m_blockDB.AddOutputPosition(output.GetCommitment(), OutputLocation(mmrIndex, blockHeight));
 	}
 
 	// Append new kernels
@@ -211,7 +215,7 @@ bool TxHashSet::SaveOutputPositions(const BlockHeader& blockHeader, const uint64
 	const uint64_t size = blockHeader.GetOutputMMRSize();
 	for (uint64_t mmrIndex = firstOutputIndex; mmrIndex < size; mmrIndex++)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(mmrIndex);
 		if (pOutput != nullptr)
 		{
 			m_blockDB.AddOutputPosition(pOutput->GetCommitment(), OutputLocation(mmrIndex, blockHeader.GetHeight()));
@@ -259,10 +263,10 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(const uint64_t startIndex, const ui
 			break;
 		}
 
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(mmrIndex);
 		if (pOutput != nullptr)
 		{
-			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
+			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetAt(mmrIndex);
 			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
 			if (pRangeProof == nullptr || pOutputPosition == nullptr || pOutputPosition->GetMMRIndex() != mmrIndex)
 			{
@@ -287,10 +291,10 @@ std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(const uint64_t st
 	uint64_t mmrIndex = startIndex;
 	while (mmrIndex <= lastIndex)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetOutputAt(mmrIndex);
+		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(mmrIndex);
 		if (pOutput != nullptr)
 		{
-			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetRangeProofAt(mmrIndex);
+			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetAt(mmrIndex);
 			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(pOutput->GetCommitment());
 
 			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, *pOutputPosition, *pRangeProof));
@@ -323,8 +327,8 @@ bool TxHashSet::Rewind(const BlockHeader& header)
 	}
 
 	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
-	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), std::make_optional<Roaring>(leavesToAdd));
-	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), std::make_optional<Roaring>(leavesToAdd));
+	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
+	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
 
 	return true;
 }

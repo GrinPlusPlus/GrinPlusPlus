@@ -50,13 +50,6 @@ bool Connection::IsConnectionActive() const
 		return false;
 	}
 
-	// TODO: Check last contact
-	//const time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	//const time_t lastContactTime = m_connectedPeer.GetPeer().GetLastContactTime();
-	//const double differenceInSeconds = std::difftime(currentTime, lastContactTime);
-	//
-	//return differenceInSeconds < 120.0;
-
 	return m_socket.IsActive();
 }
 
@@ -78,8 +71,8 @@ void Connection::Send(const IMessage& message)
 
 bool Connection::ExceedsRateLimit() const
 {
-	// TODO: Implement
-	return false;
+	return m_socket.GetRateCounter().GetSentInLastMinute() > 500
+		|| m_socket.GetRateCounter().GetReceivedInLastMinute() > 500;
 }
 
 //

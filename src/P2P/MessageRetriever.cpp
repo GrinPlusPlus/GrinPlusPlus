@@ -42,7 +42,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		//socket.SetBlocking(true);
 
 		std::vector<unsigned char> headerBuffer(11, 0);
-		const bool received = socket.Receive(11, headerBuffer);
+		const bool received = socket.Receive(11, true, headerBuffer);
 		if (received)
 		{
 			ByteBuffer byteBuffer(headerBuffer);
@@ -60,7 +60,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 				}
 
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
-				const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), payload);
+				const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), false, payload);
 				if (bPayloadRetrieved)
 				{
 					connectedPeer.GetPeer().UpdateLastContactTime();

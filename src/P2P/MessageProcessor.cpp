@@ -415,7 +415,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 		const uint64_t bytesRead = file.gcount();
 
 		const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-		const bool sent = socket.Send(bytesToSend);
+		const bool sent = socket.Send(bytesToSend, false);
 
 		if (!sent || m_connectionManager.IsTerminating())
 		{
@@ -458,7 +458,7 @@ MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t conn
 	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 	{
 		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const bool received = socket.Receive(bytesToRead, buffer);
+		const bool received = socket.Receive(bytesToRead, false, buffer);
 		if (!received || m_connectionManager.IsTerminating())
 		{
 			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);

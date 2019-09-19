@@ -222,8 +222,13 @@ bool Socket::SetBlocking(const bool blocking)
 	return m_blocking == blocking;
 }
 
-bool Socket::Send(const std::vector<unsigned char>& message)
+bool Socket::Send(const std::vector<unsigned char>& message, const bool incrementCount)
 {
+	if (incrementCount)
+	{
+		m_rateCounter.AddMessageSent();
+	}
+
 	const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(message.data(), message.size()), m_errorCode);
 	if (m_errorCode && m_errorCode.value() != EAGAIN)
 	{
@@ -233,7 +238,7 @@ bool Socket::Send(const std::vector<unsigned char>& message)
 	return bytesWritten == message.size();
 }
 
-bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data)
+bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data)
 {
 	if (data.size() < numBytes)
 	{
@@ -252,6 +257,11 @@ bool Socket::Receive(const size_t numBytes, std::vector<unsigned char>& data)
 
 		if (bytesRead == numBytes)
 		{
+			if (incrementCount)
+			{
+				m_rateCounter.AddMessageReceived();
+			}
+
 			return true;
 		}
 		else if (m_errorCode.value() == EAGAIN)

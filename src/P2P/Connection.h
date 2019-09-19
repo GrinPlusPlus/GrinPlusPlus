@@ -23,7 +23,19 @@ class PeerManager;
 class Connection
 {
 public:
-	Connection(Socket&& socket, const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer);
+	Connection(
+		Socket&& socket,
+		const uint64_t connectionId,
+		const Config& config,
+		ConnectionManager& connectionManager,
+		PeerManager& peerManager,
+		IBlockChainServer& blockChainServer,
+		const ConnectedPeer& connectedPeer
+	);
+
+	Connection(const Connection&) = delete;
+	Connection& operator=(const Connection&) = delete;
+	Connection(Connection&&) = delete;
 
 	inline uint64_t GetId() const { return m_connectionId; }
 	bool Connect();

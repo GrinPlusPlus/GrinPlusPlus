@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RateCounter.h"
+
 #include <P2P/SocketAddress.h>
 #include <inttypes.h>
 #include <vector>
@@ -22,6 +24,7 @@ public:
 	inline const SocketAddress& GetSocketAddress() const { return m_address; }
 	inline const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }
 	inline uint16_t GetPort() const { return m_address.GetPortNumber(); }
+	inline RateCounter& GetRateCounter() { return m_rateCounter; }
 
 	bool SetReceiveTimeout(const unsigned long milliseconds);
 	inline unsigned long GetReceiveTimeout() const { return m_receiveTimeout; }
@@ -35,10 +38,10 @@ public:
 	bool SetBlocking(const bool blocking);
 	inline bool IsBlocking() const { return m_blocking; }
 
-	bool Send(const std::vector<unsigned char>& message);
+	bool Send(const std::vector<unsigned char>& message, const bool incrementCount);
 
 	bool HasReceivedData();
-	bool Receive(const size_t numBytes, std::vector<unsigned char>& data);
+	bool Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data);
 
 private:
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
@@ -50,5 +53,5 @@ private:
 	unsigned long m_receiveTimeout;
 	unsigned long m_sendTimeout;
 	int m_receiveBufferSize;
-	// TODO: Connection stats
+	RateCounter m_rateCounter;
 };

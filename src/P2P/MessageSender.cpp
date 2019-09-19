@@ -24,5 +24,5 @@ bool MessageSender::Send(Socket& socket, const IMessage& message) const
 		LoggerAPI::LogTrace("Sending message " + MessageTypes::ToString(message.GetMessageType()) + " to " + socket.GetSocketAddress().Format());
 	}
 
-	return socket.Send(serializer.GetBytes());
+	return socket.Send(serializer.GetBytes(), true);
 }

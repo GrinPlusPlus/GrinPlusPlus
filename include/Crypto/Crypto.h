@@ -180,14 +180,6 @@ public:
 	static std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey);
 
 	//
-	//
-	//
-	static std::unique_ptr<SecretKey> ECDH(
-		const SecretKey& privateKey,
-		const PublicKey& publicKey
-	);
-
-	//
 	// Adds a number of public keys together.
 	// Returns the combined public key if successful.
 	//

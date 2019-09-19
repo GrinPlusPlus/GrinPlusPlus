@@ -159,7 +159,11 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 
 		if (result == 1)
 		{
-			return std::make_unique<RewoundProof>(RewoundProof(value, std::make_unique<SecretKey>(SecretKey(std::move(blindingFactorBytes))), ProofMessage(std::move(message))));
+			return std::make_unique<RewoundProof>(RewoundProof(
+				value, 
+				std::make_unique<SecretKey>(SecretKey(std::move(blindingFactorBytes))), 
+				ProofMessage(std::move(message))
+			));
 		}
 	}
 

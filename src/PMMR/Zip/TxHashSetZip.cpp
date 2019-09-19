@@ -41,7 +41,7 @@ bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) c
 		return false;
 	}
 
-	LoggerAPI::LogInfo("TxHashSetZip::Extract - Successfully extracted zip file.");
+	LOG_INFO("Successfully extracted zip file.");
 	zipFile.Close();
 	return true;
 }
@@ -52,16 +52,16 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 	const fs::path kernelPath(kernelDir);
 	if (fs::exists(kernelPath))
 	{
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractKernelFolder - Kernel folder exists. Deleting its contents now.");
+		LOG_DEBUG("Kernel folder exists. Deleting its contents now.");
 		std::error_code errorCode;
 		const uint64_t removedFiles = fs::remove_all(kernelPath, errorCode);
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractKernelFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
+		LOG_DEBUG(std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
 	const bool kernelDirCreated = fs::create_directories(kernelPath);
 	if (!kernelDirCreated)
 	{
-		LoggerAPI::LogError("TxHashSetZip::ExtractKernelFolder - Failed to create Kernel folder.");
+		LOG_ERROR("Failed to create Kernel folder.");
 		return false;
 	}
 
@@ -71,7 +71,7 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 		const EZipFileStatus extractStatus = zipFile.ExtractFile("kernel/" + file, kernelDir + "/" + file);
 		if (extractStatus != EZipFileStatus::SUCCESS)
 		{
-			LoggerAPI::LogError("TxHashSetZip::ExtractKernelFolder - Failed to extract file (" + file + ").");
+			LOG_ERROR("Failed to extract file (" + file + ").");
 			return false;
 		}
 	}
@@ -85,16 +85,16 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 	const fs::path outputPath(outputDir);
 	if (fs::exists(outputPath))
 	{
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractOutputFolder - Output folder exists. Deleting its contents now.");
+		LOG_DEBUG("Output folder exists. Deleting its contents now.");
 		std::error_code errorCode;
 		const uint64_t removedFiles = fs::remove_all(outputPath, errorCode);
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractOutputFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
+		LOG_DEBUG(std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
 	const bool outputDirCreated = fs::create_directories(outputPath);
 	if (!outputDirCreated)
 	{
-		LoggerAPI::LogError("TxHashSetZip::ExtractOutputFolder - Failed to create Output folder.");
+		LOG_ERROR("Failed to create Output folder.");
 		return false;
 	}
 
@@ -104,7 +104,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 		const EZipFileStatus extractStatus = zipFile.ExtractFile("output/" + file, outputDir + "/" + file);
 		if (extractStatus != EZipFileStatus::SUCCESS)
 		{
-			LoggerAPI::LogError("TxHashSetZip::ExtractOutputFolder - Failed to extract file (" + file + ").");
+			LOG_ERROR("Failed to extract file (" + file + ").");
 			return false;
 		}
 	}
@@ -120,16 +120,16 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 	const fs::path rangeProofPath(rangeProofDir);
 	if (fs::exists(rangeProofPath))
 	{
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractRangeProofFolder - RangeProof folder exists. Deleting its contents now.");
+		LOG_DEBUG("RangeProof folder exists. Deleting its contents now.");
 		std::error_code errorCode;
 		const uint64_t removedFiles = fs::remove_all(rangeProofPath, errorCode);
-		LoggerAPI::LogDebug("TxHashSetZip::ExtractRangeProofFolder - " + std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
+		LOG_DEBUG(std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
 	}
 
 	const bool rangeProofDirCreated = fs::create_directories(rangeProofPath);
 	if (!rangeProofDirCreated)
 	{
-		LoggerAPI::LogError("TxHashSetZip::ExtractRangeProofFolder - Failed to create RangeProof folder.");
+		LOG_ERROR("Failed to create RangeProof folder.");
 		return false;
 	}
 
@@ -139,7 +139,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 		const EZipFileStatus extractStatus = zipFile.ExtractFile("rangeproof/" + file, rangeProofDir + "/" + file);
 		if (extractStatus != EZipFileStatus::SUCCESS)
 		{
-			LoggerAPI::LogError("TxHashSetZip::ExtractRangeProofFolder - Failed to extract file (" + file + ").");
+			LOG_ERROR("Failed to extract file (" + file + ").");
 			return false;
 		}
 	}

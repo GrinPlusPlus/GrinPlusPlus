@@ -2,19 +2,18 @@
 #include <Crypto/CryptoException.h>
 #include <Infrastructure/Logger.h>
 
-#include "Blake2.h"
-#include "sha256.h"
-#include "ripemd160.h"
-#include "hmac_sha256.h"
-#include "hmac_sha512.h"
-#include "aes.h"
-#include "scrypt/crypto_scrypt.h"
-#include "siphash.h"
+#include "ThirdParty/Blake2.h"
+#include "ThirdParty/sha256.h"
+#include "ThirdParty/ripemd160.h"
+#include "ThirdParty/hmac_sha256.h"
+#include "ThirdParty/hmac_sha512.h"
+#include "ThirdParty/aes.h"
+#include "ThirdParty/siphash.h"
+#include <scrypt/crypto_scrypt.h>
 
 // Secp256k1
 #include "AggSig.h"
 #include "Bulletproofs.h"
-#include "ECDH.h"
 #include "Pedersen.h"
 #include "PublicKeys.h"
 
@@ -242,11 +241,6 @@ SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned
 std::unique_ptr<PublicKey> Crypto::CalculatePublicKey(const SecretKey& privateKey)
 {
 	return PublicKeys::GetInstance().CalculatePublicKey(privateKey);
-}
-
-std::unique_ptr<SecretKey> Crypto::ECDH(const SecretKey& privateKey, const PublicKey& publicKey)
-{
-	return ECDH::GetInstance().CalculateSharedSecret(privateKey, publicKey);
 }
 
 std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)

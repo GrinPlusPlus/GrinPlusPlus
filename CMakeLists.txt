@@ -17,7 +17,7 @@ endif()
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
-set(VERSION_REVISION 4)
+set(VERSION_REVISION 5)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
@@ -57,8 +57,8 @@ set(WITH_GFLAGS OFF)
 add_definitions(-DNDEBUG)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
-add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
-add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+#add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
+#add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 add_definitions(-DASIO_STANDALONE)
 add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
 
@@ -92,6 +92,9 @@ include(rocksdb)
 include(croaring)
 include(civetweb)
 include(uint128)
+include(ctaes)
+include(scrypt)
+include(secp256k1-zkp)
 add_subdirectory(deps/cuckoo)
 
 # Grin++ Projects

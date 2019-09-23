@@ -44,7 +44,7 @@ void PeerDB::CloseDB()
 
 std::vector<Peer> PeerDB::LoadAllPeers()
 {
-	LoggerAPI::LogTrace("PeerDB::LoadAllPeers - Loading all peers.");
+	LOG_TRACE("Loading all peers.");
 
 	std::vector<Peer> peers;
 
@@ -61,7 +61,7 @@ std::vector<Peer> PeerDB::LoadAllPeers()
 
 std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
 {
-	LoggerAPI::LogTrace("PeerDB::LoadAllPeers - Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
+	LOG_TRACE("Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
 
 	Serializer addressSerializer;
 	if (address.IsLocalhost() && portOpt.has_value())
@@ -90,7 +90,7 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 
 void PeerDB::SavePeers(const std::vector<Peer>& peers)
 {
-	LoggerAPI::LogTrace("PeerDB::SavePeers - Saving peers: " + std::to_string(peers.size()));
+	LOG_TRACE_F("Saving peers: %llu", peers.size());
 
 	WriteBatch writeBatch;
 	for (const Peer& peer : peers)

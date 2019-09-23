@@ -18,7 +18,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	std::unique_ptr<BlockHeader> pHeader = m_chainState.GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
 	{
-		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Header not found for hash %s.", HexUtil::ConvertHash(blockHash).c_str()));
+		LOG_ERROR_F("Header not found for hash %s.", HexUtil::ConvertHash(blockHash).c_str());
 		return false;
 	}
 
@@ -29,7 +29,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	ITxHashSet* pTxHashSet = TxHashSetManager::LoadFromZip(m_config, m_blockDB, path, *pHeader);
 	if (pTxHashSet == nullptr)
 	{
-		LoggerAPI::LogError("TxHashSetProcessor::ProcessTxHashSet - Failed to load " + path);
+		LOG_ERROR("Failed to load " + path);
 		return false;
 	}
 
@@ -37,7 +37,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
 	if (pBlockSums == nullptr)
 	{
-		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Validation of %s failed.", path.c_str()));
+		LOG_ERROR_F("Validation of %s failed.", path.c_str());
 		TxHashSetManager::DestroyTxHashSet(pTxHashSet);
 		return false;
 	}
@@ -47,7 +47,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 
 	// 5. Add Output positions to DB
 	{
-		LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Saving output positions.");
+		LOG_DEBUG("Saving output positions.");
 		LockedChainState lockedState = m_chainState.GetLocked();
 		Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
 
@@ -65,15 +65,15 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 6. Store TxHashSet
-	LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Using TxHashSet.");
+	LOG_DEBUG("Using TxHashSet.");
 	LockedChainState lockedState = m_chainState.GetLocked();
 	lockedState.m_txHashSetManager.SetTxHashSet(pTxHashSet);
 
 	// 7. Update confirmed chain
-	LoggerAPI::LogDebug("TxHashSetProcessor::ProcessTxHashSet - Updating confirmed chain.");
+	LOG_DEBUG("Updating confirmed chain.");
 	if (!UpdateConfirmedChain(lockedState, *pHeader))
 	{
-		LoggerAPI::LogError(StringUtil::Format("TxHashSetProcessor::ProcessTxHashSet - Failed to update confirmed chain for %s.", path.c_str()));
+		LOG_ERROR_F("Failed to update confirmed chain for %s.", path.c_str());
 		lockedState.m_txHashSetManager.Close();
 		return false;
 	}

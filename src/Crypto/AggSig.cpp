@@ -53,7 +53,7 @@ std::unique_ptr<CompactSignature> AggSig::SignMessage(const SecretKey& secretKey
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
 	if (randomizeResult != 1)
     {
-	    LoggerAPI::LogError("AggSig::SignMessage - Context randomization failed.");
+		LOG_ERROR("Context randomization failed.");
         return std::unique_ptr<CompactSignature>(nullptr);
     }
 
@@ -249,13 +249,13 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 			}
 			else
 			{
-				LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to convert commitment to pubkey: " + commitment->ToHex());
+				LOG_ERROR("Failed to convert commitment to pubkey: " + commitment->ToHex());
 				return false;
 			}
 		}
 		else
 		{
-			LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Failed to parse commitment " + commitment->ToHex());
+			LOG_ERROR("Failed to parse commitment " + commitment->ToHex());
 			return false;
 		}
 	}
@@ -300,7 +300,7 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 	}
 	else
 	{
-		LoggerAPI::LogError("AggSig::VerifyAggregateSignatures - Signature failed to verify.");
+		LOG_ERROR("Signature failed to verify.");
 		return false;
 	}
 }

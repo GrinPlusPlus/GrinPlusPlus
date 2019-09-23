@@ -15,10 +15,11 @@ StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServer
 	m_connectionId = 0;
 }
 
-bool StateSyncer::SyncState(const SyncStatus& syncStatus)
+bool StateSyncer::SyncState(SyncStatus& syncStatus)
 {
 	if (IsStateSyncDue(syncStatus))
 	{
+		syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
 		RequestState(syncStatus);
 
 		return true;

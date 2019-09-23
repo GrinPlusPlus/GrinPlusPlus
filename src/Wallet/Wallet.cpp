@@ -13,7 +13,7 @@ Wallet::Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& w
 
 Wallet* Wallet::LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username)
 {
-	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // TODO: Need to lookup actual account
+	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
 	return new Wallet(config, nodeClient, walletDB, username, std::move(userPath));
 }
 
@@ -172,7 +172,7 @@ OutputData Wallet::CreateBlindedOutput(
 		}
 	}
 
-	LoggerAPI::LogError("Wallet::CreateBlindedOutput - Failed to create output.");
+	LOG_ERROR("Failed to create output.");
 	throw CryptoException();
 }
 
@@ -212,7 +212,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxById(const SecureVector& masterSeed, cons
 		}
 	}
 
-	LoggerAPI::LogInfo("Wallet::GetTxById - Could not find transaction " + std::to_string(walletTxId));
+	LOG_INFO_F("Could not find transaction %lu", walletTxId);
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 
@@ -227,14 +227,14 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed,
 		}
 	}
 
-	LoggerAPI::LogInfo("Wallet::GetTxBySlateId - Could not find transaction " + uuids::to_string(slateId));
+	LOG_INFO("Could not find transaction " + uuids::to_string(slateId));
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 
 bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
-	LoggerAPI::LogDebug("Wallet::CancelWalletTx - Canceling WalletTx (" + std::to_string(walletTx.GetId()) + ") of type " + WalletTxType::ToString(type));
+	LOG_DEBUG_F("Canceling WalletTx (%lu) of type (%s).", walletTx.GetId(), WalletTxType::ToString(type).c_str());
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
@@ -245,7 +245,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 	}
 	else
 	{
-		LoggerAPI::LogError("Wallet::CancelWalletTx - WalletTx was not in a cancelable status.");
+		LOG_ERROR("WalletTx was not in a cancelable status.");
 		return false;
 	}
 
@@ -267,7 +267,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 		if (iter != inputCommitments.end())
 		{
 			const EOutputStatus status = output.GetStatus();
-			LoggerAPI::LogDebug("Wallet::CancelWalletTx - Found input with status " + OutputStatus::ToString(status));
+			LOG_DEBUG("Found input with status " + OutputStatus::ToString(status));
 
 			if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 			{
@@ -281,14 +281,14 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 			}
 			else if (walletTx.GetType() != EWalletTxType::SENT_CANCELED)
 			{
-				LoggerAPI::LogError("Wallet::CancelWalletTx - Can't cancel output with status " + OutputStatus::ToString(status));
+				LOG_ERROR("Can't cancel output with status " + OutputStatus::ToString(status));
 				return false;
 			}
 		}
 		else if (output.GetWalletTxId() == walletTx.GetId())
 		{
 			const EOutputStatus status = output.GetStatus();
-			LoggerAPI::LogDebug("Wallet::CancelWalletTx - Found output with status " + OutputStatus::ToString(status));
+			LOG_DEBUG("Found output with status " + OutputStatus::ToString(status));
 
 			if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 			{
@@ -297,7 +297,7 @@ bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 			}
 			else if (status != EOutputStatus::CANCELED)
 			{
-				LoggerAPI::LogError("Wallet::CancelWalletTx - Can't cancel output with status " + OutputStatus::ToString(status));
+				LOG_ERROR("Can't cancel output with status " + OutputStatus::ToString(status));
 				return false;
 			}
 		}

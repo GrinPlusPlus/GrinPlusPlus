@@ -37,9 +37,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 
 	if (hasReceivedData)
 	{
-		//LOG_TRACE("Received data from: " + connectedPeer.GetPeer().GetIPAddress().Format());
 		socket.SetReceiveTimeout(5 * 1000);
-		//socket.SetBlocking(true);
 
 		std::vector<unsigned char> headerBuffer(11, 0);
 		const bool received = socket.Receive(11, true, headerBuffer);
@@ -80,17 +78,3 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 
 	return std::unique_ptr<RawMessage>(nullptr);
 }
-
-/*void MessageRetriever::LogError() const
-{
-	const int lastError = WSAGetLastError();
-
-	TCHAR* s = NULL;
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
-
-	const std::string errorMessage = s;
-	LoggerAPI::LogTrace(errorMessage);
-
-	LocalFree(s);
-}*/

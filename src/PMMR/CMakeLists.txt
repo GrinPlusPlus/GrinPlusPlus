@@ -9,7 +9,6 @@ file(GLOB SOURCE_CODE
     "TxHashSetImpl.cpp"
     "TxHashSetManager.cpp"
     "TxHashSetValidator.cpp"
-    "Common/HashFile.cpp"
     "Common/LeafSet.cpp"
     "Common/MMRHashUtil.cpp"
     "Common/MMRUtil.cpp"

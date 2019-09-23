@@ -1,7 +1,6 @@
 #include "BlockDBImpl.h"
 
 #include <Infrastructure/Logger.h>
-#include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <utility>
 #include <string>
@@ -48,18 +47,6 @@ void BlockDB::OpenDB()
 		m_pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &m_pOutputPosHandle);
 		m_pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &m_pInputBitmapHandle);
 	}
-	else if (columnFamilies.size() == 5)
-	{
-		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN });
-		std::vector<ColumnFamilyHandle*> columnHandles;
-		Status s = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
-		m_pDefaultHandle = columnHandles[0];
-		m_pBlockHandle = columnHandles[1];
-		m_pHeaderHandle = columnHandles[2];
-		m_pBlockSumsHandle = columnHandles[3];
-		m_pOutputPosHandle = columnHandles[4];
-		m_pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &m_pInputBitmapHandle);
-	}
 	else
 	{
 		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
@@ -76,7 +63,6 @@ void BlockDB::OpenDB()
 
 void BlockDB::CloseDB()
 {
-	//delete m_pDefaultHandle;
 	delete m_pBlockHandle;
 	delete m_pHeaderHandle;
 	delete m_pBlockSumsHandle;
@@ -87,7 +73,7 @@ void BlockDB::CloseDB()
 
 std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& hashes) const
 {
-	LoggerAPI::LogTrace("BlockDB::LoadBlockHeaders - Loading headers - " + std::to_string(hashes.size()));
+	LOG_TRACE_F("Loading (%llu) headers.", hashes.size());
 
 	std::vector<BlockHeader*> blockHeaders;
 	blockHeaders.reserve(hashes.size());
@@ -106,7 +92,7 @@ std::vector<BlockHeader*> BlockDB::LoadBlockHeaders(const std::vector<Hash>& has
 		}
 	}
 
-	LoggerAPI::LogTrace("BlockDB::LoadBlockHeaders - Finished loading headers.");
+	LOG_TRACE("Finished loading headers.");
 	return blockHeaders;
 }
 
@@ -129,7 +115,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 
 void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 {
-	LoggerAPI::LogTrace("BlockDB::AddBlockHeader - Adding header");
+	LOG_TRACE("Adding header");
 	const std::vector<unsigned char>& hash = blockHeader.GetHash().GetData();
 
 	Serializer serializer;
@@ -142,7 +128,7 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 
 void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 {
-	LoggerAPI::LogTrace("BlockDB::AddBlockHeaders - Adding headers - " + std::to_string(blockHeaders.size()));
+	LOG_TRACE_F("Adding (%llu) headers.", blockHeaders.size());
 
 	for (const BlockHeader& blockHeader : blockHeaders)
 	{
@@ -156,12 +142,12 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 		m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, key, value);
 	}
 
-	LoggerAPI::LogTrace("BlockDB::AddBlockHeaders - Finished adding headers.");
+	LOG_TRACE("Finished adding headers.");
 }
 
 void BlockDB::AddBlock(const FullBlock& block)
 {
-	LoggerAPI::LogTrace("BlockDB::AddBlock - Adding block");
+	LOG_TRACE("Adding block");
 	const std::vector<unsigned char>& hash = block.GetHash().GetData();
 
 	Serializer serializer;
@@ -191,7 +177,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 {
-	LoggerAPI::LogTrace("BlockDB::AddBlockSums - Adding BlockSums for block " + HexUtil::ConvertHash(blockHash));
+	LOG_TRACE("Adding BlockSums for block " + blockHash.ToHex());
 
 	Slice key((const char*)&blockHash[0], 32);
 
@@ -226,7 +212,6 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location)
 {
 	const std::string outputHex = outputCommitment.ToHex();
-	//LoggerAPI::LogTrace(StringUtil::Format("BlockDB::AddOutputPosition - Adding position (%llu) at height (%llu) for output (%s).", location.GetMMRIndex(), location.GetBlockHeight(), outputHex.c_str()));
 
 	Slice key((const char*)outputCommitment.GetCommitmentBytes().data(), 32); // TODO: This should be 33 bytes. Need to find a good way to fix this.
 

@@ -1,6 +1,14 @@
 #include <Crypto/RandomNumberGenerator.h>
 
 #include <random>
+#include <Crypto/CryptoException.h>
+
+#ifdef _WIN32
+#pragma comment(lib, "Bcrypt.lib")
+#include <bcrypt.h>
+#else
+#include <fcntl.h>  
+#endif
 
 CBigInteger<32> RandomNumberGenerator::GenerateRandom32()
 {
@@ -10,16 +18,31 @@ CBigInteger<32> RandomNumberGenerator::GenerateRandom32()
 
 SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
 {
-	// TODO: Find a good CSPRNG
-	std::random_device randomDevice;
-	std::mt19937 rng(randomDevice());
-	std::uniform_int_distribution<unsigned short> uniformDistribution(0, 255);
-
 	SecureVector buffer(numBytes);
-	for (uint8_t i = 0; i < numBytes; i++)
+#ifdef _WIN32
+	const NTSTATUS status = BCryptGenRandom(nullptr, buffer.data(), buffer.size(), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+	if (!BCRYPT_SUCCESS(status))
 	{
-		buffer[i] = (unsigned char)uniformDistribution(rng);
+		throw CryptoException("RNG Failure");
 	}
+#else
+	bool success = false;
+	int hFile = open("/dev/urandom", O_RDONLY);
+	if (hFile >= 0)
+	{
+		if (read(hFile, p, nSize) == nSize)
+		{
+			success = true;
+		}
+
+		close(hFile);
+	}
+
+	if (!success)
+	{
+		throw CryptoException("RNG Failure");
+	}
+#endif
 
 	return buffer;
 }

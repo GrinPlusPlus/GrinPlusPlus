@@ -1,25 +1,27 @@
 #pragma once
 
-#include <Core/File.h>
+#include <Core/DataFile.h>
 #include <Crypto/Hash.h>
 #include <string>
 
-class HashFile
+class HashFile : public DataFile<32>
 {
 public:
-	HashFile(const std::string& path);
+	HashFile(const std::string& path) : DataFile<32>(path) { };
 
-	bool Load();
-	bool Flush();
-	bool Rewind(const uint64_t size);
-	bool Discard();
+	inline Hash GetHashAt(const uint64_t mmrIndex) const
+	{
+		std::vector<unsigned char> data;
+		if (GetDataAt(mmrIndex, data))
+		{
+			return Hash(std::move(data));
+		}
 
-	uint64_t GetSize() const;
-	Hash GetHashAt(const uint64_t mmrIndex) const;
+		return ZERO_HASH;
+	}
 	
-	void AddHash(const Hash& hash);
-
-private:
-	// TODO: Store peaks in memory
-	File m_file;
+	inline void AddHash(const Hash& hash)
+	{
+		AddData(hash.GetData());
+	}
 };

@@ -16,7 +16,7 @@ BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, ChainState& cha
 
 EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& header)
 {
-	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessSingleHeader - Validating " + header.FormatHash());
+	LOG_TRACE("Validating " + header.FormatHash());
 
 	LockedChainState lockedState = m_chainState.GetLocked();
 	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
@@ -25,7 +25,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Header %s already processed.", header.FormatHash().c_str()));
+		LOG_TRACE_F("Header %s already processed.", header.FormatHash().c_str());
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -64,18 +64,18 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 			}
 		}
 
-		LoggerAPI::LogDebug(StringUtil::Format("BlockHeaderProcessor::ProcessSingleHeader - Processing header %s as an orphan.", header.FormatHash().c_str()));
+		LOG_DEBUG_F("Processing header %s as an orphan.", header.FormatHash().c_str());
 		lockedState.m_orphanPool.AddOrphanHeader(header);
 		return EBlockChainStatus::ORPHANED;
 	}
 
-	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessSingleHeader - Processing next candidate header " + header.FormatHash());
+	LOG_TRACE("Processing next candidate header " + header.FormatHash());
 
 	// Validate the header.
 	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
 	if (!BlockHeaderValidator(m_config, lockedState.m_blockStore.GetBlockDB(), lockedState.m_headerMMR).IsValidHeader(header, *pPreviousHeaderPtr))
 	{
-		LoggerAPI::LogError("BlockHeaderProcessor::ProcessSingleHeader - Header failed to validate.");
+		LOG_ERROR("Header failed to validate.");
 		return EBlockChainStatus::INVALID;
 	}
 
@@ -88,7 +88,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	candidateChain.AddBlock(pBlockIndex);
 	lockedState.m_chainStore.Flush();
 
-	LoggerAPI::LogDebug("BlockHeaderProcessor::ProcessSingleHeader - Successfully validated " + header.FormatHash());
+	LOG_DEBUG("Successfully validated " + header.FormatHash());
 
 	return EBlockChainStatus::SUCCESS;
 }
@@ -103,7 +103,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 	const uint64_t height = headers.front().GetHeight();
 	if (height == 0)
 	{
-		LoggerAPI::LogError("BlockHeaderProcessor::ProcessSyncHeaders - Header with height 0 received.");
+		LOG_ERROR("Header with height 0 received.");
 		return EBlockChainStatus::INVALID;
 	}
 
@@ -156,17 +156,17 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 
 	if (newHeaders.empty())
 	{
-		LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Headers already processed.");
+		LOG_TRACE("Headers already processed.");
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	LoggerAPI::LogTrace("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Processing " + std::to_string(newHeaders.size()) + " headers.");
+	LOG_TRACE_F("Processing (%llu) headers.", newHeaders.size());
 
 	// Check if previous header exists and matches previous.
 	BlockIndex* pPrevIndex = syncChain.GetByHeight(newHeaders.front()->GetHeight() - 1);
 	if (pPrevIndex == nullptr || pPrevIndex->GetHash() != newHeaders.front()->GetPreviousBlockHash())
 	{
-		LoggerAPI::LogInfo("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Previous header doesn't match. Still syncing?");
+		LOG_INFO("Previous header doesn't match. Still syncing?");
 		return EBlockChainStatus::UNKNOWN_ERROR;
 	}
 
@@ -194,7 +194,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 	const EBlockChainStatus addSyncHeadersStatus = AddSyncHeaders(lockedState, newHeaders);
 	if (addSyncHeadersStatus != EBlockChainStatus::SUCCESS)
 	{
-		LoggerAPI::LogError("BlockHeaderProcessor::ProcessChunkedSyncHeaders - Failed to add sync headers.");
+		LOG_ERROR("Failed to add sync headers.");
 		headerMMR.Rollback();
 		lockedState.m_chainStore.ReorgChain(EChainType::CANDIDATE, EChainType::SYNC, candidateChain.GetTip()->GetHeight());
 

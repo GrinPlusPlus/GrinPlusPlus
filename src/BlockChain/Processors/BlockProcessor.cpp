@@ -18,13 +18,13 @@ BlockProcessor::BlockProcessor(const Config& config, const IBlockDB& blockDB, Ch
 EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 {	
 	const uint64_t candidateHeight = m_chainState.GetHeight(EChainType::CANDIDATE);
-	const uint64_t horizonHeight = std::max(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
+	const uint64_t horizonHeight = (std::max)(candidateHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
 
 	const BlockHeader& header = block.GetBlockHeader();
 	uint64_t height = header.GetHeight();
 	if (height <= horizonHeight)
 	{
-		LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Can't process blocks beyond horizon.");
+		LOG_WARNING("Can't process blocks beyond horizon.");
 		return EBlockChainStatus::INVALID;
 	}
 
@@ -37,14 +37,14 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		// Verify block is self-consistent before locking
 		if (!BlockValidator(m_blockDB, nullptr).IsBlockSelfConsistent(block))
 		{
-			LoggerAPI::LogWarning("BlockProcessor::ProcessBlock - Failed to validate " + header.FormatHash());
+			LOG_WARNING("Failed to validate " + header.FormatHash());
 			return EBlockChainStatus::INVALID;
 		}
 
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s successfully processed.", header.FormatHash().c_str()));
+			LOG_TRACE_F("Block %s successfully processed.", header.FormatHash().c_str());
 		}
 
 		return returnStatus;
@@ -63,7 +63,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
 	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.GetHash())
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already part of confirmed chain.", header.FormatHash().c_str()));
+		LOG_TRACE_F("Block %s already part of confirmed chain.", header.FormatHash().c_str());
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -105,7 +105,7 @@ EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, Loc
 	// Check if already processed as an orphan
 	if (lockedState.m_orphanPool.IsOrphan(block.GetBlockHeader().GetHeight(), block.GetHash()))
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str()));
+		LOG_TRACE_F("Block %s already processed as an orphan.", block.GetBlockHeader().FormatHash().c_str());
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -123,7 +123,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Locked
 	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
-		LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Candidate block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", header.FormatHash().c_str());
 		return EBlockStatus::ORPHAN;
 	}
 
@@ -133,7 +133,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Locked
 	BlockIndex* pPreviousConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr)
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockProcessor::ProcessBlock - Previous confirmed block missing. Treating %s as orphan.", header.FormatHash().c_str()));
+		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", header.FormatHash().c_str());
 		return EBlockStatus::ORPHAN;
 	}
 	
@@ -141,7 +141,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Locked
 	{
 		const uint64_t forkPoint = lockedState.m_chainStore.FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 
-		LoggerAPI::LogWarning(StringUtil::Format("BlockProcessor::ProcessBlock - Fork detected at height (%lld).", forkPoint));
+		LOG_WARNING_F("Fork detected at height (%lld).", forkPoint);
 
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
 		for (uint64_t i = forkPoint; i < header.GetHeight(); i++)
@@ -160,7 +160,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Locked
 	BlockIndex* pConfirmedIndex = confirmedChain.GetByHeight(header.GetHeight());
 	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
 	{
-		LoggerAPI::LogDebug(StringUtil::Format("BlockProcessor::ProcessBlock - Confirmed block mismatch. Treating %s as orphan.", header.FormatHash().c_str()));
+		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", header.FormatHash().c_str());
 
 		return EBlockStatus::REORG;
 	}

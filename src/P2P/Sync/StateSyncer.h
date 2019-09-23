@@ -12,7 +12,7 @@ class StateSyncer
 public:
 	StateSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
 
-	bool SyncState(const SyncStatus& syncStatus);
+	bool SyncState(SyncStatus& syncStatus);
 
 private:
 	bool IsStateSyncDue(const SyncStatus& syncStatus) const;

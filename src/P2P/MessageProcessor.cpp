@@ -323,14 +323,14 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetRequestMessage txHashSetRequestMessage = TxHashSetRequestMessage::Deserialize(byteBuffer);
 
-				return SendTxHashSet(connectionId, socket, connectedPeer, txHashSetRequestMessage);
+				return SendTxHashSet(connectionId, socket, txHashSetRequestMessage);
 			}
 			case TxHashSetArchive:
 			{
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return ReceiveTxHashSet(connectionId, socket, connectedPeer, txHashSetArchiveMessage);
+				return ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage);
 			}
 			case GetTransactionMsg:
 			{
@@ -378,9 +378,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 	return EStatus::UNKNOWN_MESSAGE;
 }
 
-MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetRequestMessage& txHashSetRequestMessage)
+MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
-	LOG_INFO_F("Sending TxHashSet snapshot to %s", connectedPeer.GetPeer().GetIPAddress().Format().c_str());
+	LOG_INFO_F("Sending TxHashSet snapshot to %s", socket.GetIPAddress().Format().c_str());
 
 	std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
 	if (pHeader == nullptr)
@@ -437,11 +437,17 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connect
 	return EStatus::SUCCESS;
 }
 
-MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
+MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
-	LOG_INFO_F("Downloading TxHashSet from %s", connectedPeer.GetPeer().GetIPAddress().Format().c_str());
-
 	SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
+	if (syncStatus.GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
+	{
+		LOG_WARNING_F("Received TxHashSet from Peer (%s) when not requested.", socket.GetIPAddress().Format().c_str());
+		return EStatus::BAN_PEER;
+	}
+
+	LOG_INFO_F("Downloading TxHashSet from %s", socket.GetIPAddress().Format().c_str());
+
 	syncStatus.UpdateDownloaded(0);
 	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 

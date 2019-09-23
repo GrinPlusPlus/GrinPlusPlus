@@ -35,7 +35,7 @@ std::unique_ptr<Commitment> Pedersen::PedersenCommit(const uint64_t value, const
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommit - Failed to create commitment. Result: " + std::to_string(result) + " Value: " + std::to_string(value) + " Blind: " + blindingFactor.GetBytes().ToHex());
+	LOG_ERROR_F("Failed to create commitment. Result: %d, Value: %llu, Blind: %s", result, value, blindingFactor.GetBytes().ToHex().c_str());
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -67,7 +67,7 @@ std::unique_ptr<Commitment> Pedersen::PedersenCommitSum(const std::vector<Commit
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	LoggerAPI::LogError("Secp256k1Wrapper::PedersenCommitSum - secp256k1_pedersen_commit_sum returned result: " + std::to_string(result));
+	LOG_ERROR_F("secp256k1_pedersen_commit_sum returned result: %d", result);
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -94,7 +94,7 @@ std::unique_ptr<BlindingFactor> Pedersen::PedersenBlindSum(const std::vector<Bli
 		return std::make_unique<BlindingFactor>(BlindingFactor(std::move(blindingFactorBytes)));
 	}
 
-	LoggerAPI::LogError("Secp256k1Wrapper::PedersenBlindSum - secp256k1_pedersen_blind_sum returned result: " + std::to_string(result));
+	LOG_ERROR_F("secp256k1_pedersen_blind_sum returned result: %d", result);
 	return std::unique_ptr<BlindingFactor>(nullptr);
 }
 

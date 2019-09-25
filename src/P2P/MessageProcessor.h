@@ -35,7 +35,7 @@ public:
 
 private:
 	EStatus ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
-	EStatus SendTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage);
+	EStatus SendTxHashSet(ConnectedPeer& connectedPeer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage);
 	EStatus ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
 
 	const Config& m_config;

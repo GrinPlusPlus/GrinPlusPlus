@@ -19,12 +19,26 @@ public:
 	// Constructors
 	//
 	Peer(const SocketAddress& socketAddress)
-		: m_socketAddress(socketAddress), m_version(0), m_capabilities(Capabilities(Capabilities::UNKNOWN)), m_userAgent(""), m_lastContactTime(0), m_lastBanTime(0), m_banReason(EBanReason::None)
+		: m_socketAddress(socketAddress),
+		m_version(0),
+		m_capabilities(Capabilities(Capabilities::UNKNOWN)),
+		m_userAgent(""),
+		m_lastContactTime(0),
+		m_lastBanTime(0),
+		m_banReason(EBanReason::None),
+		m_lastTxHashSetRequest(0)
 	{
 
 	}
 	Peer(const SocketAddress& socketAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent)
-		: m_socketAddress(socketAddress), m_version(version), m_capabilities(capabilities), m_userAgent(userAgent), m_lastContactTime(0), m_lastBanTime(0), m_banReason(EBanReason::None)
+		: m_socketAddress(socketAddress),
+		m_version(version),
+		m_capabilities(capabilities),
+		m_userAgent(userAgent),
+		m_lastContactTime(0),
+		m_lastBanTime(0),
+		m_banReason(EBanReason::None),
+		m_lastTxHashSetRequest(0)
 	{
 
 	}
@@ -35,7 +49,8 @@ public:
 		m_userAgent(userAgent), 
 		m_lastContactTime(lastContactTime), 
 		m_lastBanTime(lastBanTime),
-		m_banReason(banReason)
+		m_banReason(banReason),
+		m_lastTxHashSetRequest(0)
 	{
 
 	}
@@ -70,6 +85,7 @@ public:
 		m_lastContactTime = other.m_lastContactTime.load();
 		m_lastBanTime = other.m_lastBanTime.load();
 		m_banReason = other.m_banReason.load();
+		m_lastTxHashSetRequest = other.m_lastTxHashSetRequest.load();
 		return *this;
 	}
 	Peer& operator=(Peer&& other) = default;
@@ -84,6 +100,7 @@ public:
 	inline void UpdateBanReason(const EBanReason banReason) { m_banReason = banReason; }
 	inline void Unban() { m_lastBanTime = 0; }
 	inline void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
+	inline void UpdateLastTxHashSetRequest() { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 
 	//
 	// Getters
@@ -97,6 +114,7 @@ public:
 	inline std::time_t GetLastContactTime() const { return m_lastContactTime; }
 	inline std::time_t GetLastBanTime() const { return m_lastBanTime; }
 	inline EBanReason GetBanReason() const { return m_banReason; }
+	inline std::time_t GetLastTxHashSetRequest() const { return m_lastTxHashSetRequest; }
 	inline bool IsBanned() const
 	{
 		const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
@@ -138,4 +156,5 @@ private:
 	mutable std::atomic<std::time_t> m_lastContactTime;
 	std::atomic<std::time_t> m_lastBanTime;
 	std::atomic<EBanReason> m_banReason;
+	std::atomic<std::time_t> m_lastTxHashSetRequest;
 };

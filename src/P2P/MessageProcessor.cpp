@@ -323,7 +323,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetRequestMessage txHashSetRequestMessage = TxHashSetRequestMessage::Deserialize(byteBuffer);
 
-				return SendTxHashSet(connectionId, socket, txHashSetRequestMessage);
+				return SendTxHashSet(connectedPeer, socket, txHashSetRequestMessage);
 			}
 			case TxHashSetArchive:
 			{
@@ -378,9 +378,17 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 	return EStatus::UNKNOWN_MESSAGE;
 }
 
-MessageProcessor::EStatus MessageProcessor::SendTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage)
+MessageProcessor::EStatus MessageProcessor::SendTxHashSet(ConnectedPeer& peer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
+	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
+	if (peer.GetPeer().GetLastTxHashSetRequest() > maxTxHashSetRequest)
+	{
+		LOG_WARNING_F("Peer (%s) requested multiple TxHashSet's within 2 hours.", socket.GetIPAddress().Format().c_str());
+		return EStatus::BAN_PEER;
+	}
+
 	LOG_INFO_F("Sending TxHashSet snapshot to %s", socket.GetIPAddress().Format().c_str());
+	peer.GetPeer().UpdateLastTxHashSetRequest();
 
 	std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
 	if (pHeader == nullptr)

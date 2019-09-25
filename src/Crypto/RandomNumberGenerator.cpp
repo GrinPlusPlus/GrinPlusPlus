@@ -30,7 +30,7 @@ SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
 	int hFile = open("/dev/urandom", O_RDONLY);
 	if (hFile >= 0)
 	{
-		if (read(hFile, p, nSize) == nSize)
+		if (read(hFile, buffer.data(), numBytes) == numBytes)
 		{
 			success = true;
 		}

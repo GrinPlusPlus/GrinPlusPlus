@@ -14,16 +14,14 @@
 5. Choose x64-Debug or x64-Release from build configurations drop-down
 6. Generate CMake Cache and Build All from the CMake menu
 
-Replace `<CONFIG>` with `Debug` or `Release`
-
 **Command Line**:
 1. ```Open "Developer Command Prompt for Visual Studio 2017"```
 2. ```cd C:/Choose/A/Path```
-3. ```git clone --recursive https://github.com/GrinPlusPlus/GrinPlusPlus.git```
+3. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
 4. ```cd GrinPlusPlus```
 5. ```mkdir build & cd build```
-6. ```cmake -G "Visual Studio 15 2017 Win64" ..```
-7. ```cmake --build . --config <CONFIG>```
+6. ```cmake ..```
+7. ```cmake --build .```
 
 Once your code is built, you can just open GrinNode.exe from your bin folder.
 
@@ -33,7 +31,7 @@ Once your code is built, you can just open GrinNode.exe from your bin folder.
 * gcc 7.x.x (Tested on gcc 7.4.0)
 * uuid-dev
 
-1. ```git clone --recursive https://github.com/GrinPlusPlus/GrinPlusPlus.git```
+1. ```git clone https://github.com/GrinPlusPlus/GrinPlusPlus.git```
 2. ```cd GrinPlusPlus```
 3. ```mkdir build```
 4. ```cd build```

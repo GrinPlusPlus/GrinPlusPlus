@@ -7,7 +7,8 @@
 #pragma comment(lib, "Bcrypt.lib")
 #include <bcrypt.h>
 #else
-#include <fcntl.h>  
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 CBigInteger<32> RandomNumberGenerator::GenerateRandom32()

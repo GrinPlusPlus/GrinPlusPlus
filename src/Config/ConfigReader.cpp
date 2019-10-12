@@ -32,8 +32,10 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 	// Read LogLevel
 	const std::string logLevel = ReadLogLevel(root);
 
+	const TorConfig torConfig = ReadTorConfig(root);
+
 	// TODO: Mempool, mining, and logger settings
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel);
+	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel, torConfig);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
@@ -215,4 +217,34 @@ std::string ConfigReader::ReadLogLevel(const Json::Value& root) const
 	}
 
 	return "DEBUG";
+}
+
+TorConfig ConfigReader::ReadTorConfig(const Json::Value& root) const
+{
+	uint16_t socksPort = 3421;
+	uint16_t controlPort = 3422;
+	std::string password = "MyPassword";
+	std::string hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
+	if (root.isMember(ConfigProps::Tor::TOR))
+	{
+		const Json::Value& torRoot = root[ConfigProps::Tor::TOR];
+
+		if (torRoot.isMember(ConfigProps::Tor::SOCKS_PORT))
+		{
+			socksPort = (uint16_t)torRoot[ConfigProps::Tor::SOCKS_PORT].asUInt();
+		}
+
+		if (torRoot.isMember(ConfigProps::Tor::CONTROL_PORT))
+		{
+			controlPort = (uint16_t)torRoot[ConfigProps::Tor::CONTROL_PORT].asUInt();
+		}
+
+		if (torRoot.isMember(ConfigProps::Tor::PASSWORD) && torRoot.isMember(ConfigProps::Tor::HASHED_PASSWORD))
+		{
+			password = torRoot[ConfigProps::Tor::PASSWORD].asCString();
+			hashedPassword = torRoot[ConfigProps::Tor::HASHED_PASSWORD].asCString();
+		}
+	}
+
+	return TorConfig(socksPort, controlPort, password, hashedPassword);
 }

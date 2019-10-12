@@ -1,6 +1,6 @@
 #pragma once
 
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <Config/Config.h>
 
 #include <vector>

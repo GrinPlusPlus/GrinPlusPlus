@@ -15,8 +15,9 @@
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
-#include <Common/Secure.h>
+#include <Wallet/Tor/TorAddress.h>
 #include <Crypto/SecretKey.h>
+#include <Common/Secure.h>
 
 #ifdef MW_WALLET
 #define WALLET_API EXPORT
@@ -60,6 +61,8 @@ public:
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
 
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const = 0;
+
+	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.

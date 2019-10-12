@@ -1,8 +1,9 @@
 #pragma once
 
 #include "civetweb/include/civetweb.h"
-#include "RestException.h"
 
+#include <Net/HTTP.h>
+#include <Net/HTTPException.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/Serialization/DeserializationException.h>
 #include <Core/Util/JsonUtil.h>
@@ -10,13 +11,7 @@
 #include <string>
 #include <optional>
 
-enum class EHTTPMethod
-{
-	GET,
-	POST
-};
-
-class RestUtil
+class HTTPUtil
 {
 public:
 	// Strips away the base URI and any query strings.
@@ -42,7 +37,7 @@ public:
 
 	static bool HasQueryParam(struct mg_connection* conn, const std::string& parameterName)
 	{
-		const std::string queryString = RestUtil::GetQueryString(conn);
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
 		if (!queryString.empty())
 		{
 			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
@@ -60,7 +55,7 @@ public:
 
 	static std::optional<std::string> GetQueryParam(struct mg_connection* conn, const std::string& parameterName)
 	{
-		const std::string queryString = RestUtil::GetQueryString(conn);
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
 		if (!queryString.empty())
 		{
 			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
@@ -76,7 +71,7 @@ public:
 					std::vector<std::string> parameterTokens = StringUtil::Split(token, "=");
 					if (parameterTokens.size() != 2)
 					{
-						throw RestException();
+						throw HTTPException();
 					}
 
 					return std::make_optional<std::string>(parameterTokens[1]);
@@ -98,19 +93,19 @@ public:
 		return std::nullopt;
 	}
 
-	static EHTTPMethod GetHTTPMethod(struct mg_connection* conn)
+	static HTTP::EHTTPMethod GetHTTPMethod(struct mg_connection* conn)
 	{
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
 		if (req_info->request_method == std::string("GET"))
 		{
-			return EHTTPMethod::GET;
+			return HTTP::EHTTPMethod::GET;
 		}
 		else if (req_info->request_method == std::string("POST"))
 		{
-			return EHTTPMethod::POST;
+			return HTTP::EHTTPMethod::POST;
 		}
 		
-		throw RestException();
+		throw HTTPException();
 	}
 
 	static std::optional<Json::Value> GetRequestBody(mg_connection* conn)
@@ -128,7 +123,7 @@ public:
 		const int bytesRead = mg_read(conn, requestBody.data(), contentLength);
 		if (bytesRead != contentLength)
 		{
-			throw RestException();
+			throw HTTPException();
 		}
 
 		Json::Value json;
@@ -145,7 +140,7 @@ public:
 		Json::StreamWriterBuilder builder;
 		builder["indentation"] = ""; // Removes whitespaces
 		const std::string output = Json::writeString(builder, json);
-		return RestUtil::BuildSuccessResponse(conn, output);
+		return HTTPUtil::BuildSuccessResponse(conn, output);
 	}
 
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)

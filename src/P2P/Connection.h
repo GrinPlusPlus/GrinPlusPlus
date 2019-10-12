@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Messages/Message.h"
-#include "Socket.h"
 
+#include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 #include <mutex>

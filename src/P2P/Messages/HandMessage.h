@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Message.h"
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <P2P/Capabilities.h>
 
 // First part of a handshake, sender advertises its version and characteristics.

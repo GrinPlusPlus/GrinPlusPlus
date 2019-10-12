@@ -1,7 +1,7 @@
 #include "ServerAPI.h"
-#include "../../RestUtil.h"
 #include "../NodeContext.h"
 
+#include <Net/HTTPUtil.h>
 #include <P2P/Common.h>
 #include <json/json.h>
 
@@ -24,7 +24,7 @@
 */
 int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
 {
-	if (RestUtil::GetHTTPMethod(conn) == EHTTPMethod::GET)
+	if (HTTPUtil::GetHTTPMethod(conn) == HTTP::EHTTPMethod::GET)
 	{
 		Json::Value rootNode;
 		rootNode.append("GET /v1/blocks/<hash>?compact");
@@ -44,11 +44,11 @@ int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
 		rootNode.append("GET /v1/txhashset/lastrangeproofs?n=###");
 		rootNode.append("GET /v1/txhashset/outputs?start_index=1&max=100");
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildNotFoundResponse(conn, "Not Found");
+		return HTTPUtil::BuildNotFoundResponse(conn, "Not Found");
 	}
 }
 
@@ -59,7 +59,7 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	std::unique_ptr<BlockHeader> pTip = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip == nullptr)
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
 	}
 
 	Json::Value statusNode;
@@ -93,7 +93,7 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	const uint64_t headerHeight = pServer->m_pBlockChainServer->GetHeight(EChainType::CANDIDATE);
 	statusNode["header_height"] = headerHeight;
 
-	return RestUtil::BuildSuccessResponse(conn, statusNode.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(conn, statusNode.toStyledString());
 }
 
 std::string ServerAPI::GetStatusString(const SyncStatus& syncStatus)
@@ -138,5 +138,5 @@ int ServerAPI::ResyncChain_Handler(struct mg_connection* conn, void* pNodeContex
 	pServer->m_pBlockChainServer->ResyncChain();
 	pServer->m_pP2PServer->UnbanAllPeers();
 
-	return RestUtil::BuildSuccessResponse(conn, "");
+	return HTTPUtil::BuildSuccessResponse(conn, "");
 }

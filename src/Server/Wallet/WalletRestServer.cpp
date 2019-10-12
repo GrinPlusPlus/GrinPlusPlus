@@ -1,10 +1,10 @@
 #include "WalletRestServer.h"
 #include "WalletContext.h"
-#include "../civetweb/include/civetweb.h"
-#include "../RestUtil.h"
 #include "API/OwnerGetAPI.h"
 #include "API/OwnerPostAPI.h"
 
+#include <civetweb.h>
+#include <Net/HTTPUtil.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
@@ -41,39 +41,39 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 
 	try
 	{
-		const std::string action = RestUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
-		const EHTTPMethod method = RestUtil::GetHTTPMethod(pConnection);
-		if (method == EHTTPMethod::GET)
+		const std::string action = HTTPUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
+		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(pConnection);
+		if (method == HTTP::EHTTPMethod::GET)
 		{
 			return OwnerGetAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
 		}
-		else if (method == EHTTPMethod::POST)
+		else if (method == HTTP::EHTTPMethod::POST)
 		{
-			return OwnerPostAPI::HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+			return OwnerPostAPI(pContext->m_config).HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
 		}
 	}
 	catch (const SessionTokenException&)
 	{
-		return RestUtil::BuildUnauthorizedResponse(pConnection, "session_token is missing or invalid.");
+		return HTTPUtil::BuildUnauthorizedResponse(pConnection, "session_token is missing or invalid.");
 	}
 	catch (const DeserializationException&)
 	{
-		return RestUtil::BuildBadRequestResponse(pConnection, "Failed to deserialize one or more fields.");
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "Failed to deserialize one or more fields.");
 	}
 	catch (const InsufficientFundsException&)
 	{
-		return RestUtil::BuildConflictResponse(pConnection, "Insufficient funds available.");
+		return HTTPUtil::BuildConflictResponse(pConnection, "Insufficient funds available.");
 	}
 	catch (const WalletStoreException& e)
 	{
-		return RestUtil::BuildInternalErrorResponse(pConnection, std::string(e.what()));
+		return HTTPUtil::BuildInternalErrorResponse(pConnection, std::string(e.what()));
 	}
 	catch (const std::exception& e)
 	{
-		return RestUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred." + std::string(e.what()));
+		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred." + std::string(e.what()));
 	}
 
-	return RestUtil::BuildBadRequestResponse(pConnection, "HTTPMethod not Supported");
+	return HTTPUtil::BuildBadRequestResponse(pConnection, "HTTPMethod not Supported");
 }
 
 bool WalletRestServer::Shutdown()

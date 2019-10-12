@@ -15,7 +15,7 @@
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB)
-	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB)
+	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB, *this)
 {
 
 }
@@ -96,6 +96,14 @@ bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
 {
 	return m_sessionManager.GetGrinboxAddress(token);
+}
+
+std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token)
+{
+	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
+
+	return wallet.GetWallet().GetTorAddress();
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const

@@ -74,6 +74,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps/jsoncpp
 	${PROJECT_SOURCE_DIR}/deps/zlib
 	${PROJECT_SOURCE_DIR}/deps/Catch2
+	${PROJECT_SOURCE_DIR}/deps/ed25519-donna
 	${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 
@@ -113,6 +114,7 @@ add_subdirectory(src/PoW)
 add_subdirectory(src/Database)
 add_subdirectory(src/BlockChain)
 add_subdirectory(src/TxPool)
+add_subdirectory(src/Net)
 add_subdirectory(src/P2P)
 add_subdirectory(src/Wallet)
 add_subdirectory(src/Server)

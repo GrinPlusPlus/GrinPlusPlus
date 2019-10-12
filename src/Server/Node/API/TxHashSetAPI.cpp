@@ -1,8 +1,8 @@
 #include "TxHashSetAPI.h"
-#include "../../RestUtil.h"
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
+#include <Net/HTTPUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
@@ -28,11 +28,11 @@ int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContex
 		rootNode["range_proof_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetRangeProofRoot().GetData());
 		rootNode["kernel_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetKernelRoot().GetData());
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
 	}
 }
 
@@ -42,12 +42,12 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNode
 
 	uint64_t numHashes = 10;
 
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		if (!StringUtil::StartsWith(queryString, "n="))
 		{
-			return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastkernels?n=###");
+			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastkernels?n=###");
 		}
 
 		std::string numHashesStr = queryString.substr(2);
@@ -67,11 +67,11 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNode
 			rootNode.append(kernelNode);
 		}
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 	}
 }
 
@@ -81,12 +81,12 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 
 	uint64_t numHashes = 10;
 
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		if (!StringUtil::StartsWith(queryString, "n="))
 		{
-			return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastoutputs?n=###");
+			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastoutputs?n=###");
 		}
 
 		std::string numHashesStr = queryString.substr(2);
@@ -106,11 +106,11 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 			rootNode.append(outputNode);
 		}
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 	}
 }
 
@@ -120,12 +120,12 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 
 	uint64_t numHashes = 10;
 
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		if (!StringUtil::StartsWith(queryString, "n="))
 		{
-			return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastrangeproofs?n=###");
+			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastrangeproofs?n=###");
 		}
 
 		std::string numHashesStr = queryString.substr(2);
@@ -145,11 +145,11 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 			rootNode.append(rangeProofNode);
 		}
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 	}
 }
 
@@ -178,7 +178,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 	uint64_t startIndex = 1;
 	uint64_t max = 100;
 
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
@@ -189,7 +189,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 				std::vector<std::string> startIndexTokens = StringUtil::Split(token, "=");
 				if (startIndexTokens.size() != 2)
 				{
-					return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
+					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
 				}
 
 				startIndex = std::stoull(startIndexTokens[1]);
@@ -199,7 +199,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 				std::vector<std::string> maxTokens = StringUtil::Split(token, "=");
 				if (maxTokens.size() != 2)
 				{
-					return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
+					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
 				}
 
 				max = std::stoull(maxTokens[1]);
@@ -243,10 +243,10 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 
 		rootNode["outputs"] = outputsNode;
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 	}
 }

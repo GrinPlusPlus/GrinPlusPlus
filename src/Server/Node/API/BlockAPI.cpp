@@ -1,8 +1,8 @@
 #include "BlockAPI.h"
-#include "../../RestUtil.h"
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
+#include <Net/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
@@ -18,8 +18,8 @@
 // GET /v1/blocks/<hash>?compact
 int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	const std::string requestedBlock = RestUtil::GetURIParam(conn, "/v1/blocks/");
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string requestedBlock = HTTPUtil::GetURIParam(conn, "/v1/blocks/");
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 
 	IBlockChainServer* pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	if (queryString == "compact")
@@ -32,7 +32,7 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 			if (pCompactBlock != nullptr)
 			{
 				const Json::Value compactBlockJSON = JSONFactory::BuildCompactBlockJSON(*pCompactBlock);
-				return RestUtil::BuildSuccessResponse(conn, compactBlockJSON.toStyledString());
+				return HTTPUtil::BuildSuccessResponse(conn, compactBlockJSON.toStyledString());
 			}
 		}
 	}
@@ -43,12 +43,12 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 		if (nullptr != pFullBlock)
 		{
 			const Json::Value blockJSON = JSONFactory::BuildBlockJSON(*pFullBlock);
-			return RestUtil::BuildSuccessResponse(conn, blockJSON.toStyledString());
+			return HTTPUtil::BuildSuccessResponse(conn, blockJSON.toStyledString());
 		}
 	}
 
 	const std::string response = "BLOCK NOT FOUND";
-	return RestUtil::BuildBadRequestResponse(conn, response);
+	return HTTPUtil::BuildBadRequestResponse(conn, response);
 }
 
 std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer)

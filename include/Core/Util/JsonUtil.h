@@ -74,7 +74,7 @@ public:
 		const Json::Value value = node.get(key, Json::nullValue);
 		if (value == Json::nullValue)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION("Missing field " + key);
 		}
 
 		return value;
@@ -216,6 +216,11 @@ public:
 	static std::optional<std::string> GetStringOpt(const Json::Value& parentJSON, const std::string& key)
 	{
 		return ConvertToStringOpt(GetOptionalField(parentJSON, key));
+	}
+
+	static std::string GetRequiredString(const Json::Value& parentJSON, const std::string& key)
+	{
+		return std::string(GetRequiredField(parentJSON, key).asCString());
 	}
 
 	//

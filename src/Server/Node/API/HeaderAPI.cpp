@@ -1,8 +1,8 @@
 #include "HeaderAPI.h"
-#include "../../RestUtil.h"
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
+#include <Net/HTTPUtil.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
@@ -19,18 +19,18 @@
 //
 int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	const std::string requestedHeader = RestUtil::GetURIParam(conn, "/v1/headers/");
+	const std::string requestedHeader = HTTPUtil::GetURIParam(conn, "/v1/headers/");
 	std::unique_ptr<BlockHeader> pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
 
 	if (nullptr != pBlockHeader)
 	{
 		const Json::Value headerNode = JSONFactory::BuildHeaderJSON(*pBlockHeader);
-		return RestUtil::BuildSuccessResponse(conn, headerNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, headerNode.toStyledString());
 	}
 	else
 	{
 		const std::string response = "HEADER NOT FOUND";
-		return RestUtil::BuildBadRequestResponse(conn, response);
+		return HTTPUtil::BuildBadRequestResponse(conn, response);
 	}
 }
 

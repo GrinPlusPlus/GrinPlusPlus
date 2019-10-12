@@ -7,6 +7,7 @@
 #include <Config/Genesis.h>
 #include <Config/WalletConfig.h>
 #include <Config/ServerConfig.h>
+#include <Config/TorConfig.h>
 #include <string>
 #include <filesystem.h>
 #include <Common/Util/FileUtil.h>
@@ -22,7 +23,8 @@ public:
 		const P2PConfig& p2pConfig,
 		const WalletConfig& walletConfig, 
 		const ServerConfig& serverConfig,
-		const std::string& logLevel
+		const std::string& logLevel,
+		const TorConfig& torConfig
 	)
 		: m_clientMode(clientMode), 
 		m_environment(environment), 
@@ -31,7 +33,8 @@ public:
 		m_p2pConfig(p2pConfig),
 		m_walletConfig(walletConfig),
 		m_serverConfig(serverConfig),
-		m_logLevel(logLevel)
+		m_logLevel(logLevel),
+		m_torConfig(torConfig)
 	{
 		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath);
 		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "kernel/");
@@ -55,6 +58,7 @@ public:
 	inline const WalletConfig& GetWalletConfig() const { return m_walletConfig; }
 	inline const ServerConfig& GetServerConfig() const { return m_serverConfig; }
 	inline const std::string& GetLogLevel() const { return m_logLevel; }
+	inline const TorConfig& GetTorConfig() const { return m_torConfig; }
 
 private:
 	std::string m_txHashSetPath{ "TXHASHSET/" };
@@ -70,4 +74,5 @@ private:
 	WalletConfig m_walletConfig;
 	ServerConfig m_serverConfig;
 	std::string m_logLevel;
+	TorConfig m_torConfig;
 };

@@ -16,11 +16,7 @@ public:
 
 	static SelectionStrategyDTO FromJSON(const Json::Value& selectionStrategyJSON)
 	{
-		const std::optional<std::string> selectionStrategyOpt = JsonUtil::GetStringOpt(selectionStrategyJSON, "strategy");
-		if (!selectionStrategyOpt.has_value())
-		{
-			throw DeserializationException();
-		}
+		const std::string selectionStrategy = JsonUtil::GetRequiredString(selectionStrategyJSON, "strategy");
 
 		std::set<Commitment> inputs;
 		const Json::Value inputsJSON = JsonUtil::GetOptionalField(selectionStrategyJSON, "inputs");
@@ -32,7 +28,7 @@ public:
 			}
 		}
 
-		return SelectionStrategyDTO(SelectionStrategy::FromString(selectionStrategyOpt.value()), std::move(inputs));
+		return SelectionStrategyDTO(SelectionStrategy::FromString(selectionStrategy), std::move(inputs));
 	}
 
 	inline const ESelectionStrategy GetStrategy() const { return m_strategy; }

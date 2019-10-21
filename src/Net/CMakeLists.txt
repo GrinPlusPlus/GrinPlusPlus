@@ -10,11 +10,10 @@ endif()
 
 file(GLOB SOURCE_CODE
     "Socket.cpp"
-	"Socks5.cpp"
 )
 
 add_subdirectory(Tor)
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-add_dependencies(${TARGET_NAME} Infrastructure Core Tor)
-target_link_libraries(${TARGET_NAME} Infrastructure Core Tor)
+add_dependencies(${TARGET_NAME} Infrastructure Core sha3 ed25519-donna)
+target_link_libraries(${TARGET_NAME} Infrastructure Core sha3 ed25519-donna)

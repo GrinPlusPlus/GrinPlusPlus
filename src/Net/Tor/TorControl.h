@@ -1,8 +1,9 @@
 #pragma once
 
+#include "TorControlClient.h"
+
 #include <Crypto/SecretKey.h>
 #include <Config/TorConfig.h>
-#include <Net/Socket.h>
 #include <Net/Tor/TorAddress.h>
 
 class TorControl
@@ -26,6 +27,5 @@ private:
 	std::string m_password;
 	long m_processId;
 
-	asio::io_context m_context;
-	Socket m_socket;
+	TorControlClient m_client;
 };

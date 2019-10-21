@@ -39,11 +39,9 @@ public:
 	inline bool IsBlocking() const { return m_blocking; }
 
 	bool Send(const std::vector<unsigned char>& message, const bool incrementCount);
-	bool SendLine(const std::string& line);
 
 	bool HasReceivedData();
 	bool Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data);
-	bool ReceiveLine(std::string& line);
 
 private:
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;

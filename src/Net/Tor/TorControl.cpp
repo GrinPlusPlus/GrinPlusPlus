@@ -1,6 +1,6 @@
 #include "TorControl.h"
-#include "TorException.h"
 
+#include <Net/Tor/TorException.h>
 #include <filesystem.h>
 #include <Crypto/Crypto.h>
 #include <Common/Base64.h>
@@ -9,8 +9,7 @@
 #include <Common/Util/StringUtil.h>
 
 TorControl::TorControl(const TorConfig& config)
-	: m_torConfig(config),
-	m_socket(SocketAddress(IPAddress::FromString("127.0.0.1"), config.GetControlPort()))
+	: m_torConfig(config)
 {
 
 }
@@ -30,10 +29,9 @@ bool TorControl::Initialize()
 	if (m_processId > 0)
 	{
 		// Open control socket
-		bool connected = m_socket.Connect(m_context);
+		bool connected = m_client.Connect(SocketAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetControlPort()));
 		if (!connected || !Authenticate(m_torConfig.GetControlPassword()))
 		{
-			m_socket.CloseSocket();
 			ProcessUtil::KillProc(m_processId);
 			m_processId = 0;
 		}
@@ -53,40 +51,17 @@ void TorControl::Shutdown()
 
 bool TorControl::Authenticate(const std::string& password)
 {
-	std::string command = StringUtil::Format("AUTHENTICATE \"%s\"", password.c_str());
+	std::string command = StringUtil::Format("AUTHENTICATE \"%s\"\n", password.c_str());
 
 	try
 	{
-		m_socket.SendLine(command);
-
-		std::string lineRead;
-		while (!lineRead.empty() || m_socket.ReceiveLine(lineRead))
-		{
-			std::vector<std::string> lines = StringUtil::Split(lineRead, "\r\n");
-
-			const std::string line = lines[0];
-			lineRead = "";
-			for (size_t i = 1; i < lines.size(); i++)
-			{
-				lineRead += lines[i] + "\r\n";
-			}
-
-			if (!StringUtil::StartsWith(line, "250"))
-			{
-				return false;
-			}
-			else if (StringUtil::StartsWith(line, "250 OK"))
-			{
-				return true;
-			}
-		}
+		m_client.Invoke(command);
+		return true;
 	}
-	catch (const SocketException& e)
+	catch (TorException& e)
 	{
 		return false;
 	}
-
-	return false;
 }
 
 std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t externalPort, const uint16_t internalPort)
@@ -96,68 +71,28 @@ std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t ext
 	std::string serializedKey = FormatKey(privateKey);
 
 	// ADD_ONION ED25519-V3:<SERIALIZED_KEY> PORT=External,Internal
-	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d", serializedKey.c_str(), externalPort, internalPort);
+	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d\n", serializedKey.c_str(), externalPort, internalPort);
 
-	try
+	std::vector<std::string> response = m_client.Invoke(command);
+	for (std::string& line : response)
 	{
-		m_socket.SendLine(command);
-
-		std::string lineRead;
-		while (!lineRead.empty() || m_socket.ReceiveLine(lineRead))
+		if (StringUtil::StartsWith(line, "250-ServiceID="))
 		{
-			std::vector<std::string> lines = StringUtil::Split(lineRead, "\r\n");
-
-			const std::string line = lines[0];
-			lineRead = "";
-			for (size_t i = 1; i < lines.size(); i++)
-			{
-				lineRead += lines[i] + "\r\n";
-			}
-
-			if (!StringUtil::StartsWith(line, "250"))
-			{
-				throw TOR_EXCEPTION(line);
-			}
-			else if (StringUtil::StartsWith(line, "250-ServiceID="))
-			{
-				const size_t prefix = std::string("250-ServiceID=").size();
-				address = line.substr(prefix);
-			}
-			else if (StringUtil::StartsWith(line, "250 OK"))
-			{
-				return address;
-			}
+			const size_t prefix = std::string("250-ServiceID=").size();
+			return line.substr(prefix);
 		}
 	}
-	catch (const SocketException& e)
-	{
-		throw TOR_EXCEPTION("Socket exception occurred.");
-	}
 
-	throw TOR_EXCEPTION("OK not found.");
+	throw TOR_EXCEPTION("Address not returned");
 }
 
 bool TorControl::DelOnion(const TorAddress& torAddress)
 {
 	// DEL_ONION ServiceId
-	std::string command = StringUtil::Format("DEL_ONION %s", torAddress.ToString().c_str());
+	std::string command = StringUtil::Format("DEL_ONION %s\n", torAddress.ToString().c_str());
 
-	try
-	{
-		m_socket.SendLine(command);
-
-		std::string line;
-		if (!m_socket.ReceiveLine(line))
-		{
-			return false;
-		}
-
-		return StringUtil::StartsWith(line, "250");
-	}
-	catch (const SocketException& e)
-	{
-		throw TOR_EXCEPTION("Socket exception occurred.");
-	}
+	m_client.Invoke(command);
+	return true;
 }
 
 std::string TorControl::FormatKey(const SecretKey& privateKey) const

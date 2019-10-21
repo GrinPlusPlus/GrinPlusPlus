@@ -2,8 +2,8 @@
 
 #include <Config/TorConfig.h>
 #include <Crypto/SecretKey.h>
-#include <Net/Tor/TorConnection.h>
 #include <Net/Tor/TorAddress.h>
+#include <Net/Tor/TorConnection.h>
 
 // Forward Declarations
 class TorControl;
@@ -16,7 +16,7 @@ public:
 	std::unique_ptr<TorAddress> AddListener(const SecretKey& privateKey, const int portNumber);
 	bool RemoveListener(const TorAddress& torAddress);
 
-	std::unique_ptr<TorConnection> Connect(const TorAddress& address) const;
+	std::unique_ptr<TorConnection> Connect(const TorAddress& address);
 
 private:
 	TorManager(const TorConfig& config);
@@ -24,4 +24,5 @@ private:
 
 	const TorConfig& m_torConfig;
 	TorControl* m_pControl;
+	asio::io_context m_context;
 };

@@ -237,18 +237,6 @@ bool Socket::Send(const std::vector<unsigned char>& message, const bool incremen
 	return bytesWritten == message.size();
 }
 
-bool Socket::SendLine(const std::string& line)
-{
-	const std::string lineWithEnding = line + "\r\n";
-	const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(lineWithEnding.data(), lineWithEnding.size()), m_errorCode);
-	if (m_errorCode && m_errorCode.value() != EAGAIN)
-	{
-		throw SocketException();
-	}
-
-	return bytesWritten == lineWithEnding.size();
-}
-
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data)
 {
 	if (data.size() < numBytes)
@@ -280,31 +268,6 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 			LoggerAPI::LogDebug("Socket::Receive - EAGAIN error returned. Pausing briefly, and then trying again.");
 			std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		}
-	}
-
-	return false;
-}
-
-bool Socket::ReceiveLine(std::string& line)
-{
-	line.clear();
-
-	asio::streambuf buffer;
-	std::size_t length = asio::read_until(*m_pSocket, buffer, "\r\n", m_errorCode);
-	if (m_errorCode && m_errorCode.value() != EAGAIN)
-	{
-		const int value = m_errorCode.value();
-		LOG_DEBUG_F("Error code: %d", value);
-		throw SocketException();
-	}
-
-	if (length > 0)
-	{
-		std::istream input(&buffer);
-		line = std::string(std::istreambuf_iterator<char>(input), {});
-		//getline(input, line);
-
-		return true;
 	}
 
 	return false;

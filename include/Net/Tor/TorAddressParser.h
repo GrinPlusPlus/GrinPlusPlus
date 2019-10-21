@@ -1,8 +1,11 @@
 #pragma once
 
-#include <Wallet/Tor/TorAddress.h>
+#include <Infrastructure/Logger.h>
+#include <Net/Tor/TorAddress.h>
 #include <Crypto/ED25519.h>
-#include <keccak-tiny/keccak-tiny.h>
+#include <Crypto/BigInteger.h>
+#include <sha3/sha3.h>
+#include <cppcodec/base32_default_rfc4648.hpp>
 
 /* Compute the CEIL of <b>a</b> divided by <b>b</b>, for nonnegative <b>a</b>
  * and positive <b>b</b>.  Works on integer types only. Not defined if a+(b-1)
@@ -38,69 +41,90 @@
 class TorAddressParser
 {
 public:
+	// 2.2.7. Client-side validation of onion addresses
+
+	//  When a Tor client receives a prop224 onion address from the user, it
+	//  MUST first validate the onion address before attempting to connect or
+	//  fetch its descriptor. If the validation fails, the client MUST
+	//  refuse to connect.
+
+	//  As part of the address validation, Tor clients should check that the
+	//  underlying ed25519 key does not have a torsion component. If Tor accepted
+	//  ed25519 keys with torsion components, attackers could create multiple
+	//  equivalent onion addresses for a single ed25519 key, which would map to the
+	//  same service. We want to avoid that because it could lead to phishing
+	//  attacks and surprising behaviors (e.g. imagine a browser plugin that blocks
+	//  onion addresses, but could be bypassed using an equivalent onion address
+	//  with a torsion component).
+
+	//  The right way for clients to detect such fraudulent addresses (which should
+	//  only occur malevolently and never natutally) is to extract the ed25519
+	//  public key from the onion address and multiply it by the ed25519 group order
+	//  and ensure that the result is the ed25519 identity element. For more
+	//  details, please see [TORSION-REFS].
 	static std::optional<TorAddress> Parse(const std::string& address)
 	{
-		uint8_t version;
-		uint8_t checksum[HS_SERVICE_ADDR_CHECKSUM_LEN_USED];
-		ed25519_public_key_t service_pubkey;
+		try
+		{
+			uint8_t version;
+			ed25519_public_key_t pubkey;
 
-		char decoded[HS_SERVICE_ADDR_LEN];
+			/* Obvious length check. */
+			if (address.size() != HS_SERVICE_ADDR_LEN_BASE32) {
+				return std::nullopt;
+			}
 
-		/* Obvious length check. */
-		if (address.size() != HS_SERVICE_ADDR_LEN_BASE32) {
-			//log_warn(LD_REND, "Service address %s has an invalid length. "
-			//	"Expected %lu but got %lu.",
-			//	escaped_safe_str(address),
-			//	(unsigned long)HS_SERVICE_ADDR_LEN_BASE32,
-			//	(unsigned long)strlen(address));
-			return std::nullopt;
+			/* Decode address so we can extract needed fields. */
+			std::vector<uint8_t> b32Decoded = base32::decode(address);
+			if (b32Decoded.size() != HS_SERVICE_ADDR_LEN)
+			{
+				return std::nullopt;
+			}
+
+			/* Parse the decoded address into the fields we need. */
+			size_t offset = 0;
+
+			/* First is the key. */
+			memcpy(pubkey.pubkey.data(), b32Decoded.data(), ED25519_PUBKEY_LEN);
+			offset += ED25519_PUBKEY_LEN;
+
+			/* Followed by a 2 bytes checksum. */
+			std::vector<uint8_t> checksum(b32Decoded.begin() + offset, b32Decoded.begin() + offset + HS_SERVICE_ADDR_CHECKSUM_LEN_USED);
+			offset += HS_SERVICE_ADDR_CHECKSUM_LEN_USED;
+
+			/* Finally, version value is 1 byte. */
+			version = *(const uint8_t*)(b32Decoded.data() + offset);
+			offset += sizeof(uint8_t);
+
+			/* Extra safety. */
+			if (offset != HS_SERVICE_ADDR_LEN)
+			{
+				return std::nullopt;
+			}
+
+			if (IsValid(version, pubkey, checksum))
+			{
+				return std::make_optional<TorAddress>(TorAddress(address, pubkey, version)); // TODO: Pass version & pubkey
+			}
 		}
-
-		/* Decode address so we can extract needed fields. */
-		if (base32_decode(decoded, sizeof(decoded), address, strlen(address)) != sizeof(decoded)) {
-			//log_warn(LD_REND, "Service address %s can't be decoded.",
-			//	escaped_safe_str(address));
-			return std::nullopt;
-		}
-
-		/* Parse the decoded address into the fields we need. */
-		size_t offset = 0;
-
-		/* First is the key. */
-		memcpy(service_pubkey.pubkey, decoded, ED25519_PUBKEY_LEN);
-		offset += ED25519_PUBKEY_LEN;
-
-		/* Followed by a 2 bytes checksum. */
-		memcpy(&checksum, decoded + offset, HS_SERVICE_ADDR_CHECKSUM_LEN_USED);
-		offset += HS_SERVICE_ADDR_CHECKSUM_LEN_USED;
-
-		/* Finally, version value is 1 byte. */
-		version = *(const uint8_t*)(decoded + offset);
-		offset += sizeof(uint8_t);
-
-		/* Extra safety. */
-		if (offset != HS_SERVICE_ADDR_LEN)
+		catch (std::exception& e)
 		{
 			return std::nullopt;
-		}
-
-		if (IsValid(version, pubkey, checksum))
-		{
-			return std::make_optional<TorAddress>(TorAddress(address)); // TODO: Pass version & pubkey
 		}
 
 		return std::nullopt;
 	}
 
 private:
-	static bool IsValid(const uint8_t version, const ed25519_public_key_t& pubkey, const uint8_t* checksum)
+	static bool IsValid(const uint8_t version, const ed25519_public_key_t& pubkey, const std::vector<uint8_t>& checksum)
 	{
 		/* Get the checksum it's supposed to be and compare it with what we have encoded in the address. */
-		uint8_t target_checksum[DIGEST256_LEN];
+		std::vector<uint8_t> expectedChecksum;
 
-		const bool checksum = BuildChecksum(pubkey, version, target_checksum);
-		if (!checksum || tor_memcmp(checksum, target_checksum, HS_SERVICE_ADDR_CHECKSUM_LEN_USED) != 0)
+		const bool checksumBuilt = BuildChecksum(pubkey, version, expectedChecksum);
+		if (!checksumBuilt || memcmp(checksum.data(), expectedChecksum.data(), HS_SERVICE_ADDR_CHECKSUM_LEN_USED) != 0)
 		{
+			LOG_WARNING_F("Checksum invalid for TOR address. Expected %s but got %s", CBigInteger<32>(checksum).ToHex(), CBigInteger<32>(expectedChecksum).ToHex());
 			//log_warn(LD_REND, "Service address %s invalid checksum.",
 			//	escaped_safe_str(address));
 			return false;
@@ -113,6 +137,7 @@ private:
 		/* First check that we were not given the identity element */
 		if (ED25519::IsIdentityElement(pubkey))
 		{
+			LOG_WARNING("TOR address is identity element.");
 			//log_warn(LD_CRYPTO, "ed25519 pubkey is the identity");
 			return false;
 		}
@@ -120,14 +145,10 @@ private:
 		/* For any point on the curve, doing l*point should give the identity element
 		 * (where l is the group order). Do the computation and check that the
 		 * identity element is returned. */
-		if (!ED25519::MultiplyWithGroupOrder(pubkey))
-		{
-			//log_warn(LD_CRYPTO, "ed25519 group order scalarmult failed");
-			return false;
-		}
-
+		ed25519_public_key_t result = ED25519::MultiplyWithGroupOrder(pubkey);
 		if (!ED25519::IsIdentityElement(result))
 		{
+			LOG_WARNING("TOR address is invalid ed25519 point.");
 			//log_warn(LD_CRYPTO, "ed25519 validation failed");
 			return false;
 		}
@@ -140,7 +161,7 @@ private:
 	 *    SHA3-256(".onion checksum" || PUBKEY || VERSION)
 	 *
 	 * checksum_out must be large enough to receive 32 bytes (DIGEST256_LEN). */
-	static bool BuildChecksum(const ed25519_public_key_t& key, uint8_t version, uint8_t* checksum_out)
+	static bool BuildChecksum(const ed25519_public_key_t& key, uint8_t version, std::vector<uint8_t>& checksum_out)
 	{
 		size_t offset = 0;
 		char data[HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN];
@@ -149,7 +170,7 @@ private:
 		memcpy(data, HS_SERVICE_ADDR_CHECKSUM_PREFIX, HS_SERVICE_ADDR_CHECKSUM_PREFIX_LEN);
 		offset += HS_SERVICE_ADDR_CHECKSUM_PREFIX_LEN;
 
-		memcpy(data + offset, key.pubkey, ED25519_PUBKEY_LEN);
+		memcpy(data + offset, key.pubkey.data(), ED25519_PUBKEY_LEN);
 		offset += ED25519_PUBKEY_LEN;
 
 		*(uint8_t*)(data + offset) = version;
@@ -161,6 +182,14 @@ private:
 		}
 
 		/* Hash the data payload to create the checksum. */
-		return sha3_256((uint8_t*)checksum_out, DIGEST256_LEN, (const uint8_t*)data, sizeof(data)) == 0;
+		std::string hashHex = SHA3(SHA3::Bits256)(data, HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN);
+		if (hashHex.size() < (HS_SERVICE_ADDR_CHECKSUM_LEN_USED * 2))
+		{
+			return false;
+		}
+
+		checksum_out = CBigInteger<HS_SERVICE_ADDR_CHECKSUM_LEN_USED>::FromHex(hashHex.substr(0, HS_SERVICE_ADDR_CHECKSUM_LEN_USED * 2)).GetData();
+
+		return true;
 	}
 };

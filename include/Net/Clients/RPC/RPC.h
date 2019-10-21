@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Core/Util/JsonUtil.h>
-#include <Net/HTTPUtil.h>
-#include <Net/RPCException.h>
+#include <Net/Util/HTTPUtil.h>
+#include <Net/Clients/RPC/RPCException.h>
 
 namespace RPC
 {
@@ -137,7 +137,7 @@ enum ErrorCode
 class Error
 {
 public:
-	Error(const int code, const std::string& message, const Json::Value& data)
+	Error(const int code, const std::string& message, const std::optional<Json::Value>& data)
 		: m_code(code), m_message(message), m_data(data)
 	{
 
@@ -147,14 +147,23 @@ public:
 	inline const std::string& GetMsg() const { return m_message; }
 	inline const std::optional<Json::Value>& GetData() const { return m_data; }
 
+	static Error Parse(const Json::Value& error)
+	{
+		int code = (int)JsonUtil::GetRequiredUInt64(error, "code");
+		std::string message = JsonUtil::GetRequiredString(error, "message");
+		std::optional<Json::Value> data = JsonUtil::GetOptionalField(error, "data");
+
+		return Error(code, message, data);
+	}
+
 	Json::Value ToJSON() const
 	{
 		Json::Value json;
 		json["code"] = m_code;
 		json["message"] = m_message;
-		if (!m_data.isNull())
+		if (m_data.has_value())
 		{
-			json["data"] = m_data;
+			json["data"] = m_data.value();
 		}
 
 		return json;
@@ -163,12 +172,14 @@ public:
 private:
 	int m_code;
 	std::string m_message;
-	Json::Value m_data;
+	std::optional<Json::Value> m_data;
 };
 
 class Response
 {
 public:
+	Response(const Response& other) = default;
+
 	static Response BuildResult(const Json::Value& id, const Json::Value& result)
 	{
 		return Response(Json::Value(id), std::make_optional<Json::Value>(Json::Value(result)), std::nullopt);
@@ -178,6 +189,63 @@ public:
 	{
 		Error error(code, message, data.value_or(Json::nullValue));
 		return Response(Json::Value(id), std::nullopt, std::make_optional<Error>(std::move(error)));
+	}
+
+	static Response Parse(const std::string& jsonStr)
+	{
+		try
+		{
+			Json::Value json;
+			if (!JsonUtil::Parse(jsonStr, json))
+			{
+				throw RPC_EXCEPTION("invalid json", std::nullopt);
+			}
+
+			// Parse id
+			std::optional<Json::Value> idOpt = JsonUtil::GetOptionalField(json, "id");
+			if (!idOpt.has_value())
+			{
+				throw RPC_EXCEPTION("id is missing", std::nullopt);
+			}
+
+			Json::Value id = idOpt.value();
+
+			// Parse jsonrpc
+			std::optional<Json::Value> jsonrpcOpt = JsonUtil::GetOptionalField(json, "jsonrpc");
+			if (!jsonrpcOpt.has_value())
+			{
+				throw RPC_EXCEPTION("jsonrpc is missing", id);
+			}
+			else if (!jsonrpcOpt.value().isString())
+			{
+				throw RPC_EXCEPTION("jsonrpc must be a string", id);
+			}
+
+			std::string jsonrpc(jsonrpcOpt.value().asString());
+			if (jsonrpc != "2.0")
+			{
+				throw RPC_EXCEPTION("invalid jsonrpc value: " + jsonrpc, id);
+			}
+
+			// Parse params
+			std::optional<Json::Value> resultOpt = JsonUtil::GetOptionalField(json, "result");
+			std::optional<Json::Value> errorJsonOpt = JsonUtil::GetOptionalField(json, "error");
+			std::optional<Error> errorOpt = std::nullopt;
+			if (errorJsonOpt.has_value())
+			{
+				errorOpt = std::make_optional<Error>(Error::Parse(errorJsonOpt.value()));
+			}
+
+			return Response(std::move(id), std::move(resultOpt), std::move(errorOpt));
+		}
+		catch (const RPCException& e)
+		{
+			throw e;
+		}
+		catch (const std::exception& e)
+		{
+			throw RPC_EXCEPTION(e.what(), std::nullopt);
+		}
 	}
 
 	inline const Json::Value& GetId() const { return m_id; }

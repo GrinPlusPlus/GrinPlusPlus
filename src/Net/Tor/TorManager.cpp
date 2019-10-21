@@ -1,18 +1,19 @@
 #include <Net/Tor/TorManager.h>
 #include <Net/Tor/TorException.h>
+#include <Net/Tor/TorAddressParser.h>
 #include <Infrastructure/Logger.h>
 #include <memory>
 
 #include "TorControl.h"
 
 TorManager& TorManager::GetInstance(const TorConfig& config)
-	: m_torConfig(config)
 {
 	static TorManager instance(config);
 	return instance;
 }
 
 TorManager::TorManager(const TorConfig& config)
+	: m_torConfig(config)
 {
 	m_pControl = new TorControl(config);
 	m_pControl->Initialize();
@@ -31,7 +32,15 @@ std::unique_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey,
 		const std::string address = m_pControl->AddOnion(privateKey, 80, portNumber);
 		if (!address.empty())
 		{
-			return std::make_unique<TorAddress>(address);
+			std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
+			if (!torAddress.has_value())
+			{
+				LOG_ERROR_F("Failed to parse listener address: %s", address.c_str());
+			}
+			else
+			{
+				return std::make_unique<TorAddress>(torAddress.value());
+			}
 		}
 	}
 	catch (const TorException& e)
@@ -56,12 +65,17 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 	return false;
 }
 
-std::unique_ptr<TorConnection> TorManager::Connect(const TorAddress& address) const
+std::unique_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
 {
-	Socks5Connection connection;
+	try
+	{
+		SocketAddress proxyAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetSocksPort());
 
-	SocketAddress socksAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetSocksPort());
-	const bool connected = connection.Connect(socksAddress, address.ToString(), 80);
-
-	return connected ? std::make_unique<TorConnection>(TorConnection(address, std::move(connection))) : std::nullopt;
+		return std::make_unique<TorConnection>(address, std::move(proxyAddress));
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Failed to create TorConnection: %s", e.what());
+		return nullptr;
+	}
 }

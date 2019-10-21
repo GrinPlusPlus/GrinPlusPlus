@@ -2,8 +2,8 @@
 
 #include "civetweb/include/civetweb.h"
 
-#include <Net/HTTP.h>
-#include <Net/HTTPException.h>
+#include <Net/Clients/HTTP/HTTP.h>
+#include <Net/Clients/HTTP/HTTPException.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/Serialization/DeserializationException.h>
 #include <Core/Util/JsonUtil.h>

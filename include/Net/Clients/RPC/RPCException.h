@@ -27,7 +27,7 @@ public:
 		return m_what.c_str();
 	}
 
-	inline const std::optional<Json::Value> GetId() const { return m_idOpt; }
+	inline const std::optional<Json::Value>& GetId() const { return m_idOpt; }
 
 private:
 	std::string m_message;

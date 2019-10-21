@@ -12,4 +12,4 @@ Wiki: https://github.com/GrinPlusPlus/GrinPlusPlus/wiki
 The node and wallet have been released on Mainnet for 64-bit Windows & Mac OS X beta-testing!
 
 ### Build Instruction
-See [BUIDL.md](BUIDL.md).
+See [BUILD.md](BUILD.md).

@@ -3,7 +3,7 @@
 #include <Config/Config.h>
 #include <Wallet/WalletManager.h>
 #include <civetweb/include/civetweb.h>
-#include <Net/RPC.h>
+#include <Net/Clients/RPC/RPC.h>
 #include <Net/Tor/TorConnection.h>
 #include <optional>
 
@@ -15,7 +15,8 @@ public:
 	RPC::Response Send(mg_connection* pConnection, RPC::Request& request);
 
 private:
-	std::optional<TorConnection> ConnectViaTor(const std::optional<std::string>& addressOpt) const;
+	std::unique_ptr<TorConnection> EstablishConnection(const std::optional<std::string>& addressOpt) const;
+	bool CheckVersion(TorConnection& connection) const;
 
 	const Config& m_config;
 	IWalletManager& m_walletManager;

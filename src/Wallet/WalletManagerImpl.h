@@ -50,15 +50,7 @@ public:
 		const uint8_t numChangeOutputs
 	) override final;
 
-	virtual std::unique_ptr<Slate> Send(
-		const SessionToken& token,
-		const uint64_t amount,
-		const uint64_t feeBase,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt,
-		const SelectionStrategyDTO& strategy,
-		const uint8_t numChangeOutputs
-	) override final;
+	virtual std::unique_ptr<Slate> Send(const SendCriteria& sendCriteria) override final;
 
 	virtual std::unique_ptr<Slate> Receive(
 		const SessionToken& token,

@@ -1,10 +1,7 @@
 #include "OwnerPostAPI.h"
 #include "SessionTokenUtil.h"
 
-#include <Net/RPC.h>
-#include <Net/HTTPUtil.h>
-#include <Net/Tor/TorManager.h>
-#include <Net/Tor/TorAddressParser.h>
+#include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
@@ -225,50 +222,7 @@ int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walle
 
 int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
-	if (!amountOpt.has_value())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "amount missing");
-	}
-
-	const Json::Value feeBaseJSON = json.get("fee_base", Json::nullValue);
-	if (feeBaseJSON == Json::nullValue || !feeBaseJSON.isUInt64())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
-	}
-
-	const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
-	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
-
-	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
-	if (selectionStrategyJSON == Json::nullValue)
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
-	}
-
-	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
-	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
-
-	std::unique_ptr<TorConnection> pTorConnection = nullptr;
-	if (addressOpt.has_value())
-	{
-		const std::optional<TorAddress> torAddress = TorAddressParser::Parse(addressOpt.value());
-		if (torAddress.has_value())
-		{
-			pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress.value());
-			if (pTorConnection == nullptr)
-			{
-				return HTTPUtil::BuildNotFoundResponse(pConnection, "Unable to connect to recipient.");
-			}
-
-			if (!pTorConnection->CheckVersion())
-			{
-				return HTTPUtil::BuildInternalErrorResponse(pConnection, "Error occurred during check_version.");
-			}
-		}
-	}
-
-	std::unique_ptr<Slate> pSlate = walletManager.Send(token, amountOpt.value(), feeBaseJSON.asUInt64(), addressOpt, messageOpt, selectionStrategy, numOutputs);
+	std::unique_ptr<Slate> pSlate = walletManager.Send(SendCriteria::FromJSON(json));
 	if (pSlate != nullptr)
 	{
 		return HTTPUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());

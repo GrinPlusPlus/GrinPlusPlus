@@ -1,7 +1,7 @@
 #include "OwnerGetAPI.h"
 #include "SessionTokenUtil.h"
 
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
@@ -114,13 +114,13 @@ int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletM
 
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
 
-	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
-	if (selectionStrategyJSON == Json::nullValue)
+	const std::optional<Json::Value> selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
+	if (!selectionStrategyJSON.has_value())
 	{
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
-	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
 	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
 	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
 

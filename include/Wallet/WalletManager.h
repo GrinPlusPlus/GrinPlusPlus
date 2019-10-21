@@ -12,10 +12,11 @@
 #include <Wallet/Slate.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
+#include <Wallet/Models/Criteria/SendCriteria.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
-#include <Wallet/Tor/TorAddress.h>
+#include <Net/Tor/TorAddress.h>
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 
@@ -110,15 +111,7 @@ public:
 	// * SessionTokenException - If no matching session found, or if the token is invalid.
 	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
 	//
-	virtual std::unique_ptr<Slate> Send(
-		const SessionToken& token,
-		const uint64_t amount,
-		const uint64_t feeBase,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt,
-		const SelectionStrategyDTO& strategy,
-		const uint8_t numChangeOutputs
-	) = 0;
+	virtual std::unique_ptr<Slate> Send(const SendCriteria& sendCriteria) = 0;
 
 	virtual std::unique_ptr<Slate> Receive(
 		const SessionToken& token,

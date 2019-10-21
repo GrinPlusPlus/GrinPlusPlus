@@ -3,13 +3,20 @@
 #include <inttypes.h>
 #include <ed25519-donna/ed25519_donna_tor.h>
 #include <Crypto/CryptoException.h>
+#include <vector>
 
 #define ED25519_PUBKEY_LEN 32
 
 /** An Ed25519 public key */
-typedef struct ed25519_public_key_t {
-	uint8_t pubkey[ED25519_PUBKEY_LEN];
-} ed25519_public_key_t;
+struct ed25519_public_key_t
+{
+	ed25519_public_key_t()
+	{
+		pubkey.resize(ED25519_PUBKEY_LEN);
+	}
+
+	std::vector<uint8_t> pubkey;
+};
 
 class ED25519
 {
@@ -25,14 +32,14 @@ public:
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
 		};
 
-		return tor_memeq(point.pubkey, ed25519_identity, sizeof(ed25519_identity)) != 0;
+		return tor_memeq(point.pubkey.data(), ed25519_identity, sizeof(ed25519_identity)) != 0;
 	}
 
 	static ed25519_public_key_t MultiplyWithGroupOrder(const ed25519_public_key_t& pubKey)
 	{
 		ed25519_public_key_t result;
-		const int result = ed25519_donna_scalarmult_with_group_order(result.pubkey, pubKey.pubkey);
-		if (result != 0)
+		const int status = ed25519_donna_scalarmult_with_group_order(result.pubkey.data(), pubKey.pubkey.data());
+		if (status != 0)
 		{
 			throw CryptoException("ED25519::MultiplyWithGroupOrder");
 		}
@@ -53,7 +60,7 @@ private:
 	static int tor_memeq(const void* a, const void* b, size_t sz)
 	{
 		/* Treat a and b as byte ranges. */
-		const uint8_t* ba = a, * bb = b;
+		const uint8_t* ba = (const uint8_t*)a, * bb = (const uint8_t*)b;
 		uint32_t any_difference = 0;
 		while (sz--) {
 			/* Set byte_diff to all of those bits that are different in *ba and *bb,

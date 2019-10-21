@@ -80,14 +80,22 @@ public:
 		return value;
 	}
 
-	static Json::Value GetOptionalField(const Json::Value& node, const std::string& key)
+	static std::optional<Json::Value> GetOptionalField(const Json::Value& node, const std::string& key)
 	{
 		if (node == Json::nullValue)
 		{
 			throw DeserializationException();
 		}
 
-		return node.get(key, Json::nullValue);
+		Json::Value value = node.get(key, Json::nullValue);
+		if (!value.isNull())
+		{
+			return std::make_optional<Json::Value>(std::move(value));
+		}
+		else
+		{
+			return std::nullopt;
+		}
 	}
 
 	//
@@ -179,7 +187,7 @@ public:
 
 	static std::optional<CompactSignature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)
 	{
-		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key), hex);
+		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key).value_or(Json::Value(Json::nullValue)), hex);
 	}
 
 	//
@@ -215,7 +223,7 @@ public:
 
 	static std::optional<std::string> GetStringOpt(const Json::Value& parentJSON, const std::string& key)
 	{
-		return ConvertToStringOpt(GetOptionalField(parentJSON, key));
+		return ConvertToStringOpt(GetOptionalField(parentJSON, key).value_or(Json::Value(Json::nullValue)));
 	}
 
 	static std::string GetRequiredString(const Json::Value& parentJSON, const std::string& key)
@@ -250,14 +258,14 @@ public:
 
 	static std::optional<uint64_t> GetUInt64Opt(const Json::Value& parentJSON, const std::string& key)
 	{
-		const Json::Value value = JsonUtil::GetOptionalField(parentJSON, key);
-		if (value.isNull())
+		const std::optional<Json::Value> json = JsonUtil::GetOptionalField(parentJSON, key);
+		if (!json.has_value())
 		{
 			return std::nullopt;
 		}
 		else
 		{
-			return ConvertToUInt64(value);
+			return ConvertToUInt64(json.value());
 		}
 	}
 
@@ -279,5 +287,13 @@ public:
 		std::string errors;
 		std::istringstream inputStream(input);
 		return Json::parseFromStream(Json::CharReaderBuilder(), inputStream, &outputJSON, &errors);
+	}
+
+	// Write
+	static std::string WriteCondensed(const Json::Value& json)
+	{
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = ""; // Removes whitespaces
+		return Json::writeString(builder, json);
 	}
 };

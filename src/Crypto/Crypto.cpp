@@ -181,7 +181,7 @@ std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitm
 
 bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
 {
-	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);;
+	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);
 }
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)

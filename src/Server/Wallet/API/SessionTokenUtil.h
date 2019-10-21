@@ -2,7 +2,7 @@
 
 #include <civetweb.h>
 
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <Wallet/SessionToken.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 

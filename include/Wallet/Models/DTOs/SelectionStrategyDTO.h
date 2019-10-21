@@ -19,10 +19,10 @@ public:
 		const std::string selectionStrategy = JsonUtil::GetRequiredString(selectionStrategyJSON, "strategy");
 
 		std::set<Commitment> inputs;
-		const Json::Value inputsJSON = JsonUtil::GetOptionalField(selectionStrategyJSON, "inputs");
-		if (inputsJSON != Json::nullValue)
+		const std::optional<Json::Value> inputsJSON = JsonUtil::GetOptionalField(selectionStrategyJSON, "inputs");
+		if (inputsJSON.has_value())
 		{
-			for (Json::Value::const_iterator iter = inputsJSON.begin(); iter != inputsJSON.end(); iter++)
+			for (Json::Value::const_iterator iter = inputsJSON.value().begin(); iter != inputsJSON.value().end(); iter++)
 			{
 				inputs.insert(JsonUtil::ConvertToCommitment(*iter, true));
 			}

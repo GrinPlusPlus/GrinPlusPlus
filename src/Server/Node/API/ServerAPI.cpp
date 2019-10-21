@@ -1,7 +1,7 @@
 #include "ServerAPI.h"
 #include "../NodeContext.h"
 
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <P2P/Common.h>
 #include <json/json.h>
 

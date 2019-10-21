@@ -4,7 +4,7 @@
 #include "API/OwnerPostAPI.h"
 
 #include <civetweb.h>
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
@@ -12,7 +12,7 @@
 WalletRestServer::WalletRestServer(const Config& config, IWalletManager& walletManager, INodeClient& nodeClient)
 	: m_config(config), m_walletManager(walletManager)
 {
-	m_pWalletContext = new WalletContext(&walletManager, &nodeClient);
+	m_pWalletContext = new WalletContext(config, &walletManager, &nodeClient);
 }
 
 WalletRestServer::~WalletRestServer()

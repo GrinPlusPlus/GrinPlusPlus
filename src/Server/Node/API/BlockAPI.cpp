@@ -2,7 +2,7 @@
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 

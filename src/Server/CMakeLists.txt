@@ -1,13 +1,5 @@
 set(TARGET_NAME GrinNode)
 
-#if(MSVC)
-#    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-#		string(REGEX REPLACE "/W[0-4]" "/W0 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-#    else()
-#		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0 /WX")
-#    endif()
-#endif()
-
 file(GLOB SOURCE_CODE
 	"Main.cpp"
 	"JSONFactory.cpp"
@@ -25,12 +17,14 @@ file(GLOB SOURCE_CODE
 	"Wallet/WalletRestServer.cpp"
 	"Wallet/API/OwnerGetAPI.cpp"
 	"Wallet/API/OwnerPostAPI.cpp"
+	"Wallet/V2/OwnerController.cpp"
+	"Wallet/V2/Send/OwnerSend.cpp"
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 
-add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet PoW civetweb)
+add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet PoW civetweb ed25519-donna)
 target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
-target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet PoW civetweb)
+target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Config Wallet PoW civetweb ed25519-donna)

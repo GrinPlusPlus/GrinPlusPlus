@@ -3,8 +3,8 @@
 
 #include <Wallet/WalletManager.h>
 #include <Net/Tor/TorManager.h>
-#include <Net/HTTPUtil.h>
-#include <Net/RPC.h>
+#include <Net/Util/HTTPUtil.h>
+#include <Net/Clients/RPC/RPC.h>
 #include <civetweb.h>
 
 ForeignController::ForeignController(const Config& config, IWalletManager& walletManager)
@@ -106,7 +106,9 @@ int ForeignController::ForeignAPIHandler(mg_connection* pConnection, void* pCbCo
 					std::unique_ptr<Slate> pReceivedSlate = pContext->m_walletManager.Receive(pContext->m_token, slate, std::nullopt, message);
 					if (pReceivedSlate != nullptr)
 					{
-						responseJSON = RPC::Response::BuildResult(request.GetId(), pReceivedSlate->ToJSON()).ToJSON();
+						Json::Value result;
+						result["Ok"] = pReceivedSlate->ToJSON();
+						responseJSON = RPC::Response::BuildResult(request.GetId(), result).ToJSON();
 					}
 					else
 					{

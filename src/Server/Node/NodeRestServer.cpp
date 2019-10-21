@@ -12,7 +12,7 @@
 
 #include "API/Explorer/BlockInfoAPI.h"
 
-#include <Net/HTTPUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <P2P/P2PServer.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Database/Database.h>

@@ -13,12 +13,23 @@
 class StringUtil
 {
 public:
+	template<class T>
+	static decltype(auto) convert_for_snprintf(T const& x)
+	{
+		return x;
+	}
+
+	static decltype(auto) convert_for_snprintf(std::string const& x)
+	{
+		return x.c_str();
+	}
+	
 	template<typename ... Args>
 	static std::string Format(const std::string& format, Args ... args)
 	{
-		size_t size = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+		size_t size = std::snprintf(nullptr, 0, format.c_str(), convert_for_snprintf(args) ...) + 1; // Extra space for '\0'
 		std::unique_ptr<char[]> buf(new char[size]);
-		std::snprintf(buf.get(), size, format.c_str(), args ...);
+		std::snprintf(buf.get(), size, format.c_str(), StringUtil::convert_for_snprintf(args) ...);
 		return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 	}
 

@@ -16,6 +16,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #endif
+#ifdef __APPLE__
+#include <stdbool.h>
+#endif
 
 static void
 ED25519_FN(ed25519_randombytes_unsafe) (void *p, size_t len)

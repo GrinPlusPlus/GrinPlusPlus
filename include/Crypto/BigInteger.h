@@ -230,7 +230,7 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::
 	}
 
 	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
-	for (size_t i = 0; i < hexNoSpaces.length(); i += 2)
+	for (size_t i = 0; i < (std::min)(hexNoSpaces.length(), NUM_BYTES * 2); i += 2)
 	{
 		data[i / 2] = (FromHexChar(hexNoSpaces[i]) * 16 + FromHexChar(hexNoSpaces[i + 1]));
 	}

@@ -1,11 +1,11 @@
 #include "MessageRetriever.h"
 #include "ConnectionManager.h"
-#include "Socket.h"
 #include "Messages/MessageHeader.h"
 
 #include <iostream>
 #include <P2P/ConnectedPeer.h>
-#include <P2P/SocketException.h>
+#include <Net/Socket.h>
+#include <Net/SocketException.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>

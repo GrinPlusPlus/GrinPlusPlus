@@ -7,8 +7,8 @@
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
 
-SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB)
-	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB)
+SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, IWalletManager& walletManager)
+	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_foreignController(config, walletManager)
 {
 	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 }
@@ -17,6 +17,7 @@ SessionManager::~SessionManager()
 {
 	for (auto iter = m_sessionsById.begin(); iter != m_sessionsById.end(); iter++)
 	{
+		m_foreignController.StopListener(iter->second->m_pWallet->GetUsername());
 		delete iter->second;
 	}
 }
@@ -45,17 +46,10 @@ std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username,
 
 SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)
 {
-	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
-	LoggerAPI::LogTrace("SessionManager::Login - KeyChain loaded successfully from seed.");
-
-	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
-	LoggerAPI::LogTrace("SessionManager::Login - Wallet loaded successfully.");
-
 	const CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
 	SecureVector seedWithChecksum = SecureVector(seed.begin(), seed.end());
 	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
-	LoggerAPI::LogTrace("SessionManager::Login - seedWithChecksum calculated.");
 
 	SecureVector tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
 
@@ -66,7 +60,6 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	}
 
 	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
-	LoggerAPI::LogTrace("SessionManager::Login - Grinbox keychain loaded successfully.");
 
 	std::unique_ptr<SecretKey> pGrinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
 	std::vector<unsigned char> encryptedGrinboxAddress(32);
@@ -76,10 +69,20 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	}
 
 	const uint64_t sessionId = m_nextSessionId++;
-	m_sessionsById[sessionId] = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
-	LoggerAPI::LogDebug("SessionManager::Login - Session created successfully.");
+	SessionToken token(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 
-	return SessionToken(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
+	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
+
+	LoggedInSession* pSession = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
+	m_sessionsById[sessionId] = pSession;
+
+	std::optional<TorAddress> torAddressOpt = m_foreignController.StartListener(username, token, seed);
+	if (torAddressOpt.has_value())
+	{
+		pWallet->SetTorAddress(torAddressOpt.value());
+	}
+
+	return token;
 }
 
 void SessionManager::Logout(const SessionToken& token)
@@ -87,6 +90,8 @@ void SessionManager::Logout(const SessionToken& token)
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
+		m_foreignController.StopListener(iter->second->m_pWallet->GetUsername());
+
 		delete iter->second;
 		m_sessionsById.erase(iter);
 	}

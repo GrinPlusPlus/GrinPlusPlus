@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <vector>
 
 class PeerAddressesMessage : public IMessage

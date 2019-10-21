@@ -18,7 +18,6 @@
 static void SigIntHandler(int signum)
 {
 	printf("\n\nCtrl-C Pressed\n\n");
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	ShutdownManager::GetInstance().Shutdown();
 }
 
@@ -50,6 +49,9 @@ int main(int argc, char* argv[])
 	mg_init_library(0);
 
 	signal(SIGINT, SigIntHandler);
+	signal(SIGTERM, SigIntHandler);
+	signal(SIGABRT, SigIntHandler);
+	signal(9, SigIntHandler);
 
 	const Config config = ConfigManager::LoadConfig(environment);
 	NodeDaemon node(config);

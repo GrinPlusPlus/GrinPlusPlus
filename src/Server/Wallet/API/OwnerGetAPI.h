@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../../civetweb/include/civetweb.h"
-
+#include <civetweb.h>
 #include <Wallet/SessionToken.h>
 
 // Forward Declarations

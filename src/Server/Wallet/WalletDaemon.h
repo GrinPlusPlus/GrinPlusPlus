@@ -5,6 +5,7 @@
 
 // Forward Declarations
 class WalletRestServer;
+class OwnerController;
 class IWalletManager;
 
 class WalletDaemon
@@ -21,4 +22,5 @@ private:
 
 	IWalletManager* m_pWalletManager;
 	WalletRestServer* m_pWalletRestServer;
+	OwnerController* m_pOwnerController;
 };

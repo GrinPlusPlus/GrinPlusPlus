@@ -1,7 +1,7 @@
 #include "ChainAPI.h"
-#include "../../RestUtil.h"
 #include "../NodeContext.h"
 
+#include <Net/Util/HTTPUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
@@ -21,11 +21,11 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 		chainNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
 		chainNode["total_difficulty"] = pTip->GetTotalDifficulty();
 
-		return RestUtil::BuildSuccessResponse(conn, chainNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, chainNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
 	}
 }
 
@@ -35,7 +35,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 
 	uint64_t startHeight = 0;
 	uint64_t endHeight = 0;
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
@@ -46,7 +46,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 				std::vector<std::string> startHeightTokens = StringUtil::Split(token, "=");
 				if (startHeightTokens.size() != 2)
 				{
-					return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/chain/outputs/byheight?start_height=1&end_height=100");
+					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/chain/outputs/byheight?start_height=1&end_height=100");
 				}
 
 				startHeight = std::stoull(startHeightTokens[1]);
@@ -56,7 +56,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 				std::vector<std::string> endHeightTokens = StringUtil::Split(token, "=");
 				if (endHeightTokens.size() != 2)
 				{
-					return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/chain/outputs/byheight?start_height=1&end_height=100");
+					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/chain/outputs/byheight?start_height=1&end_height=100");
 				}
 
 				endHeight = std::stoull(endHeightTokens[1]);
@@ -128,7 +128,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 		rootNode.append(blockNode);
 	}
 
-	return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
 int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNodeContext)
@@ -136,7 +136,7 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 
 	std::vector<std::string> ids;
-	const std::string queryString = RestUtil::GetQueryString(conn);
+	const std::string queryString = HTTPUtil::GetQueryString(conn);
 	if (!queryString.empty())
 	{
 		std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
@@ -147,7 +147,7 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 				std::vector<std::string> startIndexTokens = StringUtil::Split(token, "=");
 				if (startIndexTokens.size() != 2)
 				{
-					return RestUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
+					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
 				}
 
 				std::vector<std::string> tempIds = StringUtil::Split(startIndexTokens[1], ",");
@@ -174,5 +174,5 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 		}
 	}
 
-	return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }

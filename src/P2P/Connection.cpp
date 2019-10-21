@@ -8,7 +8,7 @@
 #include "Messages/GetPeerAddressesMessage.h"
 #include "Seed/HandShake.h"
 
-#include <P2P/SocketException.h>
+#include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>

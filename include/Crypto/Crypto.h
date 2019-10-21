@@ -49,7 +49,12 @@ public:
 	//
 	// Uses SHA256 to hash the given input into a 32 byte hash.
 	//
-	static CBigInteger<32> SHA256(const std::vector<unsigned char>& input);
+	static CBigInteger<32> SHA256(const std::vector<unsigned char> & input);
+
+	//
+	// Uses SHA512 to hash the given input into a 64 byte hash.
+	//
+	static CBigInteger<64> SHA512(const std::vector<unsigned char> & input);
 
 	//
 	// Uses RipeMD160 to hash the given input into a 20 byte hash.

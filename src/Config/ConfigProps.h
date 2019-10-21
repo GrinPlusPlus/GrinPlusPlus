@@ -46,4 +46,14 @@ namespace ConfigProps
 
 		static const std::string DATABASE = "DATABASE";
 	}
+
+	namespace Tor
+	{
+		static const std::string TOR = "TOR";
+
+		static const std::string SOCKS_PORT = "SOCKS_PORT";
+		static const std::string CONTROL_PORT = "CONTROL_PORT";
+		static const std::string PASSWORD = "PASSWORD";
+		static const std::string HASHED_PASSWORD = "HASHED_PASSWORD";
+	}
 }

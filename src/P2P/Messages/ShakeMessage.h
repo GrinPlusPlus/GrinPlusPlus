@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Message.h"
-#include <P2P/SocketAddress.h>
+#include <Net/SocketAddress.h>
 #include <P2P/Capabilities.h>
 
 // Second part of a handshake, receiver of the first part replies with its own version and characteristics.

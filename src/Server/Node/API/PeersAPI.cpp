@@ -1,8 +1,8 @@
 #include "PeersAPI.h"
-#include "../../RestUtil.h"
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
+#include <Net/Util/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <json/json.h>
 
@@ -25,7 +25,7 @@ int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pNodeContext
 		rootNode.append(JSONFactory::BuildPeerJSON(peer));
 	}
 
-	return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
 //
@@ -47,7 +47,7 @@ int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeC
 		rootNode.append(JSONFactory::BuildConnectedPeerJSON(connectedPeer));
 	}
 
-	return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
 //
@@ -64,7 +64,7 @@ int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeC
 int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
-	const std::string requestedPeer = RestUtil::GetURIParam(conn, "/v1/peers/");
+	const std::string requestedPeer = HTTPUtil::GetURIParam(conn, "/v1/peers/");
 	if (requestedPeer.empty())
 	{
 		return GetAllPeers_Handler(conn, pNodeContext);
@@ -72,7 +72,7 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 
 	try
 	{
-		const EHTTPMethod method = RestUtil::GetHTTPMethod(conn);
+		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(conn);
 
 		const std::string ipAddressStr = ParseIPAddress(requestedPeer);
 		IPAddress ipAddress = IPAddress::FromString(ipAddressStr);
@@ -81,23 +81,23 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 		const std::optional<uint16_t> portOpt = portStr.empty() ? std::nullopt : std::make_optional<uint16_t>((uint16_t)std::stoul(portStr));
 
 		const std::string commandStr = ParseCommand(requestedPeer);
-		if (commandStr == "ban" && method == EHTTPMethod::POST)
+		if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)
 		{
 			const bool banned = pServer->m_pP2PServer->BanPeer(ipAddress, portOpt, EBanReason::ManualBan);
 			if (banned)
 			{
-				return RestUtil::BuildSuccessResponse(conn, "");
+				return HTTPUtil::BuildSuccessResponse(conn, "");
 			}
 		}
-		else if (commandStr == "unban" && method == EHTTPMethod::POST)
+		else if (commandStr == "unban" && method == HTTP::EHTTPMethod::POST)
 		{
 			const bool unbanned = pServer->m_pP2PServer->UnbanPeer(ipAddress, portOpt);
 			if (unbanned)
 			{
-				return RestUtil::BuildSuccessResponse(conn, "");
+				return HTTPUtil::BuildSuccessResponse(conn, "");
 			}
 		}
-		else if (commandStr == "" && method == EHTTPMethod::GET)
+		else if (commandStr == "" && method == HTTP::EHTTPMethod::GET)
 		{
 			std::optional<Peer> peerOpt = pServer->m_pP2PServer->GetPeer(ipAddress, portOpt);
 			if (peerOpt.has_value())
@@ -105,20 +105,20 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 				Json::Value rootNode;
 				rootNode.append(JSONFactory::BuildPeerJSON(peerOpt.value()));
 
-				return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+				return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 			}
 		}
 		else
 		{
-			return RestUtil::BuildBadRequestResponse(conn, "Invalid command.");
+			return HTTPUtil::BuildBadRequestResponse(conn, "Invalid command.");
 		}
 	}
 	catch (const DeserializationException&)
 	{
-		return RestUtil::BuildBadRequestResponse(conn, "Invalid IP address.");
+		return HTTPUtil::BuildBadRequestResponse(conn, "Invalid IP address.");
 	}
 
-	return RestUtil::BuildNotFoundResponse(conn, "Peer not found.");
+	return HTTPUtil::BuildNotFoundResponse(conn, "Peer not found.");
 }
 
 std::string PeersAPI::ParseIPAddress(const std::string& request)

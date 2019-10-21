@@ -2,6 +2,8 @@
 
 #include "Wallet.h"
 #include "LockedWallet.h"
+#include "ForeignController.h"
+#include "LoggedInSession.h"
 
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
@@ -9,12 +11,15 @@
 #include <Wallet/NodeClient.h>
 #include <Wallet/SessionToken.h>
 #include <memory>
-#include <map>
+#include <unordered_map>
+
+// Forward Declarations
+class IWalletManager;
 
 class SessionManager
 {
 public:
-	SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB);
+	SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, IWalletManager& walletManager);
 	~SessionManager();
 
 	std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password);
@@ -26,29 +31,13 @@ public:
 	LockedWallet GetWallet(const SessionToken& token);
 
 private:
-	struct LoggedInSession
-	{
-		LoggedInSession(Wallet* pWallet, std::vector<unsigned char>&& encryptedSeedWithCS, std::vector<unsigned char>&& encryptedGrinboxAddress)
-			: m_pWallet(pWallet), m_encryptedSeedWithCS(std::move(encryptedSeedWithCS)), m_encryptedGrinboxAddress(std::move(encryptedGrinboxAddress))
-		{
+	std::unordered_map<uint64_t, LoggedInSession*> m_sessionsById;
+	// TODO: Keep multimap of sessions per username
 
-		}
-
-		~LoggedInSession()
-		{
-			delete m_pWallet;
-		}
-
-		std::mutex m_mutex;
-		Wallet* m_pWallet;
-		std::vector<unsigned char> m_encryptedSeedWithCS;
-		std::vector<unsigned char> m_encryptedGrinboxAddress;
-	};
-
-	std::map<uint64_t, LoggedInSession*> m_sessionsById;
 	uint64_t m_nextSessionId;
 
 	const Config& m_config;
 	const INodeClient& m_nodeClient;
 	IWalletDB& m_walletDB;
+	ForeignController m_foreignController;
 };

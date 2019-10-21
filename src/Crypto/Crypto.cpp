@@ -39,13 +39,22 @@ CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& key, const std
 	return CBigInteger<32>(&tmp[0]);
 }
 
-CBigInteger<32> Crypto::SHA256(const std::vector<unsigned char>& input)
+CBigInteger<32> Crypto::SHA256(const std::vector<unsigned char> & input)
 {
 	std::vector<unsigned char> sha256(32, 0);
 
 	CSHA256().Write(input.data(), input.size()).Finalize(sha256.data());
 
 	return CBigInteger<32>(sha256);
+}
+
+CBigInteger<64> Crypto::SHA512(const std::vector<unsigned char> & input)
+{
+	std::vector<unsigned char> sha512(64, 0);
+
+	CSHA512().Write(input.data(), input.size()).Finalize(sha512.data());
+
+	return CBigInteger<64>(sha512);
 }
 
 CBigInteger<20> Crypto::RipeMD160(const std::vector<unsigned char>& input)
@@ -172,7 +181,7 @@ std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitm
 
 bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
 {
-	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);;
+	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);
 }
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)

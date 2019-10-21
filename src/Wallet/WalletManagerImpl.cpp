@@ -15,7 +15,7 @@
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB)
-	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB)
+	: m_config(config), m_nodeClient(nodeClient), m_pWalletDB(pWalletDB), m_sessionManager(config, nodeClient, *pWalletDB, *this)
 {
 
 }
@@ -96,6 +96,14 @@ bool WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
 {
 	return m_sessionManager.GetGrinboxAddress(token);
+}
+
+std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token)
+{
+	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
+	LockedWallet wallet = m_sessionManager.GetWallet(token);
+
+	return wallet.GetWallet().GetTorAddress();
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const
@@ -229,19 +237,21 @@ FeeEstimateDTO WalletManager::EstimateFee(
 	return FeeEstimateDTO(fee, std::move(inputDTOs));
 }
 
-std::unique_ptr<Slate> WalletManager::Send(
-	const SessionToken& token, 
-	const uint64_t amount,
-	const uint64_t feeBase,
-	const std::optional<std::string>& addressOpt,
-	const std::optional<std::string>& messageOpt, 
-	const SelectionStrategyDTO& strategy, 
-	const uint8_t numChangeOutputs)
+std::unique_ptr<Slate> WalletManager::Send(const SendCriteria& sendCriteria)
 {
-	const SecureVector masterSeed = m_sessionManager.GetSeed(token);
-	LockedWallet wallet = m_sessionManager.GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.GetSeed(sendCriteria.GetToken());
+	LockedWallet wallet = m_sessionManager.GetWallet(sendCriteria.GetToken());
 
-	return SendSlateBuilder(m_config, m_nodeClient).BuildSendSlate(wallet.GetWallet(), masterSeed, amount, feeBase, numChangeOutputs, addressOpt, messageOpt, strategy);
+	return SendSlateBuilder(m_config, m_nodeClient).BuildSendSlate(
+		wallet.GetWallet(),
+		masterSeed,
+		sendCriteria.GetAmount(),
+		sendCriteria.GetFeeBase(),
+		sendCriteria.GetNumOutputs(),
+		sendCriteria.GetAddress(),
+		sendCriteria.GetMsg(),
+		sendCriteria.GetSelectionStrategy()
+	);
 }
 
 std::unique_ptr<Slate> WalletManager::Receive(

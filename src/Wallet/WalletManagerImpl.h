@@ -27,6 +27,7 @@ public:
 	virtual SecureString GetSeedWords(const SessionToken& token) override final;
 	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
+	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) override final;
 
 	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
@@ -49,15 +50,7 @@ public:
 		const uint8_t numChangeOutputs
 	) override final;
 
-	virtual std::unique_ptr<Slate> Send(
-		const SessionToken& token,
-		const uint64_t amount,
-		const uint64_t feeBase,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt,
-		const SelectionStrategyDTO& strategy,
-		const uint8_t numChangeOutputs
-	) override final;
+	virtual std::unique_ptr<Slate> Send(const SendCriteria& sendCriteria) override final;
 
 	virtual std::unique_ptr<Slate> Receive(
 		const SessionToken& token,

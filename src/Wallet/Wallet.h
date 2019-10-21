@@ -3,6 +3,7 @@
 #include "Keychain/KeyChain.h"
 
 #include <uuid.h>
+#include <optional>
 #include <Common/Secure.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
@@ -11,6 +12,7 @@
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
+#include <Net/Tor/TorAddress.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BulletproofType.h>
@@ -23,6 +25,9 @@ public:
 	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
 
 	inline const std::string& GetUsername() const { return m_username; }
+
+	inline void SetTorAddress(const TorAddress& address) { m_pTorAddress = std::make_optional<TorAddress>(address); }
+	inline std::optional<TorAddress> GetTorAddress() const { return m_pTorAddress; }
 
 	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
 
@@ -62,4 +67,5 @@ private:
 	IWalletDB& m_walletDB;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
+	std::optional<TorAddress> m_pTorAddress;
 };

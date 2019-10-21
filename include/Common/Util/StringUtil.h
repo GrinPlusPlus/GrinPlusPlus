@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <vector>
 #include <locale>
+#include <algorithm>
 
 #pragma warning(disable : 4840)
 
@@ -76,5 +77,28 @@ public:
 		}
 
 		return output;
+	}
+
+	static inline std::string Trim(const std::string& s)
+	{
+		std::string copy = s;
+		ltrim(copy);
+		rtrim(copy);
+		return copy;
+	}
+
+private:
+	// trim from start (in place)
+	static inline void ltrim(std::string& s) {
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+			return !std::isspace(ch);
+			}));
+	}
+
+	// trim from end (in place)
+	static inline void rtrim(std::string& s) {
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+			return !std::isspace(ch) && ch != '\r' && ch != '\n';
+			}).base(), s.end());
 	}
 };

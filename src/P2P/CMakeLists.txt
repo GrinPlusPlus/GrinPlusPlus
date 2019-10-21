@@ -22,5 +22,5 @@ endif(GRINPP_STATIC)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_P2P)
 
-add_dependencies(${TARGET_NAME} Infrastructure Core Crypto Database)
-target_link_libraries(${TARGET_NAME} Infrastructure Core Crypto Database)
+add_dependencies(${TARGET_NAME} Infrastructure Core Crypto Database Net)
+target_link_libraries(${TARGET_NAME} Infrastructure Core Crypto Database Net)

@@ -1,8 +1,8 @@
 #include "BlockInfoAPI.h"
-#include <RestUtil.h>
 #include <JSONFactory.h>
 #include <Node/NodeContext.h>
 
+#include <Net/Util/HTTPUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <json/json.h>
@@ -16,23 +16,23 @@ int BlockInfoAPI::GetBlockInfo_Handler(struct mg_connection* conn, void* pNodeCo
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 
-	EHTTPMethod httpMethod = RestUtil::GetHTTPMethod(conn);
-	if (httpMethod == EHTTPMethod::GET)
+	HTTP::EHTTPMethod httpMethod = HTTPUtil::GetHTTPMethod(conn);
+	if (httpMethod == HTTP::EHTTPMethod::GET)
 	{
-		const std::string uriParam = RestUtil::GetURIParam(conn, "/v1/explorer/blockinfo/");
+		const std::string uriParam = HTTPUtil::GetURIParam(conn, "/v1/explorer/blockinfo/");
 		if (uriParam == "latest")
 		{
 			return GetLatestBlockInfo(conn, *pServer);
 		}
 	}
 
-	return RestUtil::BuildBadRequestResponse(conn, "Endpoint not found.");
+	return HTTPUtil::BuildBadRequestResponse(conn, "Endpoint not found.");
 }
 
 int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& server)
 {
 	int numBlocks = 20;
-	std::optional<std::string> numBlocksOpt = RestUtil::GetQueryParam(conn, "num_blocks");
+	std::optional<std::string> numBlocksOpt = HTTPUtil::GetQueryParam(conn, "num_blocks");
 	if (numBlocksOpt.has_value())
 	{
 		numBlocks = std::stoi(numBlocksOpt.value());
@@ -80,10 +80,10 @@ int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& se
 
 		rootNode["blocks"] = blocksNode;
 
-		return RestUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
 	else
 	{
-		return RestUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
 	}
 }

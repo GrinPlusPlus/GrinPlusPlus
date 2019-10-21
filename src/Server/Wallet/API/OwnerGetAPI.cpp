@@ -1,7 +1,7 @@
 #include "OwnerGetAPI.h"
-#include "../../RestUtil.h"
 #include "SessionTokenUtil.h"
 
+#include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
@@ -23,7 +23,7 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		{
 			accountsNode.append(account);
 		}
-		return RestUtil::BuildSuccessResponse(pConnection, accountsNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(pConnection, accountsNode.toStyledString());
 	}
 
 	if (action == "retrieve_mnemonic")
@@ -32,7 +32,7 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		Json::Value json;
 		SecureString walletWords = walletManager.GetSeedWords(token);
 		json["mnemonic"] = (std::string)walletWords;
-		return RestUtil::BuildSuccessResponse(pConnection, json.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(pConnection, json.toStyledString());
 	}
 
 	// GET /v1/wallet/owner/node_height
@@ -69,7 +69,7 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		return RetrieveTransactions(pConnection, walletManager, token);
 	}
 
-	return RestUtil::BuildBadRequestResponse(pConnection, "GET /v1/wallet/owner/" + action + " not Supported");
+	return HTTPUtil::BuildBadRequestResponse(pConnection, "GET /v1/wallet/owner/" + action + " not Supported");
 }
 
 // GET /v1/wallet/owner/node_height
@@ -78,7 +78,7 @@ int OwnerGetAPI::GetNodeHeight(mg_connection* pConnection, INodeClient& nodeClie
 	// TODO: Load from wallet instead, and return height of last refresh
 	Json::Value rootJSON;
 	rootJSON["height"] = nodeClient.GetChainHeight();
-	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }
 
 // GET /v1/wallet/owner/retrieve_summary_info
@@ -86,16 +86,16 @@ int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager&
 {
 	WalletSummary walletSummary = walletManager.GetWalletSummary(token);
 
-	return RestUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
+	return HTTPUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
 }
 
 // GET /v1/wallet/owner/estimate_fee
 int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
-	std::optional<Json::Value> requestBodyOpt = RestUtil::GetRequestBody(pConnection);
+	std::optional<Json::Value> requestBodyOpt = HTTPUtil::GetRequestBody(pConnection);
 	if (!requestBodyOpt.has_value())
 	{
-		return RestUtil::BuildBadRequestResponse(pConnection, "Request body not found.");
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "Request body not found.");
 	}
 
 	const Json::Value& json = requestBodyOpt.value();
@@ -103,28 +103,28 @@ int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletM
 	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
 	if (!amountOpt.has_value())
 	{
-		return RestUtil::BuildBadRequestResponse(pConnection, "amount missing");
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "amount missing");
 	}
 
 	const Json::Value feeBaseJSON = json.get("fee_base", Json::nullValue);
 	if (feeBaseJSON == Json::nullValue || !feeBaseJSON.isUInt64())
 	{
-		return RestUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
 	}
 
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
 
-	const Json::Value selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
-	if (selectionStrategyJSON == Json::nullValue)
+	const std::optional<Json::Value> selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
+	if (!selectionStrategyJSON.has_value())
 	{
-		return RestUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
-	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
 	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
 	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
 
-	return RestUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
 }
 
 // GET /v1/wallet/owner/retrieve_txs?refresh&id=x
@@ -132,7 +132,7 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 {
 	Json::Value rootJSON;
 
-	const std::optional<std::string> txIdOpt = RestUtil::GetQueryParam(pConnection, "id");
+	const std::optional<std::string> txIdOpt = HTTPUtil::GetQueryParam(pConnection, "id");
 
 	Json::Value transactionsJSON = Json::arrayValue;
 
@@ -160,7 +160,7 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 	}
 
 	rootJSON["transactions"] = transactionsJSON;
-	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }
 
 // GET /v1/wallet/owner/retrieve_outputs?show_spent&show_canceled
@@ -170,8 +170,8 @@ int OwnerGetAPI::RetrieveOutputs(mg_connection* pConnection, IWalletManager& wal
 
 	Json::Value outputsJSON = Json::arrayValue;
 
-	const bool includeSpent = RestUtil::HasQueryParam(pConnection, "show_spent");
-	const bool includeCanceled = RestUtil::HasQueryParam(pConnection, "show_canceled");
+	const bool includeSpent = HTTPUtil::HasQueryParam(pConnection, "show_spent");
+	const bool includeCanceled = HTTPUtil::HasQueryParam(pConnection, "show_canceled");
 
 	const std::vector<WalletOutputDTO> outputs = walletManager.GetOutputs(token, includeSpent, includeCanceled);
 	for (const WalletOutputDTO& output : outputs)
@@ -180,5 +180,5 @@ int OwnerGetAPI::RetrieveOutputs(mg_connection* pConnection, IWalletManager& wal
 	}
 
 	rootJSON["outputs"] = outputsJSON;
-	return RestUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
+	return HTTPUtil::BuildSuccessResponse(pConnection, rootJSON.toStyledString());
 }

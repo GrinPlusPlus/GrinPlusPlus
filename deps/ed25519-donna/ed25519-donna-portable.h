@@ -9,10 +9,12 @@
 		#undef mul32x32_64		
 		#define mul32x32_64(a,b) __emulu(a,b)
 	#endif
-	#undef inline
+#define DONNA_INLINE
+#define DONNA_NOINLINE
+	/*#undef inline
 	#define inline __forceinline
 	#define DONNA_INLINE __forceinline
-	#define DONNA_NOINLINE __declspec(noinline)
+	#define DONNA_NOINLINE __declspec(noinline)*/
 	#define ALIGN(x) __declspec(align(x))
 	#define ROTL32(a,b) _rotl(a,b)
 	#define ROTR32(a,b) _rotr(a,b)

@@ -39,6 +39,7 @@
 #include "ed25519_donna_tor.h"
 #include "ed25519-randombytes.h"
 #include "ed25519-hash.h"
+#include "memwipe.h"
 
 //#include "lib/crypt_ops/crypto_util.h"
 
@@ -151,7 +152,8 @@ ed25519_donna_seckey(unsigned char *sk)
 {
   ed25519_secret_key seed;
 
-  crypto_strongest_rand(seed, 32);
+  ed25519_randombytes_unsafe(seed, 32);
+  //crypto_strongest_rand(seed, 32);
 
   ed25519_extsk(sk, seed);
 

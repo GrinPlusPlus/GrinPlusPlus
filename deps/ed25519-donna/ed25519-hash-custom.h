@@ -9,34 +9,35 @@
 	void ed25519_hash(uint8_t *hash, const uint8_t *in, size_t inlen);
 */
 
-#include "lib/crypt_ops/crypto_digest.h"
+#include "sha512.h"
 
 typedef struct ed25519_hash_context {
-  crypto_digest_t *ctx;
+	mbedtls_sha512_context* ctx;
 } ed25519_hash_context;
 
 
 static void
 ed25519_hash_init(ed25519_hash_context *ctx)
 {
-  ctx->ctx = crypto_digest512_new(DIGEST_SHA512);
+	ctx->ctx = malloc(sizeof(mbedtls_sha512_context));
+	mbedtls_sha512_init(ctx->ctx);
+	mbedtls_sha512_starts(ctx->ctx);
 }
 static void
 ed25519_hash_update(ed25519_hash_context *ctx, const uint8_t *in, size_t inlen)
 {
-  crypto_digest_add_bytes(ctx->ctx, (const char *)in, inlen);
+	mbedtls_sha512_update(ctx->ctx, in, inlen);
 }
 static void
 ed25519_hash_final(ed25519_hash_context *ctx, uint8_t *hash)
 {
-  crypto_digest_get_digest(ctx->ctx, (char *)hash, DIGEST512_LEN);
-  crypto_digest_free(ctx->ctx);
-  ctx->ctx = NULL;
+	mbedtls_sha512_finish(ctx->ctx, hash);
+	free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 static void
 ed25519_hash(uint8_t *hash, const uint8_t *in, size_t inlen)
 {
-  crypto_digest512((char *)hash, (const char *)in, inlen,
-		   DIGEST_SHA512);
+	SHA512(in, inlen, hash);
 }
 

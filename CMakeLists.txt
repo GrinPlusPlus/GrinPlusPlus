@@ -54,7 +54,7 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(WITH_GFLAGS OFF)
-add_definitions(-DNDEBUG)
+#add_definitions(-DNDEBUG)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
 #add_definitions(-D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
@@ -75,6 +75,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps/zlib
 	${PROJECT_SOURCE_DIR}/deps/Catch2
 	${PROJECT_SOURCE_DIR}/deps/ed25519-donna
+	${PROJECT_SOURCE_DIR}/deps/cppcodec
 	${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 
@@ -96,7 +97,10 @@ include(uint128)
 include(ctaes)
 include(scrypt)
 include(secp256k1-zkp)
+include(sha3)
 add_subdirectory(deps/cuckoo)
+add_subdirectory(deps/cppcodec)
+add_subdirectory(deps/ed25519-donna)
 
 # Grin++ Projects
 set(GRINPP_TESTS false)

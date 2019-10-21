@@ -1,8 +1,10 @@
 /* Added for Tor. */
 #ifndef SRC_EXT_ED25519_DONNA_H_INCLUDED_
 #define SRC_EXT_ED25519_DONNA_H_INCLUDED_
-#include "lib/cc/torint.h"
-
+//#include "lib/cc/torint.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef unsigned char curved25519_key[32];
 
 int ed25519_sign_open_batch_donna(const unsigned char **m, size_t *mlen, const unsigned char **pk, const unsigned char **RS, size_t num, int *valid);
@@ -34,5 +36,8 @@ int ed25519_donna_pubkey_from_curve25519_pubkey(unsigned char *out,
 int
 ed25519_donna_scalarmult_with_group_order(unsigned char *out,
                                           const unsigned char *pubkey);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

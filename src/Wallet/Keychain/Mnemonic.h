@@ -6,8 +6,8 @@
 
 class Mnemonic
 {
-public:
-	// TODO: Use SecureVectors
-	static SecureString CreateMnemonic(const std::vector<unsigned char>& entropy);
-	static std::optional<SecureVector> ToEntropy(const SecureString& walletWords);
+  public:
+    // TODO: Use SecureVectors
+    static SecureString CreateMnemonic(const std::vector<unsigned char> &entropy);
+    static std::optional<SecureVector> ToEntropy(const SecureString &walletWords);
 };

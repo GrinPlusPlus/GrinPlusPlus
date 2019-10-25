@@ -2,30 +2,30 @@
 
 #include "TorControlClient.h"
 
-#include <Crypto/SecretKey.h>
 #include <Config/TorConfig.h>
+#include <Crypto/SecretKey.h>
 #include <Net/Tor/TorAddress.h>
 
 class TorControl
 {
-public:
-	TorControl(const TorConfig& torConfig);
+  public:
+    TorControl(const TorConfig &torConfig);
 
-	bool Initialize();
+    bool Initialize();
 
-	void Shutdown();
+    void Shutdown();
 
-	std::string AddOnion(const SecretKey& privateKey, const uint16_t externalPort, const uint16_t internalPort);
-	bool DelOnion(const TorAddress& torAddress);
+    std::string AddOnion(const SecretKey &privateKey, const uint16_t externalPort, const uint16_t internalPort);
+    bool DelOnion(const TorAddress &torAddress);
 
-private:
-	bool Authenticate(const std::string& password);
-	
-	std::string FormatKey(const SecretKey& privateKey) const;
+  private:
+    bool Authenticate(const std::string &password);
 
-	const TorConfig& m_torConfig;
-	std::string m_password;
-	long m_processId;
+    std::string FormatKey(const SecretKey &privateKey) const;
 
-	TorControlClient m_client;
+    const TorConfig &m_torConfig;
+    std::string m_password;
+    long m_processId;
+
+    TorControlClient m_client;
 };

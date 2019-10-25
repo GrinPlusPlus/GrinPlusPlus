@@ -2,8 +2,8 @@
 #include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
-#include <Net/Util/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
+#include <Net/Util/HTTPUtil.h>
 #include <json/json.h>
 
 //
@@ -12,20 +12,20 @@
 // APIs:
 // GET /v1/peers/all
 //
-int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pNodeContext)
+int PeersAPI::GetAllPeers_Handler(struct mg_connection *conn, void *pNodeContext)
 {
-	NodeContext* pServer = (NodeContext*)pNodeContext;
+    NodeContext *pServer = (NodeContext *)pNodeContext;
 
-	const std::vector<Peer> peers = pServer->m_pP2PServer->GetAllPeers();
+    const std::vector<Peer> peers = pServer->m_pP2PServer->GetAllPeers();
 
-	Json::Value rootNode;
+    Json::Value rootNode;
 
-	for (const Peer& peer : peers)
-	{
-		rootNode.append(JSONFactory::BuildPeerJSON(peer));
-	}
+    for (const Peer &peer : peers)
+    {
+        rootNode.append(JSONFactory::BuildPeerJSON(peer));
+    }
 
-	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+    return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
 //
@@ -34,20 +34,20 @@ int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pNodeContext
 // APIs:
 // GET /v1/peers/connected
 //
-int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeContext)
+int PeersAPI::GetConnectedPeers_Handler(struct mg_connection *conn, void *pNodeContext)
 {
-	NodeContext* pServer = (NodeContext*)pNodeContext;
+    NodeContext *pServer = (NodeContext *)pNodeContext;
 
-	const std::vector<ConnectedPeer> connectedPeers = pServer->m_pP2PServer->GetConnectedPeers();
+    const std::vector<ConnectedPeer> connectedPeers = pServer->m_pP2PServer->GetConnectedPeers();
 
-	Json::Value rootNode;
+    Json::Value rootNode;
 
-	for (const ConnectedPeer& connectedPeer : connectedPeers)
-	{
-		rootNode.append(JSONFactory::BuildConnectedPeerJSON(connectedPeer));
-	}
+    for (const ConnectedPeer &connectedPeer : connectedPeers)
+    {
+        rootNode.append(JSONFactory::BuildConnectedPeerJSON(connectedPeer));
+    }
 
-	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+    return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 }
 
 //
@@ -61,107 +61,108 @@ int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeC
 // POST /v1/peers/a.b.c.d/unban
 // POST /v1/peers/a.b.c.d:p/unban
 //
-int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
+int PeersAPI::Peer_Handler(struct mg_connection *conn, void *pNodeContext)
 {
-	NodeContext* pServer = (NodeContext*)pNodeContext;
-	const std::string requestedPeer = HTTPUtil::GetURIParam(conn, "/v1/peers/");
-	if (requestedPeer.empty())
-	{
-		return GetAllPeers_Handler(conn, pNodeContext);
-	}
+    NodeContext *pServer = (NodeContext *)pNodeContext;
+    const std::string requestedPeer = HTTPUtil::GetURIParam(conn, "/v1/peers/");
+    if (requestedPeer.empty())
+    {
+        return GetAllPeers_Handler(conn, pNodeContext);
+    }
 
-	try
-	{
-		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(conn);
+    try
+    {
+        const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(conn);
 
-		const std::string ipAddressStr = ParseIPAddress(requestedPeer);
-		IPAddress ipAddress = IPAddress::FromString(ipAddressStr);
+        const std::string ipAddressStr = ParseIPAddress(requestedPeer);
+        IPAddress ipAddress = IPAddress::FromString(ipAddressStr);
 
-		const std::string portStr = ParsePort(requestedPeer);
-		const std::optional<uint16_t> portOpt = portStr.empty() ? std::nullopt : std::make_optional<uint16_t>((uint16_t)std::stoul(portStr));
+        const std::string portStr = ParsePort(requestedPeer);
+        const std::optional<uint16_t> portOpt =
+            portStr.empty() ? std::nullopt : std::make_optional<uint16_t>((uint16_t)std::stoul(portStr));
 
-		const std::string commandStr = ParseCommand(requestedPeer);
-		if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)
-		{
-			const bool banned = pServer->m_pP2PServer->BanPeer(ipAddress, portOpt, EBanReason::ManualBan);
-			if (banned)
-			{
-				return HTTPUtil::BuildSuccessResponse(conn, "");
-			}
-		}
-		else if (commandStr == "unban" && method == HTTP::EHTTPMethod::POST)
-		{
-			const bool unbanned = pServer->m_pP2PServer->UnbanPeer(ipAddress, portOpt);
-			if (unbanned)
-			{
-				return HTTPUtil::BuildSuccessResponse(conn, "");
-			}
-		}
-		else if (commandStr == "" && method == HTTP::EHTTPMethod::GET)
-		{
-			std::optional<Peer> peerOpt = pServer->m_pP2PServer->GetPeer(ipAddress, portOpt);
-			if (peerOpt.has_value())
-			{
-				Json::Value rootNode;
-				rootNode.append(JSONFactory::BuildPeerJSON(peerOpt.value()));
+        const std::string commandStr = ParseCommand(requestedPeer);
+        if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)
+        {
+            const bool banned = pServer->m_pP2PServer->BanPeer(ipAddress, portOpt, EBanReason::ManualBan);
+            if (banned)
+            {
+                return HTTPUtil::BuildSuccessResponse(conn, "");
+            }
+        }
+        else if (commandStr == "unban" && method == HTTP::EHTTPMethod::POST)
+        {
+            const bool unbanned = pServer->m_pP2PServer->UnbanPeer(ipAddress, portOpt);
+            if (unbanned)
+            {
+                return HTTPUtil::BuildSuccessResponse(conn, "");
+            }
+        }
+        else if (commandStr == "" && method == HTTP::EHTTPMethod::GET)
+        {
+            std::optional<Peer> peerOpt = pServer->m_pP2PServer->GetPeer(ipAddress, portOpt);
+            if (peerOpt.has_value())
+            {
+                Json::Value rootNode;
+                rootNode.append(JSONFactory::BuildPeerJSON(peerOpt.value()));
 
-				return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
-			}
-		}
-		else
-		{
-			return HTTPUtil::BuildBadRequestResponse(conn, "Invalid command.");
-		}
-	}
-	catch (const DeserializationException&)
-	{
-		return HTTPUtil::BuildBadRequestResponse(conn, "Invalid IP address.");
-	}
+                return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+            }
+        }
+        else
+        {
+            return HTTPUtil::BuildBadRequestResponse(conn, "Invalid command.");
+        }
+    }
+    catch (const DeserializationException &)
+    {
+        return HTTPUtil::BuildBadRequestResponse(conn, "Invalid IP address.");
+    }
 
-	return HTTPUtil::BuildNotFoundResponse(conn, "Peer not found.");
+    return HTTPUtil::BuildNotFoundResponse(conn, "Peer not found.");
 }
 
-std::string PeersAPI::ParseIPAddress(const std::string& request)
+std::string PeersAPI::ParseIPAddress(const std::string &request)
 {
-	const std::size_t colonPos = request.find(":");
-	if (colonPos != std::string::npos)
-	{
-		return request.substr(0, colonPos);
-	}
+    const std::size_t colonPos = request.find(":");
+    if (colonPos != std::string::npos)
+    {
+        return request.substr(0, colonPos);
+    }
 
-	const std::size_t slashPos = request.find("/");
-	if (slashPos != std::string::npos)
-	{
-		return request.substr(0, slashPos);
-	}
+    const std::size_t slashPos = request.find("/");
+    if (slashPos != std::string::npos)
+    {
+        return request.substr(0, slashPos);
+    }
 
-	return request;
+    return request;
 }
 
-std::string PeersAPI::ParsePort(const std::string& request)
+std::string PeersAPI::ParsePort(const std::string &request)
 {
-	const std::size_t colonPos = request.find(":");
-	if (colonPos == std::string::npos)
-	{
-		return "";
-	}
+    const std::size_t colonPos = request.find(":");
+    if (colonPos == std::string::npos)
+    {
+        return "";
+    }
 
-	const std::size_t slashPos = request.find("/");
-	if (slashPos != std::string::npos)
-	{
-		return request.substr(colonPos + 1, slashPos - (colonPos + 1));
-	}
+    const std::size_t slashPos = request.find("/");
+    if (slashPos != std::string::npos)
+    {
+        return request.substr(colonPos + 1, slashPos - (colonPos + 1));
+    }
 
-	return request.substr(colonPos + 1);
+    return request.substr(colonPos + 1);
 }
 
-std::string PeersAPI::ParseCommand(const std::string& request)
+std::string PeersAPI::ParseCommand(const std::string &request)
 {
-	const std::size_t slashPos = request.find("/");
-	if (slashPos != std::string::npos)
-	{
-		return request.substr(slashPos + 1);
-	}
+    const std::size_t slashPos = request.find("/");
+    if (slashPos != std::string::npos)
+    {
+        return request.substr(slashPos + 1);
+    }
 
-	return "";
+    return "";
 }

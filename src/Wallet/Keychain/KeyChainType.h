@@ -2,6 +2,6 @@
 
 enum class EKeyChainType
 {
-	DEFAULT,
-	GRINBOX
+    DEFAULT,
+    GRINBOX
 };

@@ -5,11 +5,11 @@ class ChainState;
 
 class ChainResyncer
 {
-public:
-	ChainResyncer(ChainState& chainState);
+  public:
+    ChainResyncer(ChainState &chainState);
 
-	bool ResyncChain();
+    bool ResyncChain();
 
-private:
-	ChainState& m_chainState;
+  private:
+    ChainState &m_chainState;
 };

@@ -5,6 +5,6 @@
 
 class CompactBlockFactory
 {
-public:
-	static CompactBlock CreateCompactBlock(const FullBlock& block);
+  public:
+    static CompactBlock CreateCompactBlock(const FullBlock &block);
 };

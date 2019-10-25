@@ -2,6 +2,6 @@
 
 enum class EDirection
 {
-	OUTBOUND,
-	INBOUND
+    OUTBOUND,
+    INBOUND
 };

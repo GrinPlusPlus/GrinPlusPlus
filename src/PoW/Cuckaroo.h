@@ -4,6 +4,6 @@
 
 class Cuckaroo
 {
-public:
-	static bool Validate(const BlockHeader& blockHeader);
+  public:
+    static bool Validate(const BlockHeader &blockHeader);
 };

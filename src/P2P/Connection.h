@@ -2,11 +2,11 @@
 
 #include "Messages/Message.h"
 
+#include <Config/Config.h>
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
-#include <Config/Config.h>
-#include <mutex>
 #include <atomic>
+#include <mutex>
 #include <queue>
 
 // Forward Declarations
@@ -22,55 +22,72 @@ class PeerManager;
 //
 class Connection
 {
-public:
-	Connection(
-		Socket&& socket,
-		const uint64_t connectionId,
-		const Config& config,
-		ConnectionManager& connectionManager,
-		PeerManager& peerManager,
-		IBlockChainServer& blockChainServer,
-		const ConnectedPeer& connectedPeer
-	);
+  public:
+    Connection(Socket &&socket, const uint64_t connectionId, const Config &config, ConnectionManager &connectionManager,
+               PeerManager &peerManager, IBlockChainServer &blockChainServer, const ConnectedPeer &connectedPeer);
 
-	Connection(const Connection&) = delete;
-	Connection& operator=(const Connection&) = delete;
-	Connection(Connection&&) = delete;
+    Connection(const Connection &) = delete;
+    Connection &operator=(const Connection &) = delete;
+    Connection(Connection &&) = delete;
 
-	inline uint64_t GetId() const { return m_connectionId; }
-	bool Connect();
-	bool IsConnectionActive() const;
-	void Disconnect();
+    inline uint64_t GetId() const
+    {
+        return m_connectionId;
+    }
+    bool Connect();
+    bool IsConnectionActive() const;
+    void Disconnect();
 
-	void Send(const IMessage& message);
+    void Send(const IMessage &message);
 
-	inline Socket& GetSocket() const { return m_socket; }
-	inline Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
-	inline const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
-	inline const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
-	inline uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
-	inline uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
-	inline Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
+    inline Socket &GetSocket() const
+    {
+        return m_socket;
+    }
+    inline Peer &GetPeer()
+    {
+        return m_connectedPeer.GetPeer();
+    }
+    inline const Peer &GetPeer() const
+    {
+        return m_connectedPeer.GetPeer();
+    }
+    inline const ConnectedPeer &GetConnectedPeer() const
+    {
+        return m_connectedPeer;
+    }
+    inline uint64_t GetTotalDifficulty() const
+    {
+        return m_connectedPeer.GetTotalDifficulty();
+    }
+    inline uint64_t GetHeight() const
+    {
+        return m_connectedPeer.GetHeight();
+    }
+    inline Capabilities GetCapabilities() const
+    {
+        return m_connectedPeer.GetPeer().GetCapabilities();
+    }
 
-	bool ExceedsRateLimit() const;
+    bool ExceedsRateLimit() const;
 
-private:
-	static void Thread_ProcessConnection(Connection* pConnection);
+  private:
+    static void Thread_ProcessConnection(Connection *pConnection);
 
-	const Config& m_config;
-	IBlockChainServer& m_blockChainServer;
-	ConnectionManager& m_connectionManager;
-	PeerManager& m_peerManager;
-	std::atomic<bool> m_terminate = true;
-	std::thread m_connectionThread;
-	const uint64_t m_connectionId;
+    const Config &m_config;
+    IBlockChainServer &m_blockChainServer;
+    ConnectionManager &m_connectionManager;
+    PeerManager &m_peerManager;
+    std::atomic<bool> m_terminate = true;
+    std::thread m_connectionThread;
+    const uint64_t m_connectionId;
 
-	mutable std::mutex m_peerMutex;
-	ConnectedPeer m_connectedPeer;
+    mutable std::mutex m_peerMutex;
+    ConnectedPeer m_connectedPeer;
 
-	asio::io_context m_context;
-	mutable Socket m_socket;
+    asio::io_context m_context;
+    mutable Socket m_socket;
 
-	mutable std::mutex m_sendMutex;
-	std::queue<IMessage*> m_sendQueue;
+    mutable std::mutex m_sendMutex;
+    std::queue<IMessage *> m_sendQueue;
 };

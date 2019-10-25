@@ -2,9 +2,9 @@
 
 #include <chrono>
 #include <deque>
-#include <unordered_set>
-#include <unordered_map>
 #include <stdint.h>
+#include <unordered_map>
+#include <unordered_set>
 
 // Forward Declarations
 class ConnectionManager;
@@ -13,28 +13,28 @@ class SyncStatus;
 
 class BlockSyncer
 {
-public:
-	BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
+  public:
+    BlockSyncer(ConnectionManager &connectionManager, IBlockChainServer &blockChainServer);
 
-	bool SyncBlocks(const SyncStatus& syncStatus, const bool startup);
+    bool SyncBlocks(const SyncStatus &syncStatus, const bool startup);
 
-private:
-	bool IsBlockSyncDue(const SyncStatus& syncStatus);
-	bool RequestBlocks();
+  private:
+    bool IsBlockSyncDue(const SyncStatus &syncStatus);
+    bool RequestBlocks();
 
-	ConnectionManager & m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
+    ConnectionManager &m_connectionManager;
+    IBlockChainServer &m_blockChainServer;
 
-	std::chrono::time_point<std::chrono::system_clock> m_timeout;
-	uint64_t m_lastHeight;
-	uint64_t m_highestRequested;
+    std::chrono::time_point<std::chrono::system_clock> m_timeout;
+    uint64_t m_lastHeight;
+    uint64_t m_highestRequested;
 
-	struct RequestedBlock
-	{
-		uint64_t PEER_ID;
-		uint64_t BLOCK_HEIGHT;
-		std::chrono::time_point<std::chrono::system_clock> TIMEOUT;
-	};
-	std::unordered_map<uint64_t, RequestedBlock> m_requestedBlocks;
-	std::unordered_set<uint64_t> m_slowPeers;
+    struct RequestedBlock
+    {
+        uint64_t PEER_ID;
+        uint64_t BLOCK_HEIGHT;
+        std::chrono::time_point<std::chrono::system_clock> TIMEOUT;
+    };
+    std::unordered_map<uint64_t, RequestedBlock> m_requestedBlocks;
+    std::unordered_set<uint64_t> m_slowPeers;
 };

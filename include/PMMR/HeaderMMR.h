@@ -20,17 +20,17 @@ class BlockHeader;
 
 class IHeaderMMR
 {
-public:
-	virtual void AddHeader(const BlockHeader& header) = 0;
-	virtual Hash Root(const uint64_t nextHeight) const = 0;
+  public:
+    virtual void AddHeader(const BlockHeader &header) = 0;
+    virtual Hash Root(const uint64_t nextHeight) const = 0;
 
-	virtual bool Rewind(const uint64_t nextHeight) = 0;
-	virtual bool Rollback() = 0;
-	virtual bool Commit() = 0;
+    virtual bool Rewind(const uint64_t nextHeight) = 0;
+    virtual bool Rollback() = 0;
+    virtual bool Commit() = 0;
 };
 
 namespace HeaderMMRAPI
 {
-	PMMR_API IHeaderMMR* OpenHeaderMMR(const Config& config);
-	PMMR_API void CloseHeaderMMR(IHeaderMMR* pHeaderMMR);
-}
+PMMR_API IHeaderMMR *OpenHeaderMMR(const Config &config);
+PMMR_API void CloseHeaderMMR(IHeaderMMR *pHeaderMMR);
+} // namespace HeaderMMRAPI

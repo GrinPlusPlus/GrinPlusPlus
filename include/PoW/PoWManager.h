@@ -20,20 +20,17 @@
 //
 class POW_API PoWManager
 {
-public:
-	PoWManager(const Config& config, const IBlockDB& blockDB);
-	~PoWManager() = default;
+  public:
+    PoWManager(const Config &config, const IBlockDB &blockDB);
+    ~PoWManager() = default;
 
-	//
-	// Validates the difficulty, algo, etc of the header's proof of work.
-	// Returns true if the PoW is valid.
-	//
-	bool IsPoWValid(
-		const BlockHeader& header,
-		const BlockHeader& previousHeader
-	) const;
+    //
+    // Validates the difficulty, algo, etc of the header's proof of work.
+    // Returns true if the PoW is valid.
+    //
+    bool IsPoWValid(const BlockHeader &header, const BlockHeader &previousHeader) const;
 
-private:
-	const Config& m_config;
-	const IBlockDB& m_blockDB;
+  private:
+    const Config &m_config;
+    const IBlockDB &m_blockDB;
 };

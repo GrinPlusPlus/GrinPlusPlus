@@ -10,17 +10,17 @@ class IWalletManager;
 
 class WalletDaemon
 {
-public:
-	WalletDaemon(const Config& config, INodeClient& nodeClient);
+  public:
+    WalletDaemon(const Config &config, INodeClient &nodeClient);
 
-	void Initialize();
-	void Shutdown();
+    void Initialize();
+    void Shutdown();
 
-private:
-	const Config& m_config;
-	INodeClient& m_nodeClient;
+  private:
+    const Config &m_config;
+    INodeClient &m_nodeClient;
 
-	IWalletManager* m_pWalletManager;
-	WalletRestServer* m_pWalletRestServer;
-	OwnerController* m_pOwnerController;
+    IWalletManager *m_pWalletManager;
+    WalletRestServer *m_pWalletRestServer;
+    OwnerController *m_pOwnerController;
 };

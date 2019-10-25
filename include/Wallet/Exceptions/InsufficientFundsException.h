@@ -4,9 +4,9 @@
 
 class InsufficientFundsException : public std::exception
 {
-public:
-	const char* what() const throw()
-	{
-		return "Insufficient funds.";
-	}
+  public:
+    const char *what() const throw()
+    {
+        return "Insufficient funds.";
+    }
 };

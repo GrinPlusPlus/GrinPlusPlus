@@ -2,15 +2,15 @@
 
 enum class EDandelionStatus
 {
-	// Tx to be included in the next "stem" run.
-	TO_STEM,
+    // Tx to be included in the next "stem" run.
+    TO_STEM,
 
-	// Tx previously "stemmed" and propagated.
-	STEMMED,
+    // Tx previously "stemmed" and propagated.
+    STEMMED,
 
-	// Tx to be included in the next "fluff" run.
-	TO_FLUFF,
+    // Tx to be included in the next "fluff" run.
+    TO_FLUFF,
 
-	// Tx previously "fluffed" and broadcast.
-	FLUFFED
+    // Tx previously "fluffed" and broadcast.
+    FLUFFED
 };

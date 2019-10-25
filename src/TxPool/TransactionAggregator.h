@@ -5,7 +5,8 @@
 
 class TransactionAggregator
 {
-public:
-	static std::unique_ptr<Transaction> Aggregate(const std::vector<Transaction>& transactions);
-	static std::unique_ptr<Transaction> Deaggregate(const Transaction& multiKernelTx, const std::vector<Transaction>& transactions);
+  public:
+    static std::unique_ptr<Transaction> Aggregate(const std::vector<Transaction> &transactions);
+    static std::unique_ptr<Transaction> Deaggregate(const Transaction &multiKernelTx,
+                                                    const std::vector<Transaction> &transactions);
 };

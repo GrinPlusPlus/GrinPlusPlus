@@ -7,9 +7,9 @@ struct NodeContext;
 
 class BlockInfoAPI
 {
-public:
-	static int GetBlockInfo_Handler(struct mg_connection* conn, void* pNodeContext);
+  public:
+    static int GetBlockInfo_Handler(struct mg_connection *conn, void *pNodeContext);
 
-private:
-	static int GetLatestBlockInfo(struct mg_connection* conn, NodeContext& server);
+  private:
+    static int GetLatestBlockInfo(struct mg_connection *conn, NodeContext &server);
 };

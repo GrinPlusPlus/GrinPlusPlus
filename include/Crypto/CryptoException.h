@@ -4,35 +4,33 @@
 
 class CryptoException : public std::exception
 {
-private:
-	struct ExceptionData
-	{
-		char const* m_pMessage;
-	};
+  private:
+    struct ExceptionData
+    {
+        char const *m_pMessage;
+    };
 
-	ExceptionData m_data;
+    ExceptionData m_data;
 
-public:
-	explicit CryptoException() noexcept
-		: m_data()
-	{
-		m_data.m_pMessage = nullptr;
-	}
+  public:
+    explicit CryptoException() noexcept : m_data()
+    {
+        m_data.m_pMessage = nullptr;
+    }
 
-	explicit CryptoException(char const* const pMessage) noexcept
-		: m_data()
-	{
-		m_data.m_pMessage = pMessage;
-	}
+    explicit CryptoException(char const *const pMessage) noexcept : m_data()
+    {
+        m_data.m_pMessage = pMessage;
+    }
 
-	explicit CryptoException(const std::string& message) noexcept
-		: m_data()
-	{
-		m_data.m_pMessage = message.c_str();
-	}
+    explicit CryptoException(const std::string &message) noexcept : m_data()
+    {
+        m_data.m_pMessage = message.c_str();
+    }
 
-	const char* what() const throw()
-	{
-		return m_data.m_pMessage != nullptr ? m_data.m_pMessage : "An error occurred while performing a cryptographic operation.";
-	}
+    const char *what() const throw()
+    {
+        return m_data.m_pMessage != nullptr ? m_data.m_pMessage
+                                            : "An error occurred while performing a cryptographic operation.";
+    }
 };

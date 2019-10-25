@@ -4,5 +4,5 @@
 
 class RPCNodeClient : public INodeClient
 {
-	// TODO: Implement using https://github.com/rpclib/rpclib
+    // TODO: Implement using https://github.com/rpclib/rpclib
 };

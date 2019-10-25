@@ -20,13 +20,13 @@
 //
 class CRYPTO_API RandomNumberGenerator
 {
-public:
-	//
-	// Generates a cryptographically-strong pseudo-random 32-byte number.
-	//
-	static CBigInteger<32> GenerateRandom32();
+  public:
+    //
+    // Generates a cryptographically-strong pseudo-random 32-byte number.
+    //
+    static CBigInteger<32> GenerateRandom32();
 
-	static SecureVector GenerateRandomBytes(const size_t numBytes);
+    static SecureVector GenerateRandomBytes(const size_t numBytes);
 
-	static uint64_t GenerateRandom(const uint64_t minimum, const uint64_t maximum);
+    static uint64_t GenerateRandom(const uint64_t minimum, const uint64_t maximum);
 };

@@ -6,60 +6,65 @@
 
 class StemTransactionMessage : public IMessage
 {
-public:
-	//
-	// Constructors
-	//
-	StemTransactionMessage(Transaction&& transaction)
-		: m_transaction(std::move(transaction))
-	{
+  public:
+    //
+    // Constructors
+    //
+    StemTransactionMessage(Transaction &&transaction) : m_transaction(std::move(transaction))
+    {
+    }
+    StemTransactionMessage(const Transaction &transaction) : m_transaction(transaction)
+    {
+    }
+    StemTransactionMessage(const StemTransactionMessage &other) = default;
+    StemTransactionMessage(StemTransactionMessage &&other) noexcept = default;
 
-	}
-	StemTransactionMessage(const Transaction& transaction)
-		: m_transaction(transaction)
-	{
+    //
+    // Destructor
+    //
+    virtual ~StemTransactionMessage() = default;
 
-	}
-	StemTransactionMessage(const StemTransactionMessage& other) = default;
-	StemTransactionMessage(StemTransactionMessage&& other) noexcept = default;
+    //
+    // Operators
+    //
+    StemTransactionMessage &operator=(const StemTransactionMessage &other) = default;
+    StemTransactionMessage &operator=(StemTransactionMessage &&other) noexcept = default;
 
-	//
-	// Destructor
-	//
-	virtual ~StemTransactionMessage() = default;
+    //
+    // Clone
+    //
+    virtual StemTransactionMessage *Clone() const override final
+    {
+        return new StemTransactionMessage(*this);
+    }
 
-	//
-	// Operators
-	//
-	StemTransactionMessage& operator=(const StemTransactionMessage& other) = default;
-	StemTransactionMessage& operator=(StemTransactionMessage&& other) noexcept = default;
+    //
+    // Getters
+    //
+    virtual MessageTypes::EMessageType GetMessageType() const override final
+    {
+        return MessageTypes::StemTransaction;
+    }
+    inline const Transaction &GetTransaction() const
+    {
+        return m_transaction;
+    }
 
-	//
-	// Clone
-	//
-	virtual StemTransactionMessage* Clone() const override final { return new StemTransactionMessage(*this); }
+    //
+    // Deserialization
+    //
+    static StemTransactionMessage Deserialize(ByteBuffer &byteBuffer)
+    {
+        Transaction transaction = Transaction::Deserialize(byteBuffer);
+        return StemTransactionMessage(std::move(transaction));
+    }
 
-	//
-	// Getters
-	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::StemTransaction; }
-	inline const Transaction& GetTransaction() const { return m_transaction; }
+  protected:
+    virtual void SerializeBody(Serializer &serializer) const override final
+    {
+        m_transaction.Serialize(serializer);
+    }
 
-	//
-	// Deserialization
-	//
-	static StemTransactionMessage Deserialize(ByteBuffer& byteBuffer)
-	{
-		Transaction transaction = Transaction::Deserialize(byteBuffer);
-		return StemTransactionMessage(std::move(transaction));
-	}
-
-protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
-	{
-		m_transaction.Serialize(serializer);
-	}
-
-private:
-	Transaction m_transaction;
+  private:
+    Transaction m_transaction;
 };

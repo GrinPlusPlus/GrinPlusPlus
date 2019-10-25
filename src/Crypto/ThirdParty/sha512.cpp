@@ -7,14 +7,14 @@
 #include <Core/Serialization/EndianHelper.h>
 #include <string.h>
 
-static inline uint64_t ReadBE64(const unsigned char* ptr)
+static inline uint64_t ReadBE64(const unsigned char *ptr)
 {
-	return EndianHelper::ReadBE64(ptr);
+    return EndianHelper::ReadBE64(ptr);
 }
 
-static inline void WriteBE64(unsigned char* ptr, uint64_t x)
+static inline void WriteBE64(unsigned char *ptr, uint64_t x)
 {
-	EndianHelper::WriteBE64(ptr, x);
+    EndianHelper::WriteBE64(ptr, x);
 }
 
 // Internal implementation code.
@@ -23,15 +23,34 @@ namespace
 /// Internal SHA-512 implementation.
 namespace sha512
 {
-uint64_t inline Ch(uint64_t x, uint64_t y, uint64_t z) { return z ^ (x & (y ^ z)); }
-uint64_t inline Maj(uint64_t x, uint64_t y, uint64_t z) { return (x & y) | (z & (x | y)); }
-uint64_t inline Sigma0(uint64_t x) { return (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25); }
-uint64_t inline Sigma1(uint64_t x) { return (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23); }
-uint64_t inline sigma0(uint64_t x) { return (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7); }
-uint64_t inline sigma1(uint64_t x) { return (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6); }
+uint64_t inline Ch(uint64_t x, uint64_t y, uint64_t z)
+{
+    return z ^ (x & (y ^ z));
+}
+uint64_t inline Maj(uint64_t x, uint64_t y, uint64_t z)
+{
+    return (x & y) | (z & (x | y));
+}
+uint64_t inline Sigma0(uint64_t x)
+{
+    return (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
+}
+uint64_t inline Sigma1(uint64_t x)
+{
+    return (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
+}
+uint64_t inline sigma0(uint64_t x)
+{
+    return (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
+}
+uint64_t inline sigma1(uint64_t x)
+{
+    return (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
+}
 
 /** One round of SHA-512. */
-void inline Round(uint64_t a, uint64_t b, uint64_t c, uint64_t& d, uint64_t e, uint64_t f, uint64_t g, uint64_t& h, uint64_t k, uint64_t w)
+void inline Round(uint64_t a, uint64_t b, uint64_t c, uint64_t &d, uint64_t e, uint64_t f, uint64_t g, uint64_t &h,
+                  uint64_t k, uint64_t w)
 {
     uint64_t t1 = h + Sigma1(e) + Ch(e, f, g) + k + w;
     uint64_t t2 = Sigma0(a) + Maj(a, b, c);
@@ -40,7 +59,7 @@ void inline Round(uint64_t a, uint64_t b, uint64_t c, uint64_t& d, uint64_t e, u
 }
 
 /** Initialize SHA-256 state. */
-void inline Initialize(uint64_t* s)
+void inline Initialize(uint64_t *s)
 {
     s[0] = 0x6a09e667f3bcc908ull;
     s[1] = 0xbb67ae8584caa73bull;
@@ -53,7 +72,7 @@ void inline Initialize(uint64_t* s)
 }
 
 /** Perform one SHA-512 transformation, processing a 128-byte chunk. */
-void Transform(uint64_t* s, const unsigned char* chunk)
+void Transform(uint64_t *s, const unsigned char *chunk)
 {
     uint64_t a = s[0], b = s[1], c = s[2], d = s[3], e = s[4], f = s[5], g = s[6], h = s[7];
     uint64_t w0, w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12, w13, w14, w15;
@@ -157,7 +176,6 @@ void Transform(uint64_t* s, const unsigned char* chunk)
 
 } // namespace
 
-
 ////// SHA-512
 
 CSHA512::CSHA512() : bytes(0)
@@ -165,11 +183,12 @@ CSHA512::CSHA512() : bytes(0)
     sha512::Initialize(s);
 }
 
-CSHA512& CSHA512::Write(const unsigned char* data, size_t len)
+CSHA512 &CSHA512::Write(const unsigned char *data, size_t len)
 {
-    const unsigned char* end = data + len;
+    const unsigned char *end = data + len;
     size_t bufsize = bytes % 128;
-    if (bufsize && bufsize + len >= 128) {
+    if (bufsize && bufsize + len >= 128)
+    {
         // Fill the buffer, and process it.
         memcpy(buf + bufsize, data, 128 - bufsize);
         bytes += 128 - bufsize;
@@ -177,13 +196,15 @@ CSHA512& CSHA512::Write(const unsigned char* data, size_t len)
         sha512::Transform(s, buf);
         bufsize = 0;
     }
-    while (end >= data + 128) {
+    while (end >= data + 128)
+    {
         // Process full chunks directly from the source.
         sha512::Transform(s, data);
         data += 128;
         bytes += 128;
     }
-    if (end > data) {
+    if (end > data)
+    {
         // Fill the buffer with what remains.
         memcpy(buf + bufsize, data, end - data);
         bytes += end - data;
@@ -208,7 +229,7 @@ void CSHA512::Finalize(unsigned char hash[OUTPUT_SIZE])
     WriteBE64(hash + 56, s[7]);
 }
 
-CSHA512& CSHA512::Reset()
+CSHA512 &CSHA512::Reset()
 {
     bytes = 0;
     sha512::Initialize(s);

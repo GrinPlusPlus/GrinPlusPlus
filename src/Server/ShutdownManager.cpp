@@ -1,7 +1,7 @@
 #include "ShutdownManager.h"
 
-ShutdownManager& ShutdownManager::GetInstance()
+ShutdownManager &ShutdownManager::GetInstance()
 {
-	static ShutdownManager instance;
-	return instance;
+    static ShutdownManager instance;
+    return instance;
 }

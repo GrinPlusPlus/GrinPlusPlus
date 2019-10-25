@@ -5,23 +5,23 @@
 
 enum class ESelectionStrategy
 {
-	ALL,
-	CUSTOM
+    ALL,
+    CUSTOM
 };
 
 namespace SelectionStrategy
 {
-	static ESelectionStrategy FromString(const std::string& input)
-	{
-		if (input == "ALL")
-		{
-			return ESelectionStrategy::ALL;
-		}
-		else if (input == "CUSTOM")
-		{
-			return ESelectionStrategy::CUSTOM;
-		}
+static ESelectionStrategy FromString(const std::string &input)
+{
+    if (input == "ALL")
+    {
+        return ESelectionStrategy::ALL;
+    }
+    else if (input == "CUSTOM")
+    {
+        return ESelectionStrategy::CUSTOM;
+    }
 
-		throw DeserializationException();
-	}
+    throw DeserializationException();
 }
+} // namespace SelectionStrategy

@@ -3,8 +3,8 @@
 #include "minizip/unzip.h"
 
 #ifdef _WIN32
-	#include "minizip/iowin32.h"
-	#define USEWIN32IOAPI
+#include "minizip/iowin32.h"
+#define USEWIN32IOAPI
 #endif
 
 #include <string>
@@ -12,10 +12,10 @@
 
 enum class EZipFileStatus
 {
-	SUCCESS,
-	NOT_OPEN,
-	NOT_FOUND,
-	WRITE_FAILED
+    SUCCESS,
+    NOT_OPEN,
+    NOT_FOUND,
+    WRITE_FAILED
 };
 
 /*
@@ -23,17 +23,17 @@ enum class EZipFileStatus
  */
 class ZipFile
 {
-private:
-	std::string m_zipFilePath;
-	unzFile m_unzFile;
+  private:
+    std::string m_zipFilePath;
+    unzFile m_unzFile;
 
-public:
-	ZipFile(const std::string& zipFilePath);
+  public:
+    ZipFile(const std::string &zipFilePath);
 
-	EZipFileStatus Open();
-	void Close();
+    EZipFileStatus Open();
+    void Close();
 
-	EZipFileStatus ExtractFile(const std::string& path, const std::string& destination) const;
-	EZipFileStatus ListFiles(std::vector<std::string>& files) const;
-	//void CheckFile(const std::string& path) const;
+    EZipFileStatus ExtractFile(const std::string &path, const std::string &destination) const;
+    EZipFileStatus ListFiles(std::vector<std::string> &files) const;
+    // void CheckFile(const std::string& path) const;
 };

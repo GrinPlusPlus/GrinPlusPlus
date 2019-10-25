@@ -7,9 +7,10 @@
 
 class HeaderAPI
 {
-public:
-	static int GetHeader_Handler(struct mg_connection* conn, void* pNodeContext);
+  public:
+    static int GetHeader_Handler(struct mg_connection *conn, void *pNodeContext);
 
-private:
-	static std::unique_ptr<BlockHeader> GetHeader(const std::string& requestedHeader, IBlockChainServer* pBlockChainServer);
+  private:
+    static std::unique_ptr<BlockHeader> GetHeader(const std::string &requestedHeader,
+                                                  IBlockChainServer *pBlockChainServer);
 };

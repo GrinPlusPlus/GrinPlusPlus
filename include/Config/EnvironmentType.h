@@ -2,6 +2,6 @@
 
 enum class EEnvironmentType
 {
-	MAINNET,
-	FLOONET
+    MAINNET,
+    FLOONET
 };

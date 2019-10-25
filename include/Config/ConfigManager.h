@@ -15,9 +15,9 @@
 
 class CONFIG_API ConfigManager
 {
-public:
-	//
-	// Loads and parses the config information from disk.
-	//
-	static Config LoadConfig(const EEnvironmentType environment);
+  public:
+    //
+    // Loads and parses the config information from disk.
+    //
+    static Config LoadConfig(const EEnvironmentType environment);
 };

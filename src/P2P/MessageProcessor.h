@@ -2,8 +2,8 @@
 
 #include "Messages/RawMessage.h"
 
-#include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
+#include <P2P/ConnectedPeer.h>
 
 // Forward Declarations
 class Socket;
@@ -17,29 +17,34 @@ class PeerManager;
 
 class MessageProcessor
 {
-public:
-	enum EStatus
-	{
-		SUCCESS,
-		SOCKET_FAILURE,
-		UNKNOWN_ERROR,
-		RESOURCE_NOT_FOUND,
-		UNKNOWN_MESSAGE,
-		SYNCING,
-		BAN_PEER
-	};
+  public:
+    enum EStatus
+    {
+        SUCCESS,
+        SOCKET_FAILURE,
+        UNKNOWN_ERROR,
+        RESOURCE_NOT_FOUND,
+        UNKNOWN_MESSAGE,
+        SYNCING,
+        BAN_PEER
+    };
 
-	MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
+    MessageProcessor(const Config &config, ConnectionManager &connectionManager, PeerManager &peerManager,
+                     IBlockChainServer &blockChainServer);
 
-	EStatus ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
+    EStatus ProcessMessage(const uint64_t connectionId, Socket &socket, ConnectedPeer &connectedPeer,
+                           const RawMessage &rawMessage);
 
-private:
-	EStatus ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
-	EStatus SendTxHashSet(ConnectedPeer& connectedPeer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage);
-	EStatus ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
+  private:
+    EStatus ProcessMessageInternal(const uint64_t connectionId, Socket &socket, ConnectedPeer &connectedPeer,
+                                   const RawMessage &rawMessage);
+    EStatus SendTxHashSet(ConnectedPeer &connectedPeer, Socket &socket,
+                          const TxHashSetRequestMessage &txHashSetRequestMessage);
+    EStatus ReceiveTxHashSet(const uint64_t connectionId, Socket &socket,
+                             const TxHashSetArchiveMessage &txHashSetArchiveMessage);
 
-	const Config& m_config;
-	ConnectionManager& m_connectionManager;
-	PeerManager& m_peerManager;
-	IBlockChainServer& m_blockChainServer;
+    const Config &m_config;
+    ConnectionManager &m_connectionManager;
+    PeerManager &m_peerManager;
+    IBlockChainServer &m_blockChainServer;
 };

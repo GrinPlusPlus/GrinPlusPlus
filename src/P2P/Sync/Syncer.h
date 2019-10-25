@@ -11,23 +11,29 @@ class SyncStatus;
 
 class Syncer
 {
-public:
-	Syncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
+  public:
+    Syncer(ConnectionManager &connectionManager, IBlockChainServer &blockChainServer);
 
-	void Start();
-	void Stop();
+    void Start();
+    void Stop();
 
-	inline SyncStatus& GetSyncStatus() { return m_syncStatus; }
-	inline const SyncStatus& GetSyncStatus() const { return m_syncStatus; }
+    inline SyncStatus &GetSyncStatus()
+    {
+        return m_syncStatus;
+    }
+    inline const SyncStatus &GetSyncStatus() const
+    {
+        return m_syncStatus;
+    }
 
-private:
-	static void Thread_Sync(Syncer& syncer);
-	void UpdateSyncStatus();
+  private:
+    static void Thread_Sync(Syncer &syncer);
+    void UpdateSyncStatus();
 
-	ConnectionManager& m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
-	SyncStatus m_syncStatus;
+    ConnectionManager &m_connectionManager;
+    IBlockChainServer &m_blockChainServer;
+    SyncStatus m_syncStatus;
 
-	std::atomic<bool> m_terminate;
-	std::thread m_syncThread;
+    std::atomic<bool> m_terminate;
+    std::thread m_syncThread;
 };

@@ -2,6 +2,6 @@
 
 enum class EPoolType
 {
-	STEMPOOL,
-	MEMPOOL
+    STEMPOOL,
+    MEMPOOL
 };

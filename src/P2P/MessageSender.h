@@ -2,16 +2,16 @@
 
 #include "Messages/Message.h"
 
-#include <Net/Socket.h>
 #include <Config/Config.h>
+#include <Net/Socket.h>
 
 class MessageSender
 {
-public:
-	MessageSender(const Config& config);
+  public:
+    MessageSender(const Config &config);
 
-	bool Send(Socket& socket, const IMessage& message) const;
+    bool Send(Socket &socket, const IMessage &message) const;
 
-private:
-	const Config& m_config;
+  private:
+    const Config &m_config;
 };

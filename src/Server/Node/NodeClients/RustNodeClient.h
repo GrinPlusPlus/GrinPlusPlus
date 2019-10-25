@@ -4,5 +4,5 @@
 
 class RustNodeClient : public INodeClient
 {
-	// TODO: Implement Rest calls to core Rust node
+    // TODO: Implement Rest calls to core Rust node
 };

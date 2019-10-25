@@ -6,13 +6,16 @@
 
 #include <string.h>
 
-CHMAC_SHA256::CHMAC_SHA256(const unsigned char* key, size_t keylen)
+CHMAC_SHA256::CHMAC_SHA256(const unsigned char *key, size_t keylen)
 {
     unsigned char rkey[64];
-    if (keylen <= 64) {
+    if (keylen <= 64)
+    {
         memcpy(rkey, key, keylen);
         memset(rkey + keylen, 0, 64 - keylen);
-    } else {
+    }
+    else
+    {
         CSHA256().Write(key, keylen).Finalize(rkey);
         memset(rkey + 32, 0, 32);
     }

@@ -23,21 +23,21 @@ class IPeerDB;
 //
 class IDatabase
 {
-public:
-	virtual IBlockDB& GetBlockDB() = 0;
+  public:
+    virtual IBlockDB &GetBlockDB() = 0;
 
-	virtual IPeerDB& GetPeerDB() = 0;
+    virtual IPeerDB &GetPeerDB() = 0;
 };
 
 namespace DatabaseAPI
 {
-	//
-	// Opens all node databases and returns an instance of IDatabase.
-	//
-	DATABASE_API IDatabase* OpenDatabase(const Config& config);
+//
+// Opens all node databases and returns an instance of IDatabase.
+//
+DATABASE_API IDatabase *OpenDatabase(const Config &config);
 
-	//
-	// Closes all node databases and cleans up the memory of IDatabase.
-	//
-	DATABASE_API void CloseDatabase(IDatabase* pDatabase);
-}
+//
+// Closes all node databases and cleans up the memory of IDatabase.
+//
+DATABASE_API void CloseDatabase(IDatabase *pDatabase);
+} // namespace DatabaseAPI

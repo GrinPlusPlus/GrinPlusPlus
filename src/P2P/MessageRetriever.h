@@ -4,8 +4,8 @@
 
 #include <Config/Config.h>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 // Forward Declarations
 class Socket;
@@ -14,18 +14,19 @@ class ConnectionManager;
 
 class MessageRetriever
 {
-public:
-	MessageRetriever(const Config& config, const ConnectionManager& connectionManager);
+  public:
+    MessageRetriever(const Config &config, const ConnectionManager &connectionManager);
 
-	enum ERetrievalMode
-	{
-		BLOCKING,
-		NON_BLOCKING
-	};
+    enum ERetrievalMode
+    {
+        BLOCKING,
+        NON_BLOCKING
+    };
 
-	std::unique_ptr<RawMessage> RetrieveMessage(Socket& socket, const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const;
+    std::unique_ptr<RawMessage> RetrieveMessage(Socket &socket, const ConnectedPeer &connectedPeer,
+                                                const ERetrievalMode retrievalMode) const;
 
-private:
-	const Config& m_config;
-	const ConnectionManager& m_connectionManager;
+  private:
+    const Config &m_config;
+    const ConnectionManager &m_connectionManager;
 };

@@ -1,112 +1,112 @@
 #include "PeerDBImpl.h"
 
-#include <Infrastructure/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <utility>
-#include <string>
+#include <Infrastructure/Logger.h>
 #include <filesystem.h>
+#include <string>
+#include <utility>
 
-PeerDB::PeerDB(const Config& config)
-	: m_config(config)
+PeerDB::PeerDB(const Config &config) : m_config(config)
 {
-
 }
 
 PeerDB::~PeerDB()
 {
-
 }
 
 void PeerDB::OpenDB()
 {
-	Options options;
-	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
-	options.IncreaseParallelism();
-	options.max_open_files = 10;
-	
-	//options.OptimizeLevelStyleCompaction();
-	// create the DB if it's not already present
-	options.create_if_missing = true;
-	options.compression = kNoCompression;
+    Options options;
+    // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
+    options.IncreaseParallelism();
+    options.max_open_files = 10;
 
-	// open DB
-	const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
-	fs::create_directories(dbPath);
+    // options.OptimizeLevelStyleCompaction();
+    // create the DB if it's not already present
+    options.create_if_missing = true;
+    options.compression = kNoCompression;
 
-	Status s = DB::Open(options, dbPath, &m_pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
+    // open DB
+    const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
+    fs::create_directories(dbPath);
+
+    Status s = DB::Open(
+        options, dbPath,
+        &m_pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
 }
 
 void PeerDB::CloseDB()
 {
-	delete m_pDatabase;
+    delete m_pDatabase;
 }
 
 std::vector<Peer> PeerDB::LoadAllPeers()
 {
-	LOG_TRACE("Loading all peers.");
+    LOG_TRACE("Loading all peers.");
 
-	std::vector<Peer> peers;
+    std::vector<Peer> peers;
 
-	rocksdb::Iterator* it = m_pDatabase->NewIterator(rocksdb::ReadOptions());
-	for (it->SeekToFirst(); it->Valid(); it->Next())
-	{
-		std::vector<unsigned char> data(it->value().data(), it->value().data() + it->value().size());
-		ByteBuffer byteBuffer(data);
-		peers.emplace_back(Peer::Deserialize(byteBuffer));
-	}
+    rocksdb::Iterator *it = m_pDatabase->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        std::vector<unsigned char> data(it->value().data(), it->value().data() + it->value().size());
+        ByteBuffer byteBuffer(data);
+        peers.emplace_back(Peer::Deserialize(byteBuffer));
+    }
 
-	return peers;
+    return peers;
 }
 
-std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
+std::optional<Peer> PeerDB::GetPeer(const IPAddress &address, const std::optional<uint16_t> &portOpt)
 {
-	LOG_TRACE("Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
+    LOG_TRACE("Loading peer: " +
+              (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
 
-	Serializer addressSerializer;
-	if (address.IsLocalhost() && portOpt.has_value())
-	{
-		SocketAddress(address, portOpt.value()).Serialize(addressSerializer);
-	}
-	else
-	{
-		address.Serialize(addressSerializer);
-	}
+    Serializer addressSerializer;
+    if (address.IsLocalhost() && portOpt.has_value())
+    {
+        SocketAddress(address, portOpt.value()).Serialize(addressSerializer);
+    }
+    else
+    {
+        address.Serialize(addressSerializer);
+    }
 
-	Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+    Slice key((const char *)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
 
-	std::string value;
-	const Status status = m_pDatabase->Get(ReadOptions(), key, &value);
-	if (status.ok())
-	{
-		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		ByteBuffer byteBuffer(data);
+    std::string value;
+    const Status status = m_pDatabase->Get(ReadOptions(), key, &value);
+    if (status.ok())
+    {
+        std::vector<unsigned char> data(value.data(), value.data() + value.size());
+        ByteBuffer byteBuffer(data);
 
-		return std::make_optional<Peer>(Peer::Deserialize(byteBuffer));
-	}
+        return std::make_optional<Peer>(Peer::Deserialize(byteBuffer));
+    }
 
-	return std::nullopt;
+    return std::nullopt;
 }
 
-void PeerDB::SavePeers(const std::vector<Peer>& peers)
+void PeerDB::SavePeers(const std::vector<Peer> &peers)
 {
-	LOG_TRACE_F("Saving peers: %llu", peers.size());
+    LOG_TRACE_F("Saving peers: %llu", peers.size());
 
-	WriteBatch writeBatch;
-	for (const Peer& peer : peers)
-	{
-		const IPAddress& address = peer.GetIPAddress();
+    WriteBatch writeBatch;
+    for (const Peer &peer : peers)
+    {
+        const IPAddress &address = peer.GetIPAddress();
 
-		Serializer addressSerializer;
-		address.Serialize(addressSerializer);
-		Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+        Serializer addressSerializer;
+        address.Serialize(addressSerializer);
+        Slice key((const char *)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
 
-		Serializer peerSerializer;
-		peer.Serialize(peerSerializer);
-		Slice value((const char*)peerSerializer.GetBytes().data(), peerSerializer.GetBytes().size());
+        Serializer peerSerializer;
+        peer.Serialize(peerSerializer);
+        Slice value((const char *)peerSerializer.GetBytes().data(), peerSerializer.GetBytes().size());
 
-		writeBatch.Put(key, value);
-	}
+        writeBatch.Put(key, value);
+    }
 
-	m_pDatabase->Write(WriteOptions(), &writeBatch);
+    m_pDatabase->Write(WriteOptions(), &writeBatch);
 }

@@ -1,39 +1,37 @@
 #pragma once
 
-#include <lru/cache.hpp>
 #include <Crypto/Commitment.h>
+#include <lru/cache.hpp>
 #include <mutex>
 
 class BulletProofsCache
 {
-public:
-	BulletProofsCache()
-		: m_bulletproofsCache(3000)
-	{
+  public:
+    BulletProofsCache() : m_bulletproofsCache(3000)
+    {
+    }
 
-	}
+    void AddToCache(const Commitment &commitment)
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
 
-	void AddToCache(const Commitment& commitment)
-	{
-		std::unique_lock<std::mutex> lock(m_mutex);
+        m_bulletproofsCache.insert(commitment, commitment);
+    }
 
-		m_bulletproofsCache.insert(commitment, commitment);
-	}
+    bool WasAlreadyVerified(const Commitment &commitment) const
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
 
-	bool WasAlreadyVerified(const Commitment& commitment) const
-	{
-		std::unique_lock<std::mutex> lock(m_mutex);
+        auto iter = m_bulletproofsCache.find(commitment);
+        if (iter != m_bulletproofsCache.end() && iter->value() == commitment)
+        {
+            return true;
+        }
 
-		auto iter = m_bulletproofsCache.find(commitment);
-		if (iter != m_bulletproofsCache.end() && iter->value() == commitment)
-		{
-			return true;
-		}
+        return false;
+    }
 
-		return false;
-	}
-
-private:
-	mutable std::mutex m_mutex;
-	mutable LRU::Cache<Commitment, Commitment> m_bulletproofsCache;
+  private:
+    mutable std::mutex m_mutex;
+    mutable LRU::Cache<Commitment, Commitment> m_bulletproofsCache;
 };

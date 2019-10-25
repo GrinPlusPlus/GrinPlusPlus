@@ -6,60 +6,65 @@
 
 class TransactionMessage : public IMessage
 {
-public:
-	//
-	// Constructors
-	//
-	TransactionMessage(Transaction&& transaction)
-		: m_transaction(std::move(transaction))
-	{
+  public:
+    //
+    // Constructors
+    //
+    TransactionMessage(Transaction &&transaction) : m_transaction(std::move(transaction))
+    {
+    }
+    TransactionMessage(const Transaction &transaction) : m_transaction(transaction)
+    {
+    }
+    TransactionMessage(const TransactionMessage &other) = default;
+    TransactionMessage(TransactionMessage &&other) noexcept = default;
 
-	}
-	TransactionMessage(const Transaction& transaction)
-		: m_transaction(transaction)
-	{
+    //
+    // Destructor
+    //
+    virtual ~TransactionMessage() = default;
 
-	}
-	TransactionMessage(const TransactionMessage& other) = default;
-	TransactionMessage(TransactionMessage&& other) noexcept = default;
+    //
+    // Operators
+    //
+    TransactionMessage &operator=(const TransactionMessage &other) = default;
+    TransactionMessage &operator=(TransactionMessage &&other) noexcept = default;
 
-	//
-	// Destructor
-	//
-	virtual ~TransactionMessage() = default;
+    //
+    // Clone
+    //
+    virtual TransactionMessage *Clone() const override final
+    {
+        return new TransactionMessage(*this);
+    }
 
-	//
-	// Operators
-	//
-	TransactionMessage& operator=(const TransactionMessage& other) = default;
-	TransactionMessage& operator=(TransactionMessage&& other) noexcept = default;
+    //
+    // Getters
+    //
+    virtual MessageTypes::EMessageType GetMessageType() const override final
+    {
+        return MessageTypes::TransactionMsg;
+    }
+    inline const Transaction &GetTransaction() const
+    {
+        return m_transaction;
+    }
 
-	//
-	// Clone
-	//
-	virtual TransactionMessage* Clone() const override final { return new TransactionMessage(*this); }
+    //
+    // Deserialization
+    //
+    static TransactionMessage Deserialize(ByteBuffer &byteBuffer)
+    {
+        Transaction transaction = Transaction::Deserialize(byteBuffer);
+        return TransactionMessage(std::move(transaction));
+    }
 
-	//
-	// Getters
-	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TransactionMsg; }
-	inline const Transaction& GetTransaction() const { return m_transaction; }
+  protected:
+    virtual void SerializeBody(Serializer &serializer) const override final
+    {
+        m_transaction.Serialize(serializer);
+    }
 
-	//
-	// Deserialization
-	//
-	static TransactionMessage Deserialize(ByteBuffer& byteBuffer)
-	{
-		Transaction transaction = Transaction::Deserialize(byteBuffer);
-		return TransactionMessage(std::move(transaction));
-	}
-
-protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
-	{
-		m_transaction.Serialize(serializer);
-	}
-
-private:
-	Transaction m_transaction;
+  private:
+    Transaction m_transaction;
 };

@@ -7,6 +7,6 @@
 
 class PublicKeyCalculator
 {
-public:
-	std::unique_ptr<PublicExtKey> DeterminePublicKey(const PrivateExtKey& privateKey) const;
+  public:
+    std::unique_ptr<PublicExtKey> DeterminePublicKey(const PrivateExtKey &privateKey) const;
 };

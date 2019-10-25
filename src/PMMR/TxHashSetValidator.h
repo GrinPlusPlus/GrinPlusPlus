@@ -14,19 +14,21 @@ class Commitment;
 
 class TxHashSetValidator
 {
-public:
-	TxHashSetValidator(const IBlockChainServer& blockChainServer);
+  public:
+    TxHashSetValidator(const IBlockChainServer &blockChainServer);
 
-	std::unique_ptr<BlockSums> Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
+    std::unique_ptr<BlockSums> Validate(TxHashSet &txHashSet, const BlockHeader &blockHeader,
+                                        SyncStatus &syncStatus) const;
 
-private:
-	bool ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
-	bool ValidateMMRHashes(const MMR& mmr) const;
+  private:
+    bool ValidateSizes(TxHashSet &txHashSet, const BlockHeader &blockHeader) const;
+    bool ValidateMMRHashes(const MMR &mmr) const;
 
-	bool ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
-	std::unique_ptr<BlockSums> ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
-	bool ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
-	bool ValidateKernelSignatures(const KernelMMR& kernelMMR, SyncStatus& syncStatus) const;
+    bool ValidateKernelHistory(const KernelMMR &kernelMMR, const BlockHeader &blockHeader,
+                               SyncStatus &syncStatus) const;
+    std::unique_ptr<BlockSums> ValidateKernelSums(TxHashSet &txHashSet, const BlockHeader &blockHeader) const;
+    bool ValidateRangeProofs(TxHashSet &txHashSet, const BlockHeader &blockHeader, SyncStatus &syncStatus) const;
+    bool ValidateKernelSignatures(const KernelMMR &kernelMMR, SyncStatus &syncStatus) const;
 
-	const IBlockChainServer& m_blockChainServer;
+    const IBlockChainServer &m_blockChainServer;
 };

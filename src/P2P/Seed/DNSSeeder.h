@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Net/SocketAddress.h>
 #include <Config/Config.h>
+#include <Net/SocketAddress.h>
 
-#include <vector>
 #include <string>
+#include <vector>
 
 // Forward Declarations
 struct in_addr;
@@ -14,16 +14,16 @@ struct in_addr;
 //
 class DNSSeeder
 {
-public:
-	DNSSeeder(const Config& config);
+  public:
+    DNSSeeder(const Config &config);
 
-	//
-	// Connects to one of the "trusted" DNS seeds, and retrieves a collection of IP addresses to MimbleWimble nodes.
-	//
-	std::vector<SocketAddress> GetPeersFromDNS() const;
+    //
+    // Connects to one of the "trusted" DNS seeds, and retrieves a collection of IP addresses to MimbleWimble nodes.
+    //
+    std::vector<SocketAddress> GetPeersFromDNS() const;
 
-private:
-	const Config& m_config;
+  private:
+    const Config &m_config;
 
-	std::vector<IPAddress> Resolve(const std::string& domainName) const;
+    std::vector<IPAddress> Resolve(const std::string &domainName) const;
 };

@@ -7,16 +7,16 @@
 
 class Database : public IDatabase
 {
-public:
-	Database(const Config& config);
-	virtual ~Database();
+  public:
+    Database(const Config &config);
+    virtual ~Database();
 
-	virtual IBlockDB& GetBlockDB() override final;
-	virtual IPeerDB& GetPeerDB() override final;
+    virtual IBlockDB &GetBlockDB() override final;
+    virtual IPeerDB &GetPeerDB() override final;
 
-private:
-	const Config& m_config;
+  private:
+    const Config &m_config;
 
-	BlockDB m_blockDB;
-	PeerDB m_peerDB;
+    BlockDB m_blockDB;
+    PeerDB m_peerDB;
 };

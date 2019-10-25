@@ -326,3 +326,5 @@ cmake_install.cmake
 #include/ThirdParty/zlib/zconf.h
 
 #include/ThirdParty/zlib/zconf\.h\.included
+
+.vscode/

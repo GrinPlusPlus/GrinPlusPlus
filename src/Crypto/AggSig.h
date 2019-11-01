@@ -36,7 +36,6 @@ private:
 	~AggSig();
 
 	std::vector<secp256k1_ecdsa_signature> ParseCompactSignatures(const std::vector<CompactSignature>& signatures) const;
-	std::unique_ptr<Signature> SerializeSignature(const secp256k1_ecdsa_signature& signature) const;
 
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;

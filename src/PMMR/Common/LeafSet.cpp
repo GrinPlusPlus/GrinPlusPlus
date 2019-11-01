@@ -84,7 +84,7 @@ bool LeafSet::Flush(const std::string& path, Roaring& bitmap) const
 
 bool LeafSet::Snapshot(const Hash& blockHash)
 {
-	std::string path = m_path + "." + HexUtil::ConvertHash(blockHash);
+	std::string path = m_path + "." + HexUtil::ShortHash(blockHash);
 	Roaring snapshotBitmap = m_bitmap;
 
 	return Flush(path, snapshotBitmap);

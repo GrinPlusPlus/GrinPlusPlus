@@ -5,8 +5,8 @@
 
 using namespace Consensus;
 
-DifficultyCalculator::DifficultyCalculator(const IBlockDB& blockDB)
-	: m_blockDB(blockDB)
+DifficultyCalculator::DifficultyCalculator(std::shared_ptr<const IBlockDB> pBlockDB)
+	: m_pBlockDB(pBlockDB)
 {
 
 }
@@ -30,7 +30,7 @@ HeaderInfo DifficultyCalculator::CalculateNextDifficulty(const BlockHeader& head
 	// to latest, and pad with simulated pre-genesis data to allow earlier
 	// adjustment if there isn't enough window data length will be
 	// DIFFICULTY_ADJUST_WINDOW + 1 (for initial block time bound)
-	const std::vector<HeaderInfo> difficultyData = DifficultyLoader(m_blockDB).LoadDifficultyData(header);
+	const std::vector<HeaderInfo> difficultyData = DifficultyLoader(m_pBlockDB).LoadDifficultyData(header);
 
 	// First, get the ratio of secondary PoW vs primary, skipping initial header
 	const std::vector<HeaderInfo> difficultyDataSkipFirst(difficultyData.cbegin() + 1, difficultyData.cend());

@@ -7,8 +7,8 @@
 #include <Consensus/BlockTime.h>
 #include <Infrastructure/Logger.h>
 
-StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
-	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
+StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 	m_timeRequested = std::chrono::system_clock::now();
 	m_requestedHeight = 0;
@@ -101,7 +101,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
 	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
-	Hash hash = m_blockChainServer.GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
+	Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 	if (m_connectionId > 0)
 	{
 		LOG_WARNING("Banning peer " + std::to_string(m_connectionId));

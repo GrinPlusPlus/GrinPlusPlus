@@ -5,8 +5,8 @@
 
 // TODO: Evaluate whether we should be using SYNC or CANDIDATE in this class.
 
-BlockLocator::BlockLocator(IBlockChainServer& blockChainServer)
-	: m_blockChainServer(blockChainServer)
+BlockLocator::BlockLocator(IBlockChainServerPtr pBlockChainServer)
+	: m_pBlockChainServer(pBlockChainServer)
 {
 
 }
@@ -19,7 +19,7 @@ std::vector<CBigInteger<32>> BlockLocator::GetLocators(const SyncStatus& syncSta
 	locators.reserve(locatorHeights.size());
 	for (const uint64_t locatorHeight : locatorHeights)
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHeight(locatorHeight, EChainType::SYNC);
+		std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(locatorHeight, EChainType::SYNC);
 		if (pHeader != nullptr)
 		{
 			locators.push_back(pHeader->GetHash());
@@ -66,13 +66,13 @@ std::vector<BlockHeader> BlockLocator::LocateHeaders(const std::vector<CBigInteg
 	std::unique_ptr<BlockHeader> pCommonHeader = FindCommonHeader(locatorHashes);
 	if (pCommonHeader != nullptr)
 	{
-		const uint64_t totalHeight = m_blockChainServer.GetHeight(EChainType::SYNC);
+		const uint64_t totalHeight = m_pBlockChainServer->GetHeight(EChainType::SYNC);
 		const uint64_t headerHeight = pCommonHeader->GetHeight();
 		const uint64_t numHeadersToSend = (std::min)(totalHeight - headerHeight, (uint64_t)P2P::MAX_BLOCK_HEADERS);
 
 		for (int i = 1; i <= numHeadersToSend; i++)
 		{
-			std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHeight(headerHeight + i, EChainType::SYNC);
+			std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(headerHeight + i, EChainType::SYNC);
 			if (pHeader == nullptr)
 			{
 				break;
@@ -89,7 +89,7 @@ std::unique_ptr<BlockHeader> BlockLocator::FindCommonHeader(const std::vector<CB
 {
 	for (CBigInteger<32> locatorHash : locatorHashes)
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHash(locatorHash);
+		std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHash(locatorHash);
 		if (pHeader != nullptr)
 		{
 			return pHeader;

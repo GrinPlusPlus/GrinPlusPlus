@@ -24,36 +24,34 @@ NodeDaemon::NodeDaemon(const Config& config)
 INodeClient* NodeDaemon::Initialize()
 {
 	LoggerAPI::Initialize(m_config.GetLogDirectory(), m_config.GetLogLevel());
-	m_pDatabase = DatabaseAPI::OpenDatabase(m_config);
-	m_pTxHashSetManager = new TxHashSetManager(m_config, m_pDatabase->GetBlockDB());
-	m_pTransactionPool = TxPoolAPI::CreateTransactionPool(m_config, *m_pTxHashSetManager, m_pDatabase->GetBlockDB());
-	m_pBlockChainServer = BlockChainAPI::StartBlockChainServer(m_config, *m_pDatabase, *m_pTxHashSetManager, *m_pTransactionPool);
-	m_pP2PServer = P2PAPI::StartP2PServer(m_config, *m_pBlockChainServer, *m_pDatabase, *m_pTransactionPool);
 
-	m_pNodeRestServer = new NodeRestServer(m_config, m_pDatabase, m_pTxHashSetManager, m_pBlockChainServer, m_pP2PServer);
+	m_pNodeClient = DefaultNodeClient::Create(m_config);
+
+	m_pNodeRestServer = new NodeRestServer(m_config, m_pNodeClient->GetNodeContext());
 	m_pNodeRestServer->Initialize();
 
-	m_pNodeClient = new DefaultNodeClient(*m_pBlockChainServer, m_pDatabase->GetBlockDB(), *m_pTxHashSetManager, *m_pTransactionPool);
-	return m_pNodeClient;
+	return m_pNodeClient.get();
 }
 
 void NodeDaemon::Shutdown()
 {
 	try
 	{
-		delete m_pNodeClient;
 		m_pNodeRestServer->Shutdown();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		P2PAPI::ShutdownP2PServer(m_pP2PServer);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		delete m_pTxHashSetManager;
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		DatabaseAPI::CloseDatabase(m_pDatabase);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		delete m_pNodeRestServer;
+
+		m_pNodeClient.reset();
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//P2PAPI::ShutdownP2PServer(m_pP2PServer);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//delete m_pTxHashSetManager;
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//DatabaseAPI::CloseDatabase(m_pDatabase);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		LoggerAPI::Flush();
 	}
 	catch(const std::system_error& e)
@@ -66,7 +64,7 @@ void NodeDaemon::Shutdown()
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)
 {
-	const SyncStatus& syncStatus = m_pP2PServer->GetSyncStatus();
+	const SyncStatus& syncStatus = m_pNodeClient->GetP2PServer()->GetSyncStatus();
 
 #ifdef _WIN32
 		std::system("cls");

@@ -3,19 +3,21 @@
 #include "Chain.h"
 
 #include <Config/Config.h>
+#include <Core/Traits/Lockable.h>
 
 // TODO: Use memory-mapped file
-class ChainStore
+class ChainStore : public Traits::Batchable
 {
 public:
-	ChainStore(const Config& config, BlockIndex* pGenesisIndex);
-	bool Load();
-	bool Flush();
+	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, BlockIndex* pGenesisIndex);
 
-	Chain& GetChain(const EChainType chainType);
-	const Chain& GetChain(const EChainType chainType) const;
+	virtual void Commit() override final;
+	virtual void Rollback() override final {} // TODO: Handle this
+
+	std::shared_ptr<Chain> GetChain(const EChainType chainType);
+	std::shared_ptr<const Chain> GetChain(const EChainType chainType) const;
 	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex);
-	BlockIndex* FindCommonIndex(const EChainType chainType1, const EChainType chainType2);
+	const BlockIndex* FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const;
 
 	//
 	// Applies all of the blocks from the source chain to the destination chain, up to the specified height.
@@ -24,15 +26,18 @@ public:
 
 	bool AddBlock(const EChainType source, const EChainType destination, const uint64_t height);
 
-	inline Chain& GetConfirmedChain() { return m_confirmedChain; }
-	inline Chain& GetCandidateChain() { return m_candidateChain; }
-	inline Chain& GetSyncChain() { return m_syncChain; }
+	std::shared_ptr<Chain> GetConfirmedChain() { return m_pConfirmedChain; }
+	std::shared_ptr<Chain> GetCandidateChain() { return m_pCandidateChain; }
+	std::shared_ptr<Chain> GetSyncChain() { return m_pSyncChain; }
+
+	std::shared_ptr<const Chain> GetConfirmedChain() const { return m_pConfirmedChain; }
+	std::shared_ptr<const Chain> GetCandidateChain() const { return m_pCandidateChain; }
+	std::shared_ptr<const Chain> GetSyncChain() const { return m_pSyncChain; }
 
 private:
-	bool m_loaded;
-	Chain m_confirmedChain;
-	Chain m_candidateChain;
-	Chain m_syncChain;
+	ChainStore(std::shared_ptr<Chain> pConfirmedChain, std::shared_ptr<Chain> pCandidateChain, std::shared_ptr<Chain> pSyncChain);
 
-	const Config& m_config;
+	std::shared_ptr<Chain> m_pConfirmedChain;
+	std::shared_ptr<Chain> m_pCandidateChain;
+	std::shared_ptr<Chain> m_pSyncChain;
 };

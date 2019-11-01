@@ -7,10 +7,11 @@
 #include <Crypto/BigInteger.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/HexUtil.h>
+#include <Common/Traits.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class Commitment
+class Commitment : public Traits::IPrintable
 {
 public:
 	//
@@ -39,14 +40,14 @@ public:
 	//
 	Commitment& operator=(const Commitment& other) = default;
 	Commitment& operator=(Commitment&& other) noexcept = default;
-	inline bool operator<(const Commitment& rhs) const { return m_commitmentBytes < rhs.GetCommitmentBytes(); }
-	inline bool operator!=(const Commitment& rhs) const { return m_commitmentBytes != rhs.GetCommitmentBytes(); }
-	inline bool operator==(const Commitment& rhs) const { return m_commitmentBytes == rhs.GetCommitmentBytes(); }
+	inline bool operator<(const Commitment& rhs) const { return m_commitmentBytes < rhs.GetBytes(); }
+	inline bool operator!=(const Commitment& rhs) const { return m_commitmentBytes != rhs.GetBytes(); }
+	inline bool operator==(const Commitment& rhs) const { return m_commitmentBytes == rhs.GetBytes(); }
 
 	//
 	// Getters
 	//
-	inline const CBigInteger<33>& GetCommitmentBytes() const { return m_commitmentBytes; }
+	inline const CBigInteger<33>& GetBytes() const { return m_commitmentBytes; }
 
 	//
 	// Serialization/Deserialization
@@ -66,6 +67,11 @@ public:
 		return HexUtil::ConvertToHex(m_commitmentBytes.GetData());
 	}
 
+	//
+	// Traits
+	//
+	virtual std::string Format() const override final { return m_commitmentBytes.Format(); }
+
 private:
 	// The 33 byte commitment.
 	CBigInteger<33> m_commitmentBytes;
@@ -78,7 +84,7 @@ namespace std
 	{
 		size_t operator()(const Commitment& commitment) const
 		{
-			const std::vector<unsigned char>& bytes = commitment.GetCommitmentBytes().GetData();
+			const std::vector<unsigned char>& bytes = commitment.GetBytes().GetData();
 			return BitUtil::ConvertToU64(bytes[0], bytes[4], bytes[8], bytes[12], bytes[16], bytes[20], bytes[24], bytes[28]);
 		}
 	};

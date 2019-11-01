@@ -9,26 +9,24 @@
 class OutputPMMR : public PruneableMMR<OUTPUT_SIZE, OutputIdentifier>
 {
 public:
-	static OutputPMMR* Load(const std::string& txHashSetDirectory)
+	static std::shared_ptr<OutputPMMR> Load(const std::string& txHashSetDirectory)
 	{
-		HashFile* pHashFile = new HashFile(txHashSetDirectory + "output/pmmr_hash.bin");
-		pHashFile->Load();
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "output/pmmr_hash.bin");
 
 		LeafSet leafSet(txHashSetDirectory + "output/pmmr_leaf.bin");
 		leafSet.Load();
 
 		PruneList pruneList(PruneList::Load(txHashSetDirectory + "output/pmmr_prun.bin"));
 
-		DataFile<OUTPUT_SIZE>* pDataFile = new DataFile<OUTPUT_SIZE>(txHashSetDirectory + "output/pmmr_data.bin");
-		pDataFile->Load();
+		std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile = DataFile<OUTPUT_SIZE>::Load(txHashSetDirectory + "output/pmmr_data.bin");
 
-		return new OutputPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+		return std::make_shared<OutputPMMR>(OutputPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile));
 	}
 
 	virtual ~OutputPMMR() = default;
 
 private:
-	OutputPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<OUTPUT_SIZE>* pDataFile)
+	OutputPMMR(std::shared_ptr<HashFile> pHashFile, LeafSet&& leafSet, PruneList&& pruneList, std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile)
 		: PruneableMMR<OUTPUT_SIZE, OutputIdentifier>(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile)
 	{
 

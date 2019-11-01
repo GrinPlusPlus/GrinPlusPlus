@@ -1,15 +1,14 @@
 #pragma once
 
-// Forward Declarations
-class ChainState;
+#include "ChainState.h"
 
 class ChainResyncer
 {
 public:
-	ChainResyncer(ChainState& chainState);
+	ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState);
 
 	bool ResyncChain();
 
 private:
-	ChainState& m_chainState;
+	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

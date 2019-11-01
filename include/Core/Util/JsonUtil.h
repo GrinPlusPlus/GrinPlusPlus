@@ -121,7 +121,7 @@ public:
 	//
 	static Json::Value ConvertToJSON(const Commitment& commitment, const bool hex)
 	{
-		return ConvertToJSON(commitment.GetCommitmentBytes().GetData(), hex);
+		return ConvertToJSON(commitment.GetBytes().GetData(), hex);
 	}
 
 	static Commitment ConvertToCommitment(const Json::Value& commitmentJSON, const bool hex)

@@ -31,10 +31,10 @@ public:
 	//
 	// Flushes all working changes to disk.
 	//
-	virtual bool Flush() = 0;
+	virtual void Commit() = 0;
 
 	//
 	// Discards all working changes since the last flush to disk.
 	//
-	virtual bool Discard() = 0;
+	virtual void Rollback() = 0;
 };

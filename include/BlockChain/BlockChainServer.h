@@ -14,6 +14,7 @@
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/CompactBlock.h>
 #include <Core/Models/Transaction.h>
+#include <Core/Traits/Lockable.h>
 #include <Crypto/BigInteger.h>
 
 #include <vector>
@@ -21,7 +22,7 @@
 
 // Forward Declarations
 class Config;
-class IDatabase;
+class IBlockDB;
 class TxHashSetManager;
 class ITransactionPool;
 class SyncStatus;
@@ -39,6 +40,8 @@ class SyncStatus;
 class IBlockChainServer
 {
 public:
+	virtual ~IBlockChainServer() = default;
+
 	virtual bool ResyncChain() = 0;
 
 	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const = 0;
@@ -124,20 +127,17 @@ public:
 	virtual bool ProcessNextOrphanBlock() = 0;
 };
 
+typedef std::shared_ptr<IBlockChainServer> IBlockChainServerPtr;
+
 namespace BlockChainAPI
 {
 	//
 	// Creates a new instance of the BlockChain server.
 	//
-	BLOCK_CHAIN_API IBlockChainServer* StartBlockChainServer(
+	BLOCK_CHAIN_API IBlockChainServerPtr StartBlockChainServer(
 		const Config& config,
-		IDatabase& database,
-		TxHashSetManager& txHashSetManager,
-		ITransactionPool& transactionPool
+		std::shared_ptr<Locked<IBlockDB>> pDatabase,
+		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<ITransactionPool> pTransactionPool
 	);
-
-	//
-	// Stops the BlockChain server and clears up its memory usage.
-	//
-	BLOCK_CHAIN_API void ShutdownBlockChainServer(IBlockChainServer* pBlockChainServer);
 }

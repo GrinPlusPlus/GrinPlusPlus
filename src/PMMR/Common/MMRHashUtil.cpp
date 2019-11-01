@@ -4,10 +4,10 @@
 #include <Crypto/Crypto.h>
 #include <Core/Serialization/Serializer.h>
 
-void MMRHashUtil::AddHashes(HashFile& hashFile, const std::vector<unsigned char>& serializedLeaf, const PruneList* pPruneList)
+void MMRHashUtil::AddHashes(std::shared_ptr<HashFile> pHashFile, const std::vector<unsigned char>& serializedLeaf, const PruneList* pPruneList)
 {
 	// Calculate next position
-	uint64_t position = hashFile.GetSize();
+	uint64_t position = pHashFile->GetSize();
 	if (pPruneList != nullptr)
 	{
 		position += pPruneList->GetTotalShift();
@@ -15,7 +15,7 @@ void MMRHashUtil::AddHashes(HashFile& hashFile, const std::vector<unsigned char>
 
 	// Add in the new leaf hash
 	const Hash leafHash = HashLeafWithIndex(serializedLeaf, position);
-	hashFile.AddHash(leafHash);
+	pHashFile->AddData(leafHash);
 
 	// Add parent hashes
 	uint64_t peak = 1;
@@ -23,18 +23,18 @@ void MMRHashUtil::AddHashes(HashFile& hashFile, const std::vector<unsigned char>
 	{
 		const uint64_t leftSiblingPosition = (position + 1) - (2 * peak);
 
-		const Hash leftHash = GetHashAt(hashFile, leftSiblingPosition, pPruneList);
-		const Hash rightHash = GetHashAt(hashFile, position, pPruneList);
+		const Hash leftHash = GetHashAt(pHashFile, leftSiblingPosition, pPruneList);
+		const Hash rightHash = GetHashAt(pHashFile, position, pPruneList);
 
 		++position;
 		peak *= 2;
 
 		const Hash parentHash = HashParentWithIndex(leftHash, rightHash, position);
-		hashFile.AddHash(parentHash);
+		pHashFile->AddData(parentHash);
 	}
 }
 
-Hash MMRHashUtil::Root(const HashFile& hashFile, const uint64_t size, const PruneList* pPruneList)
+Hash MMRHashUtil::Root(std::shared_ptr<const HashFile> pHashFile, const uint64_t size, const PruneList* pPruneList)
 {
 	if (size == 0)
 	{
@@ -46,7 +46,7 @@ Hash MMRHashUtil::Root(const HashFile& hashFile, const uint64_t size, const Prun
 	for (auto iter = peakIndices.crbegin(); iter != peakIndices.crend(); iter++)
 	{
 		const uint64_t shiftedIndex = GetShiftedIndex(*iter, pPruneList);
-		Hash peakHash = hashFile.GetHashAt(shiftedIndex);
+		Hash peakHash = pHashFile->GetDataAt(shiftedIndex);
 		if (peakHash != ZERO_HASH)
 		{
 			if (hash == ZERO_HASH)
@@ -63,7 +63,7 @@ Hash MMRHashUtil::Root(const HashFile& hashFile, const uint64_t size, const Prun
 	return hash;
 }
 
-Hash MMRHashUtil::GetHashAt(const HashFile& hashFile, const uint64_t mmrIndex, const PruneList* pPruneList)
+Hash MMRHashUtil::GetHashAt(std::shared_ptr<const HashFile> pHashFile, const uint64_t mmrIndex, const PruneList* pPruneList)
 {
 	if (pPruneList != nullptr)
 	{
@@ -75,11 +75,11 @@ Hash MMRHashUtil::GetHashAt(const HashFile& hashFile, const uint64_t mmrIndex, c
 		const uint64_t shift = pPruneList->GetShift(mmrIndex);
 		const uint64_t shiftedIndex = (mmrIndex - shift);
 
-		return hashFile.GetHashAt(shiftedIndex);
+		return pHashFile->GetDataAt(shiftedIndex);
 	}
 	else
 	{
-		return hashFile.GetHashAt(mmrIndex);
+		return pHashFile->GetDataAt(mmrIndex);
 	}
 }
 
@@ -97,9 +97,9 @@ uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, const PruneList* 
 	}
 }
 
-std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const LeafSet* pLeafSet, const PruneList* pPruneList, const uint64_t numHashes)
+std::vector<Hash> MMRHashUtil::GetLastLeafHashes(std::shared_ptr<const HashFile> pHashFile, const LeafSet* pLeafSet, const PruneList* pPruneList, const uint64_t numHashes)
 {
-	uint64_t nextPosition = hashFile.GetSize();
+	uint64_t nextPosition = pHashFile->GetSize();
 	if (pPruneList != nullptr)
 	{
 		nextPosition += pPruneList->GetTotalShift();
@@ -115,7 +115,7 @@ std::vector<Hash> MMRHashUtil::GetLastLeafHashes(const HashFile& hashFile, const
 		const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex);
 		if (pLeafSet == nullptr || pLeafSet->Contains(mmrIndex))
 		{
-			Hash hash = GetHashAt(hashFile, mmrIndex, pPruneList);
+			Hash hash = GetHashAt(pHashFile, mmrIndex, pPruneList);
 			if (hash != ZERO_HASH)
 			{
 				hashes.emplace_back(std::move(hash));

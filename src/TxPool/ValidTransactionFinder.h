@@ -2,19 +2,21 @@
 
 #include <Core/Models/Transaction.h>
 #include <Core/Models/BlockHeader.h>
-
-// Forward Declarations
-class TxHashSetManager;
+#include <PMMR/TxHashSetManager.h>
 
 class ValidTransactionFinder
 {
 public:
-	ValidTransactionFinder(const TxHashSetManager& txHashSetManager);
+	ValidTransactionFinder(TxHashSetManagerConstPtr pTxHashSetManager);
 
-	std::vector<Transaction> FindValidTransactions(const std::vector<Transaction>& transactions, const std::unique_ptr<Transaction>& pExtraTransaction) const;
+	std::vector<Transaction> FindValidTransactions(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		const std::vector<Transaction>& transactions,
+		const std::unique_ptr<Transaction>& pExtraTransaction
+	) const;
 
 private:
-	bool IsValidTransaction(const Transaction& transaction) const;
+	bool IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const;
 
-	const TxHashSetManager& m_txHashSetManager;
+	TxHashSetManagerConstPtr m_pTxHashSetManager;
 };

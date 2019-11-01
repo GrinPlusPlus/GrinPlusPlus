@@ -1,45 +1,41 @@
 #include "ChainResyncer.h"
 #include "ChainState.h"
 
-ChainResyncer::ChainResyncer(ChainState& chainState)
-	: m_chainState(chainState)
+ChainResyncer::ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState)
+	: m_pChainState(pChainState)
 {
 
 }
 
 bool ChainResyncer::ResyncChain()
 {
-	LockedChainState locked = m_chainState.GetLocked();
+	auto pLockedState = m_pChainState->BatchWrite();
 
-	Chain& confirmedChain = locked.m_chainStore.GetConfirmedChain();
-	confirmedChain.Rewind(0);
+	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
+	pConfirmedChain->Rewind(0);
 
-	Chain& candidateChain = locked.m_chainStore.GetCandidateChain();
+	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 	
-	locked.m_headerMMR.Rewind(1);
-	for (uint64_t i = 1; i <= candidateChain.GetTip()->GetHeight(); i++)
+	pLockedState->GetHeaderMMR()->Rewind(1);
+	for (uint64_t i = 1; i <= pCandidateChain->GetTip()->GetHeight(); i++)
 	{
-		BlockIndex* pIndex = candidateChain.GetByHeight(i);
+		BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
 		const Hash& hash = pIndex->GetHash();
 
-		std::unique_ptr<BlockHeader> pHeader = locked.m_blockStore.GetBlockHeaderByHash(hash);
+		std::unique_ptr<BlockHeader> pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);
 		if (pHeader == nullptr)
 		{
-			candidateChain.Rewind(i - 1);
+			pCandidateChain->Rewind(i - 1);
 			break;
 		}
 
-		locked.m_headerMMR.AddHeader(*pHeader);
+		pLockedState->GetHeaderMMR()->AddHeader(*pHeader);
 	}
 
-	locked.m_headerMMR.Commit();
+	std::shared_ptr<Chain> pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
+	pSyncChain->Rewind(pCandidateChain->GetTip()->GetHeight());
 
-	Chain& syncChain = locked.m_chainStore.GetSyncChain();
-	syncChain.Rewind(candidateChain.GetTip()->GetHeight());
-
-	confirmedChain.Flush();
-	candidateChain.Flush();
-	syncChain.Flush();
+	pLockedState->Commit();
 
 	return true;
 }

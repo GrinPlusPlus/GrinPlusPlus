@@ -10,11 +10,17 @@
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 
-Dandelion::Dandelion(const Config& config, ConnectionManager& connectionManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool)
+Dandelion::Dandelion(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	ITransactionPoolPtr pTransactionPool,
+	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 	: m_config(config), 
 	m_connectionManager(connectionManager), 
-	m_blockChainServer(blockChainServer), 
-	m_transactionPool(transactionPool), 
+	m_pBlockChainServer(pBlockChainServer),
+	m_pTransactionPool(pTransactionPool),
+	m_pBlockDB(pBlockDB),
 	m_relayNodeId(0), 
 	m_relayExpirationTime(std::chrono::system_clock::now())
 {
@@ -105,7 +111,7 @@ bool Dandelion::ProcessStemPhase()
 		m_relayNodeId = mostWorkPeers[index];
 	}
 
-	std::unique_ptr<Transaction> pTransactionToStem = m_transactionPool.GetTransactionToStem();
+	std::unique_ptr<Transaction> pTransactionToStem = m_pTransactionPool->GetTransactionToStem(m_pBlockDB->Read().GetShared());
 	if (pTransactionToStem != nullptr)
 	{
 		LOG_DEBUG("Stemming transaction");
@@ -118,7 +124,7 @@ bool Dandelion::ProcessStemPhase()
 		if (!success)
 		{
 			LOG_WARNING("Failed to stem, fluffing instead");
-			const bool added = m_blockChainServer.AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
+			const bool added = m_pBlockChainServer->AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 			if (added)
 			{
 				const TransactionMessage transactionMessage(*pTransactionToStem);
@@ -132,11 +138,11 @@ bool Dandelion::ProcessStemPhase()
 
 bool Dandelion::ProcessFluffPhase()
 {
-	std::unique_ptr<Transaction> pTransactionToFluff = m_transactionPool.GetTransactionToFluff();
+	std::unique_ptr<Transaction> pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(m_pBlockDB->Read().GetShared());
 	if (pTransactionToFluff != nullptr)
 	{
 		LOG_DEBUG("Fluffing transaction");
-		const bool added = m_blockChainServer.AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
+		const bool added = m_pBlockChainServer->AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 		if (added)
 		{
 			const TransactionMessage transactionMessage(*pTransactionToFluff);
@@ -149,13 +155,13 @@ bool Dandelion::ProcessFluffPhase()
 
 bool Dandelion::ProcessExpiredEntries()
 {
-	const std::vector<Transaction> expiredTransactions = m_transactionPool.GetExpiredTransactions();
+	const std::vector<Transaction> expiredTransactions = m_pTransactionPool->GetExpiredTransactions();
 	if (!expiredTransactions.empty())
 	{
-		LOG_INFO_F("%ull transactions expired, fluffing now", expiredTransactions.size());
+		LOG_INFO_F("%llu transactions expired, fluffing now", expiredTransactions.size());
 		for (const Transaction& transaction : expiredTransactions)
 		{
-			if (m_blockChainServer.AddTransaction(transaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
+			if (m_pBlockChainServer->AddTransaction(transaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
 			{
 				const TransactionMessage transactionMessage(transaction);
 				m_connectionManager.BroadcastMessage(transactionMessage, 0);

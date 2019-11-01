@@ -2,24 +2,31 @@
 
 #include <BlockChain/BlockChainServer.h>
 
-P2PServer::P2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)
+P2PServer::P2PServer(const Config& config, IBlockChainServerPtr pBlockChainServer, IDatabasePtr pDatabase, ITransactionPoolPtr pTransactionPool)
 	: m_config(config), 
-	m_blockChainServer(blockChainServer), 
-	m_database(database), 
-	m_peerManager(config, database.GetPeerDB()), 
-	m_connectionManager(config, m_peerManager, blockChainServer, transactionPool)
+	m_pBlockChainServer(pBlockChainServer), 
+	m_pDatabase(pDatabase), 
+	m_peerManager(config, pDatabase->GetPeerDB()),
+	m_connectionManager(config, m_peerManager, pDatabase->GetBlockDB(), pBlockChainServer, pTransactionPool)
 {
 
 }
 
-void P2PServer::StartServer()
-{
-	m_connectionManager.Start();
-}
-
-void P2PServer::StopServer()
+P2PServer::~P2PServer()
 {
 	m_connectionManager.Stop();
+}
+
+std::shared_ptr<P2PServer> P2PServer::Create(
+	const Config& config,
+	std::shared_ptr<IBlockChainServer> pBlockChainServer,
+	std::shared_ptr<IDatabase> pDatabase,
+	std::shared_ptr<ITransactionPool> pTransactionPool)
+{
+	P2PServer* pServer = new P2PServer(config, pBlockChainServer, pDatabase, pTransactionPool);
+	pServer->m_connectionManager.Start();
+
+	return std::shared_ptr<P2PServer>(pServer);
 }
 
 std::pair<size_t, size_t> P2PServer::GetNumberOfConnectedPeers() const
@@ -107,20 +114,8 @@ bool P2PServer::UnbanAllPeers()
 
 namespace P2PAPI
 {
-	EXPORT IP2PServer* StartP2PServer(const Config& config, IBlockChainServer& blockChainServer, IDatabase& database, ITransactionPool& transactionPool)
+	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(const Config& config, IBlockChainServerPtr pBlockChainServer, IDatabasePtr pDatabase, ITransactionPoolPtr pTransactionPool)
 	{
-		P2PServer* pServer = new P2PServer(config, blockChainServer, database, transactionPool);
-		pServer->StartServer();
-
-		return pServer;
-	}
-
-	EXPORT void ShutdownP2PServer(IP2PServer* pP2PServer)
-	{
-		P2PServer* pServer = (P2PServer*)pP2PServer;
-		pServer->StopServer();
-		
-		delete pServer;
-		pServer = nullptr;
+		return P2PServer::Create(config, pBlockChainServer, pDatabase, pTransactionPool);
 	}
 }

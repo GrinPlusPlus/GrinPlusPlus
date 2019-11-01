@@ -101,22 +101,20 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 	const Commitment zeroCommitment(CBigInteger<33>::ValueOf(0));
 
 	std::vector<Commitment> sanitizedPositive;
-	for (const Commitment& positiveCommitment : positive)
-	{
-		if (positiveCommitment != zeroCommitment)
-		{
-			sanitizedPositive.push_back(positiveCommitment);
-		}
-	}
+	std::copy_if(
+		positive.cbegin(),
+		positive.cend(),
+		std::back_inserter(sanitizedPositive),
+		[&zeroCommitment](const Commitment& positiveCommitment) { return positiveCommitment != zeroCommitment; }
+	);
 
 	std::vector<Commitment> sanitizedNegative;
-	for (const Commitment& negativeCommitment : negative)
-	{
-		if (negativeCommitment != zeroCommitment)
-		{
-			sanitizedNegative.push_back(negativeCommitment);
-		}
-	}
+	std::copy_if(
+		negative.cbegin(),
+		negative.cend(),
+		std::back_inserter(sanitizedNegative),
+		[&zeroCommitment](const Commitment& negativeCommitment) { return negativeCommitment != zeroCommitment; }
+	);
 
 	return Pedersen::GetInstance().PedersenCommitSum(sanitizedPositive, sanitizedNegative);
 }
@@ -126,22 +124,20 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 	BlindingFactor zeroBlindingFactor(ZERO_HASH);
 
 	std::vector<BlindingFactor> sanitizedPositive;
-	for (const BlindingFactor& positiveBlindingFactor : positive)
-	{
-		if (positiveBlindingFactor != zeroBlindingFactor)
-		{
-			sanitizedPositive.push_back(positiveBlindingFactor);
-		}
-	}
+	std::copy_if(
+		positive.cbegin(),
+		positive.cend(),
+		std::back_inserter(sanitizedPositive),
+		[&zeroBlindingFactor](const BlindingFactor& positiveBlind) { return positiveBlind != zeroBlindingFactor; }
+	);
 
 	std::vector<BlindingFactor> sanitizedNegative;
-	for (const BlindingFactor& negativeBlindingFactor : negative)
-	{
-		if (negativeBlindingFactor != zeroBlindingFactor)
-		{
-			sanitizedNegative.push_back(negativeBlindingFactor);
-		}
-	}
+	std::copy_if(
+		negative.cbegin(),
+		negative.cend(),
+		std::back_inserter(sanitizedNegative),
+		[&zeroBlindingFactor](const BlindingFactor& negativeBlind) { return negativeBlind != zeroBlindingFactor; }
+	);
 
 	if (sanitizedPositive.empty() && sanitizedNegative.empty())
 	{
@@ -188,7 +184,6 @@ uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vect
 {
 	const std::vector<uint64_t>& key = { k0, k1 };
 
-	std::vector<unsigned char> output(24);
 	return siphash24(&key[0], &data[0], data.size());
 }
 

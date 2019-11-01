@@ -8,7 +8,7 @@
 class DifficultyCalculator
 {
 public:
-	DifficultyCalculator(const IBlockDB& blockDB);
+	DifficultyCalculator(std::shared_ptr<const IBlockDB> pBlockDB);
 
 	HeaderInfo CalculateNextDifficulty(const BlockHeader& blockHeader) const;
 
@@ -17,5 +17,5 @@ private:
 	uint64_t ScalingFactorSum(const std::vector<HeaderInfo>& difficultyData) const;
 	uint32_t SecondaryPOWScaling(const uint64_t height, const std::vector<HeaderInfo>& difficultyData) const;
 
-	const IBlockDB& m_blockDB;
+	std::shared_ptr<const IBlockDB> m_pBlockDB;
 };

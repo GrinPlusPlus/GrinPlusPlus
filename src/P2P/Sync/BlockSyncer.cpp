@@ -6,8 +6,8 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
 
-BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
-	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
+BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 	m_timeout = std::chrono::system_clock::now();
 	m_lastHeight = 0;
@@ -61,7 +61,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	}
 
 	// Make sure we have valid requests for the first 15 blocks.
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(15);
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(15);
 	uint64_t index = 0;
 	for (auto iter = blocksNeeded.cbegin(); iter != blocksNeeded.cend(); iter++)
 	{
@@ -80,7 +80,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 
 		if (requestedBlocksIter->second.TIMEOUT < std::chrono::system_clock::now())
 		{
-			if (m_connectionManager.GetPipeline().IsProcessingBlock(iter->second))
+			if (m_connectionManager.GetPipeline().GetBlockPipe().IsProcessingBlock(iter->second))
 			{
 				continue;
 			}
@@ -106,7 +106,7 @@ bool BlockSyncer::RequestBlocks()
 	}
 
 	const uint64_t numBlocksNeeded = 16 * numPeers;
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_blockChainServer.GetBlocksNeeded(2 * numBlocksNeeded);
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
 		LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - No blocks needed.");
@@ -119,7 +119,7 @@ bool BlockSyncer::RequestBlocks()
 
 	while (blockIndex < blocksNeeded.size())
 	{
-		if (m_connectionManager.GetPipeline().IsProcessingBlock(blocksNeeded[blockIndex].second))
+		if (m_connectionManager.GetPipeline().GetBlockPipe().IsProcessingBlock(blocksNeeded[blockIndex].second))
 		{
 			++blockIndex;
 			continue;

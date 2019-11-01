@@ -4,7 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <stdint.h>
+#include <Common/Traits.h>
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -15,7 +16,7 @@
 #pragma warning(disable: 4505)
 
 template<size_t NUM_BYTES, class ALLOC = std::allocator<unsigned char>>
-class CBigInteger
+class CBigInteger : public Traits::IPrintable
 {
 public:
 	//
@@ -102,6 +103,7 @@ public:
 
 		return stream.str();
 	}
+	virtual std::string Format() const override final { return ToHex(); }
 
 	//
 	// Operators

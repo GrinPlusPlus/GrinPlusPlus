@@ -26,6 +26,7 @@ private:
 	const TorConfig& m_torConfig;
 	std::string m_password;
 	long m_processId;
+	bool m_initialized;
 
 	TorControlClient m_client;
 };

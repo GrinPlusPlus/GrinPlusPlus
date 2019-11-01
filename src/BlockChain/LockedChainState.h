@@ -1,65 +1,141 @@
 #pragma once
 
-#include "BlockStore.h"
 #include "ChainStore.h"
 #include "OrphanPool/OrphanPool.h"
 
+#include <Database/Database.h>
 #include <PMMR/HeaderMMR.h>
-#include <Core/Models/BlockHeader.h>
-#include <Infrastructure/Logger.h>
 #include <TxPool/TransactionPool.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Crypto/Hash.h>
-#include <shared_mutex>
 #include <map>
 
 class LockedChainState
 {
 public:
-	LockedChainState(std::shared_mutex& mutex, ChainStore& chainStore, BlockStore& blockStore, IHeaderMMR& headerMMR, OrphanPool& orphanPool, ITransactionPool& transactionPool, TxHashSetManager& txHashSetManager)
-		: m_pReferences(new int(1)), 
-		m_mutex(mutex), 
-		m_chainStore(chainStore), 
-		m_blockStore(blockStore), 
-		m_headerMMR(headerMMR), 
-		m_orphanPool(orphanPool),
-		m_transactionPool(transactionPool),
-		m_txHashSetManager(txHashSetManager)
+	LockedChainState(
+		std::shared_ptr<Locked<ChainStore>> pChainStore,
+		std::shared_ptr<Locked<IBlockDB>> pBlockDB,
+		std::shared_ptr<Locked<IHeaderMMR>>& pHeaderMMR,
+		std::shared_ptr<OrphanPool> pOrphanPool,
+		std::shared_ptr<ITransactionPool> pTransactionPool,
+		std::shared_ptr<TxHashSetManager> pTxHashSetManager
+	)
+		: m_committed(false),
+		m_pChainStore(pChainStore), 
+		m_pBlockDB(pBlockDB),
+		m_pHeaderMMR(pHeaderMMR),
+		m_pOrphanPool(pOrphanPool),
+		m_pTransactionPool(pTransactionPool),
+		m_pTxHashSetManager(pTxHashSetManager)
 	{
-		m_mutex.lock();
-		LoggerAPI::LogTrace("LockedChainState - Mutex Locked.");
+
 	}
 
 	~LockedChainState()
 	{
-		if (--(*m_pReferences) == 0)
+		if (!m_committed)
 		{
-			m_mutex.unlock();
-			LoggerAPI::LogTrace("LockedChainState - Mutex Unlocked.");
-			delete m_pReferences;
+			Rollback();
 		}
 	}
 
-	LockedChainState(const LockedChainState& other)
-		: m_pReferences(other.m_pReferences),
-		m_mutex(other.m_mutex),
-		m_chainStore(other.m_chainStore),
-		m_blockStore(other.m_blockStore),
-		m_headerMMR(other.m_headerMMR),
-		m_orphanPool(other.m_orphanPool),
-		m_transactionPool(other.m_transactionPool),
-		m_txHashSetManager(other.m_txHashSetManager)
-	{
-		++(*m_pReferences);
-	}
+	LockedChainState(const LockedChainState& other) = delete;
 	LockedChainState& operator=(const LockedChainState&) = delete;
 
-	int* m_pReferences;
-	std::shared_mutex& m_mutex;
-	ChainStore& m_chainStore;
-	BlockStore& m_blockStore;
-	IHeaderMMR& m_headerMMR;
-	OrphanPool& m_orphanPool;
-	ITransactionPool& m_transactionPool;
-	TxHashSetManager& m_txHashSetManager;
+	void Commit()
+	{
+		if (!m_chainStoreWriter.IsNull())
+		{
+			m_chainStoreWriter->Commit();
+		}
+
+		if (!m_blockDBWriter.IsNull())
+		{
+			m_blockDBWriter->Commit();
+		}
+
+		if (!m_headerMMRWriter.IsNull())
+		{
+			m_headerMMRWriter->Commit();
+		}
+	}
+
+	void Rollback()
+	{
+		if (!m_chainStoreWriter.IsNull())
+		{
+			m_chainStoreWriter->Rollback();
+		}
+
+		if (!m_blockDBWriter.IsNull())
+		{
+			m_blockDBWriter->Rollback();
+		}
+
+		if (!m_headerMMRWriter.IsNull())
+		{
+			m_headerMMRWriter->Rollback();
+		}
+	}
+
+	std::shared_ptr<ChainStore> GetChainStore()
+	{
+		if (m_chainStoreWriter.IsNull())
+		{
+			m_chainStoreWriter = m_pChainStore->BatchWrite();
+		}
+
+		return m_chainStoreWriter.GetShared();
+	}
+
+	std::shared_ptr<IBlockDB> GetBlockDB()
+	{
+		if (m_blockDBWriter.IsNull())
+		{
+			m_blockDBWriter = m_pBlockDB->BatchWrite();
+		}
+
+		return m_blockDBWriter.GetShared();
+	}
+
+	std::shared_ptr<IHeaderMMR> GetHeaderMMR()
+	{
+		if (m_headerMMRWriter.IsNull())
+		{
+			m_headerMMRWriter = m_pHeaderMMR->BatchWrite();
+		}
+
+		return m_headerMMRWriter.GetShared();
+	}
+
+	std::shared_ptr<OrphanPool> GetOrphanPool()
+	{
+		return m_pOrphanPool;
+	}
+
+	std::shared_ptr<ITransactionPool> GetTransactionPool()
+	{
+		return m_pTransactionPool;
+	}
+
+	std::shared_ptr<TxHashSetManager> GetTxHashSetManager()
+	{
+		return m_pTxHashSetManager;
+	}
+
+private:
+	bool m_committed;
+
+	std::shared_ptr<Locked<ChainStore>> m_pChainStore;
+	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
+	std::shared_ptr<Locked<IHeaderMMR>> m_pHeaderMMR;
+	std::shared_ptr<OrphanPool> m_pOrphanPool;
+	std::shared_ptr<ITransactionPool> m_pTransactionPool;
+	std::shared_ptr<TxHashSetManager> m_pTxHashSetManager;
+
+	// Writers
+	Writer<ChainStore> m_chainStoreWriter;
+	Writer<IBlockDB> m_blockDBWriter;
+	Writer<IHeaderMMR> m_headerMMRWriter;
 };

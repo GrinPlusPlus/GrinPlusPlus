@@ -6,8 +6,8 @@
 // TODO: A FIFO cache would be more appropriate.
 LRU::Cache<Hash, BlockHeader> BLOCK_HEADERS_CACHE(128);
 
-DifficultyLoader::DifficultyLoader(const IBlockDB& blockDB)
-	: m_blockDB(blockDB)
+DifficultyLoader::DifficultyLoader(std::shared_ptr<const IBlockDB> pBlockDB)
+	: m_pBlockDB(pBlockDB)
 {
 
 }
@@ -53,7 +53,7 @@ std::unique_ptr<BlockHeader> DifficultyLoader::LoadHeader(const Hash& headerHash
 	}
 	else
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_blockDB.GetBlockHeader(headerHash);
+		std::unique_ptr<BlockHeader> pHeader = m_pBlockDB->GetBlockHeader(headerHash);
 		if (pHeader != nullptr)
 		{
 			BLOCK_HEADERS_CACHE.insert(headerHash, *pHeader);
@@ -87,7 +87,7 @@ std::vector<HeaderInfo> DifficultyLoader::PadDifficultyData(std::vector<HeaderIn
 		uint64_t last_ts = difficultyData.back().GetTimestamp();
 		while (difficultyData.size() < numBlocksNeeded)
 		{
-			last_ts -= std::min(last_ts, last_ts_delta);
+			last_ts -= (std::min)(last_ts, last_ts_delta);
 			difficultyData.emplace_back(HeaderInfo::FromTimeAndDiff(last_ts, last_diff));
 		}
 	}

@@ -6,6 +6,8 @@
 
 #include <Common/ImportExport.h>
 #include <Crypto/Hash.h>
+#include <Core/Traits/Batchable.h>
+#include <Core/Traits/Lockable.h>
 #include <vector>
 
 #ifdef MW_PMMR
@@ -18,19 +20,18 @@
 class Config;
 class BlockHeader;
 
-class IHeaderMMR
+class IHeaderMMR : public Traits::Batchable
 {
 public:
+	virtual ~IHeaderMMR() = default;
+
 	virtual void AddHeader(const BlockHeader& header) = 0;
 	virtual Hash Root(const uint64_t nextHeight) const = 0;
-
 	virtual bool Rewind(const uint64_t nextHeight) = 0;
-	virtual bool Rollback() = 0;
-	virtual bool Commit() = 0;
 };
 
 namespace HeaderMMRAPI
 {
-	PMMR_API IHeaderMMR* OpenHeaderMMR(const Config& config);
-	PMMR_API void CloseHeaderMMR(IHeaderMMR* pHeaderMMR);
+	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config);
+	//PMMR_API void CloseHeaderMMR(IHeaderMMR* pHeaderMMR);
 }

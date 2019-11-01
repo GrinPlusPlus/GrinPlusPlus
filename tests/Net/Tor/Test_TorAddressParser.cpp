@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <Net/Tor/TorAddressParser.h>
+#include <Common/Base64.h>
 
 TEST_CASE("TorAddressParser - Valid Addresses")
 {
@@ -8,6 +9,9 @@ TEST_CASE("TorAddressParser - Valid Addresses")
 		std::string address = "uappxosquocltxoj63zugtnfiocshkxlqswuhyhopjfmupcqnknecuqd";
 		std::optional<TorAddress> parsed = TorAddressParser::Parse(address);
 		REQUIRE(parsed.has_value());
+
+		std::string hex = CBigInteger<32>(parsed.value().GetPublicKey().pubkey).ToHex();
+		REQUIRE(hex == "bf4ce9b54c9b5f1184812d24088531f14ca7c80f53148c037f47d7f22e45ee02");
 	}
 	{
 		std::string address = "3qewg3yajasr7xvpnnb5omrj5zdn3jsuxgsibepekaevqkp3vtdgnzad";

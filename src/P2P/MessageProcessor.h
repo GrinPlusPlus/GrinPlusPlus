@@ -2,13 +2,13 @@
 
 #include "Messages/RawMessage.h"
 
+#include <BlockChain/BlockChainServer.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 
 // Forward Declarations
 class Socket;
 class ConnectionManager;
-class IBlockChainServer;
 class ConnectedPeer;
 class RawMessage;
 class TxHashSetArchiveMessage;
@@ -29,17 +29,16 @@ public:
 		BAN_PEER
 	};
 
-	MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
+	MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer);
 
 	EStatus ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
 
 private:
 	EStatus ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
 	EStatus SendTxHashSet(ConnectedPeer& connectedPeer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage);
-	EStatus ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	PeerManager& m_peerManager;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 };

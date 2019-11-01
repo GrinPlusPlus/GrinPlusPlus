@@ -7,7 +7,7 @@
 class PoWValidator
 {
 public:
-	PoWValidator(const Config& config, const IBlockDB& blockDB);
+	PoWValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB);
 
 	bool IsPoWValid(const BlockHeader& header, const BlockHeader& previousHeader) const;
 
@@ -15,5 +15,5 @@ private:
 	uint64_t GetMaximumDifficulty(const BlockHeader& header) const;
 
 	const Config& m_config;
-	const IBlockDB& m_blockDB;
+	std::shared_ptr<const IBlockDB> m_pBlockDB;
 };

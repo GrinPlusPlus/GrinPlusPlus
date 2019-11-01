@@ -11,12 +11,13 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionBody.h>
 #include <Crypto/BlindingFactor.h>
+#include <Common/Traits.h>
 #include <json/json.h>
 
 ////////////////////////////////////////
 // TRANSACTION
 ////////////////////////////////////////
-class Transaction
+class Transaction  : public Traits::IPrintable
 {
 public:
 	//
@@ -59,6 +60,11 @@ public:
 	// Hashing
 	//
 	const Hash& GetHash() const;
+
+	//
+	// Traits
+	//
+	virtual std::string Format() const override final { return m_hash.Format(); }
 
 private:
 	// The kernel "offset" k2 excess is k1G after splitting the key k = k1 + k2.

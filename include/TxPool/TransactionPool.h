@@ -42,6 +42,7 @@ public:
 	) const = 0;
 
 	virtual bool AddTransaction(
+		std::shared_ptr<const IBlockDB> pBlockDB,
 		const Transaction& transaction,
 		const EPoolType poolType,
 		const BlockHeader& lastConfirmedBlock
@@ -49,27 +50,24 @@ public:
 
 	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
 	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const = 0;
-	virtual void ReconcileBlock(const FullBlock& block) = 0;
+	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block) = 0;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem() = 0;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff() = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB) = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB) = 0;
 	virtual std::vector<Transaction> GetExpiredTransactions() const = 0;
 };
+
+typedef std::shared_ptr<ITransactionPool> ITransactionPoolPtr;
+typedef std::shared_ptr<const ITransactionPool> ITransactionPoolConstPtr;
 
 namespace TxPoolAPI
 {
 	//
 	// Creates a new instance of the Transaction Pool.
 	//
-	TX_POOL_API ITransactionPool* CreateTransactionPool(
+	TX_POOL_API ITransactionPoolPtr CreateTransactionPool(
 		const Config& config,
-		const TxHashSetManager& txHashSetManager,
-		const IBlockDB& blockDB
+		TxHashSetManagerConstPtr pTxHashSetManager
 	);
-
-	//
-	// Destroys the instance of the Transaction Pool
-	//
-	TX_POOL_API void DestroyTransactionPool(ITransactionPool* pTransactionPool);
 }

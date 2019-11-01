@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Config/Config.h>
+#include <BlockChain/BlockChainServer.h>
 #include <P2P/Direction.h>
 #include <atomic>
 #include <thread>
@@ -11,12 +12,11 @@
 class Connection;
 class ConnectionManager;
 class PeerManager;
-class IBlockChainServer;
 
 class Seeder
 {
 public:
-	Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer);
+	Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer);
 
 	void Start();
 	void Stop();
@@ -30,7 +30,7 @@ private:
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	PeerManager& m_peerManager;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 
 	std::atomic<bool> m_terminate = true;
 

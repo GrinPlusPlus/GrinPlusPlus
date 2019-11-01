@@ -10,8 +10,8 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
-Syncer::Syncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
-	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
+Syncer::Syncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 
 }
@@ -43,9 +43,9 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	ThreadManagerAPI::SetCurrentThreadName("SYNC");
 	LOG_DEBUG("BEGIN");
 
-	HeaderSyncer headerSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
-	StateSyncer stateSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
-	BlockSyncer blockSyncer(syncer.m_connectionManager, syncer.m_blockChainServer);
+	HeaderSyncer headerSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
+	StateSyncer stateSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
+	BlockSyncer blockSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
 	bool startup = true;
 
 	while (!syncer.m_terminate)
@@ -53,7 +53,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 		ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
 		syncer.UpdateSyncStatus();
 
-		if (syncer.m_syncStatus.GetNumActiveConnections() >= 4)
+		if (syncer.m_syncStatus.GetNumActiveConnections() >= 2)
 		{
 			// Sync Headers
 			if (headerSyncer.SyncHeaders(syncer.m_syncStatus, startup))
@@ -90,6 +90,6 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 void Syncer::UpdateSyncStatus()
 {
-	m_blockChainServer.UpdateSyncStatus(m_syncStatus);
+	m_pBlockChainServer->UpdateSyncStatus(m_syncStatus);
 	m_connectionManager.UpdateSyncStatus(m_syncStatus);
 }

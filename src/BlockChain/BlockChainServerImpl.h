@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BlockStore.h"
 #include "ChainState.h"
 #include "ChainStore.h"
 
@@ -16,15 +15,18 @@
 class BlockChainServer : public IBlockChainServer
 {
 public:
-	BlockChainServer(const Config& config, IDatabase& database, TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool);
-	virtual ~BlockChainServer();
-
 	//
 	// Initializes the blockchain by loading the previously downloaded and verified blocks from the database.
 	// If this is the first time opening BitcoinDB (ie. no blockchain database exists), the blockchain is populated with only the genesis block.
 	//
-	void Initialize();
-	void Shutdown();
+	static std::shared_ptr<BlockChainServer> Create(
+		const Config& config,
+		std::shared_ptr<Locked<IBlockDB>> pDatabase,
+		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<ITransactionPool> pTransactionPool
+	);
+	virtual ~BlockChainServer();
+
 	virtual bool ResyncChain() override final;
 
 	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const override final;
@@ -59,14 +61,19 @@ public:
 	virtual bool ProcessNextOrphanBlock() override final;
 
 private:
-	bool m_initialized = { false };
-	BlockStore* m_pBlockStore;
-	ChainState* m_pChainState;
-	ChainStore* m_pChainStore;
-	IHeaderMMR* m_pHeaderMMR;
-	ITransactionPool& m_transactionPool;
+	BlockChainServer(
+		const Config& config,
+		std::shared_ptr<Locked<IBlockDB>> pDatabase,
+		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<ITransactionPool> pTransactionPool,
+		std::shared_ptr<Locked<ChainState>> pChainState,
+		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR
+	);
 
 	const Config& m_config;
-	IDatabase& m_database;
-	TxHashSetManager& m_txHashSetManager;
+	std::shared_ptr<Locked<IBlockDB>> m_pDatabase;
+	TxHashSetManagerPtr m_pTxHashSetManager;
+	std::shared_ptr<ITransactionPool> m_pTransactionPool;
+	std::shared_ptr<Locked<ChainState>> m_pChainState;
+	std::shared_ptr<Locked<IHeaderMMR>> m_pHeaderMMR;
 };

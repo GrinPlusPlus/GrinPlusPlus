@@ -76,6 +76,9 @@ public:
 
 	inline const std::vector<unsigned char>& GetBytes() const { return m_serialized; }
 
+	const unsigned char* data() const { return m_serialized.data(); }
+	size_t size() const { return m_serialized.size(); }
+
 	// WARNING: This will destroy the contents of m_serialized.
 	// TODO: Create a SecureSerializer instead.
 	SecureVector GetSecureBytes()

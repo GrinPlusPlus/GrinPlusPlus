@@ -26,7 +26,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 
 		if (!jsonParsed)
 		{
-			LoggerAPI::LogWarning("ConfigManager::LoadConfig - Failed to parse config.json");
+			LOG_WARNING("Failed to parse config.json");
 		}
 
 		const Config config = ConfigReader().ReadConfig(root, environment);
@@ -37,7 +37,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 	}
 	else
 	{
-		LoggerAPI::LogWarning(StringUtil::Format("ConfigManager::LoadConfig - server_config.json not found in %s. Creating server_config.json with defaults.", configPath.c_str()));
+		LOG_WARNING_F("server_config.json not found in %s. Creating server_config.json with defaults.", configPath);
 
 		Json::Value emptyRoot;
 		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);

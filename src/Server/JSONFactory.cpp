@@ -110,7 +110,7 @@ Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 Json::Value JSONFactory::BuildTransactionInputJSON(const TransactionInput& input)
 {
 	Json::Value inputNode;
-	inputNode = HexUtil::ConvertToHex(input.GetCommitment().GetCommitmentBytes().GetData());
+	inputNode = input.GetCommitment().ToHex();
 	return inputNode;
 }
 
@@ -130,7 +130,7 @@ Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& out
 {
 	Json::Value outputNode;
 
-	outputNode["output_type"] = output.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT ? "Coinbase" : "Transaction";
+	outputNode["output_type"] = output.IsCoinbase() ? "Coinbase" : "Transaction";
 	// TODO: outputNode["spent"]
 	outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
 

@@ -11,13 +11,12 @@
 class BlockHydrator
 {
 public:
-	BlockHydrator(const ChainState& chainState, const ITransactionPool& transactionPool);
+	BlockHydrator(std::shared_ptr<const ITransactionPool> pTransactionPool);
 
 	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock) const;
 
 private:
 	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock, const std::vector<Transaction>& transactions) const;
 
-	const ChainState& m_chainState;
-	const ITransactionPool& m_transactionPool;
+	std::shared_ptr<const ITransactionPool> m_pTransactionPool;
 };

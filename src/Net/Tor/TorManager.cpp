@@ -35,7 +35,7 @@ std::unique_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey,
 			std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
 			if (!torAddress.has_value())
 			{
-				LOG_ERROR_F("Failed to parse listener address: %s", address.c_str());
+				LOG_ERROR_F("Failed to parse listener address: %s", address);
 			}
 			else
 			{

@@ -9,8 +9,8 @@
 #include <Consensus/BlockTime.h>
 #include <Consensus/BlockDifficulty.h>
 
-PoWValidator::PoWValidator(const Config& config, const IBlockDB& blockDB)
-	: m_config(config), m_blockDB(blockDB)
+PoWValidator::PoWValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB)
+	: m_config(config), m_pBlockDB(pBlockDB)
 {
 
 }
@@ -30,7 +30,7 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 	}
 
 	// Explicit check to ensure total_difficulty has increased by exactly the _network_ difficulty of the previous block.
-	const HeaderInfo nextHeaderInfo = DifficultyCalculator(m_blockDB).CalculateNextDifficulty(header);
+	const HeaderInfo nextHeaderInfo = DifficultyCalculator(m_pBlockDB).CalculateNextDifficulty(header);
 	if (targetDifficulty != nextHeaderInfo.GetDifficulty())
 	{
 		return false;

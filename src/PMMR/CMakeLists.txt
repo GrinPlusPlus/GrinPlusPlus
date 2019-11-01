@@ -9,6 +9,7 @@ file(GLOB SOURCE_CODE
     "TxHashSetImpl.cpp"
     "TxHashSetManager.cpp"
     "TxHashSetValidator.cpp"
+	"UBMT.cpp"
     "Common/LeafSet.cpp"
     "Common/MMRHashUtil.cpp"
     "Common/MMRUtil.cpp"
@@ -21,7 +22,7 @@ file(GLOB SOURCE_CODE
 
 if(GRINPP_STATIC)
 	add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-elseif(GRINPP_STATIC)
+else(GRINPP_STATIC)
 	add_library(${TARGET_NAME} SHARED ${SOURCE_CODE})
 endif(GRINPP_STATIC)
 

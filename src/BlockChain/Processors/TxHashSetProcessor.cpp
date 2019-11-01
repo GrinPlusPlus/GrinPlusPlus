@@ -7,29 +7,40 @@
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/HexUtil.h>
 
-TxHashSetProcessor::TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, ChainState& chainState, IBlockDB& blockDB)
-	: m_config(config), m_blockChainServer(blockChainServer), m_chainState(chainState), m_blockDB(blockDB)
+TxHashSetProcessor::TxHashSetProcessor(
+	const Config& config,
+	IBlockChainServer& blockChainServer,
+	std::shared_ptr<Locked<ChainState>> pChainState,
+	std::shared_ptr<Locked<IBlockDB>> pBlockDB)
+	: m_config(config),
+	m_blockChainServer(blockChainServer),
+	m_pChainState(pChainState),
+	m_pBlockDB(pBlockDB)
 {
 
 }
 
 bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
 {
-	std::unique_ptr<BlockHeader> pHeader = m_chainState.GetBlockHeaderByHash(blockHash);
+	std::unique_ptr<BlockHeader> pHeader = m_pChainState->Read()->GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
 	{
-		LOG_ERROR_F("Header not found for hash %s.", HexUtil::ConvertHash(blockHash).c_str());
+		LOG_ERROR_F("Header not found for hash %s.", blockHash);
 		return false;
 	}
 
 	// 1. Close Existing TxHashSet
-	m_chainState.GetLocked().m_txHashSetManager.Close();
+	{
+		auto pChainState = m_pChainState->BatchWrite();
+		pChainState->GetTxHashSetManager()->Close();
+		pChainState->Commit();
+	}
 
 	// 2. Load and Extract TxHashSet Zip
-	ITxHashSet* pTxHashSet = TxHashSetManager::LoadFromZip(m_config, m_blockDB, path, *pHeader);
+	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, m_pBlockDB, path, *pHeader);
 	if (pTxHashSet == nullptr)
 	{
-		LOG_ERROR("Failed to load " + path);
+		LOG_ERROR_F("Failed to load %s", path);
 		return false;
 	}
 
@@ -37,28 +48,29 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
 	if (pBlockSums == nullptr)
 	{
-		LOG_ERROR_F("Validation of %s failed.", path.c_str());
-		TxHashSetManager::DestroyTxHashSet(pTxHashSet);
+		LOG_ERROR_F("Validation of %s failed.", path);
+		//TxHashSetManager::DestroyTxHashSet(pTxHashSet);
 		return false;
 	}
 
 	// 4. Add BlockSums to DB
-	m_blockDB.AddBlockSums(pHeader->GetHash(), *pBlockSums);
+	auto pChainStateBatch = m_pChainState->BatchWrite();
+
+	pChainStateBatch->GetBlockDB()->AddBlockSums(pHeader->GetHash(), *pBlockSums);
 
 	// 5. Add Output positions to DB
 	{
 		LOG_DEBUG("Saving output positions.");
-		LockedChainState lockedState = m_chainState.GetLocked();
-		Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+		std::shared_ptr<Chain> pCandidateChain = pChainStateBatch->GetChainStore()->GetCandidateChain();
 
 		uint64_t firstOutput = 0;
 		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)
 		{
-			BlockIndex* pIndex = candidateChain.GetByHeight(i);
-			std::unique_ptr<BlockHeader> pNextHeader = lockedState.m_blockStore.GetBlockHeaderByHash(pIndex->GetHash());
+			BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+			std::unique_ptr<BlockHeader> pNextHeader = pChainStateBatch->GetBlockDB()->GetBlockHeader(pIndex->GetHash());
 			if (pNextHeader != nullptr)
 			{
-				pTxHashSet->SaveOutputPositions(*pNextHeader, firstOutput);
+				pTxHashSet->SaveOutputPositions(pChainStateBatch->GetBlockDB(), *pNextHeader, firstOutput);
 				firstOutput = pNextHeader->GetOutputMMRSize();
 			}
 		}
@@ -66,41 +78,40 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 
 	// 6. Store TxHashSet
 	LOG_DEBUG("Using TxHashSet.");
-	LockedChainState lockedState = m_chainState.GetLocked();
-	lockedState.m_txHashSetManager.SetTxHashSet(pTxHashSet);
+	pChainStateBatch->GetTxHashSetManager()->SetTxHashSet(pTxHashSet);
 
 	// 7. Update confirmed chain
 	LOG_DEBUG("Updating confirmed chain.");
-	if (!UpdateConfirmedChain(lockedState, *pHeader))
+	if (!UpdateConfirmedChain(pChainStateBatch, *pHeader))
 	{
-		LOG_ERROR_F("Failed to update confirmed chain for %s.", path.c_str());
-		lockedState.m_txHashSetManager.Close();
+		LOG_ERROR_F("Failed to update confirmed chain for %s.", path);
+		pChainStateBatch->GetTxHashSetManager()->Close();
 		return false;
 	}
 
-	lockedState.m_chainStore.Flush();
+	pChainStateBatch->Commit();
 
 	return true;
 }
 
-bool TxHashSetProcessor::UpdateConfirmedChain(LockedChainState& lockedState, const BlockHeader& blockHeader)
+bool TxHashSetProcessor::UpdateConfirmedChain(Writer<ChainState> pLockedState, const BlockHeader& blockHeader)
 {
-	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
-	Chain& confirmedChain = lockedState.m_chainStore.GetConfirmedChain();
+	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
+	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 	
-	BlockIndex* pBlockIndex = candidateChain.GetByHeight(blockHeader.GetHeight());
+	BlockIndex* pBlockIndex = pCandidateChain->GetByHeight(blockHeader.GetHeight());
 	if (pBlockIndex->GetHash() != blockHeader.GetHash())
 	{
 		return false;
 	}
 
-	BlockIndex* pCommonIndex = lockedState.m_chainStore.FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED);
-	if (confirmedChain.Rewind(pCommonIndex->GetHeight()))
+	const BlockIndex* pCommonIndex = pLockedState->GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED);
+	if (pConfirmedChain->Rewind(pCommonIndex->GetHeight()))
 	{
 		uint64_t height = pCommonIndex->GetHeight() + 1;
 		while (height <= pBlockIndex->GetHeight())
 		{
-			confirmedChain.AddBlock(candidateChain.GetByHeight(height));
+			pConfirmedChain->AddBlock(pCandidateChain->GetByHeight(height));
 			height++;
 		}
 

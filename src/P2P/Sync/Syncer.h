@@ -1,18 +1,18 @@
 #pragma once
 
 #include <P2P/SyncStatus.h>
+#include <BlockChain/BlockChainServer.h>
 #include <atomic>
 #include <thread>
 
 // Forward Declarations
 class ConnectionManager;
-class IBlockChainServer;
 class SyncStatus;
 
 class Syncer
 {
 public:
-	Syncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
+	Syncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
 
 	void Start();
 	void Stop();
@@ -25,7 +25,7 @@ private:
 	void UpdateSyncStatus();
 
 	ConnectionManager& m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 	SyncStatus m_syncStatus;
 
 	std::atomic<bool> m_terminate;

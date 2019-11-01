@@ -14,7 +14,13 @@ class ConnectionManager;
 class Dandelion
 {
 public:
-	Dandelion(const Config& config, ConnectionManager& connectionManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool);
+	Dandelion(
+		const Config& config,
+		ConnectionManager& connectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		ITransactionPoolPtr pTransactionPool,
+		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
+	);
 
 	void Start();
 	void Stop();
@@ -28,8 +34,9 @@ private:
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
-	ITransactionPool& m_transactionPool;
+	IBlockChainServerPtr m_pBlockChainServer;
+	ITransactionPoolPtr m_pTransactionPool;
+	std::shared_ptr<const Locked<IBlockDB>> m_pBlockDB;
 
 	std::atomic_bool m_terminate = true;
 	std::thread m_dandelionThread;

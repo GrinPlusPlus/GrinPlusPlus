@@ -3,7 +3,7 @@
 #include "Connection.h"
 #include "Sync/Syncer.h"
 #include "Seed/Seeder.h"
-#include "Pipeline.h"
+#include "Pipeline/Pipeline.h"
 #include "Dandelion.h"
 
 #include <Config/Config.h>
@@ -20,7 +20,13 @@ class PeerManager;
 class ConnectionManager
 {
 public:
-	ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool);
+	ConnectionManager(
+		const Config& config,
+		PeerManager& peerManager,
+		std::shared_ptr<const Locked<IBlockDB>> pBlockDB,
+		IBlockChainServerPtr pBlockChainServer,
+		ITransactionPoolPtr pTransactionPool
+	);
 
 	void Start();
 	void Stop();
@@ -81,7 +87,6 @@ private:
 
 	const Config& m_config;
 	PeerManager& m_peerManager;
-	IBlockChainServer& m_blockChainServer;
 	Syncer m_syncer;
 	Seeder m_seeder;
 	Pipeline m_pipeline;

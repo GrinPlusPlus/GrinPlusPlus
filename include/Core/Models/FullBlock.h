@@ -9,8 +9,9 @@
 #include <Core/Models/TransactionBody.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <Common/Traits.h>
 
-class FullBlock
+class FullBlock : public Traits::IPrintable
 {
 public:
 	//
@@ -37,6 +38,7 @@ public:
 	//
 	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
 	inline const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
+	inline uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
 
 	//
 	// Serialization/Deserialization
@@ -54,6 +56,11 @@ public:
 	//
 	inline bool WasValidated() const { return m_validated; }
 	inline void MarkAsValidated() const { m_validated = true; }
+
+	//
+	// Traits
+	//
+	virtual std::string Format() const override final { return GetHash().ToHex(); }
 
 private:
 	BlockHeader m_blockHeader;

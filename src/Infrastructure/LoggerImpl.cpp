@@ -64,8 +64,23 @@ namespace LoggerAPI
 		{
 			logLevelEnum = spdlog::level::level_enum::trace;
 		}
+		else if (logLevel == "DEBUG")
+		{
+			logLevelEnum = spdlog::level::level_enum::debug;
+		}
+		else if (logLevel == "INFO")
+		{
+			logLevelEnum = spdlog::level::level_enum::info;
+		}
+		else if (logLevel == "WARN")
+		{
+			logLevelEnum = spdlog::level::level_enum::warn;
+		}
+		else if (logLevel == "ERROR")
+		{
+			logLevelEnum = spdlog::level::level_enum::err;
+		}
 
-		// TODO: Finish this.
 		Logger::GetInstance().StartLogger(directory, logLevelEnum);
 	}
 

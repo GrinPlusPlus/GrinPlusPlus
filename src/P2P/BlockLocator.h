@@ -7,7 +7,7 @@
 class BlockLocator
 {
 public:
-	BlockLocator(IBlockChainServer& blockChainServer);
+	BlockLocator(IBlockChainServerPtr pBlockChainServer);
 
 	std::vector<CBigInteger<32>> GetLocators(const SyncStatus& syncStatus) const;
 	std::vector<BlockHeader> LocateHeaders(const std::vector<CBigInteger<32>>& locatorHashes) const;
@@ -16,5 +16,5 @@ private:
 	std::vector<uint64_t> GetLocatorHeights(const SyncStatus& syncStatus) const;
 	std::unique_ptr<BlockHeader> FindCommonHeader(const std::vector<CBigInteger<32>>& locatorHashes) const;
 
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 };

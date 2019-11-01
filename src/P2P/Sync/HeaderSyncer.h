@@ -1,16 +1,16 @@
 #pragma once
 
+#include <BlockChain/BlockChainServer.h>
 #include <chrono>
 
 // Forward Declarations
 class ConnectionManager;
-class IBlockChainServer;
 class SyncStatus;
 
 class HeaderSyncer
 {
 public:
-	HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
+	HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
 
 	bool SyncHeaders(const SyncStatus& syncStatus, const bool startup);
 
@@ -19,7 +19,7 @@ private:
 	bool RequestHeaders(const SyncStatus& syncStatus);
 
 	ConnectionManager & m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;

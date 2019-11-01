@@ -4,8 +4,8 @@
 #include <Core/Validation/CutThroughVerifier.h>
 #include <unordered_set>
 
-BlockHydrator::BlockHydrator(const ChainState& chainState, const ITransactionPool& transactionPool)
-	: m_chainState(chainState), m_transactionPool(transactionPool)
+BlockHydrator::BlockHydrator(std::shared_ptr<const ITransactionPool> pTransactionPool)
+	: m_pTransactionPool(pTransactionPool)
 {
 
 }
@@ -21,7 +21,7 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	{
 		const Hash& hash = compactBlock.GetBlockHeader().GetHash();
 		const uint64_t nonce = compactBlock.GetNonce();
-		const std::vector<Transaction> transactions = m_transactionPool.GetTransactionsByShortId(hash, nonce, std::set<ShortId>(shortIds.cbegin(), shortIds.cend()));
+		const std::vector<Transaction> transactions = m_pTransactionPool->GetTransactionsByShortId(hash, nonce, std::set<ShortId>(shortIds.cbegin(), shortIds.cend()));
 
 		if (transactions.size() == shortIds.size())
 		{

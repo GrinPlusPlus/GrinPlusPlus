@@ -4,6 +4,7 @@
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
 #include <Database/BlockDb.h>
+#include <Core/Traits/Lockable.h>
 
 #ifdef MW_PMMR
 #define TXHASHSET_API EXPORT
@@ -14,25 +15,28 @@
 class TXHASHSET_API TxHashSetManager
 {
 public:
-	TxHashSetManager(const Config& config, IBlockDB& blockDB);
+	TxHashSetManager(const Config& config);
 	~TxHashSetManager() = default;
 
-	ITxHashSet* Open(const BlockHeader& confirmedTip);
+	ITxHashSetPtr Open(const BlockHeader& confirmedTip);
 	void Flush();
 	void Close();
 
-	ITxHashSet* GetTxHashSet();
-	const ITxHashSet* GetTxHashSet() const;
-	void SetTxHashSet(ITxHashSet* pTxHashSet);
-	static void DestroyTxHashSet(ITxHashSet* pTxHashSet);
+	ITxHashSetPtr GetTxHashSet();
+	ITxHashSetConstPtr GetTxHashSet() const;
+	void SetTxHashSet(ITxHashSetPtr pTxHashSet);
+	//static void DestroyTxHashSet(ITxHashSet* pTxHashSet);
 
-	static ITxHashSet* LoadFromZip(const Config& config, IBlockDB& blockDB, const std::string& zipFilePath, const BlockHeader& header);
-	bool SaveSnapshot(const BlockHeader& header, const std::string& zipFilePath);
+	static ITxHashSetPtr LoadFromZip(const Config& config, std::shared_ptr<Locked<IBlockDB>> pDatabase, const std::string& zipFilePath, const BlockHeader& header);
+	bool SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header, const std::string& zipFilePath);
 
 private:
 	const Config& m_config;
-	IBlockDB& m_blockDB;
-	ITxHashSet* m_pTxHashSet;
+	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
+	ITxHashSetPtr m_pTxHashSet;
 
 	// TODO: Needs mutex
 };
+
+typedef std::shared_ptr<TxHashSetManager> TxHashSetManagerPtr;
+typedef std::shared_ptr<TxHashSetManager> TxHashSetManagerConstPtr;

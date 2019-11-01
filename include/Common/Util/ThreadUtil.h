@@ -3,6 +3,8 @@
 #include <Common/Util/TimeUtil.h>
 #include <chrono>
 #include <atomic>
+#include <thread>
+#include <vector>
 
 class ThreadUtil
 {
@@ -31,5 +33,24 @@ public:
 	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration, const std::atomic_bool& terminate)
 	{
 		return SleepFor(std::chrono::duration_cast<std::chrono::milliseconds>(duration), std::chrono::milliseconds(5), terminate);
+	}
+
+	static void Join(std::thread& thread)
+	{
+		if (thread.joinable())
+		{
+			thread.join();
+		}
+	}
+
+	static void JoinAll(std::vector<std::thread>& threads)
+	{
+		for (auto& thread : threads)
+		{
+			if (thread.joinable())
+			{
+				thread.join();
+			}
+		}
 	}
 };

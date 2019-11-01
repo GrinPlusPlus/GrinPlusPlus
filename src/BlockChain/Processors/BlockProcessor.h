@@ -16,20 +16,19 @@ enum class EBlockStatus
 class BlockProcessor
 {
 public:
-	BlockProcessor(const Config& config, const IBlockDB& blockDB, ChainState& chainState);
+	BlockProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
 private:
 	EBlockChainStatus ProcessBlockInternal(const FullBlock& block);
-	EBlockChainStatus ProcessNextBlock(const FullBlock& block, LockedChainState& lockedState);
-	EBlockChainStatus ProcessOrphanBlock(const FullBlock& block, LockedChainState& lockedState);
-	EBlockChainStatus HandleReorg(const FullBlock& block, LockedChainState& lockedState);
-	EBlockChainStatus ValidateAndAddBlock(const FullBlock& block, LockedChainState& lockedState);
+	EBlockChainStatus ProcessNextBlock(const FullBlock& block, Writer<ChainState> pLockedState);
+	EBlockChainStatus ProcessOrphanBlock(const FullBlock& block, Writer<ChainState> pLockedState);
+	EBlockChainStatus HandleReorg(const FullBlock& block, Writer<ChainState> pLockedState);
+	EBlockChainStatus ValidateAndAddBlock(const FullBlock& block, Writer<ChainState> pLockedState);
 
-	EBlockStatus DetermineBlockStatus(const FullBlock& block, LockedChainState& lockedState);
+	EBlockStatus DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pLockedState);
 
 	const Config& m_config;
-	const IBlockDB& m_blockDB;
-	ChainState& m_chainState;
+	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

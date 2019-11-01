@@ -8,32 +8,32 @@
 
 static const size_t SYNC_BATCH_SIZE = 32;
 
-BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, ChainState& chainState)
-	: m_config(config), m_chainState(chainState)
+BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState)
+	: m_config(config), m_pChainState(pChainState)
 {
 
 }
 
 EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& header)
 {
-	LOG_TRACE("Validating " + header.FormatHash());
+	LOG_TRACE_F("Validating %s", header);
 
-	LockedChainState lockedState = m_chainState.GetLocked();
-	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+	auto pLockedState = m_pChainState->BatchWrite();
+	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Check if header already processed
-	BlockIndex* pCandidateIndex = candidateChain.GetByHeight(header.GetHeight());
+	BlockIndex* pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
-		LOG_TRACE_F("Header %s already processed.", header.FormatHash().c_str());
+		LOG_TRACE_F("Header %s already processed.", header);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
 	// If this is not the next header needed, process as an orphan.
-	BlockIndex* pLastIndex = candidateChain.GetTip();
+	BlockIndex* pLastIndex = pCandidateChain->GetTip();
 	if (pLastIndex->GetHash() != header.GetPreviousBlockHash())
 	{
-		std::unique_ptr<BlockHeader> pCandidateHeader = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
+		std::unique_ptr<BlockHeader> pCandidateHeader = pLockedState->GetBlockDB()->GetBlockHeader(pLastIndex->GetHash());
 		if (header.GetTotalDifficulty() > pCandidateHeader->GetTotalDifficulty())
 		{
 			std::vector<BlockHeader> headers;
@@ -41,7 +41,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 			while (pHeader != nullptr)
 			{
 				headers.push_back(*pHeader);
-				BlockIndex* pIndex = candidateChain.GetByHeight(pHeader->GetHeight());
+				BlockIndex* pIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
 				if (pIndex != nullptr && pIndex->GetHash() == pHeader->GetHash())
 				{
 					// All headers exist. Reorg.
@@ -52,43 +52,49 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 						reorgHeaders.push_back(&reorgHeader);
 					}
 
-					return ProcessChunkedSyncHeaders(lockedState, reorgHeaders);
+					const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(pLockedState, reorgHeaders);
+					if (processChunkStatus == EBlockChainStatus::SUCCESS || processChunkStatus == EBlockChainStatus::ALREADY_EXISTS)
+					{
+						pLockedState->Commit();
+					}
+
+					return processChunkStatus;
 				}
 
 				const Hash previousHash = pHeader->GetPreviousBlockHash();
-				pHeader = lockedState.m_orphanPool.GetOrphanHeader(previousHash);
+				pHeader = pLockedState->GetOrphanPool()->GetOrphanHeader(previousHash);
 				if (pHeader == nullptr)
 				{
-					pHeader = lockedState.m_blockStore.GetBlockHeaderByHash(previousHash);
+					pHeader = pLockedState->GetBlockDB()->GetBlockHeader(previousHash);
 				}
 			}
 		}
 
-		LOG_DEBUG_F("Processing header %s as an orphan.", header.FormatHash().c_str());
-		lockedState.m_orphanPool.AddOrphanHeader(header);
+		LOG_DEBUG_F("Processing header %s as an orphan.", header);
+		pLockedState->GetOrphanPool()->AddOrphanHeader(header);
 		return EBlockChainStatus::ORPHANED;
 	}
 
-	LOG_TRACE("Processing next candidate header " + header.FormatHash());
+	LOG_TRACE_F("Processing next candidate header: %s", header);
 
 	// Validate the header.
-	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pLastIndex->GetHash());
-	if (!BlockHeaderValidator(m_config, lockedState.m_blockStore.GetBlockDB(), lockedState.m_headerMMR).IsValidHeader(header, *pPreviousHeaderPtr))
+	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = pLockedState->GetBlockDB()->GetBlockHeader(pLastIndex->GetHash());
+	if (!BlockHeaderValidator(m_config, pLockedState->GetBlockDB(), pLockedState->GetHeaderMMR()).IsValidHeader(header, *pPreviousHeaderPtr))
 	{
-		LOG_ERROR("Header failed to validate.");
+		LOG_ERROR_F("Header %s failed to validate", header);
 		return EBlockChainStatus::INVALID;
 	}
 
-	lockedState.m_blockStore.AddHeader(header);
-	lockedState.m_headerMMR.AddHeader(header);
-	lockedState.m_headerMMR.Commit();
+	pLockedState->GetBlockDB()->AddBlockHeader(header);
+	pLockedState->GetHeaderMMR()->AddHeader(header);
+	//lockedState.m_headerMMR.Commit();
 
-	BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(header.GetHash(), header.GetHeight(), pLastIndex);
-	lockedState.m_chainStore.GetSyncChain().AddBlock(pBlockIndex);
-	candidateChain.AddBlock(pBlockIndex);
-	lockedState.m_chainStore.Flush();
+	BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(header.GetHash(), header.GetHeight(), pLastIndex);
+	pLockedState->GetChainStore()->GetSyncChain()->AddBlock(pBlockIndex);
+	pCandidateChain->AddBlock(pBlockIndex);
+	pLockedState->Commit();
 
-	LOG_DEBUG("Successfully validated " + header.FormatHash());
+	LOG_DEBUG_F("Successfully validated %s", header);
 
 	return EBlockChainStatus::SUCCESS;
 }
@@ -117,37 +123,44 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 		chunkedHeaders.push_back(&headers[index++]);
 		if (index % SYNC_BATCH_SIZE == 0)
 		{
-			LockedChainState lockedState = m_chainState.GetLocked();
-			const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(lockedState, chunkedHeaders);
+			auto pChainStateBatch = m_pChainState->BatchWrite();
+			const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(pChainStateBatch, chunkedHeaders);
 			if (processChunkStatus != EBlockChainStatus::SUCCESS && processChunkStatus != EBlockChainStatus::ALREADY_EXISTS)
 			{
 				return processChunkStatus;
 			}
 
+			pChainStateBatch->Commit();
 			chunkedHeaders.clear();
 		}
 	}
 
 	if (!chunkedHeaders.empty())
 	{
-		LockedChainState lockedState = m_chainState.GetLocked();
-		return ProcessChunkedSyncHeaders(lockedState, chunkedHeaders);
+		auto pChainStateBatch = m_pChainState->BatchWrite();
+		const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(pChainStateBatch, chunkedHeaders);
+		if (processChunkStatus == EBlockChainStatus::SUCCESS)
+		{
+			pChainStateBatch->Commit();
+		}
+		
+		return processChunkStatus;
 	}
 
 	return EBlockChainStatus::SUCCESS;
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainState& lockedState, const std::vector<const BlockHeader*>& headers)
+EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers)
 {
-	Chain& syncChain = lockedState.m_chainStore.GetSyncChain();
-	Chain& candidateChain = lockedState.m_chainStore.GetCandidateChain();
+	std::shared_ptr<Chain> pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
+	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Filter out headers that are already part of sync chain.
 	std::vector<const BlockHeader*> newHeaders;
 	for (size_t i = 0; i < headers.size(); i++)
 	{
 		const BlockHeader* pHeader = headers[i];
-		BlockIndex* pSyncHeader = syncChain.GetByHeight(pHeader->GetHeight());
+		BlockIndex* pSyncHeader = pSyncChain->GetByHeight(pHeader->GetHeight());
 		if (pSyncHeader == nullptr || pHeader->GetHash() != pSyncHeader->GetHash())
 		{
 			newHeaders.push_back(pHeader);
@@ -163,7 +176,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 	LOG_TRACE_F("Processing (%llu) headers.", newHeaders.size());
 
 	// Check if previous header exists and matches previous.
-	BlockIndex* pPrevIndex = syncChain.GetByHeight(newHeaders.front()->GetHeight() - 1);
+	BlockIndex* pPrevIndex = pSyncChain->GetByHeight(newHeaders.front()->GetHeight() - 1);
 	if (pPrevIndex == nullptr || pPrevIndex->GetHash() != newHeaders.front()->GetPreviousBlockHash())
 	{
 		LOG_INFO("Previous header doesn't match. Still syncing?");
@@ -171,66 +184,79 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(LockedChainSta
 	}
 
 	// Rewind MMR
-	IHeaderMMR& headerMMR = lockedState.m_headerMMR;
-	headerMMR.Rewind(newHeaders.front()->GetHeight());
+	std::shared_ptr<IHeaderMMR> pHeaderMMR = pLockedState->GetHeaderMMR();
+	pHeaderMMR->Rewind(newHeaders.front()->GetHeight());
 
 	// Validate the headers.
-	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = lockedState.m_blockStore.GetBlockHeaderByHash(pPrevIndex->GetHash());
-	const BlockHeader* pPreviousHeader = pPreviousHeaderPtr.get();
-	for (const BlockHeader* pHeader : newHeaders)
+	EBlockChainStatus validateStatus = ValidateHeaders(pLockedState, newHeaders);
+	if (validateStatus != EBlockChainStatus::SUCCESS)
 	{
-		if (!BlockHeaderValidator(m_config, lockedState.m_blockStore.GetBlockDB(), headerMMR).IsValidHeader(*pHeader, *pPreviousHeader))
-		{
-			headerMMR.Rollback();
-			return EBlockChainStatus::INVALID;
-		}
-
-		headerMMR.AddHeader(*pHeader);
-		lockedState.m_blockStore.AddHeader(*pHeader);
-		pPreviousHeader = pHeader;
+		pLockedState->Rollback();
+		return validateStatus;
 	}
 
 	// Add the headers to the chain state.
-	const EBlockChainStatus addSyncHeadersStatus = AddSyncHeaders(lockedState, newHeaders);
+	const EBlockChainStatus addSyncHeadersStatus = AddSyncHeaders(pLockedState, newHeaders);
 	if (addSyncHeadersStatus != EBlockChainStatus::SUCCESS)
 	{
 		LOG_ERROR("Failed to add sync headers.");
-		headerMMR.Rollback();
-		lockedState.m_chainStore.ReorgChain(EChainType::CANDIDATE, EChainType::SYNC, candidateChain.GetTip()->GetHeight());
+		pLockedState->GetHeaderMMR()->Rollback();
+		pLockedState->GetChainStore()->ReorgChain(EChainType::CANDIDATE, EChainType::SYNC, pCandidateChain->GetTip()->GetHeight());
+		// TODO: pLockedState->Rollback()? Commit?
 
 		return addSyncHeadersStatus;
 	}
 
 	// If total difficulty increases, accept sync chain as new candidate chain.
-	if (CheckAndAcceptSyncChain(lockedState))
+	if (CheckAndAcceptSyncChain(pLockedState))
 	{
-		headerMMR.Commit();
-		lockedState.m_chainStore.Flush();
+		pLockedState->Commit();
 	}
 	else
 	{
-		headerMMR.Rollback();
+		pLockedState->Rollback();
 	}
 
 	return EBlockChainStatus::SUCCESS;
 }
 
-EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(LockedChainState& lockedState, const std::vector<const BlockHeader*>& headers) const
+EBlockChainStatus BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers)
 {
-	Chain& syncChain = lockedState.m_chainStore.GetSyncChain();
+	auto pBlockDB = pLockedState->GetBlockDB();
+	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = pBlockDB->GetBlockHeader(headers.front()->GetPreviousBlockHash());
+	const BlockHeader* pPreviousHeader = pPreviousHeaderPtr.get();
+	for (const BlockHeader* pHeader : headers)
+	{
+		if (!BlockHeaderValidator(m_config, pBlockDB, pLockedState->GetHeaderMMR()).IsValidHeader(*pHeader, *pPreviousHeader))
+		{
+			return EBlockChainStatus::INVALID;
+		}
+
+		pLockedState->GetHeaderMMR()->AddHeader(*pHeader);
+		pBlockDB->AddBlockHeader(*pHeader);
+		pPreviousHeader = pHeader;
+	}
+
+	//pDatabase->Commit();
+	return EBlockChainStatus::SUCCESS;
+}
+
+EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers) const
+{
+	std::shared_ptr<Chain> pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	const uint64_t firstHeaderHeight = (*headers.begin())->GetHeight();
 
 	// Ensure chain is on correct fork.
-	BlockIndex* pPrevious = syncChain.GetByHeight(firstHeaderHeight - 1);
+	BlockIndex* pPrevious = pSyncChain->GetByHeight(firstHeaderHeight - 1);
 	if (pPrevious == nullptr || pPrevious->GetHash() != (*headers.begin())->GetPreviousBlockHash())
 	{
 		return EBlockChainStatus::UNKNOWN_ERROR;
 	}
 
 	// Rewind chain if necessary.
-	if (syncChain.GetTip()->GetHash() != (*headers.begin())->GetPreviousBlockHash())
+	if (pSyncChain->GetTip()->GetHash() != (*headers.begin())->GetPreviousBlockHash())
 	{
-		if (!syncChain.Rewind(firstHeaderHeight - 1))
+		if (!pSyncChain->Rewind(firstHeaderHeight - 1))
 		{
 			return EBlockChainStatus::UNKNOWN_ERROR;
 		}
@@ -239,21 +265,21 @@ EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(LockedChainState& lockedS
 	for (const BlockHeader* pHeader : headers)
 	{
 		// Add to chain
-		BlockIndex* pBlockIndex = lockedState.m_chainStore.GetOrCreateIndex(pHeader->GetHash(), pHeader->GetHeight(), pPrevious);
-		syncChain.AddBlock(pBlockIndex);
+		BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(pHeader->GetHash(), pHeader->GetHeight(), pPrevious);
+		pSyncChain->AddBlock(pBlockIndex);
 		pPrevious = pBlockIndex;
 	}
 
 	return EBlockChainStatus::SUCCESS;
 }
 
-bool BlockHeaderProcessor::CheckAndAcceptSyncChain(LockedChainState& lockedState) const
+bool BlockHeaderProcessor::CheckAndAcceptSyncChain(Writer<ChainState> pLockedState) const
 {
-	BlockIndex* pSyncTip = lockedState.m_chainStore.GetSyncChain().GetTip();
-	std::unique_ptr<BlockHeader> pSyncHead = lockedState.m_blockStore.GetBlockHeaderByHash(pSyncTip->GetHash());
+	BlockIndex* pSyncTip = pLockedState->GetChainStore()->GetSyncChain()->GetTip();
+	std::unique_ptr<BlockHeader> pSyncHead = pLockedState->GetBlockDB()->GetBlockHeader(pSyncTip->GetHash());
 
-	BlockIndex* pCandidateTip = lockedState.m_chainStore.GetCandidateChain().GetTip();
-	std::unique_ptr<BlockHeader> pCandidateHead = lockedState.m_blockStore.GetBlockHeaderByHash(pCandidateTip->GetHash());
+	BlockIndex* pCandidateTip = pLockedState->GetChainStore()->GetCandidateChain()->GetTip();
+	std::unique_ptr<BlockHeader> pCandidateHead = pLockedState->GetBlockDB()->GetBlockHeader(pCandidateTip->GetHash());
 
 	if (pSyncHead == nullptr || pCandidateHead == nullptr)
 	{
@@ -262,7 +288,7 @@ bool BlockHeaderProcessor::CheckAndAcceptSyncChain(LockedChainState& lockedState
 
 	if (pSyncHead->GetTotalDifficulty() > pCandidateHead->GetTotalDifficulty())
 	{
-		return lockedState.m_chainStore.ReorgChain(EChainType::SYNC, EChainType::CANDIDATE, pSyncTip->GetHeight());
+		return pLockedState->GetChainStore()->ReorgChain(EChainType::SYNC, EChainType::CANDIDATE, pSyncTip->GetHeight());
 	}
 
 	return false;

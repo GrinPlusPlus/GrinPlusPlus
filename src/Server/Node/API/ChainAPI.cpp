@@ -10,7 +10,7 @@
 
 int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	IBlockChainServer* pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
+	IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	
 	std::unique_ptr<BlockHeader> pTip = pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip != nullptr)
@@ -156,17 +156,17 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 		}
 	}
 
-	IBlockDB& blockDB = pServer->m_pDatabase->GetBlockDB();
+	std::shared_ptr<Locked<IBlockDB>> pBlockDB = pServer->m_pDatabase->GetBlockDB();
 
 	Json::Value rootNode;
 	for (const std::string& id : ids)
 	{
 		Commitment commitment(CBigInteger<33>::FromHex(id));
-		std::unique_ptr<OutputLocation> pOutputPosition = blockDB.GetOutputPosition(commitment);
+		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->Read()->GetOutputPosition(commitment);
 		if (pOutputPosition != nullptr)
 		{
 			Json::Value outputNode;
-			outputNode["commit"] = HexUtil::ConvertToHex(commitment.GetCommitmentBytes().GetData());
+			outputNode["commit"] = commitment.GetBytes().ToHex();
 			outputNode["height"] = pOutputPosition->GetBlockHeight();
 			outputNode["mmr_index"] = pOutputPosition->GetMMRIndex() + 1;
 

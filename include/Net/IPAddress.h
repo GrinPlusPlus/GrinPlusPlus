@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <Common/Traits.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/HexUtil.h>
+#include <Common/Util/StringUtil.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -13,7 +15,7 @@ enum class EAddressFamily
 };
 
 // TODO: Implement IPv6
-class IPAddress
+class IPAddress : public Traits::IPrintable
 {
 public:
 	//
@@ -42,17 +44,24 @@ public:
 
 	static IPAddress FromString(const std::string& addressStr)
 	{
-		uint32_t byte1;
-		uint32_t byte2;
-		uint32_t byte3;
-		uint32_t byte4;
-		#ifdef _WIN32
-		sscanf_s(addressStr.c_str(), "%u.%u.%u.%u", &byte1, &byte2, &byte3, &byte4);
-		#else
-		sscanf(addressStr.c_str(), "%u.%u.%u.%u", &byte1, &byte2, &byte3, &byte4);
-		#endif
+		try
+		{
+			std::vector<std::string> octets = StringUtil::Split(addressStr, ".");
+			if (octets.size() == 4)
+			{
+				uint8_t byte1 = (uint8_t)std::stoi(octets[0], nullptr, 10);
+				uint8_t byte2 = (uint8_t)std::stoi(octets[1], nullptr, 10);
+				uint8_t byte3 = (uint8_t)std::stoi(octets[2], nullptr, 10);
+				uint8_t byte4 = (uint8_t)std::stoi(octets[3], nullptr, 10);
 
-		return FromIP((uint8_t)byte1, (uint8_t)byte2, (uint8_t)byte3, (uint8_t)byte4);
+				return FromIP(byte1, byte2, byte3, byte4);
+			}
+		}
+		catch (...)
+		{
+		}
+
+		throw DESERIALIZATION_EXCEPTION("Failed to parse IP address from: " + addressStr);
 	}
 
 	//
@@ -112,7 +121,8 @@ public:
 			return m_address[15] == 1;
 		}
 	}
-	inline std::string Format() const 
+
+	virtual std::string Format() const override final
 	{
 		if (m_address.empty())
 		{
@@ -121,8 +131,7 @@ public:
 
 		if (m_family == EAddressFamily::IPv4)
 		{
-			return std::to_string(m_address[0]) + "." + std::to_string(m_address[1]) + "." 
-				+ std::to_string(m_address[2]) + "." + std::to_string(m_address[3]);
+			return StringUtil::Format("%d.%d.%d.%d", m_address[0], m_address[1], m_address[2], m_address[3]);
 		}
 		else
 		{
@@ -138,7 +147,7 @@ public:
 					formatted += ":";
 				}
 
-				if (words[i] == 0 && i < 8 && words[i + 1] == 0)
+				if (words[i] == 0 && i < 7 && words[i + 1] == 0)
 				{
 					while (words[i + 1] == 0)
 					{

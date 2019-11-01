@@ -7,13 +7,16 @@
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
 
-ValidTransactionFinder::ValidTransactionFinder(const TxHashSetManager& txHashSetManager)
-	: m_txHashSetManager(txHashSetManager)
+ValidTransactionFinder::ValidTransactionFinder(TxHashSetManagerConstPtr pTxHashSetManager)
+	: m_pTxHashSetManager(pTxHashSetManager)
 {
 
 }
 
-std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std::vector<Transaction>& transactions, const std::unique_ptr<Transaction>& pExtraTransaction) const
+std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(
+	std::shared_ptr<const IBlockDB> pBlockDB,
+	const std::vector<Transaction>& transactions,
+	const std::unique_ptr<Transaction>& pExtraTransaction) const
 {
 	std::vector<Transaction> validTransactions;
 	for (const Transaction& transaction : transactions)
@@ -31,7 +34,7 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 		if (pAggregateTransaction != nullptr)
 		{
 			// We know the tx is valid if the entire aggregate tx is valid.
-			if (IsValidTransaction(*pAggregateTransaction))
+			if (IsValidTransaction(pBlockDB, *pAggregateTransaction))
 			{
 				validTransactions.push_back(transaction);
 			}
@@ -41,14 +44,14 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(const std
 	return validTransactions;
 }
 
-bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction) const
+bool ValidTransactionFinder::IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const
 {
 	if (!TransactionValidator().ValidateTransaction(transaction))
 	{
 		return false;
 	}
 
-	const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+	ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet == nullptr)
 	{
 		return false;
@@ -57,7 +60,7 @@ bool ValidTransactionFinder::IsValidTransaction(const Transaction& transaction) 
 	// Validate the tx against current chain state.
 	// Check all inputs are in the current UTXO set.
 	// Check all outputs are unique in current UTXO set.
-	if (!pTxHashSet->IsValid(transaction))
+	if (!pTxHashSet->IsValid(pBlockDB, transaction))
 	{
 		return false;
 	}

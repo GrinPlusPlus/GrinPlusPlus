@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Traits.h>
 #include <Net/RateCounter.h>
 #include <Net/SocketAddress.h>
 
@@ -9,7 +10,7 @@
 #include <atomic>
 #include <asio.hpp>
 
-class Socket
+class Socket : public Traits::IPrintable
 {
 public:
 	Socket(const SocketAddress& address);
@@ -20,6 +21,8 @@ public:
 	bool CloseSocket();
 	bool IsSocketOpen() const;
 	bool IsActive() const;
+
+	virtual std::string Format() const override final { return m_address.Format(); }
 
 	inline const SocketAddress& GetSocketAddress() const { return m_address; }
 	inline const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }

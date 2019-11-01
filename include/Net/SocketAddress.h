@@ -2,10 +2,11 @@
 
 #include <Net/IPAddress.h>
 
+#include <Common/Traits.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class SocketAddress
+class SocketAddress : public Traits::IPrintable
 {
 public:
 	//
@@ -37,7 +38,7 @@ public:
 	//
 	inline const IPAddress& GetIPAddress() const { return m_ipAddress; }
 	inline const uint16_t GetPortNumber() const { return m_port; }
-	inline std::string Format() const
+	virtual std::string Format() const override final
 	{
 		return m_ipAddress.Format() + ":" + std::to_string(m_port);
 	}

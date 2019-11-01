@@ -7,8 +7,8 @@
 #include <Infrastructure/Logger.h>
 #include <Infrastructure/ThreadManager.h>
 
-PeerManager::PeerManager(const Config& config, IPeerDB& peerDB)
-	: m_config(config), m_peerDB(peerDB)
+PeerManager::PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
+	: m_config(config), m_pPeerDB(pPeerDB)
 {
 
 }
@@ -27,7 +27,7 @@ void PeerManager::Start()
 	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
 
 	m_peersByAddress.clear();
-	const std::vector<Peer> peers = m_peerDB.LoadAllPeers();
+	const std::vector<Peer> peers = m_pPeerDB->Read()->LoadAllPeers();
 	for (const Peer& peer : peers)
 	{
 		m_peersByAddress.emplace(peer.GetIPAddress(), PeerEntry(Peer(peer)));
@@ -70,7 +70,7 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 
 		readLock.unlock();
 
-		peerManager.m_peerDB.SavePeers(peersToUpdate);
+		peerManager.m_pPeerDB->Write()->SavePeers(peersToUpdate);
 	}
 
 	LOG_TRACE("END");
@@ -121,7 +121,7 @@ std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::op
 		return std::make_optional<Peer>(iter->second.m_peer);
 	}
 
-	return m_peerDB.GetPeer(address, portOpt);
+	return m_pPeerDB->Read()->GetPeer(address, portOpt);
 }
 
 std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability) const

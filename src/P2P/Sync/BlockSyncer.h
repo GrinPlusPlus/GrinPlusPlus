@@ -1,5 +1,6 @@
 #pragma once
 
+#include <BlockChain/BlockChainServer.h>
 #include <chrono>
 #include <deque>
 #include <unordered_set>
@@ -8,13 +9,12 @@
 
 // Forward Declarations
 class ConnectionManager;
-class IBlockChainServer;
 class SyncStatus;
 
 class BlockSyncer
 {
 public:
-	BlockSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer);
+	BlockSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
 
 	bool SyncBlocks(const SyncStatus& syncStatus, const bool startup);
 
@@ -23,7 +23,7 @@ private:
 	bool RequestBlocks();
 
 	ConnectionManager & m_connectionManager;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;

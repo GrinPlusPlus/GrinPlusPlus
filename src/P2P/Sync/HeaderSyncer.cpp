@@ -6,8 +6,8 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 
-HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServer& blockChainServer)
-	: m_connectionManager(connectionManager), m_blockChainServer(blockChainServer)
+HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 	m_timeout = std::chrono::system_clock::now();
 	m_lastHeight = 0;
@@ -95,7 +95,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
 	LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Requesting headers.");
 
-	std::vector<CBigInteger<32>> locators = BlockLocator(m_blockChainServer).GetLocators(syncStatus);
+	std::vector<CBigInteger<32>> locators = BlockLocator(m_pBlockChainServer).GetLocators(syncStatus);
 
 	const GetHeadersMessage getHeadersMessage(std::move(locators));
 

@@ -8,9 +8,10 @@
 #include <Core/Models/ProofOfWork.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <Common/Traits.h>
 #include <Common/Util/HexUtil.h>
 
-class BlockHeader
+class BlockHeader : public Traits::IPrintable
 {
 public:
 	//
@@ -83,7 +84,12 @@ public:
 	// Hashing
 	//
 	inline const Hash& GetHash() const { return m_proofOfWork.GetHash(); }
-	inline const std::string FormatHash() const { return HexUtil::ConvertHash(GetHash()); }
+	inline const std::string ShortHash() const { return HexUtil::ShortHash(GetHash()); }
+
+	//
+	// Traits
+	//
+ 	virtual std::string Format() const override final { return GetHash().ToHex(); }
 
 private:
 	uint16_t m_version;

@@ -1,30 +1,57 @@
 #pragma once
 
+#include "..//NodeContext.h"
+
 #include <Wallet/NodeClient.h>
 #include <BlockChain/BlockChainServer.h>
-#include <Database/BlockDb.h>
+#include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
 
 class DefaultNodeClient : public INodeClient
 {
 public:
-	DefaultNodeClient(const IBlockChainServer& blockChainServer, const IBlockDB& blockDB, const TxHashSetManager& txHashSetManager, ITransactionPool& transactionPool)
-		: m_blockChainServer(blockChainServer), m_blockDB(blockDB), m_txHashSetManager(txHashSetManager), m_transactionPool(transactionPool)
+	DefaultNodeClient(
+		IDatabasePtr pDatabase,
+		TxHashSetManagerPtr pTxHashSetManager,
+		ITransactionPoolPtr pTransactionPool,
+		IBlockChainServerPtr pBlockChainServer,
+		IP2PServerPtr pP2PServer)
+		: m_pDatabase(pDatabase),
+		m_pTxHashSetManager(pTxHashSetManager),
+		m_pTransactionPool(pTransactionPool),
+		m_pBlockChainServer(pBlockChainServer),
+		m_pP2PServer(pP2PServer)
 	{
 
+	}
+
+	static std::shared_ptr<DefaultNodeClient> Create(const Config& config)
+	{
+		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(config);
+		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(config));
+		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(config, pTxHashSetManager);
+		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(config, pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
+		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(config, pBlockChainServer, pDatabase, pTransactionPool);
+
+		return std::make_shared<DefaultNodeClient>(DefaultNodeClient(pDatabase, pTxHashSetManager, pTransactionPool, pBlockChainServer, pP2PServer));
 	}
     
     virtual ~DefaultNodeClient() = default;
 
+	std::shared_ptr<NodeContext> GetNodeContext()
+	{
+		return std::make_shared<NodeContext>(NodeContext(m_pDatabase, m_pBlockChainServer, m_pP2PServer, m_pTxHashSetManager));
+	}
+
 	virtual uint64_t GetChainHeight() const override final
 	{
-		return m_blockChainServer.GetHeight(EChainType::CONFIRMED);
+		return m_pBlockChainServer->GetHeight(EChainType::CONFIRMED);
 	}
 
 	virtual std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const override final
 	{ 
-		const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 		if (pTxHashSet == nullptr)
 		{
 			return std::map<Commitment, OutputLocation>();
@@ -33,7 +60,7 @@ public:
 		std::map<Commitment, OutputLocation> outputs;
 		for (const Commitment& commitment : commitments)
 		{
-			std::unique_ptr<OutputLocation> pOutputPosition = m_blockDB.GetOutputPosition(commitment);
+			std::unique_ptr<OutputLocation> pOutputPosition = m_pDatabase->GetBlockDB()->Read()->GetOutputPosition(commitment);
 			if (pOutputPosition != nullptr && pTxHashSet->IsUnspent(*pOutputPosition))
 			{
 				outputs.insert(std::make_pair<Commitment, OutputLocation>(Commitment(commitment), OutputLocation(*pOutputPosition)));
@@ -45,34 +72,39 @@ public:
 
 	virtual std::vector<BlockWithOutputs> GetBlockOutputs(const uint64_t startHeight, const uint64_t maxHeight) const override final
 	{
-		return m_blockChainServer.GetOutputsByHeight(startHeight, maxHeight);
+		return m_pBlockChainServer->GetOutputsByHeight(startHeight, maxHeight);
 	}
 
 	virtual std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final
 	{
-		const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
+		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 		if (pTxHashSet == nullptr)
 		{
 			return std::unique_ptr<OutputRange>(nullptr);
 		}
 
-		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(startIndex, maxNumOutputs));
+		auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
+		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
 	}
 
 	virtual bool PostTransaction(const Transaction& transaction) override final
 	{
-		std::unique_ptr<BlockHeader> pTipHeader = m_blockChainServer.GetTipBlockHeader(EChainType::CONFIRMED);
+		std::unique_ptr<BlockHeader> pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTipHeader != nullptr)
 		{
-			return m_transactionPool.AddTransaction(transaction, EPoolType::STEMPOOL, *pTipHeader);
+			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
+			return m_pTransactionPool->AddTransaction(pBlockDB.GetShared(), transaction, EPoolType::STEMPOOL, *pTipHeader);
 		}
 
 		return false;
 	}
 
+	IP2PServerPtr GetP2PServer() { return m_pP2PServer; }
+
 private:
-	const IBlockChainServer& m_blockChainServer;
-	const IBlockDB& m_blockDB;
-	const TxHashSetManager& m_txHashSetManager;
-	ITransactionPool& m_transactionPool;
+	IDatabasePtr m_pDatabase;
+	TxHashSetManagerPtr m_pTxHashSetManager;
+	ITransactionPoolPtr m_pTransactionPool;
+	IBlockChainServerPtr m_pBlockChainServer;
+	IP2PServerPtr m_pP2PServer;
 };

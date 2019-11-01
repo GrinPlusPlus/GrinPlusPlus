@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Common/Traits.h>
 #include <memory>
 #include <iostream>
 #include <string>
 #include <cstdio>
+#include <cstdarg>
 #include <vector>
 #include <locale>
 #include <algorithm>
@@ -14,12 +16,9 @@ class StringUtil
 {
 public:
 	template<typename ... Args>
-	static std::string Format(const std::string& format, Args ... args)
+	static std::string Format(const std::string& format, const Args& ... args)
 	{
-		size_t size = std::snprintf(nullptr, 0, format.c_str(), convert_for_snprintf(args) ...) + 1; // Extra space for '\0'
-		std::unique_ptr<char[]> buf(new char[size]);
-		std::snprintf(buf.get(), size, format.c_str(), convert_for_snprintf(args) ...);
-		return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+		return Format2(format, convert_for_snprintf(args) ...);
 	}
 
 	static bool StartsWith(const std::string& value, const std::string& beginning)
@@ -101,15 +100,31 @@ private:
 			return !std::isspace(ch) && ch != '\r' && ch != '\n';
 			}).base(), s.end());
 	}
-	
-	template<class T>
-	static decltype(auto) convert_for_snprintf(T const& x)
+
+	template<typename ... Args>
+	static std::string Format2(const std::string& format, const Args& ... args)
 	{
-		return x;
+		size_t size = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+		std::unique_ptr<char[]> buf(new char[size]);
+		std::snprintf(buf.get(), size, format.c_str(), args ...);
+		return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 	}
 
-	static decltype(auto) convert_for_snprintf(std::string const& x)
+	static decltype(auto) convert_for_snprintf(const std::string& x)
 	{
 		return x.c_str();
+	}
+
+	template <class T>
+	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, const char*>::type convert_for_snprintf(const T& x)
+	{
+		return x.Format().c_str();
+	}
+
+
+	template <class T>
+	static typename std::enable_if<!std::is_base_of<Traits::IPrintable, T>::value, T>::type convert_for_snprintf(const T& x)
+	{
+		return x;
 	}
 };

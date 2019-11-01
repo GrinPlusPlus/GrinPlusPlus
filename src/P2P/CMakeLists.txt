@@ -12,11 +12,12 @@ file(GLOB SOURCE_CODE
     "*.cpp"
 	"Seed/*.cpp"
 	"Sync/*.cpp"
+	"Pipeline/*.cpp"
 )
 
 if(GRINPP_STATIC)
 	add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-elseif(GRINPP_STATIC)
+else(GRINPP_STATIC)
 	add_library(${TARGET_NAME} SHARED ${SOURCE_CODE})
 endif(GRINPP_STATIC)
 

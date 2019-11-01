@@ -9,8 +9,8 @@
 #include <PMMR/HeaderMMR.h>
 #include <chrono>
 
-BlockHeaderValidator::BlockHeaderValidator(const Config& config, const IBlockDB& blockDB, const IHeaderMMR& headerMMR)
-	: m_config(config), m_blockDB(blockDB), m_headerMMR(headerMMR)
+BlockHeaderValidator::BlockHeaderValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB, std::shared_ptr<const IHeaderMMR> pHeaderMMR)
+	: m_config(config), m_pBlockDB(pBlockDB), m_pHeaderMMR(pHeaderMMR)
 {
 
 }
@@ -22,7 +22,7 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	// Validate Height
 	if (header.GetHeight() != (previousHeader.GetHeight() + 1))
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid height for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Invalid height for header %s", header);
 		return false;
 	}
 
@@ -30,7 +30,7 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	const auto maxBlockTime = std::chrono::system_clock::now() + std::chrono::seconds(12 * Consensus::BLOCK_TIME_SEC);
 	if (header.GetTimestamp() > maxBlockTime.time_since_epoch().count())
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Timestamp beyond maxBlockTime for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Timestamp beyond maxBlockTime for header %s", header);
 		return false;
 	}
 
@@ -38,32 +38,32 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	const bool validHeaderVersion = Consensus::IsValidHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), header.GetHeight(), header.GetVersion());
 	if (!validHeaderVersion)
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid version for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Invalid version for header %s", header);
 		return false;
 	}
 
 	// Validate Timestamp
 	if (header.GetTimestamp() <= previousHeader.GetTimestamp())
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Timestamp not after previous for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Timestamp not after previous for header %s", header);
 		return false;
 	}
 
 	// Validate Proof Of Work
-	const bool validPoW = PoWManager(m_config, m_blockDB).IsPoWValid(header, previousHeader);
+	const bool validPoW = PoWManager(m_config, m_pBlockDB).IsPoWValid(header, previousHeader);
 	if (!validPoW)
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid Proof of Work for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Invalid Proof of Work for header %s", header);
 		return false;
 	}
 
 	// Validate the previous header MMR root is correct against the local MMR.
-	if (m_headerMMR.Root(header.GetHeight() - 1) != header.GetPreviousRoot())
+	if (m_pHeaderMMR->Root(header.GetHeight() - 1) != header.GetPreviousRoot())
 	{
-		LoggerAPI::LogWarning("BlockHeaderValidator::IsValidHeader - Invalid Header MMR Root for header " + HexUtil::ConvertHash(header.GetHash()));
+		LOG_WARNING_F("Invalid Header MMR Root for header %s", header);
 		return false;
 	}
 
-	LoggerAPI::LogTrace("BlockHeaderValidator::IsValidHeader - Header valid " + HexUtil::ConvertHash(header.GetHash()));
+	LOG_TRACE_F("Header (%s) valid", header);
 	return true;
 }

@@ -11,14 +11,18 @@
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
 
-ConnectionManager::ConnectionManager(const Config& config, PeerManager& peerManager, IBlockChainServer& blockChainServer, ITransactionPool& transactionPool)
+ConnectionManager::ConnectionManager(
+	const Config& config,
+	PeerManager& peerManager,
+	std::shared_ptr<const Locked<IBlockDB>> pBlockDB,
+	IBlockChainServerPtr pBlockChainServer,
+	ITransactionPoolPtr pTransactionPool)
 	: m_config(config), 
 	m_peerManager(peerManager), 
-	m_blockChainServer(blockChainServer),
-	m_syncer(*this, blockChainServer), 
-	m_seeder(config, *this, peerManager, blockChainServer),
-	m_pipeline(config, *this, blockChainServer),
-	m_dandelion(config, *this, blockChainServer, transactionPool),
+	m_syncer(*this, pBlockChainServer),
+	m_seeder(config, *this, peerManager, pBlockChainServer),
+	m_pipeline(config, *this, pBlockChainServer),
+	m_dandelion(config, *this, pBlockChainServer, pTransactionPool, pBlockDB),
 	m_numOutbound(0),
 	m_numInbound(0)
 {
@@ -279,7 +283,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		if (iter != m_peersToBan.end())
 		{
 			const EBanReason banReason = iter->second;
-			LOG_WARNING_F("Banning peer (%d) at (%s) for (%s).", connectionId, pConnection->GetPeer().GetIPAddress().Format().c_str(), BanReason::Format(banReason).c_str());
+			LOG_WARNING_F("Banning peer (%d) at (%s) for (%s).", connectionId, pConnection->GetPeer(), BanReason::Format(banReason));
 
 			pConnection->GetPeer().UpdateLastBanTime();
 			pConnection->GetPeer().UpdateBanReason(banReason);
@@ -294,7 +298,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		{
 			if (!pConnection->IsConnectionActive())
 			{
-				LOG_DEBUG_F("Disconnecting from inactive peer (%d) at (%s)", connectionId, pConnection->GetPeer().GetIPAddress().Format().c_str());
+				LOG_DEBUG_F("Disconnecting from inactive peer (%d) at (%s)", connectionId, pConnection->GetPeer());
 			}
 
 			m_connectionsToClose.push_back(pConnection);

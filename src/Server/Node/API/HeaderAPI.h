@@ -11,5 +11,5 @@ public:
 	static int GetHeader_Handler(struct mg_connection* conn, void* pNodeContext);
 
 private:
-	static std::unique_ptr<BlockHeader> GetHeader(const std::string& requestedHeader, IBlockChainServer* pBlockChainServer);
+	static std::unique_ptr<BlockHeader> GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer);
 };

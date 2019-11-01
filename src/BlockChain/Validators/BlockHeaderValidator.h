@@ -10,11 +10,11 @@ class IBlockDB;
 class BlockHeaderValidator
 {
 public:
-	BlockHeaderValidator(const Config& config, const IBlockDB& blockDB, const IHeaderMMR& headerMMR);
+	BlockHeaderValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB, std::shared_ptr<const IHeaderMMR> pHeaderMMR);
 
 	bool IsValidHeader(const BlockHeader& header, const BlockHeader& previousHeader) const;
 
 	const Config& m_config;
-	const IBlockDB& m_blockDB;
-	const IHeaderMMR& m_headerMMR;
+	std::shared_ptr<const IBlockDB> m_pBlockDB;
+	std::shared_ptr<const IHeaderMMR> m_pHeaderMMR;
 };

@@ -4,6 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
+#include <Core/Traits/Committed.h>
+#include <Core/Traits/Hashable.h>
 #include <Crypto/Hash.h>
 #include <Core/Models/Features.h>
 #include <Crypto/Commitment.h>
@@ -15,7 +17,7 @@
 ////////////////////////////////////////
 // TRANSACTION KERNEL
 ////////////////////////////////////////
-class TransactionKernel
+class TransactionKernel : public Traits::ICommitted, Traits::IHashable
 {
 public:
 	//
@@ -48,6 +50,7 @@ public:
 	inline const uint64_t GetLockHeight() const { return m_lockHeight; }
 	inline const Commitment& GetExcessCommitment() const { return m_excessCommitment; }
 	inline const Signature& GetExcessSignature() const { return m_excessSignature; }
+	inline bool IsCoinbase() const { return (m_features & EKernelFeatures::COINBASE_KERNEL) == EKernelFeatures::COINBASE_KERNEL; }
 	Hash GetSignatureMessage() const;
 
 	//
@@ -59,9 +62,10 @@ public:
 	static TransactionKernel FromJSON(const Json::Value& transactionKernelJSON, const bool hex);
 
 	//
-	// Hashing
+	// Traits
 	//
-	const Hash& GetHash() const;
+	virtual const Hash& GetHash() const override final;
+	virtual const Commitment& GetCommitment() const override final { return m_excessCommitment; }
 
 private:
 	// Options for a kernel's structure or use

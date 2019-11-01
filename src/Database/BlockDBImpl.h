@@ -14,13 +14,15 @@ using namespace rocksdb;
 class BlockDB : public IBlockDB
 {
 public:
-	BlockDB(const Config& config);
+	explicit BlockDB(const Config& config);
 	~BlockDB() = default;
 
 	void OpenDB();
 	void CloseDB();
 
-	virtual std::vector<BlockHeader*> LoadBlockHeaders(const std::vector<Hash>& hashes) const override final;
+	virtual void Commit() override final {} // TODO: Handle this
+	virtual void Rollback() override final {} // TODO: Handle this
+
 	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const override final;
 
 	virtual void AddBlockHeader(const BlockHeader& blockHeader) override final;

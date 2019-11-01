@@ -43,7 +43,7 @@ bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& m
 {
 	if (m_userDBs.find(username) != m_userDBs.end())
 	{
-		LoggerAPI::LogDebug("WalletSqlite::OpenWallet - wallet.db already open for user: " + username);
+		LOG_DEBUG_F("wallet.db already open for user: %s", username);
 		return false;
 	}
 
@@ -54,7 +54,7 @@ bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& m
 		sqlite3* pDatabase = nullptr;
 		if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
 		{
-			LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to open wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
+			LOG_ERROR_F("Failed to open wallet.db for user (%s) with error (%s)", username, sqlite3_errmsg(pDatabase));
 			sqlite3_close(pDatabase);
 
 			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
@@ -84,7 +84,7 @@ bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& m
 		sqlite3* pDatabase = CreateWalletDB(username);
 		if (pDatabase == nullptr)
 		{
-			LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to create wallet.db for user: " + username);
+			LOG_ERROR_F("Failed to create wallet.db for user: %s", username);
 			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
 		}
 
@@ -101,13 +101,12 @@ bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed
 	if (FileUtil::Exists(seedFile))
 	{
 		LOG_WARNING("Wallet already exists for user: " + username);
-		//LoggerAPI::LogWarning("WalletSqlite::CreateWallet - Wallet already exists for user: " + username);
 		return false;
 	}
 
 	if (!FileUtil::CreateDirectories(userDBPath))
 	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create wallet directory for user: " + username);
+		LOG_ERROR_F("Failed to create wallet directory for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Failed to create directory.");
 	}
 
@@ -115,14 +114,14 @@ bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed
 	const std::vector<unsigned char> seedBytes(seedJSON.data(), seedJSON.data() + seedJSON.size());
 	if (!FileUtil::SafeWriteToFile(seedFile, seedBytes))
 	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create seed.json for user: " + username);
+		LOG_ERROR_F("Failed to create seed.json for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Failed to create seed.json");
 	}
 	
 	sqlite3* pDatabase = CreateWalletDB(username);
 	if (pDatabase == nullptr)
 	{
-		LoggerAPI::LogError("WalletSqlite::OpenWallet - Failed to create wallet.db for user: " + username);
+		LOG_ERROR_F("Failed to create wallet.db for user: %s", username);
 		FileUtil::RemoveFile(userDBPath);
 		throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
 	}
@@ -134,19 +133,19 @@ bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed
 
 std::unique_ptr<EncryptedSeed> WalletSqlite::LoadWalletSeed(const std::string& username) const
 {
-	LoggerAPI::LogTrace("WalletSqlite::LoadWalletSeed - Loading wallet seed for " + username);
+	LOG_TRACE_F("Loading wallet seed for %s", username);
 
 	const std::string seedPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username + "/seed.json";
 	if (!FileUtil::Exists(seedPath))
 	{
-		LoggerAPI::LogWarning("Wallet not found for user: " + username);
+		LOG_WARNING_F("Wallet not found for user: %s", username);
 		return std::unique_ptr<EncryptedSeed>(nullptr);
 	}
 
 	std::vector<unsigned char> seedBytes;
 	if (!FileUtil::ReadFile(seedPath, seedBytes))
 	{
-		LoggerAPI::LogError("WalletSqlite::LoadWalletSeed - Failed to load seed.json for user: " + username);
+		LOG_ERROR_F("Failed to load seed.json for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Failed to load seed.json");
 	}
 
@@ -155,7 +154,7 @@ std::unique_ptr<EncryptedSeed> WalletSqlite::LoadWalletSeed(const std::string& u
 	Json::Value seedJSON;
 	if (!JsonUtil::Parse(seed, seedJSON))
 	{
-		LoggerAPI::LogError("WalletSqlite::LoadWalletSeed - Failed to deserialize seed.json for user: " + username);
+		LOG_ERROR_F("Failed to deserialize seed.json for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Failed to deserialize seed.json");
 	}
 
@@ -166,7 +165,7 @@ KeyChainPath WalletSqlite::GetNextChildPath(const std::string& username, const K
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::GetNextChildPath - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -176,14 +175,14 @@ KeyChainPath WalletSqlite::GetNextChildPath(const std::string& username, const K
 	const std::string query = "SELECT next_child_index FROM accounts WHERE parent_path='" + parentPath.ToString() + "'";
 	if (sqlite3_prepare_v2(m_userDBs.at(username), query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetNextChildPath - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 	{
-		LoggerAPI::LogError("WalletSqlite::GetNextChildPath - Account not found for user " + username);
+		LOG_ERROR_F("Account not found for user: %s", username);
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Account not found.");
 	}
@@ -193,7 +192,7 @@ KeyChainPath WalletSqlite::GetNextChildPath(const std::string& username, const K
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetNextChildPath - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -201,7 +200,7 @@ KeyChainPath WalletSqlite::GetNextChildPath(const std::string& username, const K
 	const std::string update = "UPDATE accounts SET next_child_index=" + std::to_string(nextChildPath.GetKeyIndices().back() + 1) + " WHERE parent_path='" + parentPath.ToString() + "';";
 	if (sqlite3_exec(pDatabase, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::GetNextChildPath - Failed to update account for user: %s. Error: %s", username.c_str(), error));
+		LOG_ERROR_F("Failed to update account for user: %s. Error: %s", username, error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Failed to update account");
 	}
@@ -215,7 +214,7 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const std::string& 
 
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::LoadSlateContext - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -225,20 +224,20 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const std::string& 
 	const std::string query = "SELECT enc_blind, enc_nonce FROM slate_contexts WHERE slate_id='" + uuids::to_string(slateId) + "'";
 	if (sqlite3_prepare_v2(m_userDBs.at(username), query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::LoadSlateContext - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		LoggerAPI::LogDebug("WalletSqlite::LoadSlateContext - Slate context found for user " + username);
+		LOG_DEBUG_F("Slate context found for user %s", username);
 
 		const int blindBytes = sqlite3_column_bytes(stmt, 0);
 		const int nonceBytes = sqlite3_column_bytes(stmt, 1);
 		if (blindBytes != 32 || nonceBytes != 32)
 		{
-			LoggerAPI::LogError("WalletSqlite::LoadSlateContext - Blind or nonce not 32 bytes.");
+			LOG_ERROR("Blind or nonce not 32 bytes.");
 			sqlite3_finalize(stmt);
 			throw WALLET_STORE_EXCEPTION("Slate context corrupt");
 		}
@@ -253,12 +252,12 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const std::string& 
 	}
 	else
 	{
-		LoggerAPI::LogInfo("WalletSqlite::LoadSlateContext - Slate context not found for user " + username);
+		LOG_INFO_F("Slate context not found for user %s", username);
 	}
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::LoadSlateContext - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -269,7 +268,7 @@ bool WalletSqlite::SaveSlateContext(const std::string& username, const SecureVec
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::LoadSlateContext - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -279,7 +278,7 @@ bool WalletSqlite::SaveSlateContext(const std::string& username, const SecureVec
 	std::string insert = "insert into slate_contexts values(?, ?, ?)";
 	if (sqlite3_prepare_v2(pDatabase, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::SaveSlateContext - Error while compiling sql: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -297,7 +296,7 @@ bool WalletSqlite::SaveSlateContext(const std::string& username, const SecureVec
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("WalletSqlite::SaveSlateContext - Error finalizing statement: %s", sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -308,7 +307,7 @@ bool WalletSqlite::AddOutputs(const std::string& username, const SecureVector& m
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::AddOutputs - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -322,7 +321,7 @@ std::vector<OutputData> WalletSqlite::GetOutputs(const std::string& username, co
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::GetOutputs - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -333,7 +332,7 @@ bool WalletSqlite::AddTransaction(const std::string& username, const SecureVecto
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::AddTransaction - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -345,7 +344,7 @@ std::vector<WalletTx> WalletSqlite::GetTransactions(const std::string& username,
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::GetTransactions - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -395,7 +394,7 @@ UserMetadata WalletSqlite::GetMetadata(const std::string& username) const
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::GetMetadata - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -406,7 +405,7 @@ bool WalletSqlite::SaveMetadata(const std::string& username, const UserMetadata&
 {
 	if (m_userDBs.find(username) == m_userDBs.end())
 	{
-		LoggerAPI::LogError("WalletSqlite::SaveMetadata - Database not open for user: " + username);
+		LOG_ERROR_F("Database not open for user: %s", username);
 		throw WALLET_STORE_EXCEPTION("Database not open");
 	}
 
@@ -416,11 +415,11 @@ bool WalletSqlite::SaveMetadata(const std::string& username, const UserMetadata&
 
 sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
 {
-	const std::string walletDBFile = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username + "/wallet.db";
+	const std::string walletDBFile = StringUtil::Format("%s/%s/wallet.db", m_config.GetWalletConfig().GetWalletDirectory(), username);
 	sqlite3* pDatabase = nullptr;
 	if (sqlite3_open(walletDBFile.c_str(), &pDatabase) != SQLITE_OK)
 	{
-		LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create wallet.db for user: " + username + ". Error: " + std::string(sqlite3_errmsg(pDatabase)));
+		LOG_ERROR_F("Failed to create wallet.db for user (%s) with error (%s)", username, sqlite3_errmsg(pDatabase));
 		sqlite3_close(pDatabase);
 		FileUtil::RemoveFile(walletDBFile);
 
@@ -447,7 +446,7 @@ sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
 		char* error = nullptr;
 		if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 		{
-			LoggerAPI::LogError("WalletSqlite::CreateWallet - Failed to create DB tables for user: " + username);
+			LOG_ERROR_F("Failed to create DB tables for user: %s", username);
 			sqlite3_free(error);
 		}
 

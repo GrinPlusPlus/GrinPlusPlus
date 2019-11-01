@@ -9,12 +9,11 @@
 #include <Core/Util/FeeUtil.h>
 #include <Core/Validation/TransactionValidator.h>
 
-TransactionPool::TransactionPool(const Config& config, const TxHashSetManager& txHashSetManager, const IBlockDB& blockDB)
+TransactionPool::TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager)
 	: m_config(config), 
-	m_txHashSetManager(txHashSetManager), 
-	m_blockDB(blockDB),
-	m_memPool(config, txHashSetManager, blockDB),
-	m_stemPool(config, txHashSetManager, blockDB)
+	m_pTxHashSetManager(pTxHashSetManager),
+	m_memPool(config, pTxHashSetManager),
+	m_stemPool(config, pTxHashSetManager)
 {
 
 }
@@ -26,7 +25,7 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
-bool TransactionPool::AddTransaction(const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
+bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -62,8 +61,8 @@ bool TransactionPool::AddTransaction(const Transaction& transaction, const EPool
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
-	const ITxHashSet* pTxHashSet = m_txHashSetManager.GetTxHashSet();
-	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(transaction))
+	ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(pBlockDB, transaction))
 	{
 		LOG_WARNING("Transaction inputs/outputs not valid: " + transaction.GetHash().ToHex());
 		return false;
@@ -112,19 +111,19 @@ std::unique_ptr<Transaction> TransactionPool::FindTransactionByKernelHash(const 
 	return pTransaction;
 }
 
-void TransactionPool::ReconcileBlock(const FullBlock& block)
+void TransactionPool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 	// First reconcile the txpool.
-	m_memPool.ReconcileBlock(block, std::unique_ptr<Transaction>(nullptr));
+	m_memPool.ReconcileBlock(pBlockDB, block, std::unique_ptr<Transaction>(nullptr));
 
 	// Now reconcile our stempool, accounting for the updated txpool txs.
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
-	m_stemPool.ReconcileBlock(block, pMemPoolAggTx);
+	m_stemPool.ReconcileBlock(pBlockDB, block, pMemPoolAggTx);
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem()
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -136,7 +135,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem()
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_txHashSetManager).FindValidTransactions(transactionsToStem, pMemPoolAggTx);
+	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_pTxHashSetManager).FindValidTransactions(pBlockDB, transactionsToStem, pMemPoolAggTx);
 	if (validTransactionsToStem.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -151,7 +150,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem()
 	return pTransactionToStem;
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff()
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -163,7 +162,7 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff()
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_txHashSetManager).FindValidTransactions(transactionsToFluff, pMemPoolAggTx);
+	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_pTxHashSetManager).FindValidTransactions(pBlockDB, transactionsToFluff, pMemPoolAggTx);
 	if (validTransactionsToFluff.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
@@ -192,16 +191,8 @@ std::vector<Transaction> TransactionPool::GetExpiredTransactions() const
 
 namespace TxPoolAPI
 {
-	TX_POOL_API ITransactionPool* CreateTransactionPool(
-		const Config& config,
-		const TxHashSetManager& txHashSetManager,
-		const IBlockDB& blockDB)
+	TX_POOL_API std::shared_ptr<ITransactionPool> CreateTransactionPool(const Config& config, TxHashSetManagerConstPtr txHashSetManager)
 	{
-		return new TransactionPool(config, txHashSetManager, blockDB);
-	}
-
-	TX_POOL_API void DestroyTransactionPool(ITransactionPool* pTransactionPool)
-	{
-		delete ((TransactionPool*)pTransactionPool);
+		return std::shared_ptr<TransactionPool>(new TransactionPool(config, txHashSetManager));
 	}
 }

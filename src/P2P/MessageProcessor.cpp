@@ -42,8 +42,8 @@ static const int BUFFER_SIZE = 256 * 1024;
 
 using namespace MessageTypes;
 
-MessageProcessor::MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_blockChainServer(blockChainServer)
+MessageProcessor::MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer)
+	: m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_pBlockChainServer(pBlockChainServer)
 {
 
 }
@@ -58,7 +58,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connec
 	{
 		const EMessageType messageType = rawMessage.GetMessageHeader().GetMessageType();
 		const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
-		LOG_ERROR_F("Deserialization exception while processing message(%d) from %s", messageType, formattedIPAddress.c_str());
+		LOG_ERROR_F("Deserialization exception while processing message(%d) from %s", messageType, formattedIPAddress);
 
 		return EStatus::BAN_PEER;
 	}
@@ -94,7 +94,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const PingMessage pingMessage = PingMessage::Deserialize(byteBuffer);
 				connectedPeer.UpdateTotals(pingMessage.GetTotalDifficulty(), pingMessage.GetHeight());
 
-				const PongMessage pongMessage(m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED), m_blockChainServer.GetHeight(EChainType::CONFIRMED));
+				const PongMessage pongMessage(m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED), m_pBlockChainServer->GetHeight(EChainType::CONFIRMED));
 
 				return MessageSender(m_config).Send(socket, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
@@ -119,7 +119,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					socketAddresses.push_back(peer.GetSocketAddress());
 				}
 
-				LOG_TRACE_F("Sending %llu addresses to %s.", socketAddresses.size(), formattedIPAddress.c_str());
+				LOG_TRACE_F("Sending %llu addresses to %s.", socketAddresses.size(), formattedIPAddress);
 				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
 
 				return MessageSender(m_config).Send(socket, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -130,7 +130,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const PeerAddressesMessage peerAddressesMessage = PeerAddressesMessage::Deserialize(byteBuffer);
 				const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
 
-				LOG_TRACE_F("Received %llu addresses from %s.", peerAddresses.size(), formattedIPAddress.c_str());
+				LOG_TRACE_F("Received %llu addresses from %s.", peerAddresses.size(), formattedIPAddress);
 				m_peerManager.AddFreshPeers(peerAddresses);
 
 				return EStatus::SUCCESS;
@@ -141,8 +141,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const GetHeadersMessage getHeadersMessage = GetHeadersMessage::Deserialize(byteBuffer);
 				const std::vector<CBigInteger<32>>& hashes = getHeadersMessage.GetHashes();
 
-				std::vector<BlockHeader> blockHeaders = BlockLocator(m_blockChainServer).LocateHeaders(hashes);
-                LOG_DEBUG_F("Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress.c_str());
+				std::vector<BlockHeader> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
+                LOG_DEBUG_F("Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress);
                 
 				const HeadersMessage headersMessage(std::move(blockHeaders));
                 return MessageSender(m_config).Send(socket, HeadersMessage(std::move(blockHeaders))) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -158,12 +158,12 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					connectedPeer.UpdateTotals(blockHeader.GetTotalDifficulty(), blockHeader.GetHeight());
 				}
 
-				const EBlockChainStatus status = m_blockChainServer.AddBlockHeader(blockHeader);
+				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(blockHeader);
 				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
 				{
-					LOG_DEBUG_F("Valid header %s received from %s. Requesting compact block", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str());
+					LOG_DEBUG_F("Valid header %s received from %s. Requesting compact block", blockHeader, formattedIPAddress);
 
-					if (m_blockChainServer.GetBlockByHash(blockHeader.GetHash()) == nullptr)
+					if (m_pBlockChainServer->GetBlockByHash(blockHeader.GetHash()) == nullptr)
 					{
 						const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
 						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -175,23 +175,30 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				}
 				else
 				{
-					LOG_TRACE_F("Header %s from %s not needed", blockHeader.FormatHash().c_str(), formattedIPAddress.c_str());
+					LOG_TRACE_F("Header %s from %s not needed", blockHeader, formattedIPAddress);
 				}
 
 				return (status == EBlockChainStatus::SUCCESS) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case Headers:
 			{
-				IBlockChainServer& blockChainServer = m_blockChainServer;
-				std::thread processHeaders([&blockChainServer, rawMessage, formattedIPAddress] {
-					ByteBuffer byteBuffer(rawMessage.GetPayload());
-					const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
-					const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
+				IBlockChainServerPtr pBlockChainServer = m_pBlockChainServer;
+				std::thread processHeaders([pBlockChainServer, rawMessage, formattedIPAddress] {
+					try
+					{
+						ByteBuffer byteBuffer(rawMessage.GetPayload());
+						const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
+						const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
 
-					LOG_DEBUG_F("%lld headers received from %s", blockHeaders.size(), formattedIPAddress.c_str());
+						LOG_DEBUG_F("%lld headers received from %s", blockHeaders.size(), formattedIPAddress);
 
-					const EBlockChainStatus status = blockChainServer.AddBlockHeaders(blockHeaders); // TODO: Handle failures
-					LOG_DEBUG_F("Headers message from %s finished processing", formattedIPAddress.c_str());
+						const EBlockChainStatus status = pBlockChainServer->AddBlockHeaders(blockHeaders); // TODO: Handle failures
+						LOG_DEBUG_F("Headers message from %s finished processing", formattedIPAddress);
+					}
+					catch (std::exception& e)
+					{
+						LOG_ERROR_F("Failed to process headers with exception: %s", e.what());
+					}
 				});
 				processHeaders.detach();
 
@@ -201,7 +208,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			{
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
-				std::unique_ptr<FullBlock> pBlock = m_blockChainServer.GetBlockByHash(getBlockMessage.GetHash());
+				std::unique_ptr<FullBlock> pBlock = m_pBlockChainServer->GetBlockByHash(getBlockMessage.GetHash());
 				if (pBlock != nullptr)
 				{
 					BlockMessage blockMessage(std::move(*pBlock));
@@ -220,11 +227,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::SYNCING_BLOCKS)
 				{
-					m_connectionManager.GetPipeline().AddBlockToProcess(connectionId, block);
+					m_connectionManager.GetPipeline().GetBlockPipe().AddBlockToProcess(connectionId, block);
 				}
 				else
 				{
-					const EBlockChainStatus added = m_blockChainServer.AddBlock(block);
+					const EBlockChainStatus added = m_pBlockChainServer->AddBlock(block);
 					if (added == EBlockChainStatus::SUCCESS)
 					{
 						const HeaderMessage headerMessage(block.GetBlockHeader());
@@ -233,7 +240,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					}
 					else if (added == EBlockChainStatus::ORPHANED)
 					{
-						if (block.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
+						if (block.GetBlockHeader().GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetBlockHeader().GetPreviousBlockHash());
 							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -251,7 +258,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			{
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const GetCompactBlockMessage getCompactBlockMessage = GetCompactBlockMessage::Deserialize(byteBuffer);
-				std::unique_ptr<CompactBlock> pCompactBlock = m_blockChainServer.GetCompactBlockByHash(getCompactBlockMessage.GetHash());
+				std::unique_ptr<CompactBlock> pCompactBlock = m_pBlockChainServer->GetCompactBlockByHash(getCompactBlockMessage.GetHash());
 				if (pCompactBlock != nullptr)
 				{
 					const CompactBlockMessage compactBlockMessage(*pCompactBlock);
@@ -266,7 +273,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const CompactBlockMessage compactBlockMessage = CompactBlockMessage::Deserialize(byteBuffer);
 				const CompactBlock& compactBlock = compactBlockMessage.GetCompactBlock();
 
-				const EBlockChainStatus added = m_blockChainServer.AddCompactBlock(compactBlock);
+				const EBlockChainStatus added = m_pBlockChainServer->AddCompactBlock(compactBlock);
 				if (added == EBlockChainStatus::SUCCESS)
 				{
 					const HeaderMessage headerMessage(compactBlock.GetBlockHeader());
@@ -282,7 +289,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				{
 					if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
 					{
-						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_blockChainServer.GetTotalDifficulty(EChainType::CONFIRMED))
+						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
 							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
@@ -303,7 +310,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_connectionManager.GetPipeline().GetTransactionPipe().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TransactionMsg:
 			{
@@ -316,7 +323,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				return m_connectionManager.GetPipeline().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_connectionManager.GetPipeline().GetTransactionPipe().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -330,7 +337,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage);
+				return m_connectionManager.GetPipeline().GetTxHashSetPipe().ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
 			}
 			case GetTransactionMsg:
 			{
@@ -338,7 +345,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
 				const Hash& kernelHash = getTransactionMessage.GetKernelHash();
 
-				std::unique_ptr<Transaction> pTransaction = m_blockChainServer.GetTransactionByKernelHash(kernelHash);
+				std::unique_ptr<Transaction> pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
 				if (pTransaction != nullptr)
 				{
 					const TransactionMessage transactionMessage(*pTransaction);
@@ -359,7 +366,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const Hash& kernelHash = transactionKernelMessage.GetKernelHash();
 
 				// TODO: Also check pipeline
-				std::unique_ptr<Transaction> pTransaction = m_blockChainServer.GetTransactionByKernelHash(kernelHash);
+				std::unique_ptr<Transaction> pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
 				if (pTransaction == nullptr)
 				{
 					const GetTransactionMessage getTransactionMessage(kernelHash);
@@ -383,20 +390,20 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(ConnectedPeer& peer, S
 	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
 	if (peer.GetPeer().GetLastTxHashSetRequest() > maxTxHashSetRequest)
 	{
-		LOG_WARNING_F("Peer (%s) requested multiple TxHashSet's within 2 hours.", socket.GetIPAddress().Format().c_str());
+		LOG_WARNING_F("Peer (%s) requested multiple TxHashSet's within 2 hours.", socket.GetIPAddress());
 		return EStatus::BAN_PEER;
 	}
 
-	LOG_INFO_F("Sending TxHashSet snapshot to %s", socket.GetIPAddress().Format().c_str());
+	LOG_INFO_F("Sending TxHashSet snapshot to %s", socket.GetIPAddress());
 	peer.GetPeer().UpdateLastTxHashSetRequest();
 
-	std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
+	std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
 	if (pHeader == nullptr)
 	{
 		return EStatus::UNKNOWN_ERROR;
 	}
 
-	const std::string zipFilePath = m_blockChainServer.SnapshotTxHashSet(*pHeader);
+	const std::string zipFilePath = m_pBlockChainServer->SnapshotTxHashSet(*pHeader);
 	if (zipFilePath.empty())
 	{
 		return EStatus::UNKNOWN_ERROR;
@@ -441,60 +448,6 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(ConnectedPeer& peer, S
 
 	file.close();
 	FileUtil::RemoveFile(zipFilePath);
-
-	return EStatus::SUCCESS;
-}
-
-MessageProcessor::EStatus MessageProcessor::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
-{
-	SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
-	if (syncStatus.GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
-	{
-		LOG_WARNING_F("Received TxHashSet from Peer (%s) when not requested.", socket.GetIPAddress().Format().c_str());
-		return EStatus::BAN_PEER;
-	}
-
-	LOG_INFO_F("Downloading TxHashSet from %s", socket.GetIPAddress().Format().c_str());
-
-	syncStatus.UpdateDownloaded(0);
-	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
-
-	socket.SetReceiveTimeout(10 * 1000);
-	socket.SetReceiveBufferSize(BUFFER_SIZE);
-
-	const std::string hashStr = HexUtil::ConvertHash(txHashSetArchiveMessage.GetBlockHash());
-	const std::string txHashSetPath = m_config.GetTxHashSetDirectory() + StringUtil::Format("txhashset_%s.zip", hashStr.c_str());
-	std::ofstream fout;
-	fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
-
-	size_t bytesReceived = 0;
-	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
-	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
-	{
-		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const bool received = socket.Receive(bytesToRead, false, buffer);
-		if (!received || m_connectionManager.IsTerminating())
-		{
-			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-
-			LOG_ERROR("Transmission ended abruptly");
-			fout.close();
-			FileUtil::RemoveFile(txHashSetPath);
-
-			return EStatus::BAN_PEER;
-		}
-
-		fout.write((char*)&buffer[0], bytesToRead);
-		bytesReceived += bytesToRead;
-
-		syncStatus.UpdateDownloaded(bytesReceived);
-	}
-
-	fout.close();
-
-	LOG_INFO("Downloading successful");
-
-	m_connectionManager.GetPipeline().AddTxHashSetToProcess(connectionId, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
 
 	return EStatus::SUCCESS;
 }

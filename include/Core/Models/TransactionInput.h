@@ -4,6 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
+#include <Core/Traits/Committed.h>
+#include <Core/Traits/Hashable.h>
 #include <Crypto/Hash.h>
 #include <Core/Models/Features.h>
 #include <Crypto/Commitment.h>
@@ -14,7 +16,7 @@
 ////////////////////////////////////////
 // TRANSACTION INPUT
 ////////////////////////////////////////
-class TransactionInput
+class TransactionInput : public Traits::ICommitted, Traits::IHashable
 {
 public:
 	//
@@ -42,7 +44,9 @@ public:
 	// Getters
 	//
 	inline const EOutputFeatures GetFeatures() const { return m_features; }
-	inline const Commitment& GetCommitment() const { return m_commitment; }
+	virtual const Commitment& GetCommitment() const override final { return m_commitment; }
+
+	inline bool IsCoinbase() const { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
 
 	//
 	// Serialization/Deserialization
@@ -53,9 +57,9 @@ public:
 	static TransactionInput FromJSON(const Json::Value& transactionInputJSON, const bool hex);
 
 	//
-	// Hashing
+	// Traits
 	//
-	const Hash& GetHash() const;
+	virtual const Hash& GetHash() const override final;
 
 private:
 	// The features of the output being spent. 

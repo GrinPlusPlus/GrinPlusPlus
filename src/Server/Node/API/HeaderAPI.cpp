@@ -34,7 +34,7 @@ int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 	}
 }
 
-std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServer* pBlockChainServer)
+std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer)
 {
 	if (requestedHeader.length() == 64 && HexUtil::IsValidHex(requestedHeader))
 	{
@@ -44,17 +44,17 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
 			if (pHeader != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with hash %s.", requestedHeader.c_str()));
+				LOG_INFO_F("Found header with hash %s.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with hash %s.", requestedHeader.c_str()));
+				LOG_INFO_F("No header found with hash %s.", requestedHeader);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Hash.", requestedHeader.c_str()));
+			LOG_ERROR_F("Failed converting %s to a Hash.", requestedHeader);
 		}
 	}
 	else if (requestedHeader.length() == 66 && HexUtil::IsValidHex(requestedHeader))
@@ -65,17 +65,17 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
 			if (pHeader != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header with output commitment %s.", requestedHeader.c_str()));
+				LOG_INFO_F("Found header with output commitment %s.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found with commitment %s.", requestedHeader.c_str()));
+				LOG_INFO_F("No header found with commitment %s.", requestedHeader);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to a Commitment.", requestedHeader.c_str()));
+			LOG_ERROR_F("Failed converting %s to a Commitment.", requestedHeader);
 		}
 	}
 	else
@@ -88,17 +88,17 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 			if (pHeader != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - Found header at height %s.", requestedHeader.c_str()));
+				LOG_INFO_F("Found header at height %s.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetHeader - No header found at height %s.", requestedHeader.c_str()));
+				LOG_INFO_F("No header found at height %s.", requestedHeader);
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetHeader - Failed converting %s to height.", requestedHeader.c_str()));
+			LOG_ERROR_F("Failed converting %s to height.", requestedHeader);
 		}
 	}
 

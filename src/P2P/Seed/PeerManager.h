@@ -18,7 +18,7 @@
 class PeerManager
 {
 public:
-	PeerManager(const Config& config, IPeerDB& peerDB);
+	PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 	
 	void Start();
 	void Stop();
@@ -62,7 +62,7 @@ private:
 	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
 	const Config& m_config;
-	IPeerDB& m_peerDB;
+	std::shared_ptr<Locked<IPeerDB>> m_pPeerDB;
 
 	std::atomic_bool m_terminate;
 	std::thread m_peerThread;

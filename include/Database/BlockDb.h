@@ -11,12 +11,12 @@
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/OutputLocation.h>
+#include <Core/Traits/Batchable.h>
 #include <memory>
 
-class IBlockDB
+class IBlockDB : public Traits::Batchable
 {
 public:
-	virtual std::vector<BlockHeader*> LoadBlockHeaders(const std::vector<Hash>& hashes) const = 0;
 	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const = 0;
 
 	virtual void AddBlockHeader(const BlockHeader& blockHeader) = 0;

@@ -54,7 +54,7 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNode
 		numHashes = std::stoull(numHashesStr);
 	}
 
-	const ITxHashSet* pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+	ITxHashSetConstPtr pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
 		Json::Value rootNode;
@@ -93,7 +93,7 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 		numHashes = std::stoull(numHashesStr);
 	}
 
-	const ITxHashSet* pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+	ITxHashSetConstPtr pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
 		Json::Value rootNode;
@@ -132,7 +132,7 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 		numHashes = std::stoull(numHashesStr);
 	}
 
-	const ITxHashSet* pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+	ITxHashSetConstPtr pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
 		Json::Value rootNode;
@@ -212,12 +212,13 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 		max = 1000;
 	}
 
-	const ITxHashSet* pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+	ITxHashSetConstPtr pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
 		Json::Value rootNode;
 
-		OutputRange range = pTxHashSet->GetOutputsByLeafIndex(startIndex, max);
+		auto pBlockDB = pServer->m_pDatabase->GetBlockDB()->Read();
+		OutputRange range = pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, max);
 		rootNode["highest_index"] = range.GetHighestIndex();
 		rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
 

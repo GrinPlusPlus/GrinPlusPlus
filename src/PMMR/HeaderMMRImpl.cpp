@@ -6,45 +6,49 @@
 #include <Core/Serialization/Serializer.h>
 #include <Config/Config.h>
 
-HeaderMMR::HeaderMMR(const std::string& path)
-	: m_hashFile(path)
+HeaderMMR::HeaderMMR(std::shared_ptr<Locked<HashFile>> pHashFile)
+	: m_pLockedHashFile(pHashFile)
 {
 
 }
 
-bool HeaderMMR::Load()
+std::shared_ptr<HeaderMMR> HeaderMMR::Load(const std::string& path)
 {
-	return m_hashFile.Load();
+	std::shared_ptr<HashFile> pHashFile = HashFile::Load(path);
+	auto locked = std::make_shared<Locked<HashFile>>(pHashFile);
+	return std::make_shared<HeaderMMR>(HeaderMMR(locked));
 }
 
-bool HeaderMMR::Commit()
+void HeaderMMR::Commit()
 {
-	const uint64_t height = MMRUtil::GetNumLeaves(m_hashFile.GetSize());
-	LOG_TRACE_F("Flushing - Height: %llu, Size: %llu", height, m_hashFile.GetSize());
-	return m_hashFile.Flush();
+	const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
+	LOG_TRACE_F("Flushing - Height: %llu, Size: %llu", height, m_batchDataOpt.value().hashFile->GetSize());
+	m_batchDataOpt.value().hashFile->Commit();
+	SetDirty(false);
 }
 
 bool HeaderMMR::Rewind(const uint64_t size)
 {
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
-	if (mmrSize != m_hashFile.GetSize())
+	if (mmrSize != m_batchDataOpt.value().hashFile->GetSize())
 	{
 		LOG_DEBUG_F("Rewinding to height %llu - %llu hashes", size, mmrSize);
-		return m_hashFile.Rewind(mmrSize);
+		m_batchDataOpt.value().hashFile->Rewind(mmrSize);
 	}
 
 	return true;
 }
 
-bool HeaderMMR::Rollback()
+void HeaderMMR::Rollback()
 {
 	LOG_DEBUG("Discarding changes.");
-	return m_hashFile.Discard();
+	m_batchDataOpt.value().hashFile->Rollback();
+	SetDirty(false);
 }
 
 void HeaderMMR::AddHeader(const BlockHeader& header)
 {
-	LOG_TRACE_F("Adding header at height %llu - MMR size %llu", header.GetHeight(), m_hashFile.GetSize());
+	LOG_TRACE_F("Adding header at height %llu - MMR size %llu", header.GetHeight(), m_batchDataOpt.value().hashFile->GetSize());
 
 	// Serialize header
 	Serializer serializer;
@@ -52,31 +56,35 @@ void HeaderMMR::AddHeader(const BlockHeader& header)
 	const std::vector<unsigned char> serializedHeader = serializer.GetBytes();
 
 	// Add hashes
-	MMRHashUtil::AddHashes(m_hashFile, serializedHeader, nullptr);
+	MMRHashUtil::AddHashes(m_batchDataOpt.value().hashFile.GetShared(), serializedHeader, nullptr);
 }
 
 Hash HeaderMMR::Root(const uint64_t lastHeight) const
 {
 	const uint64_t position = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(lastHeight));
 
-	return MMRHashUtil::Root(m_hashFile, position, nullptr);
+	if (m_batchDataOpt.has_value())
+	{
+		return MMRHashUtil::Root(m_batchDataOpt.value().hashFile.GetShared(), position, nullptr);
+	}
+	else
+	{
+		return MMRHashUtil::Root(m_pLockedHashFile->Read().GetShared(), position, nullptr);
+	}
 }
+
+//std::shared_ptr<HeaderMMR> pInstance = nullptr;
 
 namespace HeaderMMRAPI
 {
-	PMMR_API IHeaderMMR* OpenHeaderMMR(const Config& config)
+	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config)
 	{
-		HeaderMMR* pHeaderMMR = new HeaderMMR(config.GetChainDirectory() + "header_mmr.bin");
-		pHeaderMMR->Load();
-
-		return pHeaderMMR;
+		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetChainDirectory() + "header_mmr.bin");
+		return std::make_shared<Locked<IHeaderMMR>>(pHeaderMMR);
 	}
 
-	PMMR_API void CloseHeaderMMR(IHeaderMMR* pIHeaderMMR)
-	{
-		HeaderMMR* pHeaderMMR = (HeaderMMR*)pIHeaderMMR;
-		pHeaderMMR->Commit();
-
-		delete pHeaderMMR;
-	}
+	//PMMR_API void CloseHeaderMMR(IHeaderMMR* pIHeaderMMR)
+	//{
+	//	pInstance.reset();
+	//}
 }

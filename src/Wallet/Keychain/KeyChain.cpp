@@ -118,5 +118,5 @@ std::unique_ptr<RangeProof> KeyChain::GenerateRangeProof(
 
 SecretKey KeyChain::CreateNonce(const Commitment& commitment, const SecretKey& nonceHash) const
 {
-	return Crypto::Blake2b(commitment.GetCommitmentBytes().GetData(), nonceHash.GetBytes().GetData());
+	return Crypto::Blake2b(commitment.GetBytes().GetData(), nonceHash.GetBytes().GetData());
 }

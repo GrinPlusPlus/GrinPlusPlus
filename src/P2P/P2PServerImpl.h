@@ -11,16 +11,13 @@
 class P2PServer : public IP2PServer
 {
 public:
-	P2PServer(
+	static std::shared_ptr<P2PServer> Create(
 		const Config& config,
-		IBlockChainServer& blockChainServer,
-		IDatabase& database,
-		ITransactionPool& transactionPool
+		std::shared_ptr<IBlockChainServer> pBlockChainServer,
+		std::shared_ptr<IDatabase> pDatabase,
+		std::shared_ptr<ITransactionPool> pTransactionPool
 	);
-	virtual ~P2PServer() = default;
-
-	void StartServer();
-	void StopServer();
+	virtual ~P2PServer();
 
 	virtual const SyncStatus& GetSyncStatus() const override final;
 
@@ -47,9 +44,16 @@ public:
 	virtual bool UnbanAllPeers() override final;
 
 private:
+	P2PServer(
+		const Config& config,
+		std::shared_ptr<IBlockChainServer> pBlockChainServer,
+		std::shared_ptr<IDatabase> pDatabase,
+		std::shared_ptr<ITransactionPool> pTransactionPool
+	);
+
 	PeerManager m_peerManager;
 	ConnectionManager m_connectionManager;
 	const Config m_config;
-	IBlockChainServer& m_blockChainServer;
-	IDatabase& m_database;
+	std::shared_ptr<IBlockChainServer> m_pBlockChainServer;
+	std::shared_ptr<IDatabase> m_pDatabase;
 };

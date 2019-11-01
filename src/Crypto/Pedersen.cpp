@@ -35,7 +35,7 @@ std::unique_ptr<Commitment> Pedersen::PedersenCommit(const uint64_t value, const
 		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
 	}
 
-	LOG_ERROR_F("Failed to create commitment. Result: %d, Value: %llu, Blind: %s", result, value, blindingFactor.GetBytes().ToHex().c_str());
+	LOG_ERROR_F("Failed to create commitment. Result: %d, Value: %llu", result, value);
 	return std::unique_ptr<Commitment>(nullptr);
 }
 
@@ -117,7 +117,7 @@ std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const s
 	std::vector<secp256k1_pedersen_commitment*> convertedCommitments(commitments.size(), NULL);
 	for (int i = 0; i < commitments.size(); i++)
 	{
-		const std::vector<unsigned char>& commitmentBytes = commitments[i].GetCommitmentBytes().GetData();
+		const std::vector<unsigned char>& commitmentBytes = commitments[i].GetBytes().GetData();
 
 		secp256k1_pedersen_commitment* pCommitment = new secp256k1_pedersen_commitment();
 		const int parsed = secp256k1_pedersen_commitment_parse(&context, pCommitment, &commitmentBytes[0]);

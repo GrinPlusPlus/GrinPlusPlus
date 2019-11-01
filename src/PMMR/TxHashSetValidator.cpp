@@ -21,9 +21,9 @@ TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer
 
 std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
 {
-	const KernelMMR& kernelMMR = *txHashSet.GetKernelMMR();
-	const OutputPMMR& outputPMMR = *txHashSet.GetOutputPMMR();
-	const RangeProofPMMR& rangeProofPMMR = *txHashSet.GetRangeProofPMMR();
+	std::shared_ptr<const KernelMMR> pKernelMMR = txHashSet.GetKernelMMR();
+	std::shared_ptr<const OutputPMMR> pOutputPMMR = txHashSet.GetOutputPMMR();
+	std::shared_ptr<const RangeProofPMMR> pRangeProofPMMR = txHashSet.GetRangeProofPMMR();
 
 	// Validate size of each MMR matches blockHeader
 	if (!ValidateSizes(txHashSet, blockHeader))
@@ -37,9 +37,9 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	// Validate MMR hashes in parallel
 	std::vector<std::thread> threads;
 	std::atomic_bool mmrHashesValidated = true;
-	threads.emplace_back(std::thread([this, &kernelMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(kernelMMR)) { mmrHashesValidated = false; }}));
-	threads.emplace_back(std::thread([this, &outputPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(outputPMMR)) { mmrHashesValidated = false; }}));
-	threads.emplace_back(std::thread([this, &rangeProofPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(rangeProofPMMR)) { mmrHashesValidated = false; }}));
+	threads.emplace_back(std::thread([this, pKernelMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(pKernelMMR)) { mmrHashesValidated = false; }}));
+	threads.emplace_back(std::thread([this, pOutputPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(pOutputPMMR)) { mmrHashesValidated = false; }}));
+	threads.emplace_back(std::thread([this, pRangeProofPMMR, &mmrHashesValidated] { if (!this->ValidateMMRHashes(pRangeProofPMMR)) { mmrHashesValidated = false; }}));
 
 	for (auto& thread : threads)
 	{
@@ -120,19 +120,19 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 {
 	if (txHashSet.GetKernelMMR()->GetSize() != blockHeader.GetKernelMMRSize())
 	{
-		LOG_ERROR_F("Kernel size not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
+		LOG_ERROR_F("Kernel size not matching for header (%s)", blockHeader);
 		return false;
 	}
 
 	if (txHashSet.GetOutputPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LOG_ERROR_F("Output size not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
+		LOG_ERROR_F("Output size not matching for header (%s)", blockHeader);
 		return false;
 	}
 
 	if (txHashSet.GetRangeProofPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LOG_ERROR_F("RangeProof size not matching for header (%s)", blockHeader.GetHash().ToHex().c_str());
+		LOG_ERROR_F("RangeProof size not matching for header (%s)", blockHeader);
 		return false;
 	}
 
@@ -140,22 +140,22 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 }
 
 // TODO: This probably belongs in MMRHashUtil.
-bool TxHashSetValidator::ValidateMMRHashes(const MMR& mmr) const
+bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) const
 {
-	const uint64_t size = mmr.GetSize();
+	const uint64_t size = pMMR->GetSize();
 	for (uint64_t i = 0; i < size; i++)
 	{
 		const uint64_t height = MMRUtil::GetHeight(i);
 		if (height > 0)
 		{
-			const std::unique_ptr<Hash> pParentHash = mmr.GetHashAt(i);
+			const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(i);
 			if (pParentHash != nullptr)
 			{
 				const uint64_t leftIndex = MMRUtil::GetLeftChildIndex(i, height);
-				const std::unique_ptr<Hash> pLeftHash = mmr.GetHashAt(leftIndex);
+				const std::unique_ptr<Hash> pLeftHash = pMMR->GetHashAt(leftIndex);
 
 				const uint64_t rightIndex = MMRUtil::GetRightChildIndex(i);
-				const std::unique_ptr<Hash> pRightHash = mmr.GetHashAt(rightIndex);
+				const std::unique_ptr<Hash> pRightHash = pMMR->GetHashAt(rightIndex);
 
 				if (pLeftHash != nullptr && pRightHash != nullptr)
 				{
@@ -206,7 +206,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 	const int64_t overage = 0 - (Consensus::REWARD * (1 + blockHeader.GetHeight()));
 
 	// Determine output commitments
-	OutputPMMR* pOutputPMMR = txHashSet.GetOutputPMMR();
+	std::shared_ptr<const OutputPMMR> pOutputPMMR = txHashSet.GetOutputPMMR();
 	std::vector<Commitment> outputCommitments;
 	for (uint64_t i = 0; i < blockHeader.GetOutputMMRSize(); i++)
 	{
@@ -218,7 +218,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 	}
 
 	// Determine kernel excess commitments
-	KernelMMR* pKernelMMR = txHashSet.GetKernelMMR();
+	std::shared_ptr<const KernelMMR> pKernelMMR = txHashSet.GetKernelMMR();
 	std::vector<Commitment> excessCommitments;
 	for (uint64_t i = 0; i < blockHeader.GetKernelMMRSize(); i++)
 	{

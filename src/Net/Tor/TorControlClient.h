@@ -18,7 +18,7 @@ public:
 		}
 		catch (asio::system_error& e)
 		{
-			LOG_ERROR_F("Connection to %s failed with error %s.", address.Format().c_str(), e.what());
+			LOG_ERROR_F("Connection to %s failed with error %s.", address, e.what());
 			return false;
 		}
 	}

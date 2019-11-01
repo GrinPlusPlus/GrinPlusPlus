@@ -21,7 +21,7 @@
 class POW_API PoWManager
 {
 public:
-	PoWManager(const Config& config, const IBlockDB& blockDB);
+	PoWManager(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB);
 	~PoWManager() = default;
 
 	//
@@ -35,5 +35,5 @@ public:
 
 private:
 	const Config& m_config;
-	const IBlockDB& m_blockDB;
+	std::shared_ptr<const IBlockDB> m_pBlockDB;
 };

@@ -5,6 +5,7 @@
 
 #include <Core/DataFile.h>
 #include <Core/Models/TransactionKernel.h>
+#include <Core/Traits/Lockable.h>
 #include <Crypto/Hash.h>
 #include <stdint.h>
 
@@ -13,7 +14,7 @@
 class KernelMMR : public MMR
 {
 public:
-	static KernelMMR* Load(const std::string& txHashSetDirectory);
+	static std::shared_ptr<KernelMMR> Load(const std::string& txHashSetDirectory);
 	virtual ~KernelMMR();
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
@@ -21,17 +22,22 @@ public:
 
 	virtual Hash Root(const uint64_t size) const override final;
 	virtual uint64_t GetSize() const override final { return m_pHashFile->GetSize(); }
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_pHashFile->GetHashAt(mmrIndex)); }
+	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_pHashFile->GetDataAt(mmrIndex)); }
 	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
 
-	virtual bool Flush() override final;
-	virtual bool Discard() override final;
+	virtual void Commit() override final;
+	virtual void Rollback() override final;
 
 	bool ApplyKernel(const TransactionKernel& kernel);
 
 private:
-	KernelMMR(HashFile* pHashFile, DataFile<KERNEL_SIZE>* pDataFile);
+	KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFile<KERNEL_SIZE>> pDataFile);
+	//Writer<HashFile> GetHashTransaction() const;
+	//Writer<DataFile<KERNEL_SIZE>> GetDataTransaction() const;
 
-	HashFile* m_pHashFile;
-	DataFile<KERNEL_SIZE>* m_pDataFile;
+	mutable std::shared_ptr<HashFile> m_pHashFile;
+	//mutable Writer<HashFile> m_pHashTransaction;
+
+	mutable std::shared_ptr<DataFile<KERNEL_SIZE>> m_pDataFile;
+	//mutable Writer<DataFile<KERNEL_SIZE>> m_pDataTransaction;
 };

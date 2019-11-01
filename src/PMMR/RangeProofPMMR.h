@@ -9,26 +9,24 @@
 class RangeProofPMMR : public PruneableMMR<RANGE_PROOF_SIZE, RangeProof>
 {
 public:
-	static RangeProofPMMR* Load(const std::string& txHashSetDirectory)
+	static std::shared_ptr<RangeProofPMMR> Load(const std::string& txHashSetDirectory)
 	{
-		HashFile* pHashFile = new HashFile(txHashSetDirectory + "rangeproof/pmmr_hash.bin");
-		pHashFile->Load();
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "rangeproof/pmmr_hash.bin");
 
 		LeafSet leafSet(txHashSetDirectory + "rangeproof/pmmr_leaf.bin");
 		leafSet.Load();
 
 		PruneList pruneList(PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin"));
 
-		DataFile<RANGE_PROOF_SIZE>* pDataFile = new DataFile<RANGE_PROOF_SIZE>(txHashSetDirectory + "rangeproof/pmmr_data.bin");
-		pDataFile->Load();
+		std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile = DataFile<RANGE_PROOF_SIZE>::Load(txHashSetDirectory + "rangeproof/pmmr_data.bin");
 
-		return new RangeProofPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile);
+		return std::make_shared<RangeProofPMMR>(RangeProofPMMR(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile));
 	}
 
 	virtual ~RangeProofPMMR() = default;
 
 private:
-	RangeProofPMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<RANGE_PROOF_SIZE>* pDataFile)
+	RangeProofPMMR(std::shared_ptr<HashFile> pHashFile, LeafSet&& leafSet, PruneList&& pruneList, std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile)
 		: PruneableMMR<RANGE_PROOF_SIZE, RangeProof>(pHashFile, std::move(leafSet), std::move(pruneList), pDataFile)
 	{
 

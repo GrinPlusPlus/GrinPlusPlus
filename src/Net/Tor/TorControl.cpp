@@ -9,36 +9,48 @@
 #include <Common/Util/StringUtil.h>
 
 TorControl::TorControl(const TorConfig& config)
-	: m_torConfig(config)
+	: m_torConfig(config), m_initialized(false)
 {
 
 }
 
 bool TorControl::Initialize()
 {
-	// TODO: Determine if process is already running.
-
-	const std::string command = StringUtil::Format(
-		fs::current_path().string() + "/tor/tor --ControlPort %d --SocksPort %d --HashedControlPassword %s",
-		m_torConfig.GetControlPort(),
-		m_torConfig.GetSocksPort(),
-		m_torConfig.GetHashedControlPassword().c_str()
-	);
-
-	m_processId = ProcessUtil::CreateProc(command);
-	if (m_processId > 0)
+	if (m_initialized)
 	{
-		// Open control socket
-		bool connected = m_client.Connect(SocketAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetControlPort()));
-		if (!connected || !Authenticate(m_torConfig.GetControlPassword()))
+		return true;
+	}
+
+	try
+	{
+		const std::string command = StringUtil::Format(
+			fs::current_path().string() + "/tor/tor --ControlPort %d --SocksPort %d --HashedControlPassword %s",
+			m_torConfig.GetControlPort(),
+			m_torConfig.GetSocksPort(),
+			m_torConfig.GetHashedControlPassword()
+		);
+
+		// TODO: Determine if process is already running.
+		m_processId = ProcessUtil::CreateProc(command);
+		if (m_processId > 0)
 		{
-			ProcessUtil::KillProc(m_processId);
-			m_processId = 0;
+			// Open control socket
+			bool connected = m_client.Connect(SocketAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetControlPort()));
+			if (!connected || !Authenticate(m_torConfig.GetControlPassword()))
+			{
+				ProcessUtil::KillProc(m_processId);
+				m_processId = 0;
+			}
+			else
+			{
+				m_initialized = true;
+				return true;
+			}
 		}
-		else
-		{
-			return true;
-		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception caught: %s", e.what());
 	}
 
 	return false;
@@ -51,7 +63,7 @@ void TorControl::Shutdown()
 
 bool TorControl::Authenticate(const std::string& password)
 {
-	std::string command = StringUtil::Format("AUTHENTICATE \"%s\"\n", password.c_str());
+	std::string command = StringUtil::Format("AUTHENTICATE \"%s\"\n", password);
 
 	try
 	{
@@ -71,7 +83,7 @@ std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t ext
 	std::string serializedKey = FormatKey(privateKey);
 
 	// ADD_ONION ED25519-V3:<SERIALIZED_KEY> PORT=External,Internal
-	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d\n", serializedKey.c_str(), externalPort, internalPort);
+	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d\n", serializedKey, externalPort, internalPort);
 
 	std::vector<std::string> response = m_client.Invoke(command);
 	for (std::string& line : response)
@@ -89,7 +101,7 @@ std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t ext
 bool TorControl::DelOnion(const TorAddress& torAddress)
 {
 	// DEL_ONION ServiceId
-	std::string command = StringUtil::Format("DEL_ONION %s\n", torAddress.ToString().c_str());
+	std::string command = StringUtil::Format("DEL_ONION %s\n", torAddress.ToString());
 
 	m_client.Invoke(command);
 	return true;

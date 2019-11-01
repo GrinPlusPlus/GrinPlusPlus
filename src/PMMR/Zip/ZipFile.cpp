@@ -13,7 +13,7 @@ EZipFileStatus ZipFile::Open()
 	m_unzFile = unzOpen(m_zipFilePath.c_str());
 	if (m_unzFile == NULL)
 	{
-		LoggerAPI::LogError("ZipFile::Open - Zip file (" + m_zipFilePath + ") failed to open.");
+		LOG_ERROR_F("Zip file (%s) failed to open.", m_zipFilePath);
 		return EZipFileStatus::NOT_FOUND;
 	}
 
@@ -30,27 +30,27 @@ EZipFileStatus ZipFile::ExtractFile(const std::string& path, const std::string& 
 {   
 	if (m_unzFile == NULL)
 	{
-		LoggerAPI::LogWarning("ZipFile::ExtractFile - Zip file (" + m_zipFilePath + ") is not open.");
+		LOG_WARNING_F("Zip file (%s) is not open.", m_zipFilePath);
 		return EZipFileStatus::NOT_OPEN;
 	}
 
 	if (unzLocateFile(m_unzFile, path.c_str(), 0) != UNZ_OK)
 	{
-		LoggerAPI::LogInfo("ZipFile::ExtractFile - Path (" + path + ") in zip file (" + m_zipFilePath + ") was not found.");
+		LOG_INFO_F("Path (%s) in zip file (%s) was not found.", path, m_zipFilePath);
 		return EZipFileStatus::NOT_FOUND;
 	}
 
 	int openResult = unzOpenCurrentFile(m_unzFile);
 	if (openResult != UNZ_OK)
 	{
-		LoggerAPI::LogInfo("ZipFile::ExtractFile - Failed to open path (" + path + ") in zip file (" + m_zipFilePath + ").");
+		LOG_INFO_F("Failed to open path (%s) in zip file (%s).", path, m_zipFilePath);
 		return EZipFileStatus::NOT_FOUND;
 	}
 
 	std::ofstream destinationFile(destination, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!destinationFile.is_open())
 	{
-		LoggerAPI::LogWarning("ZipFile::ExtractFile - Failed to write to destination (" + destination + ").");
+		LOG_WARNING_F("Failed to write to destination (%s).", destination);
 		return EZipFileStatus::WRITE_FAILED;
 	}
 
@@ -72,7 +72,7 @@ EZipFileStatus ZipFile::ListFiles(std::vector<std::string>& files) const
 {
     if (m_unzFile == NULL)
 	{
-		LoggerAPI::LogWarning("ZipFile::ListFiles - Zip file (" + m_zipFilePath + ") is not open.");
+		LOG_WARNING_F("Zip file (%s) is not open.", m_zipFilePath);
 		return EZipFileStatus::NOT_OPEN;
     }
 

@@ -16,8 +16,8 @@
 #include <chrono>
 #include <memory>
 
-Connection::Connection(Socket&& socket, const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer, const ConnectedPeer& connectedPeer)
-	: m_socket(std::move(socket)), m_connectionId(connectionId), m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_blockChainServer(blockChainServer), m_connectedPeer(connectedPeer)
+Connection::Connection(Socket&& socket, const uint64_t connectionId, const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer, const ConnectedPeer& connectedPeer)
+	: m_socket(std::move(socket)), m_connectionId(connectionId), m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_pBlockChainServer(pBlockChainServer), m_connectedPeer(connectedPeer)
 {
 
 }
@@ -94,7 +94,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 		bool handshakeSuccess = false;
 		if (connected)
 		{
-			HandShake handshake(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_blockChainServer);
+			HandShake handshake(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_pBlockChainServer);
 			handshakeSuccess = handshake.PerformHandshake(pConnection->m_socket, pConnection->m_connectedPeer, direction);
 		}
 
@@ -129,7 +129,7 @@ void Connection::Thread_ProcessConnection(Connection* pConnection)
 
 	pConnection->m_peerManager.SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), true);
 
-	MessageProcessor messageProcessor(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_blockChainServer);
+	MessageProcessor messageProcessor(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_peerManager, pConnection->m_pBlockChainServer);
 	const MessageRetriever messageRetriever(pConnection->m_config, pConnection->m_connectionManager);
 
 	const SyncStatus& syncStatus = pConnection->m_connectionManager.GetSyncStatus();

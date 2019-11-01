@@ -14,11 +14,11 @@
 #include <Infrastructure/Logger.h>
 #include <algorithm>
 
-Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServer& blockChainServer)
+Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer)
 	: m_config(config), 
 	m_connectionManager(connectionManager), 
 	m_peerManager(peerManager), 
-	m_blockChainServer(blockChainServer)
+	m_pBlockChainServer(pBlockChainServer)
 {
 
 }
@@ -118,7 +118,15 @@ void Seeder::Thread_Listener(Seeder& seeder)
 				const bool connectionAdded = socket.Accept(seeder.m_context, acceptor, seeder.m_terminate);
 				if (connectionAdded)
 				{
-					Connection* pConnection = new Connection(std::move(socket), seeder.m_nextId++, seeder.m_config, seeder.m_connectionManager, seeder.m_peerManager, seeder.m_blockChainServer, ConnectedPeer(Peer(socket.GetSocketAddress()), EDirection::INBOUND));
+					Connection* pConnection = new Connection(
+						std::move(socket),
+						seeder.m_nextId++,
+						seeder.m_config,
+						seeder.m_connectionManager,
+						seeder.m_peerManager,
+						seeder.m_pBlockChainServer,
+						ConnectedPeer(Peer(socket.GetSocketAddress()), EDirection::INBOUND)
+					);
 					pConnection->Connect();
 				}
 			}
@@ -140,7 +148,15 @@ Connection* Seeder::SeedNewConnection()
 	if (pPeer != nullptr)
 	{
 		ConnectedPeer connectedPeer(*pPeer, EDirection::OUTBOUND);
-		Connection* pConnection = new Connection(Socket(SocketAddress(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort())), m_nextId++, m_config, m_connectionManager, m_peerManager, m_blockChainServer, connectedPeer);
+		Connection* pConnection = new Connection(
+			Socket(SocketAddress(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort())),
+			m_nextId++,
+			m_config,
+			m_connectionManager,
+			m_peerManager,
+			m_pBlockChainServer,
+			connectedPeer
+		);
 		pConnection->Connect();
 
 		return pConnection;

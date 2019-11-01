@@ -68,7 +68,14 @@ std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
 	{
 		std::for_each(iter, {}, [&addresses](auto & it)
 			{
-				addresses.push_back(IPAddress::FromString(it.endpoint().address().to_string()));
+				try
+				{
+					addresses.push_back(IPAddress::FromString(it.endpoint().address().to_string()));
+				}
+				catch (std::exception&)
+				{
+
+				}
 			});
 	}
 	else

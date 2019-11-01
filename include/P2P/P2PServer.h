@@ -11,6 +11,7 @@
 #include <P2P/Peer.h>
 #include <P2P/ConnectedPeer.h>
 #include <TxPool/TransactionPool.h>
+#include <Database/Database.h>
 #include <optional>
 
 #ifdef MW_P2P
@@ -31,7 +32,7 @@ class IDatabase;
 class IP2PServer
 {
 public:
-	virtual ~IP2PServer() {}
+	virtual ~IP2PServer() = default;
 
 	virtual const SyncStatus& GetSyncStatus() const = 0;
 
@@ -64,20 +65,22 @@ public:
 	virtual bool UnbanAllPeers() = 0;
 };
 
+typedef std::shared_ptr<IP2PServer> IP2PServerPtr;
+
 namespace P2PAPI
 {
 	//
 	// Creates a new instance of the P2P Server.
 	//
-	P2P_API IP2PServer* StartP2PServer(
+	P2P_API IP2PServerPtr StartP2PServer(
 		const Config& config,
-		IBlockChainServer& blockChainServer,
-		IDatabase& database,
-		ITransactionPool& transactionPool
+		IBlockChainServerPtr pBlockChainServer,
+		IDatabasePtr pDatabase,
+		ITransactionPoolPtr pTransactionPool
 	);
 
 	//
 	// Stops the P2P Server and clears up its memory usage.
 	//
-	P2P_API void ShutdownP2PServer(IP2PServer* pP2PServer);
+	//P2P_API void ShutdownP2PServer(IP2PServer* pP2PServer);
 }

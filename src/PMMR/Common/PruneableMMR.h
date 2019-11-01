@@ -12,28 +12,22 @@
 
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
+#include <Core/Traits/Lockable.h>
 #include <Infrastructure/Logger.h>
 
 template<size_t DATA_SIZE, class DATA_TYPE>
-class PruneableMMR : public MMR
+class PruneableMMR : public MMR, public Traits::Batchable
 {
 public:
-	PruneableMMR(HashFile* pHashFile, LeafSet&& leafSet, PruneList&& pruneList, DataFile<DATA_SIZE>* pDataFile)
+	PruneableMMR(std::shared_ptr<HashFile> pHashFile, LeafSet&& leafSet, PruneList&& pruneList, std::shared_ptr<DataFile<DATA_SIZE>> pDataFile)
 		: m_pHashFile(pHashFile), m_leafSet(std::move(leafSet)), m_pruneList(std::move(pruneList)), m_pDataFile(pDataFile)
 	{
 
 	}
 
-	virtual ~PruneableMMR()
-	{
-		delete m_pHashFile;
-		m_pHashFile = nullptr;
+	virtual ~PruneableMMR() = default;
 
-		delete m_pDataFile;
-		m_pDataFile = nullptr;
-	}
-
-	bool Append(const DATA_TYPE& object)
+	void Append(const DATA_TYPE& object)
 	{
 		// Add to LeafSet
 		const uint64_t totalShift = m_pruneList.GetTotalShift();
@@ -46,9 +40,7 @@ public:
 		m_pDataFile->AddData(serializer.GetBytes());
 
 		// Add hashes
-		MMRHashUtil::AddHashes(*m_pHashFile, serializer.GetBytes(), &m_pruneList);
-
-		return true;
+		MMRHashUtil::AddHashes(m_pHashFile, serializer.GetBytes(), &m_pruneList);
 	}
 
 	bool Remove(const uint64_t mmrIndex)
@@ -72,18 +64,16 @@ public:
 		return true;
 	}
 
-	bool Rewind(const uint64_t size, const Roaring& leavesToAdd)
+	void Rewind(const uint64_t size, const Roaring& leavesToAdd)
 	{
-		const bool hashRewind = m_pHashFile->Rewind(size - m_pruneList.GetShift(size - 1));
-		const bool dataRewind = m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size - 1));
+		m_pHashFile->Rewind(size - m_pruneList.GetShift(size - 1));
+		m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pruneList.GetLeafShift(size - 1));
 		m_leafSet.Rewind(size, leavesToAdd);
-
-		return hashRewind && dataRewind;
 	}
 
 	virtual Hash Root(const uint64_t size) const override final
 	{
-		return MMRHashUtil::Root(*m_pHashFile, size, &m_pruneList);
+		return MMRHashUtil::Root(m_pHashFile, size, &m_pruneList);
 	}
 
 	virtual uint64_t GetSize() const override final
@@ -95,7 +85,7 @@ public:
 
 	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const  override final
 	{
-		Hash hash = MMRHashUtil::GetHashAt(*m_pHashFile, mmrIndex, &m_pruneList);
+		Hash hash = MMRHashUtil::GetHashAt(m_pHashFile, mmrIndex, &m_pruneList);
 		if (hash == ZERO_HASH)
 		{
 			return std::unique_ptr<Hash>(nullptr);
@@ -106,7 +96,7 @@ public:
 
 	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final
 	{
-		return MMRHashUtil::GetLastLeafHashes(*m_pHashFile, &m_leafSet, &m_pruneList, numHashes);
+		return MMRHashUtil::GetLastLeafHashes(m_pHashFile, &m_leafSet, &m_pruneList, numHashes);
 	}
 
 	bool IsUnpruned(const uint64_t mmrIndex) const
@@ -130,44 +120,49 @@ public:
 			const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
 			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
 
-			std::vector<unsigned char> data;
-			m_pDataFile->GetDataAt(shiftedIndex, data);
-
-			if (data.size() == DATA_SIZE)
+			try
 			{
-				ByteBuffer byteBuffer(data);
-				return std::make_unique<DATA_TYPE>(DATA_TYPE::Deserialize(byteBuffer));
+				std::vector<unsigned char> data = m_pDataFile->GetDataAt(shiftedIndex);
+				if (data.size() == DATA_SIZE)
+				{
+					ByteBuffer byteBuffer(data);
+					return std::make_unique<DATA_TYPE>(DATA_TYPE::Deserialize(byteBuffer));
+				}
+			}
+			catch (FileException&)
+			{
+
 			}
 		}
 
 		return std::unique_ptr<DATA_TYPE>(nullptr);
 	}
 
-	virtual bool Flush() override final
+	const LeafSet& GetLeafSet() const
 	{
-		LOG_TRACE_F("Flushing with size (%llu)", GetSize());
-		const bool hashFlush = m_pHashFile->Flush();
-		const bool dataFlush = m_pDataFile->Flush();
-		const bool leafSetFlush = m_leafSet.Flush();
-
-		return hashFlush && dataFlush && leafSetFlush;
+		return m_leafSet;
 	}
 
-	virtual bool Discard() override final
+	virtual void Commit() override final
+	{
+		LOG_TRACE_F("Flushing with size (%llu)", GetSize());
+		m_pHashFile->Commit();
+		m_pDataFile->Commit();
+		m_leafSet.Flush();
+	}
+
+	virtual void Rollback() override final
 	{
 		LOG_INFO("Discarding changes since last flush");
-		const bool hashDiscard = m_pHashFile->Discard();
-		const bool dataDiscard = m_pDataFile->Discard();
+		m_pHashFile->Rollback();
+		m_pDataFile->Rollback();
 		m_leafSet.Discard();
-
-		// TODO: const bool pruneDiscard = m_pruneList.Discard();
-
-		return hashDiscard && dataDiscard;
+		// TODO: m_pruneList.Rollback();
 	}
 
 private:
-	HashFile* m_pHashFile;
+	std::shared_ptr<HashFile> m_pHashFile;
 	LeafSet m_leafSet;
 	PruneList m_pruneList;
-	DataFile<DATA_SIZE>* m_pDataFile;
+	std::shared_ptr<DataFile<DATA_SIZE>> m_pDataFile;
 };

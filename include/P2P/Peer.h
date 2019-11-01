@@ -5,6 +5,7 @@
 #include <P2P/Common.h>
 #include <P2P/Capabilities.h>
 #include <P2P/BanReason.h>
+#include <Common/Traits.h>
 
 #include <string>
 #include <stdint.h>
@@ -12,7 +13,7 @@
 #include <atomic>
 #include <chrono>
 
-class Peer
+class Peer : public Traits::IPrintable
 {
 public:
 	//
@@ -147,6 +148,8 @@ public:
 
 		return Peer(std::move(socketAddress), version, capabilities, userAgent, lastContactTime, lastBanTime, banReason);
 	}
+
+	virtual std::string Format() const override final { return m_socketAddress.GetIPAddress().Format(); }
 
 private:
 	SocketAddress m_socketAddress;

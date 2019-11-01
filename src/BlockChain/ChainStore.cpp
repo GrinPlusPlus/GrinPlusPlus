@@ -4,68 +4,66 @@
 #include <vector>
 #include <map>
 
-ChainStore::ChainStore(const Config& config, BlockIndex* pGenesisIndex)
-	: m_config(config),
-	m_confirmedChain(EChainType::CONFIRMED, config.GetChainDirectory() + "confirmed.chain", pGenesisIndex),
-	m_candidateChain(EChainType::CANDIDATE, config.GetChainDirectory() + "candidate.chain", pGenesisIndex),
-	m_syncChain(EChainType::SYNC, config.GetChainDirectory() + "sync.chain", pGenesisIndex),
-	m_loaded(false)
+ChainStore::ChainStore(std::shared_ptr<Chain> pConfirmedChain, std::shared_ptr<Chain> pCandidateChain, std::shared_ptr<Chain> pSyncChain)
+	: m_pConfirmedChain(pConfirmedChain), m_pCandidateChain(pCandidateChain), m_pSyncChain(pSyncChain)
 {
 
 }
 
-bool ChainStore::Load()
+std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, BlockIndex* pGenesisIndex)
 {
-	if (m_loaded)
+	LOG_TRACE("Loading Chain");
+	BlockIndexAllocator allocator(std::vector<std::shared_ptr<Chain>>({ }));
+
+	std::shared_ptr<Chain> pConfirmedChain = Chain::Load(allocator, EChainType::CONFIRMED, config.GetChainDirectory() + "confirmed.chain", pGenesisIndex);
+	if (pConfirmedChain == nullptr)
 	{
-		return true;
+		LOG_INFO("Failed to load confirmed chain");
+		throw std::exception();
 	}
 
-	m_loaded = true;
-
-	LoggerAPI::LogTrace("ChainStore::Load - Loading Chain");
-	bool success = true;
-	if (!m_syncChain.Load(*this))
+	allocator.AddChain(pConfirmedChain);
+	std::shared_ptr<Chain> pCandidateChain = Chain::Load(allocator, EChainType::CANDIDATE, config.GetChainDirectory() + "candidate.chain", pGenesisIndex);
+	if (pCandidateChain == nullptr)
 	{
-		LoggerAPI::LogInfo("ChainStore::Load - Failed to load sync chain");
-		success = false;
-	}
-	
-	if (!m_candidateChain.Load(*this))
-	{
-		LoggerAPI::LogInfo("ChainStore::Load - Failed to load candidate chain");
-		success = false;
+		LOG_INFO("Failed to load candidate chain");
+		throw std::exception();
 	}
 
-	if (!m_confirmedChain.Load(*this))
+	allocator.AddChain(pCandidateChain);
+	std::shared_ptr<Chain> pSyncChain = Chain::Load(allocator, EChainType::SYNC, config.GetChainDirectory() + "sync.chain", pGenesisIndex);
+	if (pSyncChain == nullptr)
 	{
-		LoggerAPI::LogInfo("ChainStore::Load - Failed to load confirmed chain");
-		success = false;
+		LOG_INFO("Failed to load sync chain");
+		throw std::exception();
 	}
 
-	return success;
+	auto pChainStore = std::shared_ptr<ChainStore>(new ChainStore(pConfirmedChain, pCandidateChain, pSyncChain));
+	return std::make_shared<Locked<ChainStore>>(Locked<ChainStore>(pChainStore));
 }
 
-bool ChainStore::Flush()
+void ChainStore::Commit()
 {
-	return m_syncChain.Flush() && m_candidateChain.Flush() && m_confirmedChain.Flush();
+	m_pSyncChain->Flush();
+	m_pCandidateChain->Flush();
+	m_pConfirmedChain->Flush();
 }
 
 BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)
 {
-	BlockIndex* pSyncIndex = m_syncChain.GetByHeight(height);
+	BlockIndex* pSyncIndex = m_pSyncChain->GetByHeight(height);
 	if (pSyncIndex != nullptr && pSyncIndex->GetHash() == hash)
 	{
 		return pSyncIndex;
 	}
 
-	BlockIndex* pCandidateIndex = m_candidateChain.GetByHeight(height);
+	BlockIndex* pCandidateIndex = m_pCandidateChain->GetByHeight(height);
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == hash)
 	{
 		return pCandidateIndex;
 	}
 
-	BlockIndex* pConfirmedIndex = m_confirmedChain.GetByHeight(height);
+	BlockIndex* pConfirmedIndex = m_pConfirmedChain->GetByHeight(height);
 	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == hash)
 	{
 		return pConfirmedIndex;
@@ -74,14 +72,14 @@ BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height
 	return new BlockIndex(hash, height, pPreviousIndex);
 }
 
-BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChainType chainType2)
+const BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const
 {
-	Chain& chain1 = GetChain(chainType1);
-	Chain& chain2 = GetChain(chainType2);
+	std::shared_ptr<const Chain> pChain1 = GetChain(chainType1);
+	std::shared_ptr<const Chain> pChain2 = GetChain(chainType2);
 
-	uint64_t height = (std::min)(chain1.GetTip()->GetHeight(), chain2.GetTip()->GetHeight());
-	BlockIndex* pChain1Index = chain1.GetByHeight(height);
-	BlockIndex* pChain2Index = chain2.GetByHeight(height);
+	uint64_t height = (std::min)(pChain1->GetTip()->GetHeight(), pChain2->GetTip()->GetHeight());
+	const BlockIndex* pChain1Index = pChain1->GetByHeight(height);
+	const BlockIndex* pChain2Index = pChain2->GetByHeight(height);
 
 	while (pChain1Index->GetHash() != pChain2Index->GetHash())
 	{
@@ -94,23 +92,23 @@ BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChai
 
 bool ChainStore::ReorgChain(const EChainType source, const EChainType destination, const uint64_t height)
 {
-	Chain& sourceChain = GetChain(source);
-	Chain& destinationChain = GetChain(destination);
+	std::shared_ptr<Chain> pSourceChain = GetChain(source);
+	std::shared_ptr<Chain> pDestinationChain = GetChain(destination);
 
-	if (sourceChain.GetTip()->GetHeight() < height)
+	if (pSourceChain->GetTip()->GetHeight() < height)
 	{
 		return false;
 	}
 
-	BlockIndex* pBlockIndex = FindCommonIndex(source, destination);
+	const BlockIndex* pBlockIndex = FindCommonIndex(source, destination);
 	if (pBlockIndex != nullptr)
 	{
 		const uint64_t commonHeight = pBlockIndex->GetHeight();
-		if (destinationChain.Rewind(commonHeight))
+		if (pDestinationChain->Rewind(commonHeight))
 		{
 			for (uint64_t i = commonHeight + 1; i <= height; i++)
 			{
-				destinationChain.AddBlock(sourceChain.GetByHeight(i));
+				pDestinationChain->AddBlock(pSourceChain->GetByHeight(i));
 			}
 
 			return true;
@@ -122,51 +120,51 @@ bool ChainStore::ReorgChain(const EChainType source, const EChainType destinatio
 
 bool ChainStore::AddBlock(const EChainType source, const EChainType destination, const uint64_t height)
 {
-	Chain& sourceChain = GetChain(source);
-	Chain& destinationChain = GetChain(destination);
+	std::shared_ptr<Chain> pSourceChain = GetChain(source);
+	std::shared_ptr<Chain> pDestinationChain = GetChain(destination);
 
-	if (destinationChain.GetTip()->GetHeight() + 1 == height)
+	if (pDestinationChain->GetTip()->GetHeight() + 1 == height)
 	{
-		if (sourceChain.GetTip()->GetHeight() >= height)
+		if (pSourceChain->GetTip()->GetHeight() >= height)
 		{
-			return destinationChain.AddBlock(sourceChain.GetByHeight(height));
+			return pDestinationChain->AddBlock(pSourceChain->GetByHeight(height));
 		}
 	}
 
 	return false;
 }
 
-Chain& ChainStore::GetChain(const EChainType chainType)
+std::shared_ptr<Chain> ChainStore::GetChain(const EChainType chainType)
 {
 	if (chainType == EChainType::CONFIRMED)
 	{
-		return m_confirmedChain;
+		return m_pConfirmedChain;
 	}
 	else if (chainType == EChainType::CANDIDATE)
 	{
-		return m_candidateChain;
+		return m_pCandidateChain;
 	}
 	else if (chainType == EChainType::SYNC)
 	{
-		return m_syncChain;
+		return m_pSyncChain;
 	}
 
 	throw std::exception();
 }
 
-const Chain& ChainStore::GetChain(const EChainType chainType) const
+std::shared_ptr<const Chain> ChainStore::GetChain(const EChainType chainType) const
 {
 	if (chainType == EChainType::CONFIRMED)
 	{
-		return m_confirmedChain;
+		return m_pConfirmedChain;
 	}
 	else if (chainType == EChainType::CANDIDATE)
 	{
-		return m_candidateChain;
+		return m_pCandidateChain;
 	}
 	else if (chainType == EChainType::SYNC)
 	{
-		return m_syncChain;
+		return m_pSyncChain;
 	}
 
 	throw std::exception();

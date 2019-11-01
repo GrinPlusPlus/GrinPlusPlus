@@ -2,6 +2,7 @@
 
 #include "Messages/Message.h"
 
+#include <BlockChain/BlockChainServer.h>
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
@@ -11,7 +12,6 @@
 
 // Forward Declarations
 class IMessage;
-class IBlockChainServer;
 class ConnectionManager;
 class PeerManager;
 
@@ -29,7 +29,7 @@ public:
 		const Config& config,
 		ConnectionManager& connectionManager,
 		PeerManager& peerManager,
-		IBlockChainServer& blockChainServer,
+		IBlockChainServerPtr pBlockChainServer,
 		const ConnectedPeer& connectedPeer
 	);
 
@@ -58,7 +58,7 @@ private:
 	static void Thread_ProcessConnection(Connection* pConnection);
 
 	const Config& m_config;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChainServerPtr m_pBlockChainServer;
 	ConnectionManager& m_connectionManager;
 	PeerManager& m_peerManager;
 	std::atomic<bool> m_terminate = true;

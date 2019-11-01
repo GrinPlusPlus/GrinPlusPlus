@@ -42,7 +42,7 @@ void PeerDB::CloseDB()
 	delete m_pDatabase;
 }
 
-std::vector<Peer> PeerDB::LoadAllPeers()
+std::vector<Peer> PeerDB::LoadAllPeers() const
 {
 	LOG_TRACE("Loading all peers.");
 
@@ -59,7 +59,7 @@ std::vector<Peer> PeerDB::LoadAllPeers()
 	return peers;
 }
 
-std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
+std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
 {
 	LOG_TRACE("Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
 

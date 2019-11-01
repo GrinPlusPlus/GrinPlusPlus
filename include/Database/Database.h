@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/ImportExport.h>
+#include <Core/Traits/Lockable.h>
 
 // Forward Declarations
 class Config;
@@ -24,20 +25,38 @@ class IPeerDB;
 class IDatabase
 {
 public:
-	virtual IBlockDB& GetBlockDB() = 0;
+	virtual ~IDatabase() = default;
 
-	virtual IPeerDB& GetPeerDB() = 0;
+	//
+	// The IBlockDB is responsible for managing chain-related storage such as FullBlocks, BlockHeaders, and BlockSums.
+	//
+	virtual std::shared_ptr<Locked<IBlockDB>> GetBlockDB() = 0;
+	virtual std::shared_ptr<const Locked<IBlockDB>> GetBlockDB() const = 0;
+
+	//
+	// The IPeerDB is responsible for managing storage of information about recent peers.
+	//
+	virtual std::shared_ptr<Locked<IPeerDB>> GetPeerDB() = 0;
+	virtual std::shared_ptr<const Locked<IPeerDB>> GetPeerDB() const = 0;
 };
+
+typedef std::shared_ptr<IDatabase> IDatabasePtr;
+typedef std::shared_ptr<const IDatabase> IDatabaseConstPtr;
 
 namespace DatabaseAPI
 {
 	//
 	// Opens all node databases and returns an instance of IDatabase.
+	// Caller must call CloseDatabase when finished.
 	//
-	DATABASE_API IDatabase* OpenDatabase(const Config& config);
+	// Throws DatabaseException if errors occur.
+	//
+	DATABASE_API IDatabasePtr OpenDatabase(const Config& config);
 
 	//
 	// Closes all node databases and cleans up the memory of IDatabase.
 	//
-	DATABASE_API void CloseDatabase(IDatabase* pDatabase);
+	// Throws DatabaseException if errors occur.
+	//
+	//DATABASE_API void CloseDatabase(IDatabase* pDatabase);
 }

@@ -81,7 +81,7 @@ namespace HexUtil
 		return hex;
 	}
 
-	static std::string ConvertHash(const Hash& hash)
+	static std::string ShortHash(const Hash& hash)
 	{
 		const std::vector<unsigned char>& bytes = hash.GetData();
 		const std::vector<unsigned char> firstSixBytes = std::vector<unsigned char>(bytes.cbegin(), bytes.cbegin() + 6);

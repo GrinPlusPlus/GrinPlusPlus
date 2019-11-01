@@ -3,9 +3,9 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/BlockSums.h>
 #include <P2P/SyncStatus.h>
+#include "Common/HashFile.h"
 
 // Forward Declarations
-class HashFile;
 class TxHashSet;
 class KernelMMR;
 class IBlockChainServer;
@@ -21,7 +21,7 @@ public:
 
 private:
 	bool ValidateSizes(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
-	bool ValidateMMRHashes(const MMR& mmr) const;
+	bool ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) const;
 
 	bool ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
 	std::unique_ptr<BlockSums> ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;

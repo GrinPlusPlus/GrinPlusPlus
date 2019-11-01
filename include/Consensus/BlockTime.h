@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <stdint.h>
+#include <algorithm>
 
 // See: https://github.com/mimblewimble/grin/blob/master/core/src/consensus.rs
 namespace Consensus
@@ -31,12 +32,22 @@ namespace Consensus
 	// set to nominal number of block in one day (1440 with 1-minute blocks)
 	static const uint64_t COINBASE_MATURITY = (24 * 60 * 60) / BLOCK_TIME_SEC;
 
+	static uint64_t GetMaxCoinbaseHeight(const uint64_t blockHeight)
+	{
+		return (std::max)(blockHeight, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+	}
+
 	// Default number of blocks in the past when cross-block cut-through will start
 	// happening. Needs to be long enough to not overlap with a long reorg.
 	// Rationale behind the value is the longest bitcoin fork was about 30 blocks, so 5h. 
 	// We add an order of magnitude to be safe and round to 7x24h of blocks to make it
 	// easier to reason about.
 	static const uint32_t CUT_THROUGH_HORIZON = WEEK_HEIGHT;
+
+	static uint64_t GetHorizonHeight(const uint64_t blockHeight)
+	{
+		return (std::max)(blockHeight, (uint64_t)Consensus::CUT_THROUGH_HORIZON) - Consensus::CUT_THROUGH_HORIZON;
+	}
 
 	// Default number of blocks in the past to determine the height where we request
 	// a txhashset (and full blocks from). Needs to be long enough to not overlap with

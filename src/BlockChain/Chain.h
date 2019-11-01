@@ -2,16 +2,17 @@
 
 #include "BlockIndex.h"
 
+#include <Core/Traits/Lockable.h>
 #include <Core/DataFile.h>
 
 // Forward Declarations
+class BlockIndexAllocator;
 class ChainStore;
 
 class Chain
 {
 public:
-	Chain(const EChainType chainType, const std::string& path, BlockIndex* pGenesisBlock);
-	bool Load(ChainStore& chainStore);
+	static std::shared_ptr<Chain> Load(BlockIndexAllocator& blockIndexAllocator, const EChainType chainType, const std::string& path, BlockIndex* pGenesisIndex);
 
 	BlockIndex* GetByHeight(const uint64_t height);
 	const BlockIndex* GetByHeight(const uint64_t height) const;
@@ -26,8 +27,45 @@ public:
 	bool Flush();
 
 private:
+	Chain(const EChainType chainType, std::shared_ptr<DataFile<32>> pDataFile, std::vector<BlockIndex*>&& indices);
+
+	Writer<DataFile<32>> GetTransaction();
+
 	const EChainType m_chainType;
 	std::vector<BlockIndex*> m_indices;
 	size_t m_height;
-	DataFile<32> m_dataFile;
+	Locked<DataFile<32>> m_pDataFile;
+	Writer<DataFile<32>> m_transaction;
+};
+
+class BlockIndexAllocator
+{
+public:
+	BlockIndexAllocator(const std::vector<std::shared_ptr<Chain>>& chains)
+		: m_chains(chains)
+	{
+
+	}
+
+	void AddChain(std::shared_ptr<Chain> pChain)
+	{
+		m_chains.push_back(pChain);
+	}
+
+	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)
+	{
+		for (std::shared_ptr<Chain> pChain : m_chains)
+		{
+			BlockIndex* pIndex = pChain->GetByHeight(height);
+			if (pIndex != nullptr && pIndex->GetHash() == hash)
+			{
+				return pIndex;
+			}
+		}
+
+		return new BlockIndex(hash, height, pPreviousIndex);
+	}
+
+private:
+	std::vector<std::shared_ptr<Chain>> m_chains;
 };

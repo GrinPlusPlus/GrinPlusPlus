@@ -234,7 +234,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed,
 bool Wallet::CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
-	LOG_DEBUG_F("Canceling WalletTx (%lu) of type (%s).", walletTx.GetId(), WalletTxType::ToString(type).c_str());
+	LOG_DEBUG_F("Canceling WalletTx (%lu) of type (%s).", walletTx.GetId(), WalletTxType::ToString(type));
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);

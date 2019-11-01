@@ -2,6 +2,7 @@
 
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Consensus/BlockWeight.h>
+#include <Consensus/Sorting.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
@@ -58,75 +59,43 @@ bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transaction
 
 bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
 {
-	for (auto iter = transactionBody.GetInputs().cbegin(); iter != transactionBody.GetInputs().cend(); iter++)
-	{
-		if (iter + 1 == transactionBody.GetInputs().cend())
-		{
-			break;
-		}
-
-		if (iter->GetHash() > (iter + 1)->GetHash())
-		{
-			return false;
-		}
-	}
-
-	for (auto iter = transactionBody.GetOutputs().cbegin(); iter != transactionBody.GetOutputs().cend(); iter++)
-	{
-		if (iter + 1 == transactionBody.GetOutputs().cend())
-		{
-			break;
-		}
-
-		if (iter->GetHash() > (iter + 1)->GetHash())
-		{
-			return false;
-		}
-	}
-
-	for (auto iter = transactionBody.GetKernels().cbegin(); iter != transactionBody.GetKernels().cend(); iter++)
-	{
-		if (iter + 1 == transactionBody.GetKernels().cend())
-		{
-			break;
-		}
-
-		if (iter->GetHash() > (iter + 1)->GetHash())
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return Consensus::IsSorted(transactionBody.GetInputs())
+		&& Consensus::IsSorted(transactionBody.GetOutputs())
+		&& Consensus::IsSorted(transactionBody.GetKernels());
 }
 
 // Verify that no input is spending an output from the same block.
 bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody)
 {
+	const std::vector<TransactionOutput>& outputs = transactionBody.GetOutputs();
+	const std::vector<TransactionInput>& inputs = transactionBody.GetInputs();
+
+	// Create set with output commitments
 	std::set<Commitment> commitments;
-	for (auto output : transactionBody.GetOutputs())
-	{
-		commitments.insert(output.GetCommitment());
-	}
+	std::transform(
+		outputs.cbegin(),
+		outputs.cend(),
+		std::inserter(commitments, commitments.end()),
+		[](const TransactionOutput& output) { return output.GetCommitment(); }
+	);
 
-	for (auto input : transactionBody.GetInputs())
-	{
-		if (commitments.count(input.GetCommitment()) > 0)
-		{
-			return false;
-		}
-	}
-
-	return true;
+	// Verify none of the input commitments are in the commitments set
+	return !std::any_of(
+		inputs.cbegin(),
+		inputs.cend(),
+		[&commitments](const TransactionInput& input) { return commitments.find(input.GetCommitment()) != commitments.cend(); }
+	);
 }
 
 bool TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOutput>& outputs)
 {
 	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
-	for (auto output : outputs)
-	{
-		rangeProofs.emplace_back(std::make_pair<Commitment, RangeProof>(Commitment(output.GetCommitment()), RangeProof(output.GetRangeProof())));
-	}
+	std::transform(
+		outputs.cbegin(),
+		outputs.cend(),
+		std::back_inserter(rangeProofs),
+		[](const TransactionOutput& output) { return std::make_pair<Commitment, RangeProof>(Commitment(output.GetCommitment()), RangeProof(output.GetRangeProof())); }
+	);
 
 	return Crypto::VerifyRangeProofs(rangeProofs);
 }

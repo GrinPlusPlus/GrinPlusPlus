@@ -9,16 +9,17 @@
 class BlockHeaderProcessor
 {
 public:
-	BlockHeaderProcessor(const Config& config, ChainState& chainState);
+	BlockHeaderProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
 
 	EBlockChainStatus ProcessSyncHeaders(const std::vector<BlockHeader>& headers);
 	EBlockChainStatus ProcessSingleHeader(const BlockHeader& header);
 
 private:
-	EBlockChainStatus ProcessChunkedSyncHeaders(LockedChainState& lockedState, const std::vector<const BlockHeader*>& headers);
-	EBlockChainStatus AddSyncHeaders(LockedChainState& lockedState, const std::vector<const BlockHeader*>& headers) const;
-	bool CheckAndAcceptSyncChain(LockedChainState& lockedState) const;
+	EBlockChainStatus ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers);
+	EBlockChainStatus ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers);
+	EBlockChainStatus AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers) const;
+	bool CheckAndAcceptSyncChain(Writer<ChainState> pLockedState) const;
 
 	const Config& m_config;
-	ChainState& m_chainState;
+	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

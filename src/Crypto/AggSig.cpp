@@ -205,10 +205,12 @@ std::unique_ptr<Signature> AggSig::AggregateSignatures(const std::vector<Compact
 		if (!parsedSignatures.empty())
 		{
 			std::vector<secp256k1_ecdsa_signature*> signaturePointers;
-			for (secp256k1_ecdsa_signature& parsedSignature : parsedSignatures)
-			{
-				signaturePointers.push_back(&parsedSignature);
-			}
+			std::transform(
+				parsedSignatures.begin(),
+				parsedSignatures.end(),
+				std::back_inserter(signaturePointers),
+				[](secp256k1_ecdsa_signature& parsedSig) { return &parsedSig; }
+			);
 
 			secp256k1_ecdsa_signature aggregatedSignature;
 			const int result = secp256k1_aggsig_add_signatures_single(
@@ -238,7 +240,7 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 	for (const Commitment* commitment : commitments)
 	{
 		secp256k1_pedersen_commitment parsedCommitment;
-		const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment->GetCommitmentBytes().data());
+		const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment->GetBytes().data());
 		if (commitmentResult == 1)
 		{
 			secp256k1_pubkey pubKey;
@@ -279,16 +281,20 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 	}
 
 	std::vector<const secp256k1_schnorrsig*> signaturePtrs;
-	for (secp256k1_schnorrsig& parsedSig : parsedSignatures)
-	{
-		signaturePtrs.push_back(&parsedSig);
-	}
+	std::transform(
+		parsedSignatures.cbegin(),
+		parsedSignatures.cend(),
+		std::back_inserter(signaturePtrs),
+		[](const secp256k1_schnorrsig& parsedSig) { return &parsedSig; }
+	);
 
 	std::vector<const unsigned char*> messageData;
-	for (const Hash* message : messages)
-	{
-		messageData.emplace_back(message->data());
-	}
+	std::transform(
+		messages.cbegin(),
+		messages.cend(),
+		std::back_inserter(messageData),
+		[](const Hash* pMessage) { return pMessage->data(); }
+	);
 
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
 	const int verifyResult = secp256k1_schnorrsig_verify_batch(m_pContext, pScratchSpace, signaturePtrs.data(), messageData.data(), pubKeyPtrs.data(), signatures.size());
@@ -341,16 +347,4 @@ std::vector<secp256k1_ecdsa_signature> AggSig::ParseCompactSignatures(const std:
 	}
 
 	return parsed;
-}
-
-std::unique_ptr<Signature> AggSig::SerializeSignature(const secp256k1_ecdsa_signature& signature) const
-{
-	std::vector<unsigned char> signatureBytes(64);
-	const int serializedResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, signatureBytes.data(), &signature);
-	if (serializedResult == 1)
-	{
-		return std::make_unique<Signature>(Signature(CBigInteger<64>(std::move(signatureBytes))));
-	}
-
-	return std::unique_ptr<Signature>(nullptr);
 }

@@ -21,7 +21,7 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 	const std::string requestedBlock = HTTPUtil::GetURIParam(conn, "/v1/blocks/");
 	const std::string queryString = HTTPUtil::GetQueryString(conn);
 
-	IBlockChainServer* pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
+	IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	if (queryString == "compact")
 	{
 		std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChainServer);
@@ -51,7 +51,7 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 	return HTTPUtil::BuildBadRequestResponse(conn, response);
 }
 
-std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock, IBlockChainServer* pBlockChainServer)
+std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock, IBlockChainServerPtr pBlockChainServer)
 {
 	if (requestedBlock.length() == 64 && HexUtil::IsValidHex(requestedBlock))
 	{
@@ -61,17 +61,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHash(hash);
 			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogDebug(StringUtil::Format("BlockAPI::GetBlock - Found block with hash %s.", requestedBlock.c_str()));
+				LOG_DEBUG_F("Found block with hash %s.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with hash %s.", requestedBlock.c_str()));
+				LOG_INFO_F("No block found with hash %s.", requestedBlock);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to a Hash.", requestedBlock.c_str()));
+			LOG_ERROR_F("Failed converting %s to a Hash.", requestedBlock);
 		}
 	}
 	else if (requestedBlock.length() == 66 && HexUtil::IsValidHex(requestedBlock))
@@ -82,17 +82,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByCommitment(outputCommitment);
 			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogDebug(StringUtil::Format("BlockAPI::GetBlock - Found block with output commitment %s.", requestedBlock.c_str()));
+				LOG_DEBUG_F("Found block with output commitment %s.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found with commitment %s.", requestedBlock.c_str()));
+				LOG_INFO_F("No block found with commitment %s.", requestedBlock);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to a Commitment.", requestedBlock.c_str()));
+			LOG_ERROR_F("Failed converting %s to a Commitment.", requestedBlock);
 		}
 	}
 	else
@@ -105,17 +105,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHeight(height);
 			if (pBlock != nullptr)
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - Found block at height %s.", requestedBlock.c_str()));
+				LOG_INFO_F("Found block at height %s.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LoggerAPI::LogInfo(StringUtil::Format("BlockAPI::GetBlock - No block found at height %s.", requestedBlock.c_str()));
+				LOG_INFO_F("No block found at height %s.", requestedBlock);
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			LoggerAPI::LogError(StringUtil::Format("BlockAPI::GetBlock - Failed converting %s to height.", requestedBlock.c_str()));
+			LOG_ERROR_F("Failed converting %s to height.", requestedBlock);
 		}
 	}
 

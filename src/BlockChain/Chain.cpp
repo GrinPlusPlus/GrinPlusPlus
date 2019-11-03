@@ -23,17 +23,15 @@ std::shared_ptr<Chain> Chain::Load(BlockIndexAllocator& blockIndexAllocator, con
 	indices.push_back(pGenesisIndex);
 
 	size_t nextHeight = 1;
-	BlockIndex* pPrevious = pGenesisIndex;
 	while (nextHeight < pDataFile->GetSize())
 	{
 		const Hash hash(pDataFile->GetDataAt(nextHeight));
 
-		BlockIndex* pBlockIndex = blockIndexAllocator.GetOrCreateIndex(hash, nextHeight, pPrevious);
+		BlockIndex* pBlockIndex = blockIndexAllocator.GetOrCreateIndex(hash, nextHeight);
 
 		pBlockIndex->AddChainType(chainType);
 		indices.push_back(pBlockIndex);
 
-		pPrevious = pBlockIndex;
 		++nextHeight;
 	}
 
@@ -72,7 +70,7 @@ const BlockIndex* Chain::GetTip() const
 
 bool Chain::AddBlock(BlockIndex* pBlockIndex)
 {
-	if (pBlockIndex->GetHeight() == (m_height + 1) && pBlockIndex->GetPrevious() == GetTip())
+	if (pBlockIndex->GetHeight() == (m_height + 1))
 	{
 		pBlockIndex->AddChainType(m_chainType);
 		m_indices.push_back(pBlockIndex);

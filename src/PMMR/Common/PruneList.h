@@ -4,12 +4,13 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <stdint.h>
 
 class PruneList
 {
 public:
-	static PruneList Load(const std::string& filePath);
+	static std::shared_ptr<PruneList> Load(const std::string& filePath);
 
 	bool Flush();
 

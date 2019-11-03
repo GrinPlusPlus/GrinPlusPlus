@@ -7,23 +7,24 @@
 #include <Infrastructure/Logger.h>
 
 std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
-	Wallet& wallet,
+	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,
 	const Slate& slate,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt) const
 {
+	auto pWallet = wallet.Write();
 	Slate receiveSlate = slate;
 
 	// Verify slate was never received, exactly one kernel exists, and fee is valid.
-	if (!VerifySlateStatus(wallet, masterSeed, receiveSlate))
+	if (!VerifySlateStatus(pWallet.GetShared(), masterSeed, receiveSlate))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
 	// Generate output
-	const uint32_t walletTxId = wallet.GetNextWalletTxId();
-	OutputData outputData = wallet.CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId, EBulletproofType::ENHANCED, messageOpt);
+	const uint32_t walletTxId = pWallet->GetNextWalletTxId();
+	OutputData outputData = pWallet->CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), walletTxId, EBulletproofType::ENHANCED, messageOpt);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = *Crypto::GenerateSecureNonce();
 
@@ -34,7 +35,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(wallet, masterSeed, receiveSlate, outputData, walletTxId, slateContext, addressOpt, messageOpt))
+	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, receiveSlate, outputData, walletTxId, slateContext, addressOpt, messageOpt))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -42,10 +43,10 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
 	return std::make_unique<Slate>(std::move(receiveSlate));
 }
 
-bool ReceiveSlateBuilder::VerifySlateStatus(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const
+bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	// Slate was already received.
-	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxBySlateId(masterSeed, slate.GetSlateId());
+	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetSlateId());
 	if (pWalletTx != nullptr && pWalletTx->GetType() != EWalletTxType::RECEIVED_CANCELED)
 	{
 		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Already received slate " + uuids::to_string(slate.GetSlateId()));
@@ -125,7 +126,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 
 // TODO: Use a DB Batch
 bool ReceiveSlateBuilder::UpdateDatabase(
-	Wallet& wallet,
+	std::shared_ptr<Wallet> pWallet,
 	const SecureVector& masterSeed,
 	const Slate& slate,
 	const OutputData& outputData,
@@ -135,14 +136,14 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 	const std::optional<std::string>& messageOpt) const
 {
 	// Save secretKey and secretNonce
-	if (!wallet.SaveSlateContext(slate.GetSlateId(), masterSeed, context))
+	if (!pWallet->SaveSlateContext(slate.GetSlateId(), masterSeed, context))
 	{
 		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to save context for slate " + uuids::to_string(slate.GetSlateId()));
 		return false;
 	}
 
 	// Save OutputData
-	if (!wallet.SaveOutputs(masterSeed, std::vector<OutputData>({ outputData })))
+	if (!pWallet->SaveOutputs(masterSeed, std::vector<OutputData>({ outputData })))
 	{
 		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to save output for slate " + uuids::to_string(slate.GetSlateId()));
 		return false;
@@ -164,7 +165,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 		std::nullopt
 	);
 
-	if (!wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
+	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
 	{
 		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to create WalletTx");
 		return false;

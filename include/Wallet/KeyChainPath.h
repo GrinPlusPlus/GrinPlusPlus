@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <stdint.h>
 #include <string>
@@ -62,7 +62,7 @@ public:
 	{
 		if (path.empty() || path.at(0) != 'm')
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		std::vector<uint32_t> keyIndices;
@@ -72,7 +72,7 @@ public:
 		{
 			if (remaining.at(0) != '/')
 			{
-				throw DeserializationException();
+				throw DESERIALIZATION_EXCEPTION();
 			}
 
 			remaining = remaining.substr(1);

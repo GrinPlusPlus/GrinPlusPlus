@@ -19,6 +19,11 @@ public:
 	// Returns the current confirmed chain height.
 	//
 	virtual uint64_t GetChainHeight() const = 0;
+	
+	//
+	// Returns the header of the confirmed block at the given height, if it exists.
+	//
+	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const uint64_t height) const = 0;
 
 	//
 	// Returns the location (block height and mmr index) of each requested output, if it is *unspent*.
@@ -40,3 +45,6 @@ public:
 	//
 	virtual bool PostTransaction(const Transaction& transaction) = 0;
 };
+
+typedef std::shared_ptr<INodeClient> INodeClientPtr;
+typedef std::shared_ptr<const INodeClient> INodeClientConstPtr;

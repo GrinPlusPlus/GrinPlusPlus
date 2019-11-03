@@ -5,7 +5,7 @@
 class ChainResyncer
 {
 public:
-	ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState);
+	explicit ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState);
 
 	bool ResyncChain();
 

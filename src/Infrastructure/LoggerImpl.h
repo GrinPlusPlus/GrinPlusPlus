@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spdlog/spdlog.h"
+#include <Infrastructure/Logger.h>
 
 #include <string>
 #include <memory>
@@ -10,12 +11,19 @@ class Logger
 public:
 	static Logger& GetInstance();
 
-	void StartLogger(const std::string& directory, const spdlog::level::level_enum& logLevel);
-	void Log(const spdlog::level::level_enum logLevel, const std::string& eventText);
+	void StartLogger(
+		const std::string& nodeDirectory,
+		const std::string& walletDirectory,
+		const spdlog::level::level_enum& logLevel
+	);
+	void Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
 
 private:
-	Logger();
+	Logger() = default;
 
-	std::shared_ptr<spdlog::logger> m_pLogger;
+	std::shared_ptr<spdlog::logger> GetLogger(const LoggerAPI::LogFile file);
+
+	std::shared_ptr<spdlog::logger> m_pNodeLogger;
+	std::shared_ptr<spdlog::logger> m_pWalletLogger;
 };

@@ -36,29 +36,30 @@ public:
 		m_logLevel(logLevel),
 		m_torConfig(torConfig)
 	{
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath);
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "kernel/");
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "output/");
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath + "rangeproof/");
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath);
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath);
-		fs::create_directories(m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory);
+		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath);
+		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "kernel/");
+		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "output/");
+		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "rangeproof/");
+		fs::create_directories(m_dataPath + "NODE/" + m_chainPath);
+		fs::create_directories(m_dataPath + "NODE/" + m_databasePath);
+		fs::create_directories(m_dataPath + "NODE/" + m_logDirectory);
 	}
 
-	inline const std::string& GetDataDirectory() const { return m_dataPath; }
-	inline const std::string GetLogDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_logDirectory; }
-	inline const std::string GetChainDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_chainPath; }
-	inline const std::string GetDatabaseDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_databasePath; }
-	inline const std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE/" /*+ std::string(SEPARATOR) */+ m_txHashSetPath; }
+	const std::string& GetDataDirectory() const { return m_dataPath; }
+	std::string GetNodeDirectory() const { return m_dataPath + "NODE/"; }
+	std::string GetLogDirectory() const { return m_dataPath + "NODE/" + m_logDirectory; }
+	std::string GetChainDirectory() const { return m_dataPath + "NODE/" + m_chainPath; }
+	std::string GetDatabaseDirectory() const { return m_dataPath + "NODE/" + m_databasePath; }
+	std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE/" + m_txHashSetPath; }
 
-	inline const Environment& GetEnvironment() const { return m_environment; }
-	inline const DandelionConfig& GetDandelionConfig() const { return m_dandelionConfig; }
-	inline const P2PConfig& GetP2PConfig() const { return m_p2pConfig; }
-	inline const EClientMode GetClientMode() const { return EClientMode::FAST_SYNC; }
-	inline const WalletConfig& GetWalletConfig() const { return m_walletConfig; }
-	inline const ServerConfig& GetServerConfig() const { return m_serverConfig; }
-	inline const std::string& GetLogLevel() const { return m_logLevel; }
-	inline const TorConfig& GetTorConfig() const { return m_torConfig; }
+	const Environment& GetEnvironment() const { return m_environment; }
+	const DandelionConfig& GetDandelionConfig() const { return m_dandelionConfig; }
+	const P2PConfig& GetP2PConfig() const { return m_p2pConfig; }
+	const EClientMode GetClientMode() const { return EClientMode::FAST_SYNC; }
+	const WalletConfig& GetWalletConfig() const { return m_walletConfig; }
+	const ServerConfig& GetServerConfig() const { return m_serverConfig; }
+	const std::string& GetLogLevel() const { return m_logLevel; }
+	const TorConfig& GetTorConfig() const { return m_torConfig; }
 
 private:
 	std::string m_txHashSetPath{ "TXHASHSET/" };
@@ -76,3 +77,5 @@ private:
 	std::string m_logLevel;
 	TorConfig m_torConfig;
 };
+
+typedef std::shared_ptr<const Config> ConfigPtr;

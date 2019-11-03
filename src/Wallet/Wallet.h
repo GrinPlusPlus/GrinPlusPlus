@@ -14,15 +14,15 @@
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Net/Tor/TorAddress.h>
 #include <Core/Models/TransactionOutput.h>
+#include <Core/Traits/Lockable.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BulletproofType.h>
+#include <string>
 
 class Wallet
 {
 public:
-	Wallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username, KeyChainPath&& userPath);
-
-	static Wallet* LoadWallet(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, const std::string& username);
+	static Locked<Wallet> LoadWallet(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB, const std::string& username);
 
 	inline const std::string& GetUsername() const { return m_username; }
 
@@ -62,9 +62,11 @@ public:
 	bool CancelWalletTx(const SecureVector& masterSeed, WalletTx& walletTx);
 
 private:
+	Wallet(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB, const std::string& username, KeyChainPath&& userPath);
+
 	const Config& m_config;
-	const INodeClient& m_nodeClient;
-	IWalletDB& m_walletDB;
+	INodeClientConstPtr m_pNodeClient;
+	IWalletDBPtr m_pWalletDB;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
 	std::optional<TorAddress> m_pTorAddress;

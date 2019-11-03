@@ -14,29 +14,28 @@
 static const uint8_t ENCRYPTION_FORMAT = 0;
 static const int LATEST_SCHEMA_VERSION = 1;
 
-WalletSqlite::WalletSqlite(const Config& config)
-	: m_config(config)
+WalletSqlite::WalletSqlite(const std::string& walletDirectory)
+	: m_walletDirectory(walletDirectory)
 {
+
 }
 
-void WalletSqlite::Open()
-{
-	m_userDBs.clear();
-}
-
-void WalletSqlite::Close()
+WalletSqlite::~WalletSqlite()
 {
 	for (auto userDB : m_userDBs)
 	{
 		sqlite3_close(userDB.second);
 	}
+}
 
-	m_userDBs.clear();
+std::shared_ptr<WalletSqlite> WalletSqlite::Open(const Config& config)
+{
+	return std::shared_ptr<WalletSqlite>(new WalletSqlite(config.GetWalletConfig().GetWalletDirectory()));
 }
 
 std::vector<std::string> WalletSqlite::GetAccounts() const
 {
-	return FileUtil::GetSubDirectories(m_config.GetWalletConfig().GetWalletDirectory(), false);
+	return FileUtil::GetSubDirectories(m_walletDirectory, false);
 }
 
 bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& masterSeed)
@@ -47,8 +46,7 @@ bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& m
 		return false;
 	}
 
-	const std::string userDBPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username;
-	const std::string dbFile = userDBPath + "/wallet.db";
+	const std::string dbFile = GetDBFile(username);
 	if (FileUtil::Exists(dbFile))
 	{
 		sqlite3* pDatabase = nullptr;
@@ -96,7 +94,7 @@ bool WalletSqlite::OpenWallet(const std::string& username, const SecureVector& m
 
 bool WalletSqlite::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
-	const std::string userDBPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username;
+	const std::string userDBPath = m_walletDirectory + "/" + username;
 	const std::string seedFile = userDBPath + "/seed.json";
 	if (FileUtil::Exists(seedFile))
 	{
@@ -135,7 +133,7 @@ std::unique_ptr<EncryptedSeed> WalletSqlite::LoadWalletSeed(const std::string& u
 {
 	LOG_TRACE_F("Loading wallet seed for %s", username);
 
-	const std::string seedPath = m_config.GetWalletConfig().GetWalletDirectory() + "/" + username + "/seed.json";
+	const std::string seedPath = m_walletDirectory + "/" + username + "/seed.json";
 	if (!FileUtil::Exists(seedPath))
 	{
 		LOG_WARNING_F("Wallet not found for user: %s", username);
@@ -415,7 +413,7 @@ bool WalletSqlite::SaveMetadata(const std::string& username, const UserMetadata&
 
 sqlite3* WalletSqlite::CreateWalletDB(const std::string& username)
 {
-	const std::string walletDBFile = StringUtil::Format("%s/%s/wallet.db", m_config.GetWalletConfig().GetWalletDirectory(), username);
+	const std::string walletDBFile = GetDBFile(username);
 	sqlite3* pDatabase = nullptr;
 	if (sqlite3_open(walletDBFile.c_str(), &pDatabase) != SQLITE_OK)
 	{

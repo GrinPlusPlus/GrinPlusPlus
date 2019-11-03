@@ -55,9 +55,9 @@ int main(int argc, char* argv[])
 
 	const Config config = ConfigManager::LoadConfig(environment);
 	NodeDaemon node(config);
-	INodeClient* pNodeClient = node.Initialize();
+	INodeClientPtr pNodeClient = node.Initialize();
 	
-	WalletDaemon wallet(config, *pNodeClient);
+	WalletDaemon wallet(config, pNodeClient);
 	wallet.Initialize();
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();

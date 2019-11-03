@@ -5,7 +5,7 @@
 #include <Net/Clients/HTTP/HTTP.h>
 #include <Net/Clients/HTTP/HTTPException.h>
 #include <Common/Util/StringUtil.h>
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 #include <Core/Util/JsonUtil.h>
 #include <json/json.h>
 #include <string>
@@ -129,7 +129,7 @@ public:
 		Json::Value json;
 		if (!JsonUtil::Parse(requestBody, json))
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		return std::make_optional<Json::Value>(json);

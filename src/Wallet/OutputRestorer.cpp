@@ -8,22 +8,22 @@
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
-OutputRestorer::OutputRestorer(const Config& config, const INodeClient& nodeClient, const KeyChain& keyChain)
-	: m_config(config), m_nodeClient(nodeClient), m_keyChain(keyChain)
+OutputRestorer::OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain)
+	: m_config(config), m_pNodeClient(pNodeClient), m_keyChain(keyChain)
 {
 
 }
 
 std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis) const
 {
-	const uint64_t chainHeight = m_nodeClient.GetChainHeight();
+	const uint64_t chainHeight = m_pNodeClient->GetChainHeight();
 
 	uint64_t nextLeafIndex = fromGenesis ? 0 : wallet.GetRestoreLeafIndex() + 1;
 
 	std::vector<OutputData> walletOutputs;
 	while (true)
 	{
-		std::unique_ptr<OutputRange> pOutputRange = m_nodeClient.GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
+		std::unique_ptr<OutputRange> pOutputRange = m_pNodeClient->GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
 		if (pOutputRange == nullptr)
 		{
 			return std::vector<OutputData>(); // TODO: Throw exception
@@ -75,7 +75,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 	if (pRewoundProof != nullptr)
 	{
-		LoggerAPI::LogInfo("OutputRestorer::GetWalletOutput - Found own output: " + outputDisplayInfo.GetIdentifier().GetCommitment().ToHex());
+		WALLET_INFO_F("Found own output: %s", outputDisplayInfo.GetIdentifier().GetCommitment());
 
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
@@ -89,7 +89,11 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath, pRewoundProof->GetAmount())->GetBytes();
 		}
 
-		TransactionOutput txOutput(outputDisplayInfo.GetIdentifier().GetFeatures(), Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()), RangeProof(outputDisplayInfo.GetRangeProof()));
+		TransactionOutput txOutput(
+			outputDisplayInfo.GetIdentifier().GetFeatures(),
+			Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()),
+			RangeProof(outputDisplayInfo.GetRangeProof())
+		);
 		const uint64_t amount = pRewoundProof->GetAmount();
 		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
 		const uint64_t mmrIndex = outputDisplayInfo.GetLocation().GetMMRIndex();

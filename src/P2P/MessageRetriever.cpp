@@ -48,7 +48,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 
 			if (!messageHeader.IsValid(m_config))
 			{
-				throw DeserializationException();
+				throw DESERIALIZATION_EXCEPTION();
 			}
 			else
 			{
@@ -66,7 +66,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 				}
 				else
 				{
-					throw DeserializationException();
+					throw DESERIALIZATION_EXCEPTION();
 				}
 			}
 		}

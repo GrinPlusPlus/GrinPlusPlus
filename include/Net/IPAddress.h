@@ -61,7 +61,7 @@ public:
 		{
 		}
 
-		throw DESERIALIZATION_EXCEPTION("Failed to parse IP address from: " + addressStr);
+		throw DESERIALIZATION_EXCEPTION();
 	}
 
 	//
@@ -197,7 +197,7 @@ public:
 		}
 		else
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 	}
 

@@ -2,6 +2,7 @@
 #include "ThreadManagerImpl.h"
 
 #include <Infrastructure/Logger.h>
+#include <Common/Util/FileUtil.h>
 #include <fstream>
 
 Logger& Logger::GetInstance()
@@ -10,26 +11,36 @@ Logger& Logger::GetInstance()
 	return instance;
 }
 
-Logger::Logger()
+void Logger::StartLogger(const std::string& nodeDirectory, const std::string& walletDirectory, const spdlog::level::level_enum& logLevel)
 {
-}
-
-void Logger::StartLogger(const std::string& directory, const spdlog::level::level_enum& logLevel)
-{
-	const std::string logPath = directory + "GrinPlusPlus.log";
-
-	auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
-	m_pLogger = spdlog::create_async("LOGGER", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
-	spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
-	if (m_pLogger != nullptr)
 	{
-		m_pLogger->set_level(logLevel);
+		FileUtil::CreateDirectories(nodeDirectory + "LOGS");
+		const std::string logPath = nodeDirectory + "LOGS/Node.log";
+		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
+		m_pNodeLogger = spdlog::create_async("NODE", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
+		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
+		if (m_pNodeLogger != nullptr)
+		{
+			m_pNodeLogger->set_level(logLevel);
+		}
+	}
+	{
+		FileUtil::CreateDirectories(walletDirectory + "LOGS");
+		const std::string logPath = walletDirectory + "LOGS/Wallet.log";
+		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
+		m_pWalletLogger = spdlog::create_async("WALLET", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
+		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
+		if (m_pWalletLogger != nullptr)
+		{
+			m_pWalletLogger->set_level(logLevel);
+		}
 	}
 }
 
-void Logger::Log(const spdlog::level::level_enum logLevel, const std::string& eventText)
+void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText)
 {
-	if (m_pLogger != nullptr)
+	auto pLogger = GetLogger(file);
+	if (pLogger != nullptr)
 	{
 		std::string eventTextClean = eventText;
 		while (eventTextClean.find("\n") != std::string::npos)
@@ -43,21 +54,38 @@ void Logger::Log(const spdlog::level::level_enum logLevel, const std::string& ev
 			eventTextClean = threadName + " " + eventTextClean;
 		}
 
-		m_pLogger->log(logLevel, eventTextClean);
+		pLogger->log(logLevel, eventTextClean);
 	}
 }
 
 void Logger::Flush()
 {
-	if (m_pLogger != nullptr)
+	if (m_pNodeLogger != nullptr)
 	{
-		m_pLogger->flush();
+		m_pNodeLogger->flush();
+	}
+
+	if (m_pWalletLogger != nullptr)
+	{
+		m_pWalletLogger->flush();
+	}
+}
+
+std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
+{
+	if (file == LoggerAPI::LogFile::WALLET)
+	{
+		return m_pWalletLogger;
+	}
+	else
+	{
+		return m_pNodeLogger;
 	}
 }
 
 namespace LoggerAPI
 {
-	LOGGER_API void Initialize(const std::string& directory, const std::string& logLevel)
+	LOGGER_API void Initialize(const std::string& nodeDirectory, const std::string& walletDirectory, const std::string& logLevel)
 	{
 		spdlog::level::level_enum logLevelEnum = spdlog::level::level_enum::debug;
 		if (logLevel == "TRACE")
@@ -81,32 +109,32 @@ namespace LoggerAPI
 			logLevelEnum = spdlog::level::level_enum::err;
 		}
 
-		Logger::GetInstance().StartLogger(directory, logLevelEnum);
+		Logger::GetInstance().StartLogger(nodeDirectory, walletDirectory, logLevelEnum);
 	}
 
 	LOGGER_API void LogTrace(const std::string& message)
 	{
-		Logger::GetInstance().Log(spdlog::level::level_enum::trace, message);
+		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::trace, message);
 	}
 
 	LOGGER_API void LogDebug(const std::string& message)
 	{
-		Logger::GetInstance().Log(spdlog::level::level_enum::debug, message);
+		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::debug, message);
 	}
 
 	LOGGER_API void LogInfo(const std::string& message)
 	{
-		Logger::GetInstance().Log(spdlog::level::level_enum::info, message);
+		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::info, message);
 	}
 
 	LOGGER_API void LogWarning(const std::string& message)
 	{
-		Logger::GetInstance().Log(spdlog::level::level_enum::warn, message);
+		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::warn, message);
 	}
 
 	LOGGER_API void LogError(const std::string& message)
 	{
-		Logger::GetInstance().Log(spdlog::level::level_enum::err, message);
+		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::err, message);
 	}
 
 	LOGGER_API void Flush()
@@ -115,33 +143,33 @@ namespace LoggerAPI
 	}
 
 
-	LOGGER_API void LogTrace(const std::string& function, const size_t line, const std::string& message)
+	LOGGER_API void LogTrace(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{
 		const std::string formatted = function + "(" + std::to_string(line) + ") - " + message;
-		Logger::GetInstance().Log(spdlog::level::level_enum::trace, formatted);
+		Logger::GetInstance().Log(file, spdlog::level::level_enum::trace, formatted);
 	}
 
-	LOGGER_API void LogDebug(const std::string& function, const size_t line, const std::string& message)
+	LOGGER_API void LogDebug(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{
 		const std::string formatted = function + "(" + std::to_string(line) + ") - " + message;
-		Logger::GetInstance().Log(spdlog::level::level_enum::debug, formatted);
+		Logger::GetInstance().Log(file, spdlog::level::level_enum::debug, formatted);
 	}
 
-	LOGGER_API void LogInfo(const std::string& function, const size_t line, const std::string& message)
+	LOGGER_API void LogInfo(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{
 		const std::string formatted = function + "(" + std::to_string(line) + ") - " + message;
-		Logger::GetInstance().Log(spdlog::level::level_enum::info, formatted);
+		Logger::GetInstance().Log(file, spdlog::level::level_enum::info, formatted);
 	}
 
-	LOGGER_API void LogWarning(const std::string& function, const size_t line, const std::string& message)
+	LOGGER_API void LogWarning(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{
 		const std::string formatted = function + "(" + std::to_string(line) + ") - " + message;
-		Logger::GetInstance().Log(spdlog::level::level_enum::warn, formatted);
+		Logger::GetInstance().Log(file, spdlog::level::level_enum::warn, formatted);
 	}
 
-	LOGGER_API void LogError(const std::string& function, const size_t line, const std::string& message)
+	LOGGER_API void LogError(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{
 		const std::string formatted = function + "(" + std::to_string(line) + ") - " + message;
-		Logger::GetInstance().Log(spdlog::level::level_enum::err, formatted);
+		Logger::GetInstance().Log(file, spdlog::level::level_enum::err, formatted);
 	}
 }

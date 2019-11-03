@@ -16,7 +16,7 @@ public:
 
 	std::shared_ptr<Chain> GetChain(const EChainType chainType);
 	std::shared_ptr<const Chain> GetChain(const EChainType chainType) const;
-	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex);
+	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height);
 	const BlockIndex* FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const;
 
 	//

@@ -68,7 +68,6 @@ void ConnectionManager::Stop()
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
 		LOG_ERROR(std::string(e.what()));
 	}
 	catch (...)

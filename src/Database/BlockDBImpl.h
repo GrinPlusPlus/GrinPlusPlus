@@ -3,6 +3,8 @@
 #include <rocksdb/db.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/options.h>
+#include <rocksdb/utilities/optimistic_transaction_db.h>
+#include <rocksdb/utilities/transaction.h>
 
 #include <Database/BlockDb.h>
 #include <Config/Config.h>
@@ -14,14 +16,17 @@ using namespace rocksdb;
 class BlockDB : public IBlockDB
 {
 public:
-	explicit BlockDB(const Config& config);
-	~BlockDB() = default;
+	~BlockDB();
 
-	void OpenDB();
-	void CloseDB();
+	static std::shared_ptr<BlockDB> OpenDB(const Config& config);
 
-	virtual void Commit() override final {} // TODO: Handle this
-	virtual void Rollback() override final {} // TODO: Handle this
+	virtual void Commit() override final;
+	virtual void Rollback() override final;
+	virtual void OnInitWrite() override final;
+	virtual void OnEndWrite() override final;
+
+	Status Read(ColumnFamilyHandle* pFamilyHandle, const Slice& key, std::string* pValue) const;
+	Status Write(ColumnFamilyHandle* pFamilyHandle, const Slice& key, const Slice& value);
 
 	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const override final;
 
@@ -41,9 +46,24 @@ public:
 	virtual std::unique_ptr<Roaring> GetBlockInputBitmap(const Hash& blockHash) const override final;
 
 private:
+	BlockDB(
+		const Config& config,
+		DB* pDatabase,
+		OptimisticTransactionDB* pTransactionDB,
+		ColumnFamilyHandle* pDefaultHandle,
+		ColumnFamilyHandle* pBlockHandle,
+		ColumnFamilyHandle* pHeaderHandle,
+		ColumnFamilyHandle* pBlockSumsHandle,
+		ColumnFamilyHandle* pOutputPosHandle,
+		ColumnFamilyHandle* pInputBitmapHandle
+	);
+
 	const Config& m_config;
 
 	DB* m_pDatabase;
+	OptimisticTransactionDB* m_pTransactionDB;
+
+	Transaction* m_pTransaction;
 
 	ColumnFamilyHandle* m_pDefaultHandle;
 	ColumnFamilyHandle* m_pBlockHandle;

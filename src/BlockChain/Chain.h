@@ -41,7 +41,7 @@ private:
 class BlockIndexAllocator
 {
 public:
-	BlockIndexAllocator(const std::vector<std::shared_ptr<Chain>>& chains)
+	explicit BlockIndexAllocator(const std::vector<std::shared_ptr<Chain>>& chains)
 		: m_chains(chains)
 	{
 
@@ -52,7 +52,7 @@ public:
 		m_chains.push_back(pChain);
 	}
 
-	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)
+	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height)
 	{
 		for (std::shared_ptr<Chain> pChain : m_chains)
 		{
@@ -63,7 +63,7 @@ public:
 			}
 		}
 
-		return new BlockIndex(hash, height, pPreviousIndex);
+		return new BlockIndex(hash, height);
 	}
 
 private:

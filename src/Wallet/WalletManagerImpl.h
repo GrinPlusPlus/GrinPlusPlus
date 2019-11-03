@@ -10,8 +10,8 @@
 class WalletManager : public IWalletManager
 {
 public:
-	WalletManager(const Config& config, INodeClient& nodeClient, IWalletDB* pWalletDB);
-	virtual ~WalletManager();
+	WalletManager(const Config& config, INodeClientPtr nodeClient, IWalletDBPtr pWalletDB);
+	virtual ~WalletManager() = default;
 
 	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(
 		const std::string& username,
@@ -25,13 +25,13 @@ public:
 	) override final;
 
 	virtual SecureString GetSeedWords(const SessionToken& token) override final;
-	virtual bool CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
+	virtual void CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) override final;
 
-	virtual std::unique_ptr<SessionToken> Login(const std::string& username, const SecureString& password) override final;
+	virtual SessionToken Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
-	virtual bool DeleteWallet(const std::string& username, const SecureString& password) override final;
+	virtual void DeleteWallet(const std::string& username, const SecureString& password) override final;
 	virtual std::vector<std::string> GetAllAccounts() const override final;
 
 	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
@@ -67,7 +67,7 @@ public:
 
 private:
 	const Config& m_config;
-	INodeClient& m_nodeClient;
-	IWalletDB* m_pWalletDB;
+	INodeClientPtr m_pNodeClient;
+	IWalletDBPtr m_pWalletDB;
 	SessionManager m_sessionManager;
 };

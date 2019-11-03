@@ -8,6 +8,7 @@
 #include "Processors/BlockProcessor.h"
 #include "ChainResyncer.h"
 
+#include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
 #include <Crypto/Crypto.h>
 #include <PMMR/TxHashSet.h>
@@ -32,11 +33,6 @@ BlockChainServer::BlockChainServer(
 
 }
 
-BlockChainServer::~BlockChainServer()
-{
-
-}
-
 std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
@@ -44,7 +40,7 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
 	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
-	BlockIndex* pGenesisIndex = new BlockIndex(genesisBlock.GetHash(), 0, nullptr);
+	BlockIndex* pGenesisIndex = new BlockIndex(genesisBlock.GetHash(), 0);
 
 	std::shared_ptr<Locked<ChainStore>> pChainStore = ChainStore::Load(config, pGenesisIndex);
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(config);
@@ -123,7 +119,12 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 
 std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 {
-	// TODO: Check horizon.
+	const uint64_t horizon = Consensus::GetHorizonHeight(m_pChainState->Read()->GetHeight(EChainType::CONFIRMED));
+	if (blockHeader.GetHeight() < horizon)
+	{
+		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
+	}
+
 	auto pReader = m_pChainState->Read();
 	const std::string destination = StringUtil::Format("%sSnapshots/TxHashSet.%s.zip", fs::temp_directory_path().string(), blockHeader.ShortHash());
 	if (m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), blockHeader, destination))

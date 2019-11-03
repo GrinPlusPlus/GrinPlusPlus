@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Exceptions/UnimplementedException.h>
 #include <Core/Traits/Batchable.h>
 #include <memory>
 #include <shared_mutex>
@@ -103,7 +104,7 @@ class Writer : virtual public Reader<T>
 			m_pMutex->unlock();
 		}
 
-		typename std::enable_if<std::is_base_of<Traits::Batchable, U>::value, void>::type Commit()
+		void Commit()
 		{
 			if (std::is_base_of<Traits::Batchable, U>::value)
 			{
@@ -225,8 +226,13 @@ public:
 		return Writer<T>::Create(false, m_pObject, m_pMutex);
 	}
 
-	typename std::enable_if<std::is_base_of<Traits::Batchable, T>::value, Writer<T>>::type BatchWrite()
+	Writer<T> BatchWrite()
 	{
+		if (!std::is_base_of<Traits::Batchable, T>::value)
+		{
+			throw UNIMPLEMENTED_EXCEPTION;
+		}
+
 		return Writer<T>::Create(true, m_pObject, m_pMutex);
 	}
 

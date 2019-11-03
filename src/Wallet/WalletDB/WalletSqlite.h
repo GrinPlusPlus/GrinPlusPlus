@@ -9,11 +9,9 @@
 class WalletSqlite : public IWalletDB
 {
 public:
-	WalletSqlite(const Config& config);
-    virtual ~WalletSqlite() = default;
+    virtual ~WalletSqlite();
 
-	void Open();
-	void Close();
+	static std::shared_ptr<WalletSqlite> Open(const Config& config);
 
 	virtual std::vector<std::string> GetAccounts() const override final;
 
@@ -39,12 +37,15 @@ public:
 	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) override final;
 
 private:
+	WalletSqlite(const std::string& walletDirectory);
+
+	std::string GetDBFile(const std::string username) const { return StringUtil::Format("%s/%s/wallet.db", m_walletDirectory, username); }
+
 	sqlite3* CreateWalletDB(const std::string& username);
 
 	UserMetadata GetMetadata(const std::string& username) const;
 	bool SaveMetadata(const std::string& username, const UserMetadata& userMetadata);
 
-	const Config& m_config;
-
+	std::string m_walletDirectory;
 	std::unordered_map<std::string, sqlite3*> m_userDBs;
 };

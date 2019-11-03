@@ -49,7 +49,6 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	if (pBlockSums == nullptr)
 	{
 		LOG_ERROR_F("Validation of %s failed.", path);
-		//TxHashSetManager::DestroyTxHashSet(pTxHashSet);
 		return false;
 	}
 

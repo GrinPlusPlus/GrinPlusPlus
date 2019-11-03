@@ -9,38 +9,52 @@
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
 
-WalletRestServer::WalletRestServer(const Config& config, IWalletManager& walletManager, INodeClient& nodeClient)
-	: m_config(config), m_walletManager(walletManager)
+WalletRestServer::WalletRestServer(
+	const Config& config,
+	IWalletManagerPtr pWalletManager,
+	std::shared_ptr<WalletContext> pWalletContext,
+	mg_context* pOwnerCivetContext)
+	: m_config(config),
+	m_pWalletManager(pWalletManager),
+	m_pWalletContext(pWalletContext),
+	m_pOwnerCivetContext(pOwnerCivetContext)
 {
-	m_pWalletContext = new WalletContext(config, &walletManager, &nodeClient);
+
 }
 
 WalletRestServer::~WalletRestServer()
 {
-	delete m_pWalletContext;
+	mg_stop(m_pOwnerCivetContext);
 }
 
-bool WalletRestServer::Initialize()
+std::shared_ptr<WalletRestServer> WalletRestServer::Create(const Config& config, IWalletManagerPtr pWalletManager, std::shared_ptr<INodeClient> pNodeClient)
 {
-	const uint32_t ownerPort = m_config.GetWalletConfig().GetOwnerPort();
+	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
 	const char* pOwnerOptions[] = {
 		"num_threads", "1",
 		"listening_ports", std::to_string(ownerPort).c_str(),
 		NULL
 	};
 
-	m_pOwnerCivetContext = mg_start(NULL, 0, pOwnerOptions);
-	mg_set_request_handler(m_pOwnerCivetContext, "/v1/wallet/owner/", WalletRestServer::OwnerAPIHandler, m_pWalletContext);
+	std::shared_ptr<WalletContext> pWalletContext = std::shared_ptr<WalletContext>(new WalletContext(config, pWalletManager, pNodeClient));
 
-	return true;
+	mg_context* pOwnerCivetContext = mg_start(NULL, 0, pOwnerOptions);
+	mg_set_request_handler(pOwnerCivetContext, "/v1/wallet/owner/", WalletRestServer::OwnerAPIHandler, pWalletContext.get());
+
+	return std::shared_ptr<WalletRestServer>(new WalletRestServer(
+		config,
+		pWalletManager,
+		pWalletContext,
+		pOwnerCivetContext
+	));
 }
 
 int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext)
 {
-	WalletContext* pContext = (WalletContext*)pWalletContext;
-
 	try
 	{
+		WalletContext* pContext = (WalletContext*)pWalletContext;
+
 		const std::string action = HTTPUtil::GetURIParam(pConnection, "/v1/wallet/owner/");
 		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(pConnection);
 		if (method == HTTP::EHTTPMethod::GET)
@@ -74,11 +88,4 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "HTTPMethod not Supported");
-}
-
-bool WalletRestServer::Shutdown()
-{
-	mg_stop(m_pOwnerCivetContext);
-
-	return true;
 }

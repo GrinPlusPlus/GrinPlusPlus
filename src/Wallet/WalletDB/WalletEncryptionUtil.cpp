@@ -27,7 +27,7 @@ SecureVector WalletEncryptionUtil::Decrypt(const SecureVector& masterSeed, const
 	const uint8_t formatVersion = byteBuffer.ReadU8();
 	if (formatVersion != ENCRYPTION_FORMAT)
 	{
-		throw DeserializationException();
+		throw DESERIALIZATION_EXCEPTION();
 	}
 
 	const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();

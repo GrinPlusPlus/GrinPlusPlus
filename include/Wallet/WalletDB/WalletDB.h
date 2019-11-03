@@ -45,15 +45,12 @@ public:
 	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) = 0;
 };
 
+typedef std::shared_ptr<IWalletDB> IWalletDBPtr;
+
 namespace WalletDBAPI
 {
 	//
 	// Opens the wallet database and returns an instance of IWalletDB.
 	//
-	WALLET_DB_API IWalletDB* OpenWalletDB(const Config& config);
-
-	//
-	// Closes the wallet database and cleans up the memory of IWalletDB.
-	//
-	WALLET_DB_API void CloseWalletDB(IWalletDB* pWalletDB);
+	WALLET_DB_API IWalletDBPtr OpenWalletDB(const Config& config);
 }

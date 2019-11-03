@@ -49,6 +49,11 @@ public:
 		return m_pBlockChainServer->GetHeight(EChainType::CONFIRMED);
 	}
 
+	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const uint64_t height) const override final
+	{
+		return m_pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);
+	}
+
 	virtual std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const override final
 	{ 
 		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();

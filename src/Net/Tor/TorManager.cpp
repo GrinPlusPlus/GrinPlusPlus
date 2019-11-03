@@ -15,31 +15,27 @@ TorManager& TorManager::GetInstance(const TorConfig& config)
 TorManager::TorManager(const TorConfig& config)
 	: m_torConfig(config)
 {
-	m_pControl = new TorControl(config);
-	m_pControl->Initialize();
-}
-
-TorManager::~TorManager()
-{
-	m_pControl->Shutdown();
-	delete m_pControl;
+	m_pControl = TorControl::Create(config);
 }
 
 std::unique_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey, const int portNumber)
 {
 	try
 	{
-		const std::string address = m_pControl->AddOnion(privateKey, 80, portNumber);
-		if (!address.empty())
+		if (m_pControl != nullptr)
 		{
-			std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
-			if (!torAddress.has_value())
+			const std::string address = m_pControl->AddOnion(privateKey, 80, portNumber);
+			if (!address.empty())
 			{
-				LOG_ERROR_F("Failed to parse listener address: %s", address);
-			}
-			else
-			{
-				return std::make_unique<TorAddress>(torAddress.value());
+				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
+				if (!torAddress.has_value())
+				{
+					LOG_ERROR_F("Failed to parse listener address: %s", address);
+				}
+				else
+				{
+					return std::make_unique<TorAddress>(torAddress.value());
+				}
 			}
 		}
 	}
@@ -55,7 +51,10 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 {
 	try
 	{
-		return m_pControl->DelOnion(torAddress);
+		if (m_pControl != nullptr)
+		{
+			return m_pControl->DelOnion(torAddress);
+		}
 	}
 	catch (const TorException& e)
 	{

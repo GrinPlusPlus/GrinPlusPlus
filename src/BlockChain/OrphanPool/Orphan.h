@@ -5,7 +5,7 @@
 struct Orphan
 {
 public:
-	Orphan(const FullBlock& block)
+	explicit Orphan(const FullBlock& block)
 		: m_block(block)
 	{
 

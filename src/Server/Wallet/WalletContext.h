@@ -6,13 +6,13 @@
 
 struct WalletContext
 {
-	WalletContext(const Config& config, IWalletManager* pWalletManager, INodeClient* pNodeClient)
+	WalletContext(const Config& config, IWalletManagerPtr pWalletManager, INodeClientPtr pNodeClient)
 		: m_config(config), m_pWalletManager(pWalletManager), m_pNodeClient(pNodeClient)
 	{
 
 	}
 
 	const Config& m_config;
-	IWalletManager* m_pWalletManager;
-	INodeClient* m_pNodeClient;
+	IWalletManagerPtr m_pWalletManager;
+	INodeClientPtr m_pNodeClient;
 };

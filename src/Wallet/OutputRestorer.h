@@ -9,7 +9,7 @@
 class OutputRestorer
 {
 public:
-	OutputRestorer(const Config& config, const INodeClient& nodeClient, const KeyChain& keyChain);
+	OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain);
 
 	std::vector<OutputData> FindAndRewindOutputs(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis) const;
 
@@ -18,6 +18,6 @@ private:
 	EOutputStatus DetermineStatus(const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const;
 
 	const Config& m_config;
-	const INodeClient& m_nodeClient;
+	INodeClientConstPtr m_pNodeClient;
 	const KeyChain& m_keyChain;
 };

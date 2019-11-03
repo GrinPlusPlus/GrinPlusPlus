@@ -4,6 +4,7 @@
 #include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
+#include <Core/Exceptions/WalletException.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 
@@ -127,19 +128,19 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "password missing");
 	}
 
-	std::unique_ptr<SessionToken> pSessionToken = walletManager.Login(usernameOpt.value(), SecureString(passwordOpt.value()));
-	if (pSessionToken != nullptr)
+	try
 	{
+		SessionToken sessionToken = walletManager.Login(usernameOpt.value(), SecureString(passwordOpt.value()));
 		Json::Value responseJSON;
-		responseJSON["session_token"] = pSessionToken->ToBase64();
+		responseJSON["session_token"] = sessionToken.ToBase64();
 
-		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(*pSessionToken);
+		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(sessionToken);
 		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
 		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
 		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
 
-		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(*pSessionToken);
+		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(sessionToken);
 		if (torAddressOpt.has_value())
 		{
 			responseJSON["tor_address"] = torAddressOpt.value().ToString();
@@ -147,7 +148,7 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 
 		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
-	else
+	catch (const WalletException&)
 	{
 		return HTTPUtil::BuildUnauthorizedResponse(pConnection, "Invalid username/password");
 	}
@@ -210,14 +211,8 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
 	std::optional<std::string> fromGenesis = HTTPUtil::GetQueryParam(pConnection, "fromGenesis");
-	if (walletManager.CheckForOutputs(token, fromGenesis.has_value()))
-	{
-		return HTTPUtil::BuildSuccessResponse(pConnection, "");
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "CheckForOutputs failed");
-	}
+	walletManager.CheckForOutputs(token, fromGenesis.has_value());
+	return HTTPUtil::BuildSuccessResponse(pConnection, "");
 }
 
 int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)

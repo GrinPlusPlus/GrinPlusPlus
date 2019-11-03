@@ -11,14 +11,14 @@
 
 static const uint64_t SLATE_VERSION = 2;
 
-SendSlateBuilder::SendSlateBuilder(const Config& config, const INodeClient& nodeClient)
-	: m_config(config), m_nodeClient(nodeClient)
+SendSlateBuilder::SendSlateBuilder(const Config& config, INodeClientConstPtr pNodeClient)
+	: m_config(config), m_pNodeClient(pNodeClient)
 {
 
 }
 
 std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
-	Wallet& wallet, 
+	Locked<Wallet> wallet, 
 	const SecureVector& masterSeed, 
 	const uint64_t amount, 
 	const uint64_t feeBase,
@@ -28,13 +28,14 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const SelectionStrategyDTO& strategy) const
 {
 	// Set lock_height for transaction kernel (current chain height).
-	const uint64_t blockHeight = m_nodeClient.GetChainHeight() + 1;
+	const uint64_t blockHeight = m_pNodeClient->GetChainHeight() + 1;
 	const uint16_t headerVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), blockHeight);
 
 	// Select inputs using desired selection strategy.
 	const uint8_t totalNumOutputs = numOutputs + 1;
 	const uint64_t numKernels = 1;
-	const std::vector<OutputData> availableCoins = wallet.GetAllAvailableCoins(masterSeed);
+	auto pWallet = wallet.Write();
+	const std::vector<OutputData> availableCoins = pWallet->GetAllAvailableCoins(masterSeed);
 	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
 
 	// Calculate the fee
@@ -47,10 +48,10 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 		inputTotal += input.GetAmount();
 	}
 
-	const uint32_t walletTxId = wallet.GetNextWalletTxId();
+	const uint32_t walletTxId = pWallet->GetNextWalletTxId();
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
-	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(wallet, masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType, messageOpt);
+	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(pWallet.GetShared(), masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType, messageOpt);
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
@@ -67,10 +68,10 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	Slate slate(std::move(slateVersionInfo), 2, uuids::uuid_system_generator()(), std::move(transaction), amount, fee, blockHeight, 0);
 	AddSenderInfo(slate, secretKey, secretNonce, messageOpt);
 
-	const WalletTx walletTx = BuildWalletTx(wallet, walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
+	const WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(wallet, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx))
+	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx))
 	{
 		LoggerAPI::LogError("SendSlateBuilder::BuildSendSlate - Failed to update database for slate " + uuids::to_string(slate.GetSlateId()));
 		return std::unique_ptr<Slate>(nullptr);
@@ -130,7 +131,6 @@ void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, c
 }
 
 WalletTx SendSlateBuilder::BuildWalletTx(
-	Wallet& wallet,
 	const uint32_t walletTxId,
 	const std::vector<OutputData>& inputs,
 	const std::vector<OutputData>& outputs,
@@ -167,31 +167,38 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 }
 
 // TODO: Use a DB Batch
-bool SendSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& context, const std::vector<OutputData>& changeOutputs, std::vector<OutputData>& coinsToLock, const WalletTx& walletTx) const
+bool SendSlateBuilder::UpdateDatabase(
+	std::shared_ptr<Wallet> pWallet,
+	const SecureVector& masterSeed,
+	const uuids::uuid& slateId,
+	const SlateContext& context,
+	const std::vector<OutputData>& changeOutputs,
+	std::vector<OutputData>& coinsToLock,
+	const WalletTx& walletTx) const
 {
 	// Save secretKey and secretNonce
-	if (!wallet.SaveSlateContext(slateId, masterSeed, context))
+	if (!pWallet->SaveSlateContext(slateId, masterSeed, context))
 	{
 		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to save context for slate " + uuids::to_string(slateId));
 		return false;
 	}
 
 	// Save new blinded outputs
-	if (!wallet.SaveOutputs(masterSeed, changeOutputs))
+	if (!pWallet->SaveOutputs(masterSeed, changeOutputs))
 	{
 		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to save new outputs.");
 		return false;
 	}
 
 	// Lock coins
-	if (!wallet.LockCoins(masterSeed, coinsToLock))
+	if (!pWallet->LockCoins(masterSeed, coinsToLock))
 	{
 		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to lock coins.");
 		return false;
 	}
 
 	// Save the log/WalletTx
-	if (!wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
+	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
 	{
 		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to create WalletTx");
 		return false;

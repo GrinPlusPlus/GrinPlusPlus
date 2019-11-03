@@ -99,14 +99,15 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 
 bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
+	if (m_connectionId > 0)
+	{
+		LOG_WARNING_F("Banning peer: %llu", m_connectionId);
+		m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
+	}
+
 	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
 	Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
-	if (m_connectionId > 0)
-	{
-		LOG_WARNING("Banning peer " + std::to_string(m_connectionId));
-		m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
-	}
 
 	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
 	m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(txHashSetRequestMessage);

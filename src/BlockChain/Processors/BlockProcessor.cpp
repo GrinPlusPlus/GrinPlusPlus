@@ -20,8 +20,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	const uint64_t horizonHeight = Consensus::GetHorizonHeight(candidateHeight);
 
 	const BlockHeader& header = block.GetBlockHeader();
-	uint64_t height = header.GetHeight();
-	if (height <= horizonHeight)
+	if (header.GetHeight() <= horizonHeight)
 	{
 		LOG_WARNING("Can't process blocks beyond horizon.");
 		return EBlockChainStatus::INVALID;
@@ -76,7 +75,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 		return status;
 	}
 
-	EBlockChainStatus status = EBlockChainStatus::SUCCESS;
+	EBlockChainStatus status;
 	if (blockStatus == EBlockStatus::REORG)
 	{
 		status = HandleReorg(block, pLockedState);
@@ -96,18 +95,13 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 EBlockChainStatus BlockProcessor::ProcessNextBlock(const FullBlock& block, Writer<ChainState> pLockedState)
 {
-	const EBlockChainStatus added = ValidateAndAddBlock(block, pLockedState);
-	if (added != EBlockChainStatus::SUCCESS)
+	const EBlockChainStatus status = ValidateAndAddBlock(block, pLockedState);
+	if (status == EBlockChainStatus::SUCCESS)
 	{
-		pLockedState->GetTxHashSetManager()->GetTxHashSet()->Rollback();
-		return added;
+		pLockedState->GetChainStore()->AddBlock(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
 	}
 
-	pLockedState->GetTxHashSetManager()->GetTxHashSet()->Commit();
-	pLockedState->GetChainStore()->AddBlock(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
-	pLockedState->GetChainStore()->Commit();
-
-	return EBlockChainStatus::SUCCESS;
+	return status;
 }
 
 EBlockChainStatus BlockProcessor::ProcessOrphanBlock(const FullBlock& block, Writer<ChainState> pLockedState)
@@ -130,7 +124,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Orphan if block not a part of candidate chain.
-	BlockIndex* pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
+	const BlockIndex* pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
 		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", header);
@@ -140,7 +134,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 
 	// Orphan if previous block is missing.
-	BlockIndex* pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight() - 1);
+	const BlockIndex* pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr)
 	{
 		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", header);
@@ -156,7 +150,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
 		for (uint64_t i = forkPoint; i < header.GetHeight(); i++)
 		{
-			BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+			const BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
 			if (!pLockedState->GetOrphanPool()->IsOrphan(i, pIndex->GetHash()) && pLockedState->GetBlockDB()->GetBlock(pIndex->GetHash()) == nullptr)
 			{
 				return EBlockStatus::ORPHAN;
@@ -167,7 +161,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	}
 
 	// Orphan if different block a part of confirmed chain.
-	BlockIndex* pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
+	const BlockIndex* pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
 	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
 	{
 		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", header);
@@ -195,13 +189,13 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, Writer<Cha
 	ITxHashSetPtr pTxHashSet = pLockedState->GetTxHashSetManager()->GetTxHashSet();
 	if (!pTxHashSet->Rewind(pLockedState->GetBlockDB(), *pCommonHeader))
 	{
-		pTxHashSet->Rollback();
+		//pTxHashSet->Rollback();
 		return EBlockChainStatus::UNKNOWN_ERROR;
 	}
 
 	for (uint64_t i = commonHeight + 1; i < block.GetBlockHeader().GetHeight(); i++)
 	{
-		BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+		const BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
 		std::unique_ptr<FullBlock> pBlock = pLockedState->GetOrphanPool()->GetOrphanBlock(i, pIndex->GetHash());
 		if (pBlock == nullptr)
 		{
@@ -210,14 +204,14 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, Writer<Cha
 
 		if (pBlock == nullptr)
 		{
-			pTxHashSet->Rollback();
+			//pTxHashSet->Rollback();
 			return EBlockChainStatus::INVALID;
 		}
 
 		const EBlockChainStatus added = ValidateAndAddBlock(*pBlock, pLockedState);
 		if (added != EBlockChainStatus::SUCCESS)
 		{
-			pTxHashSet->Rollback();
+			//pTxHashSet->Rollback();
 			return EBlockChainStatus::INVALID;
 		}
 	}
@@ -225,13 +219,11 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, Writer<Cha
 	const EBlockChainStatus added = ValidateAndAddBlock(block, pLockedState);
 	if (added != EBlockChainStatus::SUCCESS)
 	{
-		pTxHashSet->Rollback();
+		//pTxHashSet->Rollback();
 		return EBlockChainStatus::INVALID;
 	}
 
 	pLockedState->GetChainStore()->ReorgChain(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
-	pLockedState->GetChainStore()->Commit();
-	pTxHashSet->Commit();
 	return EBlockChainStatus::SUCCESS;
 }
 

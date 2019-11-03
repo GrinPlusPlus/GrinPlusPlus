@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/File.h>
-#include <Core/FileException.h>
+#include <Core/Exceptions/FileException.h>
 #include <Core/Traits/Batchable.h>
 #include <Crypto/BigInteger.h>
 #include <Common/Util/StringUtil.h>

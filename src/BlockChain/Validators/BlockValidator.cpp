@@ -51,7 +51,12 @@ std::unique_ptr<BlockSums> BlockValidator::ValidateBlock(const FullBlock& block)
 		return std::unique_ptr<BlockSums>(nullptr);
 	}
 
-	return KernelSumValidator::ValidateKernelSums(block.GetTransactionBody(), 0 - Consensus::REWARD, block.GetBlockHeader().GetTotalKernelOffset(), std::make_optional<BlockSums>(*pPreviousBlockSums));
+	return KernelSumValidator::ValidateKernelSums(
+		block.GetTransactionBody(),
+		0 - Consensus::REWARD,
+		block.GetBlockHeader().GetTotalKernelOffset(),
+		std::make_optional<BlockSums>(*pPreviousBlockSums)
+	);
 }
 
 // Validates all the elements in a block that can be checked without additional data. 

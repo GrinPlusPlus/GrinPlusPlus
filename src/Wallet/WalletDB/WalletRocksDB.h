@@ -10,13 +10,15 @@
 
 using namespace rocksdb;
 
+//
+// WalletRocksDB is deprecated, and only remains to help migrate existing wallets to SQLITE.
+//
 class WalletRocksDB : public IWalletDB
 {
 public:
-	WalletRocksDB(const Config& config);
+	virtual ~WalletRocksDB();
 
-	void Open();
-	void Close();
+	static std::shared_ptr<WalletRocksDB> Open(const Config& config);
 
 	virtual std::vector<std::string> GetAccounts() const override final;
 
@@ -42,17 +44,17 @@ public:
 	virtual bool UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex) override final;
 
 private:
-	std::unique_ptr<UserMetadata> GetMetadata(const std::string& username) const;
-	bool SaveMetadata(const std::string& username, const UserMetadata& userMetadata);
-
-	static std::string GetUsernamePrefix(const std::string& username);
-	static std::string CombineKeyWithUsername(const std::string& username, const std::string& key);
-	static SecretKey CreateSecureKey(const SecureVector& masterSeed, const std::string& dataType);
-
-	static std::vector<unsigned char> Encrypt(const SecureVector& masterSeed, const std::string& dataType, const SecureVector& bytes);
-	static SecureVector Decrypt(const SecureVector& masterSeed, const std::string& dataType, const std::vector<unsigned char>& encrypted);
-
-	const Config& m_config;
+	WalletRocksDB(
+		DB* pDatabase,
+		ColumnFamilyHandle* pDefaultHandle,
+		ColumnFamilyHandle* pSeedHandle,
+		ColumnFamilyHandle* pNextChildHandle,
+		ColumnFamilyHandle* pLogHandle,
+		ColumnFamilyHandle* pSlateHandle,
+		ColumnFamilyHandle* pTxHandle,
+		ColumnFamilyHandle* pOutputHandle,
+		ColumnFamilyHandle* pUserMetadataHandle
+	);
 
 	DB* m_pDatabase = { nullptr };
 	ColumnFamilyHandle* m_pDefaultHandle;

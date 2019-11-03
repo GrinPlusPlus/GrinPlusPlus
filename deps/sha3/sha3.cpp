@@ -6,10 +6,11 @@
 #include "sha3.h"
 // big endian architectures need #define __BYTE_ORDER __BIG_ENDIAN
 #ifndef _MSC_VER
-#elif __APPLE__
+#if __APPLE__
 	#include <machine/endian.h>
 #else
 	#include <endian.h>
+#endif
 #endif
 /// same as reset()
 SHA3::SHA3(Bits bits)

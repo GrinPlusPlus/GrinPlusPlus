@@ -7,73 +7,31 @@
 #include <string>
 #include <filesystem.h>
 
-BlockDB::BlockDB(const Config& config)
-	: m_config(config)
+BlockDB::BlockDB(
+	const Config& config,
+	DB* pDatabase,
+	OptimisticTransactionDB* pTransactionDB,
+	ColumnFamilyHandle* pDefaultHandle,
+	ColumnFamilyHandle* pBlockHandle,
+	ColumnFamilyHandle* pHeaderHandle,
+	ColumnFamilyHandle* pBlockSumsHandle,
+	ColumnFamilyHandle* pOutputPosHandle,
+	ColumnFamilyHandle* pInputBitmapHandle)
+	: m_config(config),
+	m_pDatabase(pDatabase),
+	m_pTransactionDB(pTransactionDB),
+	m_pTransaction(nullptr),
+	m_pDefaultHandle(pDefaultHandle),
+	m_pBlockHandle(pBlockHandle),
+	m_pHeaderHandle(pHeaderHandle),
+	m_pBlockSumsHandle(pBlockSumsHandle),
+	m_pOutputPosHandle(pOutputPosHandle),
+	m_pInputBitmapHandle(pInputBitmapHandle)
 {
 
 }
 
-void BlockDB::OpenDB()
-{
-	Options options;
-	options.IncreaseParallelism();
-
-	// create the DB if it's not already present
-	options.create_if_missing = true;
-	options.compression = kNoCompression;
-
-	// open DB
-	const std::string dbPath = m_config.GetDatabaseDirectory() + "CHAIN/";
-	fs::create_directories(dbPath);
-
-	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-	ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-	ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-	ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
-
-	std::vector<std::string> columnFamilies;
-	Status status = DB::ListColumnFamilies(options, dbPath, &columnFamilies);
-
-	if (status.ok())
-	{
-		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
-		std::vector<ColumnFamilyHandle*> columnHandles;
-		status = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
-		if (!status.ok())
-		{
-			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
-		}
-
-		m_pDefaultHandle = columnHandles[0];
-		m_pBlockHandle = columnHandles[1];
-		m_pHeaderHandle = columnHandles[2];
-		m_pBlockSumsHandle = columnHandles[3];
-		m_pOutputPosHandle = columnHandles[4];
-		m_pInputBitmapHandle = columnHandles[5];
-	}
-	else
-	{
-		LOG_INFO("BlockDB not found. Creating it now.");
-
-		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor() });
-		std::vector<ColumnFamilyHandle*> columnHandles;
-		status = DB::Open(options, dbPath, columnDescriptors, &columnHandles, &m_pDatabase);
-		if (!status.ok())
-		{
-			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
-		}
-
-		m_pDefaultHandle = columnHandles[0];
-		m_pDatabase->CreateColumnFamily(BLOCK_COLUMN.options, BLOCK_COLUMN.name, &m_pBlockHandle);
-		m_pDatabase->CreateColumnFamily(HEADER_COLUMN.options, HEADER_COLUMN.name, &m_pHeaderHandle);
-		m_pDatabase->CreateColumnFamily(BLOCK_SUMS_COLUMN.options, BLOCK_SUMS_COLUMN.name, &m_pBlockSumsHandle);
-		m_pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &m_pOutputPosHandle);
-		m_pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &m_pInputBitmapHandle);
-	}
-}
-
-void BlockDB::CloseDB()
+BlockDB::~BlockDB()
 {
 	delete m_pBlockHandle;
 	delete m_pHeaderHandle;
@@ -83,6 +41,147 @@ void BlockDB::CloseDB()
 	delete m_pDatabase;
 }
 
+std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
+{
+	Options options;
+	options.IncreaseParallelism();
+
+	// create the DB if it's not already present
+	options.create_if_missing = true;
+	options.compression = kNoCompression;
+
+	// open DB
+	const std::string dbPath = config.GetDatabaseDirectory() + "CHAIN/";
+	fs::create_directories(dbPath);
+
+	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+
+	std::vector<std::string> columnFamilies;
+	Status status = OptimisticTransactionDB::ListColumnFamilies(options, dbPath, &columnFamilies);
+
+	OptimisticTransactionDB* pTransactionDB = nullptr;
+	DB* pDatabase = nullptr;
+	ColumnFamilyHandle* pDefaultHandle = nullptr;
+	ColumnFamilyHandle* pBlockHandle = nullptr;
+	ColumnFamilyHandle* pHeaderHandle = nullptr;
+	ColumnFamilyHandle* pBlockSumsHandle = nullptr;
+	ColumnFamilyHandle* pOutputPosHandle = nullptr;
+	ColumnFamilyHandle* pInputBitmapHandle = nullptr;
+
+	if (status.ok())
+	{
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
+		std::vector<ColumnFamilyHandle*> columnHandles;
+
+		status = OptimisticTransactionDB::Open(options, dbPath, columnDescriptors, &columnHandles, &pTransactionDB);
+		if (!status.ok())
+		{
+			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
+		}
+
+		pDatabase = pTransactionDB->GetBaseDB();
+
+		pDefaultHandle = columnHandles[0];
+		pBlockHandle = columnHandles[1];
+		pHeaderHandle = columnHandles[2];
+		pBlockSumsHandle = columnHandles[3];
+		pOutputPosHandle = columnHandles[4];
+		pInputBitmapHandle = columnHandles[5];
+	}
+	else
+	{
+		LOG_INFO("BlockDB not found. Creating it now.");
+
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor() });
+		std::vector<ColumnFamilyHandle*> columnHandles;
+		status = OptimisticTransactionDB::Open(options, dbPath, columnDescriptors, &columnHandles, &pTransactionDB);
+		if (!status.ok())
+		{
+			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
+		}
+
+		pDatabase = pTransactionDB->GetBaseDB();
+
+		pDefaultHandle = columnHandles[0];
+		pDatabase->CreateColumnFamily(BLOCK_COLUMN.options, BLOCK_COLUMN.name, &pBlockHandle);
+		pDatabase->CreateColumnFamily(HEADER_COLUMN.options, HEADER_COLUMN.name, &pHeaderHandle);
+		pDatabase->CreateColumnFamily(BLOCK_SUMS_COLUMN.options, BLOCK_SUMS_COLUMN.name, &pBlockSumsHandle);
+		pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &pOutputPosHandle);
+		pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &pInputBitmapHandle);
+	}
+
+	return std::shared_ptr<BlockDB>(new BlockDB(
+		config,
+		pDatabase,
+		pTransactionDB,
+		pDefaultHandle,
+		pBlockHandle,
+		pHeaderHandle,
+		pBlockSumsHandle,
+		pOutputPosHandle,
+		pInputBitmapHandle
+	));
+}
+
+void BlockDB::Commit()
+{
+	const Status status = m_pTransaction->Commit();
+	if (!status.ok())
+	{
+		LOG_ERROR_F("Transaction::Commit failed with error (%s)", status.getState());
+		throw DATABASE_EXCEPTION("Transaction::Commit Failed with error: " + std::string(status.getState()));
+	}
+}
+
+void BlockDB::Rollback()
+{
+	const Status status = m_pTransaction->Rollback();
+	if (!status.ok())
+	{
+		LOG_ERROR_F("Transaction::Rollback failed with error (%s)", status.getState());
+		throw DATABASE_EXCEPTION("Transaction::Rollback Failed with error: " + std::string(status.getState()));
+	}
+}
+
+void BlockDB::OnInitWrite()
+{
+	m_pTransaction = m_pTransactionDB->BeginTransaction(WriteOptions());
+}
+
+void BlockDB::OnEndWrite()
+{
+	delete m_pTransaction;
+	m_pTransaction = nullptr;
+}
+
+Status BlockDB::Read(ColumnFamilyHandle* pFamilyHandle, const Slice& key, std::string* pValue) const
+{
+	if (m_pTransaction != nullptr)
+	{
+		return m_pTransaction->Get(ReadOptions(), pFamilyHandle, key, pValue);
+	}
+	else
+	{
+		return m_pDatabase->Get(ReadOptions(), pFamilyHandle, key, pValue);
+	}
+}
+
+Status BlockDB::Write(ColumnFamilyHandle* pFamilyHandle, const Slice& key, const Slice& value)
+{
+	if (m_pTransaction != nullptr)
+	{
+		return m_pTransaction->Put(pFamilyHandle, key, value);
+	}
+	else
+	{
+		return m_pDatabase->Put(WriteOptions(), pFamilyHandle, key, value);
+	}
+}
+
 std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 {
 	try
@@ -90,7 +189,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 		Slice key((const char*)hash.data(), hash.size());
 
 		std::string value;
-		const Status status = m_pDatabase->Get(ReadOptions(), m_pHeaderHandle, key, &value);
+		const Status status = Read(m_pHeaderHandle, key, &value);
 		if (status.ok())
 		{
 			std::vector<unsigned char> data(value.data(), value.data() + value.size());
@@ -132,7 +231,7 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 
 		Slice key((const char*)hash.data(), hash.size());
 		Slice value((const char*)serializer.data(), serializer.size());
-		const Status status = m_pDatabase->Put(WriteOptions(), m_pHeaderHandle, Slice(key), value);
+		const Status status = Write(m_pHeaderHandle, Slice(key), value);
 		if (!status.ok())
 		{
 			LOG_ERROR_F("DB::Put failed for header (%s) with error (%s)", hash, status.getState());
@@ -154,8 +253,6 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 {
 	LOG_TRACE_F("Adding (%llu) headers.", blockHeaders.size());
 
-	rocksdb::WriteBatch batch;
-
 	try
 	{
 		Status status;
@@ -169,19 +266,12 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 			Slice key((const char*)hash.data(), hash.size());
 			Slice value((const char*)serializer.data(), serializer.size());
 
-			status = batch.Put(m_pHeaderHandle, key, value);
+			status = m_pTransaction->Put(m_pHeaderHandle, key, value);
 			if (!status.ok())
 			{
 				LOG_ERROR_F("WriteBatch::put failed for header (%s) with error (%s)", blockHeader, status.getState());
 				throw DATABASE_EXCEPTION("WriteBatch::put failed with error: " + std::string(status.getState()));
 			}
-		}
-
-		status = m_pDatabase->Write(rocksdb::WriteOptions(), &batch);
-		if (!status.ok())
-		{
-			LOG_ERROR_F("DB::Write failed for batch with error (%s)", status.getState());
-			throw DATABASE_EXCEPTION("DB::Write failed with error: " + std::string(status.getState()));
 		}
 	}
 	catch (DatabaseException&)
@@ -207,7 +297,12 @@ void BlockDB::AddBlock(const FullBlock& block)
 
 	Slice key((const char*)hash.data(), hash.size());
 	Slice value((const char*)serializer.data(), serializer.size());
-	m_pDatabase->Put(WriteOptions(), m_pBlockHandle, Slice(key), value);
+	const Status status = Write(m_pBlockHandle, Slice(key), value);
+	if (!status.ok())
+	{
+		LOG_ERROR_F("Failed to save Block: %s", block);
+		throw DATABASE_EXCEPTION("Failed to save Block.");
+	}
 }
 
 std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
@@ -216,7 +311,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 
 	Slice key((const char*)hash.data(), hash.size());
 	std::string value;
-	Status s = m_pDatabase->Get(ReadOptions(), m_pBlockHandle, key, &value);
+	Status s = Read(m_pBlockHandle, key, &value);
 	if (s.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
@@ -239,7 +334,12 @@ void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 	Slice value((const char*)serializer.data(), serializer.size());
 
 	// Insert BlockSums object
-	m_pDatabase->Put(WriteOptions(), m_pBlockSumsHandle, key, value);
+	const Status status = Write(m_pBlockSumsHandle, key, value);
+	if (!status.ok())
+	{
+		LOG_ERROR_F("Failed to save BlockSums for %s", blockHash);
+		throw DATABASE_EXCEPTION("Failed to save BlockSums.");
+	}
 }
 
 std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
@@ -249,7 +349,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 	// Read from DB
 	Slice key((const char*)blockHash.data(), blockHash.size());
 	std::string value;
-	const Status s = m_pDatabase->Get(ReadOptions(), m_pBlockSumsHandle, key, &value);
+	const Status s = Read(m_pBlockSumsHandle, key, &value);
 	if (s.ok())
 	{
 		// Deserialize result
@@ -271,7 +371,12 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const Output
 	Slice value((const char*)serializer.data(), serializer.size());
 
 	// Insert the output position
-	m_pDatabase->Put(WriteOptions(), m_pOutputPosHandle, key, value);
+	const Status status = Write(m_pOutputPosHandle, key, value);
+	if (!status.ok())
+	{
+		LOG_ERROR_F("Failed to save location for output %s", outputCommitment);
+		throw DATABASE_EXCEPTION("Failed to save output location.");
+	}
 }
 
 std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& outputCommitment) const
@@ -282,7 +387,7 @@ std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& out
 
 	// Read from DB
 	std::string value;
-	const Status s = m_pDatabase->Get(ReadOptions(), m_pOutputPosHandle, key, &value);
+	const Status s = Read(m_pOutputPosHandle, key, &value);
 	if (s.ok())
 	{
 		// Deserialize result
@@ -313,7 +418,7 @@ void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 		Slice value(serializedBitmap.data(), bitmapSize);
 
 		// Insert the output position
-		m_pDatabase->Put(WriteOptions(), m_pInputBitmapHandle, key, value);
+		const Status status = Write(m_pInputBitmapHandle, key, value);
 	}
 	catch (DatabaseException&)
 	{
@@ -334,7 +439,7 @@ std::unique_ptr<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) con
 
 		// Read from DB
 		std::string value;
-		const Status s = m_pDatabase->Get(ReadOptions(), m_pInputBitmapHandle, key, &value);
+		const Status s = Read(m_pInputBitmapHandle, key, &value);
 		if (s.ok())
 		{
 			// Deserialize result

@@ -10,11 +10,8 @@ Database::Database(const Config& config, std::shared_ptr<Locked<IBlockDB>> pBloc
 
 std::shared_ptr<IDatabase> Database::Open(const Config& config)
 {
-	std::shared_ptr<BlockDB> pBlockDB(new BlockDB(config));
-	pBlockDB->OpenDB();
-
-	std::shared_ptr<PeerDB> pPeerDB(new PeerDB(config));
-	pPeerDB->OpenDB();
+	std::shared_ptr<BlockDB> pBlockDB = BlockDB::OpenDB(config);
+	std::shared_ptr<PeerDB> pPeerDB(PeerDB::OpenDB(config));
 
 	return std::shared_ptr<IDatabase>(new Database(config, std::make_shared<Locked<IBlockDB>>(pBlockDB), std::make_shared<Locked<IPeerDB>>(pPeerDB)));
 }
@@ -22,7 +19,7 @@ std::shared_ptr<IDatabase> Database::Open(const Config& config)
 namespace DatabaseAPI
 {
 	//
-	// Creates a new instance of the BlockChain server.
+	// Creates a new instance of the Database.
 	//
 	DATABASE_API std::shared_ptr<IDatabase> OpenDatabase(const Config& config)
 	{
@@ -39,28 +36,4 @@ namespace DatabaseAPI
 			throw DATABASE_EXCEPTION("Exception caught: " + std::string(e.what()));
 		}
 	}
-
-	////
-	//// Stops the BlockChain server and clears up its memory usage.
-	////
-	//DATABASE_API void CloseDatabase(IDatabase* pDatabase)
-	//{
-	//	Database* pDatabaseImpl = (Database*)pDatabase;
-	//	try
-	//	{
-	//		pDatabaseImpl->Close();
-	//	}
-	//	catch (DatabaseException&)
-	//	{
-	//		delete pDatabaseImpl;
-	//		throw;
-	//	}
-	//	catch (std::exception& e)
-	//	{
-	//		delete pDatabaseImpl;
-	//		throw DATABASE_EXCEPTION("Exception caught: " + std::string(e.what()));
-	//	}
-
-	//	delete pDatabaseImpl;
-	//}
 }

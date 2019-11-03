@@ -37,7 +37,7 @@ public:
 		const uint8_t formatVersion = byteBuffer.ReadU8();
 		if (formatVersion != SLATE_CONTEXT_FORMAT)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		CBigInteger<32> decryptedBlind = byteBuffer.ReadBigInteger<32>() ^ DeriveXORKey(masterSeed, slateId, "blind");

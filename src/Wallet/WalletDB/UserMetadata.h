@@ -31,7 +31,7 @@ public:
 	{
 		if (byteBuffer.ReadU8() != USER_METADATA_FORMAT)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		const uint32_t nextTxId = byteBuffer.ReadU32();

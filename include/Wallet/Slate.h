@@ -92,7 +92,7 @@ public:
 		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
 		if (!slateIdOpt.has_value())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		const uint64_t amount = JsonUtil::GetRequiredUInt64(slateNode, "amount");

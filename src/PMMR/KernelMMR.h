@@ -15,7 +15,7 @@ class KernelMMR : public MMR
 {
 public:
 	static std::shared_ptr<KernelMMR> Load(const std::string& txHashSetDirectory);
-	virtual ~KernelMMR();
+	virtual ~KernelMMR() = default;
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
 	bool Rewind(const uint64_t size);
@@ -28,16 +28,11 @@ public:
 	virtual void Commit() override final;
 	virtual void Rollback() override final;
 
-	bool ApplyKernel(const TransactionKernel& kernel);
+	void ApplyKernel(const TransactionKernel& kernel);
 
 private:
 	KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFile<KERNEL_SIZE>> pDataFile);
-	//Writer<HashFile> GetHashTransaction() const;
-	//Writer<DataFile<KERNEL_SIZE>> GetDataTransaction() const;
 
 	mutable std::shared_ptr<HashFile> m_pHashFile;
-	//mutable Writer<HashFile> m_pHashTransaction;
-
 	mutable std::shared_ptr<DataFile<KERNEL_SIZE>> m_pDataFile;
-	//mutable Writer<DataFile<KERNEL_SIZE>> m_pDataTransaction;
 };

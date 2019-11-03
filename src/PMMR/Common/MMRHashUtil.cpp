@@ -4,7 +4,10 @@
 #include <Crypto/Crypto.h>
 #include <Core/Serialization/Serializer.h>
 
-void MMRHashUtil::AddHashes(std::shared_ptr<HashFile> pHashFile, const std::vector<unsigned char>& serializedLeaf, const PruneList* pPruneList)
+void MMRHashUtil::AddHashes(
+	std::shared_ptr<HashFile> pHashFile,
+	const std::vector<unsigned char>& serializedLeaf,
+	std::shared_ptr<const PruneList> pPruneList)
 {
 	// Calculate next position
 	uint64_t position = pHashFile->GetSize();
@@ -34,7 +37,10 @@ void MMRHashUtil::AddHashes(std::shared_ptr<HashFile> pHashFile, const std::vect
 	}
 }
 
-Hash MMRHashUtil::Root(std::shared_ptr<const HashFile> pHashFile, const uint64_t size, const PruneList* pPruneList)
+Hash MMRHashUtil::Root(
+	std::shared_ptr<const HashFile> pHashFile,
+	const uint64_t size,
+	std::shared_ptr<const PruneList> pPruneList)
 {
 	if (size == 0)
 	{
@@ -63,7 +69,10 @@ Hash MMRHashUtil::Root(std::shared_ptr<const HashFile> pHashFile, const uint64_t
 	return hash;
 }
 
-Hash MMRHashUtil::GetHashAt(std::shared_ptr<const HashFile> pHashFile, const uint64_t mmrIndex, const PruneList* pPruneList)
+Hash MMRHashUtil::GetHashAt(
+	std::shared_ptr<const HashFile> pHashFile,
+	const uint64_t mmrIndex,
+	std::shared_ptr<const PruneList> pPruneList)
 {
 	if (pPruneList != nullptr)
 	{
@@ -83,7 +92,7 @@ Hash MMRHashUtil::GetHashAt(std::shared_ptr<const HashFile> pHashFile, const uin
 	}
 }
 
-uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, const PruneList* pPruneList)
+uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, std::shared_ptr<const PruneList> pPruneList)
 {
 	if (pPruneList != nullptr)
 	{
@@ -97,7 +106,11 @@ uint64_t MMRHashUtil::GetShiftedIndex(const uint64_t mmrIndex, const PruneList* 
 	}
 }
 
-std::vector<Hash> MMRHashUtil::GetLastLeafHashes(std::shared_ptr<const HashFile> pHashFile, const LeafSet* pLeafSet, const PruneList* pPruneList, const uint64_t numHashes)
+std::vector<Hash> MMRHashUtil::GetLastLeafHashes(
+	std::shared_ptr<const HashFile> pHashFile,
+	std::shared_ptr<const LeafSet> pLeafSet,
+	std::shared_ptr<const PruneList> pPruneList,
+	const uint64_t numHashes)
 {
 	uint64_t nextPosition = pHashFile->GetSize();
 	if (pPruneList != nullptr)

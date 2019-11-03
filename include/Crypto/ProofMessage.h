@@ -54,7 +54,7 @@ public:
 			const uint32_t first4Bytes = byteBuffer.ReadU32();
 			if (first4Bytes != 0)
 			{
-				throw DeserializationException();
+				throw DESERIALIZATION_EXCEPTION();
 			}
 		}
 

@@ -5,10 +5,23 @@
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/HexUtil.h>
 
-LeafSet::LeafSet(const std::string& path)
-	: m_path(path)
+LeafSet::LeafSet(const std::string& path, const Roaring& bitmap)
+	: m_path(path), m_bitmap(bitmap), m_bitmapBackup(bitmap)
 {
 
+}
+
+std::shared_ptr<LeafSet> LeafSet::Load(const std::string& path)
+{
+	Roaring bitmap;
+
+	std::vector<unsigned char> data;
+	if (FileUtil::ReadFile(path, data))
+	{
+		bitmap = Roaring::readSafe((const char*)& data[0], data.size());
+	}
+
+	return std::shared_ptr<LeafSet>(new LeafSet(path, bitmap));
 }
 
 void LeafSet::Add(const uint32_t position)
@@ -35,20 +48,6 @@ void LeafSet::Rewind(const uint64_t size, const Roaring& positionsToAdd)
 bool LeafSet::Contains(const uint64_t position) const
 {
 	return m_bitmap.contains((uint32_t)position + 1);
-}
-
-bool LeafSet::Load()
-{
-	std::vector<unsigned char> data;
-	if (FileUtil::ReadFile(m_path, data))
-	{
-		m_bitmap = Roaring::readSafe((const char*)&data[0], data.size());
-		m_bitmapBackup = m_bitmap;
-
-		return true;
-	}
-
-	return false;
 }
 
 bool LeafSet::Flush()

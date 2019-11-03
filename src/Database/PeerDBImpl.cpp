@@ -1,5 +1,6 @@
 #include "PeerDBImpl.h"
 
+#include <Database/DatabaseException.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -7,18 +8,18 @@
 #include <string>
 #include <filesystem.h>
 
-PeerDB::PeerDB(const Config& config)
-	: m_config(config)
+PeerDB::PeerDB(const Config& config, DB* pDatabase)
+	: m_config(config), m_pDatabase(pDatabase)
 {
 
 }
 
 PeerDB::~PeerDB()
 {
-
+	delete m_pDatabase;
 }
 
-void PeerDB::OpenDB()
+std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 {
 	Options options;
 	// Optimize RocksDB. This is the easiest way to get RocksDB to perform well
@@ -31,15 +32,18 @@ void PeerDB::OpenDB()
 	options.compression = kNoCompression;
 
 	// open DB
-	const std::string dbPath = m_config.GetDatabaseDirectory() + "PEERS/";
+	const std::string dbPath = config.GetDatabaseDirectory() + "PEERS/";
 	fs::create_directories(dbPath);
 
-	Status s = DB::Open(options, dbPath, &m_pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
-}
+	DB* pDatabase = nullptr;
+	Status status = DB::Open(options, dbPath, &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
+	if (!status.ok())
+	{
+		LOG_ERROR_F("DB::Open failed with error: %s", status.getState());
+		throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
+	}
 
-void PeerDB::CloseDB()
-{
-	delete m_pDatabase;
+	return std::shared_ptr<PeerDB>(new PeerDB(config, pDatabase));
 }
 
 std::vector<Peer> PeerDB::LoadAllPeers() const

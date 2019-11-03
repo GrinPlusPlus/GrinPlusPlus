@@ -6,7 +6,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 
 enum EOutputFeatures
 {
@@ -43,7 +43,7 @@ namespace OutputFeatures
 			return EOutputFeatures::COINBASE_OUTPUT;
 		}
 
-		throw DeserializationException();
+		throw DESERIALIZATION_EXCEPTION();
 	}
 }
 
@@ -91,6 +91,6 @@ namespace KernelFeatures
 			return EKernelFeatures::HEIGHT_LOCKED;
 		}
 
-		throw DeserializationException();
+		throw DESERIALIZATION_EXCEPTION();
 	}
 }

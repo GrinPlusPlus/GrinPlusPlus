@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 #include <string>
 
 enum class ESelectionStrategy
@@ -22,6 +22,6 @@ namespace SelectionStrategy
 			return ESelectionStrategy::CUSTOM;
 		}
 
-		throw DeserializationException();
+		throw DESERIALIZATION_EXCEPTION();
 	}
 }

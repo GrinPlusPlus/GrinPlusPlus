@@ -29,6 +29,7 @@
 #include "Messages/GetTransactionMessage.h"
 #include "Messages/TransactionKernelMessage.h"
 
+#include <Core/Exceptions/BadDataException.h>
 #include <P2P/Common.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -54,11 +55,17 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connec
 	{
 		return ProcessMessageInternal(connectionId, socket, connectedPeer, rawMessage);
 	}
+	catch (const BadDataException& e)
+	{
+		const EMessageType messageType = rawMessage.GetMessageHeader().GetMessageType();
+		LOG_ERROR_F("Bad data received in message(%d) from %s", messageType, connectedPeer.GetPeer());
+
+		return EStatus::BAN_PEER;
+	}
 	catch (const DeserializationException&)
 	{
 		const EMessageType messageType = rawMessage.GetMessageHeader().GetMessageType();
-		const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
-		LOG_ERROR_F("Deserialization exception while processing message(%d) from %s", messageType, formattedIPAddress);
+		LOG_ERROR_F("Deserialization exception while processing message(%d) from %s", messageType, connectedPeer.GetPeer());
 
 		return EStatus::BAN_PEER;
 	}
@@ -142,10 +149,10 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const std::vector<CBigInteger<32>>& hashes = getHeadersMessage.GetHashes();
 
 				std::vector<BlockHeader> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
-                LOG_DEBUG_F("Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress);
+				LOG_DEBUG_F("Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress);
                 
 				const HeadersMessage headersMessage(std::move(blockHeaders));
-                return MessageSender(m_config).Send(socket, HeadersMessage(std::move(blockHeaders))) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:
 			{

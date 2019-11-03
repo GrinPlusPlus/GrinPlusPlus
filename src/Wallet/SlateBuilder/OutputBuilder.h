@@ -9,7 +9,7 @@ class OutputBuilder
 {
 public:
 	static std::vector<OutputData> CreateOutputs(
-		Wallet& wallet, 
+		std::shared_ptr<Wallet> pWallet, 
 		const SecureVector& masterSeed, 
 		const uint64_t totalAmount, 
 		const uint32_t walletTxId, 
@@ -32,7 +32,7 @@ public:
 				coinAmount += (totalAmount % numOutputs);
 			}
 
-			outputs.emplace_back(wallet.CreateBlindedOutput(masterSeed, coinAmount, walletTxId, bulletproofType, messageOpt));
+			outputs.emplace_back(pWallet->CreateBlindedOutput(masterSeed, coinAmount, walletTxId, bulletproofType, messageOpt));
 		}
 
 		return outputs;

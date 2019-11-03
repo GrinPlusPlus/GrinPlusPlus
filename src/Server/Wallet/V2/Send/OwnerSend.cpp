@@ -3,8 +3,8 @@
 #include <Net/Tor/TorManager.h>
 #include <Net/Tor/TorAddressParser.h>
 
-OwnerSend::OwnerSend(const Config& config, IWalletManager& walletManager)
-	: m_config(config), m_walletManager(walletManager)
+OwnerSend::OwnerSend(const Config& config, IWalletManagerPtr pWalletManager)
+	: m_config(config), m_pWalletManager(pWalletManager)
 {
 
 }
@@ -13,13 +13,13 @@ RPC::Response OwnerSend::Send(mg_connection* pConnection, RPC::Request& request)
 {
 	if (!request.GetParams().has_value())
 	{
-		throw DESERIALIZATION_EXCEPTION("params missing");
+		throw DESERIALIZATION_EXCEPTION();
 	}
 
 	SendCriteria criteria = SendCriteria::FromJSON(request.GetParams().value());
 	std::unique_ptr<TorConnection> pTorConnection = EstablishConnection(criteria.GetAddress());
 
-	std::unique_ptr<Slate> pSlate = m_walletManager.Send(criteria);
+	std::unique_ptr<Slate> pSlate = m_pWalletManager->Send(criteria);
 	if (pSlate != nullptr)
 	{
 		if (pTorConnection != nullptr)
@@ -39,10 +39,10 @@ RPC::Response OwnerSend::Send(mg_connection* pConnection, RPC::Request& request)
 			else
 			{
 				Json::Value okJson = JsonUtil::GetRequiredField(receiveTxResponse.GetResult().value(), "Ok");
-				std::unique_ptr<Slate> pFinalizedSlate = m_walletManager.Finalize(criteria.GetToken(), Slate::FromJSON(okJson));
+				std::unique_ptr<Slate> pFinalizedSlate = m_pWalletManager->Finalize(criteria.GetToken(), Slate::FromJSON(okJson));
 				if (pFinalizedSlate != nullptr)
 				{
-					m_walletManager.PostTransaction(criteria.GetToken(), pFinalizedSlate->GetTransaction());
+					m_pWalletManager->PostTransaction(criteria.GetToken(), pFinalizedSlate->GetTransaction());
 
 					Json::Value result;
 					result["status"] = "FINALIZED"; // TODO: Enum

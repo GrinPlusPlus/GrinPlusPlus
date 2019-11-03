@@ -89,7 +89,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	pLockedState->GetHeaderMMR()->AddHeader(header);
 	//lockedState.m_headerMMR.Commit();
 
-	BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(header.GetHash(), header.GetHeight(), pLastIndex);
+	BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(header.GetHash(), header.GetHeight());
 	pLockedState->GetChainStore()->GetSyncChain()->AddBlock(pBlockIndex);
 	pCandidateChain->AddBlock(pBlockIndex);
 	pLockedState->Commit();
@@ -265,9 +265,8 @@ EBlockChainStatus BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLocke
 	for (const BlockHeader* pHeader : headers)
 	{
 		// Add to chain
-		BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(pHeader->GetHash(), pHeader->GetHeight(), pPrevious);
+		BlockIndex* pBlockIndex = pLockedState->GetChainStore()->GetOrCreateIndex(pHeader->GetHash(), pHeader->GetHeight());
 		pSyncChain->AddBlock(pBlockIndex);
-		pPrevious = pBlockIndex;
 	}
 
 	return EBlockChainStatus::SUCCESS;

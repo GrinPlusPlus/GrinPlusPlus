@@ -20,9 +20,8 @@ public:
 
 private:
 	TorManager(const TorConfig& config);
-	~TorManager();
 
 	const TorConfig& m_torConfig;
-	TorControl* m_pControl;
+	std::shared_ptr<TorControl> m_pControl;
 	asio::io_context m_context;
 };

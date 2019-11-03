@@ -13,10 +13,6 @@ KernelMMR::KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFi
 
 }
 
-KernelMMR::~KernelMMR()
-{
-}
-
 std::shared_ptr<KernelMMR> KernelMMR::Load(const std::string& txHashSetDirectory)
 {
 	std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "kernel/pmmr_hash.bin");
@@ -74,7 +70,7 @@ void KernelMMR::Rollback()
 	m_pDataFile->Rollback();
 }
 
-bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
+void KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
 	// Add to data file
 	Serializer serializer;
@@ -83,6 +79,4 @@ bool KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 
 	// Add hashes
 	MMRHashUtil::AddHashes(m_pHashFile, serializer.GetBytes(), nullptr);
-
-	return true;
 }

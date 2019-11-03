@@ -54,7 +54,7 @@ public:
 		const uint64_t proofSize = byteBuffer.ReadU64();
 		if (proofSize > MAX_PROOF_SIZE)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		return RangeProof(byteBuffer.ReadVector(proofSize));

@@ -3,6 +3,7 @@
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/KeyChainPath.h>
 #include <Wallet/OutputStatus.h>
+#include <Common/Traits.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
@@ -12,7 +13,7 @@
 
 static const uint8_t OUTPUT_DATA_FORMAT = 1;
 
-class OutputData
+class OutputData : Traits::IPrintable
 {
 public:
 	OutputData(
@@ -115,7 +116,7 @@ public:
 		const uint8_t formatVersion = byteBuffer.ReadU8();
 		if (formatVersion > OUTPUT_DATA_FORMAT)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		KeyChainPath keyChainPath = KeyChainPath::FromString(byteBuffer.ReadVarStr());
@@ -158,6 +159,8 @@ public:
 			messageOpt
 		);
 	}
+
+	virtual std::string Format() const override final { return m_output.GetCommitment().Format(); }
 
 private:
 	KeyChainPath m_keyChainPath;

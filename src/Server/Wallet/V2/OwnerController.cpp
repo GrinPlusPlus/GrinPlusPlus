@@ -4,20 +4,25 @@
 #include <Net/Tor/TorManager.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Net/Tor/TorException.h>
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 #include <Net/Clients/HTTP/HTTPException.h>
 
 #include "Send/OwnerSend.h"
 
-OwnerController::OwnerController(const Config& config)
-	: m_config(config)
+OwnerController::OwnerController(std::shared_ptr<CallbackData> pCallbackData, mg_context* pCivetContext)
+	: m_pCallbackData(pCallbackData), m_pCivetContext(pCivetContext)
 {
 
 }
 
-bool OwnerController::StartListener(IWalletManager* pWalletManager)
+OwnerController::~OwnerController()
 {
-	m_pWalletManager = pWalletManager;
+	mg_stop(m_pCivetContext);
+}
+
+std::shared_ptr<OwnerController> OwnerController::Create(const Config& config, IWalletManagerPtr pWalletManager)
+{
+	std::shared_ptr<CallbackData> pCallbackData(new CallbackData(config, pWalletManager));
 
 	const char* pOptions[] = {
 		"num_threads", "1",
@@ -25,23 +30,13 @@ bool OwnerController::StartListener(IWalletManager* pWalletManager)
 		NULL
 	};
 
-	m_pCivetContext = mg_start(NULL, 0, pOptions);
-	if (m_pCivetContext == nullptr)
-	{
-		return false;
-	}
+	mg_context* pCivetContext = mg_start(NULL, 0, pOptions);
+	mg_set_request_handler(pCivetContext, "/v2", OwnerAPIHandler, pCallbackData.get());
 
-	mg_set_request_handler(m_pCivetContext, "/v2", OwnerAPIHandler, this);
-	return true;
+	return std::shared_ptr<OwnerController>(new OwnerController(pCallbackData, pCivetContext));
 }
 
-bool OwnerController::StopListener()
-{
-	mg_stop(m_pCivetContext);
-	return true;
-}
-
-int OwnerController::OwnerAPIHandler(mg_connection* pConnection, void* pContext)
+int OwnerController::OwnerAPIHandler(mg_connection* pConnection, void* pCBData)
 {
 	Json::Value responseJSON;
 	try
@@ -53,8 +48,8 @@ int OwnerController::OwnerAPIHandler(mg_connection* pConnection, void* pContext)
 			const std::string& method = request.GetMethod();
 			if (method == "send")
 			{
-				OwnerController* pController = (OwnerController*)pContext;
-				OwnerSend send(pController->m_config, *pController->m_pWalletManager);
+				CallbackData* pCallbackData = (CallbackData*)pCBData;
+				OwnerSend send(pCallbackData->m_config, pCallbackData->m_pWalletManager);
 
 				responseJSON = send.Send(pConnection, request).ToJSON();
 			}

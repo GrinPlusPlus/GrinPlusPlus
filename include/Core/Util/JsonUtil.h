@@ -6,7 +6,7 @@
 #include <Crypto/PublicKey.h>
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 #include <json/json.h>
 #include <optional>
 #include <vector>
@@ -35,7 +35,7 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		if (hex)
@@ -43,7 +43,7 @@ public:
 			std::vector<unsigned char> bytes = HexUtil::FromHex(std::string(node.asString()));
 			if (bytes.size() != expectedSize)
 			{
-				throw DeserializationException();
+				throw DESERIALIZATION_EXCEPTION();
 			}
 
 			return bytes;
@@ -52,7 +52,7 @@ public:
 		const size_t size = node.size();
 		if (size != expectedSize)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		std::vector<unsigned char> bytes(size);
@@ -68,13 +68,13 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		const Json::Value value = node.get(key, Json::nullValue);
 		if (value == Json::nullValue)
 		{
-			throw DESERIALIZATION_EXCEPTION("Missing field " + key);
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		return value;
@@ -84,7 +84,7 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		Json::Value value = node.get(key, Json::nullValue);
@@ -246,7 +246,7 @@ public:
 		}
 		else
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 	}
 

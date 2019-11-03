@@ -21,16 +21,16 @@ NodeDaemon::NodeDaemon(const Config& config)
 
 }
 
-INodeClient* NodeDaemon::Initialize()
+std::shared_ptr<INodeClient> NodeDaemon::Initialize()
 {
-	LoggerAPI::Initialize(m_config.GetLogDirectory(), m_config.GetLogLevel());
+	LoggerAPI::Initialize(m_config.GetNodeDirectory(), m_config.GetWalletConfig().GetWalletDirectory(), m_config.GetLogLevel());
 
 	m_pNodeClient = DefaultNodeClient::Create(m_config);
 
 	m_pNodeRestServer = new NodeRestServer(m_config, m_pNodeClient->GetNodeContext());
 	m_pNodeRestServer->Initialize();
 
-	return m_pNodeClient.get();
+	return m_pNodeClient;
 }
 
 void NodeDaemon::Shutdown()
@@ -41,17 +41,6 @@ void NodeDaemon::Shutdown()
 		delete m_pNodeRestServer;
 
 		m_pNodeClient.reset();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//P2PAPI::ShutdownP2PServer(m_pP2PServer);
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//TxPoolAPI::DestroyTransactionPool(m_pTransactionPool);
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//BlockChainAPI::ShutdownBlockChainServer(m_pBlockChainServer);
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//delete m_pTxHashSetManager;
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//DatabaseAPI::CloseDatabase(m_pDatabase);
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		LoggerAPI::Flush();
 	}
 	catch(const std::system_error& e)

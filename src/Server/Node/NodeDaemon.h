@@ -18,7 +18,7 @@ class NodeDaemon
 public:
 	NodeDaemon(const Config& config);
 
-	INodeClient* Initialize();
+	std::shared_ptr<INodeClient> Initialize();
 	void UpdateDisplay(const int secondsRunning);
 	void Shutdown();
 

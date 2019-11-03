@@ -11,7 +11,7 @@
 class BlockHydrator
 {
 public:
-	BlockHydrator(std::shared_ptr<const ITransactionPool> pTransactionPool);
+	explicit BlockHydrator(std::shared_ptr<const ITransactionPool> pTransactionPool);
 
 	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock) const;
 

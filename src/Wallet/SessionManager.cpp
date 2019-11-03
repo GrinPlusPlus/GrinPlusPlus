@@ -7,8 +7,8 @@
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
 
-SessionManager::SessionManager(const Config& config, const INodeClient& nodeClient, IWalletDB& walletDB, IWalletManager& walletManager)
-	: m_config(config), m_nodeClient(nodeClient), m_walletDB(walletDB), m_foreignController(config, walletManager)
+SessionManager::SessionManager(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB, IWalletManager& walletManager)
+	: m_config(config), m_pNodeClient(pNodeClient), m_pWalletDB(pWalletDB), m_foreignController(config, walletManager)
 {
 	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 }
@@ -17,31 +17,34 @@ SessionManager::~SessionManager()
 {
 	for (auto iter = m_sessionsById.begin(); iter != m_sessionsById.end(); iter++)
 	{
-		m_foreignController.StopListener(iter->second->m_pWallet->GetUsername());
+		m_foreignController.StopListener(iter->second->m_wallet.Read()->GetUsername());
 		delete iter->second;
 	}
 }
 
-std::unique_ptr<SessionToken> SessionManager::Login(const std::string& username, const SecureString& password)
+SessionToken SessionManager::Login(const std::string& username, const SecureString& password)
 {
-	LoggerAPI::LogDebug("SessionManager::Login - Logging in with username: " + username);
-	std::unique_ptr<EncryptedSeed> pSeed = m_walletDB.LoadWalletSeed(username);
+	WALLET_DEBUG_F("Logging in with username: %s", username);
+	std::unique_ptr<EncryptedSeed> pSeed = m_pWalletDB->LoadWalletSeed(username);
 	if (pSeed != nullptr)
 	{
 		std::optional<SecureVector> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
 		if (decryptedSeedOpt.has_value())
 		{
-			LoggerAPI::LogInfo("SessionManager::Login - Valid password provided. Logging in now.");
+			WALLET_INFO("Valid password provided. Logging in now.");
 
-			m_walletDB.OpenWallet(username, decryptedSeedOpt.value());
-			return std::make_unique<SessionToken>(Login(username, decryptedSeedOpt.value()));
+			m_pWalletDB->OpenWallet(username, decryptedSeedOpt.value());
+			return Login(username, decryptedSeedOpt.value());
 		}
 
-		LoggerAPI::LogError("SessionManager::Login - Wallet seed not decrypted. Wrong password?");
+		WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
+	}
+	else
+	{
+		WALLET_ERROR("Wallet seed not found.");
 	}
 
-	LoggerAPI::LogError("SessionManager::Login - Wallet seed not found.");
-	return std::unique_ptr<SessionToken>(nullptr);
+	throw SessionTokenException();
 }
 
 SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)
@@ -71,15 +74,15 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	const uint64_t sessionId = m_nextSessionId++;
 	SessionToken token(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 
-	Wallet* pWallet = Wallet::LoadWallet(m_config, m_nodeClient, m_walletDB, username);
+	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB, username);
 
-	LoggedInSession* pSession = new LoggedInSession(pWallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
+	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
 	m_sessionsById[sessionId] = pSession;
 
 	std::optional<TorAddress> torAddressOpt = m_foreignController.StartListener(username, token, seed);
 	if (torAddressOpt.has_value())
 	{
-		pWallet->SetTorAddress(torAddressOpt.value());
+		wallet.Write()->SetTorAddress(torAddressOpt.value());
 	}
 
 	return token;
@@ -90,7 +93,7 @@ void SessionManager::Logout(const SessionToken& token)
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
-		m_foreignController.StopListener(iter->second->m_pWallet->GetUsername());
+		m_foreignController.StopListener(iter->second->m_wallet.Read()->GetUsername());
 
 		delete iter->second;
 		m_sessionsById.erase(iter);
@@ -147,14 +150,12 @@ SecretKey SessionManager::GetGrinboxAddress(const SessionToken& token) const
 	throw SessionTokenException();
 }
 
-LockedWallet SessionManager::GetWallet(const SessionToken& token)
+Locked<Wallet> SessionManager::GetWallet(const SessionToken& token)
 {
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
-		LoggedInSession* pSession = iter->second;
-
-		return LockedWallet(pSession->m_mutex, *(pSession->m_pWallet));
+		return iter->second->m_wallet;
 	}
 
 	throw SessionTokenException();

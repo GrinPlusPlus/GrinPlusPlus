@@ -5,7 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Core/Serialization/EndianHelper.h>
-#include <Core/Serialization/DeserializationException.h>
+#include <Core/Exceptions/DeserializationException.h>
 
 #include <vector>
 #include <string>
@@ -29,7 +29,7 @@ public:
 	{
 		if (m_index + sizeof(T) > m_bytes.size())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		if (EndianHelper::IsBigEndian())
@@ -52,7 +52,7 @@ public:
 	{
 		if (m_index + sizeof(T) > m_bytes.size())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		if (EndianHelper::IsBigEndian())
@@ -152,7 +152,7 @@ public:
 
 		if (m_index + stringLength > m_bytes.size())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		std::vector<unsigned char> temp(m_bytes.cbegin() + m_index, m_bytes.cbegin() + m_index + stringLength);
@@ -166,7 +166,7 @@ public:
 	{
 		if (m_index + NUM_BYTES > m_bytes.size())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		std::vector<unsigned char> data(m_bytes.cbegin() + m_index, m_bytes.cbegin() + m_index + NUM_BYTES);
@@ -180,7 +180,7 @@ public:
 	{
 		if (m_index + numBytes > m_bytes.size())
 		{
-			throw DeserializationException();
+			throw DESERIALIZATION_EXCEPTION();
 		}
 
 		const size_t index = m_index;

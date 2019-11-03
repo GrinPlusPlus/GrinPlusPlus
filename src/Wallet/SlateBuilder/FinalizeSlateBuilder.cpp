@@ -5,7 +5,7 @@
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
 
-std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const
+std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	Slate finalSlate = slate;
 
@@ -24,6 +24,8 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secu
 		return std::unique_ptr<Slate>(nullptr);
 	}
 
+	auto pWallet = wallet.Write();
+
 	// Verify partial signatures
 	const Hash message = kernels.front().GetSignatureMessage();
 	if (!SignatureUtil::VerifyPartialSignatures(finalSlate.GetParticipantData(), message))
@@ -32,7 +34,7 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secu
 	}
 
 	// Add partial signature to slate's participant data
-	if (!AddPartialSignature(wallet, masterSeed, finalSlate, message))
+	if (!AddPartialSignature(pWallet.GetShared(), masterSeed, finalSlate, message))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -44,7 +46,7 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secu
 	}
 
 	// Update database with latest WalletTx
-	if (!UpdateDatabase(wallet, masterSeed, finalSlate))
+	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, finalSlate))
 	{
 		return std::unique_ptr<Slate>(nullptr);
 	}
@@ -52,10 +54,10 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Wallet& wallet, const Secu
 	return std::make_unique<Slate>(std::move(finalSlate));
 }
 
-bool FinalizeSlateBuilder::AddPartialSignature(Wallet& wallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
+bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
 {
 	// Load secretKey and secretNonce
-	std::unique_ptr<SlateContext> pSlateContext = wallet.GetSlateContext(slate.GetSlateId(), masterSeed);
+	std::unique_ptr<SlateContext> pSlateContext = pWallet->GetSlateContext(slate.GetSlateId(), masterSeed);
 	if (pSlateContext == nullptr)
 	{
 		return false;
@@ -127,10 +129,10 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	return true;
 }
 
-bool FinalizeSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& masterSeed, Slate& finalSlate) const
+bool FinalizeSlateBuilder::UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const
 {
 	// Load WalletTx
-	std::unique_ptr<WalletTx> pWalletTx = wallet.GetTxBySlateId(masterSeed, finalSlate.GetSlateId());
+	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, finalSlate.GetSlateId());
 	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_STARTED)
 	{
 		return false;
@@ -140,7 +142,7 @@ bool FinalizeSlateBuilder::UpdateDatabase(Wallet& wallet, const SecureVector& ma
 	pWalletTx->SetType(EWalletTxType::SENDING_FINALIZED);
 	pWalletTx->SetTransaction(finalSlate.GetTransaction());
 
-	if (!wallet.AddWalletTxs(masterSeed, std::vector<WalletTx>({ *pWalletTx })))
+	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ *pWalletTx })))
 	{
 		return false;
 	}

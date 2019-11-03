@@ -26,11 +26,6 @@ TxHashSet::TxHashSet(
 
 }
 
-TxHashSet::~TxHashSet()
-{
-	//std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-}
-
 bool TxHashSet::IsUnspent(const OutputLocation& location) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
@@ -128,17 +123,8 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		}
 
 		const uint64_t mmrIndex = pOutputPosition->GetMMRIndex();
-		if (!m_pOutputPMMR->Remove(mmrIndex))
-		{
-			LOG_WARNING_F("Failed to remove output at position (%llu)", mmrIndex);
-			return false;
-		}
-
-		if (!m_pRangeProofPMMR->Remove(mmrIndex))
-		{
-			LOG_WARNING_F("Failed to remove rangeproof at position (%llu)", mmrIndex);
-			return false;
-		}
+		m_pOutputPMMR->Remove(mmrIndex);
+		m_pRangeProofPMMR->Remove(mmrIndex);
 
 		blockInputBitmap.add(mmrIndex + 1);
 	}

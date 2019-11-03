@@ -18,7 +18,7 @@ public:
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR,
 		const BlockHeader& blockHeader
 	);
-	virtual ~TxHashSet();
+	virtual ~TxHashSet() = default;
 
 	inline void ReadLock() { m_txHashSetMutex.lock_shared(); }
 	inline void Unlock() { m_txHashSetMutex.unlock_shared(); }

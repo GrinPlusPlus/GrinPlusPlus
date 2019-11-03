@@ -245,8 +245,6 @@ void ChainState::Commit()
 		m_headerMMRWriter->Commit();
 	}
 
-	//m_pHeaderMMR->Commit();
-	//GetChainStore()->Flush();
 	m_pTxHashSetManager->Flush();
 }
 

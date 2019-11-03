@@ -10,7 +10,7 @@
 class OwnerSend
 {
 public:
-	OwnerSend(const Config& config, IWalletManager& walletManager);
+	OwnerSend(const Config& config, IWalletManagerPtr pWalletManager);
 
 	RPC::Response Send(mg_connection* pConnection, RPC::Request& request);
 
@@ -19,5 +19,5 @@ private:
 	bool CheckVersion(TorConnection& connection) const;
 
 	const Config& m_config;
-	IWalletManager& m_walletManager;
+	IWalletManagerPtr m_pWalletManager;
 };

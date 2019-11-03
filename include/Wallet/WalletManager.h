@@ -54,7 +54,7 @@ public:
 	//
 	virtual SecureString GetSeedWords(const SessionToken& token) = 0;
 
-	virtual bool CheckForOutputs(
+	virtual void CheckForOutputs(
 		const SessionToken& token,
 		const bool fromGenesis
 	) = 0;
@@ -68,7 +68,7 @@ public:
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
-	virtual std::unique_ptr<SessionToken> Login(
+	virtual SessionToken Login(
 		const std::string& username,
 		const SecureString& password
 	) = 0;
@@ -80,9 +80,8 @@ public:
 
 	//
 	// Validates the password and then deletes the wallet.
-	// Returns true if the wallet is deleted successfully.
 	//
-	virtual bool DeleteWallet(
+	virtual void DeleteWallet(
 		const std::string& username,
 		const SecureString& password
 	) = 0;
@@ -141,15 +140,12 @@ public:
 	) = 0;
 };
 
+typedef std::shared_ptr<IWalletManager> IWalletManagerPtr;
+
 namespace WalletAPI
 {
 	//
 	// Creates a new instance of the Wallet manager.
 	//
-	WALLET_API IWalletManager* StartWalletManager(const Config& config, INodeClient& nodeClient);
-
-	//
-	// Stops the Wallet manager and clears up its memory usage.
-	//
-	WALLET_API void ShutdownWalletManager(IWalletManager* pWalletManager);
+	WALLET_API IWalletManagerPtr CreateWalletManager(const Config& config, INodeClientPtr pNodeClient);
 }

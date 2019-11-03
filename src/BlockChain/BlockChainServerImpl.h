@@ -25,7 +25,6 @@ public:
 		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool
 	);
-	virtual ~BlockChainServer();
 
 	virtual bool ResyncChain() override final;
 

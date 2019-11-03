@@ -49,7 +49,7 @@ void ChainStore::Commit()
 	m_pConfirmedChain->Flush();
 }
 
-BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height, BlockIndex* pPreviousIndex)
+BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height)
 {
 	BlockIndex* pSyncIndex = m_pSyncChain->GetByHeight(height);
 	if (pSyncIndex != nullptr && pSyncIndex->GetHash() == hash)
@@ -69,7 +69,7 @@ BlockIndex* ChainStore::GetOrCreateIndex(const Hash& hash, const uint64_t height
 		return pConfirmedIndex;
 	}
 
-	return new BlockIndex(hash, height, pPreviousIndex);
+	return new BlockIndex(hash, height);
 }
 
 const BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const
@@ -83,8 +83,9 @@ const BlockIndex* ChainStore::FindCommonIndex(const EChainType chainType1, const
 
 	while (pChain1Index->GetHash() != pChain2Index->GetHash())
 	{
-		pChain1Index = pChain1Index->GetPrevious();
-		pChain2Index = pChain2Index->GetPrevious();
+		--height;
+		pChain1Index = pChain1->GetByHeight(height);
+		pChain2Index = pChain2->GetByHeight(height);
 	}
 
 	return pChain1Index;

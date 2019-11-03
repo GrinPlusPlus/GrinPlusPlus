@@ -25,14 +25,12 @@ public:
 	ITxHashSetPtr GetTxHashSet();
 	ITxHashSetConstPtr GetTxHashSet() const;
 	void SetTxHashSet(ITxHashSetPtr pTxHashSet);
-	//static void DestroyTxHashSet(ITxHashSet* pTxHashSet);
 
 	static ITxHashSetPtr LoadFromZip(const Config& config, std::shared_ptr<Locked<IBlockDB>> pDatabase, const std::string& zipFilePath, const BlockHeader& header);
 	bool SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header, const std::string& zipFilePath);
 
 private:
 	const Config& m_config;
-	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
 	ITxHashSetPtr m_pTxHashSet;
 
 	// TODO: Needs mutex

@@ -10,7 +10,7 @@ class ReceiveSlateBuilder
 {
 public:
 	std::unique_ptr<Slate> AddReceiverData(
-		Wallet& wallet,
+		Locked<Wallet> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
 		const std::optional<std::string>& addressOpt,
@@ -18,10 +18,10 @@ public:
 	) const;
 
 private:
-	bool VerifySlateStatus(Wallet& wallet, const SecureVector& masterSeed, const Slate& slate) const;
+	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
 	void AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
 	bool UpdateDatabase(
-		Wallet& wallet,
+		std::shared_ptr<Wallet> pWallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
 		const OutputData& outputData,

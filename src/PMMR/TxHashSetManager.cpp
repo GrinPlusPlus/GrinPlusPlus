@@ -55,7 +55,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		pRangeProofPMMR->Rewind(blockHeader.GetOutputMMRSize(), Roaring());
 		pRangeProofPMMR->Commit();
 
-		return std::make_shared<TxHashSet>(pKernelMMR, pOutputPMMR, pRangeProofPMMR, blockHeader);
+		return std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, blockHeader));
 	}
 
 	return nullptr;
@@ -136,11 +136,6 @@ void TxHashSetManager::SetTxHashSet(std::shared_ptr<ITxHashSet> pTxHashSet)
 	Close();
 	m_pTxHashSet = pTxHashSet;
 }
-
-//void TxHashSetManager::DestroyTxHashSet(ITxHashSetPtr pTxHashSet)
-//{
-//	delete (TxHashSet*)pTxHashSet;
-//}
 
 void TxHashSetManager::Close()
 {

@@ -110,16 +110,16 @@ public:
 	// * SessionTokenException - If no matching session found, or if the token is invalid.
 	// * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
 	//
-	virtual std::unique_ptr<Slate> Send(const SendCriteria& sendCriteria) = 0;
+	virtual Slate Send(const SendCriteria& sendCriteria) = 0;
 
-	virtual std::unique_ptr<Slate> Receive(
+	virtual Slate Receive(
 		const SessionToken& token,
 		const Slate& slate,
 		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt
 	) = 0;
 
-	virtual std::unique_ptr<Slate> Finalize(
+	virtual Slate Finalize(
 		const SessionToken& token,
 		const Slate& slate
 	) = 0;

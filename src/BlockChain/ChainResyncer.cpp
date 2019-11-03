@@ -19,7 +19,7 @@ bool ChainResyncer::ResyncChain()
 	pLockedState->GetHeaderMMR()->Rewind(1);
 	for (uint64_t i = 1; i <= pCandidateChain->GetTip()->GetHeight(); i++)
 	{
-		BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
 		const Hash& hash = pIndex->GetHash();
 
 		std::unique_ptr<BlockHeader> pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);

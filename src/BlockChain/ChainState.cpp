@@ -41,7 +41,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 		pHeaderMMR->Write()->AddHeader(genesisHeader);
 	}
 
-	const BlockIndex* pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
+	std::shared_ptr<const BlockIndex> pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
 	const std::unique_ptr<BlockHeader> pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
 	pTxHashSetManager->Open(*pConfirmedHeader);
 
@@ -52,14 +52,14 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
 	const Hash& candidateHeadHash = GetChainStore()->GetChain(EChainType::CANDIDATE)->GetTip()->GetHash();
-	std::unique_ptr<BlockHeader> pCandidateHead = m_pBlockDB->Read()->GetBlockHeader(candidateHeadHash);
+	std::unique_ptr<BlockHeader> pCandidateHead = GetBlockDB()->GetBlockHeader(candidateHeadHash);
 	if (pCandidateHead != nullptr)
 	{
 		syncStatus.UpdateHeaderStatus(pCandidateHead->GetHeight(), pCandidateHead->GetTotalDifficulty());
 	}
 
 	const Hash& confirmedHeadHash = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetTip()->GetHash();
-	std::unique_ptr<BlockHeader> pConfirmedHead = m_pBlockDB->Read()->GetBlockHeader(confirmedHeadHash);
+	std::unique_ptr<BlockHeader> pConfirmedHead = GetBlockDB()->GetBlockHeader(confirmedHeadHash);
 	if (pConfirmedHead != nullptr)
 	{
 		syncStatus.UpdateBlockStatus(pConfirmedHead->GetHeight(), pConfirmedHead->GetTotalDifficulty());
@@ -92,21 +92,21 @@ std::unique_ptr<BlockHeader> ChainState::GetTipBlockHeader(const EChainType chai
 {
 	const Hash& headHash = GetChainStore()->GetChain(chainType)->GetTip()->GetHash();
 
-	return m_pBlockDB->Read()->GetBlockHeader(headHash);
+	return GetBlockDB()->GetBlockHeader(headHash);
 }
 
 std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash) const
 {
-	return m_pBlockDB->Read()->GetBlockHeader(hash);
+	return GetBlockDB()->GetBlockHeader(hash);
 }
 
 std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
 	std::shared_ptr<const Chain> pChain = GetChainStore()->GetChain(chainType);
-	const BlockIndex* pBlockIndex = pChain->GetByHeight(height);
+	std::shared_ptr<const BlockIndex> pBlockIndex = pChain->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
-		return m_pBlockDB->Read()->GetBlockHeader(pBlockIndex->GetHash());
+		return GetBlockDB()->GetBlockHeader(pBlockIndex->GetHash());
 	}
 
 	return std::unique_ptr<BlockHeader>(nullptr);
@@ -116,13 +116,13 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commit
 {
 	std::unique_ptr<BlockHeader> pHeader(nullptr);
 
-	std::unique_ptr<OutputLocation> pOutputLocation = m_pBlockDB->Read()->GetOutputPosition(outputCommitment);
+	std::unique_ptr<OutputLocation> pOutputLocation = GetBlockDB()->GetOutputPosition(outputCommitment);
 	if (pOutputLocation != nullptr)
 	{
-		const BlockIndex* pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(pOutputLocation->GetBlockHeight());
+		std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(pOutputLocation->GetBlockHeight());
 		if (pBlockIndex != nullptr)
 		{
-			return m_pBlockDB->Read()->GetBlockHeader(pBlockIndex->GetHash());
+			return GetBlockDB()->GetBlockHeader(pBlockIndex->GetHash());
 		}
 	}
 
@@ -131,15 +131,15 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commit
 
 std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash) const
 {
-	return m_pBlockDB->Read()->GetBlock(hash);
+	return GetBlockDB()->GetBlock(hash);
 }
 
 std::unique_ptr<FullBlock> ChainState::GetBlockByHeight(const uint64_t height) const
 {
-	const BlockIndex* pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
+	std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
-		return m_pBlockDB->Read()->GetBlock(pBlockIndex->GetHash());
+		return GetBlockDB()->GetBlock(pBlockIndex->GetHash());
 	}
 	else
 	{
@@ -160,10 +160,10 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 		return std::unique_ptr<BlockWithOutputs>(nullptr);
 	}
 
-	const BlockIndex* pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
+	std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
-		std::unique_ptr<FullBlock> pBlock = m_pBlockDB->Read()->GetBlock(pBlockIndex->GetHash());
+		std::unique_ptr<FullBlock> pBlock = GetBlockDB()->GetBlock(pBlockIndex->GetHash());
 		if (pBlock != nullptr)
 		{
 			std::vector<OutputDisplayInfo> outputsFound;
@@ -172,7 +172,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 			const std::vector<TransactionOutput>& outputs = pBlock->GetTransactionBody().GetOutputs();
 			for (const TransactionOutput& output : outputs)
 			{
-				std::unique_ptr<OutputLocation> pOutputLocation = m_pBlockDB->Read()->GetOutputPosition(output.GetCommitment());
+				std::unique_ptr<OutputLocation> pOutputLocation = GetBlockDB()->GetOutputPosition(output.GetCommitment());
 				if (pOutputLocation != nullptr)
 				{
 					const bool spent = !pTxHashSet->IsUnspent(*pOutputLocation);
@@ -198,7 +198,7 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 	uint64_t nextHeight = GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 	while (nextHeight <= candidateHeight)
 	{
-		const BlockIndex* pIndex = pCandidateChain->GetByHeight(nextHeight);
+		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(nextHeight);
 		if (!m_pOrphanPool->IsOrphan(nextHeight, pIndex->GetHash()))
 		{
 			blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight, pIndex->GetHash()));
@@ -214,19 +214,6 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 
 	return blocksNeeded;
 }
-
-//LockedChainState ChainState::GetLocked()
-//{
-//	return LockedChainState(
-//		m_chainMutex,
-//		m_pChainStore,
-//		m_pBlockDB,
-//		m_pHeaderMMR,
-//		m_orphanPool,
-//		m_pTransactionPool,
-//		m_pTxHashSetManager
-//	);
-//}
 
 void ChainState::Commit()
 {
@@ -279,10 +266,3 @@ void ChainState::OnEndWrite()
 	m_blockDBWriter.Clear();
 	m_headerMMRWriter.Clear();
 }
-
-//void ChainState::FlushAll()
-//{
-//	// TODO: m_pHeaderMMR->Commit();
-//	GetChainStore()->Flush();
-//	m_pTxHashSetManager->Flush();
-//}

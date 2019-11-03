@@ -9,63 +9,70 @@
 class BlockIndexAllocator;
 class ChainStore;
 
-class Chain
+class Chain : Traits::Batchable
 {
 public:
-	static std::shared_ptr<Chain> Load(BlockIndexAllocator& blockIndexAllocator, const EChainType chainType, const std::string& path, BlockIndex* pGenesisIndex);
+	static std::shared_ptr<Chain> Load(
+		std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
+		const EChainType chainType,
+		const std::string& path,
+		std::shared_ptr<const BlockIndex> pGenesisIndex
+	);
 
-	BlockIndex* GetByHeight(const uint64_t height);
-	const BlockIndex* GetByHeight(const uint64_t height) const;
-
-	BlockIndex* GetTip();
-	const BlockIndex* GetTip() const;
+	const Hash& GetHash(const uint64_t height) const;
+	std::shared_ptr<const BlockIndex> GetByHeight(const uint64_t height) const;
+	std::shared_ptr<const BlockIndex> GetTip() const;
 
 	inline EChainType GetType() const { return m_chainType; }
 
-	bool AddBlock(BlockIndex* pBlockIndex);
-	bool Rewind(const uint64_t lastHeight);
-	bool Flush();
+	std::shared_ptr<const BlockIndex> AddBlock(const Hash& hash);
+	void Rewind(const uint64_t lastHeight);
+
+	virtual void Commit() override final;
+	virtual void Rollback() override final;
+	virtual void OnInitWrite() override final;
+	virtual void OnEndWrite() override final;
 
 private:
-	Chain(const EChainType chainType, std::shared_ptr<DataFile<32>> pDataFile, std::vector<BlockIndex*>&& indices);
-
-	Writer<DataFile<32>> GetTransaction();
+	Chain(
+		const EChainType chainType,
+		std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
+		std::shared_ptr<DataFile<32>> pDataFile,
+		std::vector<std::shared_ptr<const BlockIndex>>&& indices
+	);
 
 	const EChainType m_chainType;
-	std::vector<BlockIndex*> m_indices;
+	std::shared_ptr<BlockIndexAllocator> m_pBlockIndexAllocator;
+	std::vector<std::shared_ptr<const BlockIndex>> m_indices;
 	size_t m_height;
-	Locked<DataFile<32>> m_pDataFile;
-	Writer<DataFile<32>> m_transaction;
+	Locked<DataFile<32>> m_dataFile;
+	Writer<DataFile<32>> m_dataFileWriter;
 };
 
 class BlockIndexAllocator
 {
 public:
-	explicit BlockIndexAllocator(const std::vector<std::shared_ptr<Chain>>& chains)
-		: m_chains(chains)
-	{
+	BlockIndexAllocator() = default;
 
-	}
-
-	void AddChain(std::shared_ptr<Chain> pChain)
+	void AddChain(std::shared_ptr<const Chain> pChain)
 	{
 		m_chains.push_back(pChain);
 	}
 
-	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height)
+	std::shared_ptr<const BlockIndex> GetOrCreateIndex(const Hash& hash, const uint64_t height) const
 	{
-		for (std::shared_ptr<Chain> pChain : m_chains)
+		for (std::shared_ptr<const Chain> pChain : m_chains)
 		{
-			BlockIndex* pIndex = pChain->GetByHeight(height);
+			std::shared_ptr<const BlockIndex> pIndex = pChain->GetByHeight(height);
 			if (pIndex != nullptr && pIndex->GetHash() == hash)
 			{
 				return pIndex;
 			}
 		}
 
-		return new BlockIndex(hash, height);
+		return std::make_shared<const BlockIndex>(BlockIndex(hash, height));
 	}
 
 private:
-	std::vector<std::shared_ptr<Chain>> m_chains;
+	std::vector<std::shared_ptr<const Chain>> m_chains;
 };

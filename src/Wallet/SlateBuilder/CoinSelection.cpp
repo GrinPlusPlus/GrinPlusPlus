@@ -4,7 +4,6 @@
 #include <Wallet/Exceptions/InsufficientFundsException.h>
 #include <Infrastructure/Logger.h>
 
-// TODO: Apply Strategy instead of just selecting greatest number of outputs.
 // If strategy is "ALL", spend all available coins to reduce the fee.
 std::vector<OutputData> CoinSelection::SelectCoinsToSpend(
 	const std::vector<OutputData>& availableCoins, 

@@ -1,13 +1,28 @@
 #include "Chain.h"
 #include "ChainStore.h"
 
-Chain::Chain(const EChainType chainType, std::shared_ptr<DataFile<32>> pDataFile, std::vector<BlockIndex*>&& indices)
-	: m_chainType(chainType), m_pDataFile(pDataFile), m_transaction(), m_indices(std::move(indices)), m_height(m_indices.size() - 1)
+#include <Core/Exceptions/BlockChainException.h>
+
+Chain::Chain(
+	const EChainType chainType,
+	std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
+	std::shared_ptr<DataFile<32>> pDataFile,
+	std::vector<std::shared_ptr<const BlockIndex>>&& indices)
+	: m_chainType(chainType),
+	m_pBlockIndexAllocator(pBlockIndexAllocator),
+	m_dataFile(pDataFile),
+	m_dataFileWriter(),
+	m_indices(std::move(indices)),
+	m_height(m_indices.size() - 1)
 {
 
 }
 
-std::shared_ptr<Chain> Chain::Load(BlockIndexAllocator& blockIndexAllocator, const EChainType chainType, const std::string& path, BlockIndex* pGenesisIndex)
+std::shared_ptr<Chain> Chain::Load(
+	std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
+	const EChainType chainType,
+	const std::string& path,
+	std::shared_ptr<const BlockIndex> pGenesisIndex)
 {
 	std::shared_ptr<DataFile<32>> pDataFile = DataFile<32>::Load(path);
 
@@ -18,27 +33,24 @@ std::shared_ptr<Chain> Chain::Load(BlockIndexAllocator& blockIndexAllocator, con
 		pDataFile->Commit();
 	}
 
-	std::vector<BlockIndex*> indices;
-	pGenesisIndex->AddChainType(chainType);
+	std::vector<std::shared_ptr<const BlockIndex>> indices;
 	indices.push_back(pGenesisIndex);
 
-	size_t nextHeight = 1;
-	while (nextHeight < pDataFile->GetSize())
+	while (indices.size() < pDataFile->GetSize())
 	{
-		const Hash hash(pDataFile->GetDataAt(nextHeight));
-
-		BlockIndex* pBlockIndex = blockIndexAllocator.GetOrCreateIndex(hash, nextHeight);
-
-		pBlockIndex->AddChainType(chainType);
-		indices.push_back(pBlockIndex);
-
-		++nextHeight;
+		const Hash hash = pDataFile->GetDataAt(indices.size());
+		indices.push_back(pBlockIndexAllocator->GetOrCreateIndex(hash, indices.size()));
 	}
 
-	return std::make_shared<Chain>(Chain(chainType, pDataFile, std::move(indices)));
+	return std::make_shared<Chain>(Chain(chainType, pBlockIndexAllocator, pDataFile, std::move(indices)));
 }
 
-BlockIndex* Chain::GetByHeight(const uint64_t height)
+const Hash& Chain::GetHash(const uint64_t height) const
+{
+	return m_indices[height]->GetHash();
+}
+
+std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) const
 {
 	if (m_height >= height)
 	{
@@ -48,82 +60,77 @@ BlockIndex* Chain::GetByHeight(const uint64_t height)
 	return nullptr;
 }
 
-const BlockIndex* Chain::GetByHeight(const uint64_t height) const
-{
-	if (m_height >= height)
-	{
-		return m_indices[height];
-	}
-
-	return nullptr;
-}
-
-BlockIndex* Chain::GetTip()
+std::shared_ptr<const BlockIndex> Chain::GetTip() const
 {
 	return m_indices[m_height];
 }
 
-const BlockIndex* Chain::GetTip() const
+std::shared_ptr<const BlockIndex> Chain::AddBlock(const Hash& hash)
 {
-	return m_indices[m_height];
+	SetDirty(true);
+
+	std::shared_ptr<const BlockIndex> pBlockIndex = m_pBlockIndexAllocator->GetOrCreateIndex(hash, ++m_height);
+	m_indices.push_back(pBlockIndex);
+
+	const auto& bytes = pBlockIndex->GetHash().GetData();
+	m_dataFileWriter->AddData(bytes);
+
+	return pBlockIndex;
 }
 
-bool Chain::AddBlock(BlockIndex* pBlockIndex)
-{
-	if (pBlockIndex->GetHeight() == (m_height + 1))
-	{
-		pBlockIndex->AddChainType(m_chainType);
-		m_indices.push_back(pBlockIndex);
-
-		const auto& bytes = pBlockIndex->GetHash().GetData();
-		GetTransaction()->AddData(bytes);
-		m_height++;
-		return true;
-	}
-
-	return false;
-}
-
-bool Chain::Rewind(const uint64_t lastHeight)
+void Chain::Rewind(const uint64_t lastHeight)
 {
 	if (m_height < lastHeight)
 	{
-		return false;
+		throw BLOCK_CHAIN_EXCEPTION("Tried to rewind forward.");
 	}
 
 	if (m_height > lastHeight)
 	{
-		for (uint64_t i = lastHeight + 1; i <= m_height; i++)
-		{
-			BlockIndex* pBlockIndex = m_indices[i];
-			pBlockIndex->RemoveChainType(m_chainType);
-			if (pBlockIndex->IsSafeToDelete())
-			{
-				delete pBlockIndex;
-			}
-		}
-
+		SetDirty(true);
 		m_indices.erase(m_indices.begin() + lastHeight + 1, m_indices.end());
 
-		GetTransaction()->Rewind(lastHeight + 1);
+		m_dataFileWriter->Rewind(lastHeight + 1);
 		m_height = lastHeight;
 	}
-
-	return true;
 }
 
-bool Chain::Flush()
+void Chain::Commit()
 {
-	GetTransaction()->Commit();
-	return true;
-}
-
-Writer<DataFile<32>> Chain::GetTransaction()
-{
-	if (m_transaction.IsNull())
+	if (IsDirty())
 	{
-		m_transaction = m_pDataFile.BatchWrite();
+		m_dataFileWriter->Commit();
 	}
 
-	return m_transaction;
+	SetDirty(false);
+}
+
+void Chain::Rollback()
+{
+	if (IsDirty())
+	{
+		m_dataFileWriter->Rollback();
+		m_indices.clear();
+
+		while (m_indices.size() < m_dataFileWriter->GetSize())
+		{
+			const Hash hash = m_dataFileWriter->GetDataAt(m_indices.size());
+			m_indices.push_back(m_pBlockIndexAllocator->GetOrCreateIndex(hash, m_indices.size()));
+		}
+
+		m_height = m_indices.size() - 1;
+	}
+
+	SetDirty(false);
+}
+
+void Chain::OnInitWrite()
+{
+	SetDirty(false);
+	m_dataFileWriter = m_dataFile.BatchWrite();
+}
+
+void Chain::OnEndWrite()
+{
+	m_dataFileWriter.Clear();
 }

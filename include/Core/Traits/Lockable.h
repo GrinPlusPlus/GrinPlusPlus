@@ -63,6 +63,24 @@ private:
 	std::shared_ptr<InnerReader<T>> m_pReader;
 };
 
+class MutexUnlocker
+{
+public:
+	MutexUnlocker(std::shared_ptr<std::shared_mutex> pMutex)
+		: m_pMutex(pMutex)
+	{
+
+	}
+
+	~MutexUnlocker()
+	{
+		m_pMutex->unlock();
+	}
+
+private:
+	std::shared_ptr<std::shared_mutex> m_pMutex;
+};
+
 template<class T>
 class Writer : virtual public Reader<T>
 {
@@ -79,29 +97,19 @@ class Writer : virtual public Reader<T>
 
 		virtual ~InnerWriter()
 		{
-			try
-			{
-				if (m_batched)
-				{
-					if (IsDirty())
-					{
-						Rollback();
-					}
-				}
-				else
-				{
-					Commit();
-				}
+			// Using MutexUnlocker in case exception is thrown.
+			MutexUnlocker unlocker(m_pMutex);
 
-				OnEndWrite();
-			}
-			catch (std::exception& e)
+			if (m_batched)
 			{
-				m_pMutex->unlock();
-				//throw;
+				Rollback();
+			}
+			else
+			{
+				Commit();
 			}
 
-			m_pMutex->unlock();
+			OnEndWrite();
 		}
 
 		void Commit()
@@ -147,7 +155,7 @@ class Writer : virtual public Reader<T>
 				return ((Traits::Batchable*)m_pObject.get())->IsDirty();
 			}
 
-			return false;
+			return true;
 		}
 
 		bool m_batched;

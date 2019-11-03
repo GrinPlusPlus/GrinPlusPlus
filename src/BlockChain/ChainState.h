@@ -2,7 +2,6 @@
 
 #include "Chain.h"
 #include "ChainStore.h"
-#include "LockedChainState.h"
 #include "OrphanPool/OrphanPool.h"
 
 #include <P2P/SyncStatus.h>
@@ -14,6 +13,7 @@
 #include <Crypto/Hash.h>
 #include <Core/Traits/Lockable.h>
 #include <Database/Database.h>
+#include <TxPool/TransactionPool.h>
 #include <shared_mutex>
 
 // Forward Declarations
@@ -114,20 +114,9 @@ public:
 		return m_headerMMRWriter;
 	}
 
-	std::shared_ptr<OrphanPool> GetOrphanPool()
-	{
-		return m_pOrphanPool;
-	}
-
-	std::shared_ptr<ITransactionPool> GetTransactionPool()
-	{
-		return m_pTransactionPool;
-	}
-
-	std::shared_ptr<TxHashSetManager> GetTxHashSetManager()
-	{
-		return m_pTxHashSetManager;
-	}
+	std::shared_ptr<OrphanPool> GetOrphanPool() { return m_pOrphanPool; }
+	ITransactionPoolPtr GetTransactionPool() { return m_pTransactionPool; }
+	TxHashSetManagerPtr GetTxHashSetManager() { return m_pTxHashSetManager; }
 
 private:
 	ChainState(

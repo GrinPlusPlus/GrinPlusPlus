@@ -50,16 +50,16 @@ public:
 		const uint8_t numChangeOutputs
 	) override final;
 
-	virtual std::unique_ptr<Slate> Send(const SendCriteria& sendCriteria) override final;
+	virtual Slate Send(const SendCriteria& sendCriteria) override final;
 
-	virtual std::unique_ptr<Slate> Receive(
+	virtual Slate Receive(
 		const SessionToken& token,
 		const Slate& slate,
 		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt
 	) override final;
 
-	virtual std::unique_ptr<Slate> Finalize(const SessionToken& token, const Slate& slate) override final;
+	virtual Slate Finalize(const SessionToken& token, const Slate& slate) override final;
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) override final;
 	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
 
@@ -69,5 +69,5 @@ private:
 	const Config& m_config;
 	INodeClientPtr m_pNodeClient;
 	IWalletDBPtr m_pWalletDB;
-	SessionManager m_sessionManager;
+	Locked<SessionManager> m_sessionManager;
 };

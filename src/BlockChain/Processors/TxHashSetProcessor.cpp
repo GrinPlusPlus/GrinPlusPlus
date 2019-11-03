@@ -65,8 +65,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 		uint64_t firstOutput = 0;
 		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)
 		{
-			BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
-			std::unique_ptr<BlockHeader> pNextHeader = pChainStateBatch->GetBlockDB()->GetBlockHeader(pIndex->GetHash());
+			std::unique_ptr<BlockHeader> pNextHeader = pChainStateBatch->GetBlockHeaderByHeight(i, EChainType::CANDIDATE);
 			if (pNextHeader != nullptr)
 			{
 				pTxHashSet->SaveOutputPositions(pChainStateBatch->GetBlockDB(), *pNextHeader, firstOutput);
@@ -98,24 +97,21 @@ bool TxHashSetProcessor::UpdateConfirmedChain(Writer<ChainState> pLockedState, c
 	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 	
-	BlockIndex* pBlockIndex = pCandidateChain->GetByHeight(blockHeader.GetHeight());
+	std::shared_ptr<const BlockIndex> pBlockIndex = pCandidateChain->GetByHeight(blockHeader.GetHeight());
 	if (pBlockIndex->GetHash() != blockHeader.GetHash())
 	{
 		return false;
 	}
 
-	const BlockIndex* pCommonIndex = pLockedState->GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED);
-	if (pConfirmedChain->Rewind(pCommonIndex->GetHeight()))
-	{
-		uint64_t height = pCommonIndex->GetHeight() + 1;
-		while (height <= pBlockIndex->GetHeight())
-		{
-			pConfirmedChain->AddBlock(pCandidateChain->GetByHeight(height));
-			height++;
-		}
+	std::shared_ptr<const BlockIndex> pCommonIndex = pLockedState->GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED);
+	pConfirmedChain->Rewind(pCommonIndex->GetHeight());
 
-		return true;
+	uint64_t height = pCommonIndex->GetHeight() + 1;
+	while (height <= pBlockIndex->GetHeight())
+	{
+		pConfirmedChain->AddBlock(pCandidateChain->GetHash(height));
+		height++;
 	}
 
-	return false;
+	return true;
 }

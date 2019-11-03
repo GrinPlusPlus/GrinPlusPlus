@@ -5,19 +5,20 @@
 #include <Config/Config.h>
 #include <Core/Traits/Lockable.h>
 
-// TODO: Use memory-mapped file
 class ChainStore : public Traits::Batchable
 {
 public:
-	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, BlockIndex* pGenesisIndex);
+	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, std::shared_ptr<BlockIndex>);
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final {} // TODO: Handle this
+	virtual void Rollback() override final;
+	virtual void OnInitWrite() override final;
+	virtual void OnEndWrite() override final;
 
 	std::shared_ptr<Chain> GetChain(const EChainType chainType);
 	std::shared_ptr<const Chain> GetChain(const EChainType chainType) const;
-	BlockIndex* GetOrCreateIndex(const Hash& hash, const uint64_t height);
-	const BlockIndex* FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const;
+	//std::shared_ptr<BlockIndex> GetOrCreateIndex(const Hash& hash, const uint64_t height);
+	std::shared_ptr<const BlockIndex> FindCommonIndex(const EChainType chainType1, const EChainType chainType2) const;
 
 	//
 	// Applies all of the blocks from the source chain to the destination chain, up to the specified height.

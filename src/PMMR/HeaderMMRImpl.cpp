@@ -27,6 +27,13 @@ void HeaderMMR::Commit()
 	SetDirty(false);
 }
 
+void HeaderMMR::Rollback()
+{
+	LOG_DEBUG("Discarding changes.");
+	m_batchDataOpt.value().hashFile->Rollback();
+	SetDirty(false);
+}
+
 bool HeaderMMR::Rewind(const uint64_t size)
 {
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
@@ -37,13 +44,6 @@ bool HeaderMMR::Rewind(const uint64_t size)
 	}
 
 	return true;
-}
-
-void HeaderMMR::Rollback()
-{
-	LOG_DEBUG("Discarding changes.");
-	m_batchDataOpt.value().hashFile->Rollback();
-	SetDirty(false);
 }
 
 void HeaderMMR::AddHeader(const BlockHeader& header)
@@ -73,8 +73,6 @@ Hash HeaderMMR::Root(const uint64_t lastHeight) const
 	}
 }
 
-//std::shared_ptr<HeaderMMR> pInstance = nullptr;
-
 namespace HeaderMMRAPI
 {
 	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config)
@@ -82,9 +80,4 @@ namespace HeaderMMRAPI
 		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetChainDirectory() + "header_mmr.bin");
 		return std::make_shared<Locked<IHeaderMMR>>(pHeaderMMR);
 	}
-
-	//PMMR_API void CloseHeaderMMR(IHeaderMMR* pIHeaderMMR)
-	//{
-	//	pInstance.reset();
-	//}
 }

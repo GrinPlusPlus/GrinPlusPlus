@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <Wallet/SessionToken.h>
 #include <Net/Tor/TorAddress.h>
+#include <civetweb.h>
 #include <unordered_map>
 #include <optional>
 #include <string>
@@ -10,13 +11,12 @@
 
 // Forward Declarations
 class IWalletManager;
-struct mg_context;
-struct mg_connection;
 
 class ForeignController
 {
 public:
 	ForeignController(const Config& config, IWalletManager& walletManager);
+	~ForeignController();
 
 	std::optional<TorAddress> StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
 	bool StopListener(const std::string& username);
@@ -44,5 +44,5 @@ private:
 	IWalletManager& m_walletManager;
 
 	mutable std::mutex m_contextsMutex;
-	std::unordered_map<std::string, Context*> m_contextsByUsername;
+	std::unordered_map<std::string, std::shared_ptr<Context>> m_contextsByUsername;
 };

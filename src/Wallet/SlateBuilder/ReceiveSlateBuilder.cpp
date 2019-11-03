@@ -2,11 +2,12 @@
 #include "SignatureUtil.h"
 #include "TransactionBuilder.h"
 
+#include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
 #include <Wallet/SlateContext.h>
 #include <Infrastructure/Logger.h>
 
-std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
+Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,
 	const Slate& slate,
@@ -19,7 +20,7 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
 	// Verify slate was never received, exactly one kernel exists, and fee is valid.
 	if (!VerifySlateStatus(pWallet.GetShared(), masterSeed, receiveSlate))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		throw WALLET_EXCEPTION("Failed to verify received slate.");
 	}
 
 	// Generate output
@@ -37,10 +38,10 @@ std::unique_ptr<Slate> ReceiveSlateBuilder::AddReceiverData(
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
 	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, receiveSlate, outputData, walletTxId, slateContext, addressOpt, messageOpt))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		throw WALLET_EXCEPTION("Failed to update wallet database.");
 	}
 
-	return std::make_unique<Slate>(std::move(receiveSlate));
+	return receiveSlate;
 }
 
 bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const
@@ -49,14 +50,14 @@ bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, con
 	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetSlateId());
 	if (pWalletTx != nullptr && pWalletTx->GetType() != EWalletTxType::RECEIVED_CANCELED)
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Already received slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Already received slate %s", uuids::to_string(slate.GetSlateId()));
 		return false;
 	}
 
 	// Verify slate message signatures
 	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Failed to verify message signatures for slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to verify message signatures for slate %s", uuids::to_string(slate.GetSlateId()));
 		return false;
 	}
 
@@ -66,7 +67,7 @@ bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, con
 	const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetBody().GetKernels();
 	if (kernels.size() != 1)
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::VerifySlateStatus - Slate " + uuids::to_string(slate.GetSlateId()) + " had " + std::to_string(kernels.size()) + " kernels.");
+		WALLET_ERROR_F("Slate %s had %llu kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
 		return false;
 	}
 
@@ -94,7 +95,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(secretKey, secretNonce, participants, kernelMessage);
 	if (pPartialSignature == nullptr)
 	{
-		LoggerAPI::LogError("SlateBuilder::AddParticipantData - Failed to generate signature for slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to generate signature for slate %s", uuids::to_string(slate.GetSlateId()));
 		throw CryptoException();
 	}
 
@@ -107,7 +108,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
-			LoggerAPI::LogError("SlateBuilder::AddParticipantData - Failed to sign message for slate " + uuids::to_string(slate.GetSlateId()));
+			WALLET_ERROR_F("Failed to sign message for slate %s", uuids::to_string(slate.GetSlateId()));
 			throw CryptoException();
 		}
 
@@ -119,7 +120,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 
 	if (!SignatureUtil::VerifyPartialSignatures(slate.GetParticipantData(), kernelMessage))
 	{
-		LoggerAPI::LogError("SlateBuilder::AddParticipantData - Failed to verify signature for slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to verify signature for slate %s", uuids::to_string(slate.GetSlateId()));
 		throw CryptoException();
 	}
 }
@@ -167,7 +168,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 
 	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to create WalletTx");
+		WALLET_ERROR("Failed to create WalletTx");
 		return false;
 	}
 

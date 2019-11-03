@@ -9,7 +9,7 @@
 class FinalizeSlateBuilder
 {
 public:
-	std::unique_ptr<Slate> Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const;
+	Slate Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const;
 
 private:
 	bool AddPartialSignature(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const;

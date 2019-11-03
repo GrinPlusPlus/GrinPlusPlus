@@ -40,7 +40,7 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
 	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
-	BlockIndex* pGenesisIndex = new BlockIndex(genesisBlock.GetHash(), 0);
+	std::shared_ptr<BlockIndex> pGenesisIndex = std::make_shared<BlockIndex>(BlockIndex(genesisBlock.GetHash(), 0));
 
 	std::shared_ptr<Locked<ChainStore>> pChainStore = ChainStore::Load(config, pGenesisIndex);
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(config);

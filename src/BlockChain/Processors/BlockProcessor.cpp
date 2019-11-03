@@ -59,7 +59,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	const BlockHeader& header = block.GetBlockHeader();
 
 	// 1. Check if already part of confirmed chain
-	BlockIndex* pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
+	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
 	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.GetHash())
 	{
 		LOG_TRACE_F("Block %s already part of confirmed chain.", header);
@@ -124,7 +124,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Orphan if block not a part of candidate chain.
-	const BlockIndex* pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
+	std::shared_ptr<const BlockIndex> pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
 	{
 		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", header);
@@ -134,7 +134,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 
 	// Orphan if previous block is missing.
-	const BlockIndex* pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight() - 1);
+	std::shared_ptr<const BlockIndex> pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr)
 	{
 		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", header);
@@ -150,7 +150,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
 		for (uint64_t i = forkPoint; i < header.GetHeight(); i++)
 		{
-			const BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+			std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
 			if (!pLockedState->GetOrphanPool()->IsOrphan(i, pIndex->GetHash()) && pLockedState->GetBlockDB()->GetBlock(pIndex->GetHash()) == nullptr)
 			{
 				return EBlockStatus::ORPHAN;
@@ -161,7 +161,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	}
 
 	// Orphan if different block a part of confirmed chain.
-	const BlockIndex* pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
+	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
 	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
 	{
 		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", header);
@@ -195,7 +195,7 @@ EBlockChainStatus BlockProcessor::HandleReorg(const FullBlock& block, Writer<Cha
 
 	for (uint64_t i = commonHeight + 1; i < block.GetBlockHeader().GetHeight(); i++)
 	{
-		const BlockIndex* pIndex = pCandidateChain->GetByHeight(i);
+		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
 		std::unique_ptr<FullBlock> pBlock = pLockedState->GetOrphanPool()->GetOrphanBlock(i, pIndex->GetHash());
 		if (pBlock == nullptr)
 		{

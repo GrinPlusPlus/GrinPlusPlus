@@ -16,15 +16,6 @@ public:
 	inline const Hash& GetHash() const { return m_hash; }
 	inline uint64_t GetHeight() const { return m_height; }
 
-	inline void AddChainType(const EChainType chainType) { m_chainTypeMask = ChainType::AddChainType(m_chainTypeMask, chainType); }
-	inline void RemoveChainType(const EChainType chainType) { m_chainTypeMask = ChainType::RemoveChainType(m_chainTypeMask, chainType); }
-
-	inline bool IsSync() const { return ChainType::IsSync(m_chainTypeMask); }
-	inline bool IsCandidate() const { return ChainType::IsCandidate(m_chainTypeMask); }
-	inline bool IsConfirmed() const { return ChainType::IsConfirmed(m_chainTypeMask); }
-	inline bool IsInAllChains() const { return ChainType::IsAll(m_chainTypeMask); }
-	inline bool IsSafeToDelete() const { return ChainType::IsNone(m_chainTypeMask); }
-
 private:
 	Hash m_hash;
 	uint64_t m_height;

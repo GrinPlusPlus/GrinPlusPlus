@@ -5,12 +5,24 @@
 #include <Net/Tor/TorManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPC.h>
-#include <civetweb.h>
 
 ForeignController::ForeignController(const Config& config, IWalletManager& walletManager)
 	: m_config(config), m_walletManager(walletManager)
 {
 
+}
+
+ForeignController::~ForeignController()
+{
+	for (auto iter : m_contextsByUsername)
+	{
+		if (iter.second->m_torAddress.has_value())
+		{
+			TorManager::GetInstance(m_config.GetTorConfig()).RemoveListener(iter.second->m_torAddress.value());
+		}
+
+		mg_stop(iter.second->m_pCivetContext);
+	}
 }
 
 std::optional<TorAddress> ForeignController::StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed)
@@ -36,9 +48,9 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	mg_get_server_ports(pForeignContext, 1, &ports);
 	const int portNumber = ports.port;
 
-	Context* pContext = new Context(pForeignContext, m_walletManager, portNumber, token);
+	std::shared_ptr<Context> pContext = std::make_shared<Context>(Context(pForeignContext, m_walletManager, portNumber, token));
 
-	mg_set_request_handler(pForeignContext, "/v2/foreign", ForeignAPIHandler, pContext);
+	mg_set_request_handler(pForeignContext, "/v2/foreign", ForeignAPIHandler, pContext.get());
 	m_contextsByUsername[username] = pContext;
 
 	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
@@ -75,10 +87,9 @@ bool ForeignController::StopListener(const std::string& username)
 		}
 
 		mg_stop(iter->second->m_pCivetContext);
-	}
 
-	delete iter->second;
-	m_contextsByUsername.erase(iter);
+		m_contextsByUsername.erase(iter);
+	}
 
 	return true;
 }
@@ -103,17 +114,11 @@ int ForeignController::ForeignAPIHandler(mg_connection* pConnection, void* pCbCo
 					std::optional<std::string> message = params[2].isNull() ? std::nullopt : std::make_optional<std::string>(params[2].asCString());
 
 					Context* pContext = (Context*)pCbContext;
-					std::unique_ptr<Slate> pReceivedSlate = pContext->m_walletManager.Receive(pContext->m_token, slate, std::nullopt, message);
-					if (pReceivedSlate != nullptr)
-					{
-						Json::Value result;
-						result["Ok"] = pReceivedSlate->ToJSON();
-						responseJSON = RPC::Response::BuildResult(request.GetId(), result).ToJSON();
-					}
-					else
-					{
-						responseJSON = RPC::Response::BuildError(request.GetId(), RPC::ErrorCode::INTERNAL_ERROR, "Failed to receive", std::nullopt).ToJSON();
-					}
+					Slate receivedSlate = pContext->m_walletManager.Receive(pContext->m_token, slate, std::nullopt, message);
+
+					Json::Value result;
+					result["Ok"] = receivedSlate.ToJSON();
+					responseJSON = RPC::Response::BuildResult(request.GetId(), result).ToJSON();
 				}
 				catch (DeserializationException& e)
 				{

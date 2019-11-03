@@ -217,15 +217,9 @@ int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walle
 
 int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	std::unique_ptr<Slate> pSlate = walletManager.Send(SendCriteria::FromJSON(json));
-	if (pSlate != nullptr)
-	{
-		return HTTPUtil::BuildSuccessResponseJSON(pConnection, pSlate->ToJSON());
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
-	}
+	Slate slate = walletManager.Send(SendCriteria::FromJSON(json));
+	
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, slate.ToJSON());
 }
 
 int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
@@ -236,15 +230,9 @@ int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletMana
 	const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
 	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message"); // TODO: Handle this
 
-	std::unique_ptr<Slate> pReceivedSlate = walletManager.Receive(token, slate, addressOpt, messageOpt);
-	if (pReceivedSlate != nullptr)
-	{
-		return HTTPUtil::BuildSuccessResponseJSON(pConnection, pReceivedSlate->ToJSON());
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
-	}
+	Slate receivedSlate = walletManager.Receive(token, slate, addressOpt, messageOpt);
+	
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, receivedSlate.ToJSON());
 }
 
 int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
@@ -253,20 +241,13 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 
 	const bool postTx = HTTPUtil::HasQueryParam(pConnection, "post");
 
-	std::unique_ptr<Slate> pFinalSlate = walletManager.Finalize(token, slate);
-	if (pFinalSlate != nullptr)
-	{
-        if (postTx)
-        {
-            walletManager.PostTransaction(token, pFinalSlate->GetTransaction());
-        }
+	Slate finalizedSlate = walletManager.Finalize(token, slate);
+    if (postTx)
+    {
+        walletManager.PostTransaction(token, finalizedSlate.GetTransaction());
+    }
 
-		return HTTPUtil::BuildSuccessResponseJSON(pConnection, pFinalSlate->ToJSON());
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
-	}
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, finalizedSlate.ToJSON());
 }
 
 int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)

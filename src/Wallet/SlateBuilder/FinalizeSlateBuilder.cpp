@@ -2,10 +2,11 @@
 #include "TransactionBuilder.h"
 #include "SignatureUtil.h"
 
+#include <Core/Exceptions/WalletException.h>
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
 
-std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const
+Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	Slate finalSlate = slate;
 
@@ -14,14 +15,15 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, con
 	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
 	if (kernels.size() != 1)
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Slate %s had %llu kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
+		throw WALLET_EXCEPTION("Invalid number of kernels.");
 	}
 
 	// Verify slate message signatures
 	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
 	{
-		LoggerAPI::LogError("FinalizeSlateBuilder::Finalize - Failed to verify message signatures for slate " + uuids::to_string(slate.GetSlateId()));
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to verify message signatures for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to verify message signatures.");
 	}
 
 	auto pWallet = wallet.Write();
@@ -30,28 +32,32 @@ std::unique_ptr<Slate> FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, con
 	const Hash message = kernels.front().GetSignatureMessage();
 	if (!SignatureUtil::VerifyPartialSignatures(finalSlate.GetParticipantData(), message))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to verify partial signatures for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to verify partial signatures.");
 	}
 
 	// Add partial signature to slate's participant data
 	if (!AddPartialSignature(pWallet.GetShared(), masterSeed, finalSlate, message))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to generate signatures for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to generate signatures.");
 	}
 
 	// Finalize transaction
 	if (!AddFinalTransaction(finalSlate, message))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to verify finalized transaction for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
 	}
 
 	// Update database with latest WalletTx
 	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, finalSlate))
 	{
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to update database for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to update wallet database.");
 	}
 
-	return std::make_unique<Slate>(std::move(finalSlate));
+	return finalSlate;
 }
 
 bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const

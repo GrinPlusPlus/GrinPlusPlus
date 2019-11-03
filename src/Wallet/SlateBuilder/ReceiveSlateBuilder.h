@@ -9,7 +9,7 @@
 class ReceiveSlateBuilder
 {
 public:
-	std::unique_ptr<Slate> AddReceiverData(
+	Slate AddReceiverData(
 		Locked<Wallet> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,

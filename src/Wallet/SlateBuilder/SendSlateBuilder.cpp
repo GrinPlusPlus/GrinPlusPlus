@@ -3,6 +3,7 @@
 #include "OutputBuilder.h"
 #include "CoinSelection.h"
 
+#include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
 #include <Crypto/CryptoUtil.h>
 #include <Common/Util/FunctionalUtil.h>
@@ -17,7 +18,7 @@ SendSlateBuilder::SendSlateBuilder(const Config& config, INodeClientConstPtr pNo
 
 }
 
-std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
+Slate SendSlateBuilder::BuildSendSlate(
 	Locked<Wallet> wallet, 
 	const SecureVector& masterSeed, 
 	const uint64_t amount, 
@@ -73,11 +74,11 @@ std::unique_ptr<Slate> SendSlateBuilder::BuildSendSlate(
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
 	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx))
 	{
-		LoggerAPI::LogError("SendSlateBuilder::BuildSendSlate - Failed to update database for slate " + uuids::to_string(slate.GetSlateId()));
-		return std::unique_ptr<Slate>(nullptr);
+		WALLET_ERROR_F("Failed to update database for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to update wallet database.");
 	}
 
-	return std::make_unique<Slate>(std::move(slate));
+	return slate;
 }
 
 // TODO: Memory is not securely erased from these BlindingFactors. A better way of handling this is needed.
@@ -120,7 +121,7 @@ void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, c
 		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
-			LoggerAPI::LogError("SendSlateBuilder::AddSenderInfo - Failed to sign message for slate " + uuids::to_string(slate.GetSlateId()));
+			WALLET_ERROR_F("Failed to sign message for slate %s", uuids::to_string(slate.GetSlateId()));
 			throw CryptoException();
 		}
 
@@ -179,28 +180,28 @@ bool SendSlateBuilder::UpdateDatabase(
 	// Save secretKey and secretNonce
 	if (!pWallet->SaveSlateContext(slateId, masterSeed, context))
 	{
-		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to save context for slate " + uuids::to_string(slateId));
+		WALLET_ERROR_F("Failed to save context for slate %s", uuids::to_string(slateId));
 		return false;
 	}
 
 	// Save new blinded outputs
 	if (!pWallet->SaveOutputs(masterSeed, changeOutputs))
 	{
-		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to save new outputs.");
+		WALLET_ERROR("Failed to save new outputs.");
 		return false;
 	}
 
 	// Lock coins
 	if (!pWallet->LockCoins(masterSeed, coinsToLock))
 	{
-		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to lock coins.");
+		WALLET_ERROR("Failed to lock coins.");
 		return false;
 	}
 
 	// Save the log/WalletTx
 	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
 	{
-		LoggerAPI::LogError("SendSlateBuilder::UpdateDatabase - Failed to create WalletTx");
+		WALLET_ERROR("Failed to create WalletTx");
 		return false;
 	}
 

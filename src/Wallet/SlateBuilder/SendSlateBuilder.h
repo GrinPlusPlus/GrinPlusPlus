@@ -18,7 +18,7 @@ public:
 	//
 	// Creates a slate for sending grins from the provided wallet.
 	//
-	std::unique_ptr<Slate> BuildSendSlate(
+	Slate BuildSendSlate(
 		Locked<Wallet> wallet, 
 		const SecureVector& masterSeed, 
 		const uint64_t amount, 

@@ -52,7 +52,7 @@ std::vector<Hash> KernelMMR::GetLastLeafHashes(const uint64_t numHashes) const
 bool KernelMMR::Rewind(const uint64_t size)
 {
 	m_pHashFile->Rewind(size);
-	m_pHashFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
+	m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
 	return true;
 }
 
@@ -60,7 +60,7 @@ void KernelMMR::Commit()
 {
 	LOG_TRACE_F("Flushing with size (%llu)", GetSize());
 	m_pHashFile->Commit();
-	m_pHashFile->Commit();
+	m_pDataFile->Commit();
 }
 
 void KernelMMR::Rollback()

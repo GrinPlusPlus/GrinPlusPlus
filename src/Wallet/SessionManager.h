@@ -19,8 +19,14 @@ class IWalletManager;
 class SessionManager
 {
 public:
-	SessionManager(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB, IWalletManager& walletManager);
 	~SessionManager();
+
+	static Locked<SessionManager> Create(
+		const Config& config,
+		INodeClientConstPtr pNodeClient,
+		IWalletDBPtr pWalletDB,
+		IWalletManager& walletManager
+	);
 
 	SessionToken Login(const std::string& username, const SecureString& password);
 	SessionToken Login(const std::string& username, const SecureVector& seed);
@@ -28,10 +34,17 @@ public:
 
 	SecureVector GetSeed(const SessionToken& token) const;
 	SecretKey GetGrinboxAddress(const SessionToken& token) const;
-	Locked<Wallet> GetWallet(const SessionToken& token);
+	Locked<Wallet> GetWallet(const SessionToken& token) const;
 
 private:
-	std::unordered_map<uint64_t, LoggedInSession*> m_sessionsById;
+	SessionManager(
+		const Config& config,
+		INodeClientConstPtr pNodeClient,
+		IWalletDBPtr pWalletDB,
+		std::shared_ptr<ForeignController> pForeignController
+	);
+
+	std::unordered_map<uint64_t, std::shared_ptr<LoggedInSession>> m_sessionsById;
 	// TODO: Keep multimap of sessions per username
 
 	uint64_t m_nextSessionId;
@@ -39,5 +52,5 @@ private:
 	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
 	IWalletDBPtr m_pWalletDB;
-	ForeignController m_foreignController;
+	std::shared_ptr<ForeignController> m_pForeignController;
 };

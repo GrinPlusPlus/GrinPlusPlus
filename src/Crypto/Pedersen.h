@@ -15,9 +15,9 @@ class Pedersen
 public:
 	static Pedersen& GetInstance();
 
-	std::unique_ptr<Commitment> PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
-	std::unique_ptr<Commitment> PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
-	std::unique_ptr<BlindingFactor> PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;
+	Commitment PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
+	Commitment PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
+	BlindingFactor PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;
 
 	std::unique_ptr<SecretKey> BlindSwitch(const SecretKey& secretKey, const uint64_t amount) const;
 

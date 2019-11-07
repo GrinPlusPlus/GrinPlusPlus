@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <unordered_map>
 
-Pool::Pool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager)
-	: m_config(config), m_pTxHashSetManager(pTxHashSetManager)
+Pool::Pool(const Config& config)
+	: m_config(config)
 {
 
 }
@@ -155,7 +155,7 @@ void Pool::RemoveTransaction(const Transaction& transaction)
 
 // Quick reconciliation step - we can evict any txs in the pool where
 // inputs or kernels intersect with the block.
-void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx)
+void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_transactionsMutex);
 
@@ -177,7 +177,7 @@ void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBl
 
 	m_transactions.clear();
 
-	const std::vector<Transaction> validTransactions = ValidTransactionFinder(m_pTxHashSetManager).FindValidTransactions(pBlockDB, filteredTransactions, pMemPoolAggTx);
+	const std::vector<Transaction> validTransactions = ValidTransactionFinder().FindValidTransactions(pBlockDB, pTxHashSet, filteredTransactions, pMemPoolAggTx);
 	for (auto& transaction : validTransactions)
 	{
 		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(transaction.GetHash());
@@ -239,5 +239,5 @@ std::unique_ptr<Transaction> Pool::Aggregate() const
 		transactions.push_back(entry.GetTransaction());
 	}
 
-	return TransactionAggregator::Aggregate(transactions);
+	return std::make_unique<Transaction>(TransactionAggregator::Aggregate(transactions));
 }

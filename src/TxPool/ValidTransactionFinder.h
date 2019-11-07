@@ -7,16 +7,21 @@
 class ValidTransactionFinder
 {
 public:
-	ValidTransactionFinder(TxHashSetManagerConstPtr pTxHashSetManager);
+	ValidTransactionFinder();
 
 	std::vector<Transaction> FindValidTransactions(
 		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet,
 		const std::vector<Transaction>& transactions,
 		const std::unique_ptr<Transaction>& pExtraTransaction
 	) const;
 
 private:
-	bool IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const;
+	bool IsValidTransaction(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet,
+		const Transaction& transaction
+	) const;
 
 	TxHashSetManagerConstPtr m_pTxHashSetManager;
 };

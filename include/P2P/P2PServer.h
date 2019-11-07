@@ -75,6 +75,7 @@ namespace P2PAPI
 	P2P_API IP2PServerPtr StartP2PServer(
 		const Config& config,
 		IBlockChainServerPtr pBlockChainServer,
+		TxHashSetManagerConstPtr pTxHashSetManager,
 		IDatabasePtr pDatabase,
 		ITransactionPoolPtr pTransactionPool
 	);

@@ -14,11 +14,13 @@ Dandelion::Dandelion(
 	const Config& config,
 	ConnectionManager& connectionManager,
 	IBlockChainServerPtr pBlockChainServer,
+	TxHashSetManagerConstPtr pTxHashSetManager,
 	ITransactionPoolPtr pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 	: m_config(config), 
 	m_connectionManager(connectionManager), 
 	m_pBlockChainServer(pBlockChainServer),
+	m_pTxHashSetManager(pTxHashSetManager),
 	m_pTransactionPool(pTransactionPool),
 	m_pBlockDB(pBlockDB),
 	m_relayNodeId(0), 
@@ -38,6 +40,7 @@ std::shared_ptr<Dandelion> Dandelion::Create(
 	const Config& config,
 	ConnectionManager& connectionManager,
 	IBlockChainServerPtr pBlockChainServer,
+	TxHashSetManagerConstPtr pTxHashSetManager,
 	ITransactionPoolPtr pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 {
@@ -45,6 +48,7 @@ std::shared_ptr<Dandelion> Dandelion::Create(
 		config,
 		connectionManager,
 		pBlockChainServer,
+		pTxHashSetManager,
 		pTransactionPool,
 		pBlockDB
 	));
@@ -120,7 +124,10 @@ bool Dandelion::ProcessStemPhase()
 		m_relayNodeId = mostWorkPeers[index];
 	}
 
-	std::unique_ptr<Transaction> pTransactionToStem = m_pTransactionPool->GetTransactionToStem(m_pBlockDB->Read().GetShared());
+	std::unique_ptr<Transaction> pTransactionToStem = m_pTransactionPool->GetTransactionToStem(
+		m_pBlockDB->Read().GetShared(),
+		m_pTxHashSetManager->GetTxHashSet()->Read().GetShared()
+	);
 	if (pTransactionToStem != nullptr)
 	{
 		LOG_DEBUG("Stemming transaction");
@@ -147,7 +154,10 @@ bool Dandelion::ProcessStemPhase()
 
 bool Dandelion::ProcessFluffPhase()
 {
-	std::unique_ptr<Transaction> pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(m_pBlockDB->Read().GetShared());
+	std::unique_ptr<Transaction> pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(
+		m_pBlockDB->Read().GetShared(),
+		m_pTxHashSetManager->GetTxHashSet()->Read().GetShared()
+	);
 	if (pTransactionToFluff != nullptr)
 	{
 		LOG_DEBUG("Fluffing transaction");

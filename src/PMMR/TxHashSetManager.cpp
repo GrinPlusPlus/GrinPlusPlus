@@ -14,7 +14,7 @@ TxHashSetManager::TxHashSetManager(const Config& config)
 
 }
 
-ITxHashSetPtr TxHashSetManager::Open(const BlockHeader& confirmedTip)
+std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::Open(const BlockHeader& confirmedTip)
 {
 	Close();
 
@@ -22,17 +22,10 @@ ITxHashSetPtr TxHashSetManager::Open(const BlockHeader& confirmedTip)
 	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetDirectory());
 	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetDirectory());
 
-	m_pTxHashSet = std::make_shared<TxHashSet>(pKernelMMR, pOutputPMMR, pRangeProofPMMR, confirmedTip);
+	auto pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, confirmedTip));
+	m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet));
 
 	return m_pTxHashSet;
-}
-
-void TxHashSetManager::Flush()
-{
-	if (m_pTxHashSet != nullptr)
-	{
-		m_pTxHashSet->Commit();
-	}
 }
 
 std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, std::shared_ptr<Locked<IBlockDB>> pBlockDB, const std::string& zipFilePath, const BlockHeader& blockHeader)
@@ -68,31 +61,29 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, co
 		return false;
 	}
 
-	// 1. Lock TxHashSet
-	TxHashSet* pTxHashSet = (TxHashSet*)m_pTxHashSet.get();
-	pTxHashSet->ReadLock();
-
-	// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
-	const std::string txHashSetDirectory = m_config.GetTxHashSetDirectory();
-
 	const std::string snapshotDir = StringUtil::Format("%sSnapshots/%s/", fs::temp_directory_path().string(), blockHeader.ShortHash());
-	if (!FileUtil::CopyDirectory(txHashSetDirectory, snapshotDir))
+	std::unique_ptr<BlockHeader> pFlushedHeader = nullptr;
+
 	{
-		pTxHashSet->Unlock();
-		return false;
+		// 1. Lock TxHashSet
+		auto reader = m_pTxHashSet->Read();
+
+		// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
+		const std::string txHashSetDirectory = m_config.GetTxHashSetDirectory();
+		if (!FileUtil::CopyDirectory(txHashSetDirectory, snapshotDir))
+		{
+			return false;
+		}
+
+		pFlushedHeader = std::make_unique<BlockHeader>(BlockHeader(reader->GetFlushedBlockHeader()));
 	}
-
-	const BlockHeader flushedBlockHeader = pTxHashSet->GetFlushedBlockHeader();
-
-	// 3. Unlock TxHashSet
-	pTxHashSet->Unlock();
 
 	{
 		// 4. Load Snapshot TxHashSet
 		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(snapshotDir);
 		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(snapshotDir);
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
-		TxHashSet snapshotTxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, flushedBlockHeader);
+		TxHashSet snapshotTxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, *pFlushedHeader);
 
 		// 5. Rewind Snapshot TxHashSet
 		if (!snapshotTxHashSet.Rewind(pBlockDB, blockHeader))
@@ -121,12 +112,12 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, co
 	return true;
 }
 
-ITxHashSetPtr TxHashSetManager::GetTxHashSet()
+std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::GetTxHashSet()
 {
 	return m_pTxHashSet;
 }
 
-ITxHashSetConstPtr TxHashSetManager::GetTxHashSet() const
+std::shared_ptr<const Locked<ITxHashSet>> TxHashSetManager::GetTxHashSet() const
 {
 	return m_pTxHashSet;
 }
@@ -134,7 +125,7 @@ ITxHashSetConstPtr TxHashSetManager::GetTxHashSet() const
 void TxHashSetManager::SetTxHashSet(std::shared_ptr<ITxHashSet> pTxHashSet)
 {
 	Close();
-	m_pTxHashSet = pTxHashSet;
+	m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet));
 }
 
 void TxHashSetManager::Close()

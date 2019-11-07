@@ -20,13 +20,7 @@ public:
 			negative.push_back(*pNegative);
 		}
 
-		std::unique_ptr<BlindingFactor> pBlindingFactor = Crypto::AddBlindingFactors(positive, negative);
-		if (pBlindingFactor == nullptr)
-		{
-			throw CryptoException("Failed to add blinding factors");
-		}
-
-		return *pBlindingFactor;
+		return Crypto::AddBlindingFactors(positive, negative);
 	}
 
 	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys)

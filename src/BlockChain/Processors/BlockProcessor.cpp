@@ -174,8 +174,8 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	// TODO: Add rewound blocks to orphan pool
 	// TODO: Add rewound transactions back to TxPool
 
-	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSetManager()->GetTxHashSet();
-	if (!pTxHashSet->Rewind(pBatch->GetBlockDB(), *pCommonHeader))
+	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSet();
+	if (pTxHashSet == nullptr || !pTxHashSet->Rewind(pBatch->GetBlockDB(), *pCommonHeader))
 	{
 		LOG_ERROR_F("Failed to rewind TxHashSet to block %s", pCommonHeader->GetHash());
 		throw BLOCK_CHAIN_EXCEPTION("Failed to rewind TxHashSet");
@@ -214,9 +214,9 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 		throw BLOCK_CHAIN_EXCEPTION("Previous header not found.");
 	}
 
-	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSetManager()->GetTxHashSet();
+	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSet();
 
-	if (!pTxHashSet->ApplyBlock(pBatch->GetBlockDB(), block))
+	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBatch->GetBlockDB(), block))
 	{
 		LOG_ERROR_F("Failed to apply block %s to the TxHashSet", block);
 		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
@@ -227,5 +227,5 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 	pBatch->GetBlockDB()->AddBlockSums(block.GetHash(), blockSums);
 	pBatch->GetBlockDB()->AddBlock(block);
 	pBatch->GetOrphanPool()->RemoveOrphan(block.GetBlockHeader().GetHeight(), block.GetHash());
-	pBatch->GetTransactionPool()->ReconcileBlock(pBatch->GetBlockDB(), block);
+	pBatch->GetTransactionPool()->ReconcileBlock(pBatch->GetBlockDB(), pTxHashSet, block);
 }

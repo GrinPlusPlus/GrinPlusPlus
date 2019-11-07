@@ -23,7 +23,7 @@ public:
 	inline void ReadLock() { m_txHashSetMutex.lock_shared(); }
 	inline void Unlock() { m_txHashSetMutex.unlock_shared(); }
 	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
-	inline const BlockHeader& GetFlushedBlockHeader() const { return m_blockHeaderBackup; }
+	virtual const BlockHeader& GetFlushedBlockHeader() const override final { return m_blockHeaderBackup; }
 
 	virtual bool IsUnspent(const OutputLocation& location) const override final;
 	virtual bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const override final;

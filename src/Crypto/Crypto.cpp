@@ -84,19 +84,19 @@ CBigInteger<64> Crypto::HMAC_SHA512(const std::vector<unsigned char>& key, const
 	return CBigInteger<64>(std::move(result));
 }
 
-std::unique_ptr<Commitment> Crypto::CommitTransparent(const uint64_t value)
+Commitment Crypto::CommitTransparent(const uint64_t value)
 {
 	const BlindingFactor blindingFactor(CBigInteger<32>::ValueOf(0));
 
 	return Pedersen::GetInstance().PedersenCommit(value, blindingFactor);
 }
 
-std::unique_ptr<Commitment> Crypto::CommitBlinded(const uint64_t value, const BlindingFactor& blindingFactor)
+Commitment Crypto::CommitBlinded(const uint64_t value, const BlindingFactor& blindingFactor)
 {
 	return Pedersen::GetInstance().PedersenCommit(value, blindingFactor);
 }
 
-std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative)
+Commitment Crypto::AddCommitments(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative)
 {
 	const Commitment zeroCommitment(CBigInteger<33>::ValueOf(0));
 
@@ -119,7 +119,7 @@ std::unique_ptr<Commitment> Crypto::AddCommitments(const std::vector<Commitment>
 	return Pedersen::GetInstance().PedersenCommitSum(sanitizedPositive, sanitizedNegative);
 }
 
-std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
+BlindingFactor Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative)
 {
 	BlindingFactor zeroBlindingFactor(ZERO_HASH);
 
@@ -141,7 +141,7 @@ std::unique_ptr<BlindingFactor> Crypto::AddBlindingFactors(const std::vector<Bli
 
 	if (sanitizedPositive.empty() && sanitizedNegative.empty())
 	{
-		return std::make_unique<BlindingFactor>(zeroBlindingFactor);
+		return zeroBlindingFactor;
 	}
 
 	return Pedersen::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);

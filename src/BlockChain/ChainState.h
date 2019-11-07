@@ -114,6 +114,42 @@ public:
 		return m_headerMMRWriter;
 	}
 
+	std::shared_ptr<ITxHashSet> GetTxHashSet()
+	{
+		if (m_txHashSetWriter.IsNull())
+		{
+			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			if (pTxHashSet != nullptr)
+			{
+				m_txHashSetWriter = pTxHashSet->BatchWrite();
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+
+		return m_txHashSetWriter.GetShared();
+	}
+
+	Reader<ITxHashSet> GetTxHashSet() const
+	{
+		if (m_txHashSetWriter.IsNull())
+		{
+			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			if (pTxHashSet != nullptr)
+			{
+				return pTxHashSet->Read();
+			}
+			else
+			{
+				return Reader<ITxHashSet>::Create(nullptr, nullptr, false);
+			}
+		}
+
+		return m_txHashSetWriter;
+	}
+
 	std::shared_ptr<OrphanPool> GetOrphanPool() { return m_pOrphanPool; }
 	ITransactionPoolPtr GetTransactionPool() { return m_pTransactionPool; }
 	TxHashSetManagerPtr GetTxHashSetManager() { return m_pTxHashSetManager; }
@@ -140,4 +176,5 @@ private:
 	Writer<ChainStore> m_chainStoreWriter;
 	Writer<IBlockDB> m_blockDBWriter;
 	Writer<IHeaderMMR> m_headerMMRWriter;
+	Writer<ITxHashSet> m_txHashSetWriter;
 };

@@ -53,6 +53,11 @@ public:
 		return m_pReader->m_pObject;
 	}
 
+	bool IsNull() const
+	{
+		return m_pReader->m_pObject == nullptr;
+	}
+
 private:
 	Reader(std::shared_ptr<InnerReader<T>> pReader)
 		: m_pReader(pReader)
@@ -204,7 +209,7 @@ public:
 
 private:
 	Writer(std::shared_ptr<InnerWriter<T>> pWriter)
-		: m_pWriter(pWriter), Reader(Reader::Create(pWriter->m_pObject, pWriter->m_pMutex, false))
+		: m_pWriter(pWriter), Reader(Reader<T>::Create(pWriter->m_pObject, pWriter->m_pMutex, false))
 	{
 
 	}

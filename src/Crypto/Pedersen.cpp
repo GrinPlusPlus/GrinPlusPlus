@@ -3,6 +3,7 @@
 #include "secp256k1-zkp/include/secp256k1_commitment.h"
 #include "SwitchGeneratorPoint.h"
 
+#include <Crypto/CryptoException.h>
 #include <Infrastructure/Logger.h>
 
 Pedersen& Pedersen::GetInstance()
@@ -21,7 +22,7 @@ Pedersen::~Pedersen()
 	secp256k1_context_destroy(m_pContext);
 }
 
-std::unique_ptr<Commitment> Pedersen::PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const
+Commitment Pedersen::PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -32,14 +33,14 @@ std::unique_ptr<Commitment> Pedersen::PedersenCommit(const uint64_t value, const
 		std::vector<unsigned char> serializedCommitment(33);
 		secp256k1_pedersen_commitment_serialize(m_pContext, &serializedCommitment[0], &commitment);
 
-		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
+		return Commitment(CBigInteger<33>(std::move(serializedCommitment)));
 	}
 
 	LOG_ERROR_F("Failed to create commitment. Result: %d, Value: %llu", result, value);
-	return std::unique_ptr<Commitment>(nullptr);
+	throw CryptoException("Failed to create commitment.");
 }
 
-std::unique_ptr<Commitment> Pedersen::PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const
+Commitment Pedersen::PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -59,19 +60,25 @@ std::unique_ptr<Commitment> Pedersen::PedersenCommitSum(const std::vector<Commit
 	Pedersen::CleanupCommitments(positiveCommitments);
 	Pedersen::CleanupCommitments(negativeCommitments);
 
-	if (result == 1)
+	if (result != 1)
 	{
-		std::vector<unsigned char> serializedCommitment(33);
-		secp256k1_pedersen_commitment_serialize(m_pContext, &serializedCommitment[0], &commitment);
-
-		return std::make_unique<Commitment>(Commitment(CBigInteger<33>(std::move(serializedCommitment))));
+		LOG_ERROR_F("secp256k1_pedersen_commit_sum returned result: %d", result);
+		throw CryptoException("secp256k1_pedersen_commit_sum error");
 	}
 
-	LOG_ERROR_F("secp256k1_pedersen_commit_sum returned result: %d", result);
-	return std::unique_ptr<Commitment>(nullptr);
+
+	std::vector<unsigned char> serializedCommitment(33);
+	const int serializeResult = secp256k1_pedersen_commitment_serialize(m_pContext, &serializedCommitment[0], &commitment);
+	if (serializeResult != 1)
+	{
+		LOG_ERROR_F("secp256k1_pedersen_commitment_serialize returned result: %d", serializeResult);
+		throw CryptoException("secp256k1_pedersen_commitment_serialize error");
+	}
+
+	return Commitment(CBigInteger<33>(std::move(serializedCommitment)));
 }
 
-std::unique_ptr<BlindingFactor> Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const
+BlindingFactor Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -91,11 +98,11 @@ std::unique_ptr<BlindingFactor> Pedersen::PedersenBlindSum(const std::vector<Bli
 
 	if (result == 1)
 	{
-		return std::make_unique<BlindingFactor>(BlindingFactor(std::move(blindingFactorBytes)));
+		return BlindingFactor(std::move(blindingFactorBytes));
 	}
 
 	LOG_ERROR_F("secp256k1_pedersen_blind_sum returned result: %d", result);
-	return std::unique_ptr<BlindingFactor>(nullptr);
+	throw CryptoException("secp256k1_pedersen_blind_sum error");
 }
 
 std::unique_ptr<SecretKey> Pedersen::BlindSwitch(const SecretKey& blindingFactor, const uint64_t amount) const

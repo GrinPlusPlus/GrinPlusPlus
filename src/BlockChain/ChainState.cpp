@@ -154,8 +154,8 @@ std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const uint64_t height, con
 
 std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t height) const
 {
-	ITxHashSetPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr)
+	Reader<ITxHashSet> pTxHashSet = GetTxHashSet();
+	if (pTxHashSet.IsNull())
 	{
 		return std::unique_ptr<BlockWithOutputs>(nullptr);
 	}
@@ -232,7 +232,10 @@ void ChainState::Commit()
 		m_headerMMRWriter->Commit();
 	}
 
-	m_pTxHashSetManager->Flush();
+	if (!m_txHashSetWriter.IsNull())
+	{
+		m_txHashSetWriter->Commit();
+	}
 }
 
 void ChainState::Rollback()
@@ -251,6 +254,11 @@ void ChainState::Rollback()
 	{
 		m_headerMMRWriter->Rollback();
 	}
+
+	if (!m_txHashSetWriter.IsNull())
+	{
+		m_txHashSetWriter->Rollback();
+	}
 }
 
 void ChainState::OnInitWrite()
@@ -258,6 +266,7 @@ void ChainState::OnInitWrite()
 	m_chainStoreWriter.Clear();
 	m_blockDBWriter.Clear();
 	m_headerMMRWriter.Clear();
+	m_txHashSetWriter.Clear();
 }
 
 void ChainState::OnEndWrite()
@@ -265,4 +274,5 @@ void ChainState::OnEndWrite()
 	m_chainStoreWriter.Clear();
 	m_blockDBWriter.Clear();
 	m_headerMMRWriter.Clear();
+	m_txHashSetWriter.Clear();
 }

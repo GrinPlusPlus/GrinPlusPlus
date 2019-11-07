@@ -336,7 +336,7 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 
 namespace BlockChainAPI
 {
-	EXPORT std::shared_ptr<IBlockChainServer> StartBlockChainServer(
+	BLOCK_CHAIN_API std::shared_ptr<IBlockChainServer> StartBlockChainServer(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		TxHashSetManagerPtr pTxHashSetManager,

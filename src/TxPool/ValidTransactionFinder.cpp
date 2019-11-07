@@ -7,14 +7,14 @@
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
 
-ValidTransactionFinder::ValidTransactionFinder(TxHashSetManagerConstPtr pTxHashSetManager)
-	: m_pTxHashSetManager(pTxHashSetManager)
+ValidTransactionFinder::ValidTransactionFinder()
 {
 
 }
 
 std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(
 	std::shared_ptr<const IBlockDB> pBlockDB,
+	ITxHashSetConstPtr pTxHashSet,
 	const std::vector<Transaction>& transactions,
 	const std::unique_ptr<Transaction>& pExtraTransaction) const
 {
@@ -30,31 +30,23 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(
 		candidateTransactions.push_back(transaction);
 
 		// Build a single aggregate tx from candidate txs.
-		std::unique_ptr<Transaction> pAggregateTransaction = TransactionAggregator::Aggregate(candidateTransactions);
-		if (pAggregateTransaction != nullptr)
+		Transaction aggregateTransaction = TransactionAggregator::Aggregate(candidateTransactions);
+
+		// We know the tx is valid if the entire aggregate tx is valid.
+		if (IsValidTransaction(pBlockDB, pTxHashSet, aggregateTransaction))
 		{
-			// We know the tx is valid if the entire aggregate tx is valid.
-			if (IsValidTransaction(pBlockDB, *pAggregateTransaction))
-			{
-				validTransactions.push_back(transaction);
-			}
+			validTransactions.push_back(transaction);
 		}
 	}
 
 	return validTransactions;
 }
 
-bool ValidTransactionFinder::IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const
+bool ValidTransactionFinder::IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const Transaction& transaction) const
 {
 	try
 	{
 		TransactionValidator().Validate(transaction);
-
-		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-		if (pTxHashSet == nullptr)
-		{
-			return false;
-		}
 
 		// Validate the tx against current chain state.
 		// Check all inputs are in the current UTXO set.

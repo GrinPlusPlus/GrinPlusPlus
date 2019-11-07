@@ -5,16 +5,16 @@
 #include <set>
 
 // Aggregate a vector of transactions into a multi-kernel transaction with cut_through.
-std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<Transaction>& transactions)
+Transaction TransactionAggregator::Aggregate(const std::vector<Transaction>& transactions)
 {
 	if (transactions.empty())
 	{
-		return std::make_unique<Transaction>(Transaction(BlindingFactor(ZERO_HASH), TransactionBody()));
+		return Transaction(BlindingFactor(ZERO_HASH), TransactionBody());
 	}
 
 	if (transactions.size() == 1)
 	{
-		return std::make_unique<Transaction>(transactions.front());
+		return transactions.front();
 	}
 
 	std::vector<TransactionInput> inputs;
@@ -50,16 +50,12 @@ std::unique_ptr<Transaction> TransactionAggregator::Aggregate(const std::vector<
 	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
 
 	// Sum the kernel_offsets up to give us an aggregate offset for the transaction.
-	const std::unique_ptr<BlindingFactor> pTotalKernelOffset = Crypto::AddBlindingFactors(kernelOffsets, std::vector<BlindingFactor>());
-	if (pTotalKernelOffset == nullptr)
-	{
-		return std::unique_ptr<Transaction>(nullptr);
-	}
+	BlindingFactor totalKernelOffset = Crypto::AddBlindingFactors(kernelOffsets, std::vector<BlindingFactor>());
 
 	// Build a new aggregate tx from the following:
 	//   * cut-through inputs
 	//   * cut-through outputs
 	//   * full set of tx kernels
 	//   * sum of all kernel offsets
-	return std::make_unique<Transaction>(Transaction(BlindingFactor(*pTotalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels))));
+	return Transaction(std::move(totalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels)));
 }

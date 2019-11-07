@@ -35,19 +35,11 @@ public:
 		std::vector<Commitment> outputCommitments = outputs;
 		if (overage > 0)
 		{
-			std::unique_ptr<Commitment> pOverCommitment = Crypto::CommitTransparent(overage);
-			if (pOverCommitment != nullptr)
-			{
-				outputCommitments.push_back(*pOverCommitment);
-			}
+			outputCommitments.push_back(Crypto::CommitTransparent(overage));
 		}
 		else if (overage < 0)
 		{
-			std::unique_ptr<Commitment> pOverCommitment = Crypto::CommitTransparent(0 - overage);
-			if (pOverCommitment != nullptr)
-			{
-				inputCommitments.push_back(*pOverCommitment);
-			}
+			inputCommitments.push_back(Crypto::CommitTransparent(0 - overage));
 		}
 
 		if (blockSumsOpt.has_value())
@@ -56,12 +48,7 @@ public:
 		}
 
 		// Sum all input|output|overage commitments.
-		std::unique_ptr<Commitment> pUTXOSum = Crypto::AddCommitments(outputCommitments, inputCommitments);
-		if (pUTXOSum == nullptr)
-		{
-			LOG_ERROR("Failed to sum input, output, and overage commitments.");
-			throw BAD_DATA_EXCEPTION("Failed to sum input, output, and overage commitments.");
-		}
+		Commitment utxoSum = Crypto::AddCommitments(outputCommitments, inputCommitments);
 
 		// Sum the kernel excesses accounting for the kernel offset.
 		std::vector<Commitment> kernelCommitments = kernels;
@@ -70,25 +57,14 @@ public:
 			kernelCommitments.push_back(blockSumsOpt.value().GetKernelSum());
 		}
 
-		std::unique_ptr<Commitment> pKernelSum = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());
-		if (pKernelSum == nullptr)
-		{
-			LOG_ERROR("Failed to sum kernel commitments.");
-			throw BAD_DATA_EXCEPTION("Failed to sum kernel commitments.");
-		}
+		Commitment kernelSum = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());
+		Commitment kernelSumPlusOffset = AddKernelOffset(kernelSum, kernelOffset);
 
-		std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, kernelOffset);
-		if (*pUTXOSum != *pKernelSumPlusOffset)
-		{
-			LOG_ERROR("Failed to validate kernel sums.");
-			throw BAD_DATA_EXCEPTION("Failed to validate kernel sums.");
-		}
-
-		return BlockSums(*pUTXOSum, *pKernelSum);
+		return BlockSums(utxoSum, kernelSum);
 	}
 
 private:
-	static std::unique_ptr<Commitment> AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset)
+	static Commitment AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset)
 	{
 		// Add the commitments along with the commit to zero built from the offset
 		std::vector<Commitment> commitments;
@@ -96,14 +72,7 @@ private:
 
 		if (totalKernelOffset.GetBytes() != CBigInteger<32>::ValueOf(0))
 		{
-			std::unique_ptr<Commitment> pOffsetCommitment = Crypto::CommitBlinded((uint64_t)0, totalKernelOffset);
-			if (pOffsetCommitment == nullptr)
-			{
-				LoggerAPI::LogError("KernelSumValidator::AddKernelOffset - Failed to commit kernel offset.");
-				return std::unique_ptr<Commitment>(nullptr);
-			}
-
-			commitments.push_back(*pOffsetCommitment);
+			commitments.push_back(Crypto::CommitBlinded((uint64_t)0, totalKernelOffset));
 		}
 
 		return Crypto::AddCommitments(commitments, std::vector<Commitment>());

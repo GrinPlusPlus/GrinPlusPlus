@@ -68,11 +68,21 @@ public:
 
 	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
 	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const = 0;
-	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block) = 0;
+	virtual void ReconcileBlock(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet,
+		const FullBlock& block
+	) = 0;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB) = 0;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB) = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToStem(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet
+	) = 0;
+	virtual std::unique_ptr<Transaction> GetTransactionToFluff(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet
+	) = 0;
 	virtual std::vector<Transaction> GetExpiredTransactions() const = 0;
 };
 

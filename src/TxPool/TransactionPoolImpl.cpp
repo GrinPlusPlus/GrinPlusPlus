@@ -12,8 +12,8 @@
 TransactionPool::TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager)
 	: m_config(config), 
 	m_pTxHashSetManager(pTxHashSetManager),
-	m_memPool(config, pTxHashSetManager),
-	m_stemPool(config, pTxHashSetManager)
+	m_memPool(config),
+	m_stemPool(config)
 {
 
 }
@@ -68,8 +68,8 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
-	ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(pBlockDB, transaction))
+	std::shared_ptr<Locked<ITxHashSet>> pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+	if (pTxHashSet == nullptr || !pTxHashSet->Read()->IsValid(pBlockDB, transaction))
 	{
 		LOG_WARNING("Transaction inputs/outputs not valid: " + transaction.GetHash().ToHex());
 		return EAddTransactionStatus::NOT_ADDED;
@@ -118,19 +118,19 @@ std::unique_ptr<Transaction> TransactionPool::FindTransactionByKernelHash(const 
 	return pTransaction;
 }
 
-void TransactionPool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block)
+void TransactionPool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 	// First reconcile the txpool.
-	m_memPool.ReconcileBlock(pBlockDB, block, std::unique_ptr<Transaction>(nullptr));
+	m_memPool.ReconcileBlock(pBlockDB, pTxHashSet, block, std::unique_ptr<Transaction>(nullptr));
 
 	// Now reconcile our stempool, accounting for the updated txpool txs.
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
-	m_stemPool.ReconcileBlock(pBlockDB, block, pMemPoolAggTx);
+	m_stemPool.ReconcileBlock(pBlockDB, pTxHashSet, block, pMemPoolAggTx);
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB)
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -142,22 +142,20 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToStem(std::shared_p
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder(m_pTxHashSetManager).FindValidTransactions(pBlockDB, transactionsToStem, pMemPoolAggTx);
+	std::vector<Transaction> validTransactionsToStem = ValidTransactionFinder().FindValidTransactions(pBlockDB, pTxHashSet, transactionsToStem, pMemPoolAggTx);
 	if (validTransactionsToStem.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
-	std::unique_ptr<Transaction> pTransactionToStem = TransactionAggregator::Aggregate(validTransactionsToStem);
-	if (pTransactionToStem != nullptr)
-	{
-		m_stemPool.ChangeStatus(validTransactionsToStem, EDandelionStatus::STEMMED);
-	}
+	Transaction transactionToStem = TransactionAggregator::Aggregate(validTransactionsToStem);
 
-	return pTransactionToStem;
+	m_stemPool.ChangeStatus(validTransactionsToStem, EDandelionStatus::STEMMED);
+
+	return std::make_unique<Transaction>(std::move(transactionToStem));
 }
 
-std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB)
+std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -169,23 +167,21 @@ std::unique_ptr<Transaction> TransactionPool::GetTransactionToFluff(std::shared_
 
 	const std::unique_ptr<Transaction> pMemPoolAggTx = m_memPool.Aggregate();
 
-	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder(m_pTxHashSetManager).FindValidTransactions(pBlockDB, transactionsToFluff, pMemPoolAggTx);
+	std::vector<Transaction> validTransactionsToFluff = ValidTransactionFinder().FindValidTransactions(pBlockDB, pTxHashSet, transactionsToFluff, pMemPoolAggTx);
 	if (validTransactionsToFluff.empty())
 	{
 		return std::unique_ptr<Transaction>(nullptr);
 	}
 
-	std::unique_ptr<Transaction> pTransactionToFluff = TransactionAggregator::Aggregate(validTransactionsToFluff);
-	if (pTransactionToFluff != nullptr)
+	Transaction transactionToFluff = TransactionAggregator::Aggregate(validTransactionsToFluff);
+
+	m_memPool.AddTransaction(transactionToFluff, EDandelionStatus::FLUFFED);
+	for (const Transaction& transaction : validTransactionsToFluff)
 	{
-		m_memPool.AddTransaction(*pTransactionToFluff, EDandelionStatus::FLUFFED);
-		for (const Transaction& transaction : validTransactionsToFluff)
-		{
-			m_stemPool.RemoveTransaction(transaction);
-		}
+		m_stemPool.RemoveTransaction(transaction);
 	}
 
-	return pTransactionToFluff;
+	return std::make_unique<Transaction>(std::move(transactionToFluff));
 }
 
 std::vector<Transaction> TransactionPool::GetExpiredTransactions() const

@@ -32,7 +32,7 @@ public:
 		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(config));
 		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(config, pTxHashSetManager);
 		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(config, pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
-		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(config, pBlockChainServer, pDatabase, pTransactionPool);
+		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(config, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
 
 		return std::make_shared<DefaultNodeClient>(DefaultNodeClient(pDatabase, pTxHashSetManager, pTransactionPool, pBlockChainServer, pP2PServer));
 	}
@@ -56,7 +56,7 @@ public:
 
 	virtual std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const override final
 	{ 
-		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+		auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 		if (pTxHashSet == nullptr)
 		{
 			return std::map<Commitment, OutputLocation>();
@@ -66,7 +66,7 @@ public:
 		for (const Commitment& commitment : commitments)
 		{
 			std::unique_ptr<OutputLocation> pOutputPosition = m_pDatabase->GetBlockDB()->Read()->GetOutputPosition(commitment);
-			if (pOutputPosition != nullptr && pTxHashSet->IsUnspent(*pOutputPosition))
+			if (pOutputPosition != nullptr && pTxHashSet->Read()->IsUnspent(*pOutputPosition))
 			{
 				outputs.insert(std::make_pair<Commitment, OutputLocation>(Commitment(commitment), OutputLocation(*pOutputPosition)));
 			}
@@ -82,14 +82,14 @@ public:
 
 	virtual std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const override final
 	{
-		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+		auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 		if (pTxHashSet == nullptr)
 		{
 			return std::unique_ptr<OutputRange>(nullptr);
 		}
 
 		auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
+		return std::make_unique<OutputRange>(pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
 	}
 
 	virtual bool PostTransaction(const Transaction& transaction) override final

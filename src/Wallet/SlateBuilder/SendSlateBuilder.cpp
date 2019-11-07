@@ -88,14 +88,14 @@ SecretKey SendSlateBuilder::CalculatePrivateKey(const BlindingFactor& transactio
 
 	// Calculate sum inputs blinding factors xI.
 	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getBlindingFactors);
-	std::unique_ptr<BlindingFactor> pInputBFSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
+	BlindingFactor inputBFSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
 
 	// Calculate sum change outputs blinding factors xC.
 	std::vector<BlindingFactor> outputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(changeOutputs, getBlindingFactors);
-	std::unique_ptr<BlindingFactor> pOutputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, std::vector<BlindingFactor>());
+	BlindingFactor outputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, std::vector<BlindingFactor>());
 
 	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
-	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(pOutputBFSum.get(), pInputBFSum.get());
+	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&outputBFSum, &inputBFSum);
 
 	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
 	BlindingFactor privateKeyBF = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);

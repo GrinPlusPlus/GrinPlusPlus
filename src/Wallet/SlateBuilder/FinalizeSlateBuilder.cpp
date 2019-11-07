@@ -109,16 +109,22 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	// Build the final excess based on final tx and offset
 	auto getInputCommitments = [](const TransactionInput& input) -> Commitment { return input.GetCommitment(); };
 	std::vector<Commitment> inputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetInputs(), getInputCommitments);
-	inputCommitments.emplace_back(*Crypto::CommitBlinded(0, transaction.GetOffset()));
+	inputCommitments.emplace_back(Crypto::CommitBlinded(0, transaction.GetOffset()));
 
 	auto getOutputCommitments = [](const TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
 	std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetOutputs(), getOutputCommitments);
-	outputCommitments.emplace_back(*Crypto::CommitTransparent(kernel.GetFee()));
+	outputCommitments.emplace_back(Crypto::CommitTransparent(kernel.GetFee()));
 
-	std::unique_ptr<Commitment> pFinalExcess = Crypto::AddCommitments(outputCommitments, inputCommitments);
+	Commitment finalExcess = Crypto::AddCommitments(outputCommitments, inputCommitments);
 
 	// Update the tx kernel to reflect the offset excess and sig
-	TransactionKernel finalKernel(kernel.GetFeatures(), kernel.GetFee(), kernel.GetLockHeight(), Commitment(*pFinalExcess), Signature(*pAggSignature));
+	TransactionKernel finalKernel(
+		kernel.GetFeatures(),
+		kernel.GetFee(),
+		kernel.GetLockHeight(),
+		std::move(finalExcess),
+		Signature(*pAggSignature)
+	);
 	if (!KernelSignatureValidator().VerifyKernelSignatures(std::vector<TransactionKernel>({ finalKernel })))
 	{
 		return false;

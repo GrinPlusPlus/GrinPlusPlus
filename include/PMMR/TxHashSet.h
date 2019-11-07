@@ -82,6 +82,8 @@ public:
 	//
 	virtual std::vector<OutputDisplayInfo> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const = 0;
 
+	virtual const BlockHeader& GetFlushedBlockHeader() const = 0;
+
 
 
 	//

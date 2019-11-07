@@ -128,6 +128,7 @@ void ChainStore::AddBlock(const EChainType source, const EChainType destination,
 		if (pSourceChain->GetTip()->GetHeight() >= height)
 		{
 			pDestinationChain->AddBlock(pSourceChain->GetHash(height));
+			return;
 		}
 	}
 

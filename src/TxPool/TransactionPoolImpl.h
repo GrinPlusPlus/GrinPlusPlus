@@ -19,11 +19,11 @@ public:
 	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
 	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
 	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const override final;
-	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block) override final;
+	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block) override final;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB) override final;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB) override final;
+	virtual std::unique_ptr<Transaction> GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
+	virtual std::unique_ptr<Transaction> GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
 	virtual std::vector<Transaction> GetExpiredTransactions() const override final;
 
 private:

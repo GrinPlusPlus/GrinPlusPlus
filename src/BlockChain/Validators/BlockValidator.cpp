@@ -146,22 +146,10 @@ bool BlockValidator::IsCoinbaseValid(const FullBlock& block) const
 		[](uint64_t reward, const TransactionKernel& kernel) { return reward + kernel.GetFee(); }
 	);
 
-	std::unique_ptr<Commitment> pRewardCommitment = Crypto::CommitTransparent(reward);
-	if (pRewardCommitment == nullptr)
-	{
-		return false;
-	}
-
-	const std::vector<Commitment> overCommitment({ *pRewardCommitment });
-	const std::unique_ptr<Commitment> pOutputAdjustedSum = Crypto::AddCommitments(coinbaseCommitments, overCommitment);
-
-	const std::unique_ptr<Commitment> pKernelSum = Crypto::AddCommitments(coinbaseKernelExcesses, std::vector<Commitment>());
-
 	// Verify the kernel sum equals the output sum accounting for block fees.
-	if (pOutputAdjustedSum == nullptr || pKernelSum == nullptr)
-	{
-		return false;
-	}
+	const std::vector<Commitment> overCommitment({ Crypto::CommitTransparent(reward) });
+	const Commitment outputAdjustedSum = Crypto::AddCommitments(coinbaseCommitments, overCommitment);
+	const Commitment kernelSum = Crypto::AddCommitments(coinbaseKernelExcesses, std::vector<Commitment>());
 
-	return *pKernelSum == *pOutputAdjustedSum;
+	return kernelSum == outputAdjustedSum;
 }

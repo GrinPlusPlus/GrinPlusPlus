@@ -80,12 +80,12 @@ public:
 	//
 	// Creates a pedersen commitment from a value with a zero blinding factor.
 	//
-	static std::unique_ptr<Commitment> CommitTransparent(const uint64_t value);
+	static Commitment CommitTransparent(const uint64_t value);
 
 	//
 	// Creates a pedersen commitment from a value with the supplied blinding factor.
 	//
-	static std::unique_ptr<Commitment> CommitBlinded(
+	static Commitment CommitBlinded(
 		const uint64_t value,
 		const BlindingFactor& blindingFactor
 	);
@@ -93,7 +93,7 @@ public:
 	//
 	// Adds the homomorphic pedersen commitments together.
 	//
-	static std::unique_ptr<Commitment> AddCommitments(
+	static Commitment AddCommitments(
 		const std::vector<Commitment>& positive,
 		const std::vector<Commitment>& negative
 	);
@@ -101,7 +101,7 @@ public:
 	//
 	// Takes a vector of blinding factors and calculates an additional blinding value that adds to zero.
 	//
-	static std::unique_ptr<BlindingFactor> AddBlindingFactors(
+	static BlindingFactor AddBlindingFactors(
 		const std::vector<BlindingFactor>& positive,
 		const std::vector<BlindingFactor>& negative
 	);

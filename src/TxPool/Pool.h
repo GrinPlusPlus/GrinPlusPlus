@@ -17,15 +17,24 @@
 class Pool
 {
 public:
-	Pool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager);
+	Pool(const Config& config);
 
 	void AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	bool ContainsTransaction(const Transaction& transaction) const;
 	void RemoveTransaction(const Transaction& transaction);
-	void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx);
+	void ReconcileBlock(
+		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet,
+		const FullBlock& block,
+		const std::unique_ptr<Transaction>& pMemPoolAggTx
+	);
 	void ChangeStatus(const std::vector<Transaction>& transactions, const EDandelionStatus status);
 
-	std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const;
+	std::vector<Transaction> GetTransactionsByShortId(
+		const Hash& hash,
+		const uint64_t nonce,
+		const std::set<ShortId>& missingShortIds
+	) const;
 	std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;
 	std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const;
 	std::vector<Transaction> FindTransactionsByStatus(const EDandelionStatus status) const;
@@ -37,7 +46,6 @@ private:
 	bool ShouldEvict_Locked(const Transaction& transaction, const FullBlock& block) const;
 
 	const Config& m_config;
-	TxHashSetManagerConstPtr m_pTxHashSetManager;
 
 	mutable std::shared_mutex m_transactionsMutex; // TODO: Lock belongs in TransactionPoolImpl, instead.
 	std::vector<TxPoolEntry> m_transactions;

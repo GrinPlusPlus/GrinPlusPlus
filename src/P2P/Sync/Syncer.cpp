@@ -68,7 +68,10 @@ void Syncer::Thread_Sync(Syncer& syncer)
 				// Sync Headers
 				if (headerSyncer.SyncHeaders(*syncer.m_pSyncStatus, startup))
 				{
-					syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::SYNCING_HEADERS);
+					if (syncer.m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET && syncer.m_pSyncStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
+					{
+						syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::SYNCING_HEADERS);
+					}
 					continue;
 				}
 

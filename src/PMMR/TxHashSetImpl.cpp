@@ -3,6 +3,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
+#include <Common/Util/ThreadUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -326,10 +327,7 @@ void TxHashSet::Commit()
 	threads.emplace_back(std::thread([this] { this->m_pRangeProofPMMR->Commit(); }));
 	for (auto& thread : threads)
 	{
-		if (thread.joinable())
-		{
-			thread.join();
-		}
+		ThreadUtil::Join(thread);
 	}
 
 	m_blockHeaderBackup = m_blockHeader;

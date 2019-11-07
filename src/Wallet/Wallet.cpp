@@ -153,24 +153,26 @@ OutputData Wallet::CreateBlindedOutput(
 
 	KeyChainPath keyChainPath = m_pWalletDB->GetNextChildPath(m_username, m_userPath);
 	SecretKey blindingFactor = *keyChain.DerivePrivateKey(keyChainPath, amount);
-	std::unique_ptr<Commitment> pCommitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes())); // TODO: Creating a BlindingFactor here is unsafe. The memory may not get cleared.
-	if (pCommitment != nullptr)
+	Commitment commitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes())); // TODO: Creating a BlindingFactor here is unsafe. The memory may not get cleared.
+
+	std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, commitment, blindingFactor, bulletproofType);
+	if (pRangeProof != nullptr)
 	{
-		std::unique_ptr<RangeProof> pRangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, *pCommitment, blindingFactor, bulletproofType);
-		if (pRangeProof != nullptr)
-		{
-			TransactionOutput transactionOutput(EOutputFeatures::DEFAULT_OUTPUT, Commitment(*pCommitment), RangeProof(*pRangeProof));
+		TransactionOutput transactionOutput(
+			EOutputFeatures::DEFAULT_OUTPUT,
+			std::move(commitment),
+			RangeProof(*pRangeProof)
+		);
 			
-			return OutputData(
-				std::move(keyChainPath),
-				std::move(blindingFactor),
-				std::move(transactionOutput),
-				amount,
-				EOutputStatus::NO_CONFIRMATIONS,
-				std::make_optional<uint32_t>(walletTxId),
-				messageOpt
-			);
-		}
+		return OutputData(
+			std::move(keyChainPath),
+			std::move(blindingFactor),
+			std::move(transactionOutput),
+			amount,
+			EOutputStatus::NO_CONFIRMATIONS,
+			std::make_optional<uint32_t>(walletTxId),
+			messageOpt
+		);
 	}
 
 	LOG_ERROR("Failed to create output.");

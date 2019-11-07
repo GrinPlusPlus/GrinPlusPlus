@@ -36,6 +36,7 @@ P2PServer::~P2PServer()
 std::shared_ptr<P2PServer> P2PServer::Create(
 	const Config& config,
 	std::shared_ptr<IBlockChainServer> pBlockChainServer,
+	TxHashSetManagerConstPtr pTxHashSetManager,
 	std::shared_ptr<IDatabase> pDatabase,
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
@@ -86,6 +87,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 		config,
 		*pConnectionManager,
 		pBlockChainServer,
+		pTxHashSetManager,
 		pTransactionPool,
 		pDatabase->GetBlockDB()
 	);
@@ -182,8 +184,13 @@ bool P2PServer::UnbanAllPeers()
 
 namespace P2PAPI
 {
-	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(const Config& config, IBlockChainServerPtr pBlockChainServer, IDatabasePtr pDatabase, ITransactionPoolPtr pTransactionPool)
+	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(
+		const Config& config,
+		IBlockChainServerPtr pBlockChainServer,
+		TxHashSetManagerConstPtr pTxHashSetManager,
+		IDatabasePtr pDatabase,
+		ITransactionPoolPtr pTransactionPool)
 	{
-		return P2PServer::Create(config, pBlockChainServer, pDatabase, pTransactionPool);
+		return P2PServer::Create(config, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
 	}
 }

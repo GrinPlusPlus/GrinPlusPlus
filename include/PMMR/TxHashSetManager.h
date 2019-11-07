@@ -18,12 +18,11 @@ public:
 	TxHashSetManager(const Config& config);
 	~TxHashSetManager() = default;
 
-	ITxHashSetPtr Open(const BlockHeader& confirmedTip);
-	void Flush();
+	std::shared_ptr<Locked<ITxHashSet>> Open(const BlockHeader& confirmedTip);
 	void Close();
 
-	ITxHashSetPtr GetTxHashSet();
-	ITxHashSetConstPtr GetTxHashSet() const;
+	std::shared_ptr<Locked<ITxHashSet>> GetTxHashSet();
+	std::shared_ptr<const Locked<ITxHashSet>> GetTxHashSet() const;
 	void SetTxHashSet(ITxHashSetPtr pTxHashSet);
 
 	static ITxHashSetPtr LoadFromZip(const Config& config, std::shared_ptr<Locked<IBlockDB>> pDatabase, const std::string& zipFilePath, const BlockHeader& header);
@@ -31,7 +30,7 @@ public:
 
 private:
 	const Config& m_config;
-	ITxHashSetPtr m_pTxHashSet;
+	std::shared_ptr<Locked<ITxHashSet>> m_pTxHashSet;
 
 	// TODO: Needs mutex
 };

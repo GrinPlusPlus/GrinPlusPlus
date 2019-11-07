@@ -1,20 +1,36 @@
 #include "P2PServerImpl.h"
 
+#include "Seed/Seeder.h"
+#include "Pipeline/Pipeline.h"
+#include "Sync/Syncer.h"
 #include <BlockChain/BlockChainServer.h>
 
-P2PServer::P2PServer(const Config& config, IBlockChainServerPtr pBlockChainServer, IDatabasePtr pDatabase, ITransactionPoolPtr pTransactionPool)
-	: m_config(config), 
-	m_pBlockChainServer(pBlockChainServer), 
-	m_pDatabase(pDatabase), 
-	m_peerManager(config, pDatabase->GetPeerDB()),
-	m_connectionManager(config, m_peerManager, pDatabase->GetBlockDB(), pBlockChainServer, pTransactionPool)
+P2PServer::P2PServer(
+	SyncStatusConstPtr pSyncStatus,
+	Locked<PeerManager> peerManager,
+	ConnectionManagerPtr pConnectionManager,
+	std::shared_ptr<Pipeline> pPipeline,
+	std::shared_ptr<Seeder> pSeeder,
+	std::shared_ptr<Syncer> pSyncer,
+	std::shared_ptr<Dandelion> pDandelion)
+	: m_pSyncStatus(pSyncStatus),
+	m_peerManager(peerManager),
+	m_pConnectionManager(pConnectionManager),
+	m_pPipeline(pPipeline),
+	m_pSeeder(pSeeder),
+	m_pSyncer(pSyncer),
+	m_pDandelion(pDandelion)
 {
 
 }
 
 P2PServer::~P2PServer()
 {
-	m_connectionManager.Stop();
+	m_pDandelion.reset();
+	m_pSyncer.reset();
+	m_pSeeder.reset();
+	m_pPipeline.reset();
+	m_pConnectionManager->Shutdown();
 }
 
 std::shared_ptr<P2PServer> P2PServer::Create(
@@ -23,56 +39,108 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	std::shared_ptr<IDatabase> pDatabase,
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
-	P2PServer* pServer = new P2PServer(config, pBlockChainServer, pDatabase, pTransactionPool);
-	pServer->m_connectionManager.Start();
+	// Sync Status
+	SyncStatusPtr pSyncStatus(new SyncStatus());
 
-	return std::shared_ptr<P2PServer>(pServer);
+	// Peer Manager
+	Locked<PeerManager> peerManager = PeerManager::Create(
+		config,
+		pDatabase->GetPeerDB()
+	);
+
+	// Connection Manager
+	ConnectionManagerPtr pConnectionManager = ConnectionManager::Create(
+		config,
+		peerManager,
+		pTransactionPool
+	);
+
+	// Pipeline
+	std::shared_ptr<Pipeline> pPipeline = Pipeline::Create(
+		config,
+		pConnectionManager,
+		pBlockChainServer,
+		pSyncStatus
+	);
+
+	// Seeder
+	std::shared_ptr<Seeder> pSeeder = Seeder::Create(
+		config,
+		*pConnectionManager,
+		peerManager,
+		pBlockChainServer,
+		pPipeline,
+		pSyncStatus
+	);
+
+	// Syncer
+	std::shared_ptr<Syncer> pSyncer = Syncer::Create(
+		pConnectionManager,
+		pBlockChainServer,
+		pPipeline,
+		pSyncStatus
+	);
+
+	// Dandelion
+	std::shared_ptr<Dandelion> pDandelion = Dandelion::Create(
+		config,
+		*pConnectionManager,
+		pBlockChainServer,
+		pTransactionPool,
+		pDatabase->GetBlockDB()
+	);
+
+	// P2P Server
+	return std::shared_ptr<P2PServer>(new P2PServer(
+		pSyncStatus,
+		peerManager,
+		pConnectionManager,
+		pPipeline,
+		pSeeder,
+		pSyncer,
+		pDandelion
+	));
 }
 
 std::pair<size_t, size_t> P2PServer::GetNumberOfConnectedPeers() const
 {
-	return m_connectionManager.GetNumConnectionsWithDirection();
-}
-
-const SyncStatus& P2PServer::GetSyncStatus() const
-{
-	return m_connectionManager.GetSyncStatus();
+	return m_pConnectionManager->GetNumConnectionsWithDirection();
 }
 
 std::vector<Peer> P2PServer::GetAllPeers() const
 {
-	return m_peerManager.GetAllPeers();
+	return m_peerManager.Read()->GetAllPeers();
 }
 
 std::vector<ConnectedPeer> P2PServer::GetConnectedPeers() const
 {
-	return m_connectionManager.GetConnectedPeers();
+	return m_pConnectionManager->GetConnectedPeers();
 }
 
 std::optional<Peer> P2PServer::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
 {
-	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_connectionManager.GetConnectedPeer(address, portOpt);
+	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address, portOpt);
 	if (connectedPeerOpt.has_value())
 	{
 		return std::make_optional<Peer>(connectedPeerOpt.value().second.GetPeer());
 	}
 
-	return m_peerManager.GetPeer(address, portOpt);
+	return m_peerManager.Read()->GetPeer(address, portOpt);
 }
 
 bool P2PServer::BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason)
 {
-	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_connectionManager.GetConnectedPeer(address, portOpt);
+	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address, portOpt);
 	if (connectedPeerOpt.has_value())
 	{
-		m_connectionManager.BanConnection(connectedPeerOpt.value().first, EBanReason::ManualBan);
+		m_pConnectionManager->BanConnection(connectedPeerOpt.value().first, EBanReason::ManualBan);
 		return true;
 	}
 
-	std::optional<Peer> peerOpt = m_peerManager.GetPeer(address, portOpt);
+	std::optional<Peer> peerOpt = m_peerManager.Read()->GetPeer(address, portOpt);
 	if (peerOpt.has_value())
 	{
-		m_peerManager.BanPeer(peerOpt.value(), EBanReason::ManualBan);
+		m_peerManager.Write()->BanPeer(peerOpt.value(), EBanReason::ManualBan);
 		return true;
 	}
 
@@ -81,14 +149,14 @@ bool P2PServer::BanPeer(const IPAddress& address, const std::optional<uint16_t>&
 
 bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
 {
-	std::optional<Peer> peerOpt = m_peerManager.GetPeer(address, portOpt);
+	std::optional<Peer> peerOpt = m_peerManager.Read()->GetPeer(address, portOpt);
 	if (peerOpt.has_value())
 	{
 		Peer peer = peerOpt.value();
 		if (peer.IsBanned())
 		{
 			const IPAddress& address = peer.GetIPAddress();
-			m_peerManager.UnbanPeer(address);
+			m_peerManager.Write()->UnbanPeer(address);
 		}
 
 		return true;
@@ -99,13 +167,13 @@ bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t
 
 bool P2PServer::UnbanAllPeers()
 {
-	std::vector<Peer> peers = m_peerManager.GetAllPeers();
+	std::vector<Peer> peers = m_peerManager.Read()->GetAllPeers();
 	for (const Peer& peer : peers)
 	{
 		if (peer.IsBanned())
 		{
 			const IPAddress& address = peer.GetIPAddress();
-			m_peerManager.UnbanPeer(address);
+			m_peerManager.Write()->UnbanPeer(address);
 		}
 	}
 

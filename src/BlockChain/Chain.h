@@ -61,6 +61,11 @@ public:
 
 	std::shared_ptr<const BlockIndex> GetOrCreateIndex(const Hash& hash, const uint64_t height) const
 	{
+		return GetOrCreateIndex(Hash(hash), height);
+	}
+
+	std::shared_ptr<const BlockIndex> GetOrCreateIndex(Hash&& hash, const uint64_t height) const
+	{
 		for (std::shared_ptr<const Chain> pChain : m_chains)
 		{
 			std::shared_ptr<const BlockIndex> pIndex = pChain->GetByHeight(height);
@@ -70,7 +75,7 @@ public:
 			}
 		}
 
-		return std::make_shared<const BlockIndex>(BlockIndex(hash, height));
+		return std::make_shared<const BlockIndex>(BlockIndex(std::move(hash), height));
 	}
 
 private:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <memory>
 #include <atomic>
 
 enum class ESyncStatus
@@ -99,3 +100,6 @@ private:
 	std::atomic<uint64_t> m_txHashSetTotalSize;
 	std::atomic<uint8_t> m_txHashSetProcessingStatus;
 };
+
+typedef std::shared_ptr<SyncStatus> SyncStatusPtr;
+typedef std::shared_ptr<SyncStatus> SyncStatusConstPtr;

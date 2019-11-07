@@ -1,16 +1,17 @@
 #pragma once
 
+#include "../ConnectionManager.h"
+
 #include <BlockChain/BlockChainServer.h>
 #include <chrono>
 
 // Forward Declarations
-class ConnectionManager;
 class SyncStatus;
 
 class StateSyncer
 {
 public:
-	StateSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
+	StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer);
 
 	bool SyncState(SyncStatus& syncStatus);
 
@@ -22,6 +23,6 @@ private:
 	uint64_t m_requestedHeight;
 	uint64_t m_connectionId;
 
-	ConnectionManager & m_connectionManager;
+	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
 };

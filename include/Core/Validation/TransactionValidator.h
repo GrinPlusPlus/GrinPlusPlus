@@ -5,9 +5,9 @@
 class TransactionValidator
 {
 public:
-	bool ValidateTransaction(const Transaction& transaction);
+	void Validate(const Transaction& transaction) const;
 
 private:
-	bool ValidateFeatures(const TransactionBody& transactionBody);
-	bool ValidateKernelSums(const Transaction& transaction);
+	void ValidateFeatures(const TransactionBody& transactionBody) const;
+	void ValidateKernelSums(const Transaction& transaction) const;
 };

@@ -14,7 +14,7 @@ public:
 	std::vector<HeaderInfo> LoadDifficultyData(const BlockHeader& header) const;
 
 private:
-	std::unique_ptr<BlockHeader> LoadHeader(const Hash& headerHash) const;
+	std::shared_ptr<BlockHeader> LoadHeader(const Hash& headerHash) const;
 	std::vector<HeaderInfo> PadDifficultyData(std::vector<HeaderInfo>& difficultyData) const;
 
 	std::shared_ptr<const IBlockDB> m_pBlockDB;

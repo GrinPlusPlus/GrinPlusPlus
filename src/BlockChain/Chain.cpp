@@ -28,7 +28,7 @@ std::shared_ptr<Chain> Chain::Load(
 
 	if (pDataFile->GetSize() == 0)
 	{
-		const auto& bytes = pGenesisIndex->GetHash().GetData();
+		const auto bytes = pGenesisIndex->GetHash().GetData();
 		pDataFile->AddData(bytes);
 		pDataFile->Commit();
 	}
@@ -38,8 +38,8 @@ std::shared_ptr<Chain> Chain::Load(
 
 	while (indices.size() < pDataFile->GetSize())
 	{
-		const Hash hash = pDataFile->GetDataAt(indices.size());
-		indices.push_back(pBlockIndexAllocator->GetOrCreateIndex(hash, indices.size()));
+		Hash hash = pDataFile->GetDataAt(indices.size());
+		indices.push_back(pBlockIndexAllocator->GetOrCreateIndex(std::move(hash), indices.size()));
 	}
 
 	return std::make_shared<Chain>(Chain(chainType, pBlockIndexAllocator, pDataFile, std::move(indices)));
@@ -69,12 +69,14 @@ std::shared_ptr<const BlockIndex> Chain::AddBlock(const Hash& hash)
 {
 	SetDirty(true);
 
-	std::shared_ptr<const BlockIndex> pBlockIndex = m_pBlockIndexAllocator->GetOrCreateIndex(hash, ++m_height);
+	const uint64_t height = m_height + 1;
+	std::shared_ptr<const BlockIndex> pBlockIndex = m_pBlockIndexAllocator->GetOrCreateIndex(hash, height);
 	m_indices.push_back(pBlockIndex);
 
-	const auto& bytes = pBlockIndex->GetHash().GetData();
+	const auto bytes = pBlockIndex->GetHash().GetData();
 	m_dataFileWriter->AddData(bytes);
 
+	++m_height;
 	return pBlockIndex;
 }
 
@@ -114,8 +116,8 @@ void Chain::Rollback()
 
 		while (m_indices.size() < m_dataFileWriter->GetSize())
 		{
-			const Hash hash = m_dataFileWriter->GetDataAt(m_indices.size());
-			m_indices.push_back(m_pBlockIndexAllocator->GetOrCreateIndex(hash, m_indices.size()));
+			Hash hash = m_dataFileWriter->GetDataAt(m_indices.size());
+			m_indices.push_back(m_pBlockIndexAllocator->GetOrCreateIndex(std::move(hash), m_indices.size()));
 		}
 
 		m_height = m_indices.size() - 1;

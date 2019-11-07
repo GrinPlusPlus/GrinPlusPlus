@@ -15,9 +15,9 @@ public:
 	EBlockChainStatus ProcessSingleHeader(const BlockHeader& header);
 
 private:
-	EBlockChainStatus ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers);
-	EBlockChainStatus ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers);
-	EBlockChainStatus AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<const BlockHeader*>& headers) const;
+	EBlockChainStatus ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers);
+	void ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers);
+	void AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers) const;
 	bool CheckAndAcceptSyncChain(Writer<ChainState> pLockedState) const;
 
 	const Config& m_config;

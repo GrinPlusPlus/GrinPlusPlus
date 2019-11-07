@@ -20,7 +20,7 @@ bool ChainResyncer::ResyncChain()
 	for (uint64_t i = 1; i <= pCandidateChain->GetTip()->GetHeight(); i++)
 	{
 		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
-		const Hash& hash = pIndex->GetHash();
+		const Hash hash = pIndex->GetHash();
 
 		std::unique_ptr<BlockHeader> pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);
 		if (pHeader == nullptr)

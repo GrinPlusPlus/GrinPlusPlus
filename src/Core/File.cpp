@@ -16,6 +16,8 @@ bool File::Load()
 	std::ifstream file(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
 	if (!file.is_open())
 	{
+		std::ofstream file2(m_path, std::ios::out | std::ios::binary | std::ios::app);
+		file.close();
 		return false;
 	}
 

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../ConnectionManager.h"
+#include "../Pipeline/Pipeline.h"
+
 #include <BlockChain/BlockChainServer.h>
 #include <chrono>
 #include <deque>
@@ -8,13 +11,16 @@
 #include <stdint.h>
 
 // Forward Declarations
-class ConnectionManager;
 class SyncStatus;
 
 class BlockSyncer
 {
 public:
-	BlockSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
+	BlockSyncer(
+		std::weak_ptr<ConnectionManager> pConnectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		std::shared_ptr<Pipeline> pPipeline
+	);
 
 	bool SyncBlocks(const SyncStatus& syncStatus, const bool startup);
 
@@ -22,8 +28,9 @@ private:
 	bool IsBlockSyncDue(const SyncStatus& syncStatus);
 	bool RequestBlocks();
 
-	ConnectionManager & m_connectionManager;
+	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
+	std::shared_ptr<Pipeline> m_pPipeline;
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;

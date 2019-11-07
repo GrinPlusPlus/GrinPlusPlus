@@ -25,14 +25,18 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 	return m_memPool.GetTransactionsByShortId(hash, nonce, missingShortIds);
 }
 
-bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock)
+EAddTransactionStatus TransactionPool::AddTransaction(
+	std::shared_ptr<const IBlockDB> pBlockDB,
+	const Transaction& transaction,
+	const EPoolType poolType,
+	const BlockHeader& lastConfirmedBlock)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(transaction))
 	{
 		LOG_TRACE("Duplicate transaction " + transaction.GetHash().ToHex());
-		return false;
+		return EAddTransactionStatus::DUPLICATE;
 	}
 
 	// Verify fee meets minimum
@@ -40,7 +44,7 @@ bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, c
 	if (FeeUtil::CalculateMinimumFee(feeBase, transaction) > FeeUtil::CalculateActualFee(transaction))
 	{
 		LOG_WARNING("Fee too low for transaction " + transaction.GetHash().ToHex());
-		return false;
+		return EAddTransactionStatus::LOW_FEE;
 	}
 	
 	// Verify lock time
@@ -49,15 +53,18 @@ bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, c
 		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
 		{
 			LOG_INFO("Invalid lock height: " + transaction.GetHash().ToHex());
-			return false;
+			return EAddTransactionStatus::NOT_ADDED;
 		}
 	}
 
-	if (!TransactionValidator().ValidateTransaction(transaction))
+	try
 	{
-		// TODO: Ban peer
+		TransactionValidator().Validate(transaction);
+	}
+	catch (std::exception& e)
+	{
 		LOG_WARNING("Invalid transaction " + transaction.GetHash().ToHex());
-		return false;
+		return EAddTransactionStatus::TX_INVALID;
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
@@ -65,7 +72,7 @@ bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, c
 	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(pBlockDB, transaction))
 	{
 		LOG_WARNING("Transaction inputs/outputs not valid: " + transaction.GetHash().ToHex());
-		return false;
+		return EAddTransactionStatus::NOT_ADDED;
 	}
 
 	if (poolType == EPoolType::MEMPOOL)
@@ -88,7 +95,7 @@ bool TransactionPool::AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, c
 		}
 	}
 
-	return true;
+	return EAddTransactionStatus::ADDED;
 }
 
 std::vector<Transaction> TransactionPool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const

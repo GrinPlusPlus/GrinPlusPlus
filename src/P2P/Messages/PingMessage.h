@@ -30,7 +30,7 @@ public:
 	//
 	// Clone
 	//
-	virtual PingMessage* Clone() const override final { return new PingMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PingMessage(*this)); }
 
 	//
 	// Getters

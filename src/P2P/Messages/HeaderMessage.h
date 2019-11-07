@@ -37,7 +37,7 @@ public:
 	//
 	// Clone
 	//
-	virtual HeaderMessage* Clone() const override final { return new HeaderMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new HeaderMessage(*this)); }
 
 	//
 	// Getters

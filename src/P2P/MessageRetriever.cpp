@@ -10,6 +10,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
+#include <chrono>
 
 MessageRetriever::MessageRetriever(const Config& config, const ConnectionManager& connectionManager)
 	: m_config(config), m_connectionManager(connectionManager)

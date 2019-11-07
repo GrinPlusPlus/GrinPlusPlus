@@ -1,6 +1,7 @@
 #include <Core/Validation/TransactionBodyValidator.h>
 
 #include <Core/Validation/KernelSignatureValidator.h>
+#include <Core/Exceptions/BadDataException.h>
 #include <Consensus/BlockWeight.h>
 #include <Consensus/Sorting.h>
 #include <Infrastructure/Logger.h>
@@ -10,38 +11,21 @@
 
 // Validates all relevant parts of a transaction body. 
 // Checks the excess value against the signature as well as range proofs for each output.
-bool TransactionBodyValidator::ValidateTransactionBody(const TransactionBody& transactionBody, const bool withReward)
+void TransactionBodyValidator::Validate(const TransactionBody& transactionBody, const bool withReward)
 {
-	if (!ValidateWeight(transactionBody, withReward))
-	{
-		return false;
-	}
-
-	if (!VerifySorted(transactionBody))
-	{
-		return false;
-	}
-
-	if (!VerifyCutThrough(transactionBody))
-	{
-		return false;
-	}
-
-	if (!VerifyRangeProofs(transactionBody.GetOutputs()))
-	{
-		return false;
-	}
-
+	ValidateWeight(transactionBody, withReward);
+	VerifySorted(transactionBody);
+	VerifyCutThrough(transactionBody);
+	VerifyRangeProofs(transactionBody.GetOutputs());
+	
 	if (!KernelSignatureValidator::VerifyKernelSignatures(transactionBody.GetKernels()))
 	{
-		return false;
+		throw BAD_DATA_EXCEPTION("Kernel signatures invalid");
 	}
-
-	return true;
 }
 
 // Verify the body is not too big in terms of number of inputs|outputs|kernels.
-bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transactionBody, const bool withReward)
+void TransactionBodyValidator::ValidateWeight(const TransactionBody& transactionBody, const bool withReward)
 {
 	// If with reward check the body as if it was a block, with an additional output and kernel for reward.
 	const uint32_t reserve = withReward ? 1 : 0;
@@ -51,21 +35,23 @@ bool TransactionBodyValidator::ValidateWeight(const TransactionBody& transaction
 
 	if ((blockInputWeight + blockOutputWeight + blockKernelWeight) > Consensus::MAX_BLOCK_WEIGHT)
 	{
-		return false;
+		throw BAD_DATA_EXCEPTION("Block weight invalid");
 	}
-
-	return true;
 }
 
-bool TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
+void TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
 {
-	return Consensus::IsSorted(transactionBody.GetInputs())
+	const bool sorted = Consensus::IsSorted(transactionBody.GetInputs())
 		&& Consensus::IsSorted(transactionBody.GetOutputs())
 		&& Consensus::IsSorted(transactionBody.GetKernels());
+	if (!sorted)
+	{
+		throw BAD_DATA_EXCEPTION("Inputs, outputs, and/or kernels not sorted.");
+	}
 }
 
 // Verify that no input is spending an output from the same block.
-bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody)
+void TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody)
 {
 	const std::vector<TransactionOutput>& outputs = transactionBody.GetOutputs();
 	const std::vector<TransactionInput>& inputs = transactionBody.GetInputs();
@@ -80,14 +66,18 @@ bool TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transacti
 	);
 
 	// Verify none of the input commitments are in the commitments set
-	return !std::any_of(
+	const bool invalid = std::any_of(
 		inputs.cbegin(),
 		inputs.cend(),
 		[&commitments](const TransactionInput& input) { return commitments.find(input.GetCommitment()) != commitments.cend(); }
 	);
+	if (invalid)
+	{
+		throw BAD_DATA_EXCEPTION("Cut-through not performed correctly.");
+	}
 }
 
-bool TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOutput>& outputs)
+void TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOutput>& outputs)
 {
 	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 	std::transform(
@@ -97,5 +87,8 @@ bool TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOu
 		[](const TransactionOutput& output) { return std::make_pair<Commitment, RangeProof>(Commitment(output.GetCommitment()), RangeProof(output.GetRangeProof())); }
 	);
 
-	return Crypto::VerifyRangeProofs(rangeProofs);
+	if (!Crypto::VerifyRangeProofs(rangeProofs))
+	{
+		throw BAD_DATA_EXCEPTION("Range proofs invalid.");
+	}
 }

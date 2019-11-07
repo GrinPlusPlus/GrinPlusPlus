@@ -9,30 +9,19 @@
 #include <numeric>
 
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic
-bool TransactionValidator::ValidateTransaction(const Transaction& transaction)
+void TransactionValidator::Validate(const Transaction& transaction) const
 {
 	// Validate the "transaction body"
-	if (!TransactionBodyValidator().ValidateTransactionBody(transaction.GetBody(), false))
-	{
-		return false;
-	}
+	TransactionBodyValidator().Validate(transaction.GetBody(), false);
 
 	// Verify no output or kernel includes invalid features (coinbase)
-	if (!ValidateFeatures(transaction.GetBody()))
-	{
-		return false;
-	}
+	ValidateFeatures(transaction.GetBody());
 
 	// Verify the big "sum": all inputs plus reward+fee, all output commitments, all kernels plus the kernel excess
-	if (!ValidateKernelSums(transaction))
-	{
-		return false;
-	}
-
-	return true;
+	ValidateKernelSums(transaction);
 }
 
-bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBody)
+void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBody) const
 {
 	// Verify no output features.
 	const bool hasCoinbaseOutputs = std::any_of(
@@ -40,6 +29,10 @@ bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 		transactionBody.GetOutputs().cend(),
 		[](const TransactionOutput& output) { return output.IsCoinbase(); }
 	);
+	if (hasCoinbaseOutputs)
+	{
+		throw BAD_DATA_EXCEPTION("Transaction contains coinbase outputs.");
+	}
 
 	// Verify no kernel features.
 	const bool hasCoinbaseKernels = std::any_of(
@@ -47,12 +40,14 @@ bool TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 		transactionBody.GetKernels().cend(),
 		[](const TransactionKernel& kernel) { return kernel.IsCoinbase(); }
 	);
-
-	return !hasCoinbaseOutputs && !hasCoinbaseKernels;
+	if (hasCoinbaseKernels)
+	{
+		throw BAD_DATA_EXCEPTION("Transaction contains coinbase kernels.");
+	}
 }
 
 // Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
-bool TransactionValidator::ValidateKernelSums(const Transaction& transaction)
+void TransactionValidator::ValidateKernelSums(const Transaction& transaction) const
 {
 	// Calculate overage
 	const std::vector<TransactionKernel>& blockKernels = transaction.GetBody().GetKernels();
@@ -62,6 +57,14 @@ bool TransactionValidator::ValidateKernelSums(const Transaction& transaction)
 		(int64_t)0,
 		[](int64_t overage, const TransactionKernel& kernel) { return overage + (int64_t)kernel.GetFee(); }
 	);
-
-	return KernelSumValidator::ValidateKernelSums(transaction.GetBody(), overage, transaction.GetOffset(), std::nullopt) != nullptr;
+	
+	try
+	{
+		KernelSumValidator::ValidateKernelSums(transaction.GetBody(), overage, transaction.GetOffset(), std::nullopt);
+	}
+	catch (std::exception& e)
+	{
+		LOG_WARNING_F("Kernel sum validation failed with error: %s", e.what());
+		throw BAD_DATA_EXCEPTION("Kernel sum validation failed.");
+	}
 }

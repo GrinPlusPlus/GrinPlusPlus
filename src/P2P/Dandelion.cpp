@@ -22,33 +22,35 @@ Dandelion::Dandelion(
 	m_pTransactionPool(pTransactionPool),
 	m_pBlockDB(pBlockDB),
 	m_relayNodeId(0), 
-	m_relayExpirationTime(std::chrono::system_clock::now())
+	m_relayExpirationTime(std::chrono::system_clock::now()),
+	m_terminate(false)
 {
 
 }
 
-void Dandelion::Start()
+Dandelion::~Dandelion()
 {
 	m_terminate = true;
-
-	if (m_dandelionThread.joinable())
-	{
-		m_dandelionThread.join();
-	}
-
-	m_terminate = false;
-
-	m_dandelionThread = std::thread(Thread_Monitor, std::ref(*this));
+	ThreadUtil::Join(m_dandelionThread);
 }
 
-void Dandelion::Stop()
+std::shared_ptr<Dandelion> Dandelion::Create(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	ITransactionPoolPtr pTransactionPool,
+	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 {
-	m_terminate = true;
+	auto pDandelion = std::shared_ptr<Dandelion>(new Dandelion(
+		config,
+		connectionManager,
+		pBlockChainServer,
+		pTransactionPool,
+		pBlockDB
+	));
 
-	if (m_dandelionThread.joinable())
-	{
-		m_dandelionThread.join();
-	}
+	pDandelion->m_dandelionThread = std::thread(Dandelion::Thread_Monitor, std::ref(*pDandelion));
+	return pDandelion;
 }
 
 // A process to monitor transactions in the stempool.
@@ -69,26 +71,33 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 		const uint8_t patience = config.GetPatienceSeconds();
 		ThreadUtil::SleepFor(std::chrono::seconds(patience), dandelion.m_terminate);
 
-		// Step 1: find all "ToStem" entries in stempool from last run.
-		// Aggregate them up to give a single (valid) aggregated tx and propagate it
-		// to the next Dandelion relay along the stem.
-		if (!dandelion.ProcessStemPhase())
+		try
 		{
-			LOG_ERROR("Problem with stem phase");
-		}
+			// Step 1: find all "ToStem" entries in stempool from last run.
+			// Aggregate them up to give a single (valid) aggregated tx and propagate it
+			// to the next Dandelion relay along the stem.
+			if (!dandelion.ProcessStemPhase())
+			{
+				LOG_ERROR("Problem with stem phase");
+			}
 
-		// Step 2: find all "ToFluff" entries in stempool from last run.
-		// Aggregate them up to give a single (valid) aggregated tx and (re)add it
-		// to our pool with stem=false (which will then broadcast it).
-		if (!dandelion.ProcessFluffPhase())
-		{
-			LOG_ERROR("Problem with fluff phase");
-		}
+			// Step 2: find all "ToFluff" entries in stempool from last run.
+			// Aggregate them up to give a single (valid) aggregated tx and (re)add it
+			// to our pool with stem=false (which will then broadcast it).
+			if (!dandelion.ProcessFluffPhase())
+			{
+				LOG_ERROR("Problem with fluff phase");
+			}
 
-		// Step 3: now find all expired entries based on embargo timer.
-		if (!dandelion.ProcessExpiredEntries())
+			// Step 3: now find all expired entries based on embargo timer.
+			if (!dandelion.ProcessExpiredEntries())
+			{
+				LOG_ERROR("Problem processing expired pool entries");
+			}
+		}
+		catch (std::exception& e)
 		{
-			LOG_ERROR("Problem processing expired pool entries");
+			LOG_ERROR_F("Exception thrown: %s", e.what());
 		}
 	}
 

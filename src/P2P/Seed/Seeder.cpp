@@ -14,48 +14,51 @@
 #include <Infrastructure/Logger.h>
 #include <algorithm>
 
-Seeder::Seeder(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), 
-	m_connectionManager(connectionManager), 
-	m_peerManager(peerManager), 
-	m_pBlockChainServer(pBlockChainServer)
+Seeder::Seeder(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	Locked<PeerManager> peerManager,
+	IBlockChainServerPtr pBlockChainServer,
+	std::shared_ptr<Pipeline> pPipeline,
+	SyncStatusConstPtr pSyncStatus)
+	: m_config(config),
+	m_connectionManager(connectionManager),
+	m_peerManager(peerManager),
+	m_pBlockChainServer(pBlockChainServer),
+	m_pPipeline(pPipeline),
+	m_pSyncStatus(pSyncStatus),
+	m_pContext(std::make_shared<asio::io_context>()),
+	m_terminate(false)
 {
 
 }
 
-void Seeder::Start()
+Seeder::~Seeder()
 {
 	m_terminate = true;
-
-	if (m_seedThread.joinable())
-	{
-		m_seedThread.join();
-	}
-
-	if (m_listenerThread.joinable())
-	{
-		m_listenerThread.join();
-	}
-
-	m_terminate = false;
-
-	m_seedThread = std::thread(Thread_Seed, std::ref(*this));
-	m_listenerThread = std::thread(Thread_Listener, std::ref(*this));
+	ThreadUtil::Join(m_listenerThread);
+	ThreadUtil::Join(m_seedThread);
 }
 
-void Seeder::Stop()
+std::shared_ptr<Seeder> Seeder::Create(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	Locked<PeerManager> peerManager,
+	IBlockChainServerPtr pBlockChainServer,
+	std::shared_ptr<Pipeline> pPipeline,
+	SyncStatusConstPtr pSyncStatus)
 {
-	m_terminate = true;
-
-	if (m_listenerThread.joinable())
-	{
-		m_listenerThread.join();
-	}
-
-	if (m_seedThread.joinable())
-	{
-		m_seedThread.join();
-	}
+	std::shared_ptr<Seeder> pSeeder = std::shared_ptr<Seeder>(new Seeder(
+		config,
+		connectionManager,
+		peerManager,
+		pBlockChainServer,
+		pPipeline,
+		pSyncStatus
+	));
+	pSeeder->m_seedThread = std::thread(Thread_Seed, std::ref(*pSeeder.get()));
+	pSeeder->m_listenerThread = std::thread(Thread_Listener, std::ref(*pSeeder.get()));
+	return pSeeder;
 }
 
 //
@@ -102,7 +105,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - BEGIN");
 
 	const uint16_t portNumber = seeder.m_config.GetEnvironment().GetP2PPort();
-	asio::ip::tcp::acceptor acceptor(seeder.m_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
+	asio::ip::tcp::acceptor acceptor(*seeder.m_pContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
 	asio::error_code errorCode;
 	acceptor.listen(asio::socket_base::max_listen_connections, errorCode);
 
@@ -111,23 +114,24 @@ void Seeder::Thread_Listener(Seeder& seeder)
 		const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
 		while (!seeder.m_terminate)
 		{
-			Socket socket(SocketAddress(IPAddress(), portNumber));
-			// TODO: Always accept, but then send peers and immediately drop
+			SocketPtr pSocket = SocketPtr(new Socket(SocketAddress(IPAddress(), portNumber)));
+			// FUTURE: Always accept, but then send peers and immediately drop
 			if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
 			{
-				const bool connectionAdded = socket.Accept(seeder.m_context, acceptor, seeder.m_terminate);
+				const bool connectionAdded = pSocket->Accept(seeder.m_pContext, acceptor, seeder.m_terminate);
 				if (connectionAdded)
 				{
-					Connection* pConnection = new Connection(
-						std::move(socket),
+					ConnectionPtr pConnection = Connection::Create(
+						pSocket,
 						seeder.m_nextId++,
 						seeder.m_config,
 						seeder.m_connectionManager,
 						seeder.m_peerManager,
 						seeder.m_pBlockChainServer,
-						ConnectedPeer(Peer(socket.GetSocketAddress()), EDirection::INBOUND)
+						ConnectedPeer(Peer(pSocket->GetSocketAddress()), EDirection::INBOUND),
+						seeder.m_pPipeline,
+						seeder.m_pSyncStatus
 					);
-					pConnection->Connect();
 				}
 			}
 			else
@@ -142,22 +146,25 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	LoggerAPI::LogTrace("Seeder::Thread_Listener() - END");
 }
 
-Connection* Seeder::SeedNewConnection()
+ConnectionPtr Seeder::SeedNewConnection()
 {
-	std::unique_ptr<Peer> pPeer = m_peerManager.GetNewPeer(Capabilities::FAST_SYNC_NODE);
+	std::unique_ptr<Peer> pPeer = m_peerManager.Read()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
 		ConnectedPeer connectedPeer(*pPeer, EDirection::OUTBOUND);
-		Connection* pConnection = new Connection(
-			Socket(SocketAddress(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort())),
+		SocketAddress address(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort());
+		SocketPtr pSocket = SocketPtr(new Socket(std::move(address)));
+		ConnectionPtr pConnection = Connection::Create(
+			pSocket,
 			m_nextId++,
 			m_config,
 			m_connectionManager,
 			m_peerManager,
 			m_pBlockChainServer,
-			connectedPeer
+			connectedPeer,
+			m_pPipeline,
+			m_pSyncStatus
 		);
-		pConnection->Connect();
 
 		return pConnection;
 	}
@@ -165,7 +172,7 @@ Connection* Seeder::SeedNewConnection()
 	{
 		std::vector<SocketAddress> peerAddresses = DNSSeeder(m_config).GetPeersFromDNS();
 
-		m_peerManager.AddFreshPeers(peerAddresses);
+		m_peerManager.Write()->AddFreshPeers(peerAddresses);
 	}
 
 	// TODO: Request new peers

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "Dandelion.h"
 #include "ConnectionManager.h"
+#include "Pipeline/Pipeline.h"
+#include "Sync/Syncer.h"
+#include "Seed/Seeder.h"
 #include "Seed/PeerManager.h"
 
 #include <P2P/P2PServer.h>
@@ -19,7 +23,7 @@ public:
 	);
 	virtual ~P2PServer();
 
-	virtual const SyncStatus& GetSyncStatus() const override final;
+	virtual SyncStatusConstPtr GetSyncStatus() const override final { return m_pSyncStatus; }
 
 	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const override final;
 	virtual std::vector<Peer> GetAllPeers() const override final;
@@ -45,15 +49,20 @@ public:
 
 private:
 	P2PServer(
-		const Config& config,
-		std::shared_ptr<IBlockChainServer> pBlockChainServer,
-		std::shared_ptr<IDatabase> pDatabase,
-		std::shared_ptr<ITransactionPool> pTransactionPool
+		SyncStatusConstPtr pSyncStatus,
+		Locked<PeerManager> peerManager,
+		ConnectionManagerPtr pConnectionManager,
+		std::shared_ptr<Pipeline> pPipeline,
+		std::shared_ptr<Seeder> pSeeder,
+		std::shared_ptr<Syncer> pSyncer,
+		std::shared_ptr<Dandelion> pDandelion
 	);
 
-	PeerManager m_peerManager;
-	ConnectionManager m_connectionManager;
-	const Config m_config;
-	std::shared_ptr<IBlockChainServer> m_pBlockChainServer;
-	std::shared_ptr<IDatabase> m_pDatabase;
+	SyncStatusConstPtr m_pSyncStatus;
+	Locked<PeerManager> m_peerManager;
+	ConnectionManagerPtr m_pConnectionManager;
+	std::shared_ptr<Pipeline> m_pPipeline;
+	std::shared_ptr<Seeder> m_pSeeder;
+	std::shared_ptr<Syncer> m_pSyncer;
+	std::shared_ptr<Dandelion> m_pDandelion;
 };

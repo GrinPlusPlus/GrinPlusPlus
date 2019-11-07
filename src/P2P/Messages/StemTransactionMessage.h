@@ -37,7 +37,7 @@ public:
 	//
 	// Clone
 	//
-	virtual StemTransactionMessage* Clone() const override final { return new StemTransactionMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new StemTransactionMessage(*this)); }
 
 	//
 	// Getters

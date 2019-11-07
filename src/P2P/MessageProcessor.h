@@ -1,19 +1,21 @@
 #pragma once
 
 #include "Messages/RawMessage.h"
+#include "Seed/PeerManager.h"
 
 #include <BlockChain/BlockChainServer.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
+#include <memory>
 
 // Forward Declarations
 class Socket;
 class ConnectionManager;
 class ConnectedPeer;
 class RawMessage;
+class Pipeline;
 class TxHashSetArchiveMessage;
 class TxHashSetRequestMessage;
-class PeerManager;
 
 class MessageProcessor
 {
@@ -29,7 +31,14 @@ public:
 		BAN_PEER
 	};
 
-	MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer);
+	MessageProcessor(
+		const Config& config,
+		ConnectionManager& connectionManager,
+		Locked<PeerManager> peerManager,
+		IBlockChainServerPtr pBlockChainServer,
+		Pipeline& pipeline,
+		SyncStatusConstPtr pSyncStatus
+	);
 
 	EStatus ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
 
@@ -39,6 +48,8 @@ private:
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
-	PeerManager& m_peerManager;
+	Locked<PeerManager> m_peerManager;
 	IBlockChainServerPtr m_pBlockChainServer;
+	Pipeline& m_pipeline;
+	SyncStatusConstPtr m_pSyncStatus;
 };

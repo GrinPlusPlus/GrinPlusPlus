@@ -24,7 +24,7 @@ private:
 	bool ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) const;
 
 	bool ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
-	std::unique_ptr<BlockSums> ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
+	BlockSums ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
 	bool ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
 	bool ValidateKernelSignatures(const KernelMMR& kernelMMR, SyncStatus& syncStatus) const;
 

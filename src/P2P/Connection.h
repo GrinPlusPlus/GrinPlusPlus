@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Seed/PeerManager.h"
 #include "Messages/Message.h"
 
 #include <BlockChain/BlockChainServer.h>
@@ -14,6 +15,7 @@
 class IMessage;
 class ConnectionManager;
 class PeerManager;
+class Pipeline;
 
 //
 // A Connection will be created for each ConnectedPeer.
@@ -23,28 +25,31 @@ class PeerManager;
 class Connection
 {
 public:
-	Connection(
-		Socket&& socket,
-		const uint64_t connectionId,
-		const Config& config,
-		ConnectionManager& connectionManager,
-		PeerManager& peerManager,
-		IBlockChainServerPtr pBlockChainServer,
-		const ConnectedPeer& connectedPeer
-	);
-
 	Connection(const Connection&) = delete;
 	Connection& operator=(const Connection&) = delete;
 	Connection(Connection&&) = delete;
+	~Connection();
+
+	static std::shared_ptr<Connection> Create(
+		SocketPtr pSocket,
+		const uint64_t connectionId,
+		const Config& config,
+		ConnectionManager& connectionManager,
+		Locked<PeerManager> peerManager,
+		IBlockChainServerPtr pBlockChainServer,
+		const ConnectedPeer& connectedPeer,
+		std::shared_ptr<Pipeline> pPipeline,
+		SyncStatusConstPtr pSyncStatus
+	);
+
+	void Disconnect();
 
 	inline uint64_t GetId() const { return m_connectionId; }
-	bool Connect();
 	bool IsConnectionActive() const;
-	void Disconnect();
 
 	void Send(const IMessage& message);
 
-	inline Socket& GetSocket() const { return m_socket; }
+	inline SocketPtr GetSocket() const { return m_pSocket; }
 	inline Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
 	inline const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
 	inline const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
@@ -55,12 +60,27 @@ public:
 	bool ExceedsRateLimit() const;
 
 private:
-	static void Thread_ProcessConnection(Connection* pConnection);
+	Connection(
+		SocketPtr pSocket,
+		const uint64_t connectionId,
+		const Config& config,
+		ConnectionManager& connectionManager,
+		Locked<PeerManager> peerManager,
+		IBlockChainServerPtr pBlockChainServer,
+		const ConnectedPeer& connectedPeer,
+		Pipeline& pipeline,
+		SyncStatusConstPtr pSyncStatus
+	);
+
+	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 
 	const Config& m_config;
 	IBlockChainServerPtr m_pBlockChainServer;
 	ConnectionManager& m_connectionManager;
-	PeerManager& m_peerManager;
+	Locked<PeerManager> m_peerManager;
+	Pipeline& m_pipeline;
+	SyncStatusConstPtr m_pSyncStatus;
+
 	std::atomic<bool> m_terminate = true;
 	std::thread m_connectionThread;
 	const uint64_t m_connectionId;
@@ -68,9 +88,11 @@ private:
 	mutable std::mutex m_peerMutex;
 	ConnectedPeer m_connectedPeer;
 
-	asio::io_context m_context;
-	mutable Socket m_socket;
+	std::shared_ptr<asio::io_context> m_pContext;
+	mutable SocketPtr m_pSocket;
 
 	mutable std::mutex m_sendMutex;
-	std::queue<IMessage*> m_sendQueue;
+	std::queue<IMessagePtr> m_sendQueue;
 };
+
+typedef std::shared_ptr<Connection> ConnectionPtr;

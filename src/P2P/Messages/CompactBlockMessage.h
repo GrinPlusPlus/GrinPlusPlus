@@ -37,7 +37,7 @@ public:
 	//
 	// Clone
 	//
-	virtual CompactBlockMessage* Clone() const override final { return new CompactBlockMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new CompactBlockMessage(*this)); }
 
 	//
 	// Getters

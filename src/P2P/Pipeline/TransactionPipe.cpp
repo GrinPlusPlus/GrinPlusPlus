@@ -1,34 +1,30 @@
 #include "TransactionPipe.h"
 #include "../Messages/TransactionKernelMessage.h"
-#include "../ConnectionManager.h"
 
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
-TransactionPipe::TransactionPipe(const Config& config, ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(true)
+TransactionPipe::TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_config(config), m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
 {
 
 }
 
-void TransactionPipe::Start()
-{
-	if (m_terminate)
-	{
-		ThreadUtil::Join(m_transactionThread);
-
-		m_terminate = false;
-		m_transactionThread = std::thread(Thread_ProcessTransactions, std::ref(*this));
-	}
-}
-
-void TransactionPipe::Stop()
+TransactionPipe::~TransactionPipe()
 {
 	m_terminate = true;
 
 	ThreadUtil::Join(m_transactionThread);
+}
+
+std::shared_ptr<TransactionPipe> TransactionPipe::Create(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+{
+	std::shared_ptr<TransactionPipe> pTxPipe = std::shared_ptr<TransactionPipe>(new TransactionPipe(config, pConnectionManager, pBlockChainServer));
+	pTxPipe->m_transactionThread = std::thread(Thread_ProcessTransactions, std::ref(*pTxPipe.get()));
+
+	return pTxPipe;
 }
 
 void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
@@ -51,7 +47,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 					for (auto& kernel : kernels)
 					{
 						const TransactionKernelMessage message(kernel.GetHash());
-						pipeline.m_connectionManager.BroadcastMessage(message, pTxEntry->connectionId);
+						pipeline.m_pConnectionManager->BroadcastMessage(message, pTxEntry->connectionId);
 					}
 				}
 

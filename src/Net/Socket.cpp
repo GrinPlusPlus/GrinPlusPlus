@@ -10,16 +10,28 @@ static unsigned long DEFAULT_TIMEOUT = 5 * 1000; // 5s
 #endif
 
 Socket::Socket(const SocketAddress& address)
-	: m_address(address), m_socketOpen(false), m_blocking(true), m_receiveBufferSize(0), m_receiveTimeout(DEFAULT_TIMEOUT), m_sendTimeout(DEFAULT_TIMEOUT)
+	: m_address(address),
+	m_socketOpen(false),
+	m_blocking(true),
+	m_receiveBufferSize(0),
+	m_receiveTimeout(DEFAULT_TIMEOUT),
+	m_sendTimeout(DEFAULT_TIMEOUT)
 {
 
 }
 
-bool Socket::Connect(asio::io_context& context)
+Socket::~Socket()
 {
+	m_pSocket.reset();
+	m_pContext.reset();
+}
+
+bool Socket::Connect(std::shared_ptr<asio::io_context> pContext)
+{
+	m_pContext = pContext;
 	asio::ip::tcp::endpoint endpoint(asio::ip::address(asio::ip::address_v4::from_string(m_address.GetIPAddress().Format())), m_address.GetPortNumber());
 
-	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
+	m_pSocket = std::make_shared<asio::ip::tcp::socket>(*pContext);
 	m_pSocket->async_connect(endpoint, [this](const asio::error_code & ec)
 		{
 			m_errorCode = ec;
@@ -53,7 +65,7 @@ bool Socket::Connect(asio::io_context& context)
 		}
 	);
 
-	context.run();
+	pContext->run();
 
 	auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
 	while (!m_errorCode && !m_socketOpen && std::chrono::system_clock::now() < timeout)
@@ -64,10 +76,11 @@ bool Socket::Connect(asio::io_context& context)
 	return m_socketOpen;
 }
 
-bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
+bool Socket::Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
 {
-	m_pSocket = std::make_shared<asio::ip::tcp::socket>(context);
-	acceptor.async_accept(*m_pSocket, [this, &context](const asio::error_code & ec)
+	m_pContext = pContext;
+	m_pSocket = std::make_shared<asio::ip::tcp::socket>(*pContext);
+	acceptor.async_accept(*m_pSocket, [this, pContext](const asio::error_code & ec)
 		{
 			m_errorCode = ec;
 			if (!ec)
@@ -103,10 +116,10 @@ bool Socket::Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor
 			break;
 		}
 
-		context.run_one_for(std::chrono::milliseconds(100));
+		pContext->run_one_for(std::chrono::milliseconds(100));
 	}
 
-	context.reset();
+	pContext->reset();
 
 	return m_socketOpen;
 }

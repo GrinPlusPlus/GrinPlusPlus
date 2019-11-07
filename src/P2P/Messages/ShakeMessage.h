@@ -39,7 +39,7 @@ public:
 	//
 	// Clone
 	//
-	virtual ShakeMessage* Clone() const override final { return new ShakeMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new ShakeMessage(*this)); }
 
 	//
 	// Getters

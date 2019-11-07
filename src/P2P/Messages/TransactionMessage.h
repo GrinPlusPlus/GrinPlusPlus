@@ -37,7 +37,7 @@ public:
 	//
 	// Clone
 	//
-	virtual TransactionMessage* Clone() const override final { return new TransactionMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new TransactionMessage(*this)); }
 
 	//
 	// Getters

@@ -14,9 +14,10 @@ class Socket : public Traits::IPrintable
 {
 public:
 	Socket(const SocketAddress& address);
+	~Socket();
 
-	bool Connect(asio::io_context& context);
-	bool Accept(asio::io_context& context, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);
+	bool Connect(std::shared_ptr<asio::io_context> pContext);
+	bool Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);
 
 	bool CloseSocket();
 	bool IsSocketOpen() const;
@@ -48,6 +49,7 @@ public:
 
 private:
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
+	std::shared_ptr<asio::io_context> m_pContext;
 	asio::error_code m_errorCode;
 
 	bool m_socketOpen;
@@ -58,3 +60,5 @@ private:
 	int m_receiveBufferSize;
 	RateCounter m_rateCounter;
 };
+
+typedef std::shared_ptr<Socket> SocketPtr;

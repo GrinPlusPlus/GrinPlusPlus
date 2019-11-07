@@ -2,7 +2,6 @@
 #include "HeaderSyncer.h"
 #include "StateSyncer.h"
 #include "BlockSyncer.h"
-#include "../ConnectionManager.h"
 
 #include <BlockChain/BlockChainServer.h>
 #include <P2P/SyncStatus.h>
@@ -10,32 +9,41 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
-Syncer::Syncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
+Syncer::Syncer(
+	std::weak_ptr<ConnectionManager> pConnectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	std::shared_ptr<Pipeline> pPipeline,
+	SyncStatusPtr pSyncStatus)
+	: m_pConnectionManager(pConnectionManager),
+	m_pBlockChainServer(pBlockChainServer),
+	m_pPipeline(pPipeline),
+	m_pSyncStatus(pSyncStatus),
+	m_terminate(false)
 {
 
 }
 
-void Syncer::Start()
-{
-	m_terminate = false;
-
-	if (m_syncThread.joinable())
-	{
-		m_syncThread.join();
-	}
-
-	m_syncThread = std::thread(Thread_Sync, std::ref(*this));
-}
-
-void Syncer::Stop()
+Syncer::~Syncer()
 {
 	m_terminate = true;
+	ThreadUtil::Join(m_syncThread);
+}
 
-	if (m_syncThread.joinable())
-	{
-		m_syncThread.join();
-	}
+std::shared_ptr<Syncer> Syncer::Create(
+	std::weak_ptr<ConnectionManager> pConnectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	std::shared_ptr<Pipeline> pPipeline,
+	SyncStatusPtr pSyncStatus)
+{
+	std::shared_ptr<Syncer> pSyncer = std::shared_ptr<Syncer>(new Syncer(
+		pConnectionManager,
+		pBlockChainServer,
+		pPipeline,
+		pSyncStatus
+	));
+	pSyncer->m_syncThread = std::thread(Thread_Sync, std::ref(*pSyncer));
+
+	return pSyncer;
 }
 
 void Syncer::Thread_Sync(Syncer& syncer)
@@ -43,45 +51,52 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	ThreadManagerAPI::SetCurrentThreadName("SYNC");
 	LOG_DEBUG("BEGIN");
 
-	HeaderSyncer headerSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
-	StateSyncer stateSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
-	BlockSyncer blockSyncer(syncer.m_connectionManager, syncer.m_pBlockChainServer);
+	HeaderSyncer headerSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer);
+	StateSyncer stateSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer);
+	BlockSyncer blockSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer, syncer.m_pPipeline);
 	bool startup = true;
 
 	while (!syncer.m_terminate)
 	{
-		ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
-		syncer.UpdateSyncStatus();
-
-		if (syncer.m_syncStatus.GetNumActiveConnections() >= 2)
+		try
 		{
-			// Sync Headers
-			if (headerSyncer.SyncHeaders(syncer.m_syncStatus, startup))
+			ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
+			syncer.UpdateSyncStatus();
+
+			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= 2)
 			{
-				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_HEADERS);
-				continue;
-			}
+				// Sync Headers
+				if (headerSyncer.SyncHeaders(*syncer.m_pSyncStatus, startup))
+				{
+					syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::SYNCING_HEADERS);
+					continue;
+				}
 
-			// Sync State (TxHashSet)
-			if (stateSyncer.SyncState(syncer.m_syncStatus))
+				// Sync State (TxHashSet)
+				if (stateSyncer.SyncState(*syncer.m_pSyncStatus))
+				{
+					continue;
+				}
+
+				// Sync Blocks
+				if (blockSyncer.SyncBlocks(*syncer.m_pSyncStatus, startup))
+				{
+					syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
+					continue;
+				}
+
+				startup = false;
+
+				syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::NOT_SYNCING);
+			}
+			else if (syncer.m_pSyncStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
 			{
-				continue;
+				syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
 			}
-
-			// Sync Blocks
-			if (blockSyncer.SyncBlocks(syncer.m_syncStatus, startup))
-			{
-				syncer.m_syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
-				continue;
-			}
-
-			startup = false;
-
-			syncer.m_syncStatus.UpdateStatus(ESyncStatus::NOT_SYNCING);
 		}
-		else if (syncer.m_syncStatus.GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
+		catch (std::exception&)
 		{
-			syncer.m_syncStatus.UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
+
 		}
 	}
 
@@ -90,6 +105,6 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 void Syncer::UpdateSyncStatus()
 {
-	m_pBlockChainServer->UpdateSyncStatus(m_syncStatus);
-	m_connectionManager.UpdateSyncStatus(m_syncStatus);
+	m_pBlockChainServer->UpdateSyncStatus(*m_pSyncStatus);
+	m_pConnectionManager.lock()->UpdateSyncStatus(*m_pSyncStatus);
 }

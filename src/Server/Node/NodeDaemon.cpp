@@ -15,45 +15,38 @@
 #include <iostream>
 #include <thread>
 
-NodeDaemon::NodeDaemon(const Config& config)
-	: m_config(config)
+NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient)
+	: m_config(config), m_pNodeRestServer(pNodeRestServer), m_pNodeClient(pNodeClient)
 {
 
 }
 
-std::shared_ptr<INodeClient> NodeDaemon::Initialize()
-{
-	LoggerAPI::Initialize(m_config.GetNodeDirectory(), m_config.GetWalletConfig().GetWalletDirectory(), m_config.GetLogLevel());
-
-	m_pNodeClient = DefaultNodeClient::Create(m_config);
-
-	m_pNodeRestServer = new NodeRestServer(m_config, m_pNodeClient->GetNodeContext());
-	m_pNodeRestServer->Initialize();
-
-	return m_pNodeClient;
-}
-
-void NodeDaemon::Shutdown()
+NodeDaemon::~NodeDaemon()
 {
 	try
 	{
 		m_pNodeRestServer->Shutdown();
-		delete m_pNodeRestServer;
-
-		m_pNodeClient.reset();
-		LoggerAPI::Flush();
 	}
-	catch(const std::system_error& e)
+	catch (const std::system_error& e)
 	{
 		std::cerr << e.what() << '\n';
 		std::cerr << "FAILURE" << '\n';
 	}
+}
 
+std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
+{
+	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(config);
+
+	std::shared_ptr<NodeRestServer> pNodeRestServer = std::shared_ptr<NodeRestServer>(new NodeRestServer(config, pNodeClient->GetNodeContext()));
+	pNodeRestServer->Initialize();
+
+	return std::shared_ptr<NodeDaemon>(new NodeDaemon(config, pNodeRestServer, pNodeClient));
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)
 {
-	const SyncStatus& syncStatus = m_pNodeClient->GetP2PServer()->GetSyncStatus();
+	SyncStatusConstPtr pSyncStatus = m_pNodeClient->GetP2PServer()->GetSyncStatus();
 
 #ifdef _WIN32
 		std::system("cls");
@@ -63,7 +56,7 @@ void NodeDaemon::UpdateDisplay(const int secondsRunning)
 
 	std::cout << "Time Running: " << secondsRunning << "s";
 
-	const ESyncStatus status = syncStatus.GetStatus();
+	const ESyncStatus status = pSyncStatus->GetStatus();
 	if (status == ESyncStatus::NOT_SYNCING)
 	{
 		std::cout << "\nStatus: Running";
@@ -74,14 +67,14 @@ void NodeDaemon::UpdateDisplay(const int secondsRunning)
 	}
 	else if (status == ESyncStatus::SYNCING_HEADERS)
 	{
-		const uint64_t networkHeight = syncStatus.GetNetworkHeight();
-		const uint64_t percentage = networkHeight > 0 ? (syncStatus.GetHeaderHeight() * 100 / networkHeight) : 0;
+		const uint64_t networkHeight = pSyncStatus->GetNetworkHeight();
+		const uint64_t percentage = networkHeight > 0 ? (pSyncStatus->GetHeaderHeight() * 100 / networkHeight) : 0;
 		std::cout << "\nStatus: Syncing Headers (" << percentage << "%)";
 	}
 	else if (status == ESyncStatus::SYNCING_TXHASHSET)
 	{
-		const uint64_t downloaded = syncStatus.GetDownloaded();
-		const uint64_t downloadSize = syncStatus.GetDownloadSize();
+		const uint64_t downloaded = pSyncStatus->GetDownloaded();
+		const uint64_t downloadSize = pSyncStatus->GetDownloadSize();
 		const uint64_t percentage = downloadSize > 0 ? (downloaded * 100) / downloadSize : 0;
 
 		std::cout << "\nStatus: Syncing TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
@@ -99,13 +92,13 @@ void NodeDaemon::UpdateDisplay(const int secondsRunning)
 		std::cout << "\nStatus: Syncing blocks";
 	}
 
-	std::cout << "\nNumConnections: " << syncStatus.GetNumActiveConnections();
-	std::cout << "\nHeader Height: " << syncStatus.GetHeaderHeight();
-	std::cout << "\nHeader Difficulty: " << syncStatus.GetHeaderDifficulty();
-	std::cout << "\nBlock Height: " << syncStatus.GetBlockHeight();
-	std::cout << "\nBlock Difficulty: " << syncStatus.GetBlockDifficulty();
-	std::cout << "\nNetwork Height: " << syncStatus.GetNetworkHeight();
-	std::cout << "\nNetwork Difficulty: " << syncStatus.GetNetworkDifficulty();
+	std::cout << "\nNumConnections: " << pSyncStatus->GetNumActiveConnections();
+	std::cout << "\nHeader Height: " << pSyncStatus->GetHeaderHeight();
+	std::cout << "\nHeader Difficulty: " << pSyncStatus->GetHeaderDifficulty();
+	std::cout << "\nBlock Height: " << pSyncStatus->GetBlockHeight();
+	std::cout << "\nBlock Difficulty: " << pSyncStatus->GetBlockDifficulty();
+	std::cout << "\nNetwork Height: " << pSyncStatus->GetNetworkHeight();
+	std::cout << "\nNetwork Difficulty: " << pSyncStatus->GetNetworkDifficulty();
 	std::cout << "\n\nPress Ctrl-C to exit...";
 	std::cout << std::flush;
 }

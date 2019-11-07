@@ -11,8 +11,10 @@ class IMessage
 {
 public:
 	virtual ~IMessage() = default;
-	virtual IMessage* Clone() const = 0;
+	virtual std::shared_ptr<IMessage> Clone() const = 0;
 
 	virtual MessageTypes::EMessageType GetMessageType() const = 0;
 	virtual void SerializeBody(Serializer& serializer) const = 0;
 };
+
+typedef std::shared_ptr<IMessage> IMessagePtr;

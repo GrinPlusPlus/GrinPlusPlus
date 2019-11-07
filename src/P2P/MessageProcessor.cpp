@@ -1,8 +1,8 @@
 #include "MessageProcessor.h"
 #include "MessageSender.h"
-#include "Seed/PeerManager.h"
 #include "BlockLocator.h"
 #include "ConnectionManager.h"
+#include "Pipeline/Pipeline.h"
 
 // Network Messages
 #include "Messages/ErrorMessage.h"
@@ -43,13 +43,28 @@ static const int BUFFER_SIZE = 256 * 1024;
 
 using namespace MessageTypes;
 
-MessageProcessor::MessageProcessor(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_pBlockChainServer(pBlockChainServer)
+MessageProcessor::MessageProcessor(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	Locked<PeerManager> peerManager,
+	IBlockChainServerPtr pBlockChainServer,
+	Pipeline& pipeline,
+	SyncStatusConstPtr pSyncStatus)
+	: m_config(config),
+	m_connectionManager(connectionManager),
+	m_peerManager(peerManager),
+	m_pBlockChainServer(pBlockChainServer),
+	m_pipeline(pipeline),
+	m_pSyncStatus(pSyncStatus)
 {
 
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
+MessageProcessor::EStatus MessageProcessor::ProcessMessage(
+	const uint64_t connectionId,
+	Socket& socket,
+	ConnectedPeer& connectedPeer,
+	const RawMessage& rawMessage)
 {
 	try
 	{
@@ -71,7 +86,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(const uint64_t connec
 	}
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage)
+MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
+	const uint64_t connectionId,
+	Socket& socket,
+	ConnectedPeer& connectedPeer,
+	const RawMessage& rawMessage)
 {
 	const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
@@ -119,7 +138,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const GetPeerAddressesMessage getPeerAddressesMessage = GetPeerAddressesMessage::Deserialize(byteBuffer);
 				const Capabilities capabilities = getPeerAddressesMessage.GetCapabilities();
 
-				const std::vector<Peer> peers = m_peerManager.GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
+				const std::vector<Peer> peers = m_peerManager.Read()->GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
 				std::vector<SocketAddress> socketAddresses;
 				for (const Peer& peer : peers)
 				{
@@ -138,7 +157,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
 
 				LOG_TRACE_F("Received %llu addresses from %s.", peerAddresses.size(), formattedIPAddress);
-				m_peerManager.AddFreshPeers(peerAddresses);
+				m_peerManager.Write()->AddFreshPeers(peerAddresses);
 
 				return EStatus::SUCCESS;
 			}
@@ -163,6 +182,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				if (blockHeader.GetTotalDifficulty() > connectedPeer.GetTotalDifficulty())
 				{
 					connectedPeer.UpdateTotals(blockHeader.GetTotalDifficulty(), blockHeader.GetHeight());
+				}
+
+				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
+				{
+					return EStatus::SUCCESS;
 				}
 
 				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(blockHeader);
@@ -190,7 +214,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			case Headers:
 			{
 				IBlockChainServerPtr pBlockChainServer = m_pBlockChainServer;
-				std::thread processHeaders([pBlockChainServer, rawMessage, formattedIPAddress] {
+				//std::thread processHeaders([pBlockChainServer, rawMessage, formattedIPAddress] {
 					try
 					{
 						ByteBuffer byteBuffer(rawMessage.GetPayload());
@@ -206,8 +230,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 					{
 						LOG_ERROR_F("Failed to process headers with exception: %s", e.what());
 					}
-				});
-				processHeaders.detach();
+				//});
+				//processHeaders.detach();
 
 				return EStatus::SUCCESS;
 			}
@@ -232,9 +256,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 
 				LOG_TRACE_F("Block received: %llu", block.GetBlockHeader().GetHeight());
 
-				if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::SYNCING_BLOCKS)
+				if (m_pSyncStatus->GetStatus() == ESyncStatus::SYNCING_BLOCKS)
 				{
-					m_connectionManager.GetPipeline().GetBlockPipe().AddBlockToProcess(connectionId, block);
+					m_pipeline.GetBlockPipe()->AddBlockToProcess(connectionId, block);
 				}
 				else
 				{
@@ -294,7 +318,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				}
 				else if (added == EBlockChainStatus::ORPHANED)
 				{
-					if (m_connectionManager.GetSyncStatus().GetStatus() == ESyncStatus::NOT_SYNCING)
+					if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING)
 					{
 						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
@@ -308,7 +332,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case StemTransaction:
 			{
-				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
 				{
 					return EStatus::SYNCING;
 				}
@@ -317,11 +341,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				return m_connectionManager.GetPipeline().GetTransactionPipe().AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TransactionMsg:
 			{
-				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
 				{
 					return EStatus::SYNCING;
 				}
@@ -330,7 +354,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				const Transaction& transaction = transactionMessage.GetTransaction();
 
-				return m_connectionManager.GetPipeline().GetTransactionPipe().AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -344,7 +368,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 				ByteBuffer byteBuffer(rawMessage.GetPayload());
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return m_connectionManager.GetPipeline().GetTxHashSetPipe().ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
+				return m_pipeline.GetTxHashSetPipe()->ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
 			}
 			case GetTransactionMsg:
 			{
@@ -363,7 +387,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 			}
 			case TransactionKernelMsg:
 			{
-				if (m_connectionManager.GetSyncStatus().GetStatus() != ESyncStatus::NOT_SYNCING)
+				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
 				{
 					return EStatus::SYNCING;
 				}
@@ -392,7 +416,10 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(const uint64_
 	return EStatus::UNKNOWN_MESSAGE;
 }
 
-MessageProcessor::EStatus MessageProcessor::SendTxHashSet(ConnectedPeer& peer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage)
+MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
+	ConnectedPeer& peer,
+	Socket& socket,
+	const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
 	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
 	if (peer.GetPeer().GetLastTxHashSetRequest() > maxTxHashSetRequest)

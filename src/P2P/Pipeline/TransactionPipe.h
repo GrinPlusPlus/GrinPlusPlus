@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../ConnectionManager.h"
+
 #include <Crypto/Hash.h>
 #include <Net/Socket.h>
 #include <TxPool/PoolType.h>
@@ -14,23 +16,26 @@
 
 // Forward Declarations
 class Config;
-class ConnectionManager;
 class TxHashSetArchiveMessage;
 class Transaction;
 
 class TransactionPipe
 {
 public:
-	TransactionPipe(const Config& config, ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
-
-	void Start();
-	void Stop();
+	static std::shared_ptr<TransactionPipe> Create(
+		const Config& config,
+		ConnectionManagerPtr pConnectionManager,
+		IBlockChainServerPtr pBlockChainServer
+	);
+	~TransactionPipe();
 
 	bool AddTransactionToProcess(const uint64_t connectionId, const Transaction& transaction, const EPoolType poolType);
 
 private:
+	TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);
+
 	const Config& m_config;
-	ConnectionManager& m_connectionManager;
+	ConnectionManagerPtr m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
 
 	static void Thread_ProcessTransactions(TransactionPipe& pipeline);

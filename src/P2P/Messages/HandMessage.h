@@ -43,7 +43,7 @@ public:
 	//
 	// Clone
 	//
-	virtual HandMessage* Clone() const override final { return new HandMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new HandMessage(*this)); }
 
 	//
 	// Getters

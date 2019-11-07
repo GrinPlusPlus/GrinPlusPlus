@@ -3,7 +3,7 @@ set(TARGET_NAME Infrastructure)
 file(GLOB SOURCE_CODE
     "LoggerImpl.cpp"
     "ThreadManagerImpl.cpp"
-	"ZipFileImpl.cpp"
+	"ShutdownManagerImpl.cpp"
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/deps/spdlog)

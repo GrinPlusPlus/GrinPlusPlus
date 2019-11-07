@@ -30,7 +30,7 @@ public:
 	//
 	// Clone
 	//
-	virtual ErrorMessage* Clone() const override final { return new ErrorMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new ErrorMessage(*this)); }
 
 	//
 	// Getters

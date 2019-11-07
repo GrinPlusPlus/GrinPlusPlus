@@ -1,18 +1,22 @@
 #pragma once
 
+#include "../ConnectionManager.h"
+
 #include <Config/Config.h>
 #include <BlockChain/BlockChainServer.h>
 #include <P2P/ConnectedPeer.h>
 
 // Forward Declarations
 class Socket;
-class PeerManager;
-class ConnectionManager;
 
 class HandShake
 {
 public:
-	HandShake(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer);
+	HandShake(
+		const Config& config,
+		ConnectionManager& connectionManager,
+		IBlockChainServerPtr pBlockChainServer
+	);
 
 	bool PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const;
 
@@ -24,6 +28,5 @@ private:
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
-	PeerManager& m_peerManager;
 	IBlockChainServerPtr m_pBlockChainServer;
 };

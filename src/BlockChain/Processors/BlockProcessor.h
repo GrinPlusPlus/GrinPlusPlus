@@ -22,10 +22,8 @@ public:
 
 private:
 	EBlockChainStatus ProcessBlockInternal(const FullBlock& block);
-	EBlockChainStatus ProcessNextBlock(const FullBlock& block, Writer<ChainState> pLockedState);
-	EBlockChainStatus ProcessOrphanBlock(const FullBlock& block, Writer<ChainState> pLockedState);
-	EBlockChainStatus HandleReorg(const FullBlock& block, Writer<ChainState> pLockedState);
-	EBlockChainStatus ValidateAndAddBlock(const FullBlock& block, Writer<ChainState> pLockedState);
+	void HandleReorg(const FullBlock& block, Writer<ChainState> pLockedState);
+	void ValidateAndAddBlock(const FullBlock& block, Writer<ChainState> pLockedState);
 
 	EBlockStatus DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pLockedState);
 

@@ -1,32 +1,42 @@
 #pragma once
 
+#include "../ConnectionManager.h"
+#include "../Pipeline/Pipeline.h"
+
 #include <P2P/SyncStatus.h>
 #include <BlockChain/BlockChainServer.h>
 #include <atomic>
 #include <thread>
 
 // Forward Declarations
-class ConnectionManager;
 class SyncStatus;
 
 class Syncer
 {
 public:
-	Syncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
-
-	void Start();
-	void Stop();
-
-	inline SyncStatus& GetSyncStatus() { return m_syncStatus; }
-	inline const SyncStatus& GetSyncStatus() const { return m_syncStatus; }
+	static std::shared_ptr<Syncer> Create(
+		std::weak_ptr<ConnectionManager> pConnectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		std::shared_ptr<Pipeline> pPipeline,
+		SyncStatusPtr pSyncStatus
+	);
+	~Syncer();
 
 private:
+	Syncer(
+		std::weak_ptr<ConnectionManager> pConnectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		std::shared_ptr<Pipeline> pPipeline,
+		SyncStatusPtr pSyncStatus
+	);
+
 	static void Thread_Sync(Syncer& syncer);
 	void UpdateSyncStatus();
 
-	ConnectionManager& m_connectionManager;
+	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
-	SyncStatus m_syncStatus;
+	std::shared_ptr<Pipeline> m_pPipeline;
+	SyncStatusPtr m_pSyncStatus;
 
 	std::atomic<bool> m_terminate;
 	std::thread m_syncThread;

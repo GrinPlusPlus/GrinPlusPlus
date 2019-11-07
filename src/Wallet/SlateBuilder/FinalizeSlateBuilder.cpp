@@ -125,7 +125,11 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	}
 
 	const Transaction finalTransaction = TransactionBuilder::ReplaceKernel(slate.GetTransaction(), finalKernel);
-	if (!TransactionValidator().ValidateTransaction(finalTransaction)) // TODO: Check if inputs unspent(txHashSet->Validate())?
+	try
+	{
+		TransactionValidator().Validate(finalTransaction); // TODO: Check if inputs unspent(txHashSet->Validate())?
+	}
+	catch (std::exception& e)
 	{
 		return false;
 	}

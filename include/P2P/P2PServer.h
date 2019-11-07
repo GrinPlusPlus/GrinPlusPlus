@@ -34,7 +34,7 @@ class IP2PServer
 public:
 	virtual ~IP2PServer() = default;
 
-	virtual const SyncStatus& GetSyncStatus() const = 0;
+	virtual SyncStatusConstPtr GetSyncStatus() const = 0;
 
 	//
 	// Returns the number of peers the client is currently connected to (inbound, outbound).
@@ -78,9 +78,4 @@ namespace P2PAPI
 		IDatabasePtr pDatabase,
 		ITransactionPoolPtr pTransactionPool
 	);
-
-	//
-	// Stops the P2P Server and clears up its memory usage.
-	//
-	//P2P_API void ShutdownP2PServer(IP2PServer* pP2PServer);
 }

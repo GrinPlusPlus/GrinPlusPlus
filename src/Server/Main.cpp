@@ -1,11 +1,12 @@
 #include "Node/NodeDaemon.h"
 #include "Wallet/WalletDaemon.h"
 #include "civetweb/include/civetweb.h"
-#include "ShutdownManager.h"
 
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigManager.h>
+#include <Infrastructure/ShutdownManager.h>
 #include <Infrastructure/ThreadManager.h>
+#include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
 #include <signal.h>
@@ -15,10 +16,12 @@
 #include <chrono>
 #include <atomic>
 
+void StartServer(const Config& config, const bool headless);
+
 static void SigIntHandler(int signum)
 {
 	printf("\n\nCtrl-C Pressed\n\n");
-	ShutdownManager::GetInstance().Shutdown();
+	ShutdownManagerAPI::Shutdown();
 }
 
 int main(int argc, char* argv[])
@@ -45,25 +48,34 @@ int main(int argc, char* argv[])
 		std::cout << std::flush;
 	}
 
-	/* Initialize the civetweb library */
-	mg_init_library(0);
-
 	signal(SIGINT, SigIntHandler);
 	signal(SIGTERM, SigIntHandler);
 	signal(SIGABRT, SigIntHandler);
 	signal(9, SigIntHandler);
 
 	const Config config = ConfigManager::LoadConfig(environment);
-	NodeDaemon node(config);
-	INodeClientPtr pNodeClient = node.Initialize();
-	
-	WalletDaemon wallet(config, pNodeClient);
+	LoggerAPI::Initialize(config.GetNodeDirectory(), config.GetWalletConfig().GetWalletDirectory(), config.GetLogLevel());
+	mg_init_library(0);
+
+	StartServer(config, headless);
+
+	mg_exit_library();
+	LoggerAPI::Flush();
+
+	return 0;
+}
+
+void StartServer(const Config& config, const bool headless)
+{
+	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(config);
+
+	WalletDaemon wallet(config, pNode->GetNodeClient());
 	wallet.Initialize();
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	while (true)
 	{
-		if (ShutdownManager::GetInstance().WasShutdownRequested())
+		if (ShutdownManagerAPI::WasShutdownRequested())
 		{
 			break;
 		}
@@ -71,10 +83,10 @@ int main(int argc, char* argv[])
 		if (!headless)
 		{
 			const int secondsRunning = (int)(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() - startTime.time_since_epoch()).count());
-			node.UpdateDisplay(secondsRunning);
+			pNode->UpdateDisplay(secondsRunning);
 		}
-		
-		ThreadUtil::SleepFor(std::chrono::seconds(1), ShutdownManager::GetInstance().WasShutdownRequested());
+
+		ThreadUtil::SleepFor(std::chrono::seconds(1), ShutdownManagerAPI::WasShutdownRequested());
 	}
 
 	if (!headless)
@@ -89,10 +101,5 @@ int main(int argc, char* argv[])
 	}
 
 	wallet.Shutdown();
-	node.Shutdown();
 
-	/* Un-initialize the civetweb library */
-	mg_exit_library();
-
-	return 0;
 }

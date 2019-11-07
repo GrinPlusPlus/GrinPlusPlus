@@ -16,7 +16,7 @@ public:
 		std::shared_ptr<File> pFile = std::make_shared<File>(path);
 		if (!pFile->Load())
 		{
-			throw FILE_EXCEPTION("Failed to load");
+			//throw FILE_EXCEPTION("Failed to load");
 		}
 
 		return std::make_shared<DataFile>(DataFile(pFile));

@@ -1,30 +1,29 @@
 #pragma once
 
+#include "NodeClients/DefaultNodeClient.h"
+
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <memory>
 
 // Forward Declarations
-class IDatabase;
-class IBlockChainServer;
-class IP2PServer;
 class NodeRestServer;
-class TxHashSetManager;
-class ITransactionPool;
-class DefaultNodeClient;
 
 class NodeDaemon
 {
 public:
-	NodeDaemon(const Config& config);
+	static std::shared_ptr<NodeDaemon> Create(const Config& config);
+	~NodeDaemon();
 
-	std::shared_ptr<INodeClient> Initialize();
+	INodeClientPtr GetNodeClient() { return m_pNodeClient; }
+
 	void UpdateDisplay(const int secondsRunning);
-	void Shutdown();
 
 private:
+	NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient);
+
 	const Config& m_config;
 
-	NodeRestServer* m_pNodeRestServer;
+	std::shared_ptr<NodeRestServer> m_pNodeRestServer;
 	std::shared_ptr<DefaultNodeClient> m_pNodeClient;
 };

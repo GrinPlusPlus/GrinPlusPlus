@@ -1,13 +1,12 @@
 #include "HeaderSyncer.h"
 #include "../BlockLocator.h"
-#include "../ConnectionManager.h"
 #include "../Messages/GetHeadersMessage.h"
 
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 
-HeaderSyncer::HeaderSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
+HeaderSyncer::HeaderSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 	m_timeout = std::chrono::system_clock::now();
 	m_lastHeight = 0;
@@ -59,7 +58,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 		return true;
 	}
 
-	if (!m_connectionManager.IsConnected(m_connectionId))
+	if (!m_pConnectionManager.lock()->IsConnected(m_connectionId))
 	{
 		LoggerAPI::LogTrace("HeaderSyncer::IsHeaderSyncDue() - Peer disconnected. Requesting from new peer.");
 		m_connectionId = 0;
@@ -75,7 +74,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 		{
 			if (m_retried)
 			{
-				m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
+				m_pConnectionManager.lock()->BanConnection(m_connectionId, EBanReason::FraudHeight);
 				m_connectionId = 0;
 				m_retried = false;
 			}
@@ -102,12 +101,12 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 	bool messageSent = false;
 	if (m_connectionId != 0)
 	{
-		messageSent = m_connectionManager.SendMessageToPeer(getHeadersMessage, m_connectionId);
+		messageSent = m_pConnectionManager.lock()->SendMessageToPeer(getHeadersMessage, m_connectionId);
 	}
 	
 	if (!messageSent)
 	{
-		m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(getHeadersMessage);
+		m_connectionId = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(getHeadersMessage);
 	}
 
 	if (m_connectionId != 0)

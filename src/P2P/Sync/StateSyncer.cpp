@@ -1,14 +1,13 @@
 #include "StateSyncer.h"
 #include "../BlockLocator.h"
-#include "../ConnectionManager.h"
 #include "../Messages/TxHashSetRequestMessage.h"
 
 #include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
 #include <Infrastructure/Logger.h>
 
-StateSyncer::StateSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
+StateSyncer::StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)
 {
 	m_timeRequested = std::chrono::system_clock::now();
 	m_requestedHeight = 0;
@@ -88,7 +87,7 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 		}
 	}
 
-	if (m_connectionId > 0 && !m_connectionManager.IsConnected(m_connectionId))
+	if (m_connectionId > 0 && !m_pConnectionManager.lock()->IsConnected(m_connectionId))
 	{
 		LOG_WARNING("Sync peer no longer connected.");
 		return true;
@@ -102,7 +101,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	if (m_connectionId > 0)
 	{
 		LOG_WARNING_F("Banning peer: %llu", m_connectionId);
-		m_connectionManager.BanConnection(m_connectionId, EBanReason::FraudHeight);
+		m_pConnectionManager.lock()->BanConnection(m_connectionId, EBanReason::FraudHeight);
 	}
 
 	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
@@ -110,7 +109,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 
 	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
-	m_connectionId = m_connectionManager.SendMessageToMostWorkPeer(txHashSetRequestMessage);
+	m_connectionId = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);
 
 	if (m_connectionId > 0)
 	{

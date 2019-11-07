@@ -32,7 +32,7 @@ public:
 	//
 	// Clone
 	//
-	virtual BlockMessage* Clone() const override final { return new BlockMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new BlockMessage(*this)); }
 
 	//
 	// Getters

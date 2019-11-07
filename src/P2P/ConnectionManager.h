@@ -1,17 +1,14 @@
 #pragma once
 
 #include "Connection.h"
-#include "Sync/Syncer.h"
-#include "Seed/Seeder.h"
-#include "Pipeline/Pipeline.h"
-#include "Dandelion.h"
 
+#include <TxPool/TransactionPool.h>
 #include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <Common/ConcurrentQueue.h>
+#include <memory>
 #include <vector>
 #include <shared_mutex>
 #include <thread>
-#include <set>
 #include <unordered_map>
 
 // Forward Declarations
@@ -20,27 +17,22 @@ class PeerManager;
 class ConnectionManager
 {
 public:
-	ConnectionManager(
+	static std::shared_ptr<ConnectionManager> Create(
 		const Config& config,
-		PeerManager& peerManager,
-		std::shared_ptr<const Locked<IBlockDB>> pBlockDB,
-		IBlockChainServerPtr pBlockChainServer,
+		Locked<PeerManager> pPeerManager,
 		ITransactionPoolPtr pTransactionPool
 	);
+	~ConnectionManager();
 
-	void Start();
-	void Stop();
+	void Shutdown();
 
-	inline Pipeline& GetPipeline() { return m_pipeline; }
-	inline bool IsTerminating() const { return m_terminate; }
+	bool IsTerminating() const { return m_terminate; }
 
-	inline SyncStatus& GetSyncStatus() { return m_syncer.GetSyncStatus(); }
-	inline const SyncStatus& GetSyncStatus() const { return m_syncer.GetSyncStatus(); }
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 
 	inline size_t GetNumOutbound() const { return m_numOutbound; }
 	size_t GetNumberOfActiveConnections() const;
-	std::pair<size_t, size_t> GetNumConnectionsWithDirection() const;
+	std::pair<size_t, size_t> GetNumConnectionsWithDirection() const { return std::pair<size_t, size_t>(m_numInbound, m_numOutbound); }
 	bool IsConnected(const uint64_t connectionId) const;
 	bool IsConnected(const IPAddress& address) const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
@@ -54,44 +46,44 @@ public:
 	void BroadcastMessage(const IMessage& message, const uint64_t sourceId);
 
 	void PruneConnections(const bool bInactiveOnly);
-	void AddConnection(Connection* pConnection);
+	void AddConnection(ConnectionPtr pConnection);
 
 	void BanConnection(const uint64_t connectionId, const EBanReason banReason);
 
 private:
-	Connection* GetMostWorkPeer() const;
-	Connection* GetConnectionById(const uint64_t connectionId) const;
+	ConnectionManager(const Config& config, ITransactionPoolPtr pTransactionPool);
+
+	ConnectionPtr GetMostWorkPeer() const;
+	ConnectionPtr GetConnectionById(const uint64_t connectionId) const;
 	static void Thread_Broadcast(ConnectionManager& connectionManager);
 
 	mutable std::shared_mutex m_connectionsMutex;
-	std::vector<Connection*> m_connections;
+	std::vector<ConnectionPtr> m_connections;
 	std::unordered_map<uint64_t, EBanReason> m_peersToBan;
 
 	mutable std::shared_mutex m_disconnectMutex;
-	std::vector<Connection*> m_connectionsToClose;
+	std::vector<ConnectionPtr> m_connectionsToClose;
 
 	struct MessageToBroadcast
 	{
-		MessageToBroadcast(uint64_t sourceId, IMessage* pMessage)
+		MessageToBroadcast(uint64_t sourceId, std::shared_ptr<IMessage> pMessage)
 			: m_sourceId(sourceId), m_pMessage(pMessage)
 		{
 
 		}
 		uint64_t m_sourceId;
-		IMessage* m_pMessage;
+		std::shared_ptr<IMessage> m_pMessage;
 	};
-	mutable std::mutex m_broadcastMutex;
-	std::queue<MessageToBroadcast> m_sendQueue;
+
+	ConcurrentQueue<MessageToBroadcast> m_sendQueue;
 	std::thread m_broadcastThread;
 	std::atomic_bool m_terminate;
 
 	const Config& m_config;
-	PeerManager& m_peerManager;
-	Syncer m_syncer;
-	Seeder m_seeder;
-	Pipeline m_pipeline;
-	Dandelion m_dandelion;
 
 	std::atomic<size_t> m_numOutbound;
 	std::atomic<size_t> m_numInbound;
 };
+
+typedef std::shared_ptr<ConnectionManager> ConnectionManagerPtr;
+typedef std::shared_ptr<const ConnectionManager> ConnectionManagerConstPtr;

@@ -27,6 +27,15 @@ class IBlockDB;
 #define TX_POOL_API IMPORT
 #endif
 
+enum class EAddTransactionStatus
+{
+	ADDED,
+	DUPLICATE,
+	LOW_FEE,
+	TX_INVALID,
+	NOT_ADDED
+};
+
 class ITransactionPool
 {
 public:
@@ -41,7 +50,16 @@ public:
 		const std::set<ShortId>& missingShortIds
 	) const = 0;
 
-	virtual bool AddTransaction(
+	//
+	// Validates and adds the transaction to the specified pool.
+	// Returns:
+	// * ADDED - If transaction was successfully added
+	// * DUPLICATE - If transaction was already in the pool.
+	// * LOW_FEE - If fee does not meet the minimum set in the config.
+	// * TX_INVALID - If the transaction is not self-consistent. Source peer should be banned.
+	// * NOT_ADDED - If the transaction is valid, but can't be added yet due to eg. lock-heights.
+	//
+	virtual EAddTransactionStatus AddTransaction(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		const Transaction& transaction,
 		const EPoolType poolType,

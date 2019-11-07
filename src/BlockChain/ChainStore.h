@@ -25,7 +25,7 @@ public:
 	//
 	bool ReorgChain(const EChainType source, const EChainType destination, const uint64_t height);
 
-	bool AddBlock(const EChainType source, const EChainType destination, const uint64_t height);
+	void AddBlock(const EChainType source, const EChainType destination, const uint64_t height);
 
 	std::shared_ptr<Chain> GetConfirmedChain() { return m_pConfirmedChain; }
 	std::shared_ptr<Chain> GetCandidateChain() { return m_pCandidateChain; }

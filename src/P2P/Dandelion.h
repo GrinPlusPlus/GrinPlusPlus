@@ -14,6 +14,16 @@ class ConnectionManager;
 class Dandelion
 {
 public:
+	static std::shared_ptr<Dandelion> Create(
+		const Config& config,
+		ConnectionManager& connectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		ITransactionPoolPtr pTransactionPool,
+		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
+	);
+	~Dandelion();
+
+private:
 	Dandelion(
 		const Config& config,
 		ConnectionManager& connectionManager,
@@ -22,12 +32,8 @@ public:
 		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
 	);
 
-	void Start();
-	void Stop();
-
 	static void Thread_Monitor(Dandelion& dandelion);
 
-private:
 	bool ProcessStemPhase();
 	bool ProcessFluffPhase();
 	bool ProcessExpiredEntries();

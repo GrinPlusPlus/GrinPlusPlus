@@ -46,21 +46,25 @@ std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(
 
 bool ValidTransactionFinder::IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const
 {
-	if (!TransactionValidator().ValidateTransaction(transaction))
+	try
 	{
-		return false;
-	}
+		TransactionValidator().Validate(transaction);
 
-	ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr)
-	{
-		return false;
-	}
+		ITxHashSetConstPtr pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet == nullptr)
+		{
+			return false;
+		}
 
-	// Validate the tx against current chain state.
-	// Check all inputs are in the current UTXO set.
-	// Check all outputs are unique in current UTXO set.
-	if (!pTxHashSet->IsValid(pBlockDB, transaction))
+		// Validate the tx against current chain state.
+		// Check all inputs are in the current UTXO set.
+		// Check all outputs are unique in current UTXO set.
+		if (!pTxHashSet->IsValid(pBlockDB, transaction))
+		{
+			return false;
+		}
+	}
+	catch (std::exception&)
 	{
 		return false;
 	}

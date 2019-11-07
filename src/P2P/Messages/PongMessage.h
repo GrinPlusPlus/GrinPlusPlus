@@ -30,7 +30,7 @@ public:
 	//
 	// Clone
 	//
-	virtual PongMessage* Clone() const override final { return new PongMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PongMessage(*this)); }
 
 	//
 	// Getters

@@ -79,8 +79,13 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	// Validate kernel sums
 	LOG_DEBUG("Validating kernel sums");
 	LoggerAPI::Flush();
-	std::unique_ptr<BlockSums> pBlockSums = ValidateKernelSums(txHashSet, blockHeader);
-	if (pBlockSums == nullptr)
+
+	std::unique_ptr<BlockSums> pBlockSums = nullptr;
+	try
+	{
+		pBlockSums = std::make_unique<BlockSums>(ValidateKernelSums(txHashSet, blockHeader));
+	}
+	catch (...)
 	{
 		LOG_ERROR("Invalid kernel sums");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -142,32 +147,39 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 // TODO: This probably belongs in MMRHashUtil.
 bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) const
 {
-	const uint64_t size = pMMR->GetSize();
-	for (uint64_t i = 0; i < size; i++)
+	try
 	{
-		const uint64_t height = MMRUtil::GetHeight(i);
-		if (height > 0)
+		const uint64_t size = pMMR->GetSize();
+		for (uint64_t i = 0; i < size; i++)
 		{
-			const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(i);
-			if (pParentHash != nullptr)
+			const uint64_t height = MMRUtil::GetHeight(i);
+			if (height > 0)
 			{
-				const uint64_t leftIndex = MMRUtil::GetLeftChildIndex(i, height);
-				const std::unique_ptr<Hash> pLeftHash = pMMR->GetHashAt(leftIndex);
-
-				const uint64_t rightIndex = MMRUtil::GetRightChildIndex(i);
-				const std::unique_ptr<Hash> pRightHash = pMMR->GetHashAt(rightIndex);
-
-				if (pLeftHash != nullptr && pRightHash != nullptr)
+				const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(i);
+				if (pParentHash != nullptr)
 				{
-					const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
-					if (*pParentHash != expectedHash)
+					const uint64_t leftIndex = MMRUtil::GetLeftChildIndex(i, height);
+					const std::unique_ptr<Hash> pLeftHash = pMMR->GetHashAt(leftIndex);
+
+					const uint64_t rightIndex = MMRUtil::GetRightChildIndex(i);
+					const std::unique_ptr<Hash> pRightHash = pMMR->GetHashAt(rightIndex);
+
+					if (pLeftHash != nullptr && pRightHash != nullptr)
 					{
-						LOG_ERROR_F("Invalid parent hash at index (%llu)", i);
-						return false;
+						const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
+						if (*pParentHash != expectedHash)
+						{
+							LOG_ERROR_F("Invalid parent hash at index (%llu)", i);
+							return false;
+						}
 					}
 				}
 			}
 		}
+	}
+	catch (...)
+	{
+		return false;
 	}
 
 	return true;
@@ -200,7 +212,7 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 	return true;
 }
 
-std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
+BlockSums TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const
 {
 	// Calculate overage
 	const int64_t overage = 0 - (Consensus::REWARD * (1 + blockHeader.GetHeight()));
@@ -229,7 +241,14 @@ std::unique_ptr<BlockSums> TxHashSetValidator::ValidateKernelSums(TxHashSet& txH
 		}
 	}
 
-	return KernelSumValidator::ValidateKernelSums(std::vector<Commitment>(), outputCommitments, excessCommitments, overage, blockHeader.GetTotalKernelOffset(), std::nullopt);
+	return KernelSumValidator::ValidateKernelSums(
+		std::vector<Commitment>(),
+		outputCommitments,
+		excessCommitments,
+		overage,
+		blockHeader.GetTotalKernelOffset(),
+		std::nullopt
+	);
 }
 
 bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Exceptions/BadDataException.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/BlindingFactor.h>
@@ -13,7 +14,7 @@ class KernelSumValidator
 {
 public:
 	// Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
-	static std::unique_ptr<BlockSums> ValidateKernelSums(const TransactionBody& transactionBody, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
+	static BlockSums ValidateKernelSums(const TransactionBody& transactionBody, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
 	{
 		// gather the commitments
 		auto getInputCommitments = [](TransactionInput& input) -> Commitment { return input.GetCommitment(); };
@@ -28,7 +29,7 @@ public:
 		return ValidateKernelSums(inputCommitments, outputCommitments, kernelCommitments, overage, kernelOffset, blockSumsOpt);
 	}
 
-	static std::unique_ptr<BlockSums> ValidateKernelSums(const std::vector<Commitment>& inputs, const std::vector<Commitment>& outputs, const std::vector<Commitment>& kernels, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
+	static BlockSums ValidateKernelSums(const std::vector<Commitment>& inputs, const std::vector<Commitment>& outputs, const std::vector<Commitment>& kernels, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
 	{
 		std::vector<Commitment> inputCommitments = inputs;
 		std::vector<Commitment> outputCommitments = outputs;
@@ -58,8 +59,8 @@ public:
 		std::unique_ptr<Commitment> pUTXOSum = Crypto::AddCommitments(outputCommitments, inputCommitments);
 		if (pUTXOSum == nullptr)
 		{
-			LoggerAPI::LogError("ValidationUtil::ValidateKernelSums - Failed to sum input, output, and overage commitments.");
-			return std::unique_ptr<BlockSums>(nullptr);
+			LOG_ERROR("Failed to sum input, output, and overage commitments.");
+			throw BAD_DATA_EXCEPTION("Failed to sum input, output, and overage commitments.");
 		}
 
 		// Sum the kernel excesses accounting for the kernel offset.
@@ -72,18 +73,18 @@ public:
 		std::unique_ptr<Commitment> pKernelSum = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());
 		if (pKernelSum == nullptr)
 		{
-			LoggerAPI::LogError("ValidationUtil::ValidateKernelSums - Failed to sum kernel commitments.");
-			return std::unique_ptr<BlockSums>(nullptr);
+			LOG_ERROR("Failed to sum kernel commitments.");
+			throw BAD_DATA_EXCEPTION("Failed to sum kernel commitments.");
 		}
 
 		std::unique_ptr<Commitment> pKernelSumPlusOffset = AddKernelOffset(*pKernelSum, kernelOffset);
 		if (*pUTXOSum != *pKernelSumPlusOffset)
 		{
-			LoggerAPI::LogError("ValidationUtil::ValidateKernelSums - Failed to validate kernel sums.");
-			return std::unique_ptr<BlockSums>(nullptr);
+			LOG_ERROR("Failed to validate kernel sums.");
+			throw BAD_DATA_EXCEPTION("Failed to validate kernel sums.");
 		}
 
-		return std::make_unique<BlockSums>(BlockSums(*pUTXOSum, *pKernelSum));
+		return BlockSums(*pUTXOSum, *pKernelSum);
 	}
 
 private:

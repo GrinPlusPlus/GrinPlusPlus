@@ -7,8 +7,14 @@
 class BlockIndex
 {
 public:
+	BlockIndex(Hash&& hash, const uint64_t height)
+		: m_hash(std::move(hash)), m_height(height)
+	{
+
+	}
+
 	BlockIndex(const Hash& hash, const uint64_t height)
-		: m_hash(hash), m_height(height), m_chainTypeMask(0)
+		: m_hash(hash), m_height(height)
 	{
 
 	}
@@ -19,6 +25,5 @@ public:
 private:
 	Hash m_hash;
 	uint64_t m_height;
-	uint8_t m_chainTypeMask;
 	// TODO: Also save output & kernel MMR sizes
 };

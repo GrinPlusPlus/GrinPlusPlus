@@ -7,6 +7,7 @@
 #include <P2P/BanReason.h>
 #include <Database/PeerDB.h>
 #include <Config/Config.h>
+#include <Core/Traits/Lockable.h>
 
 #include <optional>
 #include <unordered_map>
@@ -18,10 +19,8 @@
 class PeerManager
 {
 public:
-	PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
-	
-	void Start();
-	void Stop();
+	static Locked<PeerManager> Create(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	~PeerManager();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
 
@@ -37,6 +36,8 @@ public:
 	// TODO: RemovePeer
 
 private:
+	PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+
 	struct PeerEntry
 	{
 		PeerEntry(Peer&& peer)
@@ -57,7 +58,7 @@ private:
 		bool m_dirty;
 	};
 
-	static void Thread_ManagePeers(PeerManager& peerManager);
+	static void Thread_ManagePeers(Locked<PeerManager> peerManager, const std::atomic_bool& terminate);
 
 	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
@@ -67,7 +68,6 @@ private:
 	std::atomic_bool m_terminate;
 	std::thread m_peerThread;
 
-	mutable std::shared_mutex m_peersMutex;
 	mutable std::unordered_set<IPAddress> m_peersServed;
 	mutable std::unordered_map<IPAddress, PeerEntry> m_peersByAddress;
 };

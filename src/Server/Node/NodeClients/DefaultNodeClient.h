@@ -98,7 +98,14 @@ public:
 		if (pTipHeader != nullptr)
 		{
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-			return m_pTransactionPool->AddTransaction(pBlockDB.GetShared(), transaction, EPoolType::STEMPOOL, *pTipHeader);
+			try
+			{
+				return m_pTransactionPool->AddTransaction(pBlockDB.GetShared(), transaction, EPoolType::STEMPOOL, *pTipHeader) == EAddTransactionStatus::ADDED;
+			}
+			catch (std::exception& e)
+			{
+				return false;
+			}
 		}
 
 		return false;

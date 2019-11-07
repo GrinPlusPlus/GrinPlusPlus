@@ -8,6 +8,7 @@
 #include "Processors/BlockProcessor.h"
 #include "ChainResyncer.h"
 
+#include <Infrastructure/Logger.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
 #include <Crypto/Crypto.h>
@@ -89,7 +90,14 @@ uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
+	try
+	{
+		return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
+	}
+	catch (std::exception& e)
+	{
+		return EBlockChainStatus::INVALID;
+	}
 }
 
 EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
@@ -125,8 +133,9 @@ std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
 
-	auto pReader = m_pChainState->Read();
 	const std::string destination = StringUtil::Format("%sSnapshots/TxHashSet.%s.zip", fs::temp_directory_path().string(), blockHeader.ShortHash());
+
+	auto pReader = m_pChainState->Read();
 	if (m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), blockHeader, destination))
 	{
 		return destination;
@@ -137,21 +146,48 @@ std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
 {
-	const bool success = TxHashSetProcessor(m_config, *this, m_pChainState, m_pDatabase).ProcessTxHashSet(blockHash, path, syncStatus);
+	try
+	{
+		const bool success = TxHashSetProcessor(m_config, *this, m_pChainState, m_pDatabase).ProcessTxHashSet(blockHash, path, syncStatus);
+		if (success)
+		{
+			return EBlockChainStatus::SUCCESS;
+		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Failed to process TxHashSet");
+	}
 
-	return success ? EBlockChainStatus::SUCCESS : EBlockChainStatus::INVALID;
+	return EBlockChainStatus::INVALID;
 }
 
 EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction, const EPoolType poolType)
 {
-	auto pReader = m_pChainState->Read();
-	std::unique_ptr<BlockHeader> pLastConfimedHeader = m_pChainState->Read()->GetTipBlockHeader(EChainType::CONFIRMED);
-	if (pLastConfimedHeader != nullptr)
+	try
 	{
-		if (m_pTransactionPool->AddTransaction(pReader->GetBlockDB().GetShared(), transaction, poolType, *pLastConfimedHeader))
+		auto pReader = m_pChainState->Read();
+		std::unique_ptr<BlockHeader> pLastConfimedHeader = m_pChainState->Read()->GetTipBlockHeader(EChainType::CONFIRMED);
+		if (pLastConfimedHeader != nullptr)
 		{
-			return EBlockChainStatus::SUCCESS;
+			const EAddTransactionStatus status = m_pTransactionPool->AddTransaction(pReader->GetBlockDB().GetShared(), transaction, poolType, *pLastConfimedHeader);
+			if (status == EAddTransactionStatus::ADDED)
+			{
+				return EBlockChainStatus::SUCCESS;
+			}
+			else if (status == EAddTransactionStatus::TX_INVALID)
+			{
+				return EBlockChainStatus::INVALID;
+			}
+			else
+			{
+				return EBlockChainStatus::UNKNOWN_ERROR;
+			}
 		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: %s", e.what());
 	}
 
 	return EBlockChainStatus::INVALID;
@@ -164,7 +200,14 @@ std::unique_ptr<Transaction> BlockChainServer::GetTransactionByKernelHash(const 
 
 EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeader)
 {
-	return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(blockHeader);
+	try
+	{
+		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(blockHeader);
+	}
+	catch (std::exception& e)
+	{
+		return EBlockChainStatus::INVALID;
+	}
 }
 
 EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
@@ -281,7 +324,14 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 		return false;
 	}
 
-	return BlockProcessor(m_config, m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
+	try
+	{
+		return BlockProcessor(m_config, m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
+	}
+	catch (std::exception& e)
+	{
+		return false;
+	}
 }
 
 namespace BlockChainAPI

@@ -11,21 +11,42 @@
 
 static const int BUFFER_SIZE = 256 * 1024;
 
-TxHashSetPipe::TxHashSetPipe(const Config& config, ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer), m_processing(false)
+TxHashSetPipe::TxHashSetPipe(
+	const Config& config,
+	ConnectionManagerPtr pConnectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	SyncStatusPtr pSyncStatus)
+	: m_config(config),
+	m_pConnectionManager(pConnectionManager),
+	m_pBlockChainServer(pBlockChainServer),
+	m_pSyncStatus(pSyncStatus),
+	m_processing(false)
 {
 
 }
 
-void TxHashSetPipe::Stop()
+TxHashSetPipe::~TxHashSetPipe()
 {
 	ThreadUtil::Join(m_txHashSetThread);
 }
 
+std::shared_ptr<TxHashSetPipe> TxHashSetPipe::Create(
+	const Config& config,
+	ConnectionManagerPtr pConnectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	SyncStatusPtr pSyncStatus)
+{
+	return std::shared_ptr<TxHashSetPipe>(new TxHashSetPipe(
+		config,
+		pConnectionManager,
+		pBlockChainServer,
+		pSyncStatus
+	));
+}
+
 bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
-	SyncStatus& syncStatus = m_connectionManager.GetSyncStatus();
-	if (syncStatus.GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
+	if (m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
 	{
 		LOG_WARNING_F("Received TxHashSet from Peer (%s) when not requested.", socket.GetIPAddress());
 		return false;
@@ -40,8 +61,8 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 
 	LOG_INFO_F("Downloading TxHashSet from %s", socket);
 
-	syncStatus.UpdateDownloaded(0);
-	syncStatus.UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
+	m_pSyncStatus->UpdateDownloaded(0);
+	m_pSyncStatus->UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
 	socket.SetReceiveTimeout(10 * 1000);
 	socket.SetReceiveBufferSize(BUFFER_SIZE);
@@ -61,9 +82,9 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 	{
 		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 		const bool received = socket.Receive(bytesToRead, false, buffer);
-		if (!received || m_connectionManager.IsTerminating())
+		if (!received || m_pConnectionManager->IsTerminating())
 		{
-			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+			m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 
 			LOG_ERROR("Transmission ended abruptly");
 			fout.close();
@@ -76,7 +97,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 		fout.write((char*)& buffer[0], bytesToRead);
 		bytesReceived += bytesToRead;
 
-		syncStatus.UpdateDownloaded(bytesReceived);
+		m_pSyncStatus->UpdateDownloaded(bytesReceived);
 	}
 
 	fout.close();
@@ -97,28 +118,28 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, const uint6
 		ThreadManagerAPI::SetCurrentThreadName("TXHASHSET_PIPE");
 		LOG_TRACE("BEGIN");
 
-		SyncStatus& syncStatus = pipeline.m_connectionManager.GetSyncStatus();
+		SyncStatusPtr pSyncStatus = pipeline.m_pSyncStatus;
 
-		syncStatus.UpdateProcessingStatus(0);
-		syncStatus.UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
+		pSyncStatus->UpdateProcessingStatus(0);
+		pSyncStatus->UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
 
-		const EBlockChainStatus processStatus = pipeline.m_pBlockChainServer->ProcessTransactionHashSet(blockHash, path, syncStatus);
+		const EBlockChainStatus processStatus = pipeline.m_pBlockChainServer->ProcessTransactionHashSet(blockHash, path, *pSyncStatus);
 		if (processStatus == EBlockChainStatus::INVALID)
 		{
 			LOG_ERROR("Invalid TxHashSet received.");
-			syncStatus.UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-			pipeline.m_connectionManager.BanConnection(connectionId, EBanReason::BadTxHashSet); // TODO: Ban by IP address instead.
+			pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+			pipeline.m_pConnectionManager->BanConnection(connectionId, EBanReason::BadTxHashSet); // TODO: Ban by IP address instead.
 		}
 		else
 		{
-			syncStatus.UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
+			pSyncStatus->UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
 		}
 
 		LOG_TRACE("END");
 	}
 	catch (...)
 	{
-		pipeline.m_connectionManager.BanConnection(connectionId, EBanReason::BadTxHashSet);
+		pipeline.m_pConnectionManager->BanConnection(connectionId, EBanReason::BadTxHashSet);
 		LOG_ERROR("Exception thrown in thread.");
 	}
 

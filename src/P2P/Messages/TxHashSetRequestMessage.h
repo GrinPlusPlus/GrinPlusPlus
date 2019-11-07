@@ -32,7 +32,7 @@ public:
 	//
 	// Clone
 	//
-	virtual TxHashSetRequestMessage* Clone() const override final { return new TxHashSetRequestMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new TxHashSetRequestMessage(*this)); }
 
 	//
 	// Getters

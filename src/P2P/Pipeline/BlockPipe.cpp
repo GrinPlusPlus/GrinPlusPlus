@@ -7,31 +7,26 @@
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
-BlockPipe::BlockPipe(const Config& config, ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(true)
+BlockPipe::BlockPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+	: m_config(config), m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
 {
-
 }
 
-void BlockPipe::Start()
-{
-	if (m_terminate)
-	{
-		ThreadUtil::Join(m_blockThread);
-		ThreadUtil::Join(m_processThread);
-
-		m_terminate = false;
-		m_blockThread = std::thread(Thread_ProcessNewBlocks, std::ref(*this));
-		m_processThread = std::thread(Thread_PostProcessBlocks, std::ref(*this));
-	}
-}
-
-void BlockPipe::Stop()
+BlockPipe::~BlockPipe()
 {
 	m_terminate = true;
 
 	ThreadUtil::Join(m_blockThread);
 	ThreadUtil::Join(m_processThread);
+}
+
+std::shared_ptr<BlockPipe> BlockPipe::Create(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+{
+	std::shared_ptr<BlockPipe> pBlockPipe = std::shared_ptr<BlockPipe>(new BlockPipe(config, pConnectionManager, pBlockChainServer));
+	pBlockPipe->m_blockThread = std::thread(Thread_ProcessNewBlocks, std::ref(*pBlockPipe.get()));
+	pBlockPipe->m_processThread = std::thread(Thread_PostProcessBlocks, std::ref(*pBlockPipe.get()));
+
+	return pBlockPipe;
 }
 
 void BlockPipe::Thread_ProcessNewBlocks(BlockPipe& pipeline)
@@ -77,13 +72,13 @@ void BlockPipe::ProcessNewBlock(BlockPipe& pipeline, const BlockEntry& blockEntr
 		const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddBlock(blockEntry.block);
 		if (status == EBlockChainStatus::INVALID)
 		{
-			pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+			pipeline.m_pConnectionManager->BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
 		}
 	}
 	catch (std::exception& e)
 	{
 		LOG_ERROR_F("Exception (%s) caught while attempting to add block %s.", e.what(), blockEntry.block);
-		pipeline.m_connectionManager.BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+		pipeline.m_pConnectionManager->BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
 	}
 }
 

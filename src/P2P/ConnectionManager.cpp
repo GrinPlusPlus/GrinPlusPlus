@@ -1,5 +1,8 @@
 #include "ConnectionManager.h"
+#include "Sync/Syncer.h"
+#include "Pipeline/Pipeline.h"
 #include "Seed/PeerManager.h"
+#include "Seed/Seeder.h"
 #include "Messages/GetPeerAddressesMessage.h"
 #include "Messages/PingMessage.h"
 
@@ -13,67 +16,51 @@
 
 ConnectionManager::ConnectionManager(
 	const Config& config,
-	PeerManager& peerManager,
-	std::shared_ptr<const Locked<IBlockDB>> pBlockDB,
-	IBlockChainServerPtr pBlockChainServer,
 	ITransactionPoolPtr pTransactionPool)
 	: m_config(config), 
-	m_peerManager(peerManager), 
-	m_syncer(*this, pBlockChainServer),
-	m_seeder(config, *this, peerManager, pBlockChainServer),
-	m_pipeline(config, *this, pBlockChainServer),
-	m_dandelion(config, *this, pBlockChainServer, pTransactionPool, pBlockDB),
 	m_numOutbound(0),
-	m_numInbound(0)
+	m_numInbound(0),
+	m_terminate(false)
 {
 
 }
 
-void ConnectionManager::Start()
+ConnectionManager::~ConnectionManager()
 {
-	m_terminate = false;
-
-	m_peerManager.Start();
-	m_seeder.Start();
-	m_syncer.Start();
-	m_pipeline.Start();
-	m_dandelion.Start();
-
-	if (m_broadcastThread.joinable())
-	{
-		m_broadcastThread.join();
-	}
-
-	m_broadcastThread = std::thread(Thread_Broadcast, std::ref(*this));
+	Shutdown();
 }
 
-void ConnectionManager::Stop()
+void ConnectionManager::Shutdown()
 {
-	m_terminate = true;
-
-	try
+	if (!m_terminate)
 	{
-		m_seeder.Stop();
-		m_syncer.Stop();
-		m_pipeline.Stop();
-		m_dandelion.Stop();
+		m_terminate = true;
 
-		if (m_broadcastThread.joinable())
+		try
 		{
-			m_broadcastThread.join();
-		}
+			ThreadUtil::Join(m_broadcastThread);
 
-		PruneConnections(false);
-		m_peerManager.Stop();
+			PruneConnections(false);
+		}
+		catch (const std::exception& e)
+		{
+			LOG_ERROR(std::string(e.what()));
+		}
+		catch (...)
+		{
+			LOG_ERROR("Unknown exception thrown");
+		}
 	}
-	catch (const std::exception& e)
-	{
-		LOG_ERROR(std::string(e.what()));
-	}
-	catch (...)
-	{
-		LOG_ERROR("Unknown exception thrown");
-	}
+}
+
+std::shared_ptr<ConnectionManager> ConnectionManager::Create(
+	const Config& config,
+	Locked<PeerManager> pPeerManager,
+	ITransactionPoolPtr pTransactionPool)
+{
+	auto pConnectionManager = std::shared_ptr<ConnectionManager>(new ConnectionManager(config, pTransactionPool));
+	pConnectionManager->m_broadcastThread = std::thread(Thread_Broadcast, std::ref(*pConnectionManager.get()));
+	return pConnectionManager;
 }
 
 void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
@@ -81,7 +68,7 @@ void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
 	const uint64_t numActiveConnections = m_connections.size();
-	Connection* pMostWorkPeer = GetMostWorkPeer();
+	ConnectionPtr pMostWorkPeer = GetMostWorkPeer();
 	if (pMostWorkPeer != nullptr)
 	{
 		const uint64_t networkHeight = pMostWorkPeer->GetHeight();
@@ -95,27 +82,6 @@ size_t ConnectionManager::GetNumberOfActiveConnections() const
 	return m_connections.size();
 }
 
-std::pair<size_t, size_t> ConnectionManager::GetNumConnectionsWithDirection() const
-{
-	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
-
-	size_t inbound = 0;
-	size_t outbound = 0;
-	for (Connection* pConnection : m_connections)
-	{
-		if (pConnection->GetConnectedPeer().GetDirection() == EDirection::INBOUND)
-		{
-			++inbound;
-		}
-		else
-		{
-			++outbound;
-		}
-	}
-
-	return std::pair<size_t, size_t>(inbound, outbound);
-}
-
 bool ConnectionManager::IsConnected(const uint64_t connectionId) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
@@ -127,11 +93,11 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	for (Connection* pConnection : m_connections)
+	for (ConnectionPtr pConnection : m_connections)
 	{
 		if (pConnection->GetConnectedPeer().GetPeer().GetIPAddress() == address)
 		{
-			return pConnection->GetSocket().IsActive();
+			return pConnection->IsConnectionActive();
 		}
 	}
 
@@ -144,11 +110,11 @@ std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
 
 	std::vector<uint64_t> mostWorkPeers;
 
-	Connection* pMostWorkPeer = GetMostWorkPeer();
+	ConnectionPtr pMostWorkPeer = GetMostWorkPeer();
 	if (pMostWorkPeer != nullptr)
 	{
 		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
-		for (Connection* pConnection : m_connections)
+		for (ConnectionPtr pConnection : m_connections)
 		{
 			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0)
 			{
@@ -165,7 +131,7 @@ std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
 	std::vector<ConnectedPeer> connectedPeers;
-	for (Connection* pConnection : m_connections)
+	for (ConnectionPtr pConnection : m_connections)
 	{
 		connectedPeers.push_back(pConnection->GetConnectedPeer());
 	}
@@ -177,7 +143,7 @@ std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnecte
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	for (Connection* pConnection : m_connections)
+	for (ConnectionPtr pConnection : m_connections)
 	{
 		ConnectedPeer connectedPeer = pConnection->GetConnectedPeer();
 		if (connectedPeer.GetPeer().GetIPAddress() == address)
@@ -196,7 +162,7 @@ uint64_t ConnectionManager::GetMostWork() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	Connection* pConnection = GetMostWorkPeer();
+	ConnectionPtr pConnection = GetMostWorkPeer();
 	if (pConnection != nullptr)
 	{
 		return pConnection->GetTotalDifficulty();
@@ -209,7 +175,7 @@ uint64_t ConnectionManager::GetHighestHeight() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	Connection* pConnection = GetMostWorkPeer();
+	ConnectionPtr pConnection = GetMostWorkPeer();
 	if (pConnection != nullptr)
 	{
 		return pConnection->GetHeight();
@@ -222,7 +188,7 @@ uint64_t ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	Connection* pConnection = GetMostWorkPeer();
+	ConnectionPtr pConnection = GetMostWorkPeer();
 	if (pConnection != nullptr)
 	{
 		pConnection->Send(message);
@@ -236,7 +202,7 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, const uint64_
 {
 	std::shared_lock<std::shared_mutex> readLock(m_connectionsMutex);
 
-	Connection* pConnection = GetConnectionById(connectionId);
+	ConnectionPtr pConnection = GetConnectionById(connectionId);
 	if (pConnection != nullptr)
 	{
 		pConnection->Send(message);
@@ -248,11 +214,10 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, const uint64_
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
 {
-	std::unique_lock<std::mutex> writeLock(m_broadcastMutex);
-	m_sendQueue.emplace(MessageToBroadcast(sourceId, message.Clone()));
+	m_sendQueue.push_back(MessageToBroadcast(sourceId, message.Clone()));
 }
 
-void ConnectionManager::AddConnection(Connection* pConnection)
+void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_connectionsMutex);
 
@@ -269,7 +234,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	size_t numInbound = 0;
 	for (int i = (int)m_connections.size() - 1; i >= 0; i--)
 	{
-		Connection* pConnection = m_connections[i];
+		ConnectionPtr pConnection = m_connections[i];
 		const uint64_t connectionId = pConnection->GetId();
 
 		auto iter = m_peersToBan.find(connectionId);
@@ -288,7 +253,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			pConnection->GetPeer().UpdateBanReason(banReason);
 
 			m_connectionsToClose.push_back(pConnection);
-			VectorUtil::Remove<Connection*>(m_connections, i);
+			VectorUtil::Remove<ConnectionPtr>(m_connections, i);
 
 			continue;
 		}
@@ -301,7 +266,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			}
 
 			m_connectionsToClose.push_back(pConnection);
-			VectorUtil::Remove<Connection*>(m_connections, i);
+			VectorUtil::Remove<ConnectionPtr>(m_connections, i);
 
 			continue;
 		}
@@ -321,12 +286,11 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	m_peersToBan.clear();
 	writeLock.unlock();
 
-	for (Connection* pConnection : m_connectionsToClose)
+	for (ConnectionPtr pConnection : m_connectionsToClose)
 	{
 		try
 		{
 			pConnection->Disconnect();
-			delete pConnection;
 		}
 		catch (std::exception& e)
 		{
@@ -344,12 +308,12 @@ void ConnectionManager::BanConnection(const uint64_t connectionId, const EBanRea
 	m_peersToBan.insert(std::pair<uint64_t, EBanReason>(connectionId, banReason));
 }
 
-Connection* ConnectionManager::GetMostWorkPeer() const
+ConnectionPtr ConnectionManager::GetMostWorkPeer() const
 {
-	std::vector<Connection*> mostWorkPeers;
+	std::vector<ConnectionPtr> mostWorkPeers;
 	uint64_t mostWork = 0;
 	uint64_t mostWorkHeight = 0;
-	for (Connection* pConnection : m_connections)
+	for (ConnectionPtr pConnection : m_connections)
 	{
 		if (pConnection->GetHeight() == 0)
 		{
@@ -388,9 +352,9 @@ Connection* ConnectionManager::GetMostWorkPeer() const
 	return mostWorkPeers[index];
 }
 
-Connection* ConnectionManager::GetConnectionById(const uint64_t connectionId) const
+ConnectionPtr ConnectionManager::GetConnectionById(const uint64_t connectionId) const
 {
-	for (Connection* pConnection : m_connections)
+	for (ConnectionPtr pConnection : m_connections)
 	{
 		if (pConnection->GetId() == connectionId)
 		{
@@ -405,28 +369,24 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 {
 	while (!connectionManager.m_terminate) 
 	{
-		std::unique_lock<std::mutex> messageWriteLock(connectionManager.m_broadcastMutex);
-		if (connectionManager.m_sendQueue.empty())
+		std::unique_ptr<MessageToBroadcast> pBroadcastMessage = connectionManager.m_sendQueue.copy_front();
+		if (pBroadcastMessage != nullptr)
 		{
-			messageWriteLock.unlock();
-			ThreadUtil::SleepFor(std::chrono::milliseconds(100), connectionManager.m_terminate);
-			continue;
-		}
+			connectionManager.m_sendQueue.pop_front(1);
 
-		MessageToBroadcast broadcastMessage(connectionManager.m_sendQueue.front());
-		connectionManager.m_sendQueue.pop();
-		messageWriteLock.unlock();
-
-		std::shared_lock<std::shared_mutex> readLock(connectionManager.m_connectionsMutex);
-		// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
-		for (Connection* pConnection : connectionManager.m_connections)
-		{
-			if (pConnection->GetId() != broadcastMessage.m_sourceId)
+			// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
+			std::shared_lock<std::shared_mutex> readLock(connectionManager.m_connectionsMutex);
+			for (ConnectionPtr pConnection : connectionManager.m_connections)
 			{
-				pConnection->Send(*broadcastMessage.m_pMessage);
+				if (pConnection->GetId() != pBroadcastMessage->m_sourceId)
+				{
+					pConnection->Send(*pBroadcastMessage->m_pMessage);
+				}
 			}
 		}
-
-		delete broadcastMessage.m_pMessage;
+		else
+		{
+			ThreadUtil::SleepFor(std::chrono::milliseconds(100), connectionManager.m_terminate);
+		}
 	}
 }

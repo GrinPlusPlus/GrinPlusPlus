@@ -1,4 +1,5 @@
 #include "ChainStore.h"
+#include <Core/Exceptions/BlockChainException.h>
 #include <Common/Util/FileUtil.h>
 #include <Infrastructure/Logger.h>
 #include <vector>
@@ -117,7 +118,7 @@ bool ChainStore::ReorgChain(const EChainType source, const EChainType destinatio
 	return false;
 }
 
-bool ChainStore::AddBlock(const EChainType source, const EChainType destination, const uint64_t height)
+void ChainStore::AddBlock(const EChainType source, const EChainType destination, const uint64_t height)
 {
 	std::shared_ptr<Chain> pSourceChain = GetChain(source);
 	std::shared_ptr<Chain> pDestinationChain = GetChain(destination);
@@ -127,11 +128,10 @@ bool ChainStore::AddBlock(const EChainType source, const EChainType destination,
 		if (pSourceChain->GetTip()->GetHeight() >= height)
 		{
 			pDestinationChain->AddBlock(pSourceChain->GetHash(height));
-			return true;
 		}
 	}
 
-	return false;
+	throw BLOCK_CHAIN_EXCEPTION("Failed to add block");
 }
 
 std::shared_ptr<Chain> ChainStore::GetChain(const EChainType chainType)

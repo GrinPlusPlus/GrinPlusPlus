@@ -30,7 +30,7 @@ public:
 	//
 	// Clone
 	//
-	virtual BanReasonMessage* Clone() const override final { return new BanReasonMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new BanReasonMessage(*this)); }
 
 	//
 	// Getters

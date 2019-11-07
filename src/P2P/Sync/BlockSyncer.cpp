@@ -6,12 +6,18 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
 
-BlockSyncer::BlockSyncer(ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_connectionManager(connectionManager), m_pBlockChainServer(pBlockChainServer)
+BlockSyncer::BlockSyncer(
+	std::weak_ptr<ConnectionManager> pConnectionManager,
+	IBlockChainServerPtr pBlockChainServer,
+	std::shared_ptr<Pipeline> pPipeline)
+	: m_pConnectionManager(pConnectionManager),
+	m_pBlockChainServer(pBlockChainServer),
+	m_pPipeline(pPipeline),
+	m_timeout(std::chrono::system_clock::now()),
+	m_lastHeight(0),
+	m_highestRequested(0)
 {
-	m_timeout = std::chrono::system_clock::now();
-	m_lastHeight = 0;
-	m_highestRequested = 0;
+
 }
 
 bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus, const bool startup)
@@ -80,7 +86,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 
 		if (requestedBlocksIter->second.TIMEOUT < std::chrono::system_clock::now())
 		{
-			if (m_connectionManager.GetPipeline().GetBlockPipe().IsProcessingBlock(iter->second))
+			if (m_pPipeline->GetBlockPipe()->IsProcessingBlock(iter->second))
 			{
 				continue;
 			}
@@ -97,7 +103,7 @@ bool BlockSyncer::RequestBlocks()
 {
 	LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - Requesting blocks.");
 
-	std::vector<uint64_t> mostWorkPeers = m_connectionManager.GetMostWorkPeers();
+	std::vector<uint64_t> mostWorkPeers = m_pConnectionManager.lock()->GetMostWorkPeers();
 	const uint64_t numPeers = mostWorkPeers.size();
 	if (mostWorkPeers.empty())
 	{
@@ -119,7 +125,7 @@ bool BlockSyncer::RequestBlocks()
 
 	while (blockIndex < blocksNeeded.size())
 	{
-		if (m_connectionManager.GetPipeline().GetBlockPipe().IsProcessingBlock(blocksNeeded[blockIndex].second))
+		if (m_pPipeline->GetBlockPipe()->IsProcessingBlock(blocksNeeded[blockIndex].second))
 		{
 			++blockIndex;
 			continue;
@@ -131,7 +137,7 @@ bool BlockSyncer::RequestBlocks()
 		{
 			if (m_slowPeers.count(iter->second.PEER_ID) > 0 || iter->second.TIMEOUT < std::chrono::system_clock::now())
 			{
-				m_connectionManager.BanConnection(iter->second.PEER_ID, EBanReason::FraudHeight);
+				m_pConnectionManager.lock()->BanConnection(iter->second.PEER_ID, EBanReason::FraudHeight);
 				m_slowPeers.insert(iter->second.PEER_ID);
 
 				blocksToRequest.emplace_back(blocksNeeded[blockIndex]);
@@ -154,7 +160,7 @@ bool BlockSyncer::RequestBlocks()
 	for (size_t i = 0; i < blocksToRequest.size(); i++)
 	{
 		const GetBlockMessage getBlockMessage(blocksToRequest[i].second);
-		if (m_connectionManager.SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
+		if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer]))
 		{
 			RequestedBlock blockRequested;
 			blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;

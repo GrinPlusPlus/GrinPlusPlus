@@ -1,36 +1,47 @@
 #pragma once
 
+#include "../ConnectionManager.h"
 #include "BlockPipe.h"
 #include "TransactionPipe.h"
 #include "TxHashSetPipe.h"
 
+#include <P2P/SyncStatus.h>
 #include <BlockChain/BlockChainServer.h>
-#include <TxPool/PoolType.h>
-#include <Crypto/Hash.h>
-#include <deque>
-#include <shared_mutex>
-#include <thread>
-#include <atomic>
-
-// Forward Declarations
-class ConnectionManager;
+#include <memory>
 
 class Pipeline
 {
 public:
-	Pipeline(const Config& config, ConnectionManager& connectionManager, IBlockChainServerPtr pBlockChainServer);
+	static std::shared_ptr<Pipeline> Create(
+		const Config& config,
+		ConnectionManagerPtr pConnectionManager,
+		IBlockChainServerPtr pBlockChainServer,
+		SyncStatusPtr pSyncStatus)
+	{
+		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pConnectionManager, pBlockChainServer);
+		std::shared_ptr<TransactionPipe> pTransactionPipe = TransactionPipe::Create(config, pConnectionManager, pBlockChainServer);
+		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pConnectionManager, pBlockChainServer, pSyncStatus);
 
-	void Start();
-	void Stop();
+		return std::shared_ptr<Pipeline>(new Pipeline(pBlockPipe, pTransactionPipe, pTxHashSetPipe));
+	}
 
-	BlockPipe& GetBlockPipe() { return m_blockPipe; }
-	TransactionPipe& GetTransactionPipe() { return m_transactionPipe; }
-	TxHashSetPipe& GetTxHashSetPipe() { return m_txHashSetPipe; }
+	std::shared_ptr<BlockPipe> GetBlockPipe() { return m_pBlockPipe; }
+	std::shared_ptr<TransactionPipe> GetTransactionPipe() { return m_pTransactionPipe; }
+	std::shared_ptr<TxHashSetPipe> GetTxHashSetPipe() { return m_pTxHashSetPipe; }
 
 private:
-	std::atomic_bool m_terminate;
+	Pipeline(
+		std::shared_ptr<BlockPipe> pBlockPipe,
+		std::shared_ptr<TransactionPipe> pTransactionPipe,
+		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe)
+		: m_pBlockPipe(pBlockPipe),
+		m_pTransactionPipe(pTransactionPipe),
+		m_pTxHashSetPipe(pTxHashSetPipe)
+	{
 
-	BlockPipe m_blockPipe;
-	TransactionPipe m_transactionPipe;
-	TxHashSetPipe m_txHashSetPipe;
+	}
+
+	std::shared_ptr<BlockPipe> m_pBlockPipe;
+	std::shared_ptr<TransactionPipe> m_pTransactionPipe;
+	std::shared_ptr<TxHashSetPipe> m_pTxHashSetPipe;
 };

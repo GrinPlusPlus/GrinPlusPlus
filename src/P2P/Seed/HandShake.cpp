@@ -14,8 +14,13 @@
 
 static const uint64_t NONCE = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 
-HandShake::HandShake(const Config& config, ConnectionManager& connectionManager, PeerManager& peerManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_connectionManager(connectionManager), m_peerManager(peerManager), m_pBlockChainServer(pBlockChainServer)
+HandShake::HandShake(
+	const Config& config,
+	ConnectionManager& connectionManager,
+	IBlockChainServerPtr pBlockChainServer)
+	: m_config(config),
+	m_connectionManager(connectionManager),
+	m_pBlockChainServer(pBlockChainServer)
 {
 
 }
@@ -41,11 +46,11 @@ bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, c
 	}
 	catch (const DeserializationException&)
 	{
-		LoggerAPI::LogDebug("HandShake::PerformHandshake - Failed to deserialize handshake from " + socket.GetSocketAddress().Format());
+		LOG_DEBUG_F("Failed to deserialize handshake from %s", socket);
 	}
 	catch (const SocketException&)
 	{
-		LoggerAPI::LogDebug("HandShake::PerformHandshake - Socket exception encountered with " + socket.GetSocketAddress().Format());
+		LOG_DEBUG_F("Socket exception encountered with %s", socket);
 	}
 
 	return false;
@@ -80,29 +85,21 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
 
-				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Ban message received from " 
-					+ socket.GetSocketAddress().Format() 
-					+ " with reason: " 
-					+ std::to_string(banReasonMessage.GetBanReason())
-				);
+				LOG_DEBUG_F("Ban message received from (%s) with reason (%s)", socket, std::to_string(banReasonMessage.GetBanReason()));
 				return false;
 			}
 			else
 			{
-				LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Expected shake from " 
-					+ socket.GetSocketAddress().Format() 
-					+ " but received " 
-					+ MessageTypes::ToString(messageType)
-				);
+				LOG_DEBUG_F("Expected shake from (%s) but received (%s).", socket, MessageTypes::ToString(messageType));
 				return false;
 			}
 		}
 
-		LoggerAPI::LogTrace("HandShake::PerformOutboundHandshake - Shake message not received from " + socket.GetSocketAddress().Format());
+		LOG_TRACE_F("Shake message not received from (%s)", socket);
 		return false;
 	}
 
-	LoggerAPI::LogDebug("HandShake::PerformOutboundHandshake - Hand message not sent to " + socket.GetSocketAddress().Format());
+	LOG_DEBUG_F("Hand message not sent to (%s)", socket);
 	return false;
 }
 
@@ -131,28 +128,27 @@ bool HandShake::PerformInboundHandshake(Socket & socket, ConnectedPeer & connect
 				}
 				else
 				{
-					LoggerAPI::LogDebug("HandShake::PerformInboundHandshake - Failed to transmit shake message to " + socket.GetSocketAddress().Format());
+					LOG_DEBUG_F("Failed to transmit shake message to (%s)", socket.GetSocketAddress());
 					return false;
 				}
 			}
 			else if (handMessage.GetNonce() == NONCE)
 			{
-				LoggerAPI::LogDebug("HandShake::PerformInboundHandshake - Connected to self(" + socket.GetSocketAddress().Format() + "). Nonce: " + std::to_string(NONCE));
+				LOG_DEBUG_F("Connected to self (%s). Nonce: %llu", socket.GetSocketAddress(), NONCE);
 			}
 			else
 			{
-				LoggerAPI::LogDebug("HandShake::PerformInboundHandshake - Already connected to " + connectedPeer.GetPeer().GetIPAddress().Format());
+				LOG_DEBUG_F("Already connected to (%s)", connectedPeer.GetPeer());
 			}
 		}
 		else
 		{
-			LoggerAPI::LogDebug("HandShake::PerformInboundHandshake - First message from " + socket.GetSocketAddress().Format()
-				+ " was of type " + std::to_string(pReceivedMessage->GetMessageHeader().GetMessageType()));
+			LOG_DEBUG_F("First message from (%s) was of type (%s)", socket, MessageTypes::ToString(pReceivedMessage->GetMessageHeader().GetMessageType()));
 			return false;
 		}
 	}
 
-	LoggerAPI::LogTrace("HandShake::PerformInboundHandshake - Unable to connect to " + socket.GetSocketAddress().Format());
+	LOG_TRACE_F("Unable to connect to (%s).", socket);
 	return false;
 }
 

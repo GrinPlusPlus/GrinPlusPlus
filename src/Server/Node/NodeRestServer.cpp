@@ -1,6 +1,5 @@
 #include "NodeRestServer.h"
 #include "NodeContext.h"
-#include "../ShutdownManager.h"
 #include <civetweb.h>
 
 #include "API/HeaderAPI.h"
@@ -12,6 +11,7 @@
 
 #include "API/Explorer/BlockInfoAPI.h"
 
+#include <Infrastructure/ShutdownManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <P2P/P2PServer.h>
 #include <BlockChain/BlockChainServer.h>
@@ -30,7 +30,7 @@ NodeRestServer::~NodeRestServer()
 
 static int Shutdown_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	ShutdownManager::GetInstance().Shutdown();
+	ShutdownManagerAPI::Shutdown();
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 

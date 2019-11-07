@@ -8,69 +8,59 @@
 #include <Infrastructure/ThreadManager.h>
 
 PeerManager::PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
-	: m_config(config), m_pPeerDB(pPeerDB)
+	: m_config(config), m_pPeerDB(pPeerDB), m_terminate(false)
 {
 
 }
 
-void PeerManager::Start()
+PeerManager::~PeerManager()
 {
 	m_terminate = true;
+	ThreadUtil::Join(m_peerThread);
+}
 
-	if (m_peerThread.joinable())
-	{
-		m_peerThread.join();
-	}
+Locked<PeerManager> PeerManager::Create(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
+{
+	std::shared_ptr<PeerManager> pPeerManager = std::shared_ptr<PeerManager>(new PeerManager(config, pPeerDB));
 
-	m_terminate = false;
-
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
-	m_peersByAddress.clear();
-	const std::vector<Peer> peers = m_pPeerDB->Read()->LoadAllPeers();
+	pPeerManager->m_peersByAddress.clear();
+	const std::vector<Peer> peers = pPeerDB->Read()->LoadAllPeers();
 	for (const Peer& peer : peers)
 	{
-		m_peersByAddress.emplace(peer.GetIPAddress(), PeerEntry(Peer(peer)));
+		pPeerManager->m_peersByAddress.emplace(peer.GetIPAddress(), PeerEntry(Peer(peer)));
 	}
 
-	m_peerThread = std::thread(Thread_ManagePeers, std::ref(*this));
+	Locked<PeerManager> peerManager(pPeerManager);
+	pPeerManager->m_peerThread = std::thread(PeerManager::Thread_ManagePeers, peerManager, std::ref(pPeerManager->m_terminate));
+
+	return peerManager;
 }
 
-void PeerManager::Stop()
-{
-	m_terminate = true;
-
-	if (m_peerThread.joinable())
-	{
-		m_peerThread.join();
-	}
-}
-
-void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
+void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std::atomic_bool& terminate)
 {
 	ThreadManagerAPI::SetCurrentThreadName("PEER_MANAGER");
 	LOG_TRACE("BEGIN");
 
-	while (!peerManager.m_terminate)
+	while (!terminate)
 	{
-		ThreadUtil::SleepFor(std::chrono::seconds(15), peerManager.m_terminate);
+		ThreadUtil::SleepFor(std::chrono::seconds(15), terminate);
 
 		std::vector<Peer> peersToUpdate;
 
-		std::shared_lock<std::shared_mutex> readLock(peerManager.m_peersMutex);
-		for (auto iter = peerManager.m_peersByAddress.begin(); iter != peerManager.m_peersByAddress.end(); iter++)
 		{
-			PeerEntry& peerEntry = iter->second;
-			if (peerEntry.m_dirty)
+			auto pReader = peerManager.Read();
+			for (auto iter = pReader->m_peersByAddress.begin(); iter != pReader->m_peersByAddress.end(); iter++)
 			{
-				peersToUpdate.push_back(peerEntry.m_peer);
-				peerEntry.m_dirty = false;
+				PeerEntry& peerEntry = iter->second;
+				if (peerEntry.m_dirty)
+				{
+					peersToUpdate.push_back(peerEntry.m_peer);
+					peerEntry.m_dirty = false;
+				}
 			}
 		}
 
-		readLock.unlock();
-
-		peerManager.m_pPeerDB->Write()->SavePeers(peersToUpdate);
+		peerManager.Write()->m_pPeerDB->Write()->SavePeers(peersToUpdate);
 	}
 
 	LOG_TRACE("END");
@@ -78,8 +68,6 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 
 bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
-
 	const time_t currentTime = TimeUtil::Now();
 	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 
@@ -113,8 +101,6 @@ bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapab
 
 std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
-
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.cend())
 	{
@@ -126,8 +112,6 @@ std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::op
 
 std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability) const
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
 	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, 1, true);
 	if (peers.empty())
 	{
@@ -144,8 +128,6 @@ std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& p
 
 std::vector<Peer> PeerManager::GetAllPeers() const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
-
 	std::vector<Peer> peers;
 	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
 	{
@@ -163,8 +145,6 @@ std::vector<Peer> PeerManager::GetAllPeers() const
 
 std::vector<Peer> PeerManager::GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_peersMutex);
-
 	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, maxPeers, false);
 	if (peers.empty())
 	{
@@ -176,8 +156,6 @@ std::vector<Peer> PeerManager::GetPeers(const Capabilities::ECapability& preferr
 
 void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
 	for (auto socketAddress : peerAddresses)
 	{
 		const IPAddress& ipAddress = socketAddress.GetIPAddress();
@@ -190,8 +168,6 @@ void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 
 void PeerManager::SetPeerConnected(const Peer& peer, const bool connected)
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
 	const IPAddress& address = peer.GetIPAddress();
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
@@ -211,8 +187,6 @@ void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 	peer.UpdateLastBanTime();
 	peer.UpdateBanReason(banReason);
 
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
 	const IPAddress& address = peer.GetIPAddress();
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
@@ -229,8 +203,6 @@ void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 
 void PeerManager::UnbanPeer(const IPAddress& address)
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_peersMutex);
-
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
 	{

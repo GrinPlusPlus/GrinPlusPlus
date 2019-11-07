@@ -66,18 +66,18 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	statusNode["protocol_version"] = P2P::PROTOCOL_VERSION;
 	statusNode["user_agent"] = P2P::USER_AGENT;
 
-	const SyncStatus& syncStatus = pServer->m_pP2PServer->GetSyncStatus();
-	statusNode["sync_status"] = GetStatusString(syncStatus);
+	SyncStatusConstPtr pSyncStatus = pServer->m_pP2PServer->GetSyncStatus();
+	statusNode["sync_status"] = GetStatusString(*pSyncStatus);
 
 	Json::Value stateNode;
-	stateNode["downloaded"] = syncStatus.GetDownloaded();
-	stateNode["download_size"] = syncStatus.GetDownloadSize();
-	stateNode["processing_status"] = syncStatus.GetProcessingStatus();
+	stateNode["downloaded"] = pSyncStatus->GetDownloaded();
+	stateNode["download_size"] = pSyncStatus->GetDownloadSize();
+	stateNode["processing_status"] = pSyncStatus->GetProcessingStatus();
 	statusNode["state"] = stateNode;
 
 	Json::Value networkNode;
-	networkNode["height"] = syncStatus.GetNetworkHeight();
-	networkNode["total_difficulty"] = syncStatus.GetNetworkDifficulty();
+	networkNode["height"] = pSyncStatus->GetNetworkHeight();
+	networkNode["total_difficulty"] = pSyncStatus->GetNetworkDifficulty();
 	const std::pair<size_t, size_t> numConnections = pServer->m_pP2PServer->GetNumberOfConnectedPeers();
 	networkNode["num_inbound"] = Json::UInt64(numConnections.first);
 	networkNode["num_outbound"] = Json::UInt64(numConnections.second);

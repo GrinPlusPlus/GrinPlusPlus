@@ -31,7 +31,7 @@ public:
 	//
 	// Clone
 	//
-	virtual GetPeerAddressesMessage* Clone() const override final { return new GetPeerAddressesMessage(*this); }
+	virtual IMessagePtr Clone() const override final { return IMessagePtr(new GetPeerAddressesMessage(*this)); }
 
 	//
 	// Getters

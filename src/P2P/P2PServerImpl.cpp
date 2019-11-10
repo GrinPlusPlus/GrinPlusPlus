@@ -50,11 +50,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	);
 
 	// Connection Manager
-	ConnectionManagerPtr pConnectionManager = ConnectionManager::Create(
-		config,
-		peerManager,
-		pTransactionPool
-	);
+	ConnectionManagerPtr pConnectionManager = ConnectionManager::Create();
 
 	// Pipeline
 	std::shared_ptr<Pipeline> pPipeline = Pipeline::Create(
@@ -106,7 +102,10 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 
 std::pair<size_t, size_t> P2PServer::GetNumberOfConnectedPeers() const
 {
-	return m_pConnectionManager->GetNumConnectionsWithDirection();
+	return std::make_pair(
+		m_pConnectionManager->GetNumInbound(),
+		m_pConnectionManager->GetNumOutbound()
+	);
 }
 
 std::vector<Peer> P2PServer::GetAllPeers() const
@@ -124,7 +123,7 @@ std::optional<Peer> P2PServer::GetPeer(const IPAddress& address, const std::opti
 	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address, portOpt);
 	if (connectedPeerOpt.has_value())
 	{
-		return std::make_optional<Peer>(connectedPeerOpt.value().second.GetPeer());
+		return std::make_optional(connectedPeerOpt.value().second.GetPeer());
 	}
 
 	return m_peerManager.Read()->GetPeer(address, portOpt);
@@ -157,7 +156,6 @@ bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t
 		Peer peer = peerOpt.value();
 		if (peer.IsBanned())
 		{
-			const IPAddress& address = peer.GetIPAddress();
 			m_peerManager.Write()->UnbanPeer(address);
 		}
 

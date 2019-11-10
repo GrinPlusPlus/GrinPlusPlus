@@ -9,6 +9,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Infrastructure/Logger.h>
+#include <Infrastructure/ShutdownManager.h>
 #include <Common/Util/ThreadUtil.h>
 #include <chrono>
 
@@ -26,7 +27,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
 		while (!hasReceivedData)
 		{
-			if (std::chrono::system_clock::now() >= timeout || m_connectionManager.IsTerminating())
+			if (std::chrono::system_clock::now() >= timeout || ShutdownManagerAPI::WasShutdownRequested())
 			{
 				return std::unique_ptr<RawMessage>(nullptr);
 			}
@@ -44,7 +45,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		const bool received = socket.Receive(11, true, headerBuffer);
 		if (received)
 		{
-			ByteBuffer byteBuffer(headerBuffer);
+			ByteBuffer byteBuffer(std::move(headerBuffer));
 			MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
 
 			if (!messageHeader.IsValid(m_config))
@@ -55,7 +56,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 			{
 				if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
 				{
-					LOG_TRACE("Retrieved message " + MessageTypes::ToString(messageHeader.GetMessageType()) + " from " + connectedPeer.GetPeer().GetIPAddress().Format());
+					LOG_TRACE_F("Retrieved message (%s) from (%s)", MessageTypes::ToString(messageHeader.GetMessageType()), connectedPeer);
 				}
 
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
@@ -63,7 +64,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 				if (bPayloadRetrieved)
 				{
 					connectedPeer.GetPeer().UpdateLastContactTime();
-					return std::make_unique<RawMessage>(RawMessage(std::move(messageHeader), payload));
+					return std::make_unique<RawMessage>(RawMessage(std::move(messageHeader), std::move(payload)));
 				}
 				else
 				{
@@ -73,7 +74,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		}
 		else
 		{
-			LOG_TRACE("Failed to receive message from: " + connectedPeer.GetPeer().GetIPAddress().Format());
+			LOG_TRACE_F("Failed to receive message from (%s)", connectedPeer);
 		}
 	}
 

@@ -103,7 +103,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 		blockNode["header"] = headerNode;
 
 		Json::Value outputsNode;
-		for (const OutputDisplayInfo& output : block.GetOutputs())
+		for (const OutputDTO& output : block.GetOutputs())
 		{
 			// TODO: Move to JSONFactory
 			Json::Value outputNode;

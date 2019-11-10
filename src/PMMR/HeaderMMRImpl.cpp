@@ -41,6 +41,7 @@ bool HeaderMMR::Rewind(const uint64_t size)
 	{
 		LOG_DEBUG_F("Rewinding to height %llu - %llu hashes", size, mmrSize);
 		m_batchDataOpt.value().hashFile->Rewind(mmrSize);
+		SetDirty(true);
 	}
 
 	return true;
@@ -52,11 +53,12 @@ void HeaderMMR::AddHeader(const BlockHeader& header)
 
 	// Serialize header
 	Serializer serializer;
-	header.GetProofOfWork().SerializeProofNonces(serializer);
+	header.GetProofOfWork().SerializeCycle(serializer);
 	const std::vector<unsigned char> serializedHeader = serializer.GetBytes();
 
 	// Add hashes
 	MMRHashUtil::AddHashes(m_batchDataOpt.value().hashFile.GetShared(), serializedHeader, nullptr);
+	SetDirty(true);
 }
 
 Hash HeaderMMR::Root(const uint64_t lastHeight) const

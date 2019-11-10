@@ -78,7 +78,7 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 		IPAddress ipAddress = IPAddress::FromString(ipAddressStr);
 
 		const std::string portStr = ParsePort(requestedPeer);
-		const std::optional<uint16_t> portOpt = portStr.empty() ? std::nullopt : std::make_optional<uint16_t>((uint16_t)std::stoul(portStr));
+		const std::optional<uint16_t> portOpt = portStr.empty() ? std::nullopt : std::make_optional((uint16_t)std::stoul(portStr));
 
 		const std::string commandStr = ParseCommand(requestedPeer);
 		if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)

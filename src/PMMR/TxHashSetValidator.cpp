@@ -270,7 +270,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 				return false;
 			}
 
-			rangeProofs.emplace_back(std::make_pair<Commitment, RangeProof>(Commitment(pOutput->GetCommitment()), RangeProof(*pRangeProof)));
+			rangeProofs.emplace_back(std::make_pair(pOutput->GetCommitment(), *pRangeProof));
 			++i;
 
 			if (rangeProofs.size() >= 1000)

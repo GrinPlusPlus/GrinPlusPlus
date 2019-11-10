@@ -12,8 +12,8 @@
 TransactionPool::TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager)
 	: m_config(config), 
 	m_pTxHashSetManager(pTxHashSetManager),
-	m_memPool(config),
-	m_stemPool(config)
+	m_memPool(),
+	m_stemPool()
 {
 
 }
@@ -27,6 +27,7 @@ std::vector<Transaction> TransactionPool::GetTransactionsByShortId(const Hash& h
 
 EAddTransactionStatus TransactionPool::AddTransaction(
 	std::shared_ptr<const IBlockDB> pBlockDB,
+	ITxHashSetConstPtr pTxHashSet,
 	const Transaction& transaction,
 	const EPoolType poolType,
 	const BlockHeader& lastConfirmedBlock)
@@ -68,8 +69,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
-	std::shared_ptr<Locked<ITxHashSet>> pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr || !pTxHashSet->Read()->IsValid(pBlockDB, transaction))
+	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(pBlockDB, transaction))
 	{
 		LOG_WARNING("Transaction inputs/outputs not valid: " + transaction.GetHash().ToHex());
 		return EAddTransactionStatus::NOT_ADDED;

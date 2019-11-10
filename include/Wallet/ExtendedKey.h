@@ -9,20 +9,9 @@
 //
 // Represents a BIP32 extended key.
 //
-class IExtendedKey // TODO: Just make this abstract and have a PrivateExtKey and PublicExtKey derivation
+class IExtendedKey
 {
 public:
-	IExtendedKey(const uint32_t network, const uint8_t depth, const uint32_t parentFingerprint, const uint32_t childNumber, SecretKey&& chainCode, PublicKey&& keyBytes)
-		: m_network(network),
-		m_depth(depth),
-		m_parentFingerprint(parentFingerprint),
-		m_childNumber(childNumber),
-		m_chainCode(std::move(chainCode)),
-		m_keyBytes(std::move(keyBytes))
-	{
-
-	}
-
 	//
 	// 4 byte: version bytes (mainnet: TODO: public, TODO: private; floonet: 0x033C08DF public, 0x033C04A4 private)
 	// 1 byte: depth: 0x00 for master nodes, 0x01 for level-1 derived keys, ....
@@ -48,6 +37,17 @@ public:
 	inline const SecretKey& GetChainCode() const { return m_chainCode; }
 
 protected:
+	IExtendedKey(const uint32_t network, const uint8_t depth, const uint32_t parentFingerprint, const uint32_t childNumber, SecretKey&& chainCode, PublicKey&& keyBytes)
+		: m_network(network),
+		m_depth(depth),
+		m_parentFingerprint(parentFingerprint),
+		m_childNumber(childNumber),
+		m_chainCode(std::move(chainCode)),
+		m_keyBytes(std::move(keyBytes))
+	{
+
+	}
+
 	inline const PublicKey& GetKeyBytes() const { return m_keyBytes; }
 
 private:

@@ -2,37 +2,27 @@
 
 #include "Connection.h"
 
-#include <TxPool/TransactionPool.h>
-#include <Config/Config.h>
 #include <Common/ConcurrentQueue.h>
+#include <Core/Traits/Lockable.h>
 #include <memory>
 #include <vector>
-#include <shared_mutex>
 #include <thread>
 #include <unordered_map>
-
-// Forward Declarations
-class PeerManager;
 
 class ConnectionManager
 {
 public:
-	static std::shared_ptr<ConnectionManager> Create(
-		const Config& config,
-		Locked<PeerManager> pPeerManager,
-		ITransactionPoolPtr pTransactionPool
-	);
+	static std::shared_ptr<ConnectionManager> Create();
 	~ConnectionManager();
 
 	void Shutdown();
 
-	bool IsTerminating() const { return m_terminate; }
-
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 
-	inline size_t GetNumOutbound() const { return m_numOutbound; }
-	size_t GetNumberOfActiveConnections() const;
-	std::pair<size_t, size_t> GetNumConnectionsWithDirection() const { return std::pair<size_t, size_t>(m_numInbound, m_numOutbound); }
+	size_t GetNumInbound() const { return m_numInbound; }
+	size_t GetNumOutbound() const { return m_numOutbound; }
+	size_t GetNumberOfActiveConnections() const { return m_connections.Read()->size(); }
+
 	bool IsConnected(const uint64_t connectionId) const;
 	bool IsConnected(const IPAddress& address) const;
 	std::vector<uint64_t> GetMostWorkPeers() const;
@@ -51,18 +41,14 @@ public:
 	void BanConnection(const uint64_t connectionId, const EBanReason banReason);
 
 private:
-	ConnectionManager(const Config& config, ITransactionPoolPtr pTransactionPool);
+	ConnectionManager();
 
-	ConnectionPtr GetMostWorkPeer() const;
-	ConnectionPtr GetConnectionById(const uint64_t connectionId) const;
+	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const;
+	ConnectionPtr GetConnectionById(const uint64_t connectionId, const std::vector<ConnectionPtr>& connections) const;
 	static void Thread_Broadcast(ConnectionManager& connectionManager);
-
-	mutable std::shared_mutex m_connectionsMutex;
-	std::vector<ConnectionPtr> m_connections;
-	std::unordered_map<uint64_t, EBanReason> m_peersToBan;
-
-	mutable std::shared_mutex m_disconnectMutex;
-	std::vector<ConnectionPtr> m_connectionsToClose;
+	
+	Locked<std::vector<ConnectionPtr>> m_connections;	
+	Locked<std::unordered_map<uint64_t, EBanReason>> m_peersToBan;
 
 	struct MessageToBroadcast
 	{
@@ -77,9 +63,6 @@ private:
 
 	ConcurrentQueue<MessageToBroadcast> m_sendQueue;
 	std::thread m_broadcastThread;
-	std::atomic_bool m_terminate;
-
-	const Config& m_config;
 
 	std::atomic<size_t> m_numOutbound;
 	std::atomic<size_t> m_numInbound;

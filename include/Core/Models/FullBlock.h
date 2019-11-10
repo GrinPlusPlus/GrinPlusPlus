@@ -36,9 +36,10 @@ public:
 	//
 	// Getters
 	//
-	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
-	inline const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
-	inline uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
+	const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
+	const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
+	uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
+	const Hash& GetPreviousHash() const { return m_blockHeader.GetPreviousBlockHash(); }
 
 	//
 	// Serialization/Deserialization
@@ -49,13 +50,13 @@ public:
 	//
 	// Hashing
 	//
-	inline const Hash& GetHash() const { return m_blockHeader.GetHash(); }
+	const Hash& GetHash() const { return m_blockHeader.GetHash(); }
 
 	//
 	// Validation Status
 	//
-	inline bool WasValidated() const { return m_validated; }
-	inline void MarkAsValidated() const { m_validated = true; }
+	bool WasValidated() const { return m_validated; }
+	void MarkAsValidated() const { m_validated = true; }
 
 	//
 	// Traits

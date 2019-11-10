@@ -36,7 +36,7 @@ std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrInde
 
 		if (data.size() == KERNEL_SIZE)
 		{
-			ByteBuffer byteBuffer(data);
+			ByteBuffer byteBuffer(std::move(data));
 			return std::make_unique<TransactionKernel>(TransactionKernel::Deserialize(byteBuffer));
 		}
 	}

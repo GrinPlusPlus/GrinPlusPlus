@@ -9,14 +9,15 @@
 #include <PMMR/HeaderMMR.h>
 #include <chrono>
 
-BlockHeaderValidator::BlockHeaderValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB, std::shared_ptr<const IHeaderMMR> pHeaderMMR)
+BlockHeaderValidator::BlockHeaderValidator(
+	const Config& config,
+	std::shared_ptr<const IBlockDB> pBlockDB,
+	std::shared_ptr<const IHeaderMMR> pHeaderMMR)
 	: m_config(config), m_pBlockDB(pBlockDB), m_pHeaderMMR(pHeaderMMR)
 {
 
 }
 
-// TODO: Return status enum with error type instead of just true/false
-// TODO: Look up previous header instead of taking it in
 bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockHeader& previousHeader) const
 {
 	// Validate Height
@@ -26,9 +27,8 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 		return false;
 	}
 
-	// Validate Timestamp (Refuse blocks more than 12 block intervals in the future.)
-	const auto maxBlockTime = std::chrono::system_clock::now() + std::chrono::seconds(12 * Consensus::BLOCK_TIME_SEC);
-	if (header.GetTimestamp() > maxBlockTime.time_since_epoch().count())
+	// Validate Timestamp - Ensure timestamp not too far in the future
+	if (header.GetTimestamp() > Consensus::GetMaxBlockTime(std::chrono::system_clock::now()))
 	{
 		LOG_WARNING_F("Timestamp beyond maxBlockTime for header %s", header);
 		return false;

@@ -154,7 +154,7 @@ std::unique_ptr<EncryptedSeed> WalletRocksDB::LoadWalletSeed(const std::string& 
 	{
 		std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
 		LoggerAPI::LogError("WalletRocksDB::LoadWalletSeed -  Deserialized: " + HexUtil::ConvertToHex(bytes));
-		ByteBuffer byteBuffer(bytes);
+		ByteBuffer byteBuffer(std::move(bytes));
 		return std::make_unique<EncryptedSeed>(EncryptedSeed::Deserialize(byteBuffer));
 	}
 

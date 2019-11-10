@@ -131,6 +131,7 @@ add_subdirectory(src/Server)
 
 if(GRINPP_TESTS)
 	add_subdirectory(tests/BlockChain)
+	add_subdirectory(tests/Consensus)
 	#add_subdirectory(tests/Core)
 	#add_subdirectory(tests/Crypto)
 	add_subdirectory(tests/Net)

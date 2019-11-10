@@ -89,7 +89,7 @@ std::vector<WalletTx> TransactionsTable::GetTransactions(sqlite3& database, cons
 		const SecureVector decrypted = WalletEncryptionUtil::Decrypt(masterSeed, "WALLET_TX", encrypted);
 		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
 
-		ByteBuffer byteBuffer(decryptedUnsafe);
+		ByteBuffer byteBuffer(std::move(decryptedUnsafe));
 		transactions.emplace_back(WalletTx::Deserialize(byteBuffer));
 	}
 

@@ -26,7 +26,6 @@
 #define WALLET_API IMPORT
 #endif
 
-// TODO: Document exceptions thrown from each method.
 class IWalletManager
 {
 public:

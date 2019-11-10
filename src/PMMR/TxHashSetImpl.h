@@ -20,8 +20,6 @@ public:
 	);
 	virtual ~TxHashSet() = default;
 
-	inline void ReadLock() { m_txHashSetMutex.lock_shared(); }
-	inline void Unlock() { m_txHashSetMutex.unlock_shared(); }
 	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
 	virtual const BlockHeader& GetFlushedBlockHeader() const override final { return m_blockHeaderBackup; }
 
@@ -36,26 +34,22 @@ public:
 	virtual std::vector<Hash> GetLastOutputHashes(const uint64_t numberOfOutputs) const override final;
 	virtual std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const override final;
 	virtual OutputRange GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
-	virtual std::vector<OutputDisplayInfo> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const override final;
+	virtual std::vector<OutputDTO> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const override final;
 
 	virtual bool Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header) override final;
 	virtual void Commit() override final;
 	virtual void Rollback() override final;
-	virtual bool Compact() override final;
+	virtual void Compact() override final;
 
 	std::shared_ptr<KernelMMR> GetKernelMMR() { return m_pKernelMMR; }
 	std::shared_ptr<OutputPMMR> GetOutputPMMR() { return m_pOutputPMMR; }
 	std::shared_ptr<RangeProofPMMR> GetRangeProofPMMR() { return m_pRangeProofPMMR; }
 
 private:
-	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
-
 	std::shared_ptr<KernelMMR> m_pKernelMMR;
 	std::shared_ptr<OutputPMMR> m_pOutputPMMR;
 	std::shared_ptr<RangeProofPMMR> m_pRangeProofPMMR;
 
 	BlockHeader m_blockHeader;
 	BlockHeader m_blockHeaderBackup;
-
-	mutable std::shared_mutex m_txHashSetMutex;
 };

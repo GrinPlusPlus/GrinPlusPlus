@@ -237,7 +237,7 @@ std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTi
 		std::unique_ptr<BlockHeader> pHeader = m_pNodeClient->GetBlockHeader(output.GetBlockHeight().value());
 		if (pHeader != nullptr)
 		{
-			return std::make_optional<std::chrono::system_clock::time_point>(TimeUtil::ToTimePoint(pHeader->GetTimestamp()));
+			return std::make_optional(TimeUtil::ToTimePoint(pHeader->GetTimestamp()));
 		}
 	}
 
@@ -250,7 +250,7 @@ std::unique_ptr<OutputData> WalletRefresher::FindOutput(const std::vector<Output
 	{
 		if (commitment == outputData.GetOutput().GetCommitment())
 		{
-			return std::make_unique<OutputData>(OutputData(outputData));
+			return std::make_unique<OutputData>(outputData);
 		}
 	}
 

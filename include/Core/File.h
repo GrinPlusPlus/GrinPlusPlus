@@ -1,42 +1,59 @@
 #pragma once
 
-#pragma warning(push)
-#pragma warning(disable:4244)
-#pragma warning(disable:4267)
-#pragma warning(disable:4334)
-#pragma warning(disable:4018)
-#include <mio/mmap.hpp>
-#pragma warning(pop)
-
-#include <stdint.h>
 #include <string>
-#include <vector>
+#include <fstream>
+#include <memory>
 
+//
+// Wraps a std::fstream and automatically closes the stream when it falls out of scope.
+//
 class File
 {
+private:
+	class Stream
+	{
+	public:
+		Stream() = default;
+
+		void Open(const std::string& path, const std::ios_base::openmode mode)
+		{
+			m_stream.open(path, mode);
+		}
+
+		~Stream()
+		{
+			if (m_stream.is_open())
+			{
+				m_stream.close();
+			}
+		}
+
+		std::fstream m_stream;
+	};
+
 public:
-	File(const std::string& path);
+	static File Load(const std::string& path, const std::ios_base::openmode mode)
+	{
+		std::shared_ptr<Stream> pStream(new Stream());
+		pStream->Open(path, mode);
 
-	File(const File& file) = delete;
-	File(File&& file) = delete;
-	File& operator=(const File&) = delete;
+		return File(pStream);
+	}
 
-	bool Load();
-	bool Flush();
+	~File() = default;
 
-	void Append(const std::vector<unsigned char>& data);
+	std::fstream* operator->()
+	{
+		return &(m_pStream->m_stream);
+	}
 
-	bool Rewind(const uint64_t nextPosition);
-	// TODO: bool Commit(); - Should eliminate a rewind-point, but not actually flush to disk.
-	bool Discard();
-
-	uint64_t GetSize() const;
-	bool Read(const uint64_t position, const uint64_t numBytes, std::vector<unsigned char>& data) const;
+	const std::fstream* operator->() const
+	{
+		return &(m_pStream->m_stream);
+	}
 
 private:
-	std::string m_path;
-	uint64_t m_bufferIndex;
-	uint64_t m_fileSize;
-	std::vector<unsigned char> m_buffer;
-	mio::mmap_source m_mmap;
+	File(std::shared_ptr<Stream> pStream) : m_pStream(pStream) { }
+
+	std::shared_ptr<Stream> m_pStream;
 };

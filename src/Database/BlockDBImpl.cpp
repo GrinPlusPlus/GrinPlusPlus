@@ -193,7 +193,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 		if (status.ok())
 		{
 			std::vector<unsigned char> data(value.data(), value.data() + value.size());
-			ByteBuffer byteBuffer(data);
+			ByteBuffer byteBuffer(std::move(data));
 			return std::make_unique<BlockHeader>(BlockHeader::Deserialize(byteBuffer));
 		}
 		else if (status.IsNotFound())
@@ -315,7 +315,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 	if (s.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		ByteBuffer byteBuffer(data);
+		ByteBuffer byteBuffer(std::move(data));
 		pBlock = std::make_unique<FullBlock>(FullBlock::Deserialize(byteBuffer));
 	}
 
@@ -354,7 +354,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 	{
 		// Deserialize result
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		ByteBuffer byteBuffer(data);
+		ByteBuffer byteBuffer(std::move(data));
 		pBlockSums = std::make_unique<BlockSums>(BlockSums::Deserialize(byteBuffer));
 	}
 
@@ -392,7 +392,7 @@ std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& out
 	{
 		// Deserialize result
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		ByteBuffer byteBuffer(data);
+		ByteBuffer byteBuffer(std::move(data));
 		pOutputPosition = std::make_unique<OutputLocation>(OutputLocation::Deserialize(byteBuffer));
 	}
 

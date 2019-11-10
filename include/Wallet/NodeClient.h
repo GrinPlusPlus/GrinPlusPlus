@@ -3,8 +3,8 @@
 #include <Crypto/Commitment.h>
 #include <Core/Models/OutputLocation.h>
 #include <Core/Models/Transaction.h>
-#include <Core/Models/Display/BlockWithOutputs.h>
-#include <PMMR/OutputRange.h> // TODO: This belongs in Core/Models
+#include <Core/Models/DTOs/BlockWithOutputs.h>
+#include <Core/Models/DTOs/OutputRange.h>
 #include <stdint.h>
 #include <map>
 

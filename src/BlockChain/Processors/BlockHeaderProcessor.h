@@ -11,14 +11,53 @@ class BlockHeaderProcessor
 public:
 	BlockHeaderProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
 
-	EBlockChainStatus ProcessSyncHeaders(const std::vector<BlockHeader>& headers);
+	//
+	// Validates and adds a single header to the candidate chain.
+	//
+	// Throws BadDataException if the header is invalid.
+	// Throws BlockChainException if any other errors occur.
+	//
 	EBlockChainStatus ProcessSingleHeader(const BlockHeader& header);
 
+	//
+	// Validates and adds multiple headers to the sync chain.
+	// The headers are also added to the candidate chain if total difficulty increases.
+	//
+	// Throws BadDataException if any of the headers are invalid.
+	// Throws BlockChainException if any other errors occur.
+	//
+	EBlockChainStatus ProcessSyncHeaders(const std::vector<BlockHeader>& headers);
+
 private:
-	EBlockChainStatus ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers);
-	void ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers);
-	void AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers) const;
-	bool CheckAndAcceptSyncChain(Writer<ChainState> pLockedState) const;
+	EBlockChainStatus ProcessOrphan(
+		Writer<ChainState> pLockedState,
+		const BlockHeader& header
+	);
+
+	EBlockChainStatus ProcessChunkedSyncHeaders(
+		Writer<ChainState> pLockedState,
+		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+	);
+
+	void PrepareSyncChain(
+		Writer<ChainState> pLockedState,
+		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+	);
+
+	void RewindMMR(
+		Writer<ChainState> pLockedState,
+		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+	);
+
+	void ValidateHeaders(
+		Writer<ChainState> pLockedState,
+		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+	);
+
+	void AddSyncHeaders(
+		Writer<ChainState> pLockedState,
+		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+	);
 
 	const Config& m_config;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;

@@ -108,5 +108,5 @@ std::optional<SecureVector> Mnemonic::ToEntropy(const SecureString& walletWords)
 		return std::nullopt;
 	}
 
-	return std::make_optional<SecureVector>(std::move(entropy));
+	return std::make_optional(std::move(entropy));
 }

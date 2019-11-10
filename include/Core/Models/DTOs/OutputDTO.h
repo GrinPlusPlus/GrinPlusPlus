@@ -4,12 +4,18 @@
 #include <Core/Models/OutputLocation.h>
 #include <Crypto/RangeProof.h>
 
-// TODO: This is no longer just used for display purposes. It's now a core part of the wallet restore logic. Rename this and move it.
-class OutputDisplayInfo
+class OutputDTO
 {
 public:
-	OutputDisplayInfo(const bool spent, const OutputIdentifier& identifier, const OutputLocation& location, const RangeProof& rangeProof)
-		: m_spent(spent), m_identifier(identifier), m_location(location), m_rangeProof(rangeProof)
+	OutputDTO(
+		const bool spent,
+		const OutputIdentifier& identifier,
+		const OutputLocation& location,
+		const RangeProof& rangeProof)
+		: m_spent(spent),
+		m_identifier(identifier),
+		m_location(location),
+		m_rangeProof(rangeProof)
 	{
 
 	}

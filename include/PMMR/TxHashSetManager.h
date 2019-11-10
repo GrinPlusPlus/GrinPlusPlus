@@ -19,13 +19,13 @@ public:
 	~TxHashSetManager() = default;
 
 	std::shared_ptr<Locked<ITxHashSet>> Open(const BlockHeader& confirmedTip);
-	void Close();
+	void Close() { m_pTxHashSet.reset(); }
 
-	std::shared_ptr<Locked<ITxHashSet>> GetTxHashSet();
-	std::shared_ptr<const Locked<ITxHashSet>> GetTxHashSet() const;
-	void SetTxHashSet(ITxHashSetPtr pTxHashSet);
+	std::shared_ptr<Locked<ITxHashSet>> GetTxHashSet() { return m_pTxHashSet; }
+	std::shared_ptr<const Locked<ITxHashSet>> GetTxHashSet() const { return m_pTxHashSet; }
+	void SetTxHashSet(ITxHashSetPtr pTxHashSet) { m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet)); }
 
-	static ITxHashSetPtr LoadFromZip(const Config& config, std::shared_ptr<Locked<IBlockDB>> pDatabase, const std::string& zipFilePath, const BlockHeader& header);
+	static ITxHashSetPtr LoadFromZip(const Config& config, const std::string& zipFilePath, const BlockHeader& header);
 	bool SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header, const std::string& zipFilePath);
 
 private:

@@ -10,14 +10,13 @@
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Crypto/Hash.h>
-#include <map>
 #include <set>
-#include <shared_mutex>
 
 class Pool
 {
 public:
-	Pool(const Config& config);
+	Pool() = default;
+	~Pool() = default;
 
 	void AddTransaction(const Transaction& transaction, const EDandelionStatus status);
 	bool ContainsTransaction(const Transaction& transaction) const;
@@ -43,10 +42,7 @@ public:
 	std::unique_ptr<Transaction> Aggregate() const;
 
 private:
-	bool ShouldEvict_Locked(const Transaction& transaction, const FullBlock& block) const;
+	bool ShouldEvict(const Transaction& transaction, const FullBlock& block) const;
 
-	const Config& m_config;
-
-	mutable std::shared_mutex m_transactionsMutex; // TODO: Lock belongs in TransactionPoolImpl, instead.
 	std::vector<TxPoolEntry> m_transactions;
 };

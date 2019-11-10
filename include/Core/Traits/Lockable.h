@@ -48,6 +48,11 @@ public:
 		return m_pReader->m_pObject.get();
 	}
 
+	const T& operator*() const
+	{
+		return *m_pReader->m_pObject;
+	}
+
 	std::shared_ptr<const T> GetShared() const
 	{
 		return m_pReader->m_pObject;
@@ -93,7 +98,7 @@ class Writer : virtual public Reader<T>
 	class InnerWriter
 	{
 	public:
-		InnerWriter(const bool batched, std::shared_ptr<U> pObject, std::shared_ptr<std::shared_mutex> pMutex) // TODO: Pass lock guard around instead
+		InnerWriter(const bool batched, std::shared_ptr<U> pObject, std::shared_ptr<std::shared_mutex> pMutex)
 			: m_batched(batched), m_pObject(pObject), m_pMutex(pMutex)
 		{
 			m_pMutex->lock();
@@ -121,7 +126,12 @@ class Writer : virtual public Reader<T>
 		{
 			if (std::is_base_of<Traits::Batchable, U>::value)
 			{
-				((Traits::Batchable*)m_pObject.get())->Commit();
+				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				if (pBatchable->IsDirty())
+				{
+					pBatchable->Commit();
+					pBatchable->SetDirty(false);
+				}
 			}
 		}
 
@@ -129,7 +139,12 @@ class Writer : virtual public Reader<T>
 		{
 			if (std::is_base_of<Traits::Batchable, U>::value)
 			{
-				((Traits::Batchable*)m_pObject.get())->Rollback();
+				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				if (pBatchable->IsDirty())
+				{
+					pBatchable->Rollback();
+					pBatchable->SetDirty(false);
+				}
 			}
 		}
 
@@ -138,7 +153,7 @@ class Writer : virtual public Reader<T>
 			if (std::is_base_of<Traits::Batchable, U>::value)
 			{
 				auto pBatchable = (Traits::Batchable*)m_pObject.get();
-				pBatchable->SetDirty(false);
+				pBatchable->SetDirty(true);
 				pBatchable->OnInitWrite();
 			}
 		}
@@ -148,19 +163,8 @@ class Writer : virtual public Reader<T>
 			if (std::is_base_of<Traits::Batchable, U>::value)
 			{
 				auto pBatchable = (Traits::Batchable*)m_pObject.get();
-				pBatchable->SetDirty(false);
 				pBatchable->OnEndWrite();
 			}
-		}
-
-		bool IsDirty()
-		{
-			if (std::is_base_of<Traits::Batchable, U>::value)
-			{
-				return ((Traits::Batchable*)m_pObject.get())->IsDirty();
-			}
-
-			return true;
 		}
 
 		bool m_batched;
@@ -185,6 +189,16 @@ public:
 	const T* operator->() const
 	{
 		return m_pWriter->m_pObject.get();
+	}
+
+	T& operator*()
+	{
+		return *m_pWriter->m_pObject;
+	}
+
+	const T& operator*() const
+	{
+		return *m_pWriter->m_pObject;
 	}
 
 	std::shared_ptr<T> GetShared()

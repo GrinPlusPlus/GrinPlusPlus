@@ -47,7 +47,7 @@ public:
 	// HASHING
 	////////////////////////////////////////
 	const Hash& GetHash() const; // TODO: Rename "GetCycleHash"
-	void SerializeProofNonces(Serializer& serializer) const; // TODO: Should be private
+	void SerializeCycle(Serializer& serializer) const;
 
 private:
 	static std::vector<uint64_t> DeserializeProofNonces(const std::vector<unsigned char>& bits, const uint8_t edgeBits);

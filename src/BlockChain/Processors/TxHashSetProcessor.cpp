@@ -10,12 +10,10 @@
 TxHashSetProcessor::TxHashSetProcessor(
 	const Config& config,
 	IBlockChainServer& blockChainServer,
-	std::shared_ptr<Locked<ChainState>> pChainState,
-	std::shared_ptr<Locked<IBlockDB>> pBlockDB)
+	std::shared_ptr<Locked<ChainState>> pChainState)
 	: m_config(config),
 	m_blockChainServer(blockChainServer),
-	m_pChainState(pChainState),
-	m_pBlockDB(pBlockDB)
+	m_pChainState(pChainState)
 {
 
 }
@@ -37,7 +35,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	}
 
 	// 2. Load and Extract TxHashSet Zip
-	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, m_pBlockDB, path, *pHeader);
+	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, path, *pHeader);
 	if (pTxHashSet == nullptr)
 	{
 		LOG_ERROR_F("Failed to load %s", path);
@@ -60,7 +58,6 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	// 5. Add Output positions to DB
 	{
 		LOG_DEBUG("Saving output positions.");
-		std::shared_ptr<Chain> pCandidateChain = pChainStateBatch->GetChainStore()->GetCandidateChain();
 
 		uint64_t firstOutput = 0;
 		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)

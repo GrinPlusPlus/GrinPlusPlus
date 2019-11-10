@@ -136,7 +136,7 @@ public:
 				std::vector<unsigned char> data = m_pDataFile->GetDataAt(shiftedIndex);
 				if (data.size() == DATA_SIZE)
 				{
-					ByteBuffer byteBuffer(data);
+					ByteBuffer byteBuffer(std::move(data));
 					return std::make_unique<DATA_TYPE>(DATA_TYPE::Deserialize(byteBuffer));
 				}
 			}
@@ -154,7 +154,7 @@ public:
 		LOG_TRACE_F("Flushing with size (%llu)", GetSize());
 		m_pHashFile->Commit();
 		m_pDataFile->Commit();
-		m_pLeafSet->Flush();
+		m_pLeafSet->Commit();
 	}
 
 	virtual void Rollback() override final
@@ -162,7 +162,7 @@ public:
 		LOG_INFO("Discarding changes since last flush");
 		m_pHashFile->Rollback();
 		m_pDataFile->Rollback();
-		m_pLeafSet->Discard();
+		m_pLeafSet->Rollback();
 	}
 
 private:

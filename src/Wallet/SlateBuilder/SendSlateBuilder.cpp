@@ -154,7 +154,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 	return WalletTx(
 		walletTxId,
 		EWalletTxType::SENDING_STARTED, // TODO: Change EWalletTxType to EWalletTxStatus
-		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::make_optional(slate.GetSlateId()),
 		std::optional<std::string>(addressOpt),
 		std::optional<std::string>(messageOpt),
 		std::chrono::system_clock::now(),
@@ -162,8 +162,8 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 		std::nullopt,
 		amountCredited,
 		amountDebited,
-		std::make_optional<uint64_t>(slate.GetFee()),
-		std::make_optional<Transaction>(Transaction(slate.GetTransaction()))
+		std::make_optional(slate.GetFee()),
+		std::make_optional(slate.GetTransaction())
 	);
 }
 

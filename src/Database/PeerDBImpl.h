@@ -22,8 +22,8 @@ public:
 
 	virtual void SavePeers(const std::vector<Peer>& peers) override final;
 
-	virtual void Commit() override final {} // TODO: Handle this
-	virtual void Rollback() override final {} // TODO: Handle this
+	virtual void Commit() override final {} // FUTURE: Handle this
+	virtual void Rollback() override final {} // FUTURE: Handle this
 
 private:
 	PeerDB(const Config& config, DB* pDatabase);

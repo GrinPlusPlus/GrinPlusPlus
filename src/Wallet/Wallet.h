@@ -26,7 +26,7 @@ public:
 
 	inline const std::string& GetUsername() const { return m_username; }
 
-	inline void SetTorAddress(const TorAddress& address) { m_pTorAddress = std::make_optional<TorAddress>(address); }
+	inline void SetTorAddress(const TorAddress& address) { m_pTorAddress = std::make_optional(address); }
 	inline std::optional<TorAddress> GetTorAddress() const { return m_pTorAddress; }
 
 	WalletSummary GetWalletSummary(const SecureVector& masterSeed);

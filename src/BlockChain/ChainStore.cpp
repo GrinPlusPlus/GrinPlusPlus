@@ -92,30 +92,33 @@ std::shared_ptr<const BlockIndex> ChainStore::FindCommonIndex(const EChainType c
 	return pChain1Index;
 }
 
-bool ChainStore::ReorgChain(const EChainType source, const EChainType destination, const uint64_t height)
+void ChainStore::ReorgChain(const EChainType source, const EChainType destination)
+{
+	ReorgChain(source, destination, GetChain(source)->GetHeight());
+}
+
+void ChainStore::ReorgChain(const EChainType source, const EChainType destination, const uint64_t height)
 {
 	std::shared_ptr<Chain> pSourceChain = GetChain(source);
 	std::shared_ptr<Chain> pDestinationChain = GetChain(destination);
 
 	if (pSourceChain->GetTip()->GetHeight() < height)
 	{
-		return false;
+		throw BLOCK_CHAIN_EXCEPTION("Can't reorg beyond tip");
 	}
 
 	std::shared_ptr<const BlockIndex> pBlockIndex = FindCommonIndex(source, destination);
-	if (pBlockIndex != nullptr)
+	if (pBlockIndex == nullptr)
 	{
-		const uint64_t commonHeight = pBlockIndex->GetHeight();
-		pDestinationChain->Rewind(commonHeight);
-		for (uint64_t i = commonHeight + 1; i <= height; i++)
-		{
-			pDestinationChain->AddBlock(pSourceChain->GetHash(i));
-		}
-
-		return true;
+		throw BLOCK_CHAIN_EXCEPTION("No common header found.");
 	}
 
-	return false;
+	const uint64_t commonHeight = pBlockIndex->GetHeight();
+	pDestinationChain->Rewind(commonHeight);
+	for (uint64_t i = commonHeight + 1; i <= height; i++)
+	{
+		pDestinationChain->AddBlock(pSourceChain->GetHash(i));
+	}
 }
 
 void ChainStore::AddBlock(const EChainType source, const EChainType destination, const uint64_t height)

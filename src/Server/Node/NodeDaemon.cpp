@@ -23,23 +23,12 @@ NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNo
 
 NodeDaemon::~NodeDaemon()
 {
-	try
-	{
-		m_pNodeRestServer->Shutdown();
-	}
-	catch (const std::system_error& e)
-	{
-		std::cerr << e.what() << '\n';
-		std::cerr << "FAILURE" << '\n';
-	}
 }
 
 std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
 {
 	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(config);
-
-	std::shared_ptr<NodeRestServer> pNodeRestServer = std::shared_ptr<NodeRestServer>(new NodeRestServer(config, pNodeClient->GetNodeContext()));
-	pNodeRestServer->Initialize();
+	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(config, pNodeClient->GetNodeContext());
 
 	return std::shared_ptr<NodeDaemon>(new NodeDaemon(config, pNodeRestServer, pNodeClient));
 }

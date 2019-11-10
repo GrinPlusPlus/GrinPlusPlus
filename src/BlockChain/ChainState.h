@@ -7,14 +7,13 @@
 #include <P2P/SyncStatus.h>
 #include <Core/Models/BlockHeader.h>
 #include <BlockChain/ChainType.h>
-#include <Core/Models/Display/BlockWithOutputs.h>
+#include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <PMMR/HeaderMMR.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Crypto/Hash.h>
 #include <Core/Traits/Lockable.h>
 #include <Database/Database.h>
 #include <TxPool/TransactionPool.h>
-#include <shared_mutex>
 
 // Forward Declarations
 class ITransactionPool;
@@ -43,7 +42,7 @@ public:
 
 	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash) const;
 	std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const;
-	std::unique_ptr<FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
+	std::shared_ptr<const FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
 
 	std::unique_ptr<BlockWithOutputs> GetBlockWithOutputs(const uint64_t height) const;
 

@@ -12,7 +12,7 @@ public:
 	static std::shared_ptr<OutputPMMR> Load(const std::string& txHashSetDirectory)
 	{
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "output/pmmr_hash.bin");
-		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetDirectory + "output/pmmr_leaf.bin");
+		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetDirectory + "output/pmmr_leafset.bin");
 		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetDirectory + "output/pmmr_prun.bin");
 		std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile = DataFile<OUTPUT_SIZE>::Load(txHashSetDirectory + "output/pmmr_data.bin");
 

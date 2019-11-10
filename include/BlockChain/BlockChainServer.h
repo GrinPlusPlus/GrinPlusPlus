@@ -8,7 +8,7 @@
 #include <BlockChain/BlockChainStatus.h>
 #include <TxPool/PoolType.h>
 #include <P2P/SyncStatus.h>
-#include <Core/Models/Display/BlockWithOutputs.h>
+#include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <BlockChain/ChainType.h>
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>

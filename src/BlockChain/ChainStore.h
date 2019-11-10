@@ -23,7 +23,8 @@ public:
 	//
 	// Applies all of the blocks from the source chain to the destination chain, up to the specified height.
 	//
-	bool ReorgChain(const EChainType source, const EChainType destination, const uint64_t height);
+	void ReorgChain(const EChainType source, const EChainType destination, const uint64_t height);
+	void ReorgChain(const EChainType source, const EChainType destination);
 
 	void AddBlock(const EChainType source, const EChainType destination, const uint64_t height);
 

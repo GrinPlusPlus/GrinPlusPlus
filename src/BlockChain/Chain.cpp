@@ -39,15 +39,10 @@ std::shared_ptr<Chain> Chain::Load(
 	while (indices.size() < pDataFile->GetSize())
 	{
 		Hash hash = pDataFile->GetDataAt(indices.size());
-		indices.push_back(pBlockIndexAllocator->GetOrCreateIndex(std::move(hash), indices.size()));
+		indices.emplace_back(pBlockIndexAllocator->GetOrCreateIndex(std::move(hash), indices.size()));
 	}
 
 	return std::make_shared<Chain>(Chain(chainType, pBlockIndexAllocator, pDataFile, std::move(indices)));
-}
-
-const Hash& Chain::GetHash(const uint64_t height) const
-{
-	return m_indices[height]->GetHash();
 }
 
 std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) const
@@ -58,11 +53,6 @@ std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) cons
 	}
 
 	return nullptr;
-}
-
-std::shared_ptr<const BlockIndex> Chain::GetTip() const
-{
-	return m_indices[m_height];
 }
 
 std::shared_ptr<const BlockIndex> Chain::AddBlock(const Hash& hash)

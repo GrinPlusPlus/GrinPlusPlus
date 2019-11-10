@@ -104,7 +104,7 @@ std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::op
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.cend())
 	{
-		return std::make_optional<Peer>(iter->second.m_peer);
+		return std::make_optional(iter->second.m_peer);
 	}
 
 	return m_pPeerDB->Read()->GetPeer(address, portOpt);

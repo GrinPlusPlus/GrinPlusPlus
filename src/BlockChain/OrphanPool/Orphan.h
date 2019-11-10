@@ -6,7 +6,7 @@ struct Orphan
 {
 public:
 	explicit Orphan(const FullBlock& block)
-		: m_block(block)
+		: m_pBlock(std::make_shared<FullBlock>(block))
 	{
 
 	}
@@ -18,18 +18,20 @@ public:
 			return false;
 		}
 
-		const uint64_t height = this->m_block.GetBlockHeader().GetHeight();
-		const uint64_t rhsHeight = rhs.m_block.GetBlockHeader().GetHeight();
+		const uint64_t height = this->m_pBlock->GetHeight();
+		const uint64_t rhsHeight = rhs.m_pBlock->GetHeight();
 		if (height != rhsHeight)
 		{
 			return height < rhsHeight;
 		}
 		
-		return m_block.GetBlockHeader().GetHash() < rhs.m_block.GetBlockHeader().GetHash();
+		return m_pBlock->GetHash() < rhs.m_pBlock->GetHash();
 	}
 
-	inline const FullBlock& GetBlock() const { return m_block; }
+	std::shared_ptr<const FullBlock> GetBlock() const { return m_pBlock; }
+	const Hash& GetHash() const { return m_pBlock->GetHash(); }
+	uint64_t GetHeight() const { return m_pBlock->GetHeight(); }
 
 private:
-	FullBlock m_block;
+	std::shared_ptr<FullBlock> m_pBlock;
 };

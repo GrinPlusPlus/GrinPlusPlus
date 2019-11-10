@@ -126,7 +126,7 @@ Json::Value JSONFactory::BuildTransactionInputJSON(const TransactionInput& input
 	  "mmr_index": 913519
 	},
 */
-Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& output, const uint64_t blockHeight) // TODO: Should be OutputDisplayInfo
+Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& output, const uint64_t blockHeight) // TODO: Should be OutputDTO
 {
 	Json::Value outputNode;
 
@@ -139,7 +139,7 @@ Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& out
 	outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
 
 	outputNode["block_height"] = blockHeight;
-	outputNode["mmr_index"] = 0; // TODO: This will be part of OutputDisplayInfo
+	outputNode["mmr_index"] = 0; // TODO: This will be part of OutputDTO
 
 	return outputNode;
 }

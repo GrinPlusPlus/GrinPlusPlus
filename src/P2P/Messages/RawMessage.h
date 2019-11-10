@@ -10,8 +10,8 @@ public:
 	//
 	// Constructors
 	//
-	RawMessage(MessageHeader&& messageHeader, const std::vector<unsigned char>& payload)
-		: m_messageHeader(messageHeader), m_payload(payload)
+	RawMessage(MessageHeader&& messageHeader, std::vector<unsigned char>&& payload)
+		: m_messageHeader(messageHeader), m_payload(std::move(payload))
 	{
 
 	}

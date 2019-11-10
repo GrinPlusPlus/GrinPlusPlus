@@ -24,6 +24,12 @@ public:
 
 	}
 
+	ByteBuffer(std::vector<unsigned char>&& bytes)
+		: m_index(0), m_bytes(std::move(bytes))
+	{
+
+	}
+
 	template<class T>
 	void ReadBigEndian(T& t)
 	{

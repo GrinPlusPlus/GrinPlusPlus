@@ -25,5 +25,4 @@ public:
 private:
 	Hash m_hash;
 	uint64_t m_height;
-	// TODO: Also save output & kernel MMR sizes
 };

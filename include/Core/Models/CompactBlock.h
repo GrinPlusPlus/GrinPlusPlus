@@ -37,11 +37,12 @@ public:
 	//
 	// Getters
 	//
-	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
-	inline uint64_t GetNonce() const { return m_nonce; }
-	inline const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
-	inline const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
-	inline const std::vector<ShortId>& GetShortIds() const { return m_shortIds; }
+	const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
+	uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
+	uint64_t GetNonce() const { return m_nonce; }
+	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
+	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
+	const std::vector<ShortId>& GetShortIds() const { return m_shortIds; }
 
 	//
 	// Serialization/Deserialization
@@ -52,7 +53,7 @@ public:
 	//
 	// Hashing
 	//
-	inline const Hash& GetHash() const { return m_blockHeader.GetHash(); }
+	const Hash& GetHash() const { return m_blockHeader.GetHash(); }
 
 private:
 	BlockHeader m_blockHeader;

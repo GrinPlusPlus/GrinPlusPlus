@@ -26,7 +26,7 @@ std::optional<SecureVector> SeedEncrypter::DecryptWalletSeed(const EncryptedSeed
 		if (hash256 == hash256Check)
 		{
 			LoggerAPI::LogDebug("SeedEncrypter::DecryptWalletSeed - HMAC valid.");
-			return std::make_optional<SecureVector>(std::move(walletSeed));
+			return std::make_optional(std::move(walletSeed));
 		}
 		else
 		{

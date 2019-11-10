@@ -11,7 +11,7 @@
 #include <Crypto/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
-const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH; // TODO: Determine actual size
+const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
 
 AggSig& AggSig::GetInstance()
 {

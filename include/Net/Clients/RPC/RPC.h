@@ -91,7 +91,7 @@ public:
 	static Request BuildRequest(const std::string& method, const Json::Value& params)
 	{
 		Json::Value id = ID_COUNTER++;
-		return Request(std::move(id), method, std::make_optional<Json::Value>(params));
+		return Request(std::move(id), method, std::make_optional(params));
 	}
 
 	Json::Value ToJSON() const
@@ -182,13 +182,13 @@ public:
 
 	static Response BuildResult(const Json::Value& id, const Json::Value& result)
 	{
-		return Response(Json::Value(id), std::make_optional<Json::Value>(Json::Value(result)), std::nullopt);
+		return Response(Json::Value(id), std::make_optional(result), std::nullopt);
 	}
 
 	static Response BuildError(const Json::Value& id, const int code, const std::string& message, const std::optional<Json::Value>& data)
 	{
 		Error error(code, message, data.value_or(Json::nullValue));
-		return Response(Json::Value(id), std::nullopt, std::make_optional<Error>(std::move(error)));
+		return Response(Json::Value(id), std::nullopt, std::make_optional(std::move(error)));
 	}
 
 	static Response Parse(const std::string& jsonStr)
@@ -233,7 +233,7 @@ public:
 			std::optional<Error> errorOpt = std::nullopt;
 			if (errorJsonOpt.has_value())
 			{
-				errorOpt = std::make_optional<Error>(Error::Parse(errorJsonOpt.value()));
+				errorOpt = std::make_optional(Error::Parse(errorJsonOpt.value()));
 			}
 
 			return Response(std::move(id), std::move(resultOpt), std::move(errorOpt));

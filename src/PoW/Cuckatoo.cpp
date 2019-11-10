@@ -16,17 +16,6 @@ bool Cuckatoo::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-	//uint32_t nonces[PROOFSIZE];
-	//for (size_t i = 0; i < PROOFSIZE; i++)
-	//{
-	//	if (proofNonces[i] > UINT32_MAX)
-	//	{
-	//		return false;
-	//	}
-
-	//	nonces[i] = (uint32_t)proofNonces[i];
-	//}
-
 	const int result = verify(proofNonces.data(), &keys, proofOfWork.GetEdgeBits());
 
 	return result == POW_OK;

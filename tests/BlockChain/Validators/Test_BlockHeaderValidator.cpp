@@ -14,5 +14,4 @@ TEST_CASE("AggSig Interaction")
 	ITransactionPool* pTxPool = TxPoolAPI::CreateTransactionPool(config, txHashSetManager, pDatabase->GetBlockDB());
 	IBlockChainServer* pBlockChainServer = BlockChainAPI::StartBlockChainServer(config, *pDatabase, txHashSetManager, transactionPool);
 
-	pBlockChainServer->Proc
 }

@@ -55,7 +55,7 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 		block.GetTransactionBody(),
 		0 - Consensus::REWARD,
 		block.GetBlockHeader().GetTotalKernelOffset(),
-		std::make_optional<BlockSums>(*pPreviousBlockSums)
+		std::make_optional(*pPreviousBlockSums)
 	);
 }
 

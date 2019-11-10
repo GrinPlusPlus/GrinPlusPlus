@@ -104,7 +104,7 @@ public:
 
 			if (IsValid(version, pubkey, checksum))
 			{
-				return std::make_optional<TorAddress>(TorAddress(address, pubkey, version)); // TODO: Pass version & pubkey
+				return std::make_optional<TorAddress>(address, pubkey, version);
 			}
 		}
 		catch (std::exception& e)

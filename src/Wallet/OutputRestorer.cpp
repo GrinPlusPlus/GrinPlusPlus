@@ -35,8 +35,8 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 			return std::vector<OutputData>();
 		}
 
-		const std::vector<OutputDisplayInfo>& outputs = pOutputRange->GetOutputs();
-		for (const OutputDisplayInfo& output : outputs)
+		const std::vector<OutputDTO>& outputs = pOutputRange->GetOutputs();
+		for (const OutputDTO& output : outputs)
 		{
 			std::unique_ptr<OutputData> pOutputData = GetWalletOutput(masterSeed, output, chainHeight);
 			if (pOutputData != nullptr)
@@ -57,25 +57,25 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 	return walletOutputs;
 }
 
-std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDTO& output, const uint64_t currentBlockHeight) const
 {
 	EBulletproofType type = EBulletproofType::ORIGINAL;
 	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;
-	const uint64_t outputBlockHeight = outputDisplayInfo.GetLocation().GetBlockHeight();
+	const uint64_t outputBlockHeight = output.GetLocation().GetBlockHeight();
 	if (Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), ((std::max)(outputBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
 	{
-		pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof(), EBulletproofType::ORIGINAL);
+		pRewoundProof = m_keyChain.RewindRangeProof(output.GetIdentifier().GetCommitment(), output.GetRangeProof(), EBulletproofType::ORIGINAL);
 	}
 
 	if (pRewoundProof == nullptr)
 	{
 		type = EBulletproofType::ENHANCED;
-		pRewoundProof = m_keyChain.RewindRangeProof(outputDisplayInfo.GetIdentifier().GetCommitment(), outputDisplayInfo.GetRangeProof(), EBulletproofType::ENHANCED);
+		pRewoundProof = m_keyChain.RewindRangeProof(output.GetIdentifier().GetCommitment(), output.GetRangeProof(), EBulletproofType::ENHANCED);
 	}
 
 	if (pRewoundProof != nullptr)
 	{
-		WALLET_INFO_F("Found own output: %s", outputDisplayInfo.GetIdentifier().GetCommitment());
+		WALLET_INFO_F("Found own output: %s", output.GetIdentifier().GetCommitment());
 
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
@@ -90,14 +90,14 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 		}
 
 		TransactionOutput txOutput(
-			outputDisplayInfo.GetIdentifier().GetFeatures(),
-			Commitment(outputDisplayInfo.GetIdentifier().GetCommitment()),
-			RangeProof(outputDisplayInfo.GetRangeProof())
+			output.GetIdentifier().GetFeatures(),
+			Commitment(output.GetIdentifier().GetCommitment()),
+			RangeProof(output.GetRangeProof())
 		);
 		const uint64_t amount = pRewoundProof->GetAmount();
-		const EOutputStatus status = DetermineStatus(outputDisplayInfo, currentBlockHeight);
-		const uint64_t mmrIndex = outputDisplayInfo.GetLocation().GetMMRIndex();
-		const uint64_t blockHeight = outputDisplayInfo.GetLocation().GetBlockHeight();
+		const EOutputStatus status = DetermineStatus(output, currentBlockHeight);
+		const uint64_t mmrIndex = output.GetLocation().GetMMRIndex();
+		const uint64_t blockHeight = output.GetLocation().GetBlockHeight();
 
 		return std::make_unique<OutputData>(
 			std::move(keyChainPath), 
@@ -105,8 +105,8 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 			std::move(txOutput), 
 			amount, 
 			status, 
-			std::make_optional<uint64_t>(mmrIndex), 
-			std::make_optional<uint64_t>(blockHeight),
+			std::make_optional(mmrIndex), 
+			std::make_optional(blockHeight),
 			std::nullopt,
 			std::nullopt
 		);
@@ -115,15 +115,15 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 	return std::unique_ptr<OutputData>(nullptr);
 }
 
-EOutputStatus OutputRestorer::DetermineStatus(const OutputDisplayInfo& outputDisplayInfo, const uint64_t currentBlockHeight) const
+EOutputStatus OutputRestorer::DetermineStatus(const OutputDTO& output, const uint64_t currentBlockHeight) const
 {
-	if (outputDisplayInfo.IsSpent())
+	if (output.IsSpent())
 	{
 		return EOutputStatus::SPENT;
 	}
 
-	const EOutputFeatures features = outputDisplayInfo.GetIdentifier().GetFeatures();
-	const uint64_t outputBlockHeight = outputDisplayInfo.GetLocation().GetBlockHeight();
+	const EOutputFeatures features = output.GetIdentifier().GetFeatures();
+	const uint64_t outputBlockHeight = output.GetLocation().GetBlockHeight();
 	const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
 
 	if (WalletUtil::IsOutputImmature(features, outputBlockHeight, currentBlockHeight, minimumConfirmations))

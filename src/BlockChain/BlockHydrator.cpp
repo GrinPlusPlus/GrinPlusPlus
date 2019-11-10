@@ -106,5 +106,5 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	// Finally return the full block.
 	// Note: we have not actually validated the block here, caller must validate the block.
 	BlockHeader header = compactBlock.GetBlockHeader();
-	return std::make_unique<FullBlock>(FullBlock(std::move(header), std::move(transactionBody)));
+	return std::make_unique<FullBlock>(std::move(header), std::move(transactionBody));
 }

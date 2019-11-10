@@ -11,6 +11,7 @@
 
 #include "API/Explorer/BlockInfoAPI.h"
 
+#include <Infrastructure/Logger.h>
 #include <Infrastructure/ShutdownManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <P2P/P2PServer.h>
@@ -25,7 +26,21 @@ NodeRestServer::NodeRestServer(const Config& config, std::shared_ptr<NodeContext
 
 NodeRestServer::~NodeRestServer()
 {
+	try
+	{
+		mg_stop(m_pNodeCivetContext);
+	}
+	catch (const std::system_error& e)
+	{
+		LOG_ERROR_F("Exception thrown while stopping node API listener: %s", e.what());
+	}
+}
 
+std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
+{
+	auto pNodeRestServer = std::shared_ptr<NodeRestServer>(new NodeRestServer(config, pNodeContext));
+	pNodeRestServer->Initialize();
+	return pNodeRestServer;
 }
 
 static int Shutdown_Handler(struct mg_connection* conn, void* pNodeContext)
@@ -34,7 +49,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void* pNodeContext)
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-bool NodeRestServer::Initialize()
+void NodeRestServer::Initialize()
 {
 	/* Start the server */
 	const uint32_t port = m_config.GetServerConfig().GetRestAPIPort();
@@ -65,22 +80,4 @@ bool NodeRestServer::Initialize()
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, m_pNodeContext.get());
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/shutdown", Shutdown_Handler, m_pNodeContext.get());
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/", ServerAPI::V1_Handler, m_pNodeContext.get());
-
-	/*
-	// TODO: Still missing
-		"get pool",
-		"post pool/push"
-		"post chain/compact"
-		"post chain/validate"
-	*/
-
-	return true;
-}
-
-bool NodeRestServer::Shutdown()
-{
-	/* Stop the server */
-	mg_stop(m_pNodeCivetContext);
-
-	return true;
 }

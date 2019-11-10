@@ -20,11 +20,10 @@ ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNo
 void ProofOfWork::Serialize(Serializer& serializer) const
 {
 	serializer.Append<uint8_t>(m_edgeBits);
-	SerializeProofNonces(serializer);
+	SerializeCycle(serializer);
 }
 
-// TODO: Rename "SerializeCycle"
-void ProofOfWork::SerializeProofNonces(Serializer& serializer) const
+void ProofOfWork::SerializeCycle(Serializer& serializer) const
 {
 	const int bytes_len = ((m_edgeBits * Consensus::PROOFSIZE) + 7) / 8;
 	std::vector<unsigned char> bits(bytes_len, 0);
@@ -85,7 +84,7 @@ const CBigInteger<32>& ProofOfWork::GetHash() const
 	if (m_hash == CBigInteger<32>())
 	{
 		Serializer serializer;
-		SerializeProofNonces(serializer);
+		SerializeCycle(serializer);
 		m_hash = Crypto::Blake2b(serializer.GetBytes());
 	}
 

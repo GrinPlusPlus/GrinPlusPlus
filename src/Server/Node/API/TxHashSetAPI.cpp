@@ -223,7 +223,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 		rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
 
 		Json::Value outputsNode;
-		for (const OutputDisplayInfo& info : range.GetOutputs())
+		for (const OutputDTO& info : range.GetOutputs())
 		{
 			Json::Value outputNode;
 			const EOutputFeatures features = info.GetIdentifier().GetFeatures();

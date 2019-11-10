@@ -25,7 +25,6 @@ namespace LoggerAPI
 	LOGGER_API void LogInfo(const std::string& message);
 	LOGGER_API void LogWarning(const std::string& message);
 	LOGGER_API void LogError(const std::string& message);
-	// TODO: void LogConsole(const std::string& message);
 	LOGGER_API void Flush();
 
 

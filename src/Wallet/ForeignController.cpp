@@ -61,7 +61,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 		std::unique_ptr<TorAddress> pTorAddress = TorManager::GetInstance(m_config.GetTorConfig()).AddListener(hashedTorKey, portNumber);
 		if (pTorAddress != nullptr)
 		{
-			pContext->m_torAddress = std::make_optional<TorAddress>(*pTorAddress);
+			pContext->m_torAddress = std::make_optional(*pTorAddress);
 		}
 	}
 
@@ -110,8 +110,8 @@ int ForeignController::ForeignAPIHandler(mg_connection* pConnection, void* pCbCo
 				{
 					Json::Value params = paramsOpt.value();
 					Slate slate = Slate::FromJSON(params[0]);
-					std::optional<std::string> accountName = params[1].isNull() ? std::nullopt : std::make_optional<std::string>(params[1].asCString());
-					std::optional<std::string> message = params[2].isNull() ? std::nullopt : std::make_optional<std::string>(params[2].asCString());
+					std::optional<std::string> accountName = params[1].isNull() ? std::nullopt : std::make_optional(params[1].asCString());
+					std::optional<std::string> message = params[2].isNull() ? std::nullopt : std::make_optional(params[2].asCString());
 
 					Context* pContext = (Context*)pCbContext;
 					Slate receivedSlate = pContext->m_walletManager.Receive(pContext->m_token, slate, std::nullopt, message);

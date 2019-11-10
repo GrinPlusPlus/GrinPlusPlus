@@ -16,7 +16,7 @@ class IBlockDB;
 class TxHashSetProcessor
 {
 public:
-	TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, std::shared_ptr<Locked<ChainState>> pChainState, std::shared_ptr<Locked<IBlockDB>> pBlockDB);
+	TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, std::shared_ptr<Locked<ChainState>> pChainState);
 
 	bool ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus);
 
@@ -26,5 +26,4 @@ private:
 	const Config& m_config;
 	IBlockChainServer& m_blockChainServer;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
-	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
 };

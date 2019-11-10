@@ -61,6 +61,7 @@ public:
 	//
 	virtual EAddTransactionStatus AddTransaction(
 		std::shared_ptr<const IBlockDB> pBlockDB,
+		ITxHashSetConstPtr pTxHashSet,
 		const Transaction& transaction,
 		const EPoolType poolType,
 		const BlockHeader& lastConfirmedBlock

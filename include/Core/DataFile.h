@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/File.h>
+#include <Core/AppendOnlyFile.h>
 #include <Core/Exceptions/FileException.h>
 #include <Core/Traits/Batchable.h>
 #include <Crypto/BigInteger.h>
@@ -13,7 +13,7 @@ class DataFile : public Traits::Batchable
 public:
 	static std::shared_ptr<DataFile> Load(const std::string& path)
 	{ 
-		std::shared_ptr<File> pFile = std::make_shared<File>(path);
+		std::shared_ptr<AppendOnlyFile> pFile = std::make_shared<AppendOnlyFile>(path);
 		if (!pFile->Load())
 		{
 			//throw FILE_EXCEPTION("Failed to load");
@@ -22,16 +22,14 @@ public:
 		return std::make_shared<DataFile>(DataFile(pFile));
 	}
 
-	inline uint64_t GetFlushedSize() const // TODO: Remove this?
-	{
-		return m_pFile->GetSize() / NUM_BYTES;
-	}
-
 	virtual void Commit() override final
 	{
-		if (!m_pFile->Flush())
+		if (IsDirty())
 		{
-			throw FILE_EXCEPTION("Commit failed.");
+			if (!m_pFile->Flush())
+			{
+				throw FILE_EXCEPTION("Commit failed.");
+			}
 		}
 
 		SetDirty(false);
@@ -39,9 +37,12 @@ public:
 
 	virtual void Rollback() override final
 	{
-		if (!m_pFile->Discard())
+		if (IsDirty())
 		{
-			throw FILE_EXCEPTION("Rollback failed.");
+			if (!m_pFile->Discard())
+			{
+				throw FILE_EXCEPTION("Rollback failed.");
+			}
 		}
 
 		SetDirty(false);
@@ -74,20 +75,22 @@ public:
 
 	void AddData(const std::vector<unsigned char>& data)
 	{
+		SetDirty(true);
 		m_pFile->Append(data);
 	}
 
 	void AddData(const CBigInteger<NUM_BYTES>& data)
 	{
+		SetDirty(true);
 		m_pFile->Append(data.GetData());
 	}
 
 private:
-	DataFile(std::shared_ptr<File> pFile)
+	DataFile(std::shared_ptr<AppendOnlyFile> pFile)
 		: m_pFile(pFile)
 	{
 
 	}
 
-	std::shared_ptr<File> m_pFile;
+	std::shared_ptr<AppendOnlyFile> m_pFile;
 };

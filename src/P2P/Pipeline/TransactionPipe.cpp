@@ -39,8 +39,8 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 			std::unique_ptr<TxEntry> pTxEntry = pipeline.m_transactionsToProcess.copy_front();
 			if (pTxEntry != nullptr)
 			{
-				const bool success = (pipeline.m_pBlockChainServer->AddTransaction(pTxEntry->transaction, pTxEntry->poolType) == EBlockChainStatus::SUCCESS);
-				if (success && pTxEntry->poolType == EPoolType::MEMPOOL)
+				const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddTransaction(pTxEntry->transaction, pTxEntry->poolType);
+				if (status == EBlockChainStatus::SUCCESS && pTxEntry->poolType == EPoolType::MEMPOOL)
 				{
 					// Broacast TransactionKernelMsg
 					const std::vector<TransactionKernel>& kernels = pTxEntry->transaction.GetBody().GetKernels();
@@ -49,6 +49,10 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 						const TransactionKernelMessage message(kernel.GetHash());
 						pipeline.m_pConnectionManager->BroadcastMessage(message, pTxEntry->connectionId);
 					}
+				}
+				else if (status == EBlockChainStatus::INVALID)
+				{
+					pipeline.m_pConnectionManager->BanConnection(pTxEntry->connectionId, EBanReason::BadTransaction);
 				}
 
 				pipeline.m_transactionsToProcess.pop_front(1);

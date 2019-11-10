@@ -58,8 +58,8 @@ public:
 	inline const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
 
 	inline void SetType(const EWalletTxType type) { m_type = type; }
-	inline void SetConfirmedHeight(const uint64_t blockHeight) { m_confirmedHeightOpt = std::make_optional<uint64_t>(blockHeight); }
-	inline void SetTransaction(const Transaction& transaction) { m_transactionOpt = std::make_optional<Transaction>(Transaction(transaction)); }
+	inline void SetConfirmedHeight(const uint64_t blockHeight) { m_confirmedHeightOpt = std::make_optional(blockHeight); }
+	inline void SetTransaction(const Transaction& transaction) { m_transactionOpt = std::make_optional(transaction); }
 
 	void Serialize(Serializer& serializer) const
 	{
@@ -115,7 +115,7 @@ public:
 			std::string address = byteBuffer.ReadVarStr();
 			if (!address.empty())
 			{
-				addressOpt = std::make_optional<std::string>(std::move(address));
+				addressOpt = std::make_optional(std::move(address));
 			}
 		}
 
@@ -125,7 +125,7 @@ public:
 			std::string slateMessage = byteBuffer.ReadVarStr();
 			if (!slateMessage.empty())
 			{
-				slateMessageOpt = std::make_optional<std::string>(std::move(slateMessage));
+				slateMessageOpt = std::make_optional(std::move(slateMessage));
 			}
 		}
 
@@ -135,14 +135,14 @@ public:
 		const int64_t confirmationTimeMillis = byteBuffer.Read64();
 		if (confirmationTimeMillis != 0)
 		{
-			confirmationTimeOpt = std::make_optional<std::chrono::system_clock::time_point>(TimeUtil::ToTimePoint(confirmationTimeMillis));
+			confirmationTimeOpt = std::make_optional(TimeUtil::ToTimePoint(confirmationTimeMillis));
 		}
 
 		std::optional<uint64_t> confirmedHeightOpt = std::nullopt;
 		const uint64_t blockHeight = byteBuffer.ReadU64();
 		if (blockHeight != 0)
 		{
-			confirmedHeightOpt = std::make_optional<uint64_t>(blockHeight);
+			confirmedHeightOpt = std::make_optional(blockHeight);
 		}
 
 		const uint64_t amountCredited = byteBuffer.ReadU64();
@@ -151,13 +151,13 @@ public:
 		std::optional<uint64_t> feeOpt = std::nullopt;
 		if (byteBuffer.ReadU8() == 1)
 		{
-			feeOpt = std::make_optional<uint64_t>(byteBuffer.ReadU64());
+			feeOpt = std::make_optional(byteBuffer.ReadU64());
 		}
 
 		std::optional<Transaction> transactionOpt = std::nullopt;
 		if (byteBuffer.GetRemainingSize() > 0)
 		{
-			transactionOpt = std::make_optional<Transaction>(Transaction::Deserialize(byteBuffer));
+			transactionOpt = std::make_optional(Transaction::Deserialize(byteBuffer));
 		}
 
 		return WalletTx(

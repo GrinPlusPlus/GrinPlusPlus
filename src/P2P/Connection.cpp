@@ -18,22 +18,24 @@
 Connection::Connection(
 	SocketPtr pSocket,
 	const uint64_t connectionId,
-	const Config& config,
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
-	IBlockChainServerPtr pBlockChainServer,
 	const ConnectedPeer& connectedPeer,
-	Pipeline& pipeline,
-	SyncStatusConstPtr pSyncStatus)
+	SyncStatusConstPtr pSyncStatus,
+	std::shared_ptr<HandShake> pHandShake,
+	std::shared_ptr<MessageProcessor> pMessageProcessor,
+	std::shared_ptr<MessageRetriever> pMessageRetriever,
+	std::shared_ptr<MessageSender> pMessageSender)
 	: m_pSocket(pSocket),
 	m_connectionId(connectionId),
-	m_config(config),
 	m_connectionManager(connectionManager),
 	m_peerManager(peerManager),
-	m_pBlockChainServer(pBlockChainServer),
 	m_connectedPeer(connectedPeer),
-	m_pipeline(pipeline),
 	m_pSyncStatus(pSyncStatus),
+	m_pHandShake(pHandShake),
+	m_pMessageProcessor(pMessageProcessor),
+	m_pMessageRetriever(pMessageRetriever),
+	m_pMessageSender(pMessageSender),
 	m_terminate(false)
 {
 
@@ -62,16 +64,29 @@ std::shared_ptr<Connection> Connection::Create(
 	std::shared_ptr<Pipeline> pPipeline,
 	SyncStatusConstPtr pSyncStatus)
 {
-	auto pConnection = std::shared_ptr<Connection>(new Connection(
-		pSocket,
-		connectionId,
+	auto pHandShake = std::make_shared<HandShake>(config, connectionManager, pBlockChainServer);
+	auto pMessageProcessor = std::make_shared<MessageProcessor>(
 		config,
 		connectionManager,
 		peerManager,
 		pBlockChainServer,
-		connectedPeer,
 		*pPipeline,
 		pSyncStatus
+	);
+	auto pMessageRetriever = std::make_shared<MessageRetriever>(config, connectionManager);
+	auto pMessageSender = std::make_shared<MessageSender>(config);
+
+	auto pConnection = std::shared_ptr<Connection>(new Connection(
+		pSocket,
+		connectionId,
+		connectionManager,
+		peerManager,
+		connectedPeer,
+		pSyncStatus,
+		pHandShake,
+		pMessageProcessor,
+		pMessageRetriever,
+		pMessageSender
 	));
 	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
 	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
@@ -90,8 +105,7 @@ bool Connection::IsConnectionActive() const
 
 void Connection::Send(const IMessage& message)
 {
-	std::lock_guard<std::mutex> lockGuard(m_sendMutex);
-	m_sendQueue.emplace(message.Clone());
+	m_sendQueue.push_back(message.Clone());
 }
 
 bool Connection::ExceedsRateLimit() const
@@ -120,8 +134,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		bool handshakeSuccess = false;
 		if (connected)
 		{
-			HandShake handshake(pConnection->m_config, pConnection->m_connectionManager, pConnection->m_pBlockChainServer);
-			handshakeSuccess = handshake.PerformHandshake(
+			handshakeSuccess = pConnection->m_pHandShake->PerformHandshake(
 				*pConnection->m_pSocket,
 				pConnection->m_connectedPeer,
 				direction
@@ -134,9 +147,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			pConnection->m_connectionManager.AddConnection(pConnection);
 			if (pConnection->m_peerManager.Read()->ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
 			{
-				const Capabilities capabilites(Capabilities::ECapability::FAST_SYNC_NODE);
-				const GetPeerAddressesMessage getPeerAddressesMessage(capabilites);
-				pConnection->Send(getPeerAddressesMessage);
+				pConnection->Send(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
 			}
 		}
 		else
@@ -157,19 +168,6 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 
 	pConnection->m_peerManager.Write()->SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), true);
 
-	MessageProcessor messageProcessor(
-		pConnection->m_config,
-		pConnection->m_connectionManager,
-		pConnection->m_peerManager,
-		pConnection->m_pBlockChainServer,
-		pConnection->m_pipeline,
-		pConnection->m_pSyncStatus
-	);
-	const MessageRetriever messageRetriever(
-		pConnection->m_config,
-		pConnection->m_connectionManager
-	);
-
 	SyncStatusConstPtr pSyncStatus = pConnection->m_pSyncStatus;
 
 	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
@@ -186,22 +184,20 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			lastPingTime = now;
 		}
 
-		std::unique_lock<std::mutex> lockGuard(pConnection->m_peerMutex);
-
 		try
 		{
 			bool messageSentOrReceived = false;
 
 			// Check for received messages and if there is a new message, process it.
-			std::unique_ptr<RawMessage> pRawMessage = messageRetriever.RetrieveMessage(
+			std::unique_ptr<RawMessage> pRawMessage = pConnection->m_pMessageRetriever->RetrieveMessage(
 				*pConnection->m_pSocket,
 				pConnection->m_connectedPeer,
 				MessageRetriever::NON_BLOCKING
 			);
 
-			if (pRawMessage.get() != nullptr)
+			if (pRawMessage != nullptr)
 			{
-				const MessageProcessor::EStatus status = messageProcessor.ProcessMessage(
+				const MessageProcessor::EStatus status = pConnection->m_pMessageProcessor->ProcessMessage(
 					pConnection->m_connectionId,
 					*pConnection->m_pSocket,
 					pConnection->m_connectedPeer,
@@ -218,24 +214,17 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			}
 
 			// Send the next message in the queue, if one exists.
-			std::unique_lock<std::mutex> sendLockGuard(pConnection->m_sendMutex);
-			if (!pConnection->m_sendQueue.empty())
+			auto pMessageToSend = pConnection->m_sendQueue.copy_front();
+			if (pMessageToSend != nullptr)
 			{
-				IMessagePtr pMessageToSend(pConnection->m_sendQueue.front());
-				pConnection->m_sendQueue.pop();
-				sendLockGuard.unlock();
+				IMessagePtr pMessage = *pMessageToSend;
+				pConnection->m_sendQueue.pop_front(1);
 
-				MessageSender(pConnection->m_config).Send(*pConnection->m_pSocket, *pMessageToSend);
+				pConnection->m_pMessageSender->Send(*pConnection->m_pSocket, *pMessage);
 
 				messageSentOrReceived = true;
 			}
-			else
-			{
-				sendLockGuard.unlock();
-			}
-
-			lockGuard.unlock();
-
+			
 			if (!messageSentOrReceived)
 			{
 				if ((lastReceivedMessageTime + std::chrono::seconds(30)) < std::chrono::system_clock::now())

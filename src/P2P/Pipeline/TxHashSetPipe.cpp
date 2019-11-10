@@ -5,6 +5,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Infrastructure/ShutdownManager.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
@@ -82,7 +83,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 	{
 		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 		const bool received = socket.Receive(bytesToRead, false, buffer);
-		if (!received || m_pConnectionManager->IsTerminating())
+		if (!received || ShutdownManagerAPI::WasShutdownRequested())
 		{
 			m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 

@@ -84,7 +84,7 @@ void TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOu
 		outputs.cbegin(),
 		outputs.cend(),
 		std::back_inserter(rangeProofs),
-		[](const TransactionOutput& output) { return std::make_pair<Commitment, RangeProof>(Commitment(output.GetCommitment()), RangeProof(output.GetRangeProof())); }
+		[](const TransactionOutput& output) { return std::make_pair(output.GetCommitment(), output.GetRangeProof()); }
 	);
 
 	if (!Crypto::VerifyRangeProofs(rangeProofs))

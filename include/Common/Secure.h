@@ -7,6 +7,8 @@
 #if defined(_MSC_VER)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#else
+#include <sys/mman.h>
 #endif
 
 static void LOCK_MEMORY(void* pMemory, size_t size)
@@ -14,7 +16,7 @@ static void LOCK_MEMORY(void* pMemory, size_t size)
 #if defined(_MSC_VER)
 	VirtualLock(pMemory, size);
 #else
-// TODO: 
+	mlock(pMemory, size);
 #endif
 }
 
@@ -23,7 +25,7 @@ static void UNLOCK_MEMORY(void* pMemory, size_t size)
 #if defined(_MSC_VER)
 	VirtualUnlock(pMemory, size);
 #else
-// TODO: 
+	mulock(pMemory, size);
 #endif
 }
 

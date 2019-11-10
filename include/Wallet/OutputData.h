@@ -79,8 +79,8 @@ public:
 	// Setters
 	//
 	inline void SetStatus(const EOutputStatus status) { m_status = status; }
-	inline void SetBlockHeight(const uint64_t blockHeight) { m_blockHeightOpt = std::make_optional<uint64_t>(blockHeight); }
-	inline void SetWalletTxId(const uint32_t walletTxId) { m_walletTxIdOpt = std::make_optional<uint32_t>(walletTxId); }
+	inline void SetBlockHeight(const uint64_t blockHeight) { m_blockHeightOpt = std::make_optional(blockHeight); }
+	inline void SetWalletTxId(const uint32_t walletTxId) { m_walletTxIdOpt = std::make_optional(walletTxId); }
 
 	//
 	// Operators
@@ -126,10 +126,10 @@ public:
 		EOutputStatus status = (EOutputStatus)byteBuffer.ReadU8();
 
 		const uint64_t mmrIndex = byteBuffer.ReadU64();
-		const std::optional<uint64_t> mmrIndexOpt = mmrIndex == 0 ? std::nullopt : std::make_optional<uint64_t>(mmrIndex);
+		const std::optional<uint64_t> mmrIndexOpt = mmrIndex == 0 ? std::nullopt : std::make_optional(mmrIndex);
 
 		const uint64_t blockHeight = byteBuffer.GetRemainingSize() != 0 ? byteBuffer.ReadU64() : 0;
-		const std::optional<uint64_t> blockHeightOpt = blockHeight == 0 ? std::nullopt : std::make_optional<uint64_t>(blockHeight);
+		const std::optional<uint64_t> blockHeightOpt = blockHeight == 0 ? std::nullopt : std::make_optional(blockHeight);
 
 		std::optional<std::string> messageOpt = std::nullopt;
 		if (formatVersion >= 1)
@@ -137,14 +137,14 @@ public:
 			std::string message = byteBuffer.ReadVarStr();
 			if (!message.empty())
 			{
-				messageOpt = std::make_optional<std::string>(std::move(message));
+				messageOpt = std::make_optional(std::move(message));
 			}
 		}
 
 		std::optional<uint32_t> walletTxIdOpt = std::nullopt;
 		if (byteBuffer.GetRemainingSize() != 0)
 		{
-			walletTxIdOpt = std::make_optional<uint32_t>(byteBuffer.ReadU32());
+			walletTxIdOpt = std::make_optional(byteBuffer.ReadU32());
 		}
 
 		return OutputData(

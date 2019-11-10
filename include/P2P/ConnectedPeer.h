@@ -2,8 +2,9 @@
 
 #include <P2P/Peer.h>
 #include <P2P/Direction.h>
+#include <Common/Traits.h>
 
-class ConnectedPeer
+class ConnectedPeer : public Traits::IPrintable
 {
 public:
 	ConnectedPeer(const Peer& peer, const EDirection direction)
@@ -33,6 +34,8 @@ public:
 	inline void UpdateCapabilities(const Capabilities& capabilities) { m_peer.UpdateCapabilities(capabilities); }
 	inline void UpdateUserAgent(const std::string& userAgent) { m_peer.UpdateUserAgent(userAgent); }
 	inline void UpdateLastContactTime() const { m_peer.UpdateLastContactTime(); }
+
+	virtual std::string Format() const override final { return m_peer.Format(); }
 
 private:
 	EDirection m_direction;

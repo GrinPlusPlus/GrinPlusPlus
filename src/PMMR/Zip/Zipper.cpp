@@ -1,5 +1,8 @@
 #include "Zipper.h"
 
+#include <Core/File.h>
+#include <Core/Exceptions/FileException.h>
+#include <Infrastructure/Logger.h>
 #include <fstream>
 #include <filesystem.h>
 
@@ -8,70 +11,67 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	zipFile zf = zipOpen(destination.c_str(), APPEND_STATUS_CREATE);
 	if (zf == nullptr)
 	{
+		LOG_ERROR_F("Failed to create zip file at (%s)", destination);
 		return false;
 	}
 
-	bool _return = true;
-	for (size_t i = 0; i < paths.size(); i++)
+	try
 	{
-		if (fs::is_directory(fs::path(paths[i])))
+		for (size_t i = 0; i < paths.size(); i++)
 		{
-			const std::string destinationPath = paths[i].substr(std::max(paths[i].rfind('\\'), paths[i].rfind('/')) + 1);
-			if (!AddDirectory(zf, paths[i], destinationPath))
+			if (fs::is_directory(fs::path(paths[i])))
 			{
-				_return = false;
-				break;
+				const std::string destinationPath = paths[i].substr(std::max(paths[i].rfind('\\'), paths[i].rfind('/')) + 1);
+				AddDirectory(zf, paths[i], destinationPath);
+			}
+			else
+			{
+				AddFile(zf, paths[i], destination);
 			}
 		}
-		else if (!AddFile(zf, paths[i], destination))
-		{
-			_return = false;
-			break;
-		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Failed to create zip file: %s", e.what());
+		zipClose(zf, NULL);
+		return false;
 	}
 
 	if (zipClose(zf, NULL))
 	{
+		LOG_ERROR_F("Failed to close zip file (%s)", destination);
 		return false;
-	}
-
-	return _return;
-}
-
-bool Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const std::string& destDir)
-{
-	for (const auto& entry : fs::directory_iterator(sourceDir))
-	{
-		if (fs::is_directory(entry))
-		{
-			if (!AddDirectory(zf, entry, destDir + "/" + entry.path().filename().string()))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (!AddFile(zf, entry.path().string(), destDir))
-			{
-				return false;
-			}
-		}
 	}
 
 	return true;
 }
 
-bool Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::string& destDir)
+void Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const std::string& destDir)
 {
-	std::fstream file(sourceFile.c_str(), std::ios::binary | std::ios::in);
-	if (file.is_open())
+	for (const auto& entry : fs::directory_iterator(sourceDir))
 	{
-		file.seekg(0, std::ios::end);
-		long size = file.tellg();
-		file.seekg(0, std::ios::beg);
+		if (fs::is_directory(entry))
+		{
+			AddDirectory(zf, entry, destDir + "/" + entry.path().filename().string());
+		}
+		else
+		{
+			AddFile(zf, entry.path().string(), destDir);
+		}
+	}
+}
+
+void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::string& destDir)
+{
+	File pFile = File::Load(sourceFile, std::ios::binary | std::ios::in);
+	if (pFile->is_open())
+	{
+		pFile->seekg(0, std::ios::end);
+		long size = pFile->tellg();
+		pFile->seekg(0, std::ios::beg);
 
 		std::vector<char> buffer(size);
-		if (size == 0 || file.read(&buffer[0], size))
+		if (size == 0 || pFile->read(&buffer[0], size))
 		{
 			zip_fileinfo zfi = { 0 };
 			std::string fileName = destDir + "/" + sourceFile.substr(std::max(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
@@ -80,20 +80,18 @@ bool Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 			{
 				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], size))
 				{
-					return false;
+					throw FILE_EXCEPTION(StringUtil::Format("Failed to write to file %s", fileName));
 				}
 
 				if (zipCloseFileInZip(zf))
 				{
-					return false;
+					throw FILE_EXCEPTION(StringUtil::Format("Failed to close file %s", fileName));
 				}
 
-				file.close();
-				return true;
+				return;
 			}
 		}
-		file.close();
 	}
 
-	return false;
+	throw FILE_EXCEPTION(StringUtil::Format("Failed to add file %s", destDir));
 }

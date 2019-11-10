@@ -13,9 +13,7 @@
 		#define EXPORT __attribute__((visibility("default")))
 		#define IMPORT
 	#else
-		// TODO: Determine how to handle this
 		#define EXPORT
 		#define IMPORT
-		#pragma warning Unknown dynamic link import/export semantics.
 	#endif
 #endif

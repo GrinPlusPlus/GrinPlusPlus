@@ -19,9 +19,11 @@ public:
 		std::shared_ptr<const BlockIndex> pGenesisIndex
 	);
 
-	const Hash& GetHash(const uint64_t height) const;
 	std::shared_ptr<const BlockIndex> GetByHeight(const uint64_t height) const;
-	std::shared_ptr<const BlockIndex> GetTip() const;
+
+	const Hash& GetHash(const uint64_t height) const { return m_indices[height]->GetHash(); }
+	std::shared_ptr<const BlockIndex> GetTip() const { return m_indices[m_height]; }
+	uint64_t GetHeight() const { return m_height; }
 
 	inline EChainType GetType() const { return m_chainType; }
 

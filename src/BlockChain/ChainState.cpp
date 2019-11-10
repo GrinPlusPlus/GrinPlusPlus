@@ -68,13 +68,7 @@ void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 
 uint64_t ChainState::GetHeight(const EChainType chainType) const
 {
-	std::unique_ptr<BlockHeader> pHead = GetTipBlockHeader(chainType);
-	if (pHead != nullptr)
-	{
-		return pHead->GetHeight();
-	}
-
-	return 0;
+	return GetChainStore()->GetChain(chainType)->GetHeight();
 }
 
 uint64_t ChainState::GetTotalDifficulty(const EChainType chainType) const
@@ -102,8 +96,7 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash) 
 
 std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
-	std::shared_ptr<const Chain> pChain = GetChainStore()->GetChain(chainType);
-	std::shared_ptr<const BlockIndex> pBlockIndex = pChain->GetByHeight(height);
+	auto pBlockIndex = GetChainStore()->GetChain(chainType)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
 		return GetBlockDB()->GetBlockHeader(pBlockIndex->GetHash());
@@ -136,18 +129,16 @@ std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash) const
 
 std::unique_ptr<FullBlock> ChainState::GetBlockByHeight(const uint64_t height) const
 {
-	std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
+	auto pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
 		return GetBlockDB()->GetBlock(pBlockIndex->GetHash());
 	}
-	else
-	{
-		return std::unique_ptr<FullBlock>(nullptr);
-	}
+
+	return std::unique_ptr<FullBlock>(nullptr);
 }
 
-std::unique_ptr<FullBlock> ChainState::GetOrphanBlock(const uint64_t height, const Hash& hash) const
+std::shared_ptr<const FullBlock> ChainState::GetOrphanBlock(const uint64_t height, const Hash& hash) const
 {
 	return m_pOrphanPool->GetOrphanBlock(height, hash);
 }
@@ -166,7 +157,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 		std::unique_ptr<FullBlock> pBlock = GetBlockDB()->GetBlock(pBlockIndex->GetHash());
 		if (pBlock != nullptr)
 		{
-			std::vector<OutputDisplayInfo> outputsFound;
+			std::vector<OutputDTO> outputsFound;
 			outputsFound.reserve(pBlock->GetTransactionBody().GetOutputs().size());
 
 			const std::vector<TransactionOutput>& outputs = pBlock->GetTransactionBody().GetOutputs();
@@ -176,7 +167,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 				if (pOutputLocation != nullptr)
 				{
 					const bool spent = !pTxHashSet->IsUnspent(*pOutputLocation);
-					outputsFound.emplace_back(OutputDisplayInfo(spent, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
+					outputsFound.emplace_back(OutputDTO(spent, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
 				}
 			}
 

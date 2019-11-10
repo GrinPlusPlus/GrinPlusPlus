@@ -16,7 +16,7 @@ public:
     virtual ~TransactionPool() = default;
 
 	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
-	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
+	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
 	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
 	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const override final;
 	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block) override final;

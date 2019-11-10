@@ -164,7 +164,7 @@ private:
 			case SOCKS::Atyp::IPV4:
 			{
 				std::vector<uint8_t> address = Read(4, SOCKS_TIMEOUT);
-				destination.ipAddress = std::make_optional<IPAddress>(IPAddress::FromIP(address[0], address[1], address[2], address[3]));
+				destination.ipAddress = std::make_optional(IPAddress::FromIP(address[0], address[1], address[2], address[3]));
 				break;
 			}
 			case SOCKS::Atyp::IPV6:
@@ -177,7 +177,7 @@ private:
 				std::vector<uint8_t> length = Read(1, SOCKS_TIMEOUT);
 				std::vector<uint8_t> address = Read(length[0], SOCKS_TIMEOUT);
 
-				destination.domainName = std::make_optional<std::string>(address.begin(), address.end());
+				destination.domainName = std::make_optional(std::string(address.begin(), address.end()));
 				break;
 			}
 			default:

@@ -39,7 +39,7 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData());
 		SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeedBytes);
 
-		return std::make_optional<std::pair<SecureString, SessionToken>>(std::make_pair<SecureString, SessionToken>(std::move(walletWords), std::move(token)));
+		return std::make_optional(std::make_pair(std::move(walletWords), std::move(token)));
 	}
 
 	return std::nullopt;
@@ -56,7 +56,7 @@ std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& us
 		if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 		{
 			WALLET_INFO_F("Wallet restored for username: %s", username);
-			return std::make_optional<SessionToken>(m_sessionManager.Write()->Login(usernameLower, entropyOpt.value()));
+			return std::make_optional(m_sessionManager.Write()->Login(usernameLower, entropyOpt.value()));
 		}
 	}
 	else

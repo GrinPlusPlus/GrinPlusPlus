@@ -63,7 +63,7 @@ public:
 			{
 				if (token == parameterName)
 				{
-					return std::make_optional<std::string>("");
+					return std::make_optional("");
 				}
 
 				if (StringUtil::StartsWith(token, parameterName + "="))
@@ -74,7 +74,7 @@ public:
 						throw HTTPException();
 					}
 
-					return std::make_optional<std::string>(parameterTokens[1]);
+					return std::make_optional(parameterTokens[1]);
 				}
 			}
 		}
@@ -87,7 +87,7 @@ public:
 		const char* pHeaderValue = mg_get_header(conn, headerName.c_str());
 		if (pHeaderValue != nullptr)
 		{
-			return std::make_optional<std::string>(std::string(pHeaderValue));
+			return std::make_optional(std::string(pHeaderValue));
 		}
 
 		return std::nullopt;
@@ -132,7 +132,7 @@ public:
 			throw DESERIALIZATION_EXCEPTION();
 		}
 
-		return std::make_optional<Json::Value>(json);
+		return std::make_optional(json);
 	}
 
 	static int BuildSuccessResponseJSON(struct mg_connection* conn, const Json::Value& json)

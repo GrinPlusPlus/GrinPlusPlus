@@ -48,11 +48,11 @@ public:
 	inline const std::optional<std::string>& GetMessageText() const { return m_messageOpt; }
 	inline const std::optional<CompactSignature>& GetMessageSignature() const { return m_messageSignatureOpt; }
 
-	inline void AddPartialSignature(const CompactSignature& signature) { m_partialSignatureOpt = std::make_optional<CompactSignature>(signature); }
+	inline void AddPartialSignature(const CompactSignature& signature) { m_partialSignatureOpt = std::make_optional(signature); }
 	inline void AddMessage(const std::string& message, const CompactSignature& messageSignature)
 	{
-		m_messageOpt = std::make_optional<std::string>(message);
-		m_messageSignatureOpt = std::make_optional<CompactSignature>(messageSignature);
+		m_messageOpt = std::make_optional(message);
+		m_messageSignatureOpt = std::make_optional(messageSignature);
 	}
 
 	inline Json::Value ToJSON(const bool hex) const

@@ -28,7 +28,7 @@ private:
 	{
 		BatchData batch;
 		batch.hashFile = m_pLockedHashFile->BatchWrite();
-		m_batchDataOpt = std::make_optional<BatchData>(std::move(batch));
+		m_batchDataOpt = std::make_optional(std::move(batch));
 	}
 
 	virtual void OnEndWrite() override final

@@ -154,7 +154,7 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 	WalletTx walletTx(
 		walletTxId,
 		EWalletTxType::RECEIVING_IN_PROGRESS,
-		std::make_optional<uuids::uuid>(uuids::uuid(slate.GetSlateId())),
+		std::make_optional(slate.GetSlateId()),
 		std::optional<std::string>(addressOpt),
 		std::optional<std::string>(messageOpt),
 		std::chrono::system_clock::now(),

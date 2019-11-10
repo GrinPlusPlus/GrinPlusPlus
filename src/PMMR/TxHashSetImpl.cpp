@@ -29,15 +29,11 @@ TxHashSet::TxHashSet(
 
 bool TxHashSet::IsUnspent(const OutputLocation& location) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	return m_pOutputPMMR->IsUnpruned(location.GetMMRIndex());
 }
 
 bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	// Validate inputs
 	const uint64_t maximumBlockHeight = (std::max)(m_blockHeader.GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	for (const TransactionInput& input : transaction.GetBody().GetInputs())
@@ -85,8 +81,6 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 
 std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	std::unique_ptr<BlockSums> pBlockSums = nullptr;
 
 	try
@@ -108,8 +102,6 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& block)
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-
 	Roaring blockInputBitmap;
 
 	// Prune inputs
@@ -119,7 +111,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(commitment);
 		if (pOutputPosition == nullptr)
 		{
-			LOG_WARNING_F("Output position not found for commitment (%s) in block (%llu)", commitment, block.GetBlockHeader().GetHeight());
+			LOG_WARNING_F("Output position not found for commitment (%s) in block (%llu)", commitment, block);
 			return false;
 		}
 
@@ -164,15 +156,12 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	}
 
 	m_blockHeader = block.GetBlockHeader();
-	pBlockDB->Commit();
 
 	return true;
 }
 
 bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	if (m_pKernelMMR->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
 	{
 		LOG_ERROR_F("Kernel root not matching for header (%s)", blockHeader);
@@ -196,8 +185,6 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 
 void TxHashSet::SaveOutputPositions(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& blockHeader, const uint64_t firstOutputIndex)
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-	
 	const uint64_t size = blockHeader.GetOutputMMRSize();
 	for (uint64_t mmrIndex = firstOutputIndex; mmrIndex < size; mmrIndex++)
 	{
@@ -211,33 +198,25 @@ void TxHashSet::SaveOutputPositions(std::shared_ptr<IBlockDB> pBlockDB, const Bl
 
 std::vector<Hash> TxHashSet::GetLastKernelHashes(const uint64_t numberOfKernels) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	return m_pKernelMMR->GetLastLeafHashes(numberOfKernels);
 }
 
 std::vector<Hash> TxHashSet::GetLastOutputHashes(const uint64_t numberOfOutputs) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	return m_pOutputPMMR->GetLastLeafHashes(numberOfOutputs);
 }
 
 std::vector<Hash> TxHashSet::GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	return m_pRangeProofPMMR->GetLastLeafHashes(numberOfRangeProofs);
 }
 
 OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t maxNumOutputs) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
 	const uint64_t outputSize = m_pOutputPMMR->GetSize();
 	
 	uint64_t leafIndex = startIndex;
-	std::vector<OutputDisplayInfo> outputs;
+	std::vector<OutputDTO> outputs;
 	outputs.reserve(maxNumOutputs);
 	while (outputs.size() < maxNumOutputs)
 	{
@@ -254,10 +233,10 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 			std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(pOutput->GetCommitment());
 			if (pRangeProof == nullptr || pOutputPosition == nullptr || pOutputPosition->GetMMRIndex() != mmrIndex)
 			{
-				return OutputRange(0, 0, std::vector<OutputDisplayInfo>()); // TODO: Throw exception
+				throw TXHASHSET_EXCEPTION(StringUtil::Format("Failed to build OutputDTO at index %d", mmrIndex));
 			}
 
-			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, *pOutputPosition, *pRangeProof));
+			outputs.emplace_back(OutputDTO(false, *pOutput, *pOutputPosition, *pRangeProof));
 		}
 	}
 
@@ -267,11 +246,9 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 	return OutputRange(maxLeafIndex, lastRetrievedIndex, std::move(outputs));
 }
 
-std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const
+std::vector<OutputDTO> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const
 {
-	std::shared_lock<std::shared_mutex> readLock(m_txHashSetMutex);
-
-	std::vector<OutputDisplayInfo> outputs;
+	std::vector<OutputDTO> outputs;
 	uint64_t mmrIndex = startIndex;
 	while (mmrIndex <= lastIndex)
 	{
@@ -281,7 +258,7 @@ std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<c
 			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetAt(mmrIndex);
 			std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(pOutput->GetCommitment());
 
-			outputs.emplace_back(OutputDisplayInfo(false, *pOutput, *pOutputPosition, *pRangeProof));
+			outputs.emplace_back(OutputDTO(false, *pOutput, *pOutputPosition, *pRangeProof));
 		}
 
 		++mmrIndex;
@@ -292,8 +269,6 @@ std::vector<OutputDisplayInfo> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<c
 
 bool TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header)
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-
 	Roaring leavesToAdd;
 	while (m_blockHeader != header)
 	{
@@ -319,35 +294,27 @@ bool TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHead
 
 void TxHashSet::Commit()
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-
-	std::vector<std::thread> threads;
-	threads.emplace_back(std::thread([this] { this->m_pKernelMMR->Commit(); }));
-	threads.emplace_back(std::thread([this] { this->m_pOutputPMMR->Commit(); }));
-	threads.emplace_back(std::thread([this] { this->m_pRangeProofPMMR->Commit(); }));
-	for (auto& thread : threads)
-	{
-		ThreadUtil::Join(thread);
-	}
+	this->m_pKernelMMR->Commit();
+	this->m_pOutputPMMR->Commit();
+	this->m_pRangeProofPMMR->Commit();
+	//std::vector<std::thread> threads;
+	//threads.emplace_back(std::thread([this] { this->m_pKernelMMR->Commit(); }));
+	//threads.emplace_back(std::thread([this] { this->m_pOutputPMMR->Commit(); }));
+	//threads.emplace_back(std::thread([this] { this->m_pRangeProofPMMR->Commit(); }));
+	//ThreadUtil::JoinAll(threads);
 
 	m_blockHeaderBackup = m_blockHeader;
 }
 
 void TxHashSet::Rollback()
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-
 	m_pKernelMMR->Rollback();
 	m_pOutputPMMR->Rollback();
 	m_pRangeProofPMMR->Rollback();
 	m_blockHeader = m_blockHeaderBackup;
 }
 
-bool TxHashSet::Compact()
+void TxHashSet::Compact()
 {
-	std::unique_lock<std::shared_mutex> writeLock(m_txHashSetMutex);
-
 	// TODO: Implement
-
-	return true;
 }

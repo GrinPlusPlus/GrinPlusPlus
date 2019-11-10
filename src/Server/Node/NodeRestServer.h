@@ -9,13 +9,14 @@ struct mg_context;
 class NodeRestServer
 {
 public:
-	NodeRestServer(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
+	static std::shared_ptr<NodeRestServer> Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
 	~NodeRestServer();
 
-	bool Initialize();
-	bool Shutdown();
-
 private:
+	NodeRestServer(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
+
+	void Initialize();
+
 	const Config& m_config;
 
 	std::shared_ptr<NodeContext> m_pNodeContext;

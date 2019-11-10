@@ -77,8 +77,8 @@ bool Wallet::AddRestoredOutputs(const SecureVector& masterSeed, const std::vecto
 			type = EWalletTxType::COINBASE;
 		}
 
-		const std::chrono::system_clock::time_point creationTime = std::chrono::system_clock::now(); // TODO: Determine this
-		const std::optional<std::chrono::system_clock::time_point> confirmationTimeOpt = std::make_optional<std::chrono::system_clock::time_point>(std::chrono::system_clock::now()); // TODO: Determine this
+		const auto creationTime = std::chrono::system_clock::now(); // TODO: Determine this
+		const auto confirmationTimeOpt = std::make_optional(std::chrono::system_clock::now()); // TODO: Determine this
 
 		WalletTx walletTx(walletTxId, type, std::nullopt, std::nullopt, std::nullopt, creationTime, confirmationTimeOpt, output.GetBlockHeight(), output.GetAmount(), 0, std::nullopt, std::nullopt);
 		transactions.emplace_back(std::move(walletTx));
@@ -170,7 +170,7 @@ OutputData Wallet::CreateBlindedOutput(
 			std::move(transactionOutput),
 			amount,
 			EOutputStatus::NO_CONFIRMATIONS,
-			std::make_optional<uint32_t>(walletTxId),
+			std::make_optional(walletTxId),
 			messageOpt
 		);
 	}

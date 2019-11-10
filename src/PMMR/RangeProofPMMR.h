@@ -12,7 +12,7 @@ public:
 	static std::shared_ptr<RangeProofPMMR> Load(const std::string& txHashSetDirectory)
 	{
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "rangeproof/pmmr_hash.bin");
-		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetDirectory + "rangeproof/pmmr_leaf.bin");
+		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetDirectory + "rangeproof/pmmr_leafset.bin");
 		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetDirectory + "rangeproof/pmmr_prun.bin");
 		std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile = DataFile<RANGE_PROOF_SIZE>::Load(txHashSetDirectory + "rangeproof/pmmr_data.bin");
 

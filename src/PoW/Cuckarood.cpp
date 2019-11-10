@@ -15,14 +15,14 @@ bool Cuckarood::Validate(const BlockHeader& blockHeader)
 	const std::vector<uint64_t> proofNonces = proofOfWork.GetProofNonces();
 	if (proofNonces.size() != PROOFSIZE)
 	{
-		LoggerAPI::LogError("Cuckarood::Validate - Invalid proof size");
+		LOG_ERROR("Invalid proof size");
 		return false;
 	}
 
 	const int result = verify((const word_t*)proofNonces.data(), keys);
 	if (result != POW_OK)
 	{
-		LoggerAPI::LogError("Cuckarood::Validate - Failed with result: " + std::to_string(result));
+		LOG_ERROR_F("Failed with result: %d", result);
 	}
 
 	return result == POW_OK;

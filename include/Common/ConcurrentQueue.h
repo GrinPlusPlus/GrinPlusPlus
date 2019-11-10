@@ -3,6 +3,7 @@
 #include <deque>
 #include <vector>
 #include <thread>
+#include <functional>
 #include <shared_mutex>
 #include <condition_variable>
 

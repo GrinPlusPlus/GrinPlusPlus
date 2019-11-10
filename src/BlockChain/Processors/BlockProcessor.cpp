@@ -52,15 +52,15 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 {
 	auto pBatch = m_pChainState->BatchWrite();
-
-	std::shared_ptr<Chain> pConfirmedChain = pBatch->GetChainStore()->GetConfirmedChain();
-	const BlockHeader& header = block.GetBlockHeader();
+	auto pChainStore = pBatch->GetChainStore();
+	auto pOrphanPool = pBatch->GetOrphanPool();
+	auto pConfirmedChain = pChainStore->GetConfirmedChain();
 
 	// 1. Check if already part of confirmed chain
-	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
-	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == header.GetHash())
+	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight());
+	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == block.GetHash())
 	{
-		LOG_TRACE_F("Block %s already part of confirmed chain.", header);
+		LOG_TRACE_F("Block %s already part of confirmed chain.", block);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -70,13 +70,13 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	{
 		case EBlockStatus::ORPHAN:
 		{
-			if (pBatch->GetOrphanPool()->IsOrphan(block.GetHeight(), block.GetHash()))
+			if (pOrphanPool->IsOrphan(block.GetHeight(), block.GetHash()))
 			{
 				LOG_TRACE_F("Block %s already processed as an orphan.", block);
 				return EBlockChainStatus::ALREADY_EXISTS;
 			}
 
-			pBatch->GetOrphanPool()->AddOrphanBlock(block);
+			pOrphanPool->AddOrphanBlock(block);
 			pBatch->Commit();
 
 			return EBlockChainStatus::ORPHANED;
@@ -92,7 +92,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 		{
 			ValidateAndAddBlock(block, pBatch);
 
-			pBatch->GetChainStore()->AddBlock(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
+			pChainStore->AddBlock(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetHeight());
 			pBatch->Commit();
 
 			return EBlockChainStatus::SUCCESS;
@@ -106,38 +106,39 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pBatch)
 {
-	const BlockHeader& header = block.GetBlockHeader();
-	std::shared_ptr<Chain> pCandidateChain = pBatch->GetChainStore()->GetCandidateChain();
+	auto pOrphanPool = pBatch->GetOrphanPool();
+	auto pBlockDB = pBatch->GetBlockDB();
+	auto pChainStore = pBatch->GetChainStore();
+	auto pCandidateChain = pChainStore->GetCandidateChain();
+	auto pConfirmedChain = pChainStore->GetConfirmedChain();
 
 	// Orphan if block not a part of candidate chain.
-	std::shared_ptr<const BlockIndex> pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
-	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != header.GetHash())
+	auto pCandidateIndex = pCandidateChain->GetByHeight(block.GetHeight());
+	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != block.GetHash())
 	{
-		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", header);
+		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", block);
 		return EBlockStatus::ORPHAN;
 	}
 
-	std::shared_ptr<Chain> pConfirmedChain = pBatch->GetChainStore()->GetConfirmedChain();
-
 	// Orphan if previous block is missing.
-	std::shared_ptr<const BlockIndex> pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight() - 1);
+	auto pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr)
 	{
-		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", header);
+		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", block);
 		return EBlockStatus::ORPHAN;
 	}
 	
-	if (pPreviousConfirmedIndex->GetHash() != header.GetPreviousBlockHash())
+	if (pPreviousConfirmedIndex->GetHash() != block.GetPreviousHash())
 	{
-		const uint64_t forkPoint = pBatch->GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
+		const uint64_t forkPoint = pChainStore->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 
 		LOG_WARNING_F("Fork detected at height (%lld).", forkPoint);
 
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
-		for (uint64_t i = forkPoint; i < header.GetHeight(); i++)
+		for (uint64_t i = forkPoint; i < block.GetHeight(); i++)
 		{
 			std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
-			if (!pBatch->GetOrphanPool()->IsOrphan(i, pIndex->GetHash()) && pBatch->GetBlockDB()->GetBlock(pIndex->GetHash()) == nullptr)
+			if (!pOrphanPool->IsOrphan(i, pIndex->GetHash()) && pBlockDB->GetBlock(pIndex->GetHash()) == nullptr)
 			{
 				return EBlockStatus::ORPHAN;
 			}
@@ -147,10 +148,10 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	}
 
 	// Orphan if different block a part of confirmed chain.
-	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(header.GetHeight());
-	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != header.GetHash())
+	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight());
+	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != block.GetHash())
 	{
-		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", header);
+		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", block);
 
 		return EBlockStatus::REORG;
 	}
@@ -160,11 +161,17 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 
 void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBatch)
 {
-	const uint64_t commonHeight = pBatch->GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight();
-	std::shared_ptr<Chain> pCandidateChain = pBatch->GetChainStore()->GetCandidateChain();
+	auto pOrphanPool = pBatch->GetOrphanPool();
+	auto pBlockDB = pBatch->GetBlockDB();
+	auto pChainStore = pBatch->GetChainStore();
+	auto pCandidateChain = pChainStore->GetCandidateChain();
+	auto pConfirmedChain = pChainStore->GetConfirmedChain();
+	auto pTxHashSet = pBatch->GetTxHashSet();
+
+	const uint64_t commonHeight = pChainStore->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight();
 
 	const Hash& commonHash = pCandidateChain->GetByHeight(commonHeight)->GetHash();
-	std::unique_ptr<BlockHeader> pCommonHeader = pBatch->GetBlockDB()->GetBlockHeader(commonHash);
+	std::unique_ptr<BlockHeader> pCommonHeader = pBlockDB->GetBlockHeader(commonHash);
 	if (pCommonHeader == nullptr)
 	{
 		LOG_ERROR_F("Failed to find header %s", commonHash);
@@ -174,20 +181,19 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	// TODO: Add rewound blocks to orphan pool
 	// TODO: Add rewound transactions back to TxPool
 
-	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSet();
-	if (pTxHashSet == nullptr || !pTxHashSet->Rewind(pBatch->GetBlockDB(), *pCommonHeader))
+	if (pTxHashSet == nullptr || !pTxHashSet->Rewind(pBlockDB, *pCommonHeader))
 	{
 		LOG_ERROR_F("Failed to rewind TxHashSet to block %s", pCommonHeader->GetHash());
 		throw BLOCK_CHAIN_EXCEPTION("Failed to rewind TxHashSet");
 	}
 
-	for (uint64_t i = commonHeight + 1; i < block.GetBlockHeader().GetHeight(); i++)
+	for (uint64_t i = commonHeight + 1; i < block.GetHeight(); i++)
 	{
 		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
-		std::unique_ptr<FullBlock> pBlock = pBatch->GetOrphanPool()->GetOrphanBlock(i, pIndex->GetHash());
+		std::shared_ptr<const FullBlock> pBlock = pOrphanPool->GetOrphanBlock(i, pIndex->GetHash());
 		if (pBlock == nullptr)
 		{
-			pBlock = pBatch->GetBlockDB()->GetBlock(pIndex->GetHash());
+			pBlock = pBlockDB->GetBlock(pIndex->GetHash());
 		}
 
 		if (pBlock == nullptr)
@@ -201,31 +207,34 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 
 	ValidateAndAddBlock(block, pBatch);
 
-	pBatch->GetChainStore()->ReorgChain(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetBlockHeader().GetHeight());
+	pChainStore->ReorgChain(EChainType::CANDIDATE, EChainType::CONFIRMED, block.GetHeight());
 }
 
 void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainState> pBatch)
 {
-	const Hash& previousHash = block.GetBlockHeader().GetPreviousBlockHash();
-	std::unique_ptr<BlockHeader> pPreviousHeader = pBatch->GetBlockDB()->GetBlockHeader(previousHash);
+	auto pOrphanPool = pBatch->GetOrphanPool();
+	auto pBlockDB = pBatch->GetBlockDB();
+	auto pTxHashSet = pBatch->GetTxHashSet();
+	auto pTxPool = pBatch->GetTransactionPool();
+
+	const Hash& previousHash = block.GetPreviousHash();
+	std::unique_ptr<BlockHeader> pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
 	if (pPreviousHeader == nullptr)
 	{
 		LOG_ERROR_F("Failed to find header %s", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Previous header not found.");
 	}
 
-	ITxHashSetPtr pTxHashSet = pBatch->GetTxHashSet();
-
-	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBatch->GetBlockDB(), block))
+	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBlockDB, block))
 	{
 		LOG_ERROR_F("Failed to apply block %s to the TxHashSet", block);
 		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
 	}
 
-	BlockSums blockSums = BlockValidator(pBatch->GetBlockDB(), pTxHashSet).ValidateBlock(block);
+	BlockSums blockSums = BlockValidator(pBlockDB, pTxHashSet).ValidateBlock(block);
 
-	pBatch->GetBlockDB()->AddBlockSums(block.GetHash(), blockSums);
-	pBatch->GetBlockDB()->AddBlock(block);
-	pBatch->GetOrphanPool()->RemoveOrphan(block.GetBlockHeader().GetHeight(), block.GetHash());
-	pBatch->GetTransactionPool()->ReconcileBlock(pBatch->GetBlockDB(), pTxHashSet, block);
+	pBlockDB->AddBlockSums(block.GetHash(), blockSums);
+	pBlockDB->AddBlock(block);
+	pOrphanPool->RemoveOrphan(block.GetHeight(), block.GetHash());
+	pTxPool->ReconcileBlock(pBlockDB, pTxHashSet, block);
 }

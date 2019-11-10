@@ -211,7 +211,6 @@ bool Socket::SetBlocking(const bool blocking)
 	if (m_blocking != blocking)
 	{
 		#ifdef _WIN32
-		// TODO: Just change m_blocking value, and read it when using send/recieve?
 		unsigned long blockingValue = (blocking ? 0 : 1);
 		const int result = ioctlsocket(m_pSocket->native_handle(), FIONBIO, &blockingValue);
 		if (result == 0)
@@ -254,7 +253,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 {
 	if (data.size() < numBytes)
 	{
-		data = std::vector<unsigned char>(numBytes);
+		data.resize(numBytes);
 	}
 
 	size_t numTries = 0;

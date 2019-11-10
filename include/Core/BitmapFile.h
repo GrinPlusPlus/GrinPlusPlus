@@ -1,0 +1,216 @@
+#pragma once
+
+#include <Core/Traits/Batchable.h>
+#include <CRoaring/roaring.hh>
+#include <Common/Util/BitUtil.h>
+#include <fstream>
+#include <functional>
+#include <algorithm>
+#include <map>
+#include <memory>
+
+// NOTE: Uses bit positions numbered from 0-7, starting at the left.
+// For example, 65 (01000001) has bit positions 1 and 7 set.
+class BitmapFile : public Traits::Batchable
+{
+public:
+	static std::shared_ptr<BitmapFile> Load(const std::string& path)
+	{
+		auto pBitmapFile = std::make_shared<BitmapFile>(BitmapFile(path));
+		pBitmapFile->Load();
+		return pBitmapFile;
+	}
+
+	static std::shared_ptr<BitmapFile> Create(const std::string& path, const Roaring& bitmap)
+	{
+		auto pBitmapFile = Load(path);
+		pBitmapFile->Set(bitmap);
+		pBitmapFile->Commit();
+
+		return pBitmapFile;
+	}
+
+	virtual void Commit() override final
+	{
+		if (!m_modifiedBytes.empty())
+		{
+			m_mmap.unmap();
+
+			std::ofstream file(m_path, std::ios_base::binary | std::ios_base::out | std::ios_base::in);
+
+			for (auto iter : m_modifiedBytes)
+			{
+				file.seekp(iter.first);
+				file.write((const char*)&iter.second, 1);
+			}
+
+			file.close();
+
+			std::error_code error;
+			m_mmap = mio::make_mmap_source(m_path, error);
+			if (error.value() > 0)
+			{
+				// TODO: Handle this
+			}
+
+			m_modifiedBytes.clear();
+			SetDirty(false);
+		}
+	}
+
+	virtual void Rollback() override final
+	{
+		m_modifiedBytes.clear();
+		SetDirty(false);
+	}
+
+	bool IsSet(const uint64_t position) const
+	{
+		return GetByte(position / 8) & BitToByte(position % 8);
+	}
+
+	void Set(const uint64_t position)
+	{
+		SetDirty(true);
+		uint8_t byte = GetByte(position / 8);
+		byte |= BitToByte(position % 8);
+		m_modifiedBytes[position / 8] = byte;
+	}
+
+	void Set(const Roaring& positionsToSet)
+	{
+		for (auto iter = positionsToSet.begin(); iter != positionsToSet.end(); iter++)
+		{
+			Set(iter.i.current_value - 1);
+		}
+	}
+
+	void Unset(const uint64_t position)
+	{
+		SetDirty(true);
+		uint8_t byte = GetByte(position / 8);
+		byte &= (0xff ^ BitToByte(position % 8));
+		m_modifiedBytes[position / 8] = byte;
+	}
+
+	void Unset(const Roaring& positionsToUnset)
+	{
+		for (auto iter = positionsToUnset.begin(); iter != positionsToUnset.end(); iter++)
+		{
+			Unset(iter.i.current_value - 1);
+		}
+	}
+
+	const bool& operator[] (const size_t position) const
+	{
+		return IsSet(position) ? s_true : s_false;
+	}
+
+	void Rewind(const size_t size, const Roaring& positionsToAdd)
+	{
+		Set(positionsToAdd);
+
+		size_t currentSize = GetNumBytes() * 8;
+		for (size_t i = size; i < currentSize; i++)
+		{
+			Unset(i);
+		}
+	}
+
+	Roaring ToRoaring() const
+	{
+		Roaring bitmap;
+
+		const uint64_t numBytes = GetNumBytes();
+		for (size_t i = 0; i < numBytes; i++)
+		{
+			const uint8_t byte = GetByte(i);
+			for (size_t j = 0; j < 8; j++)
+			{
+				if (byte & BitToByte(j) > 0)
+				{
+					bitmap.add((i * 8) + j + 1);
+				}
+			}
+		}
+
+		return bitmap;
+	}
+
+private:
+	BitmapFile(const std::string& path) : m_path(path) { }
+
+	void Load()
+	{
+		std::fstream file(m_path, std::ios::in | std::ios::out | std::ifstream::ate | std::ifstream::binary);
+		if (!file.is_open())
+		{
+			std::ofstream file2(m_path, std::ios::out | std::ios::binary | std::ios::app);
+			file2.close();
+			m_size = 0;
+			return;
+		}
+
+		if (file.tellg() > 0)
+		{
+			std::error_code error;
+			m_mmap = mio::make_mmap_source(m_path, error);
+			m_size = m_mmap.size();
+		}
+			
+		file.close();
+	}
+
+	uint8_t GetByte(const uint64_t byteIndex) const
+	{
+		auto iter = m_modifiedBytes.find(byteIndex);
+		if (iter != m_modifiedBytes.cend())
+		{
+			return iter->second;
+		}
+		else if (byteIndex < m_mmap.size())
+		{
+			return *((uint8_t*)(m_mmap.cbegin() + byteIndex));
+		}
+
+		return 0;
+	}
+
+	uint64_t GetNumBytes() const
+	{
+		uint64_t size = 0;
+		if (!m_modifiedBytes.empty())
+		{
+			size = m_modifiedBytes.crbegin()->first + 1;
+		}
+
+		if (!m_mmap.empty())
+		{
+			size = (std::max)(size, m_mmap.size() + 1);
+		}
+
+		return size;
+	}
+
+	// Returns a byte with the given bit (0-7) set.
+	// Example: BitToByte(2) returns 32 (00100000).
+	uint8_t BitToByte(const uint8_t bit) const
+	{
+		return 1 << (7 - bit);
+	}
+
+	bool IsBitSet(const uint8_t byte, const uint64_t position) const
+	{
+		const uint8_t bitPosition = (uint8_t)position % 8;
+
+		return (byte >> (7 - bitPosition)) & 1;
+	}
+
+	std::string m_path;
+	std::map<uint64_t, uint8_t> m_modifiedBytes;
+	mio::mmap_source m_mmap;
+	uint64_t m_size;
+
+	static const bool s_true{ false };
+	static const bool s_false{ false };
+};

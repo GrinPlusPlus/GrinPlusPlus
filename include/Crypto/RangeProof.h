@@ -8,7 +8,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-static const int MAX_PROOF_SIZE = 675; // TODO: Find central location for this.
+static const int MAX_PROOF_SIZE = 675;
 
 class RangeProof
 {

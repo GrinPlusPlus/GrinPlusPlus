@@ -90,7 +90,7 @@ public:
 		Json::Value value = node.get(key, Json::nullValue);
 		if (!value.isNull())
 		{
-			return std::make_optional<Json::Value>(std::move(value));
+			return std::make_optional(std::move(value));
 		}
 		else
 		{
@@ -182,7 +182,7 @@ public:
 			return std::nullopt;
 		}
 
-		return std::make_optional<CompactSignature>(CompactSignature(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex))));
+		return std::make_optional(CBigInteger<64>(ConvertToVector(signatureJSON, 64, hex)));
 	}
 
 	static std::optional<CompactSignature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key, const bool hex)
@@ -218,7 +218,7 @@ public:
 
 	static std::optional<std::string> ConvertToStringOpt(const Json::Value& stringJSON)
 	{
-		return stringJSON == Json::nullValue ? std::nullopt : std::make_optional<std::string>(stringJSON.asString());
+		return stringJSON == Json::nullValue ? std::nullopt : std::make_optional(stringJSON.asString());
 	}
 
 	static std::optional<std::string> GetStringOpt(const Json::Value& parentJSON, const std::string& key)

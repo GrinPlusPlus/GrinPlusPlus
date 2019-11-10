@@ -124,9 +124,15 @@ bool Dandelion::ProcessStemPhase()
 		m_relayNodeId = mostWorkPeers[index];
 	}
 
+	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+	if (pTxHashSet == nullptr)
+	{
+		return false;
+	}
+
 	std::unique_ptr<Transaction> pTransactionToStem = m_pTransactionPool->GetTransactionToStem(
 		m_pBlockDB->Read().GetShared(),
-		m_pTxHashSetManager->GetTxHashSet()->Read().GetShared()
+		pTxHashSet->Read().GetShared()
 	);
 	if (pTransactionToStem != nullptr)
 	{
@@ -143,8 +149,7 @@ bool Dandelion::ProcessStemPhase()
 			const bool added = m_pBlockChainServer->AddTransaction(*pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 			if (added)
 			{
-				const TransactionMessage transactionMessage(*pTransactionToStem);
-				m_connectionManager.BroadcastMessage(transactionMessage, 0);
+				m_connectionManager.BroadcastMessage(TransactionMessage(*pTransactionToStem), 0);
 			}
 		}
 	}
@@ -154,9 +159,15 @@ bool Dandelion::ProcessStemPhase()
 
 bool Dandelion::ProcessFluffPhase()
 {
+	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+	if (pTxHashSet == nullptr)
+	{
+		return false;
+	}
+
 	std::unique_ptr<Transaction> pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(
 		m_pBlockDB->Read().GetShared(),
-		m_pTxHashSetManager->GetTxHashSet()->Read().GetShared()
+		pTxHashSet->Read().GetShared()
 	);
 	if (pTransactionToFluff != nullptr)
 	{
@@ -164,8 +175,7 @@ bool Dandelion::ProcessFluffPhase()
 		const bool added = m_pBlockChainServer->AddTransaction(*pTransactionToFluff, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 		if (added)
 		{
-			const TransactionMessage transactionMessage(*pTransactionToFluff);
-			m_connectionManager.BroadcastMessage(transactionMessage, 0);
+			m_connectionManager.BroadcastMessage(TransactionMessage(*pTransactionToFluff), 0);
 		}
 	}
 
@@ -182,8 +192,7 @@ bool Dandelion::ProcessExpiredEntries()
 		{
 			if (m_pBlockChainServer->AddTransaction(transaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
 			{
-				const TransactionMessage transactionMessage(transaction);
-				m_connectionManager.BroadcastMessage(transactionMessage, 0);
+				m_connectionManager.BroadcastMessage(TransactionMessage(transaction), 0);
 			}
 		}
 	}

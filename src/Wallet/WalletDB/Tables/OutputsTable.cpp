@@ -141,7 +141,7 @@ std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const Secure
 		const SecureVector decrypted = WalletEncryptionUtil::Decrypt(masterSeed, "OUTPUT", encrypted);
 		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
 
-		ByteBuffer byteBuffer(decryptedUnsafe);
+		ByteBuffer byteBuffer(std::move(decryptedUnsafe));
 		outputs.emplace_back(OutputData::Deserialize(byteBuffer));
 	}
 

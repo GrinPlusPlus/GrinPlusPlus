@@ -56,7 +56,7 @@ std::vector<Peer> PeerDB::LoadAllPeers() const
 	for (it->SeekToFirst(); it->Valid(); it->Next())
 	{
 		std::vector<unsigned char> data(it->value().data(), it->value().data() + it->value().size());
-		ByteBuffer byteBuffer(data);
+		ByteBuffer byteBuffer(std::move(data));
 		peers.emplace_back(Peer::Deserialize(byteBuffer));
 	}
 
@@ -84,9 +84,9 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 	if (status.ok())
 	{
 		std::vector<unsigned char> data(value.data(), value.data() + value.size());
-		ByteBuffer byteBuffer(data);
+		ByteBuffer byteBuffer(std::move(data));
 
-		return std::make_optional<Peer>(Peer::Deserialize(byteBuffer));
+		return std::make_optional(Peer::Deserialize(byteBuffer));
 	}
 
 	return std::nullopt;

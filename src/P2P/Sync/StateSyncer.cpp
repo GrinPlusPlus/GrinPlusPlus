@@ -1,5 +1,4 @@
 #include "StateSyncer.h"
-#include "../BlockLocator.h"
 #include "../Messages/TxHashSetRequestMessage.h"
 
 #include <BlockChain/BlockChainServer.h>

@@ -68,7 +68,7 @@ public:
 			std::unique_ptr<OutputLocation> pOutputPosition = m_pDatabase->GetBlockDB()->Read()->GetOutputPosition(commitment);
 			if (pOutputPosition != nullptr && pTxHashSet->Read()->IsUnspent(*pOutputPosition))
 			{
-				outputs.insert(std::make_pair<Commitment, OutputLocation>(Commitment(commitment), OutputLocation(*pOutputPosition)));
+				outputs.insert(std::make_pair(commitment, *pOutputPosition));
 			}
 		}
 
@@ -98,13 +98,26 @@ public:
 		if (pTipHeader != nullptr)
 		{
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-			try
+			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			if (pTxHashSet != nullptr)
 			{
-				return m_pTransactionPool->AddTransaction(pBlockDB.GetShared(), transaction, EPoolType::STEMPOOL, *pTipHeader) == EAddTransactionStatus::ADDED;
-			}
-			catch (std::exception& e)
-			{
-				return false;
+				auto pTxHashSetReader = pTxHashSet->Read();
+				try
+				{
+					auto result = m_pTransactionPool->AddTransaction(
+						pBlockDB.GetShared(),
+						pTxHashSetReader.GetShared(),
+						transaction,
+						EPoolType::STEMPOOL,
+						*pTipHeader
+					);
+					
+					return result == EAddTransactionStatus::ADDED;
+				}
+				catch (std::exception& e)
+				{
+					return false;
+				}
 			}
 		}
 

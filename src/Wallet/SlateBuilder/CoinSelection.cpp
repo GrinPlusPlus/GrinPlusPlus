@@ -23,7 +23,7 @@ std::vector<OutputData> CoinSelection::SelectCoinsToSpend(
 		return SelectUsingSmallestInputs(availableCoins, amount, feeBase, numOutputs, numKernels);
 	}
 
-	LoggerAPI::LogError("SlateBuilder::SelectCoinsToSpend - Unsupported selection strategy used.");
+	WALLET_ERROR("Unsupported selection strategy used.");
 	throw InsufficientFundsException();
 }
 
@@ -52,7 +52,7 @@ std::vector<OutputData> CoinSelection::SelectUsingSmallestInputs(
 	}
 
 	// Not enough coins found.
-	LoggerAPI::LogError("SlateBuilder::SelectUsingSmallestInputs - Not enough funds.");
+	WALLET_ERROR("Not enough funds.");
 	throw InsufficientFundsException();
 }
 
@@ -82,6 +82,6 @@ std::vector<OutputData> CoinSelection::SelectUsingCustomInputs(
 	}
 
 	// Not enough coins selected.
-	LoggerAPI::LogError("SlateBuilder::SelectUsingCustomInputs - Not enough funds.");
+	WALLET_ERROR("Not enough funds.");
 	throw InsufficientFundsException();
 }

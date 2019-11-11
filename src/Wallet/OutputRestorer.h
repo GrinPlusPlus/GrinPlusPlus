@@ -13,7 +13,7 @@ public:
 
 	std::vector<OutputData> FindAndRewindOutputs(
 		const SecureVector& masterSeed,
-		Wallet& wallet,
+		Writer<IWalletDB> pBatch,
 		const bool fromGenesis
 	) const;
 

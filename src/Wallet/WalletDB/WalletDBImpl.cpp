@@ -4,8 +4,9 @@
 #include "WalletRocksDB.h"
 #endif
 
-#include "WalletSqlite.h"
+#include "Sqlite/SqliteStore.h"
 #include <Infrastructure/Logger.h>
+#include <Wallet/WalletDB/WalletStore.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
 namespace WalletDBAPI
@@ -13,12 +14,12 @@ namespace WalletDBAPI
 	//
 	// Opens the wallet database and returns an instance of IWalletDB.
 	//
-	WALLET_DB_API std::shared_ptr<IWalletDB> OpenWalletDB(const Config& config)
+	WALLET_DB_API std::shared_ptr<IWalletStore> OpenWalletDB(const Config& config)
 	{
 #ifdef __linux__
-		return WalletSqlite::Open(config);
+		return SqliteStore::Open(config);
 #else
-		std::shared_ptr<WalletSqlite> pWalletDB = WalletSqlite::Open(config);
+		std::shared_ptr<SqliteStore> pWalletDB = SqliteStore::Open(config);
 
 		if (config.GetWalletConfig().GetDatabaseType() != "SQLITE")
 		{
@@ -44,7 +45,7 @@ namespace WalletDBAPI
 			}
 		}
 
-		return std::shared_ptr<IWalletDB>(pWalletDB);
+		return std::shared_ptr<IWalletStore>(pWalletDB);
 #endif
 	}
 }

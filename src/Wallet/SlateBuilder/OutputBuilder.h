@@ -9,7 +9,8 @@ class OutputBuilder
 {
 public:
 	static std::vector<OutputData> CreateOutputs(
-		std::shared_ptr<Wallet> pWallet, 
+		std::shared_ptr<Wallet> pWallet,
+		Writer<IWalletDB> pBatch,
 		const SecureVector& masterSeed, 
 		const uint64_t totalAmount, 
 		const uint32_t walletTxId, 
@@ -32,7 +33,8 @@ public:
 				coinAmount += (totalAmount % numOutputs);
 			}
 
-			outputs.emplace_back(pWallet->CreateBlindedOutput(masterSeed, coinAmount, walletTxId, bulletproofType, messageOpt));
+			KeyChainPath keyChainPath = pBatch->GetNextChildPath(pWallet->GetUserPath());
+			outputs.emplace_back(pWallet->CreateBlindedOutput(masterSeed, coinAmount, keyChainPath, walletTxId, bulletproofType, messageOpt));
 		}
 
 		return outputs;

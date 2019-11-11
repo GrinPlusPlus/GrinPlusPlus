@@ -14,11 +14,11 @@ OutputRestorer::OutputRestorer(const Config& config, INodeClientConstPtr pNodeCl
 
 }
 
-std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis) const
+std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_pNodeClient->GetChainHeight();
 
-	uint64_t nextLeafIndex = fromGenesis ? 0 : wallet.GetRestoreLeafIndex() + 1;
+	uint64_t nextLeafIndex = fromGenesis ? 0 : pBatch->GetRestoreLeafIndex() + 1;
 
 	std::vector<OutputData> walletOutputs;
 	while (true)
@@ -52,7 +52,7 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 		}
 	}
 
-	wallet.SetRestoreLeafIndex(nextLeafIndex - 1);
+	pBatch->UpdateRestoreLeafIndex(nextLeafIndex - 1);
 
 	return walletOutputs;
 }

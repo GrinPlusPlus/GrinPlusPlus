@@ -6,6 +6,8 @@
 class GrinException : public std::exception
 {
 public:
+	virtual ~GrinException() = default;
+
 	virtual const char* what() const throw()
 	{
 		return m_what.c_str();

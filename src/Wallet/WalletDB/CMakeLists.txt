@@ -14,10 +14,11 @@ file(GLOB SOURCE_CODE
     "WalletDBImpl.cpp"
     "WalletSqlite.cpp"
 	"WalletEncryptionUtil.cpp"
-	"Tables/VersionTable.cpp"
-	"Tables/OutputsTable.cpp"
-	"Tables/TransactionsTable.cpp"
-	"Tables/MetadataTable.cpp"
+	"Sqlite/*.cpp"
+	"Sqlite/Tables/VersionTable.cpp"
+	"Sqlite/Tables/OutputsTable.cpp"
+	"Sqlite/Tables/TransactionsTable.cpp"
+	"Sqlite/Tables/MetadataTable.cpp"
     ${ROCKS_SRC}
 )
 

@@ -26,8 +26,6 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 		throw WALLET_EXCEPTION("Failed to verify message signatures.");
 	}
 
-	auto pWallet = wallet.Write();
-
 	// Verify partial signatures
 	const Hash message = kernels.front().GetSignatureMessage();
 	if (!SignatureUtil::VerifyPartialSignatures(finalSlate.GetParticipantData(), message))
@@ -37,7 +35,7 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	}
 
 	// Add partial signature to slate's participant data
-	if (!AddPartialSignature(pWallet.GetShared(), masterSeed, finalSlate, message))
+	if (!AddPartialSignature(wallet.Read().GetShared(), masterSeed, finalSlate, message))
 	{
 		WALLET_ERROR_F("Failed to generate signatures for slate %s", uuids::to_string(slate.GetSlateId()));
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
@@ -51,26 +49,27 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	}
 
 	// Update database with latest WalletTx
-	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, finalSlate))
-	{
-		WALLET_ERROR_F("Failed to update database for slate %s", uuids::to_string(slate.GetSlateId()));
-		throw WALLET_EXCEPTION("Failed to update wallet database.");
-	}
+	UpdateDatabase(wallet.Write().GetShared(), masterSeed, finalSlate);
 
 	return finalSlate;
 }
 
-bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
+bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
 {
 	// Load secretKey and secretNonce
-	std::unique_ptr<SlateContext> pSlateContext = pWallet->GetSlateContext(slate.GetSlateId(), masterSeed);
+	std::unique_ptr<SlateContext> pSlateContext = pWallet->GetDatabase().Read()->LoadSlateContext(masterSeed, slate.GetSlateId());
 	if (pSlateContext == nullptr)
 	{
 		return false;
 	}
 
 	// Generate partial signature
-	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(pSlateContext->GetSecretKey(), pSlateContext->GetSecretNonce(), slate.GetParticipantData(), kernelMessage);
+	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
+		pSlateContext->GetSecretKey(),
+		pSlateContext->GetSecretNonce(),
+		slate.GetParticipantData(),
+		kernelMessage
+	);
 	if (pPartialSignature == nullptr)
 	{
 		return false;
@@ -145,23 +144,19 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	return true;
 }
 
-bool FinalizeSlateBuilder::UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const
+void FinalizeSlateBuilder::UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const
 {
 	// Load WalletTx
 	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, finalSlate.GetSlateId());
 	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_STARTED)
 	{
-		return false;
+		WALLET_ERROR_F("Transaction not found for slate (%s)", uuids::to_string(finalSlate.GetSlateId()));
+		throw WALLET_EXCEPTION_F("Transaction not found for slate (%s)", uuids::to_string(finalSlate.GetSlateId()));
 	}
 
 	// Update WalletTx
 	pWalletTx->SetType(EWalletTxType::SENDING_FINALIZED);
 	pWalletTx->SetTransaction(finalSlate.GetTransaction());
 
-	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ *pWalletTx })))
-	{
-		return false;
-	}
-
-	return true;
+	pWallet->GetDatabase().Write()->AddTransaction(masterSeed, *pWalletTx);
 }

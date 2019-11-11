@@ -37,7 +37,15 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const uint64_t numKernels = 1;
 	auto pWallet = wallet.Write();
 	const std::vector<OutputData> availableCoins = pWallet->GetAllAvailableCoins(masterSeed);
-	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amount, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
+	std::vector<OutputData> inputs = CoinSelection::SelectCoinsToSpend(
+		availableCoins,
+		amount,
+		feeBase,
+		strategy.GetStrategy(),
+		strategy.GetInputs(),
+		totalNumOutputs,
+		numKernels
+	);
 
 	// Calculate the fee
 	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
@@ -49,17 +57,27 @@ Slate SendSlateBuilder::BuildSendSlate(
 		inputTotal += input.GetAmount();
 	}
 
-	const uint32_t walletTxId = pWallet->GetNextWalletTxId();
+	auto pBatch = pWallet->GetDatabase().BatchWrite();
+	const uint32_t walletTxId = pBatch->GetNextTransactionId();
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
-	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(pWallet.GetShared(), masterSeed, changeAmount, walletTxId, numOutputs, bulletproofType, messageOpt);
+	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(
+		pWallet.GetShared(),
+		pBatch,
+		masterSeed,
+		changeAmount,
+		walletTxId,
+		numOutputs,
+		bulletproofType,
+		messageOpt
+	);
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
 	SecretKey secretKey = CalculatePrivateKey(transactionOffset, inputs, changeOutputs);
 
 	// Select a random nonce kS
-	SecretKey secretNonce = *Crypto::GenerateSecureNonce();
+	SecretKey secretNonce = Crypto::GenerateSecureNonce();
 
 	// Build Transaction
 	Transaction transaction = TransactionBuilder::BuildTransaction(inputs, changeOutputs, transactionOffset, fee, 0);
@@ -72,11 +90,9 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
 
 	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	if (!UpdateDatabase(pWallet.GetShared(), masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx))
-	{
-		WALLET_ERROR_F("Failed to update database for slate %s", uuids::to_string(slate.GetSlateId()));
-		throw WALLET_EXCEPTION("Failed to update wallet database.");
-	}
+	UpdateDatabase(pBatch, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
+
+	pBatch->Commit();
 
 	return slate;
 }
@@ -163,9 +179,8 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 	);
 }
 
-// TODO: Use a DB Batch
-bool SendSlateBuilder::UpdateDatabase(
-	std::shared_ptr<Wallet> pWallet,
+void SendSlateBuilder::UpdateDatabase(
+	Writer<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
 	const uuids::uuid& slateId,
 	const SlateContext& context,
@@ -174,32 +189,19 @@ bool SendSlateBuilder::UpdateDatabase(
 	const WalletTx& walletTx) const
 {
 	// Save secretKey and secretNonce
-	if (!pWallet->SaveSlateContext(slateId, masterSeed, context))
-	{
-		WALLET_ERROR_F("Failed to save context for slate %s", uuids::to_string(slateId));
-		return false;
-	}
+	pBatch->SaveSlateContext(masterSeed, slateId, context);
 
 	// Save new blinded outputs
-	if (!pWallet->SaveOutputs(masterSeed, changeOutputs))
-	{
-		WALLET_ERROR("Failed to save new outputs.");
-		return false;
-	}
+	pBatch->AddOutputs(masterSeed, changeOutputs);
 
 	// Lock coins
-	if (!pWallet->LockCoins(masterSeed, coinsToLock))
+	for (OutputData& coin : coinsToLock)
 	{
-		WALLET_ERROR("Failed to lock coins.");
-		return false;
+		coin.SetStatus(EOutputStatus::LOCKED);
 	}
+
+	pBatch->AddOutputs(masterSeed, coinsToLock);
 
 	// Save the log/WalletTx
-	if (!pWallet->AddWalletTxs(masterSeed, std::vector<WalletTx>({ walletTx })))
-	{
-		WALLET_ERROR("Failed to create WalletTx");
-		return false;
-	}
-
-	return true;
+	pBatch->AddTransaction(masterSeed, walletTx);
 }

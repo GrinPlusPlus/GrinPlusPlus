@@ -6,6 +6,7 @@ file(GLOB SOURCE_CODE
 	"SlateBuilder/SendSlateBuilder.cpp"
 	"SlateBuilder/ReceiveSlateBuilder.cpp"
 	"SlateBuilder/FinalizeSlateBuilder.cpp"
+	"CancelTx.cpp"
 	"Wallet.cpp"
 	"WalletRefresher.cpp"
 	"SessionManager.cpp"

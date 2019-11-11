@@ -29,7 +29,7 @@ AggSig::~AggSig()
 	secp256k1_context_destroy(m_pContext);
 }
 
-std::unique_ptr<SecretKey> AggSig::GenerateSecureNonce() const
+SecretKey AggSig::GenerateSecureNonce() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -39,10 +39,10 @@ std::unique_ptr<SecretKey> AggSig::GenerateSecureNonce() const
 	const int result = secp256k1_aggsig_export_secnonce_single(m_pContext, nonce.data(), seed.data());
 	if (result == 1)
 	{
-		return std::make_unique<SecretKey>(CBigInteger<32>(std::move(nonce)));
+		return SecretKey(CBigInteger<32>(std::move(nonce)));
 	}
 
-	return std::unique_ptr<SecretKey>(nullptr);
+	throw CryptoException("secp256k1_aggsig_export_secnonce_single failed with error: " + std::to_string(result));
 }
 
 std::unique_ptr<CompactSignature> AggSig::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message)

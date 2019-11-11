@@ -40,8 +40,8 @@ private:
 		const std::optional<std::string>& messageOpt
 	) const;
 
-	bool UpdateDatabase(
-		std::shared_ptr<Wallet> pWallet,
+	void UpdateDatabase(
+		Writer<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
 		const SlateContext& context,

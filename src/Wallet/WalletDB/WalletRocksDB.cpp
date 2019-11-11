@@ -132,19 +132,9 @@ std::vector<std::string> WalletRocksDB::GetAccounts() const
 	return usernames;
 }
 
-bool WalletRocksDB::OpenWallet(const std::string& username, const SecureVector& masterSeed)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
 std::unique_ptr<EncryptedSeed> WalletRocksDB::LoadWalletSeed(const std::string& username) const
 {
-	LoggerAPI::LogTrace("WalletRocksDB::LoadWalletSeed - Loading wallet seed for " + username);
+	WALLET_TRACE_F("Loading wallet seed for (%s)", username);
 
 	const Slice key(username);
 
@@ -153,71 +143,11 @@ std::unique_ptr<EncryptedSeed> WalletRocksDB::LoadWalletSeed(const std::string& 
 	if (readStatus.ok())
 	{
 		std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
-		LoggerAPI::LogError("WalletRocksDB::LoadWalletSeed -  Deserialized: " + HexUtil::ConvertToHex(bytes));
+		WALLET_ERROR_F("Deserialized: %s", HexUtil::ConvertToHex(bytes));
 		ByteBuffer byteBuffer(std::move(bytes));
 		return std::make_unique<EncryptedSeed>(EncryptedSeed::Deserialize(byteBuffer));
 	}
 
-	LoggerAPI::LogError("WalletRocksDB::LoadWalletSeed - Wallet seed not found for " + username);
+	WALLET_ERROR_F("Wallet seed not found for (%s)", username);
 	return std::unique_ptr<EncryptedSeed>(nullptr);
-}
-
-KeyChainPath WalletRocksDB::GetNextChildPath(const std::string& username, const KeyChainPath& parentPath)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-std::unique_ptr<SlateContext> WalletRocksDB::LoadSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId) const
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::SaveSlateContext(const std::string& username, const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::AddOutputs(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-std::vector<OutputData> WalletRocksDB::GetOutputs(const std::string& username, const SecureVector& masterSeed) const
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::AddTransaction(const std::string& username, const SecureVector& masterSeed, const WalletTx& walletTx)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-std::vector<WalletTx> WalletRocksDB::GetTransactions(const std::string& username, const SecureVector& masterSeed) const
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-uint32_t WalletRocksDB::GetNextTransactionId(const std::string& username)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-uint64_t WalletRocksDB::GetRefreshBlockHeight(const std::string& username) const
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::UpdateRefreshBlockHeight(const std::string& username, const uint64_t refreshBlockHeight)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-uint64_t WalletRocksDB::GetRestoreLeafIndex(const std::string& username) const
-{
-	throw UNIMPLEMENTED_EXCEPTION;
-}
-
-bool WalletRocksDB::UpdateRestoreLeafIndex(const std::string& username, const uint64_t lastLeafIndex)
-{
-	throw UNIMPLEMENTED_EXCEPTION;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <libsqlite3/sqlite3.h>
-#include "../UserMetadata.h"
+#include "../../UserMetadata.h"
 
 class MetadataTable
 {

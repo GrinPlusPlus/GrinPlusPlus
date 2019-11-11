@@ -8,7 +8,7 @@
 #include <Common/Secure.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
-#include <Wallet/WalletDB/WalletDB.h>
+#include <Wallet/WalletDB/WalletStore.h>
 #include <Wallet/SessionToken.h>
 #include <memory>
 #include <unordered_map>
@@ -24,7 +24,7 @@ public:
 	static Locked<SessionManager> Create(
 		const Config& config,
 		INodeClientConstPtr pNodeClient,
-		IWalletDBPtr pWalletDB,
+		std::shared_ptr<IWalletStore> pWalletDB,
 		IWalletManager& walletManager
 	);
 
@@ -40,7 +40,7 @@ private:
 	SessionManager(
 		const Config& config,
 		INodeClientConstPtr pNodeClient,
-		IWalletDBPtr pWalletDB,
+		std::shared_ptr<IWalletStore> pWalletDB,
 		std::shared_ptr<ForeignController> pForeignController
 	);
 
@@ -51,6 +51,6 @@ private:
 
 	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
-	IWalletDBPtr m_pWalletDB;
+	std::shared_ptr<IWalletStore> m_pWalletDB;
 	std::shared_ptr<ForeignController> m_pForeignController;
 };

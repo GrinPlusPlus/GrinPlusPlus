@@ -35,7 +35,7 @@ public:
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.
 	//
-	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(
+	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(
 		const std::string& username,
 		const SecureString& password
 	) = 0;

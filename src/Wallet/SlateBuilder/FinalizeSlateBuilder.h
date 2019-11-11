@@ -12,8 +12,8 @@ public:
 	Slate Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const;
 
 private:
-	bool AddPartialSignature(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const;
+	bool AddPartialSignature(std::shared_ptr<const Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const;
 	bool AddFinalTransaction(Slate& slate, const Hash& kernelMessage) const;
 
-	bool UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const;
+	void UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const;
 };

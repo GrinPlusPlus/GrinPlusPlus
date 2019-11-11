@@ -7,7 +7,7 @@
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
 
-SessionManager::SessionManager(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB, std::shared_ptr<ForeignController> pForeignController)
+SessionManager::SessionManager(const Config& config, INodeClientConstPtr pNodeClient, std::shared_ptr<IWalletStore> pWalletDB, std::shared_ptr<ForeignController> pForeignController)
 	: m_config(config), m_pNodeClient(pNodeClient), m_pWalletDB(pWalletDB), m_pForeignController(pForeignController)
 {
 	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
@@ -24,7 +24,7 @@ SessionManager::~SessionManager()
 Locked<SessionManager> SessionManager::Create(
 	const Config& config,
 	INodeClientConstPtr pNodeClient,
-	IWalletDBPtr pWalletDB,
+	std::shared_ptr<IWalletStore> pWalletDB,
 	IWalletManager& walletManager)
 {
 	std::shared_ptr<ForeignController> pForeignController = std::shared_ptr<ForeignController>(new ForeignController(config, walletManager));
@@ -34,25 +34,19 @@ Locked<SessionManager> SessionManager::Create(
 SessionToken SessionManager::Login(const std::string& username, const SecureString& password)
 {
 	WALLET_DEBUG_F("Logging in with username: %s", username);
-	std::unique_ptr<EncryptedSeed> pSeed = m_pWalletDB->LoadWalletSeed(username);
-	if (pSeed != nullptr)
+	try
 	{
-		try
-		{
-			SecureVector decryptedSeed = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+		EncryptedSeed seed = m_pWalletDB->LoadWalletSeed(username);
 
-			WALLET_INFO("Valid password provided. Logging in now.");
-			m_pWalletDB->OpenWallet(username, decryptedSeed);
-			return Login(username, decryptedSeed);
-		}
-		catch (std::exception& e)
-		{
-			WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
-		}
+		SecureVector decryptedSeed = SeedEncrypter().DecryptWalletSeed(seed, password);
+
+		WALLET_INFO("Valid password provided. Logging in now.");
+		m_pWalletDB->OpenWallet(username, decryptedSeed);
+		return Login(username, decryptedSeed);
 	}
-	else
+	catch (std::exception& e)
 	{
-		WALLET_ERROR("Wallet seed not found.");
+		WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
 	}
 
 	throw SessionTokenException();
@@ -85,7 +79,7 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	const uint64_t sessionId = m_nextSessionId++;
 	SessionToken token(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 
-	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB, username);
+	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB->OpenWallet(username, seed), username);
 
 	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
 	m_sessionsById[sessionId] = std::shared_ptr<LoggedInSession>(pSession);

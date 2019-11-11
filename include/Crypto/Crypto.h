@@ -268,5 +268,5 @@ public:
 		const SecretKey& secretKey2
 	);
 
-	static std::unique_ptr<SecretKey> GenerateSecureNonce();
+	static SecretKey GenerateSecureNonce();
 };

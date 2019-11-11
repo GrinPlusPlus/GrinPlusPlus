@@ -4,16 +4,16 @@
 
 #include <Wallet/WalletManager.h>
 #include <Wallet/NodeClient.h>
-#include <Wallet/WalletDB/WalletDB.h>
+#include <Wallet/WalletDB/WalletStore.h>
 #include <map>
 
 class WalletManager : public IWalletManager
 {
 public:
-	WalletManager(const Config& config, INodeClientPtr nodeClient, IWalletDBPtr pWalletDB);
+	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	virtual ~WalletManager() = default;
 
-	virtual std::optional<std::pair<SecureString, SessionToken>> InitializeNewWallet(
+	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(
 		const std::string& username,
 		const SecureString& password
 	) override final;
@@ -68,6 +68,6 @@ public:
 private:
 	const Config& m_config;
 	INodeClientPtr m_pNodeClient;
-	IWalletDBPtr m_pWalletDB;
+	std::shared_ptr<IWalletStore> m_pWalletStore;
 	Locked<SessionManager> m_sessionManager;
 };

@@ -1,5 +1,5 @@
 #include "OutputsTable.h"
-#include "../WalletEncryptionUtil.h"
+#include "../../WalletEncryptionUtil.h"
 
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>

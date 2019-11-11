@@ -19,7 +19,7 @@ class AggSig
 public:
 	static AggSig& GetInstance();
 
-	std::unique_ptr<SecretKey> GenerateSecureNonce() const;
+	SecretKey GenerateSecureNonce() const;
 
 	std::unique_ptr<CompactSignature> SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message);
 	bool VerifyMessageSignature(const CompactSignature& signature, const PublicKey& publicKey, const Hash& message) const;

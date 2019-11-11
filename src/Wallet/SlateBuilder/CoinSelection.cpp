@@ -12,7 +12,7 @@ std::vector<OutputData> CoinSelection::SelectCoinsToSpend(
 	const ESelectionStrategy& strategy,
 	const std::set<Commitment>& inputs,
 	const int64_t numOutputs,
-	const int64_t numKernels) const
+	const int64_t numKernels)
 {
 	if (strategy == ESelectionStrategy::CUSTOM)
 	{
@@ -32,7 +32,7 @@ std::vector<OutputData> CoinSelection::SelectUsingSmallestInputs(
 	const uint64_t amount,
 	const uint64_t feeBase,
 	const int64_t numOutputs,
-	const int64_t numKernels) const
+	const int64_t numKernels)
 {
 	std::vector<OutputData> sortedCoins = availableCoins;
 	std::sort(sortedCoins.begin(), sortedCoins.end());
@@ -62,7 +62,7 @@ std::vector<OutputData> CoinSelection::SelectUsingCustomInputs(
 	const uint64_t feeBase,
 	const std::set<Commitment>& inputs,
 	const int64_t numOutputs,
-	const int64_t numKernels) const
+	const int64_t numKernels)
 {
 	uint64_t amountFound = 0;
 	std::vector<OutputData> selectedCoins;

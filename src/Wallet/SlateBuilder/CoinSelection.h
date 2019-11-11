@@ -7,7 +7,7 @@
 class CoinSelection
 {
 public:
-	std::vector<OutputData> SelectCoinsToSpend(
+	static std::vector<OutputData> SelectCoinsToSpend(
 		const std::vector<OutputData>& availableCoins,
 		const uint64_t amount,
 		const uint64_t feeBase,
@@ -15,23 +15,23 @@ public:
 		const std::set<Commitment>& inputs,
 		const int64_t numOutputs,
 		const int64_t numKernels
-	) const;
+	);
 
 private:
-	std::vector<OutputData> SelectUsingSmallestInputs(
+	static std::vector<OutputData> SelectUsingSmallestInputs(
 		const std::vector<OutputData>& availableCoins,
 		const uint64_t amount,
 		const uint64_t feeBase,
 		const int64_t numOutputs,
 		const int64_t numKernels
-	) const;
+	);
 
-	std::vector<OutputData> SelectUsingCustomInputs(
+	static std::vector<OutputData> SelectUsingCustomInputs(
 		const std::vector<OutputData>& availableCoins,
 		const uint64_t amount,
 		const uint64_t feeBase,
 		const std::set<Commitment>& inputs,
 		const int64_t numOutputs,
 		const int64_t numKernels
-	) const;
+	);
 };

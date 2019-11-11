@@ -7,8 +7,8 @@
 #include <Wallet/WalletDB/WalletDB.h>
 #include <unordered_map>
 
-WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB)
-	: m_config(config), m_pNodeClient(pNodeClient), m_pWalletDB(pWalletDB)
+WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient)
+	: m_config(config), m_pNodeClient(pNodeClient)
 {
 
 }
@@ -21,22 +21,23 @@ WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNode
 // 3. Refresh status for all OutputData by calling m_pNodeClient->GetOutputsByCommitment
 // 4. For all OutputData, update matching WalletTx status.
 
-std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis)
+std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, const bool fromGenesis)
 {
-	WALLET_INFO_F("Refreshing wallet for user: %s", wallet.GetUsername());
+	auto pBatch = walletDB.BatchWrite();
 
-	if (m_pNodeClient->GetChainHeight() < m_pWalletDB->GetRefreshBlockHeight(wallet.GetUsername()))
+	if (m_pNodeClient->GetChainHeight() < pBatch->GetRefreshBlockHeight())
 	{
 		WALLET_INFO("Skipping refresh since node is resyncing.");
 		return std::vector<OutputData>();
 	}
 
-	std::vector<OutputData> walletOutputs = m_pWalletDB->GetOutputs(wallet.GetUsername(), masterSeed);
-	std::vector<WalletTx> walletTransactions = m_pWalletDB->GetTransactions(wallet.GetUsername(), masterSeed);
+
+	std::vector<OutputData> walletOutputs = pBatch->GetOutputs(masterSeed);
+	std::vector<WalletTx> walletTransactions = pBatch->GetTransactions(masterSeed);
 
 	// 1. Check for own outputs in new blocks.
 	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-	std::vector<OutputData> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(masterSeed, wallet, fromGenesis);
+	std::vector<OutputData> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(masterSeed, pBatch, fromGenesis);
 
 	// 2. For each restored output, look for OutputData with matching commitment.
 	for (OutputData& restoredOutput : restoredOutputs)
@@ -54,7 +55,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 				auto blockTimeOpt = GetBlockTime(restoredOutput);
 
 				// If no output found, create new WalletTx and OutputData.
-				const uint32_t walletTxId = wallet.GetNextWalletTxId();
+				const uint32_t walletTxId = pBatch->GetNextTransactionId();
 				WalletTx walletTx(
 					walletTxId,
 					EWalletTxType::RECEIVED,
@@ -71,8 +72,8 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 				);
 
 				restoredOutput.SetWalletTxId(walletTxId);
-				m_pWalletDB->AddOutputs(wallet.GetUsername(), masterSeed, std::vector<OutputData>({ restoredOutput }));
-				m_pWalletDB->AddTransaction(wallet.GetUsername(), masterSeed, walletTx);
+				pBatch->AddOutputs(masterSeed, std::vector<OutputData>({ restoredOutput }));
+				pBatch->AddTransaction(masterSeed, walletTx);
 
 				walletOutputs.push_back(restoredOutput);
 				walletTransactions.emplace_back(std::move(walletTx));
@@ -85,15 +86,16 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 	}
 
 	// 3. Refresh status for all OutputData by calling m_pNodeClient->GetOutputsByCommitment
-	RefreshOutputs(masterSeed, wallet, walletOutputs);
+	RefreshOutputs(masterSeed, pBatch, walletOutputs);
 
 	// 4. For all OutputData, update matching WalletTx status.
-	RefreshTransactions(wallet.GetUsername(), masterSeed, walletOutputs, walletTransactions);
+	RefreshTransactions(masterSeed, pBatch, walletOutputs, walletTransactions);
 
+	pBatch->Commit();
 	return walletOutputs;
 }
 
-void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wallet, std::vector<OutputData>& walletOutputs)
+void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, std::vector<OutputData>& walletOutputs)
 {
 	std::vector<Commitment> commitments;
 
@@ -161,11 +163,11 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Wallet& wal
 		}
 	}
 
-	m_pWalletDB->AddOutputs(wallet.GetUsername(), masterSeed, outputsToUpdate);
-	m_pWalletDB->UpdateRefreshBlockHeight(wallet.GetUsername(), lastConfirmedHeight);
+	pBatch->AddOutputs(masterSeed, outputsToUpdate);
+	pBatch->UpdateRefreshBlockHeight(lastConfirmedHeight);
 }
 
-void WalletRefresher::RefreshTransactions(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
+void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const std::vector<OutputData>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
 {
 	std::unordered_map<uint32_t, WalletTx> walletTransactionsById;
 	for (WalletTx& walletTx : walletTransactions)
@@ -191,14 +193,14 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 						WALLET_DEBUG_F("Marking transaction as received: %lu", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::RECEIVED);
-						m_pWalletDB->AddTransaction(username, masterSeed, walletTx);
+						pBatch->AddTransaction(masterSeed, walletTx);
 					}
 					else if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 					{
 						WALLET_DEBUG_F("Marking transaction as sent: %lu", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::SENT);
-						m_pWalletDB->AddTransaction(username, masterSeed, walletTx);
+						pBatch->AddTransaction(masterSeed, walletTx);
 					}
 				}
 			}
@@ -220,7 +222,7 @@ void WalletRefresher::RefreshTransactions(const std::string& username, const Sec
 						WALLET_DEBUG_F("Output is spent. Marking transaction as sent: %lu", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::SENT);
-						m_pWalletDB->AddTransaction(username, masterSeed, walletTx);
+						pBatch->AddTransaction(masterSeed, walletTx);
 					}
 
 					break;

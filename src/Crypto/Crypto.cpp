@@ -289,7 +289,7 @@ bool Crypto::VerifyKernelSignatures(const std::vector<const Signature*>& signatu
 	return AggSig::GetInstance().VerifyAggregateSignatures(signatures, publicKeys, messages);
 }
 
-std::unique_ptr<SecretKey> Crypto::GenerateSecureNonce()
+SecretKey Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
 }

@@ -20,8 +20,8 @@ public:
 private:
 	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
 	void AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
-	bool UpdateDatabase(
-		std::shared_ptr<Wallet> pWallet,
+	void UpdateDatabase(
+		Writer<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
 		const Slate& slate,
 		const OutputData& outputData,

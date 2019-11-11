@@ -17,18 +17,17 @@ class Wallet;
 class WalletRefresher
 {
 public:
-	WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient, IWalletDBPtr pWalletDB);
+	WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient);
 
-	std::vector<OutputData> Refresh(const SecureVector& masterSeed, Wallet& wallet, const bool fromGenesis);
+	std::vector<OutputData> Refresh(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, const bool fromGenesis);
 
 private:
-	void RefreshOutputs(const SecureVector& masterSeed, Wallet& wallet, std::vector<OutputData>& walletOutputs);
-	void RefreshTransactions(const std::string& username, const SecureVector& masterSeed, const std::vector<OutputData>& walletOutputs, std::vector<WalletTx>& walletTransactions);
+	void RefreshOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, std::vector<OutputData>& walletOutputs);
+	void RefreshTransactions(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const std::vector<OutputData>& walletOutputs, std::vector<WalletTx>& walletTransactions);
 	std::optional<std::chrono::system_clock::time_point> GetBlockTime(const OutputData& output) const;
 
 	std::unique_ptr<OutputData> FindOutput(const std::vector<OutputData>& walletOutputs, const Commitment& commitment) const;
 
 	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
-	IWalletDBPtr m_pWalletDB;
 };

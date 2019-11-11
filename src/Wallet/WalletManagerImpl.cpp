@@ -30,13 +30,13 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const SecureVector walletSeedBytes(walletSeed.GetBytes().GetData().begin(), walletSeed.GetBytes().GetData().end());
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeedBytes, password);
+	SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData());
 
 	const std::string usernameLower = StringUtil::ToLower(username);
 	if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 	{
 		WALLET_INFO_F("Wallet created with username: %s", username);
 
-		SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetBytes().GetData());
 		SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeedBytes);
 
 		return std::make_optional(std::make_pair(std::move(walletWords), std::move(token)));
@@ -48,20 +48,21 @@ std::optional<std::pair<SecureString, SessionToken>> WalletManager::InitializeNe
 std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords)
 {
 	WALLET_INFO_F("Attempting to restore account with username: %s", username);
-	std::optional<SecureVector> entropyOpt = Mnemonic::ToEntropy(walletWords);
-	if (entropyOpt.has_value())
+	try
 	{
-		const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(entropyOpt.value(), password);
+		SecureVector entropy = Mnemonic::ToEntropy(walletWords);
+
+		const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(entropy, password);
 		const std::string usernameLower = StringUtil::ToLower(username);
 		if (m_pWalletDB->CreateWallet(usernameLower, encryptedSeed))
 		{
 			WALLET_INFO_F("Wallet restored for username: %s", username);
-			return std::make_optional(m_sessionManager.Write()->Login(usernameLower, entropyOpt.value()));
+			return std::make_optional(m_sessionManager.Write()->Login(usernameLower, entropy));
 		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		WALLET_WARNING_F("Mnemonic invalid for username: %s", username);
+		WALLET_WARNING_F("Mnemonic invalid for username (%s). Error: %s", username, e.what());
 		throw InvalidMnemonicException();
 	}
 
@@ -302,7 +303,6 @@ bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walle
 	{
 		if (pWalletTx->GetTransaction().has_value())
 		{
-			// TODO: Validate tx first, and make sure it's not already confirmed.
 			return m_pNodeClient->PostTransaction(pWalletTx->GetTransaction().value());
 		}
 	}

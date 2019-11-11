@@ -109,7 +109,7 @@ public:
 	//
 	//
 	//
-	static std::unique_ptr<RangeProof> GenerateRangeProof(
+	static RangeProof GenerateRangeProof(
 		const uint64_t amount,
 		const SecretKey& key,
 		const SecretKey& privateNonce,
@@ -182,13 +182,13 @@ public:
 	//
 	// Calculates the 33 byte public key from the 32 byte private key using curve secp256k1.
 	//
-	static std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey);
+	static PublicKey CalculatePublicKey(const SecretKey& privateKey);
 
 	//
 	// Adds a number of public keys together.
 	// Returns the combined public key if successful.
 	//
-	static std::unique_ptr<PublicKey> AddPublicKeys(const std::vector<PublicKey>& publicKeys);
+	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys);
 
 	//
 	// Hashes the message and signs it using the secret key.
@@ -255,7 +255,7 @@ public:
 	//
 	// Calculates the blinding factor x' = x + SHA256(xG+vH | xJ), used in the switch commitment x'G+vH.
 	//
-	static std::unique_ptr<SecretKey> BlindSwitch(
+	static SecretKey BlindSwitch(
 		const SecretKey& secretKey,
 		const uint64_t amount
 	);

@@ -15,6 +15,8 @@
 class INodeClient
 {
 public:
+	virtual ~INodeClient() = default;
+
 	//
 	// Returns the current confirmed chain height.
 	//

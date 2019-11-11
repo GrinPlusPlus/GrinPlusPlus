@@ -103,8 +103,8 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(walletOpt.value().second);
 		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
-		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
+		PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
+		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(publicKey.GetCompressedBytes().GetData());
 
 		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
@@ -137,8 +137,8 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 		const SecretKey grinboxKey = walletManager.GetGrinboxAddress(sessionToken);
 		responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
-		std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
+		PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
+		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(publicKey.GetCompressedBytes().GetData());
 
 		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(sessionToken);
 		if (torAddressOpt.has_value())
@@ -192,8 +192,8 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 			const SecretKey grinboxKey = walletManager.GetGrinboxAddress(tokenOpt.value());
 			responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetBytes().GetData());
 
-			std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(grinboxKey);
-			responseJSON["grinbox_address"] = HexUtil::ConvertToHex(pPublicKey->GetCompressedBytes().GetData());
+			PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
+			responseJSON["grinbox_address"] = HexUtil::ConvertToHex(publicKey.GetCompressedBytes().GetData());
 
 			return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 		}

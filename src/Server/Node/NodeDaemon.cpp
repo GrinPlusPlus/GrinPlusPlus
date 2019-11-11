@@ -21,16 +21,12 @@ NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNo
 
 }
 
-NodeDaemon::~NodeDaemon()
-{
-}
-
 std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
 {
 	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(config);
 	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(config, pNodeClient->GetNodeContext());
 
-	return std::shared_ptr<NodeDaemon>(new NodeDaemon(config, pNodeRestServer, pNodeClient));
+	return std::make_shared<NodeDaemon>(NodeDaemon(config, pNodeRestServer, pNodeClient));
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)

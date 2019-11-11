@@ -2,7 +2,6 @@
 
 #include <Wallet/ParticipantData.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/CryptoUtil.h>
 
 class SignatureUtil
 {
@@ -18,8 +17,8 @@ public:
 			pubNonces.push_back(participantData.GetPublicNonce());
 		}
 
-		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
-		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+		const PublicKey sumPubKeys = Crypto::AddPublicKeys(pubKeys);
+		const PublicKey sumPubNonces = Crypto::AddPublicKeys(pubNonces);
 
 		return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 	}
@@ -39,7 +38,7 @@ public:
 			}
 		}
 
-		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+		const PublicKey sumPubNonces = Crypto::AddPublicKeys(pubNonces);
 
 		return Crypto::AggregateSignatures(signatures, sumPubNonces);
 	}
@@ -55,8 +54,8 @@ public:
 			pubNonces.push_back(participantData.GetPublicNonce());
 		}
 
-		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
-		const PublicKey sumPubNonces = CryptoUtil::AddPublicKeys(pubNonces);
+		const PublicKey sumPubKeys = Crypto::AddPublicKeys(pubKeys);
+		const PublicKey sumPubNonces = Crypto::AddPublicKeys(pubNonces);
 
 		for (const ParticipantData& participant : participants)
 		{
@@ -98,7 +97,7 @@ public:
 			pubKeys.push_back(participantData.GetPublicBlindExcess());
 		}
 
-		const PublicKey sumPubKeys = CryptoUtil::AddPublicKeys(pubKeys);
+		const PublicKey sumPubKeys = Crypto::AddPublicKeys(pubKeys);
 
 		return Crypto::VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 	}

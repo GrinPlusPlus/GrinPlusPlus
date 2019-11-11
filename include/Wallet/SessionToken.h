@@ -17,8 +17,8 @@ public:
 
 	}
 
-	inline uint64_t GetSessionId() const { return m_sessionId; }
-	inline const std::vector<unsigned char>& GetTokenKey() const { return m_tokenKey; }
+	uint64_t GetSessionId() const { return m_sessionId; }
+	const std::vector<unsigned char>& GetTokenKey() const { return m_tokenKey; }
 
 	// TODO: Use SecureString
 	std::string ToBase64() const

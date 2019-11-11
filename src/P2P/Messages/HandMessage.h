@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Message.h"
+#include <Crypto/Hash.h>
 #include <Net/SocketAddress.h>
 #include <P2P/Capabilities.h>
 
@@ -15,7 +16,7 @@ public:
 		const uint32_t version, 
 		const Capabilities& capabilities, 
 		const uint64_t nonce, 
-		CBigInteger<32>&& hash,
+		Hash&& hash,
 		const uint64_t totalDifficulty, 
 		SocketAddress&& senderAddress, 
 		SocketAddress&& receiverAddress, 
@@ -49,14 +50,14 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Hand; }
-	inline const uint32_t GetVersion() const { return m_version; }
-	inline const Capabilities& GetCapabilities() const { return m_capabilities; }
-	inline const uint64_t GetNonce() const { return m_nonce; }
-	inline const CBigInteger<32>& GetHash() const { return m_hash; }
-	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline const SocketAddress& GetSenderAddress() const { return m_senderAddress; }
-	inline const SocketAddress& GetReceiverAddress() const { return m_receiverAddress; }
-	inline const std::string& GetUserAgent() const { return m_userAgent; }
+	uint32_t GetVersion() const { return m_version; }
+	const Capabilities& GetCapabilities() const { return m_capabilities; }
+	uint64_t GetNonce() const { return m_nonce; }
+	const Hash& GetHash() const { return m_hash; }
+	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
+	const SocketAddress& GetSenderAddress() const { return m_senderAddress; }
+	const SocketAddress& GetReceiverAddress() const { return m_receiverAddress; }
+	const std::string& GetUserAgent() const { return m_userAgent; }
 
 	//
 	// Deserialization
@@ -70,7 +71,7 @@ public:
 		SocketAddress senderAddress = SocketAddress::Deserialize(byteBuffer);
 		SocketAddress receiverAddress = SocketAddress::Deserialize(byteBuffer);
 		const std::string userAgent = byteBuffer.ReadVarStr();
-		CBigInteger<32> hash = byteBuffer.ReadBigInteger<32>();
+		Hash hash = byteBuffer.ReadBigInteger<32>();
 
 		return HandMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);
 	}
@@ -99,7 +100,7 @@ private:
 	uint64_t m_nonce;
 
 	// Genesis block of our chain, only connect to peers on the same chain
-	CBigInteger<32> m_hash;
+	Hash m_hash;
 
 	// Total difficulty accumulated by the sender, used to check whether sync may be needed.
 	uint64_t m_totalDifficulty;

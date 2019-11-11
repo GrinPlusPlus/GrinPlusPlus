@@ -36,8 +36,8 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Pong; }
-	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline const uint64_t GetHeight() const { return m_height; }
+	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
+	uint64_t GetHeight() const { return m_height; }
 
 	//
 	// Deserialization

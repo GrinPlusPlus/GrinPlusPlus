@@ -21,20 +21,26 @@ std::shared_ptr<HeaderMMR> HeaderMMR::Load(const std::string& path)
 
 void HeaderMMR::Commit()
 {
-	const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
-	LOG_TRACE_F("Flushing - Height: %llu, Size: %llu", height, m_batchDataOpt.value().hashFile->GetSize());
-	m_batchDataOpt.value().hashFile->Commit();
-	SetDirty(false);
+	if (IsDirty())
+	{
+		const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
+		LOG_TRACE_F("Flushing - Height: %llu, Size: %llu", height, m_batchDataOpt.value().hashFile->GetSize());
+		m_batchDataOpt.value().hashFile->Commit();
+		SetDirty(false);
+	}
 }
 
 void HeaderMMR::Rollback()
 {
-	LOG_DEBUG("Discarding changes.");
-	m_batchDataOpt.value().hashFile->Rollback();
-	SetDirty(false);
+	if (IsDirty())
+	{
+		LOG_DEBUG("Discarding changes.");
+		m_batchDataOpt.value().hashFile->Rollback();
+		SetDirty(false);
+	}
 }
 
-bool HeaderMMR::Rewind(const uint64_t size)
+void HeaderMMR::Rewind(const uint64_t size)
 {
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
 	if (mmrSize != m_batchDataOpt.value().hashFile->GetSize())
@@ -43,8 +49,6 @@ bool HeaderMMR::Rewind(const uint64_t size)
 		m_batchDataOpt.value().hashFile->Rewind(mmrSize);
 		SetDirty(true);
 	}
-
-	return true;
 }
 
 void HeaderMMR::AddHeader(const BlockHeader& header)

@@ -36,14 +36,14 @@ public:
 	//
 	// Getters
 	//
-	inline const std::vector<unsigned char>& GetMagicBytes() const { return m_magicBytes; }
-	inline const MessageTypes::EMessageType GetMessageType() const { return m_messageType; }
-	inline const uint64_t GetMessageLength() const { return m_messageLength; }
+	const std::vector<unsigned char>& GetMagicBytes() const { return m_magicBytes; }
+	MessageTypes::EMessageType GetMessageType() const { return m_messageType; }
+	uint64_t GetMessageLength() const { return m_messageLength; }
 
 	//
 	// Validation
 	//
-	inline const bool IsValid(const Config& config) const
+	bool IsValid(const Config& config) const
 	{
 		if (m_magicBytes[0] == config.GetEnvironment().GetMagicBytes()[0] && m_magicBytes[1] == config.GetEnvironment().GetMagicBytes()[1])
 		{

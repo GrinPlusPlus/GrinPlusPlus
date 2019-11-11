@@ -24,14 +24,14 @@ public:
 
 	}
 
-	inline uint64_t GetLastConfirmedHeight() const { return m_lastConfirmedHeight; }
-	inline uint64_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
-	inline uint64_t GetTotal() const { return m_total; }
-	inline uint64_t GetAmountAwaitingConfirmation() const { return m_amountAwaitingConfirmation; }
-	inline uint64_t GetAmountImmature() const { return m_amountImmature; }
-	inline uint64_t GetAmountLocked() const { return m_amountLocked; }
-	inline uint64_t GetAmountCurrentlySpendable() const { return m_amountCurrentlySpendable; }
-	inline const std::vector<WalletTx>& GetTransactions() const { return m_transactions; }
+	uint64_t GetLastConfirmedHeight() const { return m_lastConfirmedHeight; }
+	uint64_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
+	uint64_t GetTotal() const { return m_total; }
+	uint64_t GetAmountAwaitingConfirmation() const { return m_amountAwaitingConfirmation; }
+	uint64_t GetAmountImmature() const { return m_amountImmature; }
+	uint64_t GetAmountLocked() const { return m_amountLocked; }
+	uint64_t GetAmountCurrentlySpendable() const { return m_amountCurrentlySpendable; }
+	const std::vector<WalletTx>& GetTransactions() const { return m_transactions; }
 
 	Json::Value ToJSON() const
 	{

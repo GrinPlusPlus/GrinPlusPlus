@@ -18,7 +18,7 @@
 // Forward Declarations
 class ITransactionPool;
 
-class ChainState : public Traits::Batchable
+class ChainState : public Traits::IBatchable
 {
 public:
 	static std::shared_ptr<Locked<ChainState>> Create(

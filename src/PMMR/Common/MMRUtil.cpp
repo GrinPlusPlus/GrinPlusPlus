@@ -48,7 +48,7 @@ uint64_t MMRUtil::GetParentIndex(const uint64_t mmrIndex)
 	else
 	{
 		// mmrIndex is the left sibling, so the parent node is mmrIndex + 2^(height + 1).
-		return mmrIndex + (1 << (height + 1));
+		return mmrIndex + (1ULL << (height + 1));
 	}
 }
 
@@ -60,19 +60,19 @@ uint64_t MMRUtil::GetSiblingIndex(const uint64_t mmrIndex)
 	if (GetHeight(mmrIndex + 1) == (height + 1))
 	{
 		// mmrIndex points to a right sibling, so add 1 and subtract 2^(height + 1) to get the left sibling.
-		return mmrIndex + 1 - (1 << (height + 1));
+		return mmrIndex + 1 - (1ULL << (height + 1));
 	}
 	else
 	{
 		// mmrIndex is the left sibling, so add 2^(height + 1) - 1 to get the right sibling.
-		return mmrIndex + (1 << (height + 1)) - 1;
+		return mmrIndex + (1ULL << (height + 1)) - 1;
 	}
 }
 
 // WARNING: Assumes mmrIndex is a parent.
 uint64_t MMRUtil::GetLeftChildIndex(const uint64_t mmrIndex, const uint64_t height)
 {
-	return mmrIndex - (1 << height);
+	return mmrIndex - (1ULL << height);
 }
 
 // WARNING: Assumes mmrIndex is a parent.

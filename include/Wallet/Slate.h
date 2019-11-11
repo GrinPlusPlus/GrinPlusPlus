@@ -22,7 +22,15 @@
 class Slate
 {
 public:
-	Slate(SlateVersionInfo&& versionInfo, const uint64_t numParticipants, uuids::uuid&& slateId, Transaction&& transaction, const uint64_t amount, const uint64_t fee, const uint64_t blockHeight, const uint64_t lockHeight)
+	Slate(
+		SlateVersionInfo&& versionInfo,
+		const uint64_t numParticipants,
+		uuids::uuid&& slateId,
+		Transaction&& transaction,
+		const uint64_t amount,
+		const uint64_t fee,
+		const uint64_t blockHeight,
+		const uint64_t lockHeight)
 		: m_versionInfo(versionInfo),
 		m_numParticipants(numParticipants),
 		m_slateId(std::move(slateId)),
@@ -35,18 +43,18 @@ public:
 
 	}
 
-	inline const uuids::uuid& GetSlateId() const { return m_slateId; }
-	inline const SlateVersionInfo& GetVersionInfo() const { return m_versionInfo; }
-	inline uint64_t GetAmount() const { return m_amount; }
-	inline uint64_t GetFee() const { return m_fee; }
-	inline uint64_t GetLockHeight() const { return m_lockHeight; }
-	inline uint64_t GetBlockHeight() const { return m_blockHeight; }
-	inline const Transaction& GetTransaction() const { return m_transaction; }
-	inline const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
-	inline std::vector<ParticipantData>& GetParticipantData() { return m_participantData; }
+	const uuids::uuid& GetSlateId() const { return m_slateId; }
+	const SlateVersionInfo& GetVersionInfo() const { return m_versionInfo; }
+	uint64_t GetAmount() const { return m_amount; }
+	uint64_t GetFee() const { return m_fee; }
+	uint64_t GetLockHeight() const { return m_lockHeight; }
+	uint64_t GetBlockHeight() const { return m_blockHeight; }
+	const Transaction& GetTransaction() const { return m_transaction; }
+	const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
+	std::vector<ParticipantData>& GetParticipantData() { return m_participantData; }
 
-	inline void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
-	inline void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }
+	void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
+	void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }
 
 	Json::Value ToJSON() const
 	{

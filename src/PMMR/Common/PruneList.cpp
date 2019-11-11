@@ -198,12 +198,12 @@ void PruneList::BuildShiftCaches()
 
 			// Add to shift cache
 			const uint64_t previousShift = GetShift(position - 1);
-			const uint64_t currentShift = 2 * ((1 << height) - 1);
+			const uint64_t currentShift = 2ULL * ((1ULL << height) - 1);
 			m_shiftCache.push_back(previousShift + currentShift);
 
 			// Add to leaf shift cache
 			const uint64_t previousLeafShift = GetLeafShift(position - 1);
-			const uint64_t currentLeafShift = (height == 0) ? 0 : 1 << height;
+			const uint64_t currentLeafShift = (height == 0) ? 0 : 1ULL << height;
 			m_leafShiftCache.push_back(previousLeafShift + currentLeafShift);
 		}
 	}

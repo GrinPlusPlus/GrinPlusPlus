@@ -43,7 +43,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::CompactBlockMsg; }
-	inline const CompactBlock& GetCompactBlock() const { return m_block; }
+	const CompactBlock& GetCompactBlock() const { return m_block; }
 
 	//
 	// Deserialization

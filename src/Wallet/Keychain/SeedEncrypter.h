@@ -3,7 +3,6 @@
 #include <Crypto/SecretKey.h>
 #include <Wallet/EncryptedSeed.h>
 #include <Common/Secure.h>
-#include <optional>
 #include <vector>
 #include <memory>
 
@@ -22,5 +21,7 @@ public:
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
-	std::optional<SecureVector> DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
+	// Throws KeyChainException if decryption fails.
+	//
+	SecureVector DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
 };

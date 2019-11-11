@@ -94,7 +94,13 @@ BlindingFactor Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& pos
 	}
 
 	CBigInteger<32> blindingFactorBytes;
-	const int result = secp256k1_pedersen_blind_sum(m_pContext, &blindingFactorBytes[0], blindingFactors.data(), blindingFactors.size(), positive.size());
+	const int result = secp256k1_pedersen_blind_sum(
+		m_pContext,
+		blindingFactorBytes.data(),
+		blindingFactors.data(),
+		blindingFactors.size(),
+		positive.size()
+	);
 
 	if (result == 1)
 	{
@@ -105,18 +111,26 @@ BlindingFactor Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& pos
 	throw CryptoException("secp256k1_pedersen_blind_sum error");
 }
 
-std::unique_ptr<SecretKey> Pedersen::BlindSwitch(const SecretKey& blindingFactor, const uint64_t amount) const
+SecretKey Pedersen::BlindSwitch(const SecretKey& blindingFactor, const uint64_t amount) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	std::vector<unsigned char> blindSwitch(32);
-	const int result = secp256k1_blind_switch(m_pContext, blindSwitch.data(), blindingFactor.data(), amount, &secp256k1_generator_const_h, &secp256k1_generator_const_g, &GENERATOR_J_PUB);
+	const int result = secp256k1_blind_switch(
+		m_pContext,
+		blindSwitch.data(),
+		blindingFactor.data(),
+		amount,
+		&secp256k1_generator_const_h,
+		&secp256k1_generator_const_g,
+		&GENERATOR_J_PUB
+	);
 	if (result == 1)
 	{
-		return std::make_unique<SecretKey>(SecretKey(CBigInteger<32>(std::move(blindSwitch))));
+		return SecretKey(CBigInteger<32>(std::move(blindSwitch)));
 	}
 
-	return std::unique_ptr<SecretKey>(nullptr);
+	throw CryptoException("secp256k1_blind_switch failed with error: " + std::to_string(result));
 }
 
 std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const secp256k1_context& context, const std::vector<Commitment>& commitments)
@@ -134,7 +148,7 @@ std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const s
 		{
 			// TODO: Log failue
 			CleanupCommitments(convertedCommitments);
-			return std::vector<secp256k1_pedersen_commitment*>();
+			throw CryptoException("secp256k1_pedersen_commitment_parse failed with error: " + std::to_string(parsed));
 		}
 	}
 

@@ -147,7 +147,7 @@ BlindingFactor Crypto::AddBlindingFactors(const std::vector<BlindingFactor>& pos
 	return Pedersen::GetInstance().PedersenBlindSum(sanitizedPositive, sanitizedNegative);
 }
 
-std::unique_ptr<SecretKey> Crypto::BlindSwitch(const SecretKey& secretKey, const uint64_t amount)
+SecretKey Crypto::BlindSwitch(const SecretKey& secretKey, const uint64_t amount)
 {
 	return Pedersen::GetInstance().BlindSwitch(secretKey, amount);
 }
@@ -165,7 +165,7 @@ SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& s
 	throw CryptoException("secp256k1_ec_privkey_tweak_add failed");
 }
 
-std::unique_ptr<RangeProof> Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage)
+RangeProof Crypto::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage)
 {
 	return Bulletproofs::GetInstance().GenerateRangeProof(amount, key, privateNonce, rewindNonce, proofMessage);
 }
@@ -242,12 +242,12 @@ SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned
 	throw CryptoException();
 }
 
-std::unique_ptr<PublicKey> Crypto::CalculatePublicKey(const SecretKey& privateKey)
+PublicKey Crypto::CalculatePublicKey(const SecretKey& privateKey)
 {
 	return PublicKeys::GetInstance().CalculatePublicKey(privateKey);
 }
 
-std::unique_ptr<PublicKey> Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
+PublicKey Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
 {
 	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }

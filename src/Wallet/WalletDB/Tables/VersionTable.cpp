@@ -13,7 +13,7 @@ void VersionTable::CreateTable(sqlite3& database)
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("VersionTable::CreateTable - Create version table failed with error: %s", error));
+		WALLET_ERROR_F("Create version table failed with error: %s", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Failed to create version table.");
 	}
@@ -30,7 +30,7 @@ int VersionTable::GetCurrentVersion(sqlite3& database)
 	const std::string query = "SELECT schema_version FROM version";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("VersionTable::GetCurrentVersion - Error while compiling sql: %s", sqlite3_errmsg(&database)));
+		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -44,7 +44,7 @@ int VersionTable::GetCurrentVersion(sqlite3& database)
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("VersionTable::GetCurrentVersion - Error finalizing statement: %s", sqlite3_errmsg(&database)));
+		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -57,7 +57,7 @@ bool VersionTable::DoesTableExist(sqlite3& database)
 	const std::string query = "PRAGMA table_info(version)";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("VersionTable::DoesTableExist - Error while compiling sql: %s", sqlite3_errmsg(&database)));
+		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -71,7 +71,7 @@ bool VersionTable::DoesTableExist(sqlite3& database)
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		LoggerAPI::LogError(StringUtil::Format("VersionTable::DoesTableExist - Error finalizing statement: %s", sqlite3_errmsg(&database)));
+		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 

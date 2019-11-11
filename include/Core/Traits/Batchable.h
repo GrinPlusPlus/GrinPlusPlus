@@ -4,16 +4,16 @@
 
 namespace Traits
 {
-	class Batchable
+	class IBatchable
 	{
 	public:
-		Batchable()
+		IBatchable()
 			: m_dirty(false)
 		{
 
 		}
 
-		virtual ~Batchable() = default;
+		virtual ~IBatchable() = default;
 
 		virtual void Commit() = 0;
 		virtual void Rollback() = 0;

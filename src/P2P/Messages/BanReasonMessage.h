@@ -36,7 +36,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::BanReasonMsg; }
-	inline const uint32_t GetBanReason() const { return m_banReason; }
+	uint32_t GetBanReason() const { return m_banReason; }
 
 	//
 	// Deserialization

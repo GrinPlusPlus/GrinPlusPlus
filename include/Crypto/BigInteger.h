@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -90,6 +90,7 @@ public:
 	}
 
 	inline size_t size() const { return NUM_BYTES; }
+	inline unsigned char* data() { return m_data.data(); }
 	inline const unsigned char* data() const { return m_data.data(); }
 
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
@@ -215,7 +216,6 @@ static inline unsigned char FromHexChar(const char value)
 template<size_t NUM_BYTES, class ALLOC>
 CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::string& hex)
 {
-	// TODO: Verify input size
 	size_t index = 0;
 	if (hex[0] == '0' && hex[1] == 'x')
 	{
@@ -231,8 +231,13 @@ CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::
 		}
 	}
 
+	if (hexNoSpaces.length() != NUM_BYTES * 2)
+	{
+		throw std::exception();
+	}
+
 	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
-	for (size_t i = 0; i < (std::min)(hexNoSpaces.length(), NUM_BYTES * 2); i += 2)
+	for (size_t i = 0; i < hexNoSpaces.length(); i += 2)
 	{
 		data[i / 2] = (FromHexChar(hexNoSpaces[i]) * 16 + FromHexChar(hexNoSpaces[i + 1]));
 	}

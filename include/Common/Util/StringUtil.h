@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <memory>
 #include <iostream>
 #include <string>

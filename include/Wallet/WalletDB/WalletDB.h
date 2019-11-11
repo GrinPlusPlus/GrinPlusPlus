@@ -21,6 +21,8 @@
 class IWalletDB
 {
 public:
+	virtual ~IWalletDB() = default;
+
 	virtual std::vector<std::string> GetAccounts() const = 0;
 
 	virtual bool OpenWallet(const std::string& username, const SecureVector& masterSeed) = 0;

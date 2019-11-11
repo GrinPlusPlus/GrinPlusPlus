@@ -4,6 +4,7 @@
 
 #include <Common/Util/FunctionalUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
@@ -79,7 +80,7 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 	return result == 1;
 }
 
-std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage) const
+RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage) const
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -87,7 +88,7 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
 	if (randomizeResult != 1)
 	{
-		return std::unique_ptr<RangeProof>(nullptr);
+		throw CryptoException("secp256k1_context_randomize failed with error: " + std::to_string(randomizeResult));
 	}
 
 	std::vector<unsigned char> proofBytes(MAX_PROOF_SIZE, 0);
@@ -123,10 +124,10 @@ std::unique_ptr<RangeProof> Bulletproofs::GenerateRangeProof(const uint64_t amou
 	if (result == 1)
 	{
 		proofBytes.resize(proofLen);
-		return std::make_unique<RangeProof>(RangeProof(std::move(proofBytes)));
+		return RangeProof(std::move(proofBytes));
 	}
 
-	return std::unique_ptr<RangeProof>(nullptr);
+	throw CryptoException("secp256k1_bulletproof_rangeproof_prove failed with error: " + std::to_string(result));
 }
 
 std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce) const

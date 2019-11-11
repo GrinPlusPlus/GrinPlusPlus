@@ -7,7 +7,7 @@
 #include <Crypto/BigInteger.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/HexUtil.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 

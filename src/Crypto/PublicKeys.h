@@ -12,8 +12,8 @@ class PublicKeys
 public:
 	static PublicKeys& GetInstance();
 
-	std::unique_ptr<PublicKey> CalculatePublicKey(const SecretKey& privateKey) const;
-	std::unique_ptr<PublicKey> PublicKeySum(const std::vector<PublicKey>& publicKeys) const;
+	PublicKey CalculatePublicKey(const SecretKey& privateKey) const;
+	PublicKey PublicKeySum(const std::vector<PublicKey>& publicKeys) const;
 
 private:
 	PublicKeys();

@@ -1,6 +1,5 @@
 #include "KeyGenerator.h"
 #include "KeyDefs.h"
-#include "PublicKeyCalculator.h"
 
 #include <Crypto/Crypto.h>
 #include <Common/Util/BitUtil.h>
@@ -38,15 +37,21 @@ PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed, const EK
 	}
 }
 
-std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
+PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
 {
-	std::unique_ptr<PublicExtKey> pPublicKey = PublicKeyCalculator().DeterminePublicKey(parentExtendedKey);
-	if (pPublicKey == nullptr)
-	{
-		return std::unique_ptr<PrivateExtKey>(nullptr);
-	}
+	SecretKey parentChainCode = parentExtendedKey.GetChainCode();
+	PublicKey parentCompressedKey = Crypto::CalculatePublicKey(parentExtendedKey.GetPrivateKey());
 
-	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(pPublicKey->GetPublicKey().GetCompressedBytes().GetData()).GetData());
+	PublicExtKey publicKey = PublicExtKey(
+		parentExtendedKey.GetNetwork(),
+		parentExtendedKey.GetDepth(),
+		parentExtendedKey.GetParentFingerprint(),
+		parentExtendedKey.GetChildNumber(),
+		std::move(parentChainCode),
+		std::move(parentCompressedKey)
+	);
+
+	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(publicKey.GetPublicKey().GetCompressedBytes().GetData()).GetData());
 	const uint32_t parentFingerprint = BitUtil::ConvertToU32(parentIdentifier[0], parentIdentifier[1], parentIdentifier[2], parentIdentifier[3]);
 
 	Serializer serializer(37); // Reserve 37 bytes: 1 byte for 0x00 padding (hardened) or 0x02/0x03 point parity (normal), 32 bytes for private key (hardened) or public key X coord, 4 bytes for index.
@@ -60,7 +65,7 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 	else
 	{
 		// Generate a normal child key
-		serializer.AppendBigInteger<33>(pPublicKey->GetPublicKey().GetCompressedBytes());
+		serializer.AppendBigInteger<33>(publicKey.GetPublicKey().GetCompressedBytes());
 	}
 
 	serializer.Append<uint32_t>(childKeyIndex);
@@ -78,7 +83,13 @@ std::unique_ptr<PrivateExtKey> KeyGenerator::GenerateChildPrivateKey(const Priva
 	vchRight.insert(vchRight.begin(), hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64);
 	CBigInteger<32> childChainCode(vchRight);
 
-	return std::make_unique<PrivateExtKey>(PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), parentExtendedKey.GetDepth() + 1, parentFingerprint, childKeyIndex, std::move(childChainCode), std::move(childPrivateKey)));
+	return PrivateExtKey::Create(
+		m_config.GetWalletConfig().GetPrivateKeyVersion(),
+		parentExtendedKey.GetDepth() + 1,
+		parentFingerprint, childKeyIndex,
+		std::move(childChainCode),
+		std::move(childPrivateKey)
+	);
 }
 
 PublicExtKey KeyGenerator::GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const

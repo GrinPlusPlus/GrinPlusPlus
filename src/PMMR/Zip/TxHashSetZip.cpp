@@ -14,36 +14,39 @@ TxHashSetZip::TxHashSetZip(const Config& config)
 
 bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) const
 {
-	ZipFile zipFile(path);
-	zipFile.Open();
-
-	std::vector<std::string> files;
-	zipFile.ListFiles(files);
-
-	// Extract kernel folder.
-	if (!ExtractKernelFolder(zipFile))
+	try
 	{
-		zipFile.Close();
-		return false;
+		std::shared_ptr<ZipFile> pZipFile = ZipFile::Load(path);
+
+		std::vector<std::string> files = pZipFile->ListFiles();
+
+		// Extract kernel folder.
+		if (!ExtractKernelFolder(*pZipFile))
+		{
+			return false;
+		}
+
+		// Extract output folder.
+		if (!ExtractOutputFolder(*pZipFile, header))
+		{
+			return false;
+		}
+
+		// Extract rangeProof folder.
+		if (!ExtractRangeProofFolder(*pZipFile, header))
+		{
+			return false;
+		}
+
+		LOG_INFO("Successfully extracted zip file.");
+		return true;
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Failed to extract %s. Exception thrown: %s", path, e.what());
 	}
 
-	// Extract output folder.
-	if (!ExtractOutputFolder(zipFile, header))
-	{
-		zipFile.Close();
-		return false;
-	}
-
-	// Extract rangeProof folder.
-	if (!ExtractRangeProofFolder(zipFile, header))
-	{
-		zipFile.Close();
-		return false;
-	}
-
-	LOG_INFO("Successfully extracted zip file.");
-	zipFile.Close();
-	return true;
+	return false;
 }
 
 bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
@@ -68,12 +71,7 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 	const std::vector<std::string> kernelFiles = { "pmmr_data.bin", "pmmr_hash.bin" };
 	for (const std::string& file : kernelFiles)
 	{
-		const EZipFileStatus extractStatus = zipFile.ExtractFile("kernel/" + file, kernelDir + "/" + file);
-		if (extractStatus != EZipFileStatus::SUCCESS)
-		{
-			LOG_ERROR("Failed to extract file (" + file + ").");
-			return false;
-		}
+		zipFile.ExtractFile("kernel/" + file, kernelDir + "/" + file);
 	}
 
 	return true;
@@ -101,12 +99,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : outputFiles)
 	{
-		const EZipFileStatus extractStatus = zipFile.ExtractFile("output/" + file, outputDir + "/" + file);
-		if (extractStatus != EZipFileStatus::SUCCESS)
-		{
-			LOG_ERROR("Failed to extract file (" + file + ").");
-			return false;
-		}
+		zipFile.ExtractFile("output/" + file, outputDir + "/" + file);
 	}
 
 	FileUtil::RenameFile(outputDir + "/pmmr_leaf.bin." + header.ShortHash(), outputDir + "/pmmr_leaf.bin");
@@ -136,12 +129,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : rangeProofFiles)
 	{
-		const EZipFileStatus extractStatus = zipFile.ExtractFile("rangeproof/" + file, rangeProofDir + "/" + file);
-		if (extractStatus != EZipFileStatus::SUCCESS)
-		{
-			LOG_ERROR("Failed to extract file (" + file + ").");
-			return false;
-		}
+		zipFile.ExtractFile("rangeproof/" + file, rangeProofDir + "/" + file);
 	}
 
 	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "/pmmr_leaf.bin");

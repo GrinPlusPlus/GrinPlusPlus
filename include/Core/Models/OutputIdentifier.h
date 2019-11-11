@@ -33,14 +33,14 @@ public:
 	//
 	OutputIdentifier& operator=(const OutputIdentifier& outputIdentifier) = default;
 	OutputIdentifier& operator=(OutputIdentifier&& outputIdentifier) noexcept = default;
-	inline bool operator<(const OutputIdentifier& outputIdentifier) const { return GetCommitment() < outputIdentifier.GetCommitment(); }
-	inline bool operator==(const OutputIdentifier& outputIdentifier) const { return GetCommitment() == outputIdentifier.GetCommitment(); }
+	bool operator<(const OutputIdentifier& outputIdentifier) const { return GetCommitment() < outputIdentifier.GetCommitment(); }
+	bool operator==(const OutputIdentifier& outputIdentifier) const { return GetCommitment() == outputIdentifier.GetCommitment(); }
 
 	//
 	// Getters
 	//
-	inline const EOutputFeatures GetFeatures() const { return m_features; }
-	inline const Commitment& GetCommitment() const { return m_commitment; }
+	EOutputFeatures GetFeatures() const { return m_features; }
+	const Commitment& GetCommitment() const { return m_commitment; }
 
 	//
 	// Serialization/Deserialization

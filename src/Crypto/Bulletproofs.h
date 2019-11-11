@@ -20,7 +20,7 @@ public:
 
 	bool VerifyBulletproofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs) const;
 
-	std::unique_ptr<RangeProof> GenerateRangeProof(
+	RangeProof GenerateRangeProof(
 		const uint64_t amount,
 		const SecretKey& key,
 		const SecretKey& privateNonce,

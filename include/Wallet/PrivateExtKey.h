@@ -14,7 +14,7 @@ public:
 		return PrivateExtKey(network, depth, parentFingerprint, childNumber, std::move(chainCode), CBigInteger<33>(std::move(keyBytes)), std::move(privateKey));
 	}
 
-	inline const SecretKey& GetPrivateKey() const { return m_privateKey; }
+	const SecretKey& GetPrivateKey() const { return m_privateKey; }
 	
 	static PrivateExtKey Deserialize(ByteBuffer& byteBuffer)
 	{ 

@@ -5,6 +5,7 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
+#include <Crypto/RandomNumberGenerator.h>
 
 BlockSyncer::BlockSyncer(
 	std::weak_ptr<ConnectionManager> pConnectionManager,
@@ -48,7 +49,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	const uint64_t blocksDownloaded = (chainHeight - m_lastHeight);
 	if (blocksDownloaded > 0)
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockSyncer::IsBlockSyncDue() - %llu blocks received since last check.", blocksDownloaded));
+		LOG_TRACE_F("%llu blocks received since last check.", blocksDownloaded);
 	}
 
 	// Remove downloaded blocks from queue.
@@ -62,7 +63,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	// Check if blocks were received, and we're ready to request next batch.
 	if (m_requestedBlocks.size() < 15)
 	{
-		LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Requesting next batch.");
+		LOG_TRACE("Requesting next batch.");
 		return true;
 	}
 
@@ -74,13 +75,13 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 		auto requestedBlocksIter = m_requestedBlocks.find(iter->first);
 		if (requestedBlocksIter == m_requestedBlocks.end())
 		{
-			LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Block not requested yet. Requesting now.");
+			LOG_TRACE("Block not requested yet. Requesting now.");
 			return true;
 		}
 
 		if (m_slowPeers.count(requestedBlocksIter->second.PEER_ID) > 0)
 		{
-			LoggerAPI::LogTrace("BlockSyncer::IsBlockSyncDue() - Waiting on block from banned peer. Requesting from valid peer now.");
+			LOG_TRACE("Waiting on block from banned peer. Requesting from valid peer now.");
 			return true;
 		}
 
@@ -91,7 +92,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 				continue;
 			}
 
-			LoggerAPI::LogWarning("BlockSyncer::IsBlockSyncDue() - Block request timed out. Requesting again.");
+			LOG_WARNING("Block request timed out. Requesting again.");
 			return true;
 		}
 	}
@@ -101,13 +102,13 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 
 bool BlockSyncer::RequestBlocks()
 {
-	LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - Requesting blocks.");
+	LOG_TRACE("Requesting blocks.");
 
 	std::vector<uint64_t> mostWorkPeers = m_pConnectionManager.lock()->GetMostWorkPeers();
 	const uint64_t numPeers = mostWorkPeers.size();
 	if (mostWorkPeers.empty())
 	{
-		LoggerAPI::LogDebug("BlockSyncer::RequestBlocks - No most-work peers found.");
+		LOG_DEBUG("No most-work peers found.");
 		return false;
 	}
 
@@ -115,7 +116,7 @@ bool BlockSyncer::RequestBlocks()
 	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
-		LoggerAPI::LogTrace("BlockSyncer::RequestBlocks - No blocks needed.");
+		LOG_TRACE("No blocks needed.");
 		return false;
 	}
 
@@ -156,7 +157,7 @@ bool BlockSyncer::RequestBlocks()
 		++blockIndex;
 	}
 
-	size_t nextPeer = std::rand() % mostWorkPeers.size();
+	size_t nextPeer = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
 	for (size_t i = 0; i < blocksToRequest.size(); i++)
 	{
 		const GetBlockMessage getBlockMessage(blocksToRequest[i].second);
@@ -178,7 +179,7 @@ bool BlockSyncer::RequestBlocks()
 
 	if (!blocksToRequest.empty())
 	{
-		LoggerAPI::LogTrace(StringUtil::Format("BlockSyncer::RequestBlocks - %llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers));
+		LOG_TRACE_F("%llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers);
 	}
 
 	return true;

@@ -1,6 +1,7 @@
 #include "ForeignController.h"
 #include "Keychain/KeyChain.h"
 
+#include <Infrastructure/Logger.h>
 #include <Wallet/WalletManager.h>
 #include <Net/Tor/TorManager.h>
 #include <Net/Util/HTTPUtil.h>
@@ -53,16 +54,21 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	mg_set_request_handler(pForeignContext, "/v2/foreign", ForeignAPIHandler, pContext.get());
 	m_contextsByUsername[username] = pContext;
 
-	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
-	std::unique_ptr<SecretKey> pTorKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
-	if (pTorKey != nullptr)
+	try
 	{
-		SecretKey hashedTorKey = Crypto::Blake2b(pTorKey->GetBytes().GetData());
+		KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
+		SecretKey torKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
+		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
+
 		std::unique_ptr<TorAddress> pTorAddress = TorManager::GetInstance(m_config.GetTorConfig()).AddListener(hashedTorKey, portNumber);
 		if (pTorAddress != nullptr)
 		{
 			pContext->m_torAddress = std::make_optional(*pTorAddress);
 		}
+	}
+	catch (std::exception& e)
+	{
+		WALLET_ERROR_F("Exception thrown: %s", e.what());
 	}
 
 	return pContext->m_torAddress;

@@ -39,6 +39,8 @@ enum class EAddTransactionStatus
 class ITransactionPool
 {
 public:
+	virtual ~ITransactionPool() = default;
+
 	//
 	// Retrieves txs from the mempool based on kernel short_ids from the compact block.
 	// Note: does not validate that we return the full set of required txs.

@@ -40,13 +40,12 @@ public:
 	{
 		ByteBuffer byteBuffer(m_proofMessageBytes.GetData());
 
-		bool switchCommits = true;
 		size_t length = 3;
 		if (bulletproofType == EBulletproofType::ENHANCED)
 		{
 			byteBuffer.ReadU8(); // RESERVED: Always 0
 			byteBuffer.ReadU8(); // Wallet Type
-			switchCommits = (byteBuffer.ReadU8() == 1);
+			byteBuffer.ReadU8(); // Switch Commits - Always true for now.
 			length = byteBuffer.ReadU8();
 		}
 		else

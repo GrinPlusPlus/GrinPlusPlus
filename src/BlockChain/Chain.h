@@ -9,7 +9,7 @@
 class BlockIndexAllocator;
 class ChainStore;
 
-class Chain : Traits::Batchable
+class Chain : Traits::IBatchable
 {
 public:
 	static std::shared_ptr<Chain> Load(

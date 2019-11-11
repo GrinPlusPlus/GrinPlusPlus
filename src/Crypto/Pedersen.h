@@ -19,7 +19,7 @@ public:
 	Commitment PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
 	BlindingFactor PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;
 
-	std::unique_ptr<SecretKey> BlindSwitch(const SecretKey& secretKey, const uint64_t amount) const;
+	SecretKey BlindSwitch(const SecretKey& secretKey, const uint64_t amount) const;
 
 	static std::vector<secp256k1_pedersen_commitment*> ConvertCommitments(const secp256k1_context& context, const std::vector<Commitment>& commitments);
 	static void CleanupCommitments(std::vector<secp256k1_pedersen_commitment*>& commitments);

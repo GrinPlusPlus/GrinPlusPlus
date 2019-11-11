@@ -1,6 +1,7 @@
 #include "Mnemonic.h"
 #include "WordList.h"
 
+#include <Wallet/Exceptions/KeyChainException.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
 
@@ -8,7 +9,7 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy)
 {
 	if (entropy.size() % 4 != 0)
 	{
-		return SecureString("");
+		throw KEYCHAIN_EXCEPTION("Entropy was of incorrect length.");
 	}
 
 	const size_t entropyBits = (entropy.size() * 8);
@@ -51,13 +52,13 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy)
 	return result;
 }
 
-std::optional<SecureVector> Mnemonic::ToEntropy(const SecureString& walletWords)
+SecureVector Mnemonic::ToEntropy(const SecureString& walletWords)
 {
-	const std::vector<std::string> words = StringUtil::Split(std::string(walletWords), " ");
+	const std::vector<std::string> words = StringUtil::Split(StringUtil::Trim((const std::string&)walletWords), " ");
 	const size_t numWords = words.size();
 	if (numWords < 12 || numWords > 24 || numWords % 3 != 0)
 	{
-		return std::nullopt;
+		throw KEYCHAIN_EXCEPTION("Invalid number of words provided.");
 	}
 
 	// u11 vector of indexes for each word
@@ -77,7 +78,7 @@ std::optional<SecureVector> Mnemonic::ToEntropy(const SecureString& walletWords)
 
 		if (!wordFound)
 		{
-			return std::nullopt;
+			throw KEYCHAIN_EXCEPTION("Word not found.");
 		}
 	}
 
@@ -105,8 +106,8 @@ std::optional<SecureVector> Mnemonic::ToEntropy(const SecureString& walletWords)
 	const uint32_t actualChecksum = (Crypto::SHA256((const std::vector<unsigned char>&)entropy)[0] >> (8 - checksumBits)) & mask;
 	if (actualChecksum != expectedChecksum)
 	{
-		return std::nullopt;
+		throw KEYCHAIN_EXCEPTION("Invalid checksum.");
 	}
 
-	return std::make_optional(std::move(entropy));
+	return entropy;
 }

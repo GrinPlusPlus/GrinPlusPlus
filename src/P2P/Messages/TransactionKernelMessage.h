@@ -43,7 +43,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TransactionKernelMsg; }
-	inline const Hash& GetKernelHash() const { return m_kernelHash; }
+	const Hash& GetKernelHash() const { return m_kernelHash; }
 
 	//
 	// Deserialization

@@ -3,7 +3,7 @@
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/KeyChainPath.h>
 #include <Wallet/OutputStatus.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
@@ -65,27 +65,27 @@ public:
 	//
 	// Getters
 	//
-	inline const KeyChainPath& GetKeyChainPath() const { return m_keyChainPath; }
-	inline const SecretKey& GetBlindingFactor() const { return m_blindingFactor; }
-	inline const TransactionOutput& GetOutput() const { return m_output; }
-	inline const uint64_t GetAmount() const { return m_amount; }
-	inline const EOutputStatus GetStatus() const { return m_status; }
-	inline const std::optional<uint64_t>& GetMMRIndex() const { return m_mmrIndexOpt; }
-	inline const std::optional<uint64_t>& GetBlockHeight() const { return m_blockHeightOpt; }
-	inline const std::optional<uint32_t>& GetWalletTxId() const { return m_walletTxIdOpt; }
-	inline const std::optional<std::string>& GetSlateMessage() const { return m_messageOpt; }
+	const KeyChainPath& GetKeyChainPath() const { return m_keyChainPath; }
+	const SecretKey& GetBlindingFactor() const { return m_blindingFactor; }
+	const TransactionOutput& GetOutput() const { return m_output; }
+	uint64_t GetAmount() const { return m_amount; }
+	EOutputStatus GetStatus() const { return m_status; }
+	const std::optional<uint64_t>& GetMMRIndex() const { return m_mmrIndexOpt; }
+	const std::optional<uint64_t>& GetBlockHeight() const { return m_blockHeightOpt; }
+	const std::optional<uint32_t>& GetWalletTxId() const { return m_walletTxIdOpt; }
+	const std::optional<std::string>& GetSlateMessage() const { return m_messageOpt; }
 
 	//
 	// Setters
 	//
-	inline void SetStatus(const EOutputStatus status) { m_status = status; }
-	inline void SetBlockHeight(const uint64_t blockHeight) { m_blockHeightOpt = std::make_optional(blockHeight); }
-	inline void SetWalletTxId(const uint32_t walletTxId) { m_walletTxIdOpt = std::make_optional(walletTxId); }
+	void SetStatus(const EOutputStatus status) { m_status = status; }
+	void SetBlockHeight(const uint64_t blockHeight) { m_blockHeightOpt = std::make_optional(blockHeight); }
+	void SetWalletTxId(const uint32_t walletTxId) { m_walletTxIdOpt = std::make_optional(walletTxId); }
 
 	//
 	// Operators
 	//
-	inline bool operator<(const OutputData& other) const { return GetAmount() < other.GetAmount(); }
+	bool operator<(const OutputData& other) const { return GetAmount() < other.GetAmount(); }
 
 	//
 	// Serialization
@@ -93,7 +93,7 @@ public:
 	void Serialize(Serializer& serializer) const
 	{
 		serializer.Append<uint8_t>(OUTPUT_DATA_FORMAT);
-		serializer.AppendVarStr(m_keyChainPath.ToString());
+		serializer.AppendVarStr(m_keyChainPath.Format());
 		m_blindingFactor.Serialize(serializer);
 		m_output.Serialize(serializer);
 		serializer.Append(m_amount);

@@ -1,5 +1,6 @@
 #include "Zipper.h"
 
+#include <Common/Util/FileUtil.h>
 #include <Core/File.h>
 #include <Core/Exceptions/FileException.h>
 #include <Infrastructure/Logger.h>
@@ -66,15 +67,14 @@ void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 	File pFile = File::Load(sourceFile, std::ios::binary | std::ios::in);
 	if (pFile->is_open())
 	{
-		pFile->seekg(0, std::ios::end);
-		long size = pFile->tellg();
+		size_t size = FileUtil::GetFileSize(sourceFile);
 		pFile->seekg(0, std::ios::beg);
 
 		std::vector<char> buffer(size);
 		if (size == 0 || pFile->read(&buffer[0], size))
 		{
-			zip_fileinfo zfi = { 0 };
-			std::string fileName = destDir + "/" + sourceFile.substr(std::max(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
+			zip_fileinfo zfi;
+			std::string fileName = destDir + "/" + sourceFile.substr((std::max)(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
 
 			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
 			{

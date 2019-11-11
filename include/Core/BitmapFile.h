@@ -11,7 +11,7 @@
 
 // NOTE: Uses bit positions numbered from 0-7, starting at the left.
 // For example, 65 (01000001) has bit positions 1 and 7 set.
-class BitmapFile : public Traits::Batchable
+class BitmapFile : public Traits::IBatchable
 {
 public:
 	static std::shared_ptr<BitmapFile> Load(const std::string& path)
@@ -142,23 +142,36 @@ private:
 
 	void Load()
 	{
-		std::fstream file(m_path, std::ios::in | std::ios::out | std::ifstream::ate | std::ifstream::binary);
-		if (!file.is_open())
+		std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+		if (inFile.is_open())
 		{
-			std::ofstream file2(m_path, std::ios::out | std::ios::binary | std::ios::app);
-			file2.close();
-			m_size = 0;
-			return;
+			inFile.close();
+		}
+		else
+		{
+			LOG_INFO_F("File (%s) does not exist. Creating it now.", m_path);
+			std::ofstream outFile(m_path, std::ios::out | std::ios::binary | std::ios::app);
+			if (!outFile.is_open())
+			{
+				LOG_ERROR_F("Failed to create file: %s", m_path);
+				throw FILE_EXCEPTION_F("Failed to create file: %s", m_path);
+			}
+
+			outFile.close();
 		}
 
-		if (file.tellg() > 0)
+		m_size = FileUtil::GetFileSize(m_path);
+
+		if (m_size > 0)
 		{
 			std::error_code error;
 			m_mmap = mio::make_mmap_source(m_path, error);
-			m_size = m_mmap.size();
+			if (error.value() > 0)
+			{
+				LOG_ERROR_F("Failed to mmap file: %d", error.value());
+				throw FILE_EXCEPTION_F("Failed to mmap file: %s", m_path);
+			}
 		}
-			
-		file.close();
 	}
 
 	uint8_t GetByte(const uint64_t byteIndex) const

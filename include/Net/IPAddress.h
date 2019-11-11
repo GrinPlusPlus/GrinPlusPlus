@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -14,7 +14,7 @@ enum class EAddressFamily
 	IPv6
 };
 
-// TODO: Implement IPv6
+// FUTURE: Implement IPv6
 class IPAddress : public Traits::IPrintable
 {
 public:
@@ -35,7 +35,7 @@ public:
 
 	IPAddress(const IPAddress& other) = default;
 	IPAddress(IPAddress&& other) noexcept = default;
-	IPAddress() = default;
+	IPAddress() : m_family(EAddressFamily::IPv4), m_address() { }
 
 	static IPAddress FromIP(const uint8_t byte1, const uint8_t byte2, const uint8_t byte3, const uint8_t byte4)
 	{
@@ -135,9 +135,11 @@ public:
 		}
 		else
 		{
-			const uint16_t words[8] = { BitUtil::ConvertToU16(m_address[0], m_address[1]), BitUtil::ConvertToU16(m_address[2], m_address[3]), 
-				BitUtil::ConvertToU16(m_address[4], m_address[5]), BitUtil::ConvertToU16(m_address[6], m_address[7]), BitUtil::ConvertToU16(m_address[8], m_address[9]), 
-				BitUtil::ConvertToU16(m_address[10], m_address[11]), BitUtil::ConvertToU16(m_address[12], m_address[13]), BitUtil::ConvertToU16(m_address[14], m_address[15]) };
+			std::vector<uint16_t> words;
+			for (int i = 0; i < 16; i += 2)
+			{
+				words.push_back(BitUtil::ConvertToU16(m_address[i], m_address[i + 1]));
+			}
 
 			std::string formatted;
 			for (int i = 0; i < 8; i++)
@@ -221,8 +223,8 @@ namespace std
 			}
 			else
 			{
-				// TODO: Implement
-				return 0;
+				// TODO: Not optimal, but Grin IPv6 support isn't implemented yet.
+				return BitUtil::ConvertToU32(bytes[12], bytes[13], bytes[14], bytes[15]);
 			}
 		}
 	};

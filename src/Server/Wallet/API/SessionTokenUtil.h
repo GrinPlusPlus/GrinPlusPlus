@@ -26,5 +26,4 @@ public:
 			throw SessionTokenException();
 		}
 	}
-
 };

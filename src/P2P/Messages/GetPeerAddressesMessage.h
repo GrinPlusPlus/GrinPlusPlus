@@ -37,7 +37,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::GetPeerAddrs; }
-	inline const Capabilities& GetCapabilities() const { return m_capabilities; }
+	const Capabilities& GetCapabilities() const { return m_capabilities; }
 
 	//
 	// Deserialization

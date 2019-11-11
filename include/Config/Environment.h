@@ -24,6 +24,4 @@ private:
 	FullBlock m_block;
 	std::vector<uint8_t> m_magicBytes;
 	uint16_t m_port;
-	uint32_t m_publicKeyVersion;
-	uint32_t m_privateKeyVersion;
 };

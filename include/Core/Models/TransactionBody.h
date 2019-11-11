@@ -41,9 +41,9 @@ public:
 	//
 	// Getters
 	//
-	inline const std::vector<TransactionInput>& GetInputs() const { return m_inputs; }
-	inline const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
-	inline const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
+	const std::vector<TransactionInput>& GetInputs() const { return m_inputs; }
+	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
+	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
 
 	//
 	// Serialization/Deserialization

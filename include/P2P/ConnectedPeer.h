@@ -2,7 +2,7 @@
 
 #include <P2P/Peer.h>
 #include <P2P/Direction.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 
 class ConnectedPeer : public Traits::IPrintable
 {

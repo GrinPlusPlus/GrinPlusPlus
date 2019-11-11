@@ -8,16 +8,13 @@
 #include <memory>
 
 template<size_t NUM_BYTES>
-class DataFile : public Traits::Batchable
+class DataFile : public Traits::IBatchable
 {
 public:
 	static std::shared_ptr<DataFile> Load(const std::string& path)
 	{ 
 		std::shared_ptr<AppendOnlyFile> pFile = std::make_shared<AppendOnlyFile>(path);
-		if (!pFile->Load())
-		{
-			//throw FILE_EXCEPTION("Failed to load");
-		}
+		pFile->Load();
 
 		return std::make_shared<DataFile>(DataFile(pFile));
 	}

@@ -38,19 +38,19 @@ public:
 	//
 	TransactionKernel& operator=(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel& operator=(TransactionKernel&& transactionKernel) noexcept = default;
-	inline bool operator<(const TransactionKernel& transactionKernel) const { return GetExcessCommitment() < transactionKernel.GetExcessCommitment(); }
-	inline bool operator==(const TransactionKernel& transactionKernel) const { return GetHash() == transactionKernel.GetHash(); }
-	inline bool operator!=(const TransactionKernel& transactionKernel) const { return GetHash() != transactionKernel.GetHash(); }
+	bool operator<(const TransactionKernel& transactionKernel) const { return GetExcessCommitment() < transactionKernel.GetExcessCommitment(); }
+	bool operator==(const TransactionKernel& transactionKernel) const { return GetHash() == transactionKernel.GetHash(); }
+	bool operator!=(const TransactionKernel& transactionKernel) const { return GetHash() != transactionKernel.GetHash(); }
 
 	//
 	// Getters
 	//
-	inline const EKernelFeatures GetFeatures() const { return m_features; }
-	inline const uint64_t GetFee() const { return m_fee; }
-	inline const uint64_t GetLockHeight() const { return m_lockHeight; }
-	inline const Commitment& GetExcessCommitment() const { return m_excessCommitment; }
-	inline const Signature& GetExcessSignature() const { return m_excessSignature; }
-	inline bool IsCoinbase() const { return (m_features & EKernelFeatures::COINBASE_KERNEL) == EKernelFeatures::COINBASE_KERNEL; }
+	EKernelFeatures GetFeatures() const { return m_features; }
+	uint64_t GetFee() const { return m_fee; }
+	uint64_t GetLockHeight() const { return m_lockHeight; }
+	const Commitment& GetExcessCommitment() const { return m_excessCommitment; }
+	const Signature& GetExcessSignature() const { return m_excessSignature; }
+	bool IsCoinbase() const { return (m_features & EKernelFeatures::COINBASE_KERNEL) == EKernelFeatures::COINBASE_KERNEL; }
 	Hash GetSignatureMessage() const;
 
 	//

@@ -22,15 +22,4 @@ public:
 
 		return Crypto::AddBlindingFactors(positive, negative);
 	}
-
-	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys)
-	{
-		std::unique_ptr<PublicKey> pPublicKey = Crypto::AddPublicKeys(publicKeys);
-		if (pPublicKey == nullptr)
-		{
-			throw CryptoException("Failed to add public keys");
-		}
-
-		return *pPublicKey;
-	}
 };

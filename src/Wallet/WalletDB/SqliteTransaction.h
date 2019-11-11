@@ -25,14 +25,14 @@ public:
 	{
 		if (m_open)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Begin - Tried to begin a transaction twice"));
+			WALLET_ERROR_F("Tried to begin a transaction twice");
 			throw WALLET_STORE_EXCEPTION("Tried to begin a transaction twice.");
 		}
 
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "BEGIN;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Begin - Failed with error: %s", error));
+			WALLET_ERROR_F("Failed with error: %s", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to begin transaction");
 		}
@@ -44,7 +44,7 @@ public:
 	{
 		if (!m_open)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Commit - Tried to commit a closed transaction"));
+			WALLET_ERROR_F("Tried to commit a closed transaction");
 			throw WALLET_STORE_EXCEPTION("Tried to commit a closed transaction.");
 		}
 
@@ -53,7 +53,7 @@ public:
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "COMMIT;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Commit - Failed with error: %s", error));
+			WALLET_ERROR_F("Failed with error: %s", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to commit transaction");
 		}
@@ -63,7 +63,7 @@ public:
 	{
 		if (!m_open)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Rollback - Tried to rollback a closed transaction"));
+			WALLET_ERROR_F("Tried to rollback a closed transaction");
 			throw WALLET_STORE_EXCEPTION("Tried to rollback a closed transaction.");
 		}
 
@@ -72,7 +72,7 @@ public:
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "ROLLBACK;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			LoggerAPI::LogError(StringUtil::Format("SqliteTransaction::Rollback - Failed with error: %s", error));
+			WALLET_ERROR_F("Failed with error: %s", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to rollback transaction");
 		}

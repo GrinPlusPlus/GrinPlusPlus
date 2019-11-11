@@ -2,7 +2,7 @@
 
 #include <Net/IPAddress.h>
 
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 

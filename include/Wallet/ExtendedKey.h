@@ -30,11 +30,11 @@ public:
 		m_keyBytes.Serialize(serializer);
 	}
 
-	inline uint32_t GetNetwork() const { return m_network; }
-	inline uint8_t GetDepth() const { return m_depth; }
-	inline uint32_t GetParentFingerprint() const { return m_parentFingerprint; }
-	inline uint32_t GetChildNumber() const { return m_childNumber; }
-	inline const SecretKey& GetChainCode() const { return m_chainCode; }
+	uint32_t GetNetwork() const { return m_network; }
+	uint8_t GetDepth() const { return m_depth; }
+	uint32_t GetParentFingerprint() const { return m_parentFingerprint; }
+	uint32_t GetChildNumber() const { return m_childNumber; }
+	const SecretKey& GetChainCode() const { return m_chainCode; }
 
 protected:
 	IExtendedKey(const uint32_t network, const uint8_t depth, const uint32_t parentFingerprint, const uint32_t childNumber, SecretKey&& chainCode, PublicKey&& keyBytes)
@@ -48,7 +48,7 @@ protected:
 
 	}
 
-	inline const PublicKey& GetKeyBytes() const { return m_keyBytes; }
+	const PublicKey& GetKeyBytes() const { return m_keyBytes; }
 
 private:
 	uint32_t m_network;

@@ -19,8 +19,8 @@ public:
 
 	}
 
-	inline const Commitment& GetOutputSum() const { return m_outputSum; }
-	inline const Commitment& GetKernelSum() const { return m_kernelSum; }
+	const Commitment& GetOutputSum() const { return m_outputSum; }
+	const Commitment& GetKernelSum() const { return m_kernelSum; }
 
 	void Serialize(Serializer& serializer) const
 	{

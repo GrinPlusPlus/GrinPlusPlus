@@ -11,11 +11,12 @@ Logger& Logger::GetInstance()
 	return instance;
 }
 
-void Logger::StartLogger(const std::string& nodeDirectory, const std::string& walletDirectory, const spdlog::level::level_enum& logLevel)
+void Logger::StartLogger(const std::string& logDirectory, const spdlog::level::level_enum& logLevel)
 {
+	FileUtil::CreateDirectories(logDirectory);
+
 	{
-		FileUtil::CreateDirectories(nodeDirectory + "LOGS");
-		const std::string logPath = nodeDirectory + "LOGS/Node.log";
+		const std::string logPath = logDirectory + "Node.log";
 		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
 		m_pNodeLogger = spdlog::create_async("NODE", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
@@ -25,8 +26,7 @@ void Logger::StartLogger(const std::string& nodeDirectory, const std::string& wa
 		}
 	}
 	{
-		FileUtil::CreateDirectories(walletDirectory + "LOGS");
-		const std::string logPath = walletDirectory + "LOGS/Wallet.log";
+		const std::string logPath = logDirectory + "Wallet.log";
 		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024, 5);
 		m_pWalletLogger = spdlog::create_async("WALLET", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
@@ -43,9 +43,19 @@ void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum 
 	if (pLogger != nullptr)
 	{
 		std::string eventTextClean = eventText;
-		while (eventTextClean.find("\n") != std::string::npos)
+		size_t newlinePos = eventTextClean.find("\n");
+		while (newlinePos != std::string::npos)
 		{
-			eventTextClean.erase(eventTextClean.find("\n"), 2);
+			if (eventTextClean.size() > newlinePos + 2)
+			{
+				eventTextClean.erase(newlinePos, 2);
+			}
+			else
+			{
+				eventTextClean.erase(newlinePos, 1);
+			}
+
+			newlinePos = eventTextClean.find("\n");
 		}
 
 		const std::string threadName = ThreadManager::GetInstance().GetCurrentThreadName();
@@ -85,7 +95,7 @@ std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
 
 namespace LoggerAPI
 {
-	LOGGER_API void Initialize(const std::string& nodeDirectory, const std::string& walletDirectory, const std::string& logLevel)
+	LOGGER_API void Initialize(const std::string& logDirectory, const std::string& logLevel)
 	{
 		spdlog::level::level_enum logLevelEnum = spdlog::level::level_enum::debug;
 		if (logLevel == "TRACE")
@@ -109,7 +119,7 @@ namespace LoggerAPI
 			logLevelEnum = spdlog::level::level_enum::err;
 		}
 
-		Logger::GetInstance().StartLogger(nodeDirectory, walletDirectory, logLevelEnum);
+		Logger::GetInstance().StartLogger(logDirectory, logLevelEnum);
 	}
 
 	LOGGER_API void LogTrace(const std::string& message)

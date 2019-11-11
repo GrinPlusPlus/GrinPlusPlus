@@ -1,6 +1,7 @@
 #include "PublicKeys.h"
 
 #include "secp256k1-zkp/include/secp256k1.h"
+#include <Crypto/CryptoException.h>
 
 PublicKeys& PublicKeys::GetInstance()
 {
@@ -18,7 +19,7 @@ PublicKeys::~PublicKeys()
 	secp256k1_context_destroy(m_pContext);
 }
 
-std::unique_ptr<PublicKey> PublicKeys::CalculatePublicKey(const SecretKey& privateKey) const
+PublicKey PublicKeys::CalculatePublicKey(const SecretKey& privateKey) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -34,15 +35,15 @@ std::unique_ptr<PublicKey> PublicKeys::CalculatePublicKey(const SecretKey& priva
 			const int serializeResult = secp256k1_ec_pubkey_serialize(m_pContext, serializedPublicKey.data(), &length, &pubkey, SECP256K1_EC_COMPRESSED);
 			if (serializeResult == 1)
 			{
-				return std::make_unique<PublicKey>(PublicKey(std::move(serializedPublicKey)));
+				return PublicKey(std::move(serializedPublicKey));
 			}
 		}
 	}
 
-	return std::unique_ptr<PublicKey>(nullptr);
+	throw CryptoException("Failed to calculate public key");
 }
 
-std::unique_ptr<PublicKey> PublicKeys::PublicKeySum(const std::vector<PublicKey>& publicKeys) const
+PublicKey PublicKeys::PublicKeySum(const std::vector<PublicKey>& publicKeys) const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
@@ -63,7 +64,7 @@ std::unique_ptr<PublicKey> PublicKeys::PublicKeySum(const std::vector<PublicKey>
 				delete pParsedPubKey;
 			}
 
-			return std::unique_ptr<PublicKey>(nullptr);
+			throw CryptoException("secp256k1_ec_pubkey_parse failed with error: " + std::to_string(pubKeyParsed));
 		}
 	}
 
@@ -82,9 +83,9 @@ std::unique_ptr<PublicKey> PublicKeys::PublicKeySum(const std::vector<PublicKey>
 		const int serializeResult = secp256k1_ec_pubkey_serialize(m_pContext, serializedPublicKey.data(), &length, &publicKey, SECP256K1_EC_COMPRESSED);
 		if (serializeResult == 1)
 		{
-			return std::make_unique<PublicKey>(PublicKey(CBigInteger<33>(std::move(serializedPublicKey))));
+			return PublicKey(CBigInteger<33>(std::move(serializedPublicKey)));
 		}
 	}
 
-	return std::unique_ptr<PublicKey>(nullptr);
+	throw CryptoException("Failed to combine public keys.");
 }

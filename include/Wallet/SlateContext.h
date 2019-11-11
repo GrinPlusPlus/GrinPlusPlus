@@ -15,8 +15,8 @@ public:
 
 	}
 
-	inline const SecretKey& GetSecretKey() const { return m_secretKey; }
-	inline const SecretKey& GetSecretNonce() const { return m_secretNonce; }
+	const SecretKey& GetSecretKey() const { return m_secretKey; }
+	const SecretKey& GetSecretNonce() const { return m_secretNonce; }
 
 	std::vector<unsigned char> Encrypt(const SecureVector& masterSeed, const uuids::uuid& slateId) const
 	{

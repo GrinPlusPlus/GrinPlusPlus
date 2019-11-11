@@ -7,6 +7,8 @@
 class MMR
 {
 public:
+	virtual ~MMR() = default;
+
 	//
 	// Returns the unpruned size of the MMR.
 	//

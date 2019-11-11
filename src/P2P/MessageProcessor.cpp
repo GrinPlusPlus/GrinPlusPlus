@@ -434,7 +434,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		return EStatus::UNKNOWN_ERROR;
 	}
 
-	const uint64_t fileSize = file.tellg();
+	const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 	file.seekg(0);
 	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
 	MessageSender(m_config).Send(socket, archiveMessage);

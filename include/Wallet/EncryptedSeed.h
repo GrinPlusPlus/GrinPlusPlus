@@ -16,10 +16,10 @@ public:
 
 	}
 
-	inline const CBigInteger<16>& GetIV() const { return m_iv; }
-	inline const CBigInteger<8>& GetSalt() const { return m_salt; }
-	inline const std::vector<unsigned char>& GetEncryptedSeedBytes() const { return m_encryptedSeedBytes; }
-	inline const ScryptParameters& GetScryptParameters() const { return m_scryptParameters; }
+	const CBigInteger<16>& GetIV() const { return m_iv; }
+	const CBigInteger<8>& GetSalt() const { return m_salt; }
+	const std::vector<unsigned char>& GetEncryptedSeedBytes() const { return m_encryptedSeedBytes; }
+	const ScryptParameters& GetScryptParameters() const { return m_scryptParameters; }
 
 	void Serialize(Serializer& serializer) const
 	{

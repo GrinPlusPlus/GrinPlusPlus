@@ -38,7 +38,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Block; }
-	inline const FullBlock& GetBlock() const { return m_block; }
+	const FullBlock& GetBlock() const { return m_block; }
 
 	//
 	// Deserialization

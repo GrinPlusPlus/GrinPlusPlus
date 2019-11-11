@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	signal(9, SigIntHandler);
 
 	const Config config = ConfigManager::LoadConfig(environment);
-	LoggerAPI::Initialize(config.GetNodeDirectory(), config.GetWalletConfig().GetWalletDirectory(), config.GetLogLevel());
+	LoggerAPI::Initialize(config.GetLogDirectory(), config.GetLogLevel());
 	mg_init_library(0);
 
 	StartServer(config, headless);
@@ -68,9 +68,7 @@ int main(int argc, char* argv[])
 void StartServer(const Config& config, const bool headless)
 {
 	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(config);
-
-	WalletDaemon wallet(config, pNode->GetNodeClient());
-	wallet.Initialize();
+	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(config, pNode->GetNodeClient());
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	while (true)
@@ -99,7 +97,4 @@ void StartServer(const Config& config, const bool headless)
 
 		std::cout << "SHUTTING DOWN...";
 	}
-
-	wallet.Shutdown();
-
 }

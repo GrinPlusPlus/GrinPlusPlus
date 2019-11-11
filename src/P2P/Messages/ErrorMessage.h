@@ -36,8 +36,8 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Error; }
-	inline const uint32_t GetErrorCode() const { return m_errorCode; }
-	inline const std::string& GetErrorMessage() const { return m_message; }
+	uint32_t GetErrorCode() const { return m_errorCode; }
+	const std::string& GetErrorMessage() const { return m_message; }
 
 	//
 	// Deserialization

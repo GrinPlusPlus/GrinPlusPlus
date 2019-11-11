@@ -39,7 +39,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::PeerAddrs; }
-	inline const std::vector<SocketAddress>& GetPeerAddresses() const { return m_peerAddresses; }
+	const std::vector<SocketAddress>& GetPeerAddresses() const { return m_peerAddresses; }
 
 	//
 	// Deserialization

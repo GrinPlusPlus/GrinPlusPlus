@@ -8,7 +8,7 @@
 #include <Core/Models/ProofOfWork.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <Common/Util/HexUtil.h>
 
 class BlockHeader : public Traits::IPrintable
@@ -47,31 +47,31 @@ public:
 	//
 	BlockHeader& operator=(const BlockHeader& other) = default;
 	BlockHeader& operator=(BlockHeader&& other) noexcept = default;
-	inline bool operator!=(const BlockHeader& rhs) const { return this->GetHash() != rhs.GetHash(); }
+	bool operator!=(const BlockHeader& rhs) const { return this->GetHash() != rhs.GetHash(); }
 
 	//
 	// Getters
 	//
-	inline uint16_t GetVersion() const { return m_version; }
-	inline uint64_t GetHeight() const { return m_height; }
-	inline const Hash& GetPreviousBlockHash() const { return m_previousBlockHash; }
-	inline const Hash& GetPreviousRoot() const { return m_previousRoot; }
-	inline int64_t GetTimestamp() const { return m_timestamp; }
-	inline uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline uint32_t GetScalingDifficulty() const { return m_scalingDifficulty; }
-	inline uint64_t GetNonce() const { return m_nonce; }
-	inline const ProofOfWork& GetProofOfWork() const { return m_proofOfWork; }
+	uint16_t GetVersion() const { return m_version; }
+	uint64_t GetHeight() const { return m_height; }
+	const Hash& GetPreviousBlockHash() const { return m_previousBlockHash; }
+	const Hash& GetPreviousRoot() const { return m_previousRoot; }
+	int64_t GetTimestamp() const { return m_timestamp; }
+	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
+	uint32_t GetScalingDifficulty() const { return m_scalingDifficulty; }
+	uint64_t GetNonce() const { return m_nonce; }
+	const ProofOfWork& GetProofOfWork() const { return m_proofOfWork; }
 
 	// Merklish roots
-	inline const Hash& GetOutputRoot() const { return m_outputRoot; }
-	inline const Hash& GetRangeProofRoot() const { return m_rangeProofRoot; }
-	inline const Hash& GetKernelRoot() const { return m_kernelRoot; }
+	const Hash& GetOutputRoot() const { return m_outputRoot; }
+	const Hash& GetRangeProofRoot() const { return m_rangeProofRoot; }
+	const Hash& GetKernelRoot() const { return m_kernelRoot; }
 
-	inline const BlindingFactor& GetTotalKernelOffset() const { return m_totalKernelOffset; }
+	const BlindingFactor& GetTotalKernelOffset() const { return m_totalKernelOffset; }
 
 	// Merkle Mountain Range Sizes
-	inline uint64_t GetOutputMMRSize() const { return m_outputMMRSize; }
-	inline uint64_t GetKernelMMRSize() const { return m_kernelMMRSize; }
+	uint64_t GetOutputMMRSize() const { return m_outputMMRSize; }
+	uint64_t GetKernelMMRSize() const { return m_kernelMMRSize; }
 
 	//
 	// Serialization/Deserialization
@@ -83,8 +83,8 @@ public:
 	//
 	// Hashing
 	//
-	inline const Hash& GetHash() const { return m_proofOfWork.GetHash(); }
-	inline const std::string ShortHash() const { return HexUtil::ShortHash(GetHash()); }
+	const Hash& GetHash() const { return m_proofOfWork.GetHash(); }
+	std::string ShortHash() const { return HexUtil::ShortHash(GetHash()); }
 
 	//
 	// Traits

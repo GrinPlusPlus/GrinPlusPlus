@@ -43,7 +43,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::StemTransaction; }
-	inline const Transaction& GetTransaction() const { return m_transaction; }
+	const Transaction& GetTransaction() const { return m_transaction; }
 
 	//
 	// Deserialization

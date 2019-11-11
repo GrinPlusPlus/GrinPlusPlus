@@ -11,7 +11,7 @@ public:
 
 	}
 
-	inline const PublicKey& GetPublicKey() const { return GetKeyBytes(); }
+	const PublicKey& GetPublicKey() const { return GetKeyBytes(); }
 	
 	static PublicExtKey Deserialize(ByteBuffer& byteBuffer)
 	{ 

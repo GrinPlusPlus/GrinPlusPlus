@@ -14,7 +14,7 @@ public:
 
 	}
 
-	inline uint32_t GetId() const { return m_walletTx.GetId(); }
+	uint32_t GetId() const { return m_walletTx.GetId(); }
 
 	Json::Value ToJSON() const
 	{

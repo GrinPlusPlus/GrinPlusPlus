@@ -18,9 +18,11 @@ class IBlockDB;
 class Transaction;
 class SyncStatus;
 
-class ITxHashSet : public Traits::Batchable
+class ITxHashSet : public Traits::IBatchable
 {
 public:
+	virtual ~ITxHashSet() = default;
+
 	//
 	// Validates all hashes, signatures, etc in the entire TxHashSet.
 	// This is typically only used during initial sync.

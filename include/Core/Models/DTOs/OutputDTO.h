@@ -20,10 +20,10 @@ public:
 
 	}
 
-	inline bool IsSpent() const { return m_spent; }
-	inline const OutputIdentifier& GetIdentifier() const { return m_identifier; }
-	inline const OutputLocation& GetLocation() const { return m_location; }
-	inline const RangeProof& GetRangeProof() const { return m_rangeProof; }
+	bool IsSpent() const { return m_spent; }
+	const OutputIdentifier& GetIdentifier() const { return m_identifier; }
+	const OutputLocation& GetLocation() const { return m_location; }
+	const RangeProof& GetRangeProof() const { return m_rangeProof; }
 	
 private:
 	bool m_spent;

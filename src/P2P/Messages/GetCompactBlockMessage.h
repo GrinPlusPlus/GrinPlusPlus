@@ -44,7 +44,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::GetCompactBlock; }
-	inline const Hash& GetHash() const { return m_hash; }
+	const Hash& GetHash() const { return m_hash; }
 
 	//
 	// Deserialization

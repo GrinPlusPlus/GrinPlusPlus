@@ -13,7 +13,7 @@ class NodeDaemon
 {
 public:
 	static std::shared_ptr<NodeDaemon> Create(const Config& config);
-	~NodeDaemon();
+	~NodeDaemon() = default;
 
 	INodeClientPtr GetNodeClient() { return m_pNodeClient; }
 

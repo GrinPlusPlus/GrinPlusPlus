@@ -29,6 +29,8 @@
 class IWalletManager
 {
 public:
+	virtual ~IWalletManager() = default;
+
 	//
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.

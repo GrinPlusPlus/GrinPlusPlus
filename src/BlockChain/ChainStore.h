@@ -5,7 +5,7 @@
 #include <Config/Config.h>
 #include <Core/Traits/Lockable.h>
 
-class ChainStore : public Traits::Batchable
+class ChainStore : public Traits::IBatchable
 {
 public:
 	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, std::shared_ptr<BlockIndex>);

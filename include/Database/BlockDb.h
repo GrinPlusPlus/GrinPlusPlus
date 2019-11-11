@@ -14,9 +14,11 @@
 #include <Core/Traits/Batchable.h>
 #include <memory>
 
-class IBlockDB : public Traits::Batchable
+class IBlockDB : public Traits::IBatchable
 {
 public:
+	virtual ~IBlockDB() = default;
+
 	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const Hash& hash) const = 0;
 
 	virtual void AddBlockHeader(const BlockHeader& blockHeader) = 0;

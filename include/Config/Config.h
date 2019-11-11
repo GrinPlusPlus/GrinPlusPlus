@@ -47,7 +47,7 @@ public:
 
 	const std::string& GetDataDirectory() const { return m_dataPath; }
 	std::string GetNodeDirectory() const { return m_dataPath + "NODE/"; }
-	std::string GetLogDirectory() const { return m_dataPath + "NODE/" + m_logDirectory; }
+	std::string GetLogDirectory() const { return m_dataPath + m_logDirectory; }
 	std::string GetChainDirectory() const { return m_dataPath + "NODE/" + m_chainPath; }
 	std::string GetDatabaseDirectory() const { return m_dataPath + "NODE/" + m_databasePath; }
 	std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE/" + m_txHashSetPath; }

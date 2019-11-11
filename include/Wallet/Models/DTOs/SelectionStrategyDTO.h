@@ -31,8 +31,8 @@ public:
 		return SelectionStrategyDTO(SelectionStrategy::FromString(selectionStrategy), std::move(inputs));
 	}
 
-	inline const ESelectionStrategy GetStrategy() const { return m_strategy; }
-	inline const std::set<Commitment>& GetInputs() const { return m_inputs; }
+	ESelectionStrategy GetStrategy() const { return m_strategy; }
+	const std::set<Commitment>& GetInputs() const { return m_inputs; }
 
 private:
 	ESelectionStrategy m_strategy;

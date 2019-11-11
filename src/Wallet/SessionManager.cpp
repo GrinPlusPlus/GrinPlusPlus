@@ -37,16 +37,18 @@ SessionToken SessionManager::Login(const std::string& username, const SecureStri
 	std::unique_ptr<EncryptedSeed> pSeed = m_pWalletDB->LoadWalletSeed(username);
 	if (pSeed != nullptr)
 	{
-		std::optional<SecureVector> decryptedSeedOpt = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
-		if (decryptedSeedOpt.has_value())
+		try
 		{
+			SecureVector decryptedSeed = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+
 			WALLET_INFO("Valid password provided. Logging in now.");
-
-			m_pWalletDB->OpenWallet(username, decryptedSeedOpt.value());
-			return Login(username, decryptedSeedOpt.value());
+			m_pWalletDB->OpenWallet(username, decryptedSeed);
+			return Login(username, decryptedSeed);
 		}
-
-		WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
+		catch (std::exception& e)
+		{
+			WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
+		}
 	}
 	else
 	{
@@ -73,11 +75,11 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 
 	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
 
-	std::unique_ptr<SecretKey> pGrinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
+	SecretKey grinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
 	SecureVector encryptedGrinboxAddress(32);
 	for (size_t i = 0; i < 32; i++)
 	{
-		encryptedGrinboxAddress[i] = pGrinboxAddress->GetBytes()[i] ^ hash[i];
+		encryptedGrinboxAddress[i] = grinboxAddress.GetBytes()[i] ^ hash[i];
 	}
 
 	const uint64_t sessionId = m_nextSessionId++;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Traits/Printable.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <stdint.h>
@@ -8,7 +9,7 @@
 
 static const uint32_t MINIMUM_HARDENED_INDEX = 2147483648;
 
-class KeyChainPath
+class KeyChainPath : public Traits::IPrintable
 {
 public:
 	KeyChainPath(std::vector<uint32_t>&& keyIndices)
@@ -20,13 +21,13 @@ public:
 	//
 	// Operators
 	//
-	inline bool operator<(const KeyChainPath& other) const { return GetKeyIndices() < other.GetKeyIndices(); }
-	inline bool operator==(const KeyChainPath& other) const { return GetKeyIndices() == other.GetKeyIndices(); }
-	inline bool operator!=(const KeyChainPath& other) const { return GetKeyIndices() != other.GetKeyIndices(); }
+	bool operator<(const KeyChainPath& other) const { return GetKeyIndices() < other.GetKeyIndices(); }
+	bool operator==(const KeyChainPath& other) const { return GetKeyIndices() == other.GetKeyIndices(); }
+	bool operator!=(const KeyChainPath& other) const { return GetKeyIndices() != other.GetKeyIndices(); }
 
 	const std::vector<uint32_t>& GetKeyIndices() const { return m_keyIndices; }
 
-	std::string ToString() const
+	virtual std::string Format() const override final
 	{
 		std::string path = "m";
 		for (const uint32_t keyIndex : m_keyIndices)

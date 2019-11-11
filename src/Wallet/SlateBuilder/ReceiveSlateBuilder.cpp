@@ -78,15 +78,11 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 {
 	const Hash kernelMessage = slate.GetTransaction().GetBody().GetKernels().front().GetSignatureMessage();
 
-	std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(secretKey);
-	std::unique_ptr<PublicKey> pPublicNonce = Crypto::CalculatePublicKey(secretNonce);
-	if (pPublicKey == nullptr || pPublicNonce == nullptr)
-	{
-		throw CryptoException();
-	}
+	PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
+	PublicKey publicNonce = Crypto::CalculatePublicKey(secretNonce);
 
 	// Build receiver's ParticipantData
-	ParticipantData receiverData(1, *pPublicKey, *pPublicNonce);
+	ParticipantData receiverData(1, publicKey, publicNonce);
 
 	// Generate signature
 	std::vector<ParticipantData> participants = slate.GetParticipantData();
@@ -105,7 +101,7 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	if (messageOpt.has_value())
 	{
 		// TODO: Limit message length
-		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
 			WALLET_ERROR_F("Failed to sign message for slate %s", uuids::to_string(slate.GetSlateId()));
@@ -139,14 +135,14 @@ bool ReceiveSlateBuilder::UpdateDatabase(
 	// Save secretKey and secretNonce
 	if (!pWallet->SaveSlateContext(slate.GetSlateId(), masterSeed, context))
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to save context for slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to save context for slate %s", uuids::to_string(slate.GetSlateId()));
 		return false;
 	}
 
 	// Save OutputData
 	if (!pWallet->SaveOutputs(masterSeed, std::vector<OutputData>({ outputData })))
 	{
-		LoggerAPI::LogError("ReceiveSlateBuilder::UpdateDatabase - Failed to save output for slate " + uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to save output for slate %s", uuids::to_string(slate.GetSlateId()));
 		return false;
 	}
 

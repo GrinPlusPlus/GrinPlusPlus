@@ -39,17 +39,17 @@ public:
 	//
 	TransactionOutput& operator=(const TransactionOutput& transactionOutput) = default;
 	TransactionOutput& operator=(TransactionOutput&& transactionOutput) noexcept = default;
-	inline bool operator<(const TransactionOutput& transactionOutput) const { return GetCommitment() < transactionOutput.GetCommitment(); }
-	inline bool operator==(const TransactionOutput& transactionOutput) const { return GetHash() == transactionOutput.GetHash(); }
+	bool operator<(const TransactionOutput& transactionOutput) const { return GetCommitment() < transactionOutput.GetCommitment(); }
+	bool operator==(const TransactionOutput& transactionOutput) const { return GetHash() == transactionOutput.GetHash(); }
 
 	//
 	// Getters
 	//
-	inline const EOutputFeatures GetFeatures() const { return m_features; }
+	EOutputFeatures GetFeatures() const { return m_features; }
 	virtual const Commitment& GetCommitment() const override final { return m_commitment; }
-	inline const RangeProof& GetRangeProof() const { return m_rangeProof; }
+	const RangeProof& GetRangeProof() const { return m_rangeProof; }
 
-	inline bool IsCoinbase() const { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
+	bool IsCoinbase() const { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
 
 	//
 	// Serialization/Deserialization

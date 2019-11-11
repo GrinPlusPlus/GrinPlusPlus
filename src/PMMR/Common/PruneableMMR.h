@@ -4,12 +4,12 @@
 #include "HashFile.h"
 #include "LeafSet.h"
 #include "PruneList.h"
-#include <Core/DataFile.h>
-#include <CRoaring/roaring.hh>
 
 #include "MMRUtil.h"
 #include "MMRHashUtil.h"
 
+#include <Core/DataFile.h>
+#include <CRoaring/roaring.hh>
 #include <Core/Exceptions/TxHashSetException.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
@@ -17,7 +17,7 @@
 #include <Infrastructure/Logger.h>
 
 template<size_t DATA_SIZE, class DATA_TYPE>
-class PruneableMMR : public MMR, public Traits::Batchable
+class PruneableMMR : public MMR, public Traits::IBatchable
 {
 public:
 	PruneableMMR(

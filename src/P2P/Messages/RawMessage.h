@@ -32,8 +32,8 @@ public:
 	//
 	// Getters
 	//
-	inline const MessageHeader& GetMessageHeader() const { return m_messageHeader; }
-	inline const std::vector<unsigned char>& GetPayload() const { return m_payload; }
+	const MessageHeader& GetMessageHeader() const { return m_messageHeader; }
+	const std::vector<unsigned char>& GetPayload() const { return m_payload; }
 
 private:
 	MessageHeader m_messageHeader;

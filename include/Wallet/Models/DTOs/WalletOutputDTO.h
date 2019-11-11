@@ -16,7 +16,7 @@ public:
 	{
 		Json::Value outputJSON;
 
-		outputJSON["keychain_path"] = m_outputData.GetKeyChainPath().ToString();
+		outputJSON["keychain_path"] = m_outputData.GetKeyChainPath().Format();
 		outputJSON["commitment"] = m_outputData.GetOutput().GetCommitment().ToHex();
 		outputJSON["amount"] = m_outputData.GetAmount();
 		outputJSON["status"] = OutputStatus::ToString(m_outputData.GetStatus());

@@ -38,7 +38,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::GetHeaders; }
-	inline const std::vector<CBigInteger<32>>& GetHashes() const { return m_hashes; }
+	const std::vector<CBigInteger<32>>& GetHashes() const { return m_hashes; }
 
 	//
 	// Deserialization

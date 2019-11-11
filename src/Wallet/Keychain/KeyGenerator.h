@@ -35,7 +35,7 @@ public:
 	//
 	// \return The generated child CExtendedPrivateKey.
 	//
-	std::unique_ptr<PrivateExtKey> GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const;
+	PrivateExtKey GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const;
 
 	//
 	// Generates an extended child public key from an extended parent public key (for an HD wallet).

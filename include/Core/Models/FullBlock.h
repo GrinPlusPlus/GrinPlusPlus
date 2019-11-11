@@ -9,7 +9,7 @@
 #include <Core/Models/TransactionBody.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 
 class FullBlock : public Traits::IPrintable
 {

@@ -41,21 +41,21 @@ public:
 
 	}
 
-	inline uint64_t GetParticipantId() const { return m_participantId; }
-	inline const PublicKey& GetPublicBlindExcess() const { return m_publicBlindExcess; }
-	inline const PublicKey& GetPublicNonce() const { return m_publicNonce; }
-	inline const std::optional<CompactSignature>& GetPartialSignature() const { return m_partialSignatureOpt; }
-	inline const std::optional<std::string>& GetMessageText() const { return m_messageOpt; }
-	inline const std::optional<CompactSignature>& GetMessageSignature() const { return m_messageSignatureOpt; }
+	uint64_t GetParticipantId() const { return m_participantId; }
+	const PublicKey& GetPublicBlindExcess() const { return m_publicBlindExcess; }
+	const PublicKey& GetPublicNonce() const { return m_publicNonce; }
+	const std::optional<CompactSignature>& GetPartialSignature() const { return m_partialSignatureOpt; }
+	const std::optional<std::string>& GetMessageText() const { return m_messageOpt; }
+	const std::optional<CompactSignature>& GetMessageSignature() const { return m_messageSignatureOpt; }
 
-	inline void AddPartialSignature(const CompactSignature& signature) { m_partialSignatureOpt = std::make_optional(signature); }
-	inline void AddMessage(const std::string& message, const CompactSignature& messageSignature)
+	void AddPartialSignature(const CompactSignature& signature) { m_partialSignatureOpt = std::make_optional(signature); }
+	void AddMessage(const std::string& message, const CompactSignature& messageSignature)
 	{
 		m_messageOpt = std::make_optional(message);
 		m_messageSignatureOpt = std::make_optional(messageSignature);
 	}
 
-	inline Json::Value ToJSON(const bool hex) const
+	Json::Value ToJSON(const bool hex) const
 	{
 		Json::Value participantJSON;
 		participantJSON["id"] = std::to_string(GetParticipantId());

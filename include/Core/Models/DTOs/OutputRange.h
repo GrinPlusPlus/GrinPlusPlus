@@ -11,9 +11,9 @@ public:
 
 	}
 
-	inline uint64_t GetHighestIndex() const { return m_highestIndex; }
-	inline uint64_t GetLastRetrievedIndex() const { return m_lastRetrievedIndex; }
-	inline const std::vector<OutputDTO>& GetOutputs() const { return m_outputs; }
+	uint64_t GetHighestIndex() const { return m_highestIndex; }
+	uint64_t GetLastRetrievedIndex() const { return m_lastRetrievedIndex; }
+	const std::vector<OutputDTO>& GetOutputs() const { return m_outputs; }
 
 private:
 	uint64_t m_highestIndex;

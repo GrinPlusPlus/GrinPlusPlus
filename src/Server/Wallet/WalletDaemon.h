@@ -11,12 +11,18 @@ class OwnerController;
 class WalletDaemon
 {
 public:
-	WalletDaemon(const Config& config, INodeClientPtr pNodeClient);
-
-	void Initialize();
-	void Shutdown();
+	static std::shared_ptr<WalletDaemon> Create(const Config& config, INodeClientPtr pNodeClient);
+	~WalletDaemon() = default;
 
 private:
+	WalletDaemon(
+		const Config& config,
+		INodeClientPtr pNodeClient,
+		IWalletManagerPtr pWalletManager,
+		std::shared_ptr<WalletRestServer> pWalletRestServer,
+		std::shared_ptr<OwnerController> pOwnerController
+	);
+
 	const Config& m_config;
 	INodeClientPtr m_pNodeClient;
 	IWalletManagerPtr m_pWalletManager;

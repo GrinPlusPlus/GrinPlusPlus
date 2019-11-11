@@ -21,13 +21,13 @@ public:
 		return SendCriteria(token, amount, feeBase, messageOpt, numOutputs, selectionStrategy, addressOpt);
 	}
 
-	inline const SessionToken& GetToken() const { return m_token; }
-	inline uint64_t GetAmount() const { return m_amount; }
-	inline uint64_t GetFeeBase() const { return m_feeBase; }
-	inline const std::optional<std::string>& GetMsg() const { return m_messageOpt; }
-	inline uint8_t GetNumOutputs() const { return m_numOutputs; }
-	inline const SelectionStrategyDTO& GetSelectionStrategy() const { return m_selectionStrategy; }
-	inline const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
+	const SessionToken& GetToken() const { return m_token; }
+	uint64_t GetAmount() const { return m_amount; }
+	uint64_t GetFeeBase() const { return m_feeBase; }
+	const std::optional<std::string>& GetMsg() const { return m_messageOpt; }
+	uint8_t GetNumOutputs() const { return m_numOutputs; }
+	const SelectionStrategyDTO& GetSelectionStrategy() const { return m_selectionStrategy; }
+	const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
 
 private:
 	SendCriteria(

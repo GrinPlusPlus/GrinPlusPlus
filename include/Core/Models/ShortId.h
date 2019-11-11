@@ -31,12 +31,12 @@ public:
 	//
 	ShortId& operator=(const ShortId& other) = default;
 	ShortId& operator=(ShortId&& other) noexcept = default;
-	inline bool operator<(const ShortId& shortId) const { return m_id < shortId.m_id; }
+	bool operator<(const ShortId& shortId) const { return m_id < shortId.m_id; }
 
 	//
 	// Getters
 	//
-	inline const CBigInteger<6>& GetId() const { return m_id; }
+	const CBigInteger<6>& GetId() const { return m_id; }
 
 	//
 	// Serialization/Deserialization

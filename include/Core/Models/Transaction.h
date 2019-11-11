@@ -11,7 +11,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionBody.h>
 #include <Crypto/BlindingFactor.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 #include <json/json.h>
 
 ////////////////////////////////////////
@@ -45,8 +45,8 @@ public:
 	//
 	// Getters
 	//
-	inline const BlindingFactor& GetOffset() const { return m_offset; }
-	inline const TransactionBody& GetBody() const { return m_transactionBody; }
+	const BlindingFactor& GetOffset() const { return m_offset; }
+	const TransactionBody& GetBody() const { return m_transactionBody; }
 
 	//
 	// Serialization/Deserialization

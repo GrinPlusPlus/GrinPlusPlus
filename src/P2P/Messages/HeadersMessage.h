@@ -38,7 +38,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Headers; }
-	inline const std::vector<BlockHeader>& GetHeaders() const { return m_headers; }
+	const std::vector<BlockHeader>& GetHeaders() const { return m_headers; }
 
 	//
 	// Deserialization

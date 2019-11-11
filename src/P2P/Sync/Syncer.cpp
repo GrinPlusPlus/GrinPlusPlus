@@ -9,6 +9,8 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
+static const int MINIMUM_NUM_PEERS = 4;
+
 Syncer::Syncer(
 	std::weak_ptr<ConnectionManager> pConnectionManager,
 	IBlockChainServerPtr pBlockChainServer,
@@ -63,7 +65,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 			ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
 			syncer.UpdateSyncStatus();
 
-			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= 2)
+			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= MINIMUM_NUM_PEERS)
 			{
 				// Sync Headers
 				if (headerSyncer.SyncHeaders(*syncer.m_pSyncStatus, startup))

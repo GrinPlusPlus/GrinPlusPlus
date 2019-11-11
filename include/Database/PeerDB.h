@@ -8,9 +8,11 @@
 #include <vector>
 #include <optional>
 
-class IPeerDB : public Traits::Batchable
+class IPeerDB : public Traits::IBatchable
 {
 public:
+	virtual ~IPeerDB() = default;
+
 	virtual std::vector<Peer> LoadAllPeers() const = 0;
 
 	virtual std::optional<Peer> GetPeer(

@@ -14,7 +14,7 @@ public:
 
 	virtual void AddHeader(const BlockHeader& header) override final;
 	virtual Hash Root(const uint64_t lastHeight) const override final;
-	virtual bool Rewind(const uint64_t size) override final;
+	virtual void Rewind(const uint64_t size) override final;
 
 	virtual void Commit() override final;
 	virtual void Rollback() override final;

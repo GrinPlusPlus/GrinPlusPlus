@@ -124,9 +124,9 @@ class Writer : virtual public Reader<T>
 
 		void Commit()
 		{
-			if (std::is_base_of<Traits::Batchable, U>::value)
+			if (std::is_base_of<Traits::IBatchable, U>::value)
 			{
-				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				if (pBatchable->IsDirty())
 				{
 					pBatchable->Commit();
@@ -137,9 +137,9 @@ class Writer : virtual public Reader<T>
 
 		void Rollback()
 		{
-			if (std::is_base_of<Traits::Batchable, U>::value)
+			if (std::is_base_of<Traits::IBatchable, U>::value)
 			{
-				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				if (pBatchable->IsDirty())
 				{
 					pBatchable->Rollback();
@@ -150,9 +150,9 @@ class Writer : virtual public Reader<T>
 
 		void OnInitWrite()
 		{
-			if (std::is_base_of<Traits::Batchable, U>::value)
+			if (std::is_base_of<Traits::IBatchable, U>::value)
 			{
-				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				pBatchable->SetDirty(true);
 				pBatchable->OnInitWrite();
 			}
@@ -160,9 +160,9 @@ class Writer : virtual public Reader<T>
 
 		void OnEndWrite()
 		{
-			if (std::is_base_of<Traits::Batchable, U>::value)
+			if (std::is_base_of<Traits::IBatchable, U>::value)
 			{
-				auto pBatchable = (Traits::Batchable*)m_pObject.get();
+				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				pBatchable->OnEndWrite();
 			}
 		}
@@ -255,7 +255,7 @@ public:
 
 	Writer<T> BatchWrite()
 	{
-		if (!std::is_base_of<Traits::Batchable, T>::value)
+		if (!std::is_base_of<Traits::IBatchable, T>::value)
 		{
 			throw UNIMPLEMENTED_EXCEPTION;
 		}

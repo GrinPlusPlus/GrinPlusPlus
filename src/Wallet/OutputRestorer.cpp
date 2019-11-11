@@ -86,7 +86,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 		}
 		else
 		{
-			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath, pRewoundProof->GetAmount())->GetBytes();
+			blindingFactor = m_keyChain.DerivePrivateKey(keyChainPath, pRewoundProof->GetAmount()).GetBytes();
 		}
 
 		TransactionOutput txOutput(

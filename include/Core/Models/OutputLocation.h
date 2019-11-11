@@ -23,8 +23,8 @@ public:
 	//
 	// Getters
 	//
-	inline const uint64_t GetMMRIndex() const { return m_mmrIndex; }
-	inline const uint64_t GetBlockHeight() const { return m_blockHeight; }
+	uint64_t GetMMRIndex() const { return m_mmrIndex; }
+	uint64_t GetBlockHeight() const { return m_blockHeight; }
 
 	//
 	// Serialization/Deserialization

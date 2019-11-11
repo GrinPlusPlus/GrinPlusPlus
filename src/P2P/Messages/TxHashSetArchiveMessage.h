@@ -38,9 +38,9 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TxHashSetArchive; }
-	inline const Hash& GetBlockHash() const { return m_blockHash; }
-	inline uint64_t GetBlockHeight() const { return m_blockHeight; }
-	inline uint64_t GetZippedSize() const { return m_zippedDataSize; }
+	const Hash& GetBlockHash() const { return m_blockHash; }
+	uint64_t GetBlockHeight() const { return m_blockHeight; }
+	uint64_t GetZippedSize() const { return m_zippedDataSize; }
 
 	//
 	// Deserialization

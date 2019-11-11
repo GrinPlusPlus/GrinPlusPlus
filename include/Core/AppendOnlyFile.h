@@ -8,6 +8,7 @@
 #include <mio/mmap.hpp>
 #pragma warning(pop)
 
+#include <Core/Exceptions/FileException.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/FileUtil.h>
 #include <stdint.h>
@@ -29,19 +30,28 @@ public:
 	AppendOnlyFile(AppendOnlyFile&& file) = delete;
 	AppendOnlyFile& operator=(const AppendOnlyFile&) = delete;
 
-	bool Load()
+	void Load()
 	{
-		std::ifstream file(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
-		if (!file.is_open())
+		std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+		if (inFile.is_open())
 		{
-			std::ofstream file2(m_path, std::ios::out | std::ios::binary | std::ios::app);
-			file2.close();
-			return false;
+			inFile.close();
+		}
+		else
+		{
+			LOG_INFO_F("File (%s) does not exist. Creating it now.", m_path);
+			std::ofstream outFile(m_path, std::ios::out | std::ios::binary | std::ios::app);
+			if (!outFile.is_open())
+			{
+				LOG_ERROR_F("Failed to create file: %s", m_path);
+				throw FILE_EXCEPTION_F("Failed to create file: %s", m_path);
+			}
+
+			outFile.close();
 		}
 
-		m_fileSize = file.tellg();
+		m_fileSize = FileUtil::GetFileSize(m_path);
 		m_bufferIndex = m_fileSize;
-		file.close();
 
 		if (m_fileSize > 0)
 		{
@@ -50,10 +60,9 @@ public:
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: %d", error.value());
+				throw FILE_EXCEPTION_F("Failed to mmap file: %s", m_path);
 			}
 		}
-
-		return true;
 	}
 
 	bool Flush()
@@ -128,7 +137,6 @@ public:
 			return false;
 		}
 
-		m_bufferIndex = nextPosition;
 		if (nextPosition <= m_bufferIndex)
 		{
 			m_buffer.clear();

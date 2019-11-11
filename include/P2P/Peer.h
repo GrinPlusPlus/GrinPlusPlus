@@ -5,7 +5,7 @@
 #include <P2P/Common.h>
 #include <P2P/Capabilities.h>
 #include <P2P/BanReason.h>
-#include <Common/Traits.h>
+#include <Core/Traits/Printable.h>
 
 #include <string>
 #include <stdint.h>

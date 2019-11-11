@@ -19,7 +19,7 @@
 #include <Database/Database.h>
 
 NodeRestServer::NodeRestServer(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
-	: m_config(config), m_pNodeContext(pNodeContext)
+	: m_config(config), m_pNodeContext(pNodeContext), m_pNodeCivetContext(nullptr)
 {
 
 }

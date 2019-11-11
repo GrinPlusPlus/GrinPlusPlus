@@ -38,7 +38,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TxHashSetRequest; }
-	inline const Hash& GetBlockHash() const { return m_blockHash; }
+	const Hash& GetBlockHash() const { return m_blockHash; }
 
 	//
 	// Deserialization

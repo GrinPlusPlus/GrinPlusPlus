@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Message.h"
+#include <Crypto/Hash.h>
 #include <Net/SocketAddress.h>
 #include <P2P/Capabilities.h>
 
@@ -14,7 +15,7 @@ public:
 	ShakeMessage(
 		const uint32_t version, 
 		const Capabilities& capabilities,
-		CBigInteger<32>&& hash,
+		Hash&& hash,
 		const uint64_t totalDifficulty,
 		const std::string& userAgent
 	) 
@@ -45,11 +46,11 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Shake; }
-	inline const uint32_t GetVersion() const { return m_version; }
-	inline const Capabilities& GetCapabilities() const { return m_capabilities; }
-	inline const CBigInteger<32>& GetHash() const { return m_hash; }
-	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
-	inline const std::string& GetUserAgent() const { return m_userAgent; }
+	uint32_t GetVersion() const { return m_version; }
+	const Capabilities& GetCapabilities() const { return m_capabilities; }
+	const Hash& GetHash() const { return m_hash; }
+	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
+	const std::string& GetUserAgent() const { return m_userAgent; }
 
 	//
 	// Deserialization
@@ -60,7 +61,7 @@ public:
 		const Capabilities capabilities = Capabilities::Deserialize(byteBuffer);
 		const uint64_t totalDifficulty = byteBuffer.ReadU64();
 		const std::string userAgent = byteBuffer.ReadVarStr();
-		CBigInteger<32> hash = byteBuffer.ReadBigInteger<32>();
+		Hash hash = byteBuffer.ReadBigInteger<32>();
 
 		return ShakeMessage(version, capabilities, std::move(hash), totalDifficulty, userAgent);
 	}
@@ -83,7 +84,7 @@ private:
 	Capabilities m_capabilities;
 
 	// Genesis block of our chain, only connect to peers on the same chain
-	CBigInteger<32> m_hash;
+	Hash m_hash;
 
 	// Total difficulty accumulated by the sender, used to check whether sync may be needed.
 	uint64_t m_totalDifficulty;

@@ -44,22 +44,22 @@ public:
 
 	}
 
-	inline uint32_t GetId() const { return m_walletTxId; }
-	inline EWalletTxType GetType() const { return m_type; }
-	inline const std::optional<uuids::uuid>& GetSlateId() const { return m_slateIdOpt; }
-	inline const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
-	inline const std::optional<std::string>& GetSlateMessage() const { return m_slateMessageOpt; }
-	inline const std::chrono::system_clock::time_point& GetCreationTime() const { return m_creationTime; }
-	inline const std::optional<std::chrono::system_clock::time_point>& GetConfirmationTime() const { return m_confirmationTimeOpt; }
-	inline const std::optional<uint64_t>& GetConfirmationHeight() const { return m_confirmedHeightOpt; }
-	inline uint64_t GetAmountCredited() const { return m_amountCredited; }
-	inline uint64_t GetAmountDebited() const { return m_amountDebited; }
-	inline std::optional<uint64_t> GetFee() const { return m_feeOpt; }
-	inline const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
+	uint32_t GetId() const { return m_walletTxId; }
+	EWalletTxType GetType() const { return m_type; }
+	const std::optional<uuids::uuid>& GetSlateId() const { return m_slateIdOpt; }
+	const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
+	const std::optional<std::string>& GetSlateMessage() const { return m_slateMessageOpt; }
+	const std::chrono::system_clock::time_point& GetCreationTime() const { return m_creationTime; }
+	const std::optional<std::chrono::system_clock::time_point>& GetConfirmationTime() const { return m_confirmationTimeOpt; }
+	const std::optional<uint64_t>& GetConfirmationHeight() const { return m_confirmedHeightOpt; }
+	uint64_t GetAmountCredited() const { return m_amountCredited; }
+	uint64_t GetAmountDebited() const { return m_amountDebited; }
+	std::optional<uint64_t> GetFee() const { return m_feeOpt; }
+	const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
 
-	inline void SetType(const EWalletTxType type) { m_type = type; }
-	inline void SetConfirmedHeight(const uint64_t blockHeight) { m_confirmedHeightOpt = std::make_optional(blockHeight); }
-	inline void SetTransaction(const Transaction& transaction) { m_transactionOpt = std::make_optional(transaction); }
+	void SetType(const EWalletTxType type) { m_type = type; }
+	void SetConfirmedHeight(const uint64_t blockHeight) { m_confirmedHeightOpt = std::make_optional(blockHeight); }
+	void SetTransaction(const Transaction& transaction) { m_transactionOpt = std::make_optional(transaction); }
 
 	void Serialize(Serializer& serializer) const
 	{

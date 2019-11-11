@@ -31,7 +31,7 @@ public:
 			return false;
 		}
 
-		auto size = file.tellg();
+		auto size = fs::file_size(filePath);
 		data.resize((size_t)size);
 
 		file.seekg(0, std::ios::beg);
@@ -203,6 +203,18 @@ public:
 		}
 
 		return listOfFiles;
+	}
+
+	static size_t GetFileSize(const std::string& file)
+	{
+		std::error_code error;
+		size_t fileSize = fs::file_size(file, error);
+		if (error.value() != 0)
+		{
+			return 0;
+		}
+
+		return fileSize;
 	}
 
 private:

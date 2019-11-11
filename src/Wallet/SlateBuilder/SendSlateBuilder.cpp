@@ -105,20 +105,16 @@ SecretKey SendSlateBuilder::CalculatePrivateKey(const BlindingFactor& transactio
 
 void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const
 {
-	std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(secretKey);
-	std::unique_ptr<PublicKey> pPublicNonce = Crypto::CalculatePublicKey(secretNonce);
-	if (pPublicKey == nullptr || pPublicNonce == nullptr)
-	{
-		throw CryptoException();
-	}
+	PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
+	PublicKey publicNonce = Crypto::CalculatePublicKey(secretNonce);
 
-	ParticipantData participantData(0, *pPublicKey, *pPublicNonce);
+	ParticipantData participantData(0, publicKey, publicNonce);
 
 	// Add message signature
 	if (messageOpt.has_value())
 	{
 		// TODO: Limit message length
-		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, *pPublicKey, messageOpt.value());
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
 			WALLET_ERROR_F("Failed to sign message for slate %s", uuids::to_string(slate.GetSlateId()));

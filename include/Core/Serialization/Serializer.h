@@ -74,7 +74,7 @@ public:
 		m_serialized.insert(m_serialized.end(), data.cbegin(), data.cend());
 	}
 
-	inline const std::vector<unsigned char>& GetBytes() const { return m_serialized; }
+	const std::vector<unsigned char>& GetBytes() const { return m_serialized; }
 
 	const unsigned char* data() const { return m_serialized.data(); }
 	size_t size() const { return m_serialized.size(); }

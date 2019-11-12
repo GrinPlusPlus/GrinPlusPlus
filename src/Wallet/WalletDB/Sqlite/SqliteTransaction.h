@@ -25,7 +25,7 @@ public:
 	{
 		if (m_open)
 		{
-			WALLET_ERROR_F("Tried to begin a transaction twice");
+			WALLET_ERROR("Tried to begin a transaction twice");
 			throw WALLET_STORE_EXCEPTION("Tried to begin a transaction twice.");
 		}
 
@@ -44,7 +44,7 @@ public:
 	{
 		if (!m_open)
 		{
-			WALLET_ERROR_F("Tried to commit a closed transaction");
+			WALLET_ERROR("Tried to commit a closed transaction");
 			throw WALLET_STORE_EXCEPTION("Tried to commit a closed transaction.");
 		}
 
@@ -63,7 +63,7 @@ public:
 	{
 		if (!m_open)
 		{
-			WALLET_ERROR_F("Tried to rollback a closed transaction");
+			WALLET_ERROR("Tried to rollback a closed transaction");
 			throw WALLET_STORE_EXCEPTION("Tried to rollback a closed transaction.");
 		}
 

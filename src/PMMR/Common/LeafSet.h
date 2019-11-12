@@ -4,7 +4,7 @@
 
 #include <string>
 #include <Crypto/Hash.h>
-#include <CRoaring/roaring.hh>
+#include <Roaring.h>
 #include <Core/BitmapFile.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>

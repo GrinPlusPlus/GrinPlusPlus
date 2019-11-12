@@ -310,7 +310,7 @@ void BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const
 	auto pPrevious = pSyncChain->GetByHeight(firstHeaderHeight - 1);
 	if (pPrevious == nullptr || pPrevious->GetHash() != previousHash)
 	{
-		LOG_ERROR_F("Chain state invalid. Unrecoverable error.");
+		LOG_ERROR("Chain state invalid. Unrecoverable error.");
 		throw BLOCK_CHAIN_EXCEPTION("Chain state invalid.");
 	}
 

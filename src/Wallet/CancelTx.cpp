@@ -3,7 +3,7 @@
 #include <Infrastructure/Logger.h>
 #include <Core/Exceptions/WalletException.h>
 
-void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB>& walletDB, WalletTx& walletTx)
+void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
 	WALLET_DEBUG_F("Canceling WalletTx (%lu) of type (%s).", walletTx.GetId(), WalletTxType::ToString(type));

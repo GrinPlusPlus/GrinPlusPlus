@@ -11,7 +11,7 @@ TEST_CASE("TorAddressParser - Valid Addresses")
 		REQUIRE(parsed.has_value());
 
 		std::string hex = CBigInteger<32>(parsed.value().GetPublicKey().pubkey).ToHex();
-		REQUIRE(hex == "bf4ce9b54c9b5f1184812d24088531f14ca7c80f53148c037f47d7f22e45ee02");
+		REQUIRE(hex == "a01efbba50a384b9ddc9f6f3434da5438523aaeb84ad43e0ee7a4aca3c506a9a");
 	}
 	{
 		std::string address = "3qewg3yajasr7xvpnnb5omrj5zdn3jsuxgsibepekaevqkp3vtdgnzad";

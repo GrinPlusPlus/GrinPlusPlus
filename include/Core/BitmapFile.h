@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Traits/Batchable.h>
-#include <CRoaring/roaring.hh>
+#include <Roaring.h>
 #include <Common/Util/BitUtil.h>
 #include <fstream>
 #include <functional>
@@ -191,7 +191,7 @@ private:
 
 	uint64_t GetNumBytes() const
 	{
-		uint64_t size = 0;
+		size_t size = 0;
 		if (!m_modifiedBytes.empty())
 		{
 			size = m_modifiedBytes.crbegin()->first + 1;

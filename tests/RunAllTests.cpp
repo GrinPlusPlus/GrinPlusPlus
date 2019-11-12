@@ -1,38 +1,48 @@
 #include <iostream>
 
+void RunTest(const std::string& test)
+{
+#if defined(_WIN32)
+	system(test + ".exe");
+#else
+	std::string str = "./" + test;
+	system(str.c_str());
+#endif
+}
+
 int main(int argc, char* argv[])
 {
 	std::cout << "Preparing to run BlockChain tests\n";
 	system("pause");
-	system("BlockChain_Tests.exe");
+	RunTest("BlockChain_Tests");
 
 	std::cout << "Preparing to run Consensus tests\n";
 	system("pause");
-	system("Consensus_Tests.exe");
+	RunTest("Consensus_Tests");
 
 	std::cout << "Preparing to run core tests\n";
 	system("pause");
-	system("Core_Tests.exe");
+	RunTest("Core_Tests");
 
 	std::cout << "Preparing to run crypto tests\n";
 	system("pause");
-	system("Crypto_Tests.exe");
+	RunTest("Crypto_Tests");
 
 	std::cout << "Preparing to run Network tests\n";
 	system("pause");
-	system("Net_Tests.exe");
+	RunTest("Net_Tests");
 
 	std::cout << "Preparing to run PMMR tests\n";
 	system("pause");
-	system("PMMR_TESTS.exe");
+	RunTest("PMMR_TESTS");
 
 	std::cout << "Preparing to run Wallet tests\n";
 	system("pause");
-	system("Wallet_Tests.exe");
+	RunTest("Wallet_Tests");
 
 	std::cout << "Preparing to run GrinNode tests\n";
 	system("pause");
-	system("GrinNode_Tests.exe");
+	RunTest("GrinNode_Tests");
 
 	system("pause");
 

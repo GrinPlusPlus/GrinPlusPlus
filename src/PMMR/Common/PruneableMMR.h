@@ -9,7 +9,7 @@
 #include "MMRHashUtil.h"
 
 #include <Core/DataFile.h>
-#include <CRoaring/roaring.hh>
+#include <Roaring.h>
 #include <Core/Exceptions/TxHashSetException.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>

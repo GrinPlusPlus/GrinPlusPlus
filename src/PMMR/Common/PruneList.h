@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CRoaring/roaring.hh>
+#include <Roaring.h>
 
 #include <string>
 #include <vector>

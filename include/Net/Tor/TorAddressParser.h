@@ -66,9 +66,6 @@ public:
 	{
 		try
 		{
-			uint8_t version;
-			ed25519_public_key_t pubkey;
-
 			/* Obvious length check. */
 			if (address.size() != HS_SERVICE_ADDR_LEN_BASE32) {
 				return std::nullopt;
@@ -85,7 +82,8 @@ public:
 			size_t offset = 0;
 
 			/* First is the key. */
-			memcpy(pubkey.pubkey.data(), b32Decoded.data(), ED25519_PUBKEY_LEN);
+			std::vector<uint8_t> pubkey;
+			pubkey.insert(pubkey.begin(), b32Decoded.cbegin(), b32Decoded.cbegin() + ED25519_PUBKEY_LEN);
 			offset += ED25519_PUBKEY_LEN;
 
 			/* Followed by a 2 bytes checksum. */
@@ -93,7 +91,7 @@ public:
 			offset += HS_SERVICE_ADDR_CHECKSUM_LEN_USED;
 
 			/* Finally, version value is 1 byte. */
-			version = *(const uint8_t*)(b32Decoded.data() + offset);
+			uint8_t version = b32Decoded[offset];
 			offset += sizeof(uint8_t);
 
 			/* Extra safety. */
@@ -102,13 +100,16 @@ public:
 				return std::nullopt;
 			}
 
-			if (IsValid(version, pubkey, checksum))
+			ed25519_public_key_t publicKey;
+			publicKey.pubkey = pubkey;
+			if (IsValid(version, publicKey, checksum))
 			{
-				return std::make_optional<TorAddress>(address, pubkey, version);
+				return std::make_optional<TorAddress>(address, publicKey, version);
 			}
 		}
 		catch (std::exception& e)
 		{
+			LOG_ERROR_F("Exception thrown: %s", e.what());
 			return std::nullopt;
 		}
 
@@ -122,11 +123,9 @@ private:
 		std::vector<uint8_t> expectedChecksum;
 
 		const bool checksumBuilt = BuildChecksum(pubkey, version, expectedChecksum);
-		if (!checksumBuilt || memcmp(checksum.data(), expectedChecksum.data(), HS_SERVICE_ADDR_CHECKSUM_LEN_USED) != 0)
+		if (!checksumBuilt || CBigInteger<2>(checksum) != CBigInteger<2>(expectedChecksum))
 		{
-			LOG_WARNING_F("Checksum invalid for TOR address. Expected %s but got %s", CBigInteger<32>(checksum).ToHex(), CBigInteger<32>(expectedChecksum).ToHex());
-			//log_warn(LD_REND, "Service address %s invalid checksum.",
-			//	escaped_safe_str(address));
+			LOG_WARNING_F("Checksum invalid for TOR address. Expected %s but got %s", CBigInteger<2>(checksum).ToHex(), CBigInteger<2>(expectedChecksum).ToHex());
 			return false;
 		}
 
@@ -138,7 +137,6 @@ private:
 		if (ED25519::IsIdentityElement(pubkey))
 		{
 			LOG_WARNING("TOR address is identity element.");
-			//log_warn(LD_CRYPTO, "ed25519 pubkey is the identity");
 			return false;
 		}
 
@@ -149,7 +147,6 @@ private:
 		if (!ED25519::IsIdentityElement(result))
 		{
 			LOG_WARNING("TOR address is invalid ed25519 point.");
-			//log_warn(LD_CRYPTO, "ed25519 validation failed");
 			return false;
 		}
 
@@ -164,25 +161,15 @@ private:
 	static bool BuildChecksum(const ed25519_public_key_t& key, uint8_t version, std::vector<uint8_t>& checksum_out)
 	{
 		size_t offset = 0;
-		char data[HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN];
-
-		/* Build checksum data. */
-		memcpy(data, HS_SERVICE_ADDR_CHECKSUM_PREFIX, HS_SERVICE_ADDR_CHECKSUM_PREFIX_LEN);
-		offset += HS_SERVICE_ADDR_CHECKSUM_PREFIX_LEN;
-
-		memcpy(data + offset, key.pubkey.data(), ED25519_PUBKEY_LEN);
-		offset += ED25519_PUBKEY_LEN;
-
-		*(uint8_t*)(data + offset) = version;
-		offset += sizeof(version);
-
-		if (offset != HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN)
-		{
-			return false;
-		}
-
+		std::vector<uint8_t> vec;
+		
+		std::string prefix = ".onion checksum";
+		vec.insert(vec.end(), prefix.cbegin(), prefix.cend());
+		vec.insert(vec.end(), key.pubkey.cbegin(), key.pubkey.cend());
+		vec.push_back(version);
+		
 		/* Hash the data payload to create the checksum. */
-		std::string hashHex = SHA3(SHA3::Bits256)(data, HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN);
+		std::string hashHex = SHA3(SHA3::Bits256)(vec.data(), HS_SERVICE_ADDR_CHECKSUM_INPUT_LEN);
 		if (hashHex.size() < (HS_SERVICE_ADDR_CHECKSUM_LEN_USED * 2))
 		{
 			return false;

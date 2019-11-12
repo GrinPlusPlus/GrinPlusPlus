@@ -12,7 +12,7 @@
 class CancelTx
 {
 public:
-	static void CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB>& walletDB, WalletTx& walletTx);
+	static void CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, WalletTx& walletTx);
 
 private:
 	static std::vector<OutputData> GetOutputsToUpdate(

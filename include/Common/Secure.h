@@ -25,7 +25,7 @@ static void UNLOCK_MEMORY(void* pMemory, size_t size)
 #if defined(_MSC_VER)
 	VirtualUnlock(pMemory, size);
 #else
-	mulock(pMemory, size);
+	munlock(pMemory, size);
 #endif
 }
 

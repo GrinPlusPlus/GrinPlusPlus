@@ -183,7 +183,7 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Failed to process TxHashSet");
+		LOG_ERROR("Failed to process TxHashSet");
 	}
 
 	return EBlockChainStatus::INVALID;

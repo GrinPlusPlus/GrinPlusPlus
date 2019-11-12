@@ -33,6 +33,7 @@ public:
 
 	virtual void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) override final;
 	virtual std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const override final;
+	virtual std::unique_ptr<WalletTx> GetTransactionById(const SecureVector& masterSeed, const uint32_t walletTxId) const override final;
 
 	virtual uint32_t GetNextTransactionId() override final;
 	virtual uint64_t GetRefreshBlockHeight() const override final;

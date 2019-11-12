@@ -40,7 +40,7 @@ namespace WalletDBAPI
 				}
 				catch (WalletStoreException&)
 				{
-					LOG_INFO_F("Error occurred while migrating %s", account);
+					WALLET_INFO_F("Error occurred while migrating %s", account);
 				}
 			}
 		}

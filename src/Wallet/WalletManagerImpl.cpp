@@ -298,7 +298,7 @@ bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walle
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
-	std::unique_ptr<WalletTx> pWalletTx = wallet.Write()->GetTxById(masterSeed, walletTxId);
+	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, walletTxId);
 	if (pWalletTx != nullptr)
 	{
 		if (pWalletTx->GetTransaction().has_value())
@@ -315,7 +315,7 @@ bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walle
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
-	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetTxById(masterSeed, walletTxId);
+	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, walletTxId);
 	if (pWalletTx != nullptr)
 	{
 		CancelTx::CancelWalletTx(masterSeed, wallet.Write()->GetDatabase(), *pWalletTx);

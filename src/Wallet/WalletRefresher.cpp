@@ -105,7 +105,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 
 		/*if (outputData.GetStatus() == EOutputStatus::SPENT)// || outputData.GetStatus() == EOutputStatus::CANCELED)
 		{
-			LoggerAPI::LogTrace("WalletRefresher::RefreshOutputs - No need to refresh spent/canceled output with commitment: " + commitment.ToHex());
+			WALLET_TRACE_F("No need to refresh spent/canceled output with commitment: " + commitment.ToHex());
 			continue;
 		}*/
 

@@ -96,7 +96,7 @@ bool Socket::Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::a
 				}
 
 				const std::string address = m_pSocket->remote_endpoint().address().to_string();
-				m_address = SocketAddress(IPAddress::FromString(address), m_pSocket->remote_endpoint().port());
+				m_address = SocketAddress(address, m_pSocket->remote_endpoint().port());
 				m_socketOpen = true;
 				return true;
 			}

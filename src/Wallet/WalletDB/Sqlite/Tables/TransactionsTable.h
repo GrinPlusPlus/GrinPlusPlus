@@ -12,4 +12,5 @@ public:
 
 	static void AddTransactions(sqlite3& database, const SecureVector& masterSeed, const std::vector<WalletTx>& transactions);
 	static std::vector<WalletTx> GetTransactions(sqlite3& database, const SecureVector& masterSeed);
+	static std::unique_ptr<WalletTx> GetTransactionById(sqlite3& database, const SecureVector& masterSeed, const uint32_t walletTxId);
 };

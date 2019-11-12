@@ -17,7 +17,7 @@ RPC::Response OwnerSend::Send(mg_connection* pConnection, RPC::Request& request)
 	}
 
 	SendCriteria criteria = SendCriteria::FromJSON(request.GetParams().value());
-	std::unique_ptr<TorConnection> pTorConnection = EstablishConnection(criteria.GetAddress());
+	std::shared_ptr<TorConnection> pTorConnection = EstablishConnection(criteria.GetAddress());
 
 	Slate slate = m_pWalletManager->Send(criteria);
 	if (pTorConnection != nullptr)
@@ -61,14 +61,14 @@ RPC::Response OwnerSend::Send(mg_connection* pConnection, RPC::Request& request)
 	return RPC::Response::BuildResult(request.GetId(), result);
 }
 
-std::unique_ptr<TorConnection> OwnerSend::EstablishConnection(const std::optional<std::string>& addressOpt) const
+std::shared_ptr<TorConnection> OwnerSend::EstablishConnection(const std::optional<std::string>& addressOpt) const
 {
 	if (addressOpt.has_value())
 	{
 		const std::optional<TorAddress> torAddress = TorAddressParser::Parse(addressOpt.value());
 		if (torAddress.has_value())
 		{
-			std::unique_ptr<TorConnection> pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress.value());
+			std::shared_ptr<TorConnection> pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress.value());
 			if (pTorConnection == nullptr)
 			{
 				throw HTTP_EXCEPTION("Failed to establish TOR connection.");

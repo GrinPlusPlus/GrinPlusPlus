@@ -18,7 +18,7 @@ TorManager::TorManager(const TorConfig& config)
 	m_pControl = TorControl::Create(config);
 }
 
-std::unique_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey, const int portNumber)
+std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey, const int portNumber)
 {
 	try
 	{
@@ -34,7 +34,7 @@ std::unique_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey,
 				}
 				else
 				{
-					return std::make_unique<TorAddress>(torAddress.value());
+					return std::make_shared<TorAddress>(torAddress.value());
 				}
 			}
 		}
@@ -64,13 +64,13 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 	return false;
 }
 
-std::unique_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
+std::shared_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
 {
 	try
 	{
-		SocketAddress proxyAddress(IPAddress::FromString("127.0.0.1"), m_torConfig.GetSocksPort());
+		SocketAddress proxyAddress("127.0.0.1", m_torConfig.GetSocksPort());
 
-		return std::make_unique<TorConnection>(address, std::move(proxyAddress));
+		return std::make_shared<TorConnection>(address, std::move(proxyAddress));
 	}
 	catch (std::exception& e)
 	{

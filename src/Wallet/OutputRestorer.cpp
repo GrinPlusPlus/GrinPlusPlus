@@ -24,14 +24,9 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 	while (true)
 	{
 		std::unique_ptr<OutputRange> pOutputRange = m_pNodeClient->GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
-		if (pOutputRange == nullptr)
+		if (pOutputRange == nullptr || pOutputRange->GetLastRetrievedIndex() == 0)
 		{
-			return std::vector<OutputData>(); // TODO: Throw exception
-		}
-
-		// No new outputs since last restore
-		if (pOutputRange->GetLastRetrievedIndex() == 0)
-		{
+			// No new outputs since last restore
 			return std::vector<OutputData>();
 		}
 

@@ -15,7 +15,7 @@ public:
 	RPC::Response Send(mg_connection* pConnection, RPC::Request& request);
 
 private:
-	std::unique_ptr<TorConnection> EstablishConnection(const std::optional<std::string>& addressOpt) const;
+	std::shared_ptr<TorConnection> EstablishConnection(const std::optional<std::string>& addressOpt) const;
 	bool CheckVersion(TorConnection& connection) const;
 
 	const Config& m_config;

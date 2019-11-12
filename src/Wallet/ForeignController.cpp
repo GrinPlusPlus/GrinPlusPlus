@@ -60,7 +60,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 		SecretKey torKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
 		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
 
-		std::unique_ptr<TorAddress> pTorAddress = TorManager::GetInstance(m_config.GetTorConfig()).AddListener(hashedTorKey, portNumber);
+		std::shared_ptr<TorAddress> pTorAddress = TorManager::GetInstance(m_config.GetTorConfig()).AddListener(hashedTorKey, portNumber);
 		if (pTorAddress != nullptr)
 		{
 			pContext->m_torAddress = std::make_optional(*pTorAddress);

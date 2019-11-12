@@ -53,9 +53,10 @@ void NodeRestServer::Initialize()
 {
 	/* Start the server */
 	const uint32_t port = m_config.GetServerConfig().GetRestAPIPort();
+	const std::string listeningPorts = StringUtil::Format("127.0.0.1:%lu", port);
 	const char* mg_options[] = {
 		"num_threads", "5",
-		"listening_ports", std::to_string(port).c_str(),
+		"listening_ports", listeningPorts.c_str(),
 		NULL
 	};
 	m_pNodeCivetContext = mg_start(NULL, 0, mg_options);

@@ -66,14 +66,14 @@ std::vector<OutputData> CancelTx::GetOutputsToUpdate(
 			}
 			else if (walletTx.GetType() != EWalletTxType::SENT_CANCELED)
 			{
-				LOG_ERROR("Can't cancel output with status " + OutputStatus::ToString(status));
+				WALLET_ERROR_F("Can't cancel output with status (%s)", OutputStatus::ToString(status));
 				throw WALLET_EXCEPTION("Output not in a cancelable status.");
 			}
 		}
 		else if (output.GetWalletTxId() == walletTx.GetId())
 		{
 			const EOutputStatus status = output.GetStatus();
-			LOG_DEBUG("Found output with status " + OutputStatus::ToString(status));
+			WALLET_DEBUG_F("Found output with status (%s)", OutputStatus::ToString(status));
 
 			if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 			{
@@ -82,7 +82,7 @@ std::vector<OutputData> CancelTx::GetOutputsToUpdate(
 			}
 			else if (status != EOutputStatus::CANCELED)
 			{
-				LOG_ERROR("Can't cancel output with status " + OutputStatus::ToString(status));
+				WALLET_ERROR_F("Can't cancel output with status (%s)", OutputStatus::ToString(status));
 				throw WALLET_EXCEPTION("Output not in a cancelable status.");
 			}
 		}

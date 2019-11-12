@@ -79,7 +79,7 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 		insert += " ON CONFLICT(commitment) DO UPDATE SET status=excluded.status, transaction_id=excluded.transaction_id, encrypted=excluded.encrypted";
 		if (sqlite3_prepare_v2(&database, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 		{
-			LoggerAPI::LogError(StringUtil::Format("WalletSqlite::AddOutputs - Error while compiling sql: %s", sqlite3_errmsg(&database)));
+			WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
 			sqlite3_finalize(stmt);
 			throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 		}

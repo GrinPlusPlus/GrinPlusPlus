@@ -30,9 +30,10 @@ WalletRestServer::~WalletRestServer()
 std::shared_ptr<WalletRestServer> WalletRestServer::Create(const Config& config, IWalletManagerPtr pWalletManager, std::shared_ptr<INodeClient> pNodeClient)
 {
 	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
+	const std::string listeningPorts = StringUtil::Format("127.0.0.1:%lu", ownerPort);
 	const char* pOwnerOptions[] = {
 		"num_threads", "1",
-		"listening_ports", std::to_string(ownerPort).c_str(),
+		"listening_ports", listeningPorts.c_str(),
 		NULL
 	};
 

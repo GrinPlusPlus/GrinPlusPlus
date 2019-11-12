@@ -174,6 +174,11 @@ std::vector<WalletTx> WalletSqlite::GetTransactions(const SecureVector& masterSe
 	return TransactionsTable::GetTransactions(*m_pDatabase, masterSeed);
 }
 
+std::unique_ptr<WalletTx> WalletSqlite::GetTransactionById(const SecureVector& masterSeed, const uint32_t walletTxId) const
+{
+	return TransactionsTable::GetTransactionById(*m_pDatabase, masterSeed, walletTxId);
+}
+
 uint32_t WalletSqlite::GetNextTransactionId()
 {
 	UserMetadata metadata = GetMetadata();

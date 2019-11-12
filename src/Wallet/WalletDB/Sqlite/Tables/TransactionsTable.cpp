@@ -106,3 +106,47 @@ std::vector<WalletTx> TransactionsTable::GetTransactions(sqlite3& database, cons
 
 	return transactions;
 }
+
+std::unique_ptr<WalletTx> TransactionsTable::GetTransactionById(sqlite3& database, const SecureVector& masterSeed, const uint32_t walletTxId)
+{
+	sqlite3_stmt* stmt = nullptr;
+	const std::string query = "select encrypted from transactions where id=?";
+	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
+	{
+		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+		sqlite3_finalize(stmt);
+		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
+	}
+
+	sqlite3_bind_int(stmt, 1, walletTxId);
+
+	std::unique_ptr<WalletTx> pWalletTx = nullptr;
+
+	int ret_code = sqlite3_step(stmt);
+	if (ret_code == SQLITE_ROW)
+	{
+		const int encryptedSize = sqlite3_column_bytes(stmt, 0);
+		const unsigned char* pEncrypted = (const unsigned char*)sqlite3_column_blob(stmt, 0);
+		std::vector<unsigned char> encrypted(pEncrypted, pEncrypted + encryptedSize);
+		const SecureVector decrypted = WalletEncryptionUtil::Decrypt(masterSeed, "WALLET_TX", encrypted);
+		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
+
+		ByteBuffer byteBuffer(std::move(decryptedUnsafe));
+		pWalletTx = std::make_unique<WalletTx>(WalletTx::Deserialize(byteBuffer));
+
+		ret_code = sqlite3_step(stmt);
+	}
+
+	if (ret_code != SQLITE_DONE)
+	{
+		WALLET_ERROR_F("Error while performing sql: %s", sqlite3_errmsg(&database));
+	}
+
+	if (sqlite3_finalize(stmt) != SQLITE_OK)
+	{
+		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
+	}
+
+	return pWalletTx;
+}

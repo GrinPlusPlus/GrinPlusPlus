@@ -3,11 +3,11 @@
 void RunTest(const std::string& test)
 {
 #if defined(_WIN32)
-	system(test + ".exe");
+	std::string str = test + ".exe";
 #else
 	std::string str = "./" + test;
-	system(str.c_str());
 #endif
+	system(str.c_str());
 }
 
 int main(int argc, char* argv[])

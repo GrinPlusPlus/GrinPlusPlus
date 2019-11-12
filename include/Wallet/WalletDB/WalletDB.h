@@ -27,6 +27,7 @@ public:
 
 	virtual void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) = 0;
 	virtual std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const = 0;
+	virtual std::unique_ptr<WalletTx> GetTransactionById(const SecureVector& masterSeed, const uint32_t walletTxId) const = 0;
 
 	virtual uint32_t GetNextTransactionId() = 0;
 	virtual uint64_t GetRefreshBlockHeight() const = 0;

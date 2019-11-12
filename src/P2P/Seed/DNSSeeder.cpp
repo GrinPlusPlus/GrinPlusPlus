@@ -38,17 +38,17 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 
 	for (auto seed : dnsSeeds)
 	{
-		LoggerAPI::LogTrace("DNSSeeder::GetPeersFromDNS - Checking seed: " + seed);
+		LOG_TRACE_F("Checking seed: %s", seed);
 		const std::vector<IPAddress> ipAddresses = Resolve(seed);
 		for (const IPAddress ipAddress : ipAddresses)
 		{
-			LoggerAPI::LogTrace("DNSSeeder::GetPeersFromDNS - IP Address: " + ipAddress.Format());
+			LOG_TRACE_F("IP Address: %s", ipAddress);
 			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
 		}
 
 		if (!m_config.GetEnvironment().IsMainnet())
 		{
-			addresses.emplace_back(SocketAddress(IPAddress::FromString("100.26.68.39"), 13414));
+			addresses.emplace_back(SocketAddress("100.26.68.39", 13414));
 		}
 	}
 
@@ -66,21 +66,21 @@ std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
 	std::vector<IPAddress> addresses;
 	if (!errorCode)
 	{
-		std::for_each(iter, {}, [&addresses](auto & it)
+		std::for_each(iter, {}, [&addresses](auto& it)
 			{
 				try
 				{
 					addresses.push_back(IPAddress::FromString(it.endpoint().address().to_string()));
 				}
-				catch (std::exception&)
+				catch (std::exception& e)
 				{
-
+					LOG_INFO_F("Exception thrown: %s", e.what());
 				}
 			});
 	}
 	else
 	{
-		LoggerAPI::LogTrace("DNSSeeder::Resolve - Error: " + errorCode.message());
+		LOG_TRACE_F("Error: %s", errorCode.message());
 	}
 	
 

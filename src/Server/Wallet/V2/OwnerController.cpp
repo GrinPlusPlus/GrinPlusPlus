@@ -24,9 +24,10 @@ std::shared_ptr<OwnerController> OwnerController::Create(const Config& config, I
 {
 	std::shared_ptr<CallbackData> pCallbackData(new CallbackData(config, pWalletManager));
 
+	const std::string listeningPorts = "127.0.0.1:3421"; // TODO: Read port from config
 	const char* pOptions[] = {
 		"num_threads", "1",
-		"listening_ports", "3421", // TODO: Figure out which port to use
+		"listening_ports", "3421",
 		NULL
 	};
 

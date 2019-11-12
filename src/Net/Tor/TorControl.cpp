@@ -36,7 +36,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 		{
 			// Open control socket
 			std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
-			bool connected = pClient->Connect(SocketAddress(IPAddress::FromString("127.0.0.1"), torConfig.GetControlPort()));
+			bool connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
 			if (!connected || !Authenticate(pClient, torConfig.GetControlPassword()))
 			{
 				ProcessUtil::KillProc(processId);

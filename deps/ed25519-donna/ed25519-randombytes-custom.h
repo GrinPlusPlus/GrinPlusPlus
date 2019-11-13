@@ -15,6 +15,7 @@
 #else
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 #endif
 #ifdef __APPLE__
 #include <stdbool.h>

@@ -67,7 +67,7 @@ add_subdirectory(tool)
 add_subdirectory(example)
 
 if (BUILD_TESTING)
-    add_subdirectory(test)
+    #add_subdirectory(test)
 endif()
 
 foreach(h ${PUBLIC_HEADERS})

@@ -3,11 +3,12 @@
 #include <Core/Util/JsonUtil.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPCException.h>
+#include <atomic>
 
 namespace RPC
 {
 
-static int ID_COUNTER = 1;
+static std::atomic_int ID_COUNTER = 1;
 
 class Request
 {
@@ -109,9 +110,9 @@ public:
 		return json;
 	}
 
-	inline const Json::Value& GetId() const { return m_id; }
-	inline const std::string& GetMethod() const { return m_method; }
-	inline const std::optional<Json::Value>& GetParams() const { return m_paramsOpt; }
+	const Json::Value& GetId() const { return m_id; }
+	const std::string& GetMethod() const { return m_method; }
+	const std::optional<Json::Value>& GetParams() const { return m_paramsOpt; }
 
 private:
 	Request(Json::Value&& id, const std::string& method, std::optional<Json::Value>&& paramsOpt)

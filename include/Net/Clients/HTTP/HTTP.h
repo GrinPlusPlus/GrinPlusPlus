@@ -49,8 +49,8 @@ public:
 		);
 	}
 
-	inline const std::string& GetHost() const { return m_host; }
-	inline uint16_t GetPort() const { return m_port; }
+	const std::string& GetHost() const { return m_host; }
+	uint16_t GetPort() const { return m_port; }
 
 private:
 	EHTTPMethod m_method;
@@ -69,9 +69,9 @@ public:
 
 	}
 
-	inline unsigned int GetStatusCode() const { return m_statusCode; }
-	inline const std::vector<Header>& GetHeaders() const { return m_headers; }
-	inline const std::string& GetBody() const { return m_body; }
+	unsigned int GetStatusCode() const { return m_statusCode; }
+	const std::vector<Header>& GetHeaders() const { return m_headers; }
+	const std::string& GetBody() const { return m_body; }
 
 private:
 	unsigned int m_statusCode;

@@ -6,7 +6,6 @@
 
 // Forward Declarations
 class WalletRestServer;
-class OwnerController;
 
 class WalletDaemon
 {
@@ -19,13 +18,11 @@ private:
 		const Config& config,
 		INodeClientPtr pNodeClient,
 		IWalletManagerPtr pWalletManager,
-		std::shared_ptr<WalletRestServer> pWalletRestServer,
-		std::shared_ptr<OwnerController> pOwnerController
+		std::shared_ptr<WalletRestServer> pWalletRestServer
 	);
 
 	const Config& m_config;
 	INodeClientPtr m_pNodeClient;
 	IWalletManagerPtr m_pWalletManager;
 	std::shared_ptr<WalletRestServer> m_pWalletRestServer;
-	std::shared_ptr<OwnerController> m_pOwnerController;
 };

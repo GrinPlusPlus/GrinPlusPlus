@@ -98,10 +98,8 @@ include(uint128)
 include(ctaes)
 include(scrypt)
 include(secp256k1-zkp)
-include(sha3)
 add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
-add_subdirectory(deps/ed25519-donna)
 
 # Grin++ Projects
 option(GRINPP_TESTS "Build tests" true)

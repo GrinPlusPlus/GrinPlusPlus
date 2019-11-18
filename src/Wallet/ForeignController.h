@@ -2,7 +2,6 @@
 
 #include <Config/Config.h>
 #include <Wallet/SessionToken.h>
-#include <Net/Tor/TorAddress.h>
 #include <civetweb.h>
 #include <unordered_map>
 #include <optional>
@@ -18,7 +17,7 @@ public:
 	ForeignController(const Config& config, IWalletManager& walletManager);
 	~ForeignController();
 
-	std::optional<TorAddress> StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
+	int StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
 	bool StopListener(const std::string& username);
 
 private:
@@ -35,7 +34,6 @@ private:
 		mg_context* m_pCivetContext;
 		SessionToken m_token;
 		int m_portNumber;
-		std::optional<TorAddress> m_torAddress;
 	};
 
 	static int ForeignAPIHandler(mg_connection* pConnection, void* pCbContext);

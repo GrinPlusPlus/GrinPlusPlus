@@ -140,10 +140,10 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 		PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
 		responseJSON["grinbox_address"] = HexUtil::ConvertToHex(publicKey.GetCompressedBytes().GetData());
 
-		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(sessionToken);
-		if (torAddressOpt.has_value())
+		auto listenerPort = walletManager.GetListenerPort(sessionToken);
+		if (listenerPort.has_value())
 		{
-			responseJSON["tor_address"] = torAddressOpt.value().ToString();
+			responseJSON["listener_port"] = listenerPort.value();
 		}
 
 		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());

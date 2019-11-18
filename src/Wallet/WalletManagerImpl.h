@@ -27,7 +27,7 @@ public:
 	virtual SecureString GetSeedWords(const SessionToken& token) override final;
 	virtual void CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
-	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) override final;
+	virtual std::optional<int> GetListenerPort(const SessionToken& token) override final;
 
 	virtual SessionToken Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;

@@ -12,7 +12,6 @@
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
-#include <Net/Tor/TorAddress.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/SecretKey.h>
@@ -28,8 +27,8 @@ public:
 	const KeyChainPath& GetUserPath() const { return m_userPath; }
 	Locked<IWalletDB> GetDatabase() const { return m_walletDB; }
 
-	void SetTorAddress(const TorAddress& address) { m_pTorAddress = std::make_optional(address); }
-	std::optional<TorAddress> GetTorAddress() const { return m_pTorAddress; }
+	void SetListenerPort(const int portNumber) { m_portNumber = std::make_optional(portNumber); }
+	std::optional<int> GetListenerPort() const { return m_portNumber; }
 
 	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
 
@@ -56,5 +55,5 @@ private:
 	Locked<IWalletDB> m_walletDB;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
-	std::optional<TorAddress> m_pTorAddress;
+	std::optional<int> m_portNumber;
 };

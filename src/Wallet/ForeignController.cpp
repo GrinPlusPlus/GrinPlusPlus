@@ -3,7 +3,6 @@
 
 #include <Infrastructure/Logger.h>
 #include <Wallet/WalletManager.h>
-#include <Net/Tor/TorManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPC.h>
 
@@ -17,16 +16,11 @@ ForeignController::~ForeignController()
 {
 	for (auto iter : m_contextsByUsername)
 	{
-		if (iter.second->m_torAddress.has_value())
-		{
-			TorManager::GetInstance(m_config.GetTorConfig()).RemoveListener(iter.second->m_torAddress.value());
-		}
-
 		mg_stop(iter.second->m_pCivetContext);
 	}
 }
 
-std::optional<TorAddress> ForeignController::StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed)
+int ForeignController::StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed)
 {
 	std::unique_lock<std::mutex> lock(m_contextsMutex);
 
@@ -34,7 +28,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	if (iter != m_contextsByUsername.end())
 	{
 		iter->second->m_numReferences++;
-		return iter->second->m_torAddress;
+		return iter->second->m_portNumber;
 	}
 
 	const char* pOptions[] = {
@@ -54,24 +48,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	mg_set_request_handler(pForeignContext, "/v2/foreign", ForeignAPIHandler, pContext.get());
 	m_contextsByUsername[username] = pContext;
 
-	try
-	{
-		KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
-		SecretKey torKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
-		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
-
-		std::shared_ptr<TorAddress> pTorAddress = TorManager::GetInstance(m_config.GetTorConfig()).AddListener(hashedTorKey, portNumber);
-		if (pTorAddress != nullptr)
-		{
-			pContext->m_torAddress = std::make_optional(*pTorAddress);
-		}
-	}
-	catch (std::exception& e)
-	{
-		WALLET_ERROR_F("Exception thrown: %s", e.what());
-	}
-
-	return pContext->m_torAddress;
+	return portNumber;
 }
 
 bool ForeignController::StopListener(const std::string& username)
@@ -87,11 +64,6 @@ bool ForeignController::StopListener(const std::string& username)
 	iter->second->m_numReferences--;
 	if (iter->second->m_numReferences == 0)
 	{
-		if (iter->second->m_torAddress.has_value())
-		{
-			TorManager::GetInstance(m_config.GetTorConfig()).RemoveListener(iter->second->m_torAddress.value());
-		}
-
 		mg_stop(iter->second->m_pCivetContext);
 
 		m_contextsByUsername.erase(iter);

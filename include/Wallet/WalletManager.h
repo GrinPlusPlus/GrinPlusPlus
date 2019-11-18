@@ -16,7 +16,6 @@
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
-#include <Net/Tor/TorAddress.h>
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 
@@ -64,7 +63,7 @@ public:
 
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const = 0;
 
-	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) = 0;
+	virtual std::optional<int> GetListenerPort(const SessionToken& token) = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.

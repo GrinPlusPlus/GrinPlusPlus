@@ -95,12 +95,12 @@ SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
 	return m_sessionManager.Read()->GetGrinboxAddress(token);
 }
 
-std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token)
+std::optional<int> WalletManager::GetListenerPort(const SessionToken& token)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
-	return wallet.Read()->GetTorAddress();
+	return wallet.Read()->GetListenerPort();
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const

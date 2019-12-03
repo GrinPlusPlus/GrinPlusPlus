@@ -83,7 +83,7 @@ namespace HeaderMMRAPI
 {
 	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config)
 	{
-		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetChainDirectory() + "header_mmr.bin");
+		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetChainDirectory().u8string() + "header_mmr.bin");
 		return std::make_shared<Locked<IHeaderMMR>>(pHeaderMMR);
 	}
 }

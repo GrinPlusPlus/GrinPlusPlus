@@ -3,18 +3,19 @@
 #include "Common/PruneableMMR.h"
 
 #include <Core/Models/OutputIdentifier.h>
+#include <filesystem.h>
 
 #define OUTPUT_SIZE 34
 
 class OutputPMMR : public PruneableMMR<OUTPUT_SIZE, OutputIdentifier>
 {
 public:
-	static std::shared_ptr<OutputPMMR> Load(const std::string& txHashSetDirectory)
+	static std::shared_ptr<OutputPMMR> Load(const fs::path& txHashSetPath)
 	{
-		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetDirectory + "output/pmmr_hash.bin");
-		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetDirectory + "output/pmmr_leafset.bin");
-		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetDirectory + "output/pmmr_prun.bin");
-		std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile = DataFile<OUTPUT_SIZE>::Load(txHashSetDirectory + "output/pmmr_data.bin");
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath.u8string() + "output/pmmr_hash.bin");
+		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetPath.u8string() + "output/pmmr_leafset.bin");
+		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetPath.u8string() + "output/pmmr_prun.bin");
+		std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile = DataFile<OUTPUT_SIZE>::Load(txHashSetPath.u8string() + "output/pmmr_data.bin");
 
 		return std::make_shared<OutputPMMR>(OutputPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
 	}

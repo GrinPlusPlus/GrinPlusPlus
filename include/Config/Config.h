@@ -18,7 +18,7 @@ public:
 	Config(
 		const EClientMode clientMode, 
 		const Environment& environment, 
-		const std::string& dataPath, 
+		const fs::path& dataPath, 
 		const DandelionConfig& dandelionConfig,
 		const P2PConfig& p2pConfig,
 		const WalletConfig& walletConfig, 
@@ -38,21 +38,32 @@ public:
 		m_torConfig(torConfig),
 		m_grinjoinSecretKey(grinjoinSecretKey)
 	{
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "kernel/"));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "output/"));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "rangeproof/"));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_chainPath));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_databasePath));
-		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_logDirectory));
+		std::wstring nodePath = m_dataPath.wstring() + L"NODE/";
+		m_nodePath = fs::path(nodePath);
+
+		m_logPath = fs::path(nodePath + L"LOGS/");
+		fs::create_directories(m_logPath);
+
+		m_chainPath = fs::path(nodePath + L"CHAIN/");
+		fs::create_directories(m_chainPath);
+
+		m_databasePath = fs::path(nodePath + L"DB/");
+		fs::create_directories(m_databasePath);
+
+		m_txHashSetPath = fs::path(nodePath + L"TXHASHSET/");
+		fs::create_directories(m_txHashSetPath);
+
+		fs::create_directories(m_txHashSetPath.wstring() + L"kernel/");
+		fs::create_directories(m_txHashSetPath.wstring() + L"output/");
+		fs::create_directories(m_txHashSetPath.wstring() + L"rangeproof/");
 	}
 
-	const std::string& GetDataDirectory() const { return m_dataPath; }
-	std::string GetNodeDirectory() const { return m_dataPath + "NODE/"; }
-	std::string GetLogDirectory() const { return m_dataPath + m_logDirectory; }
-	std::string GetChainDirectory() const { return m_dataPath + "NODE/" + m_chainPath; }
-	std::string GetDatabaseDirectory() const { return m_dataPath + "NODE/" + m_databasePath; }
-	std::string GetTxHashSetDirectory() const { return m_dataPath + "NODE/" + m_txHashSetPath; }
+	const fs::path& GetDataDirectory() const { return m_dataPath; }
+	fs::path GetNodeDirectory() const { return m_nodePath; }
+	fs::path GetLogDirectory() const { return m_logPath; }
+	fs::path GetChainDirectory() const { return m_chainPath; }
+	fs::path GetDatabaseDirectory() const { return m_databasePath; }
+	fs::path GetTxHashSetDirectory() const { return m_txHashSetPath; }
 
 	const Environment& GetEnvironment() const { return m_environment; }
 	const DandelionConfig& GetDandelionConfig() const { return m_dandelionConfig; }
@@ -65,11 +76,13 @@ public:
 	const std::string& GetGrinJoinSecretKey() const { return m_grinjoinSecretKey; }
 
 private:
-	std::string m_txHashSetPath{ "TXHASHSET/" };
-	std::string m_chainPath{ "CHAIN/" };
-	std::string m_logDirectory{ "LOGS/" };
-	std::string m_databasePath{ "DB/" };
-	std::string m_dataPath;
+	fs::path m_dataPath;
+	fs::path m_nodePath;
+	fs::path m_logPath;
+	fs::path m_chainPath;
+	fs::path m_databasePath;
+	fs::path m_txHashSetPath;
+
 	EClientMode m_clientMode;
 	
 	DandelionConfig m_dandelionConfig;

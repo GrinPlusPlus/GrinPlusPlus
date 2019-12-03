@@ -53,9 +53,9 @@ void ConfigWriter::WriteClientMode(Json::Value& root, const EClientMode clientMo
 	root[ConfigProps::CLIENT_MODE] = modeValue;
 }
 
-void ConfigWriter::WriteDataPath(Json::Value& root, const std::string& dataPath) const
+void ConfigWriter::WriteDataPath(Json::Value& root, const fs::path& dataPath) const
 {
-	Json::Value dataPathValue = Json::Value(dataPath);
+	Json::Value dataPathValue = Json::Value(dataPath.u8string());
 	//const std::string dataPathComment = "/* The location where all chain, transaction, and peer data will be stored. Must be a full path. */";
 	//dataPathValue.setComment(dataPathComment, Json::commentBefore);
 	root[ConfigProps::DATA_PATH] = dataPathValue;

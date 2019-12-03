@@ -15,7 +15,7 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 	const Environment environment = ReadEnvironment(root, environmentType);
 
 	// Read Directories
-	const std::string dataPath = ReadDataPath(root, environment.GetEnvironmentType());
+	const fs::path dataPath = StringUtil::ToWide(ReadDataPath(root, environment.GetEnvironmentType()));
 
 	// Read P2P Config
 	const P2PConfig p2pConfig = ReadP2P(root);
@@ -24,7 +24,7 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 	const DandelionConfig dandelionConfig = ReadDandelion(root);
 
 	// Read Wallet Config
-	const WalletConfig walletConfig = ReadWalletConfig(root, environment.GetEnvironmentType(), dataPath);
+	const WalletConfig walletConfig = ReadWalletConfig(root, environment.GetEnvironmentType(), dataPath.u8string());
 
 	// Read Server Config
 	const ServerConfig serverConfig = ReadServerConfig(root, environmentType);
@@ -37,7 +37,18 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 	const std::string grinJoinKey = ReadGrinJoinKey(root);
 
 	// TODO: Mempool, mining, and logger settings
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel, torConfig, grinJoinKey);
+	return Config(
+		clientMode,
+		environment,
+		dataPath,
+		dandelionConfig,
+		p2pConfig,
+		walletConfig,
+		serverConfig,
+		logLevel,
+		torConfig,
+		grinJoinKey
+	);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const

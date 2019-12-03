@@ -42,14 +42,14 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		pKernelMMR->Commit();
 
 		// Create output BitmapFile from Roaring file
-		const std::string leafPath = config.GetTxHashSetDirectory() + "output/pmmr_leaf.bin";
+		const std::string leafPath = config.GetTxHashSetDirectory().u8string() + "output/pmmr_leaf.bin";
 		Roaring outputBitmap;
 		std::vector<unsigned char> outputBytes;
 		if (FileUtil::ReadFile(leafPath, outputBytes))
 		{
 			outputBitmap = Roaring::readSafe((const char*)outputBytes.data(), outputBytes.size());
 		}
-		BitmapFile::Create(config.GetTxHashSetDirectory() + "output/pmmr_leafset.bin", outputBitmap);
+		BitmapFile::Create(config.GetTxHashSetDirectory().u8string() + "output/pmmr_leafset.bin", outputBitmap);
 
 		// Rewind Output MMR
 		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory());
@@ -57,14 +57,14 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		pOutputPMMR->Commit();
 
 		// Create rangeproof BitmapFile from Roaring file
-		const std::string rangeproofPath = config.GetTxHashSetDirectory() + "rangeproof/pmmr_leaf.bin";
+		const std::string rangeproofPath = config.GetTxHashSetDirectory().u8string() + "rangeproof/pmmr_leaf.bin";
 		Roaring rangeproofBitmap;
 		std::vector<unsigned char> rangeproofBytes;
 		if (FileUtil::ReadFile(rangeproofPath, rangeproofBytes))
 		{
 			rangeproofBitmap = Roaring::readSafe((const char*)rangeproofBytes.data(), rangeproofBytes.size());
 		}
-		BitmapFile::Create(config.GetTxHashSetDirectory() + "rangeproof/pmmr_leafset.bin", rangeproofBitmap);
+		BitmapFile::Create(config.GetTxHashSetDirectory().u8string() + "rangeproof/pmmr_leafset.bin", rangeproofBitmap);
 
 		// Rewind RangeProof MMR
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(config.GetTxHashSetDirectory());
@@ -92,8 +92,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, co
 		auto reader = m_pTxHashSet->Read();
 
 		// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
-		const std::string txHashSetDirectory = m_config.GetTxHashSetDirectory();
-		if (!FileUtil::CopyDirectory(txHashSetDirectory, snapshotDir))
+		if (!FileUtil::CopyDirectory(m_config.GetTxHashSetDirectory().u8string(), snapshotDir))
 		{
 			return false;
 		}

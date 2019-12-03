@@ -51,7 +51,7 @@ bool TxHashSetZip::Extract(const fs::path& path, const BlockHeader& header) cons
 
 bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 {
-	const std::string kernelDir = m_config.GetTxHashSetDirectory() + "kernel";
+	const std::string kernelDir = m_config.GetTxHashSetDirectory().u8string() + "kernel";
 	const fs::path kernelPath(StringUtil::ToWide(kernelDir));
 	if (fs::exists(kernelPath))
 	{
@@ -79,7 +79,7 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 
 bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
-	const std::string outputDir = m_config.GetTxHashSetDirectory() + "output";
+	const std::string outputDir = m_config.GetTxHashSetDirectory().u8string() + "output";
 	const fs::path outputPath(StringUtil::ToWide(outputDir));
 	if (fs::exists(outputPath))
 	{
@@ -109,7 +109,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 
 bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
-	const std::string rangeProofDir = m_config.GetTxHashSetDirectory() + "rangeproof";
+	const std::string rangeProofDir = m_config.GetTxHashSetDirectory().u8string() + "rangeproof";
 	const fs::path rangeProofPath(StringUtil::ToWide(rangeProofDir));
 	if (fs::exists(rangeProofPath))
 	{
@@ -132,7 +132,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 		zipFile.ExtractFile("rangeproof/" + file, fs::path(StringUtil::ToWide(rangeProofDir + "/" + file)));
 	}
 
-	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "/pmmr_leaf.bin");
+	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "pmmr_leaf.bin");
 
 	return true;
 }

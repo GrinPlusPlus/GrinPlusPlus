@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	signal(9, SigIntHandler);
 
 	const Config config = ConfigManager::LoadConfig(environment);
-	LoggerAPI::Initialize(config.GetLogDirectory(), config.GetLogLevel());
+	LoggerAPI::Initialize(config.GetLogDirectory().u8string(), config.GetLogLevel());
 	mg_init_library(0);
 
 	StartServer(config, headless);

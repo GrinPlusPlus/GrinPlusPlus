@@ -16,7 +16,7 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	LOG_TRACE("Loading Chain");
 	std::shared_ptr<BlockIndexAllocator> pAllocator = std::make_shared<BlockIndexAllocator>();
 
-	std::shared_ptr<Chain> pConfirmedChain = Chain::Load(pAllocator, EChainType::CONFIRMED, config.GetChainDirectory() + "confirmed.chain", pGenesisIndex);
+	std::shared_ptr<Chain> pConfirmedChain = Chain::Load(pAllocator, EChainType::CONFIRMED, config.GetChainDirectory().u8string() + "confirmed.chain", pGenesisIndex);
 	if (pConfirmedChain == nullptr)
 	{
 		LOG_INFO("Failed to load confirmed chain");
@@ -24,7 +24,7 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	}
 
 	pAllocator->AddChain(pConfirmedChain);
-	std::shared_ptr<Chain> pCandidateChain = Chain::Load(pAllocator, EChainType::CANDIDATE, config.GetChainDirectory() + "candidate.chain", pGenesisIndex);
+	std::shared_ptr<Chain> pCandidateChain = Chain::Load(pAllocator, EChainType::CANDIDATE, config.GetChainDirectory().u8string() + "candidate.chain", pGenesisIndex);
 	if (pCandidateChain == nullptr)
 	{
 		LOG_INFO("Failed to load candidate chain");
@@ -32,7 +32,7 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	}
 
 	pAllocator->AddChain(pCandidateChain);
-	std::shared_ptr<Chain> pSyncChain = Chain::Load(pAllocator, EChainType::SYNC, config.GetChainDirectory() + "sync.chain", pGenesisIndex);
+	std::shared_ptr<Chain> pSyncChain = Chain::Load(pAllocator, EChainType::SYNC, config.GetChainDirectory().u8string() + "sync.chain", pGenesisIndex);
 	if (pSyncChain == nullptr)
 	{
 		LOG_INFO("Failed to load sync chain");

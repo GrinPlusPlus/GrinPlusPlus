@@ -7,6 +7,7 @@
 #include <Core/Models/TransactionKernel.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/Hash.h>
+#include <filesystem.h>
 #include <stdint.h>
 
 #define KERNEL_SIZE 114
@@ -14,7 +15,7 @@
 class KernelMMR : public MMR
 {
 public:
-	static std::shared_ptr<KernelMMR> Load(const std::string& txHashSetDirectory);
+	static std::shared_ptr<KernelMMR> Load(const fs::path& txHashSetPath);
 	virtual ~KernelMMR() = default;
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;

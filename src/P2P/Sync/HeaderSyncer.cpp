@@ -53,14 +53,14 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 	// Check if headers were received, and we're ready to request next batch.
 	if (height >= (m_lastHeight + P2P::MAX_BLOCK_HEADERS - 1))
 	{
-		LoggerAPI::LogTrace("HeaderSyncer::IsHeaderSyncDue() - Headers received. Requesting next batch.");
+		LOG_TRACE("Headers received. Requesting next batch.");
 		m_retried = false;
 		return true;
 	}
 
 	if (!m_pConnectionManager.lock()->IsConnected(m_connectionId))
 	{
-		LoggerAPI::LogTrace("HeaderSyncer::IsHeaderSyncDue() - Peer disconnected. Requesting from new peer.");
+		LOG_TRACE("Peer disconnected. Requesting from new peer.");
 		m_connectionId = 0;
 		return true;
 	}
@@ -68,7 +68,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 	// Check if header download timed out.
 	if (m_timeout < std::chrono::system_clock::now())
 	{
-		LoggerAPI::LogDebug("HeaderSyncer::IsHeaderSyncDue() - Timed out. Banning then requesting from new peer.");
+		LOG_DEBUG("Timed out. Banning then requesting from new peer.");
 
 		if (m_connectionId != 0)
 		{
@@ -92,7 +92,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 
 bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
-	LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Requesting headers.");
+	LOG_TRACE("Requesting headers.");
 
 	std::vector<CBigInteger<32>> locators = BlockLocator(m_pBlockChainServer).GetLocators(syncStatus);
 
@@ -111,7 +111,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 
 	if (m_connectionId != 0)
 	{
-		LoggerAPI::LogTrace("HeaderSyncer::RequestHeaders - Headers requested.");
+		LOG_TRACE("Headers requested.");
 		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(12);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}

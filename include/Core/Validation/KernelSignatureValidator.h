@@ -2,7 +2,6 @@
 
 #include <Crypto/Crypto.h>
 #include <Core/Models/TransactionKernel.h>
-#include <Common/Util/HexUtil.h>
 #include <Infrastructure/Logger.h>
 
 class KernelSignatureValidator
@@ -31,14 +30,14 @@ public:
 			messages.push_back(&msgs[i]);
 		}
 
-		LoggerAPI::LogTrace("KernelSignatureValidator::VerifyKernelSignatures - Start verify");
+		LOG_TRACE("Start verify");
 		if (!Crypto::VerifyKernelSignatures(signatures, commitments, messages))
 		{
-			LoggerAPI::LogError("KernelSignatureValidator::VerifyKernelSignatures - Failed to verify kernels.");
+			LOG_ERROR("Failed to verify kernels.");
 			return false;
 		}
 
-		LoggerAPI::LogTrace("KernelSignatureValidator::VerifyKernelSignatures - Verify success");
+		LOG_TRACE("Verify success");
 		return true;
 	}
 };

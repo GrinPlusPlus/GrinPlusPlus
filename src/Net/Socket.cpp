@@ -157,7 +157,7 @@ bool Socket::IsActive() const
 
 	if (m_errorCode)
 	{
-		LoggerAPI::LogInfo("Socket::IsActive() - Connection with " + m_address.Format() + " not active. Error: " + m_errorCode.message());
+		LOG_INFO_F("Connection with (%s) not active. Error: %s", m_address, m_errorCode.message());
 	}
 	
 	return false;
@@ -277,7 +277,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 		}
 		else if (m_errorCode.value() == EAGAIN)
 		{
-			LoggerAPI::LogDebug("Socket::Receive - EAGAIN error returned. Pausing briefly, and then trying again.");
+			LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
 			std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		}
 	}

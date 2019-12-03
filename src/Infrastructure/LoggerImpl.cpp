@@ -18,7 +18,7 @@ void Logger::StartLogger(const std::string& logDirectory, const spdlog::level::l
 	{
 		const std::string logPath = logDirectory + "Node.log";
 		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath), 10 * 1024 * 1024, 10);
-		m_pNodeLogger = spdlog::create_async("NODE", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
+		m_pNodeLogger = spdlog::create_async("NODE", sink, 32768, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
 		if (m_pNodeLogger != nullptr)
 		{

@@ -21,7 +21,7 @@ bool MessageSender::Send(Socket& socket, const IMessage& message) const
 
 	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong)
 	{
-		LoggerAPI::LogTrace("Sending message " + MessageTypes::ToString(message.GetMessageType()) + " to " + socket.GetSocketAddress().Format());
+		LOG_TRACE_F("Sending message (%s) to (%s)", MessageTypes::ToString(message.GetMessageType()), socket);
 	}
 
 	return socket.Send(serializer.GetBytes(), true);

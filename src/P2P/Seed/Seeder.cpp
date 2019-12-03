@@ -68,7 +68,7 @@ std::shared_ptr<Seeder> Seeder::Create(
 void Seeder::Thread_Seed(Seeder& seeder)
 {
 	ThreadManagerAPI::SetCurrentThreadName("SEED");
-	LoggerAPI::LogTrace("Seeder::Thread_Seed() - BEGIN");
+	LOG_TRACE("BEGIN");
 
 	std::chrono::system_clock::time_point lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(10);
 
@@ -92,7 +92,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 		ThreadUtil::SleepFor(std::chrono::milliseconds(250), seeder.m_terminate);
 	}
 
-	LoggerAPI::LogTrace("Seeder::Thread_Seed() - END");
+	LOG_TRACE("END");
 }
 
 //
@@ -102,7 +102,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 void Seeder::Thread_Listener(Seeder& seeder)
 {
 	ThreadManagerAPI::SetCurrentThreadName("LISTENER");
-	LoggerAPI::LogTrace("Seeder::Thread_Listener() - BEGIN");
+	LOG_TRACE("BEGIN");
 
 	const uint16_t portNumber = seeder.m_config.GetEnvironment().GetP2PPort();
 	asio::ip::tcp::acceptor acceptor(*seeder.m_pContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
@@ -143,7 +143,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 		acceptor.cancel();
 	}
 
-	LoggerAPI::LogTrace("Seeder::Thread_Listener() - END");
+	LOG_TRACE("END");
 }
 
 ConnectionPtr Seeder::SeedNewConnection()

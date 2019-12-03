@@ -29,11 +29,7 @@ bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, c
 {
 	try
 	{
-		LoggerAPI::LogTrace("HandShake::PerformHandshake - Performing handshake with " 
-			+ socket.GetSocketAddress().Format() 
-			+ std::string(" - direction: ")
-			+ (direction == EDirection::INBOUND ? "inbound" : "outbound")
-		);
+		LOG_TRACE_F("Performing handshake with (%s) - %s", socket, (direction == EDirection::INBOUND ? "inbound" : "outbound"));
 
 		if (direction == EDirection::OUTBOUND)
 		{

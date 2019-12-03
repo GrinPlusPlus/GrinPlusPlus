@@ -46,7 +46,7 @@ public:
 	// Note: does not validate that we return the full set of required txs.
 	// The caller will need to validate that themselves.
 	//
-	virtual std::vector<Transaction> GetTransactionsByShortId(
+	virtual std::vector<TransactionPtr> GetTransactionsByShortId(
 		const Hash& hash,
 		const uint64_t nonce,
 		const std::set<ShortId>& missingShortIds
@@ -64,13 +64,13 @@ public:
 	virtual EAddTransactionStatus AddTransaction(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet,
-		const Transaction& transaction,
+		TransactionPtr pTransaction,
 		const EPoolType poolType,
 		const BlockHeader& lastConfirmedBlock
 	) = 0;
 
-	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
-	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const = 0;
+	virtual std::vector<TransactionPtr> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const = 0;
+	virtual TransactionPtr FindTransactionByKernelHash(const Hash& kernelHash) const = 0;
 	virtual void ReconcileBlock(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet,
@@ -78,15 +78,21 @@ public:
 	) = 0;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(
+	virtual TransactionPtr GetTransactionToStem(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet
 	) = 0;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(
+	virtual TransactionPtr GetTransactionToFluff(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet
 	) = 0;
-	virtual std::vector<Transaction> GetExpiredTransactions() const = 0;
+	virtual std::vector<TransactionPtr> GetExpiredTransactions() const = 0;
+
+	//
+	// Adds all JoinPool txs to the stem pool in preparation of fluffing.
+	// The transactions are not removed from the join pool until they are seen in a block.
+	//
+	virtual void FluffJoinPool() = 0;
 };
 
 typedef std::shared_ptr<ITransactionPool> ITransactionPoolPtr;

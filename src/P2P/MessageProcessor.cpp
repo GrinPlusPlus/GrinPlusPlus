@@ -74,13 +74,13 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(
 	{
 		return ProcessMessageInternal(connectionId, socket, connectedPeer, rawMessage);
 	}
-	catch (const BadDataException& e)
+	catch (const BadDataException&)
 	{
 		LOG_ERROR_F("Bad data received in message(%s) from (%s)", MessageTypes::ToString(messageType), connectedPeer.GetPeer());
 
 		return EStatus::BAN_PEER;
 	}
-	catch (const BlockChainException& e)
+	catch (const BlockChainException&)
 	{
 		LOG_ERROR_F("BlockChain exception while processing message(%d) from (%s)", MessageTypes::ToString(messageType), connectedPeer.GetPeer());
 
@@ -328,9 +328,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				}
 
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
-				const Transaction& transaction = transactionMessage.GetTransaction();
+				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, transaction, EPoolType::STEMPOOL);
+				m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, pTransaction, EPoolType::STEMPOOL);
 
 				return EStatus::SUCCESS;
 			}
@@ -342,9 +342,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				}
 
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
-				const Transaction& transaction = transactionMessage.GetTransaction();
+				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, transaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -363,10 +363,10 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
 				const Hash& kernelHash = getTransactionMessage.GetKernelHash();
 
-				std::unique_ptr<Transaction> pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
+				TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
 				if (pTransaction != nullptr)
 				{
-					const TransactionMessage transactionMessage(*pTransaction);
+					const TransactionMessage transactionMessage(pTransaction);
 					return MessageSender(m_config).Send(socket, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
@@ -382,11 +382,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const TransactionKernelMessage transactionKernelMessage = TransactionKernelMessage::Deserialize(byteBuffer);
 				const Hash& kernelHash = transactionKernelMessage.GetKernelHash();
 
-				std::unique_ptr<Transaction> pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
+				TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
 				if (pTransaction == nullptr)
 				{
 					const GetTransactionMessage getTransactionMessage(kernelHash);
-					return MessageSender(m_config).Send(socket, GetTransactionMessage(kernelHash)) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;

@@ -15,6 +15,9 @@
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
+#include <Net/Tor/TorAddressParser.h>
+#include <Net/Tor/TorManager.h>
+#include <cassert>
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, std::shared_ptr<IWalletStore> pWalletStore)
@@ -264,33 +267,76 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 		sendCriteria.GetNumOutputs(),
 		sendCriteria.GetAddress(),
 		sendCriteria.GetMsg(),
-		sendCriteria.GetSelectionStrategy()
+		sendCriteria.GetSelectionStrategy(),
+		sendCriteria.GetSlateVersion()
 	);
 }
 
-Slate WalletManager::Receive(
-	const SessionToken& token,
-	const Slate& slate,
-	const std::optional<std::string>& addressOpt,
-	const std::optional<std::string>& messageOpt)
+Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(receiveCriteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(receiveCriteria.GetToken());
 
-	return ReceiveSlateBuilder().AddReceiverData(wallet, masterSeed, slate, addressOpt, messageOpt);
+	return ReceiveSlateBuilder().AddReceiverData(
+		wallet,
+		masterSeed,
+		receiveCriteria.GetSlate(),
+		receiveCriteria.GetAddress(),
+		receiveCriteria.GetMsg()
+	);
 }
 
-Slate WalletManager::Finalize(const SessionToken& token, const Slate& slate)
+Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
 
-	return FinalizeSlateBuilder().Finalize(wallet, masterSeed, slate);
+	Slate finalizedSlate = FinalizeSlateBuilder().Finalize(wallet, masterSeed, finalizeCriteria.GetSlate());
+	if (finalizeCriteria.GetPostMethod().has_value())
+	{
+		PostTransaction(
+			finalizeCriteria.GetToken(),
+			finalizedSlate.GetTransaction(),
+			finalizeCriteria.GetPostMethod().value()
+		);
+	}
+
+	return finalizedSlate;
 }
 
-bool WalletManager::PostTransaction(const SessionToken& token, const Transaction& transaction)
+bool WalletManager::PostTransaction(const SessionToken& token, const Transaction& transaction, const PostMethodDTO& postMethod)
 {
-	return m_pNodeClient->PostTransaction(transaction);
+	const EPostMethod method = postMethod.GetMethod();
+	if (method == EPostMethod::JOIN)
+	{
+		assert(postMethod.GetGrinJoinAddress().has_value());
+
+		try
+		{
+			auto pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(postMethod.GetGrinJoinAddress().value());
+			if (pTorConnection != nullptr)
+			{
+				Json::Value params;
+				params["tx"] = transaction.ToJSON();
+				RPC::Request receiveTxRequest = RPC::Request::BuildRequest("submit_tx", params);
+				RPC::Response receiveTxResponse = pTorConnection->Invoke(receiveTxRequest, "/v1");
+
+				return !receiveTxResponse.GetError().has_value();
+			}
+		}
+		catch (std::exception& e)
+		{
+			WALLET_ERROR_F("Exception thrown: %s", e.what());
+		}
+	}
+	else
+	{
+		const EPoolType poolType = (method == EPostMethod::FLUFF) ? EPoolType::MEMPOOL : EPoolType::STEMPOOL;
+
+		return m_pNodeClient->PostTransaction(std::make_shared<Transaction>(transaction), poolType);
+	}
+
+	return false;
 }
 
 bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walletTxId)
@@ -303,7 +349,8 @@ bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walle
 	{
 		if (pWalletTx->GetTransaction().has_value())
 		{
-			return m_pNodeClient->PostTransaction(pWalletTx->GetTransaction().value());
+			return PostTransaction(token, pWalletTx->GetTransaction().value(), PostMethodDTO(EPostMethod::JOIN, TorAddressParser::Parse("grinjoin5pzzisnne3naxx4w2knwxsyamqmzfnzywnzdk7ra766u7vid")));
+			//return m_pNodeClient->PostTransaction(std::make_shared<Transaction>(pWalletTx->GetTransaction().value()), EPoolType::MEMPOOL);
 		}
 	}
 

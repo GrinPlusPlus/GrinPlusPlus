@@ -2,21 +2,24 @@
 
 #include <Config/Config.h>
 #include <Wallet/WalletManager.h>
-#include <civetweb/include/civetweb.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Tor/TorConnection.h>
+#include <Net/Servers/RPC/RPCMethod.h>
 #include <optional>
 
-class OwnerSend
+class OwnerSend : RPCMethod
 {
 public:
 	OwnerSend(const Config& config, IWalletManagerPtr pWalletManager);
+	virtual ~OwnerSend() = default;
 
-	RPC::Response Send(mg_connection* pConnection, RPC::Request& request);
+	virtual RPC::Response Handle(const RPC::Request& request) const override final;
 
 private:
-	std::shared_ptr<TorConnection> EstablishConnection(const std::optional<std::string>& addressOpt) const;
-	bool CheckVersion(TorConnection& connection) const;
+	RPC::Response SendViaTOR(const RPC::Request& request, SendCriteria& criteria, const TorAddress& torAddress) const;
+	RPC::Response SendViaFile(const RPC::Request& request, const SendCriteria& criteria, const std::string& file) const;
+
+	uint16_t CheckVersion(TorConnection& connection) const;
 
 	const Config& m_config;
 	IWalletManagerPtr m_pWalletManager;

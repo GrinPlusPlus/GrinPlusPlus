@@ -4,7 +4,7 @@
 #include <Infrastructure/Logger.h>
 #include <fstream>
 
-ZipFile::ZipFile(const std::string& zipFilePath, const unzFile& file)
+ZipFile::ZipFile(const fs::path& zipFilePath, const unzFile& file)
 	: m_zipFilePath(zipFilePath), m_unzFile(file)
 {
 
@@ -15,9 +15,9 @@ ZipFile::~ZipFile()
 	unzClose(m_unzFile);
 }
 
-std::shared_ptr<ZipFile> ZipFile::Load(const std::string& zipFilePath)
+std::shared_ptr<ZipFile> ZipFile::Load(const fs::path& zipFilePath)
 {
-	unzFile unzFile = unzOpen(zipFilePath.c_str());
+	unzFile unzFile = unzOpen(zipFilePath.u8string().c_str());
 	if (unzFile == NULL)
 	{
 		LOG_ERROR_F("Zip file (%s) failed to open.", zipFilePath);
@@ -27,7 +27,7 @@ std::shared_ptr<ZipFile> ZipFile::Load(const std::string& zipFilePath)
 	return std::shared_ptr<ZipFile>(new ZipFile(zipFilePath, unzFile));
 }
 
-void ZipFile::ExtractFile(const std::string& path, const std::string& destination) const
+void ZipFile::ExtractFile(const std::string& path, const fs::path& destination) const
 {
 	if (unzLocateFile(m_unzFile, path.c_str(), 0) != UNZ_OK)
 	{

@@ -40,8 +40,8 @@ public:
 
 	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) override final;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) override final;
-	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) override final;
-	virtual std::unique_ptr<Transaction> GetTransactionByKernelHash(const Hash& kernelHash) const override final;
+	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final;
+	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const override final;
 
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
 	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;

@@ -31,21 +31,21 @@ Transaction Transaction::Deserialize(ByteBuffer& byteBuffer)
 	return Transaction(std::move(offset), std::move(transactionBody));
 }
 
-Json::Value Transaction::ToJSON(const bool hex) const
+Json::Value Transaction::ToJSON() const
 {
 	Json::Value txNode;
-	txNode["offset"] = JsonUtil::ConvertToJSON(GetOffset(), hex);
-	txNode["body"] = GetBody().ToJSON(hex);
+	txNode["offset"] = JsonUtil::ConvertToJSON(GetOffset());
+	txNode["body"] = GetBody().ToJSON();
 	return txNode;
 }
 
-Transaction Transaction::FromJSON(const Json::Value& transactionJSON, const bool hex)
+Transaction Transaction::FromJSON(const Json::Value& transactionJSON)
 {
 	Json::Value offsetJSON = JsonUtil::GetRequiredField(transactionJSON, "offset");
-	BlindingFactor offset = JsonUtil::ConvertToBlindingFactor(offsetJSON, hex);
+	BlindingFactor offset = JsonUtil::ConvertToBlindingFactor(offsetJSON);
 
 	Json::Value bodyJSON = JsonUtil::GetRequiredField(transactionJSON, "body");
-	TransactionBody body = TransactionBody::FromJSON(bodyJSON, hex);
+	TransactionBody body = TransactionBody::FromJSON(bodyJSON);
 
 	return Transaction(std::move(offset), std::move(body));
 }

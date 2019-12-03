@@ -48,19 +48,19 @@ public:
 
 	void Disconnect();
 
-	inline uint64_t GetId() const { return m_connectionId; }
+	uint64_t GetId() const { return m_connectionId; }
 	bool IsConnectionActive() const;
 
 	void Send(const IMessage& message);
 
-	inline SocketPtr GetSocket() const { return m_pSocket; }
-	inline Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
-	inline const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
-	inline const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
-	inline const IPAddress& GetIPAddress() const { return GetPeer().GetIPAddress(); }
-	inline uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
-	inline uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
-	inline Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
+	SocketPtr GetSocket() const { return m_pSocket; }
+	Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
+	const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
+	const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
+	const IPAddress& GetIPAddress() const { return GetPeer().GetIPAddress(); }
+	uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
+	uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
+	Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
 
 	bool ExceedsRateLimit() const;
 

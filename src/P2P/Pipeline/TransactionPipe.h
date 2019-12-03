@@ -17,7 +17,6 @@
 // Forward Declarations
 class Config;
 class TxHashSetArchiveMessage;
-class Transaction;
 
 class TransactionPipe
 {
@@ -29,7 +28,7 @@ public:
 	);
 	~TransactionPipe();
 
-	bool AddTransactionToProcess(const uint64_t connectionId, const Transaction& transaction, const EPoolType poolType);
+	bool AddTransactionToProcess(const uint64_t connectionId, TransactionPtr pTransaction, const EPoolType poolType);
 
 private:
 	TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);
@@ -42,14 +41,14 @@ private:
 	std::thread m_transactionThread;
 	struct TxEntry
 	{
-		TxEntry(const uint64_t connId, const Transaction& txn, const EPoolType type)
-			: connectionId(connId), transaction(txn), poolType(type)
+		TxEntry(const uint64_t connId, TransactionPtr txn, const EPoolType type)
+			: connectionId(connId), pTransaction(txn), poolType(type)
 		{
 
 		}
 
 		uint64_t connectionId;
-		Transaction transaction;
+		TransactionPtr pTransaction;
 		EPoolType poolType;
 	};
 

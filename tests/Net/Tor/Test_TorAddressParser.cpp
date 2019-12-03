@@ -6,6 +6,14 @@
 TEST_CASE("TorAddressParser - Valid Addresses")
 {
 	{
+		std::string address = "grinjoin5pzzisnne3naxx4w2knwxsyamqmzfnzywnzdk7ra766u7vid";
+		std::optional<TorAddress> parsed = TorAddressParser::Parse(address);
+		REQUIRE(parsed.has_value());
+
+		std::string hex = CBigInteger<32>(parsed.value().GetPublicKey().pubkey).ToHex();
+		REQUIRE(hex == "3450d4b90debf39449ad26da0bdf96d29b6bcb00641992b738b372357e20ffbd");
+	}
+	{
 		std::string address = "uappxosquocltxoj63zugtnfiocshkxlqswuhyhopjfmupcqnknecuqd";
 		std::optional<TorAddress> parsed = TorAddressParser::Parse(address);
 		REQUIRE(parsed.has_value());

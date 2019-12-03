@@ -2,7 +2,7 @@
 
 #include <Core/Models/BlockHeader.h>
 #include <Config/Config.h>
-#include <string>
+#include <filesystem.h>
 
 // Forward Declarations
 class ZipFile;
@@ -12,7 +12,7 @@ class TxHashSetZip
 public:
 	TxHashSetZip(const Config& config);
 
-	bool Extract(const std::string& path, const BlockHeader& header) const;
+	bool Extract(const fs::path& path, const BlockHeader& header) const;
 
 private:
 	bool ExtractKernelFolder(const ZipFile& zipFile) const;

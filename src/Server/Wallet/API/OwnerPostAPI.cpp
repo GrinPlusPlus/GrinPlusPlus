@@ -224,37 +224,25 @@ int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager
 
 int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	Json::Value slateJSON = JsonUtil::GetRequiredField(json, "slate");
-	Slate slate = Slate::FromJSON(slateJSON);
-
-	const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
-	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message"); // TODO: Handle this
-
-	Slate receivedSlate = walletManager.Receive(token, slate, addressOpt, messageOpt);
+	Slate receivedSlate = walletManager.Receive(ReceiveCriteria::FromJSON(json));
 	
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, receivedSlate.ToJSON());
 }
 
 int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	Slate slate = Slate::FromJSON(json);
+	FinalizeCriteria finalizeCriteria = FinalizeCriteria::FromJSON(json);
 
-	const bool postTx = HTTPUtil::HasQueryParam(pConnection, "post");
-
-	Slate finalizedSlate = walletManager.Finalize(token, slate);
-    if (postTx)
-    {
-        walletManager.PostTransaction(token, finalizedSlate.GetTransaction());
-    }
+	Slate finalizedSlate = walletManager.Finalize(finalizeCriteria);
 
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, finalizedSlate.ToJSON());
 }
 
 int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)
 {
-	Transaction transaction = Transaction::FromJSON(json, true);
+	Transaction transaction = Transaction::FromJSON(json);
 
-	if (nodeClient.PostTransaction(transaction))
+	if (nodeClient.PostTransaction(std::make_shared<Transaction>(transaction), EPoolType::STEMPOOL))
 	{
 		return HTTPUtil::BuildSuccessResponse(pConnection, "");
 	}

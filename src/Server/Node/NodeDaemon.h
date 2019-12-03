@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NodeClients/DefaultNodeClient.h"
+#include "..//GrinJoin/GrinJoinController.h"
 
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
@@ -20,10 +21,11 @@ public:
 	void UpdateDisplay(const int secondsRunning);
 
 private:
-	NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient);
+	NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient, std::shared_ptr<GrinJoinController> pGrinJoinController);
 
 	const Config& m_config;
 
 	std::shared_ptr<NodeRestServer> m_pNodeRestServer;
 	std::shared_ptr<DefaultNodeClient> m_pNodeClient;
+	std::shared_ptr<GrinJoinController> m_pGrinJoinController;
 };

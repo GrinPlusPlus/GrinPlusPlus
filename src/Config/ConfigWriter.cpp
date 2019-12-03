@@ -15,11 +15,13 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 	WriteServer(root, config.GetServerConfig());
 	WriteLogLevel(root, config.GetLogLevel());
 	WriteWalletConfig(root, "SQLITE");
+	WriteGrinJoinKey(root, config.GetGrinJoinSecretKey());
 
-	std::ofstream file(configPath, std::ios::out | std::ios::binary | std::ios::ate);
+	fs::path path(StringUtil::ToWide(configPath));
+	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!file.is_open())
 	{
-		LoggerAPI::LogError("Failed to save config file at " + configPath);
+		LOG_ERROR_F("Failed to save config file at: %S", path.wstring());
 		return false;
 	}
 
@@ -134,4 +136,14 @@ void ConfigWriter::WriteWalletConfig(Json::Value& root, const std::string& datab
 	walletJSON[ConfigProps::Wallet::DATABASE] = databaseType;
 
 	root[ConfigProps::Wallet::WALLET] = walletJSON;
+}
+
+void ConfigWriter::WriteGrinJoinKey(Json::Value& root, const std::string& grinJoinKey) const
+{
+	if (!grinJoinKey.empty())
+	{
+		Json::Value grinJoinJSON;
+		grinJoinJSON[ConfigProps::GrinJoin::SECRET_KEY] = grinJoinKey;
+		root[ConfigProps::GrinJoin::GRINJOIN] = grinJoinJSON;
+	}
 }

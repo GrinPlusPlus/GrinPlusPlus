@@ -49,7 +49,7 @@ public:
 
 			return response;
 		}
-		catch (TorException& e)
+		catch (TorException&)
 		{
 			throw;
 		}

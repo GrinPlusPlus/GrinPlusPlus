@@ -5,6 +5,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <Core/Models/DTOs/OutputRange.h>
+#include <TxPool/PoolType.h>
 #include <stdint.h>
 #include <map>
 
@@ -45,7 +46,7 @@ public:
 	//
 	// Posts the transaction to the P2P Network.
 	//
-	virtual bool PostTransaction(const Transaction& transaction) = 0;
+	virtual bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) = 0;
 };
 
 typedef std::shared_ptr<INodeClient> INodeClientPtr;

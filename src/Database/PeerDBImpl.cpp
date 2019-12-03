@@ -33,7 +33,7 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 
 	// open DB
 	const std::string dbPath = config.GetDatabaseDirectory() + "PEERS/";
-	fs::create_directories(dbPath);
+	fs::create_directories(StringUtil::ToWide(dbPath));
 
 	DB* pDatabase = nullptr;
 	Status status = DB::Open(options, dbPath, &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?

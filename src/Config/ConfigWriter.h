@@ -17,4 +17,5 @@ private:
 	void WriteServer(Json::Value& root, const ServerConfig& serverConfig) const;
 	void WriteLogLevel(Json::Value& root, const std::string& logLevel) const;
 	void WriteWalletConfig(Json::Value& root, const std::string& databaseType) const;
+	void WriteGrinJoinKey(Json::Value& root, const std::string& grinJoinKey) const;
 };

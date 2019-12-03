@@ -68,7 +68,7 @@ public:
 
 			return HTTP::Response(statusCode, std::move(headers), std::string(body.begin(), body.end()));
 		}
-		catch (HTTPException& e)
+		catch (HTTPException&)
 		{
 			throw;
 		}

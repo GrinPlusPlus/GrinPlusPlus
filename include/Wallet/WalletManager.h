@@ -13,6 +13,8 @@
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/Models/Criteria/SendCriteria.h>
+#include <Wallet/Models/Criteria/ReceiveCriteria.h>
+#include <Wallet/Models/Criteria/FinalizeCriteria.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
@@ -113,21 +115,17 @@ public:
 	//
 	virtual Slate Send(const SendCriteria& sendCriteria) = 0;
 
-	virtual Slate Receive(
-		const SessionToken& token,
-		const Slate& slate,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt
-	) = 0;
+	//
+	// Receives coins and builds a received slate to return to the sender.
+	//
+	virtual Slate Receive(const ReceiveCriteria& receiveCriteria) = 0;
 
-	virtual Slate Finalize(
-		const SessionToken& token,
-		const Slate& slate
-	) = 0;
+	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) = 0;
 
 	virtual bool PostTransaction(
 		const SessionToken& token,
-		const Transaction& transaction
+		const Transaction& transaction,
+		const PostMethodDTO& postMethod
 	) = 0;
 
 	virtual bool RepostByTxId(

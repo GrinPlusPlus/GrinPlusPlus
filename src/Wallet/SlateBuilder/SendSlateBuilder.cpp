@@ -9,8 +9,8 @@
 #include <Common/Util/FunctionalUtil.h>
 #include <Infrastructure/Logger.h>
 #include <Consensus/HardForks.h>
-
-static const uint64_t SLATE_VERSION = 2;
+#include <Net/Tor/TorAddressParser.h>
+#include <Crypto/ED25519.h>
 
 SendSlateBuilder::SendSlateBuilder(const Config& config, INodeClientConstPtr pNodeClient)
 	: m_config(config), m_pNodeClient(pNodeClient)
@@ -26,7 +26,8 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const uint8_t numOutputs,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt, 
-	const SelectionStrategyDTO& strategy) const
+	const SelectionStrategyDTO& strategy,
+	const uint16_t slateVersion) const
 {
 	// Set lock_height for transaction kernel (current chain height).
 	const uint64_t blockHeight = m_pNodeClient->GetChainHeight() + 1;
@@ -82,14 +83,43 @@ Slate SendSlateBuilder::BuildSendSlate(
 	// Build Transaction
 	Transaction transaction = TransactionBuilder::BuildTransaction(inputs, changeOutputs, transactionOffset, fee, 0);
 
+	// Payment proof
+	KeyChainPath torPath = pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
+
+	std::optional<SlatePaymentProof> proofOpt = std::nullopt;
+	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;
+	if (torAddressOpt.has_value())
+	{
+		SecretKey torKey = KeyChain::FromSeed(m_config, masterSeed).DerivePrivateKey(torPath);
+		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
+		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(hashedTorKey);
+
+		proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
+	}
+
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
-	SlateVersionInfo slateVersionInfo(SLATE_VERSION, SLATE_VERSION, headerVersion);
-	Slate slate(std::move(slateVersionInfo), 2, uuids::uuid_system_generator()(), std::move(transaction), amount, fee, blockHeight, 0);
+	SlateVersionInfo slateVersionInfo(slateVersion, slateVersion, headerVersion);
+	Slate slate(
+		std::move(slateVersionInfo),
+		2,
+		uuids::uuid_system_generator()(),
+		std::move(transaction),
+		amount,
+		fee,
+		blockHeight,
+		0,
+		proofOpt
+	);
 	AddSenderInfo(slate, secretKey, secretNonce, messageOpt);
 
-	const WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
+	WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
 
-	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
+	SlateContext slateContext(
+		std::move(secretKey),
+		std::move(secretNonce),
+		proofOpt.has_value() ? std::make_optional<KeyChainPath>(torPath) : std::nullopt,
+		proofOpt.has_value() ? std::make_optional<ed25519_public_key_t>(torAddressOpt.value().GetPublicKey()) : std::nullopt 
+	);
 	UpdateDatabase(pBatch, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
 
 	pBatch->Commit();
@@ -97,8 +127,10 @@ Slate SendSlateBuilder::BuildSendSlate(
 	return slate;
 }
 
-// TODO: Memory is not securely erased from these BlindingFactors. A better way of handling this is needed.
-SecretKey SendSlateBuilder::CalculatePrivateKey(const BlindingFactor& transactionOffset, const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs) const
+SecretKey SendSlateBuilder::CalculatePrivateKey(
+	const BlindingFactor& transactionOffset,
+	const std::vector<OutputData>& inputs,
+	const std::vector<OutputData>& changeOutputs) const
 {
 	auto getBlindingFactors = [](OutputData& output) -> BlindingFactor { return BlindingFactor(output.GetBlindingFactor().GetBytes()); };
 
@@ -119,7 +151,11 @@ SecretKey SendSlateBuilder::CalculatePrivateKey(const BlindingFactor& transactio
 	return SecretKey(CBigInteger<32>(privateKeyBF.GetBytes()));
 }
 
-void SendSlateBuilder::AddSenderInfo(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const
+void SendSlateBuilder::AddSenderInfo(
+	Slate& slate,
+	const SecretKey& secretKey,
+	const SecretKey& secretNonce,
+	const std::optional<std::string>& messageOpt) const
 {
 	PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
 	PublicKey publicNonce = Crypto::CalculatePublicKey(secretNonce);

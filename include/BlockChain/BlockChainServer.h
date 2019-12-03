@@ -53,8 +53,8 @@ public:
 
 	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) = 0;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) = 0;
-	virtual EBlockChainStatus AddTransaction(const Transaction& transaction, const EPoolType poolType) = 0;
-	virtual std::unique_ptr<Transaction> GetTransactionByKernelHash(const Hash& kernelHash) const = 0;
+	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) = 0;
+	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const = 0;
 
 	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) = 0;
 

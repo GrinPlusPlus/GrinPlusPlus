@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Wallet/Models/SlateVersionInfo.h>
-#include <Core/Models/Transaction.h>
+#include <Wallet/Models/SlatePaymentProof.h>
 #include <Wallet/ParticipantData.h>
+#include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <json/json.h>
 #include <stdint.h>
@@ -17,6 +18,9 @@
 #define NOMINMAX
 #endif
 
+static uint64_t MIN_SLATE_VERSION = 2;
+static uint64_t MAX_SLATE_VERSION = 3;
+
 // A 'Slate' is passed around to all parties to build up all of the public transaction data needed to create a finalized transaction. 
 // Callers can pass the slate around by whatever means they choose, (but we can provide some binary or JSON serialization helpers here).
 class Slate
@@ -30,7 +34,8 @@ public:
 		const uint64_t amount,
 		const uint64_t fee,
 		const uint64_t blockHeight,
-		const uint64_t lockHeight)
+		const uint64_t lockHeight,
+		const std::optional<SlatePaymentProof>& proofOpt)
 		: m_versionInfo(versionInfo),
 		m_numParticipants(numParticipants),
 		m_slateId(std::move(slateId)),
@@ -38,7 +43,8 @@ public:
 		m_amount(amount),
 		m_fee(fee),
 		m_blockHeight(blockHeight),
-		m_lockHeight(lockHeight)
+		m_lockHeight(lockHeight),
+		m_proofOpt(proofOpt)
 	{
 
 	}
@@ -59,15 +65,11 @@ public:
 	Json::Value ToJSON() const
 	{
 		Json::Value slateNode;
-
-		const bool hex = m_versionInfo.GetVersion() >= 2;
-		if (m_versionInfo.GetVersion() <= 1)
+		slateNode["version_info"] = m_versionInfo.ToJSON();
+		if (m_versionInfo.GetVersion() >= 3)
 		{
-			slateNode["version"] = m_versionInfo.GetVersion();
-		}
-		else
-		{
-			slateNode["version_info"] = m_versionInfo.ToJSON();
+			slateNode["ttl_cutoff_height"] = Json::Value(Json::nullValue); // TODO: Implement
+			slateNode["payment_proof"] = m_proofOpt.has_value() ? m_proofOpt.value().ToJSON() : Json::Value(Json::nullValue);
 		}
 
 		slateNode["num_participants"] = m_numParticipants;
@@ -76,12 +78,12 @@ public:
 		slateNode["fee"] = std::to_string(m_fee);
 		slateNode["height"] = std::to_string(m_blockHeight);
 		slateNode["lock_height"] = std::to_string(m_lockHeight);
-		slateNode["tx"] = m_transaction.ToJSON(hex);
+		slateNode["tx"] = m_transaction.ToJSON();
 
 		Json::Value participantDataNode;
 		for (const ParticipantData& participant : m_participantData)
 		{
-			participantDataNode.append(participant.ToJSON(hex));
+			participantDataNode.append(participant.ToJSON());
 		}
 		slateNode["participant_data"] = participantDataNode;
 
@@ -94,7 +96,6 @@ public:
 		const uint16_t version = (uint16_t)slateNode.get("version", Json::Value(0)).asUInt();
 		const Json::Value versionInfoJSON = slateNode.get("version_info", Json::nullValue);
 		SlateVersionInfo versionInfo = (versionInfoJSON != Json::nullValue) ? SlateVersionInfo::FromJSON(versionInfoJSON) : SlateVersionInfo(version);
-		const bool hex = versionInfo.GetVersion() >= 2;
 
 		const uint64_t numParticipants = JsonUtil::GetRequiredUInt64(slateNode, "num_participants");
 		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
@@ -108,15 +109,32 @@ public:
 		const uint64_t height = JsonUtil::GetRequiredUInt64(slateNode, "height");
 		const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(slateNode, "lock_height");
 
-		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"), hex);
+		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"));
 
-		Slate slate(std::move(versionInfo), numParticipants, std::move(slateIdOpt.value()), std::move(transaction), amount, fee, height, lockHeight);
+		std::optional<SlatePaymentProof> proofOpt = std::nullopt;
+		std::optional<Json::Value> proofJsonOpt = JsonUtil::GetOptionalField(slateNode, "payment_proof");
+		if (proofJsonOpt.has_value() && !proofJsonOpt.value().isNull())
+		{
+			proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::FromJSON(proofJsonOpt.value()));
+		}
+
+		Slate slate(
+			std::move(versionInfo),
+			numParticipants,
+			std::move(slateIdOpt.value()),
+			std::move(transaction),
+			amount,
+			fee,
+			height,
+			lockHeight,
+			proofOpt
+		);
 
 		const Json::Value participantDataNode = JsonUtil::GetRequiredField(slateNode, "participant_data");
 		for (size_t i = 0; i < participantDataNode.size(); i++)
 		{
 			const Json::Value participantJSON = participantDataNode.get(Json::ArrayIndex(i), Json::nullValue);
-			slate.AddParticpantData(ParticipantData::FromJSON(participantJSON, hex));
+			slate.AddParticpantData(ParticipantData::FromJSON(participantJSON));
 		}
 
 		return slate;
@@ -143,4 +161,6 @@ private:
 	// Participant data, each participant in the transaction will insert their public data here.
 	// For now, 0 is sender and 1 is receiver, though this will change for multi-party.
 	std::vector<ParticipantData> m_participantData;
+
+	std::optional<SlatePaymentProof> m_proofOpt;
 };

@@ -34,20 +34,20 @@ TransactionOutput TransactionOutput::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionOutput((EOutputFeatures)features, std::move(commitment), std::move(rangeProof));
 }
 
-Json::Value TransactionOutput::ToJSON(const bool hex) const
+Json::Value TransactionOutput::ToJSON() const
 {
 	Json::Value outputNode;
 	outputNode["features"] = OutputFeatures::ToString(GetFeatures());
-	outputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment(), hex);
-	outputNode["proof"] = JsonUtil::ConvertToJSON(GetRangeProof(), hex);
+	outputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
+	outputNode["proof"] = JsonUtil::ConvertToJSON(GetRangeProof());
 	return outputNode;
 }
 
-TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON, const bool hex)
+TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON)
 {
 	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionOutputJSON, "features").asString());
-	Commitment commitment = JsonUtil::GetCommitment(transactionOutputJSON, "commit", hex);
-	RangeProof rangeProof = JsonUtil::GetRangeProof(transactionOutputJSON, "proof", hex);
+	Commitment commitment = JsonUtil::GetCommitment(transactionOutputJSON, "commit");
+	RangeProof rangeProof = JsonUtil::GetRangeProof(transactionOutputJSON, "proof");
 	return TransactionOutput(features, std::move(commitment), std::move(rangeProof));
 }
 

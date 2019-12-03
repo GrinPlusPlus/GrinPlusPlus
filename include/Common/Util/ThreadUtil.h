@@ -53,4 +53,12 @@ public:
 			}
 		}
 	}
+
+	static void Detach(std::thread& thread)
+	{
+		if (thread.joinable())
+		{
+			thread.detach();
+		}
+	}
 };

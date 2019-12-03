@@ -78,7 +78,7 @@ void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 
 			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
 			{
-				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], size))
+				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], (unsigned int)size))
 				{
 					throw FILE_EXCEPTION(StringUtil::Format("Failed to write to file %s", fileName));
 				}

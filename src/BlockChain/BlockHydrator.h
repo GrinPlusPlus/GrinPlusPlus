@@ -16,7 +16,7 @@ public:
 	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock) const;
 
 private:
-	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock, const std::vector<Transaction>& transactions) const;
+	std::unique_ptr<FullBlock> Hydrate(const CompactBlock& compactBlock, const std::vector<TransactionPtr>& transactions) const;
 
 	std::shared_ptr<const ITransactionPool> m_pTransactionPool;
 };

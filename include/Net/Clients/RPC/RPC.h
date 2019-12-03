@@ -10,122 +10,6 @@ namespace RPC
 
 static std::atomic_int ID_COUNTER = 1;
 
-class Request
-{
-public:
-	static Request Parse(mg_connection* pConnection)
-	{
-		try
-		{
-			std::optional<Json::Value> jsonOpt = HTTPUtil::GetRequestBody(pConnection);
-			if (!jsonOpt.has_value())
-			{
-				throw RPC_EXCEPTION("json missing or invalid", std::nullopt);
-			}
-
-			const Json::Value& json = jsonOpt.value();
-
-			// Parse id
-			std::optional<Json::Value> idOpt = JsonUtil::GetOptionalField(json, "id");
-			if (!idOpt.has_value())
-			{
-				throw RPC_EXCEPTION("id is missing", std::nullopt);
-			}
-
-			Json::Value id = idOpt.value();
-
-			// Parse jsonrpc
-			std::optional<Json::Value> jsonrpcOpt = JsonUtil::GetOptionalField(json, "jsonrpc");
-			if (!jsonrpcOpt.has_value())
-			{
-				throw RPC_EXCEPTION("jsonrpc is missing", id);
-			}
-			else if (!jsonrpcOpt.value().isString())
-			{
-				throw RPC_EXCEPTION("jsonrpc must be a string", id);
-			}
-
-			std::string jsonrpc(jsonrpcOpt.value().asString());
-			if (jsonrpc != "2.0")
-			{
-				throw RPC_EXCEPTION("invalid jsonrpc value: " + jsonrpc, id);
-			}
-
-			// Parse method
-			std::optional<Json::Value> methodOpt = JsonUtil::GetOptionalField(json, "method");
-			if (!methodOpt.has_value())
-			{
-				throw RPC_EXCEPTION("method is missing", id);
-			}
-			else if (!methodOpt.value().isString())
-			{
-				throw RPC_EXCEPTION("method must be a string", id);
-			}
-
-			const std::string method(methodOpt.value().asString());
-			if (method.empty())
-			{
-				throw RPC_EXCEPTION("method must not be empty", id);
-			}
-
-			// Parse params
-			std::optional<Json::Value> paramsOpt = JsonUtil::GetOptionalField(json, "params");
-
-			return Request(std::move(id), method, std::move(paramsOpt));
-		}
-		catch (const RPCException& e)
-		{
-			throw e;
-		}
-		catch (const std::exception& e)
-		{
-			throw RPC_EXCEPTION(e.what(), std::nullopt);
-		}
-	}
-
-	static Request BuildRequest(const std::string& method)
-	{
-		Json::Value id = ID_COUNTER++;
-		return Request(std::move(id), method, std::nullopt);
-	}
-
-	static Request BuildRequest(const std::string& method, const Json::Value& params)
-	{
-		Json::Value id = ID_COUNTER++;
-		return Request(std::move(id), method, std::make_optional(params));
-	}
-
-	Json::Value ToJSON() const
-	{
-		Json::Value json;
-		json["id"] = m_id;
-		json["jsonrpc"] = "2.0";
-		json["method"] = m_method;
-
-		if (m_paramsOpt.has_value())
-		{
-			json["params"] = m_paramsOpt.value();
-		}
-
-		return json;
-	}
-
-	const Json::Value& GetId() const { return m_id; }
-	const std::string& GetMethod() const { return m_method; }
-	const std::optional<Json::Value>& GetParams() const { return m_paramsOpt; }
-
-private:
-	Request(Json::Value&& id, const std::string& method, std::optional<Json::Value>&& paramsOpt)
-		: m_id(std::move(id)), m_method(method), m_paramsOpt(std::move(paramsOpt))
-	{
-
-	}
-
-	Json::Value m_id;
-	std::string m_method;
-	std::optional<Json::Value> m_paramsOpt;
-};
-
 enum ErrorCode
 {
 	INVALID_JSON = -32700,		// Parse error
@@ -186,7 +70,7 @@ public:
 		return Response(Json::Value(id), std::make_optional(result), std::nullopt);
 	}
 
-	static Response BuildError(const Json::Value& id, const int code, const std::string& message, const std::optional<Json::Value>& data)
+	static Response BuildError(const Json::Value& id, const int code, const std::string& message, const std::optional<Json::Value>& data = std::nullopt)
 	{
 		Error error(code, message, data.value_or(Json::nullValue));
 		return Response(Json::Value(id), std::nullopt, std::make_optional(std::move(error)));
@@ -281,6 +165,133 @@ private:
 	Json::Value m_id;
 	std::optional<Json::Value> m_resultOpt;
 	std::optional<Error> m_errorOpt;
+};
+
+class Request
+{
+public:
+	static Request Parse(mg_connection* pConnection)
+	{
+		try
+		{
+			std::optional<Json::Value> jsonOpt = HTTPUtil::GetRequestBody(pConnection);
+			if (!jsonOpt.has_value())
+			{
+				throw RPC_EXCEPTION("json missing or invalid", std::nullopt);
+			}
+
+			const Json::Value& json = jsonOpt.value();
+
+			// Parse id
+			std::optional<Json::Value> idOpt = JsonUtil::GetOptionalField(json, "id");
+			if (!idOpt.has_value())
+			{
+				throw RPC_EXCEPTION("id is missing", std::nullopt);
+			}
+
+			Json::Value id = idOpt.value();
+
+			// Parse jsonrpc
+			std::optional<Json::Value> jsonrpcOpt = JsonUtil::GetOptionalField(json, "jsonrpc");
+			if (!jsonrpcOpt.has_value())
+			{
+				throw RPC_EXCEPTION("jsonrpc is missing", id);
+			}
+			else if (!jsonrpcOpt.value().isString())
+			{
+				throw RPC_EXCEPTION("jsonrpc must be a string", id);
+			}
+
+			std::string jsonrpc(jsonrpcOpt.value().asString());
+			if (jsonrpc != "2.0")
+			{
+				throw RPC_EXCEPTION("invalid jsonrpc value: " + jsonrpc, id);
+			}
+
+			// Parse method
+			std::optional<Json::Value> methodOpt = JsonUtil::GetOptionalField(json, "method");
+			if (!methodOpt.has_value())
+			{
+				throw RPC_EXCEPTION("method is missing", id);
+			}
+			else if (!methodOpt.value().isString())
+			{
+				throw RPC_EXCEPTION("method must be a string", id);
+			}
+
+			const std::string method(methodOpt.value().asString());
+			if (method.empty())
+			{
+				throw RPC_EXCEPTION("method must not be empty", id);
+			}
+
+			// Parse params
+			std::optional<Json::Value> paramsOpt = JsonUtil::GetOptionalField(json, "params");
+
+			return Request(std::move(id), method, std::move(paramsOpt));
+		}
+		catch (const RPCException& e)
+		{
+			throw e;
+		}
+		catch (const std::exception& e)
+		{
+			throw RPC_EXCEPTION(e.what(), std::nullopt);
+		}
+	}
+
+	static Request BuildRequest(const std::string& method)
+	{
+		Json::Value id = ID_COUNTER++;
+		return Request(std::move(id), method, std::nullopt);
+	}
+
+	static Request BuildRequest(const std::string& method, const Json::Value& params)
+	{
+		Json::Value id = ID_COUNTER++;
+		return Request(std::move(id), method, std::make_optional(params));
+	}
+
+	Response BuildResult(const Json::Value& result) const
+	{
+		return Response::BuildResult(m_id, result);
+	}
+
+	Response BuildError(const int code, const std::string& message, const std::optional<Json::Value>& data = std::nullopt) const
+	{
+		Error error(code, message, data.value_or(Json::nullValue));
+		return Response::BuildError(m_id, code, message, data);
+	}
+
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["id"] = m_id;
+		json["jsonrpc"] = "2.0";
+		json["method"] = m_method;
+
+		if (m_paramsOpt.has_value())
+		{
+			json["params"] = m_paramsOpt.value();
+		}
+
+		return json;
+	}
+
+	const Json::Value& GetId() const { return m_id; }
+	const std::string& GetMethod() const { return m_method; }
+	const std::optional<Json::Value>& GetParams() const { return m_paramsOpt; }
+
+private:
+	Request(Json::Value&& id, const std::string& method, std::optional<Json::Value>&& paramsOpt)
+		: m_id(std::move(id)), m_method(method), m_paramsOpt(std::move(paramsOpt))
+	{
+
+	}
+
+	Json::Value m_id;
+	std::string m_method;
+	std::optional<Json::Value> m_paramsOpt;
 };
 
 }

@@ -52,24 +52,24 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 	return TransactionKernel((EKernelFeatures)features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }
 
-Json::Value TransactionKernel::ToJSON(const bool hex) const
+Json::Value TransactionKernel::ToJSON() const
 {
 	Json::Value kernelNode;
 	kernelNode["features"] = KernelFeatures::ToString(GetFeatures());
 	kernelNode["fee"] = std::to_string(GetFee());
 	kernelNode["lock_height"] = std::to_string(GetLockHeight());
-	kernelNode["excess"] = JsonUtil::ConvertToJSON(GetExcessCommitment(), hex);
-	kernelNode["excess_sig"] = JsonUtil::ConvertToJSON(GetExcessSignature(), hex);
+	kernelNode["excess"] = JsonUtil::ConvertToJSON(GetExcessCommitment());
+	kernelNode["excess_sig"] = JsonUtil::ConvertToJSON(GetExcessSignature());
 	return kernelNode;
 }
 
-TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKernelJSON, const bool hex)
+TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKernelJSON)
 {
 	const EKernelFeatures features = KernelFeatures::FromString(JsonUtil::GetRequiredField(transactionKernelJSON, "features").asString());
 	const uint64_t fee = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "fee");
 	const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "lock_height");
-	Commitment excessCommitment = JsonUtil::GetCommitment(transactionKernelJSON, "excess", hex);
-	Signature excessSignature = JsonUtil::GetSignature(transactionKernelJSON, "excess_sig", hex);
+	Commitment excessCommitment = JsonUtil::GetCommitment(transactionKernelJSON, "excess");
+	Signature excessSignature = JsonUtil::GetSignature(transactionKernelJSON, "excess_sig");
 
 	return TransactionKernel(features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }

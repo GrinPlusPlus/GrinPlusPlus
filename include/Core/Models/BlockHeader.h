@@ -10,6 +10,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
 #include <Common/Util/HexUtil.h>
+#include <memory>
 
 class BlockHeader : public Traits::IPrintable
 {
@@ -108,3 +109,5 @@ private:
 	uint64_t m_nonce;
 	ProofOfWork m_proofOfWork;
 };
+
+typedef std::shared_ptr<const BlockHeader> BlockHeaderPtr;

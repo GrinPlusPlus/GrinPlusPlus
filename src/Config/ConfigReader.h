@@ -18,4 +18,5 @@ private:
 	ServerConfig ReadServerConfig(const Json::Value& root, const EEnvironmentType environmentType) const;
 	std::string ReadLogLevel(const Json::Value& root) const;
 	TorConfig ReadTorConfig(const Json::Value& root) const;
+	std::string ReadGrinJoinKey(const Json::Value& root) const;
 };

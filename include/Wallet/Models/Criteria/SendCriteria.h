@@ -2,6 +2,7 @@
 
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/SessionToken.h>
+#include <Wallet/Models/DTOs/PostMethodDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
 
 class SendCriteria
@@ -16,11 +17,33 @@ public:
 		const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
 		const Json::Value selectionStrategyJSON = JsonUtil::GetRequiredField(json, "selection_strategy");
 		const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
-		const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
 
-		return SendCriteria(token, amount, feeBase, messageOpt, numOutputs, selectionStrategy, addressOpt);
+		const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
+		const std::optional<std::string> filePathOpt = JsonUtil::GetStringOpt(json, "file");
+
+		std::optional<PostMethodDTO> postMethodOpt = std::nullopt;
+		std::optional<Json::Value> postJSON = JsonUtil::GetOptionalField(json, "post_tx");
+		if (postJSON.has_value())
+		{
+			postMethodOpt = std::make_optional<PostMethodDTO>(PostMethodDTO::FromJSON(postJSON.value()));
+		}
+
+		return SendCriteria(
+			token,
+			amount,
+			feeBase,
+			messageOpt,
+			numOutputs,
+			selectionStrategy,
+			addressOpt,
+			filePathOpt,
+			postMethodOpt
+		);
 	}
 
+	//
+	// Getters
+	//
 	const SessionToken& GetToken() const { return m_token; }
 	uint64_t GetAmount() const { return m_amount; }
 	uint64_t GetFeeBase() const { return m_feeBase; }
@@ -28,6 +51,14 @@ public:
 	uint8_t GetNumOutputs() const { return m_numOutputs; }
 	const SelectionStrategyDTO& GetSelectionStrategy() const { return m_selectionStrategy; }
 	const std::optional<std::string>& GetAddress() const { return m_addressOpt; }
+	const std::optional<std::string>& GetFile() const { return m_filePathOpt; }
+	const std::optional<PostMethodDTO>& GetPostMethod() const { return m_postMethodOpt; }
+	uint16_t GetSlateVersion() const { return m_slateVersion; }
+
+	//
+	// Setters
+	//
+	void SetSlateVersion(const uint16_t slateVersion) { m_slateVersion = slateVersion; }
 
 private:
 	SendCriteria(
@@ -37,7 +68,9 @@ private:
 		const std::optional<std::string>& messageOpt,
 		const uint8_t numOutputs,
 		const SelectionStrategyDTO& selectionStrategy,
-		const std::optional<std::string>& addressOpt
+		const std::optional<std::string>& addressOpt,
+		const std::optional<std::string>& filePathOpt,
+		const std::optional<PostMethodDTO>& postMethodOpt
 	)
 		: m_token(token),
 		m_amount(amount),
@@ -45,7 +78,10 @@ private:
 		m_messageOpt(messageOpt),
 		m_numOutputs(numOutputs),
 		m_selectionStrategy(selectionStrategy),
-		m_addressOpt(addressOpt)
+		m_addressOpt(addressOpt),
+		m_filePathOpt(filePathOpt),
+		m_postMethodOpt(postMethodOpt),
+		m_slateVersion(2)
 	{
 
 	}
@@ -57,4 +93,7 @@ private:
 	uint8_t m_numOutputs;
 	SelectionStrategyDTO m_selectionStrategy;
 	std::optional<std::string> m_addressOpt;
+	std::optional<std::string> m_filePathOpt;
+	std::optional<PostMethodDTO> m_postMethodOpt;
+	uint16_t m_slateVersion;
 };

@@ -44,11 +44,7 @@ public:
 	{
 	}
 
-	CBigInteger(const CBigInteger& bigInteger)
-	{
-		m_data = bigInteger.GetData();
-	}
-
+	CBigInteger(const CBigInteger& bigInteger) = default;
 	CBigInteger(CBigInteger&& bigInteger) noexcept = default;
 
 	//

@@ -39,7 +39,7 @@ private:
 			Authenticate(nullptr);
 			Connect(destination + ".onion", port);
 		}
-		catch (SOCKSException& e)
+		catch (SOCKSException&)
 		{
 			if (numAttempts < 3)
 			{
@@ -97,9 +97,9 @@ private:
 			// Perform username/password authentication (as described in RFC1929)
 			std::vector<uint8_t> data;
 			data.push_back(0x01); // Current (and only) version of user/pass subnegotiation
-			data.push_back(pAuth->username.size());
+			data.push_back((uint8_t)pAuth->username.size());
 			data.insert(data.end(), pAuth->username.begin(), pAuth->username.end());
-			data.push_back(pAuth->password.size());
+			data.push_back((uint8_t)pAuth->password.size());
 			data.insert(data.end(), pAuth->password.begin(), pAuth->password.end());
 			Write(data, SOCKS_TIMEOUT);
 
@@ -126,7 +126,7 @@ private:
 		data.push_back(SOCKS::Command::CONNECT); // CMD CONNECT
 		data.push_back(0x00); // RSV Reserved must be 0
 		data.push_back(SOCKS::Atyp::DOMAINNAME); // ATYP DOMAINNAME
-		data.push_back(destination.size()); // Length<=255 is checked at beginning of function
+		data.push_back((uint8_t)destination.size()); // Length<=255 is checked at beginning of function
 		data.insert(data.end(), destination.begin(), destination.end());
 		data.push_back((port >> 8) & 0xFF);
 		data.push_back((port >> 0) & 0xFF);

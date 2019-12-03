@@ -99,7 +99,7 @@ EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 	{
 		return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		return EBlockChainStatus::INVALID;
 	}
@@ -183,13 +183,13 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR("Failed to process TxHashSet");
+		LOG_ERROR_F("Failed to process TxHashSet: %s", e.what());
 	}
 
 	return EBlockChainStatus::INVALID;
 }
 
-EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transaction, const EPoolType poolType)
+EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, const EPoolType poolType)
 {
 	try
 	{
@@ -200,7 +200,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 			const EAddTransactionStatus status = m_pTransactionPool->AddTransaction(
 				pReader->GetBlockDB().GetShared(),
 				pReader->GetTxHashSet().GetShared(),
-				transaction,
+				pTransaction,
 				poolType,
 				*pLastConfimedHeader
 			);
@@ -226,7 +226,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(const Transaction& transactio
 	return EBlockChainStatus::INVALID;
 }
 
-std::unique_ptr<Transaction> BlockChainServer::GetTransactionByKernelHash(const Hash& kernelHash) const
+TransactionPtr BlockChainServer::GetTransactionByKernelHash(const Hash& kernelHash) const
 {
 	return m_pTransactionPool->FindTransactionByKernelHash(kernelHash);
 }
@@ -237,7 +237,7 @@ EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeade
 	{
 		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(blockHeader);
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		return EBlockChainStatus::INVALID;
 	}
@@ -249,11 +249,11 @@ EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeade
 	{
 		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSyncHeaders(blockHeaders);
 	}
-	catch (BadDataException& e)
+	catch (BadDataException&)
 	{
 		return EBlockChainStatus::INVALID;
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		return EBlockChainStatus::UNKNOWN_ERROR;
 	}
@@ -381,7 +381,7 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 	{
 		return BlockProcessor(m_config, m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		m_pChainState->Write()->GetOrphanPool()->RemoveOrphan(pNextHeader->GetHeight(), pNextHeader->GetHash());
 		return false;

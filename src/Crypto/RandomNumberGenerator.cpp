@@ -21,7 +21,7 @@ SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
 {
 	SecureVector buffer(numBytes);
 #ifdef _WIN32
-	const NTSTATUS status = BCryptGenRandom(nullptr, buffer.data(), buffer.size(), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+	const NTSTATUS status = BCryptGenRandom(nullptr, buffer.data(), (ULONG)buffer.size(), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 	if (!BCRYPT_SUCCESS(status))
 	{
 		throw CryptoException("RNG Failure");

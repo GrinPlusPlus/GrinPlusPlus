@@ -38,8 +38,7 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	// Add output to Transaction
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
 
-	const SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
-	UpdateDatabase(pBatch, masterSeed, receiveSlate, outputData, walletTxId, slateContext, addressOpt, messageOpt);
+	UpdateDatabase(pBatch, masterSeed, receiveSlate, outputData, walletTxId, addressOpt, messageOpt);
 
 	pBatch->Commit();
 
@@ -129,12 +128,11 @@ void ReceiveSlateBuilder::UpdateDatabase(
 	const Slate& slate,
 	const OutputData& outputData,
 	const uint32_t walletTxId,
-	const SlateContext& context,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt) const
 {
 	// Save secretKey and secretNonce
-	pBatch->SaveSlateContext(masterSeed, slate.GetSlateId(), context);
+	//pBatch->SaveSlateContext(masterSeed, slate.GetSlateId(), context);
 
 	// Save OutputData
 	pBatch->AddOutputs(masterSeed, std::vector<OutputData>({ outputData }));

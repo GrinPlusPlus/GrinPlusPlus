@@ -160,7 +160,6 @@ private:
 	 * checksum_out must be large enough to receive 32 bytes (DIGEST256_LEN). */
 	static bool BuildChecksum(const ed25519_public_key_t& key, uint8_t version, std::vector<uint8_t>& checksum_out)
 	{
-		size_t offset = 0;
 		std::vector<uint8_t> vec;
 		
 		std::string prefix = ".onion checksum";

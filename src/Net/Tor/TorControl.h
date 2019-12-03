@@ -14,6 +14,7 @@ public:
 	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig);
 
 	std::string AddOnion(const SecretKey& privateKey, const uint16_t externalPort, const uint16_t internalPort);
+	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);
 	bool DelOnion(const TorAddress& torAddress);
 
 private:

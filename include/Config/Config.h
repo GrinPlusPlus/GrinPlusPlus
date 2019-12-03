@@ -24,7 +24,8 @@ public:
 		const WalletConfig& walletConfig, 
 		const ServerConfig& serverConfig,
 		const std::string& logLevel,
-		const TorConfig& torConfig
+		const TorConfig& torConfig,
+		const std::string& grinjoinSecretKey
 	)
 		: m_clientMode(clientMode), 
 		m_environment(environment), 
@@ -34,15 +35,16 @@ public:
 		m_walletConfig(walletConfig),
 		m_serverConfig(serverConfig),
 		m_logLevel(logLevel),
-		m_torConfig(torConfig)
+		m_torConfig(torConfig),
+		m_grinjoinSecretKey(grinjoinSecretKey)
 	{
-		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath);
-		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "kernel/");
-		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "output/");
-		fs::create_directories(m_dataPath + "NODE/" + m_txHashSetPath + "rangeproof/");
-		fs::create_directories(m_dataPath + "NODE/" + m_chainPath);
-		fs::create_directories(m_dataPath + "NODE/" + m_databasePath);
-		fs::create_directories(m_dataPath + "NODE/" + m_logDirectory);
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "kernel/"));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "output/"));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_txHashSetPath + "rangeproof/"));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_chainPath));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_databasePath));
+		fs::create_directories(StringUtil::ToWide(m_dataPath + "NODE/" + m_logDirectory));
 	}
 
 	const std::string& GetDataDirectory() const { return m_dataPath; }
@@ -60,6 +62,7 @@ public:
 	const ServerConfig& GetServerConfig() const { return m_serverConfig; }
 	const std::string& GetLogLevel() const { return m_logLevel; }
 	const TorConfig& GetTorConfig() const { return m_torConfig; }
+	const std::string& GetGrinJoinSecretKey() const { return m_grinjoinSecretKey; }
 
 private:
 	std::string m_txHashSetPath{ "TXHASHSET/" };
@@ -76,6 +79,7 @@ private:
 	ServerConfig m_serverConfig;
 	std::string m_logLevel;
 	TorConfig m_torConfig;
+	std::string m_grinjoinSecretKey;
 };
 
 typedef std::shared_ptr<const Config> ConfigPtr;

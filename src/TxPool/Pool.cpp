@@ -7,12 +7,12 @@
 #include <algorithm>
 #include <unordered_map>
 
-std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
+std::vector<TransactionPtr> Pool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
-	std::vector<Transaction> transactionsFound;
+	std::vector<TransactionPtr> transactionsFound;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
-		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction().GetBody().GetKernels())
+		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction()->GetKernels())
 		{
 			const ShortId shortId = ShortId::Create(kernel.GetHash(), hash, nonce);
 			if (missingShortIds.find(shortId) != missingShortIds.cend())
@@ -30,18 +30,18 @@ std::vector<Transaction> Pool::GetTransactionsByShortId(const Hash& hash, const 
 	return transactionsFound;
 }
 
-void Pool::AddTransaction(const Transaction& transaction, const EDandelionStatus status)
+void Pool::AddTransaction(TransactionPtr pTransaction, const EDandelionStatus status)
 {
-	LOG_DEBUG("Transaction added: " + transaction.GetHash().ToHex());
+	LOG_DEBUG_F("Transaction added: %s", pTransaction->GetHash());
 
-	m_transactions.emplace_back(TxPoolEntry(transaction, status, std::time_t()));
+	m_transactions.emplace_back(TxPoolEntry(pTransaction, status, std::time_t()));
 }
 
 bool Pool::ContainsTransaction(const Transaction& transaction) const
 {
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
-		if (txPoolEntry.GetTransaction() == transaction)
+		if (*txPoolEntry.GetTransaction() == transaction)
 		{
 			return true;
 		}
@@ -50,12 +50,12 @@ bool Pool::ContainsTransaction(const Transaction& transaction) const
 	return false;
 }
 
-std::vector<Transaction> Pool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
+std::vector<TransactionPtr> Pool::FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const
 {
-	std::set<Transaction> transactionSet;
+	std::set<TransactionPtr> transactionSet;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
-		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction().GetBody().GetKernels())
+		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction()->GetKernels())
 		{
 			if (kernels.count(kernel) > 0)
 			{
@@ -64,31 +64,31 @@ std::vector<Transaction> Pool::FindTransactionsByKernel(const std::set<Transacti
 		}
 	}
 
-	std::vector<Transaction> transactions;
+	std::vector<TransactionPtr> transactions;
 	std::copy(transactionSet.begin(), transactionSet.end(), std::back_inserter(transactions));
 
 	return transactions;
 }
 
-std::unique_ptr<Transaction> Pool::FindTransactionByKernelHash(const Hash& kernelHash) const
+TransactionPtr Pool::FindTransactionByKernelHash(const Hash& kernelHash) const
 {
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
-		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction().GetBody().GetKernels())
+		for (const TransactionKernel& kernel : txPoolEntry.GetTransaction()->GetKernels())
 		{
 			if (kernel.GetHash() == kernelHash)
 			{
-				return std::make_unique<Transaction>(txPoolEntry.GetTransaction());
+				return txPoolEntry.GetTransaction();
 			}
 		}
 	}
 
-	return std::unique_ptr<Transaction>(nullptr);
+	return nullptr;
 }
 
-std::vector<Transaction> Pool::FindTransactionsByStatus(const EDandelionStatus status) const
+std::vector<TransactionPtr> Pool::FindTransactionsByStatus(const EDandelionStatus status) const
 {
-	std::vector<Transaction> transactions;
+	std::vector<TransactionPtr> transactions;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
 		if (txPoolEntry.GetStatus() == status)
@@ -100,11 +100,11 @@ std::vector<Transaction> Pool::FindTransactionsByStatus(const EDandelionStatus s
 	return transactions;
 }
 
-std::vector<Transaction> Pool::GetExpiredTransactions(const uint16_t embargoSeconds) const
+std::vector<TransactionPtr> Pool::GetExpiredTransactions(const uint16_t embargoSeconds) const
 {
 	const std::time_t cutoff = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(embargoSeconds));
 
-	std::vector<Transaction> transactions;
+	std::vector<TransactionPtr> transactions;
 	for (const TxPoolEntry& txPoolEntry : m_transactions)
 	{
 		if (txPoolEntry.GetTimestamp() < cutoff)
@@ -121,7 +121,7 @@ void Pool::RemoveTransaction(const Transaction& transaction)
 	auto iter = m_transactions.begin();
 	while (iter != m_transactions.end())
 	{
-		if (transaction == iter->GetTransaction())
+		if (transaction == *iter->GetTransaction())
 		{
 			m_transactions.erase(iter);
 			break;
@@ -133,9 +133,9 @@ void Pool::RemoveTransaction(const Transaction& transaction)
 
 // Quick reconciliation step - we can evict any txs in the pool where
 // inputs or kernels intersect with the block.
-void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block, const std::unique_ptr<Transaction>& pMemPoolAggTx)
+void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block, TransactionPtr pMemPoolAggTx)
 {
-	std::vector<Transaction> filteredTransactions;
+	std::vector<TransactionPtr> filteredTransactions;
 	std::unordered_map<Hash, TxPoolEntry> filteredEntriesByHash;
 
 	// Filter txs in the pool based on the latest block.
@@ -144,24 +144,24 @@ void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetCo
 	// where an input is spent in a different tx.
 	for (auto& txPoolEntry : m_transactions)
 	{
-		if (!ShouldEvict(txPoolEntry.GetTransaction(), block))
+		if (!ShouldEvict(*txPoolEntry.GetTransaction(), block))
 		{
 			filteredTransactions.push_back(txPoolEntry.GetTransaction());
-			filteredEntriesByHash.insert(std::pair<Hash, TxPoolEntry>(txPoolEntry.GetTransaction().GetHash(), txPoolEntry));
+			filteredEntriesByHash.insert(std::pair<Hash, TxPoolEntry>(txPoolEntry.GetTransaction()->GetHash(), txPoolEntry));
 		}
 	}
 
 	m_transactions.clear();
 
-	const std::vector<Transaction> validTransactions = ValidTransactionFinder().FindValidTransactions(pBlockDB, pTxHashSet, filteredTransactions, pMemPoolAggTx);
-	for (auto& transaction : validTransactions)
+	std::vector<TransactionPtr> validTransactions = ValidTransactionFinder::FindValidTransactions(pBlockDB, pTxHashSet, filteredTransactions, pMemPoolAggTx);
+	for (auto& pTransaction : validTransactions)
 	{
-		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(transaction.GetHash());
+		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(pTransaction->GetHash());
 		m_transactions.push_back(txPoolEntry);
 	}
 }
 
-void Pool::ChangeStatus(const std::vector<Transaction>& transactions, const EDandelionStatus status)
+void Pool::ChangeStatus(const std::vector<TransactionPtr>& transactions, const EDandelionStatus status)
 {
 	for (auto& txPoolEntry : m_transactions)
 	{
@@ -178,8 +178,8 @@ void Pool::ChangeStatus(const std::vector<Transaction>& transactions, const EDan
 
 bool Pool::ShouldEvict(const Transaction& transaction, const FullBlock& block) const
 {
-	const std::vector<TransactionInput>& blockInputs = block.GetTransactionBody().GetInputs();
-	for (const TransactionInput& input : transaction.GetBody().GetInputs())
+	const std::vector<TransactionInput>& blockInputs = block.GetInputs();
+	for (const TransactionInput& input : transaction.GetInputs())
 	{
 		if (std::find(blockInputs.begin(), blockInputs.end(), input) != blockInputs.end())
 		{
@@ -187,8 +187,8 @@ bool Pool::ShouldEvict(const Transaction& transaction, const FullBlock& block) c
 		}
 	}
 
-	const std::vector<TransactionKernel>& blockKernels = block.GetTransactionBody().GetKernels();
-	for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
+	const std::vector<TransactionKernel>& blockKernels = block.GetKernels();
+	for (const TransactionKernel& kernel : transaction.GetKernels())
 	{
 		if (std::find(blockKernels.begin(), blockKernels.end(), kernel) != blockKernels.end())
 		{
@@ -199,18 +199,20 @@ bool Pool::ShouldEvict(const Transaction& transaction, const FullBlock& block) c
 	return false;
 }
 
-std::unique_ptr<Transaction> Pool::Aggregate() const
+TransactionPtr Pool::Aggregate() const
 {
 	if (m_transactions.empty())
 	{
-		return std::unique_ptr<Transaction>(nullptr);
+		return nullptr;
 	}
 
-	std::vector<Transaction> transactions;
+	LOG_INFO_F("Aggregation %llu transactions", m_transactions.size());
+
+	std::vector<TransactionPtr> transactions;
 	for (const TxPoolEntry& entry : m_transactions)
 	{
 		transactions.push_back(entry.GetTransaction());
 	}
 
-	return std::make_unique<Transaction>(TransactionAggregator::Aggregate(transactions));
+	return TransactionAggregator::Aggregate(transactions);
 }

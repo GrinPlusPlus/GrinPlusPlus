@@ -154,7 +154,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		{
 			pConnection->m_pSocket->CloseSocket();
 			pConnection->m_terminate = true;
-			pConnection->m_connectionThread.detach();
+			ThreadUtil::Detach(pConnection->m_connectionThread);
 			return;
 		}
 	}
@@ -162,7 +162,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 	{
         LOG_ERROR("Exception caught");
         pConnection->m_terminate = true;
-		pConnection->m_connectionThread.detach();
+		ThreadUtil::Detach(pConnection->m_connectionThread);
 		return;
 	}
 
@@ -249,7 +249,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&s, 0, NULL);
 
-			const std::string errorMessage = s;
+			const std::string errorMessage = StringUtil::ToUTF8(s);
 			LOG_DEBUG("Socket exception occurred: " + errorMessage);
 
 			LocalFree(s);

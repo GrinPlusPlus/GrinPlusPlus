@@ -18,7 +18,7 @@ TxHashSetProcessor::TxHashSetProcessor(
 
 }
 
-bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
+bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
 {
 	std::unique_ptr<BlockHeader> pHeader = m_pChainState->Read()->GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
@@ -38,7 +38,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, path, *pHeader);
 	if (pTxHashSet == nullptr)
 	{
-		LOG_ERROR_F("Failed to load %s", path);
+		LOG_ERROR_F("Failed to load %S", path);
 		return false;
 	}
 
@@ -46,7 +46,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
 	if (pBlockSums == nullptr)
 	{
-		LOG_ERROR_F("Validation of %s failed.", path);
+		LOG_ERROR_F("Validation of %S failed.", path);
 		return false;
 	}
 
@@ -79,7 +79,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const std::stri
 	LOG_DEBUG("Updating confirmed chain.");
 	if (!UpdateConfirmedChain(pChainStateBatch, *pHeader))
 	{
-		LOG_ERROR_F("Failed to update confirmed chain for %s.", path);
+		LOG_ERROR_F("Failed to update confirmed chain for %S.", path);
 		pChainStateBatch->GetTxHashSetManager()->Close();
 		return false;
 	}

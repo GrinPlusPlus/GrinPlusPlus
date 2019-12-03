@@ -119,7 +119,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		m_pOutputPMMR->Remove(mmrIndex);
 		m_pRangeProofPMMR->Remove(mmrIndex);
 
-		blockInputBitmap.add(mmrIndex + 1);
+		blockInputBitmap.add((uint32_t)(mmrIndex + 1));
 	}
 
 	pBlockDB->AddBlockInputBitmap(block.GetBlockHeader().GetHash(), blockInputBitmap);

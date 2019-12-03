@@ -15,8 +15,8 @@
 #include <iostream>
 #include <thread>
 
-NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient)
-	: m_config(config), m_pNodeRestServer(pNodeRestServer), m_pNodeClient(pNodeClient)
+NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient, std::shared_ptr<GrinJoinController> pGrinJoinController)
+	: m_config(config), m_pNodeRestServer(pNodeRestServer), m_pNodeClient(pNodeClient), m_pGrinJoinController(pGrinJoinController)
 {
 
 }
@@ -26,7 +26,13 @@ std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
 	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(config);
 	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(config, pNodeClient->GetNodeContext());
 
-	return std::make_shared<NodeDaemon>(NodeDaemon(config, pNodeRestServer, pNodeClient));
+	std::shared_ptr<GrinJoinController> pGrinJoinController = nullptr;
+	if (!config.GetGrinJoinSecretKey().empty())
+	{
+		pGrinJoinController = GrinJoinController::Create(config, pNodeClient->GetNodeContext(), config.GetGrinJoinSecretKey());
+	}
+
+	return std::make_shared<NodeDaemon>(NodeDaemon(config, pNodeRestServer, pNodeClient, pGrinJoinController));
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)

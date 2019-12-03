@@ -3,6 +3,7 @@
 #include "Message.h"
 
 #include <Core/Models/Transaction.h>
+#include <cassert>
 
 class TransactionMessage : public IMessage
 {
@@ -10,15 +11,10 @@ public:
 	//
 	// Constructors
 	//
-	TransactionMessage(Transaction&& transaction)
-		: m_transaction(std::move(transaction))
+	TransactionMessage(TransactionPtr pTransaction)
+		: m_pTransaction(pTransaction)
 	{
-
-	}
-	TransactionMessage(const Transaction& transaction)
-		: m_transaction(transaction)
-	{
-
+		assert(pTransaction != nullptr);
 	}
 	TransactionMessage(const TransactionMessage& other) = default;
 	TransactionMessage(TransactionMessage&& other) noexcept = default;
@@ -43,7 +39,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TransactionMsg; }
-	const Transaction& GetTransaction() const { return m_transaction; }
+	TransactionPtr GetTransaction() const { return m_pTransaction; }
 
 	//
 	// Deserialization
@@ -51,15 +47,15 @@ public:
 	static TransactionMessage Deserialize(ByteBuffer& byteBuffer)
 	{
 		Transaction transaction = Transaction::Deserialize(byteBuffer);
-		return TransactionMessage(std::move(transaction));
+		return TransactionMessage(std::make_shared<Transaction>(transaction));
 	}
 
 protected:
 	virtual void SerializeBody(Serializer& serializer) const override final
 	{
-		m_transaction.Serialize(serializer);
+		m_pTransaction->Serialize(serializer);
 	}
 
 private:
-	Transaction m_transaction;
+	TransactionPtr m_pTransaction;
 };

@@ -109,7 +109,7 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector&
 		CBigInteger<32> encryptedNonce((const unsigned char*)sqlite3_column_blob(stmt, 1));
 		SecretKey nonce = encryptedNonce ^ SlateContext::DeriveXORKey(masterSeed, slateId, "nonce");
 
-		pSlateContext = std::make_unique<SlateContext>(SlateContext(std::move(blindingFactor), std::move(nonce)));
+		pSlateContext = std::make_unique<SlateContext>(SlateContext(std::move(blindingFactor), std::move(nonce), std::nullopt, std::nullopt)); // TODO: Pass in keypath and pubkey
 	}
 	else
 	{

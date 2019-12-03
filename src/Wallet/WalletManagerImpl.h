@@ -51,16 +51,10 @@ public:
 	) override final;
 
 	virtual Slate Send(const SendCriteria& sendCriteria) override final;
+	virtual Slate Receive(const ReceiveCriteria& receiveCriteria) override final;
+	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) override final;
 
-	virtual Slate Receive(
-		const SessionToken& token,
-		const Slate& slate,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt
-	) override final;
-
-	virtual Slate Finalize(const SessionToken& token, const Slate& slate) override final;
-	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction) override final;
+	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction, const PostMethodDTO& postMethod) override final;
 	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
 
 	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;

@@ -26,7 +26,6 @@ private:
 		const Slate& slate,
 		const OutputData& outputData,
 		const uint32_t walletTxId,
-		const SlateContext& context,
 		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt
 	) const;

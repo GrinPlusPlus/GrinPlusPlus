@@ -7,6 +7,7 @@
 	#define USEWIN32IOAPI
 #endif
 
+#include <filesystem.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -17,15 +18,15 @@
 class ZipFile
 {
 public:
-	static std::shared_ptr<ZipFile> Load(const std::string& zipFilePath);
+	static std::shared_ptr<ZipFile> Load(const fs::path& zipFilePath);
 	~ZipFile();
 
-	void ExtractFile(const std::string& path, const std::string& destination) const;
+	void ExtractFile(const std::string& path, const fs::path& destination) const;
 	std::vector<std::string> ListFiles() const;
 
 private:
-	ZipFile(const std::string& zipFilePath, const unzFile& file);
+	ZipFile(const fs::path& zipFilePath, const unzFile& file);
 
-	std::string m_zipFilePath;
+	fs::path m_zipFilePath;
 	unzFile m_unzFile;
 };

@@ -153,12 +153,17 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 	const std::string walletPath = dataPath + "WALLET/";
 
 	std::string databaseType = "ROCKSDB";
+	uint32_t minimumConfirmations = 10;
 	if (root.isMember(ConfigProps::Wallet::WALLET))
 	{
 		const Json::Value& walletRoot = root[ConfigProps::Wallet::WALLET];
 		if (walletRoot.isMember(ConfigProps::Wallet::DATABASE))
 		{
 			databaseType = walletRoot.get(ConfigProps::Wallet::DATABASE, "ROCKSDB").asString();
+		}
+		if (walletRoot.isMember(ConfigProps::Wallet::MIN_CONFIRMATIONS))
+		{
+			minimumConfirmations = walletRoot.get(ConfigProps::Wallet::MIN_CONFIRMATIONS, 10).asUInt();
 		}
 	}
 
@@ -177,8 +182,6 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 		privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
 		publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 	}
-
-	const uint32_t minimumConfirmations = 10; // TODO: Read value
 
 	return WalletConfig(walletPath, databaseType, listenPort, ownerPort, publicKeyVersion, privateKeyVersion, minimumConfirmations);
 }

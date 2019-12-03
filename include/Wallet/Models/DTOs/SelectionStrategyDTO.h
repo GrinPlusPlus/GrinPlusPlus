@@ -24,7 +24,7 @@ public:
 		{
 			for (Json::Value::const_iterator iter = inputsJSON.value().begin(); iter != inputsJSON.value().end(); iter++)
 			{
-				inputs.insert(JsonUtil::ConvertToCommitment(*iter, true));
+				inputs.insert(JsonUtil::ConvertToCommitment(*iter));
 			}
 		}
 

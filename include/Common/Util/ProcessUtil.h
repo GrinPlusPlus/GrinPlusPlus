@@ -7,7 +7,7 @@
 
 #endif
 
-#include <string>
+#include <Common/Util/StringUtil.h>
 
 class ProcessUtil
 {
@@ -24,7 +24,7 @@ public:
 		ZeroMemory(&pi, sizeof(pi));
     
 		// Create the process
-		if (!CreateProcess(NULL, (LPSTR)command.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		if (!CreateProcess(NULL, (LPTSTR)StringUtil::ToWide(command).c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 		{
 			//wchar_t buf[256];
 			//FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -90,7 +90,7 @@ public:
 		}
 
 		do {
-			if (!_stricmp(entry.szExeFile, processName.c_str()))
+			if (!wcscmp(entry.szExeFile, StringUtil::ToWide(processName).c_str()))
 			{
 				CloseHandle(snapshot);
 				return entry.th32ProcessID;

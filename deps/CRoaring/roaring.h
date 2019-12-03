@@ -41,6 +41,8 @@ enum {
 #include <malloc.h>  // this should never be needed but there are some reports that it is needed.
 #endif
 
+#pragma warning(disable:4702)
+
 
 #if defined(_MSC_VER) && !defined(__clang__) && !defined(_WIN64)
 #pragma message( \

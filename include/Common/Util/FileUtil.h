@@ -20,18 +20,18 @@ class FileUtil
 public:
 	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
 	{
-		if (!fs::exists(fs::path(filePath)))
+		if (!fs::exists(StringUtil::ToWide(filePath)))
 		{
 			return false;
 		}
 
-		std::ifstream file(filePath, std::ios::in | std::ios::binary | std::ios::ate);
+		std::ifstream file(StringUtil::ToWide(filePath), std::ios::in | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
 			return false;
 		}
 
-		auto size = fs::file_size(filePath);
+		auto size = fs::file_size(StringUtil::ToWide(filePath));
 		data.resize((size_t)size);
 
 		file.seekg(0, std::ios::beg);
@@ -43,14 +43,14 @@ public:
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
 	{
-		const fs::path destinationPath(destination);
+		const fs::path destinationPath(StringUtil::ToWide(destination));
 		if (fs::exists(destinationPath))
 		{
 			fs::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const fs::path sourcePath(source);
+		const fs::path sourcePath(StringUtil::ToWide(source));
 		fs::rename(sourcePath, destinationPath, error);
 
 		return !error;
@@ -59,7 +59,7 @@ public:
 	static bool SafeWriteToFile(const std::string& filePath, const std::vector<unsigned char>& data)
 	{
 		const std::string tmpFilePath = filePath + ".tmp";
-		std::ofstream file(tmpFilePath, std::ios::out | std::ios::binary | std::ios::ate);
+		std::ofstream file(StringUtil::ToWide(tmpFilePath), std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
 			return false;
@@ -71,10 +71,23 @@ public:
 		return RenameFile(tmpFilePath, filePath);
 	}
 
+	static bool WriteTextToFile(const std::string& filePath, const std::string& text)
+	{
+		std::ofstream file(StringUtil::ToWide(filePath), std::ios::out | std::ios::trunc);
+		if (!file.is_open())
+		{
+			return false;
+		}
+
+		file.write(text.c_str(), text.size());
+		file.close();
+		return true;
+	}
+
 	static bool RemoveFile(const std::string& filePath)
 	{
 		std::error_code ec;
-		if (fs::exists(filePath, ec))
+		if (fs::exists(StringUtil::ToWide(filePath), ec))
 		{
 			const uintmax_t removed = fs::remove_all(filePath, ec);
 
@@ -87,14 +100,14 @@ public:
 	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
 	{
 		std::error_code ec;
-		fs::create_directories(destDir, ec);
+		fs::create_directories(StringUtil::ToWide(destDir), ec);
 
-		if (!fs::exists(sourceDir, ec) || !fs::exists(destDir, ec))
+		if (!fs::exists(StringUtil::ToWide(sourceDir), ec) || !fs::exists(StringUtil::ToWide(destDir), ec))
 		{
 			return false;
 		}
 
-		fs::copy(sourceDir, destDir, fs::copy_options::recursive, ec);
+		fs::copy(StringUtil::ToWide(sourceDir), StringUtil::ToWide(destDir), fs::copy_options::recursive, ec);
 
 		return ec.value() == 0;
 	}
@@ -102,13 +115,13 @@ public:
 	static bool CreateDirectories(const std::string& directory)
 	{
 		std::error_code ec;
-		return fs::create_directories(directory, ec);
+		return fs::create_directories(StringUtil::ToWide(directory), ec);
 	}
 
 	static bool Exists(const std::string& path)
 	{
 		std::error_code ec;
-		if (fs::exists(path, ec))
+		if (fs::exists(StringUtil::ToWide(path), ec))
 		{
 			return true;
 		}
@@ -144,7 +157,7 @@ public:
 	static bool TruncateFile(const std::string& filePath, const uint64_t size)
 	{
 #if defined(WIN32)
-		HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFile = CreateFile(StringUtil::ToWide(filePath).c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		LARGE_INTEGER li;
 		li.QuadPart = size;
@@ -180,7 +193,7 @@ public:
 						// Skip the iteration of current directory pointed by iterator
 						// c++17 fstem API to skip current directory iteration
 						iter.disable_recursion_pending();
-						std::string filename = iter->path().filename().string();
+						std::string filename = StringUtil::ToUTF8(iter->path().filename().wstring());
 						if (includeHidden || !StringUtil::StartsWith(filename, "."))
 						{
 							listOfFiles.push_back(filename);
@@ -208,7 +221,7 @@ public:
 	static size_t GetFileSize(const std::string& file)
 	{
 		std::error_code error;
-		size_t fileSize = fs::file_size(file, error);
+		size_t fileSize = fs::file_size(StringUtil::ToWide(file), error);
 		if (error.value() != 0)
 		{
 			return 0;

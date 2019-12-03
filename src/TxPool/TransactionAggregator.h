@@ -6,6 +6,10 @@
 class TransactionAggregator
 {
 public:
-	static Transaction Aggregate(const std::vector<Transaction>& transactions);
-	static std::unique_ptr<Transaction> Deaggregate(const Transaction& multiKernelTx, const std::vector<Transaction>& transactions);
+	//
+	// Aggregates multiple transactions into 1.
+	//
+	// Preconditions: transactions must not be empty
+	//
+	static TransactionPtr Aggregate(const std::vector<TransactionPtr>& transactions);
 };

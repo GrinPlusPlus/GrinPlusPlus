@@ -195,7 +195,7 @@ std::vector<unsigned char> Crypto::AES256_Encrypt(const SecureVector& input, con
 	ciphertext.resize(input.size() + AES_BLOCKSIZE);
 
 	AES256CBCEncrypt enc(key.data(), iv.GetData().data(), true);
-	const size_t nLen = enc.Encrypt(&input[0], input.size(), ciphertext.data());
+	const size_t nLen = enc.Encrypt(&input[0], (int)input.size(), ciphertext.data());
 	if (nLen < input.size())
 	{
 		throw CryptoException();
@@ -216,7 +216,7 @@ SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext
 	plaintext.resize(nLen);
 
 	AES256CBCDecrypt dec(key.data(), iv.GetData().data(), true);
-	nLen = dec.Decrypt(ciphertext.data(), ciphertext.size(), plaintext.data());
+	nLen = dec.Decrypt(ciphertext.data(), (int)ciphertext.size(), plaintext.data());
 	if (nLen == 0)
 	{
 		throw CryptoException();

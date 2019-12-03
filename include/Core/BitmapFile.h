@@ -47,7 +47,7 @@ public:
 			file.close();
 
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path, error);
+			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
 				// TODO: Handle this
@@ -122,12 +122,12 @@ public:
 		Roaring bitmap;
 
 		const uint64_t numBytes = GetNumBytes();
-		for (size_t i = 0; i < numBytes; i++)
+		for (uint32_t i = 0; i < (uint32_t)numBytes; i++)
 		{
 			const uint8_t byte = GetByte(i);
-			for (size_t j = 0; j < 8; j++)
+			for (uint8_t j = 0; j < 8; j++)
 			{
-				if (byte & BitToByte(j) > 0)
+				if ((byte & BitToByte(j)) > 0)
 				{
 					bitmap.add((i * 8) + j + 1);
 				}
@@ -138,7 +138,7 @@ public:
 	}
 
 private:
-	BitmapFile(const std::string& path) : m_path(path) { }
+	BitmapFile(const std::string& path) : m_path(StringUtil::ToWide(path)) { }
 
 	void Load()
 	{
@@ -160,12 +160,12 @@ private:
 			outFile.close();
 		}
 
-		m_size = FileUtil::GetFileSize(m_path);
+		m_size = FileUtil::GetFileSize(m_path.u8string());
 
 		if (m_size > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path, error);
+			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: %d", error.value());
@@ -219,7 +219,7 @@ private:
 		return (byte >> (7 - bitPosition)) & 1;
 	}
 
-	std::string m_path;
+	fs::path m_path;
 	std::map<uint64_t, uint8_t> m_modifiedBytes;
 	mio::mmap_source m_mmap;
 	uint64_t m_size;

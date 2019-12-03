@@ -5,6 +5,7 @@
 #include <Config/Config.h>
 #include <Database/BlockDb.h>
 #include <Core/Traits/Lockable.h>
+#include <filesystem.h>
 
 #ifdef MW_PMMR
 #define TXHASHSET_API EXPORT
@@ -25,7 +26,7 @@ public:
 	std::shared_ptr<const Locked<ITxHashSet>> GetTxHashSet() const { return m_pTxHashSet; }
 	void SetTxHashSet(ITxHashSetPtr pTxHashSet) { m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet)); }
 
-	static ITxHashSetPtr LoadFromZip(const Config& config, const std::string& zipFilePath, const BlockHeader& header);
+	static ITxHashSetPtr LoadFromZip(const Config& config, const fs::path& zipFilePath, const BlockHeader& header);
 	bool SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header, const std::string& zipFilePath);
 
 private:

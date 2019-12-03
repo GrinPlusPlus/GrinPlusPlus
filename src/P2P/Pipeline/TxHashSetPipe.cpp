@@ -70,7 +70,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 
 	const std::string txHashSetPath =  StringUtil::Format(
 		"%stxhashset_%s.zip",
-		m_config.GetTxHashSetDirectory(),
+		fs::temp_directory_path().string()/*m_config.GetTxHashSetDirectory()*/,
 		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);
 

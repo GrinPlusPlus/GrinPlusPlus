@@ -53,8 +53,8 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static TransactionInput Deserialize(ByteBuffer& byteBuffer);
-	Json::Value ToJSON(const bool hex) const;
-	static TransactionInput FromJSON(const Json::Value& transactionInputJSON, const bool hex);
+	Json::Value ToJSON() const;
+	static TransactionInput FromJSON(const Json::Value& transactionInputJSON);
 
 	//
 	// Traits

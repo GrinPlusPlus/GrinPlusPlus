@@ -31,6 +31,7 @@ namespace ConfigProps
 		static const std::string SERVER = "SERVER";
 
 		static const std::string REST_API_PORT = "REST_API_PORT";
+		static const std::string OWNER_API_PORT = "OWNER_API_PORT";
 	}
 
 	namespace Logger
@@ -56,5 +57,12 @@ namespace ConfigProps
 		static const std::string CONTROL_PORT = "CONTROL_PORT";
 		static const std::string PASSWORD = "PASSWORD";
 		static const std::string HASHED_PASSWORD = "HASHED_PASSWORD";
+	}
+
+	namespace GrinJoin
+	{
+		static const std::string GRINJOIN = "GRINJOIN";
+
+		static const std::string SECRET_KEY = "SECRET_KEY";
 	}
 }

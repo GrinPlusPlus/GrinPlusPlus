@@ -3,6 +3,7 @@
 #include "V2/OwnerController.h"
 
 #include <Wallet/WalletManager.h>
+#include <Net/Tor/TorManager.h>
 
 WalletDaemon::WalletDaemon(
 	const Config& config,
@@ -25,6 +26,8 @@ std::shared_ptr<WalletDaemon> WalletDaemon::Create(const Config& config, INodeCl
 
 	auto pWalletRestServer = WalletRestServer::Create(config, pWalletManager, pNodeClient);
 	auto pOwnerController = OwnerController::Create(config, pWalletManager);
+
+	TorManager::GetInstance(config.GetTorConfig());
 
 	return std::make_shared<WalletDaemon>(WalletDaemon(config, pNodeClient, pWalletManager, pWalletRestServer, pOwnerController));
 }

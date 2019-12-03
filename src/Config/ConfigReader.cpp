@@ -34,8 +34,10 @@ Config ConfigReader::ReadConfig(const Json::Value& root, const EEnvironmentType 
 
 	const TorConfig torConfig = ReadTorConfig(root);
 
+	const std::string grinJoinKey = ReadGrinJoinKey(root);
+
 	// TODO: Mempool, mining, and logger settings
-	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel, torConfig);
+	return Config(clientMode, environment, dataPath, dandelionConfig, p2pConfig, walletConfig, serverConfig, logLevel, torConfig, grinJoinKey);
 }
 
 EClientMode ConfigReader::ReadClientMode(const Json::Value& root) const
@@ -250,4 +252,19 @@ TorConfig ConfigReader::ReadTorConfig(const Json::Value& root) const
 	}
 
 	return TorConfig(socksPort, controlPort, password, hashedPassword);
+}
+
+std::string ConfigReader::ReadGrinJoinKey(const Json::Value& root) const
+{
+	if (root.isMember(ConfigProps::GrinJoin::GRINJOIN))
+	{
+		const Json::Value& grinjoinRoot = root[ConfigProps::GrinJoin::GRINJOIN];
+
+		if (grinjoinRoot.isMember(ConfigProps::GrinJoin::SECRET_KEY))
+		{
+			return grinjoinRoot.get(ConfigProps::GrinJoin::SECRET_KEY, "").asString();
+		}
+	}
+
+	return "";
 }

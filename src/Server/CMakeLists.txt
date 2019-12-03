@@ -19,6 +19,10 @@ file(GLOB SOURCE_CODE
 	"Wallet/API/OwnerPostAPI.cpp"
 	"Wallet/V2/OwnerController.cpp"
 	"Wallet/V2/Send/OwnerSend.cpp"
+	"Wallet/V2/Receive/OwnerReceive.cpp"
+	"Wallet/V2/Receive/OwnerReceive.cpp"
+	"Wallet/V2/Finalize/OwnerFinalize.cpp"
+	"GrinJoin/GrinJoinController.cpp"
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

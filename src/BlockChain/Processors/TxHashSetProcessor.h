@@ -6,6 +6,7 @@
 #include <Config/Config.h>
 #include <Crypto/Hash.h>
 #include <P2P/SyncStatus.h>
+#include <filesystem.h>
 #include <string>
 
 // Forward Declarations
@@ -18,7 +19,7 @@ class TxHashSetProcessor
 public:
 	TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, std::shared_ptr<Locked<ChainState>> pChainState);
 
-	bool ProcessTxHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus);
+	bool ProcessTxHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus);
 
 private:
 	bool UpdateConfirmedChain(Writer<ChainState> pLockedState, const BlockHeader& blockHeader);

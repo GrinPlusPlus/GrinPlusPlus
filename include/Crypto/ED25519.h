@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <ed25519-donna/ed25519_donna_tor.h>
 #include <Crypto/CryptoException.h>
+#include <Crypto/SecretKey.h>
 #include <vector>
 
 #define ED25519_PUBKEY_LEN 32
@@ -42,6 +43,18 @@ public:
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::MultiplyWithGroupOrder");
+		}
+
+		return result;
+	}
+
+	static ed25519_public_key_t CalculatePubKey(const SecretKey& secretKey)
+	{
+		ed25519_public_key_t result;
+		const int status = ed25519_donna_pubkey(result.pubkey.data(), secretKey.data());
+		if (status != 0)
+		{
+			throw CryptoException("ED25519::CalculatePubKey");
 		}
 
 		return result;

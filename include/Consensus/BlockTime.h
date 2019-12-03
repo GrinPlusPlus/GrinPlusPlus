@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <chrono>
 
+#pragma warning(disable:4505)
+
 // See: https://github.com/mimblewimble/grin/blob/master/core/src/consensus.rs
 namespace Consensus
 {
@@ -18,7 +20,7 @@ namespace Consensus
 	static const uint64_t BLOCK_TIME_SEC = 60;
 
 	// Refuse blocks more than 12 block intervals in the future.
-	static uint64_t GetMaxBlockTime(const std::chrono::time_point<std::chrono::system_clock>& currentTime)
+	static int64_t GetMaxBlockTime(const std::chrono::time_point<std::chrono::system_clock>& currentTime)
 	{
 		auto maxBlockTime = currentTime + std::chrono::seconds(12 * Consensus::BLOCK_TIME_SEC);
 		return maxBlockTime.time_since_epoch().count();

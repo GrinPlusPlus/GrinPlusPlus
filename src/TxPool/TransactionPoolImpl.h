@@ -15,16 +15,19 @@ public:
 	TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager);
     virtual ~TransactionPool() = default;
 
-	virtual std::vector<Transaction> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
-	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const Transaction& transaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
-	virtual std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
-	virtual std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const override final;
+	virtual std::vector<TransactionPtr> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
+	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, TransactionPtr pTransaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
+	virtual std::vector<TransactionPtr> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
+	virtual TransactionPtr FindTransactionByKernelHash(const Hash& kernelHash) const override final;
 	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block) override final;
 
 	// Dandelion
-	virtual std::unique_ptr<Transaction> GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
-	virtual std::unique_ptr<Transaction> GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
-	virtual std::vector<Transaction> GetExpiredTransactions() const override final;
+	virtual TransactionPtr GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
+	virtual TransactionPtr GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
+	virtual std::vector<TransactionPtr> GetExpiredTransactions() const override final;
+
+	// GrinJoin
+	virtual void FluffJoinPool() override final;
 
 private:
 	const Config& m_config;
@@ -33,4 +36,5 @@ private:
 
 	Pool m_memPool;
 	Pool m_stemPool;
+	Pool m_joinPool;
 };

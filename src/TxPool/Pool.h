@@ -18,28 +18,29 @@ public:
 	Pool() = default;
 	~Pool() = default;
 
-	void AddTransaction(const Transaction& transaction, const EDandelionStatus status);
+	void AddTransaction(TransactionPtr pTransaction, const EDandelionStatus status);
 	bool ContainsTransaction(const Transaction& transaction) const;
 	void RemoveTransaction(const Transaction& transaction);
 	void ReconcileBlock(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet,
 		const FullBlock& block,
-		const std::unique_ptr<Transaction>& pMemPoolAggTx
+		TransactionPtr pMemPoolAggTx
 	);
-	void ChangeStatus(const std::vector<Transaction>& transactions, const EDandelionStatus status);
+	void ChangeStatus(const std::vector<TransactionPtr>& transactions, const EDandelionStatus status);
 
-	std::vector<Transaction> GetTransactionsByShortId(
+	std::vector<TransactionPtr> GetTransactionsByShortId(
 		const Hash& hash,
 		const uint64_t nonce,
 		const std::set<ShortId>& missingShortIds
 	) const;
-	std::vector<Transaction> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;
-	std::unique_ptr<Transaction> FindTransactionByKernelHash(const Hash& kernelHash) const;
-	std::vector<Transaction> FindTransactionsByStatus(const EDandelionStatus status) const;
-	std::vector<Transaction> GetExpiredTransactions(const uint16_t embargoSeconds) const;
+	std::vector<TransactionPtr> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const;
+	TransactionPtr FindTransactionByKernelHash(const Hash& kernelHash) const;
+	std::vector<TransactionPtr> FindTransactionsByStatus(const EDandelionStatus status) const;
+	std::vector<TransactionPtr> GetExpiredTransactions(const uint16_t embargoSeconds) const;
 
-	std::unique_ptr<Transaction> Aggregate() const;
+	TransactionPtr Aggregate() const;
+	void Clear() { m_transactions.clear(); }
 
 private:
 	bool ShouldEvict(const Transaction& transaction, const FullBlock& block) const;

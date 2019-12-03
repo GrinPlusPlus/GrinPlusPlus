@@ -9,6 +9,7 @@
 Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const
 {
 	Slate finalSlate = slate;
+	auto walletWriter = wallet.Write();
 
 	// Verify transaction contains exactly one kernel
 	const Transaction& transaction = finalSlate.GetTransaction();
@@ -34,8 +35,15 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 		throw WALLET_EXCEPTION("Failed to verify partial signatures.");
 	}
 
+	// Verify payment proof addresses & signatures
+	if (!VerifyPaymentProofs(walletWriter.GetShared(), finalSlate))
+	{
+		WALLET_ERROR_F("Failed to verify payment proof for slate %s", uuids::to_string(slate.GetSlateId()));
+		throw WALLET_EXCEPTION("Failed to verify payment proof.");
+	}
+
 	// Add partial signature to slate's participant data
-	if (!AddPartialSignature(wallet.Read().GetShared(), masterSeed, finalSlate, message))
+	if (!AddPartialSignature(walletWriter.GetShared(), masterSeed, finalSlate, message))
 	{
 		WALLET_ERROR_F("Failed to generate signatures for slate %s", uuids::to_string(slate.GetSlateId()));
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
@@ -49,7 +57,7 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	}
 
 	// Update database with latest WalletTx
-	UpdateDatabase(wallet.Write().GetShared(), masterSeed, finalSlate);
+	UpdateDatabase(walletWriter.GetShared(), masterSeed, finalSlate);
 
 	return finalSlate;
 }
@@ -134,13 +142,19 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	{
 		TransactionValidator().Validate(finalTransaction); // TODO: Check if inputs unspent(txHashSet->Validate())?
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		return false;
 	}
 
 	slate.UpdateTransaction(finalTransaction);
 
+	return true;
+}
+
+bool FinalizeSlateBuilder::VerifyPaymentProofs(std::shared_ptr<const Wallet> pWallet, Slate& slate) const
+{
+	// TODO: Implement
 	return true;
 }
 

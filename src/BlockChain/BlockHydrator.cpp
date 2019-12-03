@@ -15,14 +15,14 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	const std::vector<ShortId>& shortIds = compactBlock.GetShortIds();
 	if (shortIds.empty())
 	{
-		return Hydrate(compactBlock, std::vector<Transaction>());
+		return Hydrate(compactBlock, std::vector<TransactionPtr>());
 	}
 	else
 	{
 		const Hash& hash = compactBlock.GetHash();
 		uint64_t nonce = compactBlock.GetNonce();
 		std::set<ShortId> shortIdsSet(shortIds.cbegin(), shortIds.cend());
-		std::vector<Transaction> transactions = m_pTransactionPool->GetTransactionsByShortId(hash, nonce, shortIdsSet);
+		std::vector<TransactionPtr> transactions = m_pTransactionPool->GetTransactionsByShortId(hash, nonce, shortIdsSet);
 
 		if (transactions.size() == shortIds.size())
 		{
@@ -33,7 +33,7 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	return std::unique_ptr<FullBlock>(nullptr);
 }
 
-std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlock, const std::vector<Transaction>& transactions) const
+std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlock, const std::vector<TransactionPtr>& transactions) const
 {
 	std::unordered_set<Hash> inputsSet;
 	std::unordered_set<Hash> outputsSet;
@@ -44,9 +44,9 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 	std::vector<TransactionKernel> allKernels;
 
 	// collect all the inputs, outputs and kernels from the txs
-	for (const Transaction& transaction : transactions)
+	for (TransactionPtr pTransaction : transactions)
 	{
-		for (const TransactionInput& input : transaction.GetBody().GetInputs())
+		for (const TransactionInput& input : pTransaction->GetInputs())
 		{
 			if (inputsSet.count(input.GetHash()) == 0)
 			{
@@ -55,7 +55,7 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 			}
 		}
 
-		for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
+		for (const TransactionOutput& output : pTransaction->GetOutputs())
 		{
 			if (outputsSet.count(output.GetHash()) == 0)
 			{
@@ -64,7 +64,7 @@ std::unique_ptr<FullBlock> BlockHydrator::Hydrate(const CompactBlock& compactBlo
 			}
 		}
 
-		for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
+		for (const TransactionKernel& kernel : pTransaction->GetKernels())
 		{
 			if (kernelsSet.count(kernel.GetHash()) == 0)
 			{

@@ -4,23 +4,25 @@
 #include <Net/Clients/RPC/RPCClient.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorException.h>
+#include <memory>
 
 class TorConnection
 {
 public:
 	TorConnection(const TorAddress& address, SocketAddress&& proxyAddress)
-		: m_address(address), m_socksClient(std::move(proxyAddress)), m_rpcClient(m_socksClient)
+		: m_address(address),
+		m_rpcClient(std::shared_ptr<HTTPClient>((HTTPClient*)new SOCKSClient(std::move(proxyAddress))))
 	{
 
 	}
 
-	RPC::Response Invoke(const uint16_t portNumber, const RPC::Request& request)
+	RPC::Response Invoke(const RPC::Request& request, const std::string& location)
 	{
 		try
 		{
-			return m_rpcClient.Invoke(m_address.ToString(), "/v2/foreign", portNumber, request);
+			return m_rpcClient.Invoke(m_address.ToString(), location, 80, request);
 		}
-		catch (TorException& e)
+		catch (TorException&)
 		{
 			throw;
 		}
@@ -32,6 +34,7 @@ public:
 
 private:
 	TorAddress m_address;
-	SOCKSClient m_socksClient;
 	HttpRpcClient m_rpcClient;
 };
+
+typedef std::shared_ptr<TorConnection> TorConnectionPtr;

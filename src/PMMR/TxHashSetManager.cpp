@@ -28,13 +28,13 @@ std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::Open(const BlockHeader& co
 	return m_pTxHashSet;
 }
 
-std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, const std::string& zipFilePath, const BlockHeader& blockHeader)
+std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, const fs::path& zipFilePath, const BlockHeader& blockHeader)
 {
 	const TxHashSetZip zip(config);
 	if (zip.Extract(zipFilePath, blockHeader))
 	{
 		LOG_INFO_F("%s extracted successfully", zipFilePath);
-		FileUtil::RemoveFile(zipFilePath);
+		FileUtil::RemoveFile(zipFilePath.u8string());
 
 		// Rewind Kernel MMR
 		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(config.GetTxHashSetDirectory());

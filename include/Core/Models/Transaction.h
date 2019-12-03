@@ -13,6 +13,7 @@
 #include <Crypto/BlindingFactor.h>
 #include <Core/Traits/Printable.h>
 #include <json/json.h>
+#include <memory>
 
 ////////////////////////////////////////
 // TRANSACTION
@@ -47,14 +48,17 @@ public:
 	//
 	const BlindingFactor& GetOffset() const { return m_offset; }
 	const TransactionBody& GetBody() const { return m_transactionBody; }
+	const std::vector<TransactionInput>& GetInputs() const { return m_transactionBody.GetInputs(); }
+	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
+	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
 
 	//
 	// Serialization/Deserialization
 	//
 	void Serialize(Serializer& serializer) const;
 	static Transaction Deserialize(ByteBuffer& byteBuffer);
-	Json::Value ToJSON(const bool hex) const;
-	static Transaction FromJSON(const Json::Value& transactionJSON, const bool hex);
+	Json::Value ToJSON() const;
+	static Transaction FromJSON(const Json::Value& transactionJSON);
 
 	//
 	// Hashing
@@ -75,3 +79,5 @@ private:
 
 	mutable Hash m_hash;
 };
+
+typedef std::shared_ptr<const Transaction> TransactionPtr;

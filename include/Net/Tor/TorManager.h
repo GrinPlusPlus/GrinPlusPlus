@@ -13,7 +13,8 @@ class TorManager
 public:
 	static TorManager& GetInstance(const TorConfig& config);
 
-	std::shared_ptr<TorAddress> AddListener(const SecretKey& privateKey, const int portNumber);
+	std::shared_ptr<TorAddress> AddListener(const SecretKey& privateKey, const uint16_t portNumber);
+	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);
 	bool RemoveListener(const TorAddress& torAddress);
 
 	std::shared_ptr<TorConnection> Connect(const TorAddress& address);

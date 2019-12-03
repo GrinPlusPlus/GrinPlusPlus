@@ -9,6 +9,8 @@
 #include <string.h>
 #include <atomic>
 
+#pragma warning(disable:4456)
+
 static inline uint32_t ReadBE32(const unsigned char* ptr)
 {
 	return EndianHelper::ReadBE32(ptr);

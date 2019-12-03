@@ -8,7 +8,9 @@
 class HttpRpcClient
 {
 public:
-	HttpRpcClient(IHTTPClient& httpClient)
+	HttpRpcClient() : m_httpClient(std::shared_ptr<IHTTPClient>(new HTTPClient())) { }
+
+	HttpRpcClient(std::shared_ptr<IHTTPClient> httpClient)
 		: m_httpClient(httpClient)
 	{
 
@@ -19,7 +21,7 @@ public:
 		try
 		{
 			const HTTP::Request httpRequest(HTTP::EHTTPMethod::POST, location, host, portNumber, JsonUtil::WriteCondensed(request.ToJSON()));
-			const HTTP::Response response = m_httpClient.Invoke(httpRequest);
+			const HTTP::Response response = m_httpClient->Invoke(httpRequest);
 
 			return RPC::Response::Parse(response.GetBody());
 		}
@@ -30,5 +32,5 @@ public:
 	}
 
 private:
-	IHTTPClient& m_httpClient;
+	std::shared_ptr<IHTTPClient> m_httpClient;
 };

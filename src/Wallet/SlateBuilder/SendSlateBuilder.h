@@ -26,7 +26,8 @@ public:
 		const uint8_t numOutputs, 
 		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt, 
-		const SelectionStrategyDTO& strategy) const;
+		const SelectionStrategyDTO& strategy,
+		const uint16_t slateVersion) const;
 
 private:
 	SecretKey CalculatePrivateKey(const BlindingFactor& transactionOffset, const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs) const;

@@ -3,6 +3,7 @@
 #include "Message.h"
 
 #include <Core/Models/Transaction.h>
+#include <cassert>
 
 class StemTransactionMessage : public IMessage
 {
@@ -10,15 +11,10 @@ public:
 	//
 	// Constructors
 	//
-	StemTransactionMessage(Transaction&& transaction)
-		: m_transaction(std::move(transaction))
+	StemTransactionMessage(TransactionPtr pTransaction)
+		: m_pTransaction(pTransaction)
 	{
-
-	}
-	StemTransactionMessage(const Transaction& transaction)
-		: m_transaction(transaction)
-	{
-
+		assert(pTransaction != nullptr);
 	}
 	StemTransactionMessage(const StemTransactionMessage& other) = default;
 	StemTransactionMessage(StemTransactionMessage&& other) noexcept = default;
@@ -43,7 +39,7 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::StemTransaction; }
-	const Transaction& GetTransaction() const { return m_transaction; }
+	TransactionPtr GetTransaction() const { return m_pTransaction; }
 
 	//
 	// Deserialization
@@ -51,15 +47,15 @@ public:
 	static StemTransactionMessage Deserialize(ByteBuffer& byteBuffer)
 	{
 		Transaction transaction = Transaction::Deserialize(byteBuffer);
-		return StemTransactionMessage(std::move(transaction));
+		return StemTransactionMessage(std::make_shared<Transaction>(transaction));
 	}
 
 protected:
 	virtual void SerializeBody(Serializer& serializer) const override final
 	{
-		m_transaction.Serialize(serializer);
+		m_pTransaction->Serialize(serializer);
 	}
 
 private:
-	Transaction m_transaction;
+	TransactionPtr m_pTransaction;
 };

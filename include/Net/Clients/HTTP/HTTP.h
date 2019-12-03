@@ -39,7 +39,7 @@ public:
 		return StringUtil::Format(
 			"%s %s HTTP/1.1\r\n"
 			"Host: %s\r\n"
-			"Content-Length: %lu\r\n"
+			"Content-Length: %llu\r\n"
 			"Content-Type: application/json-rpc\r\n\r\n%s",
 			m_method == EHTTPMethod::GET ? "GET" : "POST",
 			m_location.c_str(),

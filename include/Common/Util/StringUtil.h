@@ -8,7 +8,9 @@
 #include <cstdarg>
 #include <vector>
 #include <locale>
+#include <codecvt>
 #include <algorithm>
+#include <filesystem.h>
 
 #pragma warning(disable : 4840)
 
@@ -70,12 +72,24 @@ public:
 		std::locale loc;
 		std::string output = "";
 
-		for (auto elem : str)
+		for (char elem : str)
 		{
-			output += std::tolower(elem, loc);
+			output += static_cast<char>(std::tolower(static_cast<unsigned char>(elem), loc));
 		}
 
 		return output;
+	}
+
+	static std::string ToUTF8(const std::wstring& wstr)
+	{
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+		return converter.to_bytes(wstr);
+	}
+
+	static std::wstring ToWide(const std::string& str)
+	{
+		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+		return converter.from_bytes(str);
 	}
 
 	static inline std::string Trim(const std::string& s)
@@ -113,6 +127,16 @@ private:
 	static decltype(auto) convert_for_snprintf(const std::string& x)
 	{
 		return x.c_str();
+	}
+
+	static decltype(auto) convert_for_snprintf(const std::wstring& x)
+	{
+		return x.c_str();
+	}
+
+	static decltype(auto) convert_for_snprintf(const fs::path& path)
+	{
+		return path.wstring();
 	}
 
 	template <class T>

@@ -151,18 +151,26 @@ public:
 
 	virtual void Commit() override final
 	{
-		LOG_TRACE_F("Flushing with size (%llu)", GetSize());
-		m_pHashFile->Commit();
-		m_pDataFile->Commit();
-		m_pLeafSet->Commit();
+		if (IsDirty())
+		{
+			LOG_TRACE_F("Flushing with size (%llu)", GetSize());
+			m_pHashFile->Commit();
+			m_pDataFile->Commit();
+			m_pLeafSet->Commit();
+			SetDirty(false);
+		}
 	}
 
 	virtual void Rollback() override final
 	{
-		LOG_INFO("Discarding changes since last flush");
-		m_pHashFile->Rollback();
-		m_pDataFile->Rollback();
-		m_pLeafSet->Rollback();
+		if (IsDirty())
+		{
+			LOG_INFO("Discarding changes since last flush");
+			m_pHashFile->Rollback();
+			m_pDataFile->Rollback();
+			m_pLeafSet->Rollback();
+			SetDirty(false);
+		}
 	}
 
 private:

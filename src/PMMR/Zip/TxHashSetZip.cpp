@@ -12,7 +12,7 @@ TxHashSetZip::TxHashSetZip(const Config& config)
 
 }
 
-bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) const
+bool TxHashSetZip::Extract(const fs::path& path, const BlockHeader& header) const
 {
 	try
 	{
@@ -52,7 +52,7 @@ bool TxHashSetZip::Extract(const std::string& path, const BlockHeader& header) c
 bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 {
 	const std::string kernelDir = m_config.GetTxHashSetDirectory() + "kernel";
-	const fs::path kernelPath(kernelDir);
+	const fs::path kernelPath(StringUtil::ToWide(kernelDir));
 	if (fs::exists(kernelPath))
 	{
 		LOG_DEBUG("Kernel folder exists. Deleting its contents now.");
@@ -71,7 +71,7 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 	const std::vector<std::string> kernelFiles = { "pmmr_data.bin", "pmmr_hash.bin" };
 	for (const std::string& file : kernelFiles)
 	{
-		zipFile.ExtractFile("kernel/" + file, kernelDir + "/" + file);
+		zipFile.ExtractFile("kernel/" + file, fs::path(StringUtil::ToWide(kernelDir + "/" + file)));
 	}
 
 	return true;
@@ -80,7 +80,7 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
 	const std::string outputDir = m_config.GetTxHashSetDirectory() + "output";
-	const fs::path outputPath(outputDir);
+	const fs::path outputPath(StringUtil::ToWide(outputDir));
 	if (fs::exists(outputPath))
 	{
 		LOG_DEBUG("Output folder exists. Deleting its contents now.");
@@ -99,7 +99,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : outputFiles)
 	{
-		zipFile.ExtractFile("output/" + file, outputDir + "/" + file);
+		zipFile.ExtractFile("output/" + file, fs::path(StringUtil::ToWide(outputDir + "/" + file)));
 	}
 
 	FileUtil::RenameFile(outputDir + "/pmmr_leaf.bin." + header.ShortHash(), outputDir + "/pmmr_leaf.bin");
@@ -110,7 +110,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHeader& header) const
 {
 	const std::string rangeProofDir = m_config.GetTxHashSetDirectory() + "rangeproof";
-	const fs::path rangeProofPath(rangeProofDir);
+	const fs::path rangeProofPath(StringUtil::ToWide(rangeProofDir));
 	if (fs::exists(rangeProofPath))
 	{
 		LOG_DEBUG("RangeProof folder exists. Deleting its contents now.");
@@ -129,7 +129,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : rangeProofFiles)
 	{
-		zipFile.ExtractFile("rangeproof/" + file, rangeProofDir + "/" + file);
+		zipFile.ExtractFile("rangeproof/" + file, fs::path(StringUtil::ToWide(rangeProofDir + "/" + file)));
 	}
 
 	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "/pmmr_leaf.bin");

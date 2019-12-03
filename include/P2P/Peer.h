@@ -94,29 +94,29 @@ public:
 	//
 	// Setters
 	//
-	inline void UpdateVersion(const uint32_t version) { m_version = version; }
-	inline void UpdateCapabilities(const Capabilities& capabilities) { m_capabilities = capabilities; }
-	inline void UpdateLastContactTime() const { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
-	inline void UpdateLastBanTime() { m_lastBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
-	inline void UpdateBanReason(const EBanReason banReason) { m_banReason = banReason; }
-	inline void Unban() { m_lastBanTime = 0; }
-	inline void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
-	inline void UpdateLastTxHashSetRequest() { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
+	void UpdateVersion(const uint32_t version) { m_version = version; }
+	void UpdateCapabilities(const Capabilities& capabilities) { m_capabilities = capabilities; }
+	void UpdateLastContactTime() const { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
+	void UpdateLastBanTime() { m_lastBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
+	void UpdateBanReason(const EBanReason banReason) { m_banReason = banReason; }
+	void Unban() { m_lastBanTime = 0; }
+	void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
+	void UpdateLastTxHashSetRequest() { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 
 	//
 	// Getters
 	//
-	inline const SocketAddress& GetSocketAddress() const { return m_socketAddress; }
-	inline const IPAddress& GetIPAddress() const { return m_socketAddress.GetIPAddress(); }
-	inline uint16_t GetPortNumber() const { return m_socketAddress.GetPortNumber(); }
-	inline uint32_t GetVersion() const { return m_version; }
-	inline Capabilities GetCapabilities() const { return m_capabilities; }
-	inline const std::string& GetUserAgent() const { return m_userAgent; }
-	inline std::time_t GetLastContactTime() const { return m_lastContactTime; }
-	inline std::time_t GetLastBanTime() const { return m_lastBanTime; }
-	inline EBanReason GetBanReason() const { return m_banReason; }
-	inline std::time_t GetLastTxHashSetRequest() const { return m_lastTxHashSetRequest; }
-	inline bool IsBanned() const
+	const SocketAddress& GetSocketAddress() const { return m_socketAddress; }
+	const IPAddress& GetIPAddress() const { return m_socketAddress.GetIPAddress(); }
+	uint16_t GetPortNumber() const { return m_socketAddress.GetPortNumber(); }
+	uint32_t GetVersion() const { return m_version; }
+	Capabilities GetCapabilities() const { return m_capabilities; }
+	const std::string& GetUserAgent() const { return m_userAgent; }
+	std::time_t GetLastContactTime() const { return m_lastContactTime; }
+	std::time_t GetLastBanTime() const { return m_lastBanTime; }
+	EBanReason GetBanReason() const { return m_banReason; }
+	std::time_t GetLastTxHashSetRequest() const { return m_lastTxHashSetRequest; }
+	bool IsBanned() const
 	{
 		const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 		return GetLastBanTime() > maxBanTime;

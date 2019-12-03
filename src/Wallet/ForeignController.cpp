@@ -47,7 +47,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 
 	mg_server_ports ports;
 	mg_get_server_ports(pForeignContext, 1, &ports);
-	const int portNumber = ports.port;
+	const uint16_t portNumber = (uint16_t)ports.port;
 
 	std::shared_ptr<Context> pContext = std::make_shared<Context>(Context(pForeignContext, m_walletManager, portNumber, token));
 
@@ -114,19 +114,22 @@ int ForeignController::ForeignAPIHandler(mg_connection* pConnection, void* pCbCo
 			{
 				try
 				{
+					Context* pContext = static_cast<Context*>(pCbContext);
+
 					Json::Value params = paramsOpt.value();
 					Slate slate = Slate::FromJSON(params[0]);
 					std::optional<std::string> accountName = params[1].isNull() ? std::nullopt : std::make_optional(params[1].asCString());
 					std::optional<std::string> message = params[2].isNull() ? std::nullopt : std::make_optional(params[2].asCString());
 
-					Context* pContext = (Context*)pCbContext;
-					Slate receivedSlate = pContext->m_walletManager.Receive(pContext->m_token, slate, std::nullopt, message);
+					ReceiveCriteria criteria(SessionToken(pContext->m_token), std::move(slate), message, std::nullopt, std::nullopt);
+
+					Slate receivedSlate = pContext->m_walletManager.Receive(criteria);
 
 					Json::Value result;
 					result["Ok"] = receivedSlate.ToJSON();
 					responseJSON = RPC::Response::BuildResult(request.GetId(), result).ToJSON();
 				}
-				catch (DeserializationException& e)
+				catch (DeserializationException&)
 				{
 					responseJSON = RPC::Response::BuildError(request.GetId(), RPC::ErrorCode::INVALID_PARAMS, "Failed to deserialize slate", std::nullopt).ToJSON();
 				}
@@ -147,6 +150,7 @@ int ForeignController::ForeignAPIHandler(mg_connection* pConnection, void* pCbCo
 
 			Json::Value slateVersions;
 			slateVersions.append("V2");
+			slateVersions.append("V3");
 			versions["supported_slate_versions"] = slateVersions;
 
 			Json::Value result;

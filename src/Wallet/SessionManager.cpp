@@ -44,7 +44,7 @@ SessionToken SessionManager::Login(const std::string& username, const SecureStri
 		m_pWalletDB->OpenWallet(username, decryptedSeed);
 		return Login(username, decryptedSeed);
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
 	}

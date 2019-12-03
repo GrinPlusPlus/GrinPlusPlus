@@ -7,51 +7,49 @@
 #include <PMMR/TxHashSetManager.h>
 #include <Database/BlockDb.h>
 
-ValidTransactionFinder::ValidTransactionFinder()
-{
-
-}
-
-std::vector<Transaction> ValidTransactionFinder::FindValidTransactions(
+std::vector<TransactionPtr> ValidTransactionFinder::FindValidTransactions(
 	std::shared_ptr<const IBlockDB> pBlockDB,
 	ITxHashSetConstPtr pTxHashSet,
-	const std::vector<Transaction>& transactions,
-	const std::unique_ptr<Transaction>& pExtraTransaction) const
+	const std::vector<TransactionPtr>& transactions,
+	TransactionPtr pExtraTransaction)
 {
-	std::vector<Transaction> validTransactions;
-	for (const Transaction& transaction : transactions)
+	std::vector<TransactionPtr> validTransactions;
+	for (TransactionPtr pTransaction : transactions)
 	{
-		std::vector<Transaction> candidateTransactions = validTransactions;
+		std::vector<TransactionPtr> candidateTransactions = validTransactions;
 		if (pExtraTransaction != nullptr)
 		{
-			candidateTransactions.push_back(*pExtraTransaction);
+			candidateTransactions.push_back(pExtraTransaction);
 		}
 
-		candidateTransactions.push_back(transaction);
+		candidateTransactions.push_back(pTransaction);
 
 		// Build a single aggregate tx from candidate txs.
-		Transaction aggregateTransaction = TransactionAggregator::Aggregate(candidateTransactions);
+		TransactionPtr pAggregatedTransaction = TransactionAggregator::Aggregate(candidateTransactions);
 
 		// We know the tx is valid if the entire aggregate tx is valid.
-		if (IsValidTransaction(pBlockDB, pTxHashSet, aggregateTransaction))
+		if (IsValidTransaction(pBlockDB, pTxHashSet, pAggregatedTransaction))
 		{
-			validTransactions.push_back(transaction);
+			validTransactions.push_back(pTransaction);
 		}
 	}
 
 	return validTransactions;
 }
 
-bool ValidTransactionFinder::IsValidTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const Transaction& transaction) const
+bool ValidTransactionFinder::IsValidTransaction(
+	std::shared_ptr<const IBlockDB> pBlockDB,
+	ITxHashSetConstPtr pTxHashSet,
+	TransactionPtr pTransaction)
 {
 	try
 	{
-		TransactionValidator().Validate(transaction);
+		TransactionValidator().Validate(*pTransaction);
 
 		// Validate the tx against current chain state.
 		// Check all inputs are in the current UTXO set.
 		// Check all outputs are unique in current UTXO set.
-		if (!pTxHashSet->IsValid(pBlockDB, transaction))
+		if (!pTxHashSet->IsValid(pBlockDB, *pTransaction))
 		{
 			return false;
 		}

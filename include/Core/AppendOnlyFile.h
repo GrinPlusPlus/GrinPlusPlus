@@ -19,7 +19,7 @@ class AppendOnlyFile
 {
 public:
 	AppendOnlyFile(const std::string& path)
-		: m_path(path),
+		: m_path(StringUtil::ToWide(path)),
 		m_bufferIndex(0),
 		m_fileSize(0)
 	{
@@ -50,13 +50,13 @@ public:
 			outFile.close();
 		}
 
-		m_fileSize = FileUtil::GetFileSize(m_path);
+		m_fileSize = FileUtil::GetFileSize(m_path.u8string());
 		m_bufferIndex = m_fileSize;
 
 		if (m_fileSize > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path, error);
+			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: %d", error.value());
@@ -81,7 +81,7 @@ public:
 
 		if (m_fileSize > m_bufferIndex)
 		{
-			FileUtil::TruncateFile(m_path, m_bufferIndex);
+			FileUtil::TruncateFile(m_path.u8string(), m_bufferIndex);
 		}
 
 		if (!m_buffer.empty())
@@ -110,7 +110,7 @@ public:
 		if (m_fileSize > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path, error);
+			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: %d", error.value());
@@ -180,7 +180,7 @@ public:
 	}
 
 private:
-	std::string m_path;
+	fs::path m_path;
 	uint64_t m_bufferIndex;
 	uint64_t m_fileSize;
 	std::vector<unsigned char> m_buffer;

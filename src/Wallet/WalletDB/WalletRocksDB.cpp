@@ -62,7 +62,7 @@ std::shared_ptr<WalletRocksDB> WalletRocksDB::Open(const Config& config)
 
 	// open DB // TODO: Create one DB per username?
 	const std::string dbPath = config.GetWalletConfig().GetWalletDirectory();
-	fs::create_directories(dbPath);
+	fs::create_directories(StringUtil::ToWide(dbPath));
 
 	rocksdb::DB* pDatabase = nullptr;
 	rocksdb::ColumnFamilyHandle* pDefaultHandle;

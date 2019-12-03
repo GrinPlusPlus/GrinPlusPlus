@@ -2,26 +2,23 @@
 
 #include <Core/Models/Transaction.h>
 #include <Core/Models/BlockHeader.h>
-#include <PMMR/TxHashSetManager.h>
+#include <Database/BlockDb.h>
+#include <PMMR/TxHashSet.h>
 
 class ValidTransactionFinder
 {
 public:
-	ValidTransactionFinder();
-
-	std::vector<Transaction> FindValidTransactions(
+	static std::vector<TransactionPtr> FindValidTransactions(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet,
-		const std::vector<Transaction>& transactions,
-		const std::unique_ptr<Transaction>& pExtraTransaction
-	) const;
+		const std::vector<TransactionPtr>& transactions,
+		TransactionPtr pExtraTransaction
+	);
 
 private:
-	bool IsValidTransaction(
+	static bool IsValidTransaction(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		ITxHashSetConstPtr pTxHashSet,
-		const Transaction& transaction
-	) const;
-
-	TxHashSetManagerConstPtr m_pTxHashSetManager;
+		TransactionPtr pTransaction
+	);
 };

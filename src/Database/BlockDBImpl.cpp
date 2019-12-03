@@ -52,7 +52,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 
 	// open DB
 	const std::string dbPath = config.GetDatabaseDirectory() + "CHAIN/";
-	fs::create_directories(dbPath);
+	fs::create_directories(StringUtil::ToWide(dbPath));
 
 	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));

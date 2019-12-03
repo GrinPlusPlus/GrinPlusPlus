@@ -41,7 +41,7 @@ public:
 
 	std::shared_ptr<NodeContext> GetNodeContext()
 	{
-		return std::make_shared<NodeContext>(NodeContext(m_pDatabase, m_pBlockChainServer, m_pP2PServer, m_pTxHashSetManager));
+		return std::make_shared<NodeContext>(NodeContext(m_pDatabase, m_pBlockChainServer, m_pP2PServer, m_pTxHashSetManager, m_pTransactionPool));
 	}
 
 	virtual uint64_t GetChainHeight() const override final
@@ -92,7 +92,7 @@ public:
 		return std::make_unique<OutputRange>(pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
 	}
 
-	virtual bool PostTransaction(const Transaction& transaction) override final
+	virtual bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final
 	{
 		std::unique_ptr<BlockHeader> pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTipHeader != nullptr)
@@ -107,14 +107,14 @@ public:
 					auto result = m_pTransactionPool->AddTransaction(
 						pBlockDB.GetShared(),
 						pTxHashSetReader.GetShared(),
-						transaction,
-						EPoolType::STEMPOOL,
+						pTransaction,
+						poolType,
 						*pTipHeader
 					);
 					
 					return result == EAddTransactionStatus::ADDED;
 				}
-				catch (std::exception& e)
+				catch (std::exception&)
 				{
 					return false;
 				}

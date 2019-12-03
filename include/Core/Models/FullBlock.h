@@ -38,6 +38,9 @@ public:
 	//
 	const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
 	const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
+	const std::vector<TransactionInput>& GetInputs() const { return m_transactionBody.GetInputs(); }
+	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
+	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
 	uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
 	const Hash& GetPreviousHash() const { return m_blockHeader.GetPreviousBlockHash(); }
 

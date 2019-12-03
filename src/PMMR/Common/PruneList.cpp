@@ -3,6 +3,8 @@
 
 #include <Common/Util/FileUtil.h>
 
+#pragma warning(disable:4244)
+
 PruneList::PruneList(const std::string& filePath, Roaring&& prunedRoots)
 	: m_filePath(filePath), m_prunedRoots(std::move(prunedRoots))
 {

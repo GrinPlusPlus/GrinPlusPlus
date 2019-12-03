@@ -69,7 +69,6 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 
 	// Make sure we have valid requests for the first 15 blocks.
 	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(15);
-	uint64_t index = 0;
 	for (auto iter = blocksNeeded.cbegin(); iter != blocksNeeded.cend(); iter++)
 	{
 		auto requestedBlocksIter = m_requestedBlocks.find(iter->first);
@@ -132,7 +131,6 @@ bool BlockSyncer::RequestBlocks()
 			continue;
 		}
 
-		bool blockRequested = false;
 		auto iter = m_requestedBlocks.find(blocksNeeded[blockIndex].first);
 		if (iter != m_requestedBlocks.end())
 		{

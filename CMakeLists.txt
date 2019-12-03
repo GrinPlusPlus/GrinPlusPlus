@@ -62,6 +62,7 @@ add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
 add_definitions(-DASIO_STANDALONE)
 add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
+add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
@@ -104,6 +105,8 @@ add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/ed25519-donna)
 
 # Grin++ Projects
+add_definitions(-DUNICODE)
+add_definitions(-DSPDLOG_WCHAR_FILENAMES)
 option(GRINPP_TESTS "Build tests" true)
 option(GRINPP_STATIC "Static build" true)
 if(GRINPP_STATIC)
@@ -113,6 +116,14 @@ else()
     MESSAGE(FATAL_ERROR "Tests require a static build")
   endif()
 endif()
+
+if (MSVC)
+	if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+		string(REGEX REPLACE "/W[0-4]" "/W4 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	else()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
+	 endif()
+endif (MSVC)
 
 add_subdirectory(src/Infrastructure)
 add_subdirectory(src/Crypto)

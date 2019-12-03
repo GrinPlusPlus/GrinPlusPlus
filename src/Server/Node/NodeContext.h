@@ -8,8 +8,8 @@
 
 struct NodeContext
 {
-	NodeContext(IDatabasePtr pDatabase, IBlockChainServerPtr pBlockChainServer, IP2PServerPtr pP2PServer, TxHashSetManagerPtr pTxHashSetManager)
-		: m_pDatabase(pDatabase), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer), m_pTxHashSetManager(pTxHashSetManager)
+	NodeContext(IDatabasePtr pDatabase, IBlockChainServerPtr pBlockChainServer, IP2PServerPtr pP2PServer, TxHashSetManagerPtr pTxHashSetManager, ITransactionPoolPtr pTransactionPool)
+		: m_pDatabase(pDatabase), m_pBlockChainServer(pBlockChainServer), m_pP2PServer(pP2PServer), m_pTxHashSetManager(pTxHashSetManager), m_pTransactionPool(pTransactionPool)
 	{
 
 	}
@@ -18,4 +18,5 @@ struct NodeContext
 	IBlockChainServerPtr m_pBlockChainServer;
 	IP2PServerPtr m_pP2PServer;
 	TxHashSetManagerPtr m_pTxHashSetManager;
+	ITransactionPoolPtr m_pTransactionPool;
 };

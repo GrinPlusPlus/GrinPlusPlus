@@ -2,15 +2,13 @@
 
 #include <Core/Util/TransactionUtil.h>
 #include <Crypto/Crypto.h>
+#include <cassert>
 #include <set>
 
 // Aggregate a vector of transactions into a multi-kernel transaction with cut_through.
-Transaction TransactionAggregator::Aggregate(const std::vector<Transaction>& transactions)
+TransactionPtr TransactionAggregator::Aggregate(const std::vector<TransactionPtr>& transactions)
 {
-	if (transactions.empty())
-	{
-		return Transaction(BlindingFactor(ZERO_HASH), TransactionBody());
-	}
+	assert(!transactions.empty());
 
 	if (transactions.size() == 1)
 	{
@@ -23,31 +21,33 @@ Transaction TransactionAggregator::Aggregate(const std::vector<Transaction>& tra
 	std::vector<BlindingFactor> kernelOffsets;
 
 	// collect all the inputs, outputs and kernels from the txs
-	for (const Transaction& transaction : transactions)
+	for (const TransactionPtr& pTransaction : transactions)
 	{
-		for (const TransactionInput& input : transaction.GetBody().GetInputs())
+		for (const TransactionInput& input : pTransaction->GetInputs())
 		{
 			inputs.push_back(input);
 		}
 
-		for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
+		for (const TransactionOutput& output : pTransaction->GetOutputs())
 		{
 			outputs.push_back(output);
 		}
 
-		for (const TransactionKernel& kernel : transaction.GetBody().GetKernels())
+		for (const TransactionKernel& kernel : pTransaction->GetKernels())
 		{
 			kernels.push_back(kernel);
 		}
 
-		kernelOffsets.push_back(transaction.GetOffset());
+		kernelOffsets.push_back(pTransaction->GetOffset());
 	}
 
-	// Sort inputs and outputs during cut_through.
+	// Perform cut-through
 	TransactionUtil::PerformCutThrough(inputs, outputs);
 
 	// Sort the kernels.
 	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
+	std::sort(inputs.begin(), inputs.end(), SortInputsByHash);
+	std::sort(outputs.begin(), outputs.end(), SortOutputsByHash);
 
 	// Sum the kernel_offsets up to give us an aggregate offset for the transaction.
 	BlindingFactor totalKernelOffset = Crypto::AddBlindingFactors(kernelOffsets, std::vector<BlindingFactor>());
@@ -57,5 +57,5 @@ Transaction TransactionAggregator::Aggregate(const std::vector<Transaction>& tra
 	//   * cut-through outputs
 	//   * full set of tx kernels
 	//   * sum of all kernel offsets
-	return Transaction(std::move(totalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels)));
+	return std::make_shared<Transaction>(std::move(totalKernelOffset), TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels)));
 }

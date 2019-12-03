@@ -31,7 +31,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 		);
 
 		// TODO: Determine if process is already running.
-		long processId = ProcessUtil::CreateProc(command);
+		long processId = (long)ProcessUtil::CreateProc(command);
 		if (processId > 0)
 		{
 			// Open control socket
@@ -64,7 +64,7 @@ bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const s
 		pClient->Invoke(command);
 		return true;
 	}
-	catch (TorException& e)
+	catch (TorException&)
 	{
 		return false;
 	}
@@ -74,6 +74,11 @@ std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t ext
 {
 	std::string serializedKey = FormatKey(privateKey);
 
+	return AddOnion(serializedKey, externalPort, internalPort);
+}
+
+std::string TorControl::AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort)
+{
 	// ADD_ONION ED25519-V3:<SERIALIZED_KEY> PORT=External,Internal
 	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d\n", serializedKey, externalPort, internalPort);
 

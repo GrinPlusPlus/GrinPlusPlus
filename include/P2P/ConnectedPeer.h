@@ -18,22 +18,22 @@ public:
 
 	}
 
-	inline void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height)
+	void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height)
 	{
 		m_totalDifficulty.exchange(totalDifficulty);
 		m_height.exchange(height);
 	}
 
-	inline const Peer& GetPeer() const { return m_peer; }
-	inline Peer& GetPeer() { return m_peer; }
-	inline const EDirection GetDirection() const { return m_direction; }
-	inline const uint64_t GetTotalDifficulty() const { return m_totalDifficulty.load(); }
-	inline const uint64_t GetHeight() const { return m_height.load(); }
+	const Peer& GetPeer() const { return m_peer; }
+	Peer& GetPeer() { return m_peer; }
+	const EDirection GetDirection() const { return m_direction; }
+	const uint64_t GetTotalDifficulty() const { return m_totalDifficulty.load(); }
+	const uint64_t GetHeight() const { return m_height.load(); }
 
-	inline void UpdateVersion(const uint32_t version) { m_peer.UpdateVersion(version); }
-	inline void UpdateCapabilities(const Capabilities& capabilities) { m_peer.UpdateCapabilities(capabilities); }
-	inline void UpdateUserAgent(const std::string& userAgent) { m_peer.UpdateUserAgent(userAgent); }
-	inline void UpdateLastContactTime() const { m_peer.UpdateLastContactTime(); }
+	void UpdateVersion(const uint32_t version) { m_peer.UpdateVersion(version); }
+	void UpdateCapabilities(const Capabilities& capabilities) { m_peer.UpdateCapabilities(capabilities); }
+	void UpdateUserAgent(const std::string& userAgent) { m_peer.UpdateUserAgent(userAgent); }
+	void UpdateLastContactTime() const { m_peer.UpdateLastContactTime(); }
 
 	virtual std::string Format() const override final { return m_peer.Format(); }
 

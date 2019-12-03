@@ -55,26 +55,26 @@ public:
 		m_messageSignatureOpt = std::make_optional(messageSignature);
 	}
 
-	Json::Value ToJSON(const bool hex) const
+	Json::Value ToJSON() const
 	{
 		Json::Value participantJSON;
 		participantJSON["id"] = std::to_string(GetParticipantId());
-		participantJSON["public_blind_excess"] = JsonUtil::ConvertToJSON(GetPublicBlindExcess().GetCompressedBytes().GetData(), hex);
-		participantJSON["public_nonce"] = JsonUtil::ConvertToJSON(GetPublicNonce().GetCompressedBytes().GetData(), hex);
-		participantJSON["part_sig"] = JsonUtil::ConvertToJSON(GetPartialSignature(), hex);
+		participantJSON["public_blind_excess"] = JsonUtil::ConvertToJSON(GetPublicBlindExcess().GetCompressedBytes().GetData());
+		participantJSON["public_nonce"] = JsonUtil::ConvertToJSON(GetPublicNonce().GetCompressedBytes().GetData());
+		participantJSON["part_sig"] = JsonUtil::ConvertToJSON(GetPartialSignature());
 		participantJSON["message"] = JsonUtil::ConvertToJSON(GetMessageText());
-		participantJSON["message_sig"] = JsonUtil::ConvertToJSON(GetMessageSignature(), hex);
+		participantJSON["message_sig"] = JsonUtil::ConvertToJSON(GetMessageSignature());
 		return participantJSON;
 	}
 
-	static ParticipantData FromJSON(const Json::Value& participantJSON, const bool hex)
+	static ParticipantData FromJSON(const Json::Value& participantJSON)
 	{
 		const uint64_t participantId = JsonUtil::GetRequiredUInt64(participantJSON, "id");
-		PublicKey publicBlindExcess = JsonUtil::GetPublicKey(participantJSON, "public_blind_excess", hex);
-		PublicKey publicNonce = JsonUtil::GetPublicKey(participantJSON, "public_nonce", hex);
-		std::optional<CompactSignature> partialSigOpt = JsonUtil::GetSignatureOpt(participantJSON, "part_sig", hex);
+		PublicKey publicBlindExcess = JsonUtil::GetPublicKey(participantJSON, "public_blind_excess");
+		PublicKey publicNonce = JsonUtil::GetPublicKey(participantJSON, "public_nonce");
+		std::optional<CompactSignature> partialSigOpt = JsonUtil::GetSignatureOpt(participantJSON, "part_sig");
 		std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(participantJSON, "message");
-		std::optional<CompactSignature> messageSigOpt = JsonUtil::GetSignatureOpt(participantJSON, "message_sig", hex);
+		std::optional<CompactSignature> messageSigOpt = JsonUtil::GetSignatureOpt(participantJSON, "message_sig");
 
 		return ParticipantData(participantId, std::move(publicBlindExcess), std::move(publicNonce), std::move(partialSigOpt), std::move(messageOpt), std::move(messageSigOpt));
 	}

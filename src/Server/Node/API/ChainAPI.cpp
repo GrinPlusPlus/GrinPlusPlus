@@ -12,7 +12,7 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
 	
-	std::unique_ptr<BlockHeader> pTip = pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+	auto pTip = pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip != nullptr)
 	{
 		Json::Value chainNode;

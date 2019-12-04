@@ -56,7 +56,7 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 	
-	std::unique_ptr<BlockHeader> pTip = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+	auto pTip = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip == nullptr)
 	{
 		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");

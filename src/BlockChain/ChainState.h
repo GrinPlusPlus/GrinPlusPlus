@@ -35,10 +35,10 @@ public:
 	uint64_t GetHeight(const EChainType chainType) const;
 	uint64_t GetTotalDifficulty(const EChainType chainType) const;
 
-	std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const;
-	std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& hash) const;
-	std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const;
-	std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const;
+	BlockHeaderPtr GetTipBlockHeader(const EChainType chainType) const;
+	BlockHeaderPtr GetBlockHeaderByHash(const Hash& hash) const;
+	BlockHeaderPtr GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const;
+	BlockHeaderPtr GetBlockHeaderByCommitment(const Commitment& outputCommitment) const;
 
 	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& hash) const;
 	std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const;

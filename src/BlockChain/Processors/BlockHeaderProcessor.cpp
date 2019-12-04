@@ -28,7 +28,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Check if header already processed
-	std::shared_ptr<const BlockIndex> pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
+	auto pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
 	{
 		LOG_DEBUG_F("Header %s already processed.", header);
@@ -36,7 +36,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	}
 
 	// If this is not the next header needed, process as an orphan.
-	std::shared_ptr<const BlockIndex> pLastIndex = pCandidateChain->GetTip();
+	auto pLastIndex = pCandidateChain->GetTip();
 	if (pLastIndex->GetHash() != header.GetPreviousBlockHash())
 	{
 		return ProcessOrphan(pLockedState, header);
@@ -45,7 +45,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	LOG_TRACE_F("Processing next candidate header: %s", header);
 
 	// Validate the header.
-	std::unique_ptr<BlockHeader> pPreviousHeaderPtr = pBlockDB->GetBlockHeader(pLastIndex->GetHash());
+	auto pPreviousHeaderPtr = pBlockDB->GetBlockHeader(pLastIndex->GetHash());
 	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(header, *pPreviousHeaderPtr))
 	{
 		LOG_ERROR_F("Header %s failed to validate", header);
@@ -70,15 +70,15 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	auto pOrphanPool = pLockedState->GetOrphanPool();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
-	std::unique_ptr<BlockHeader> pCandidateHeader = pLockedState->GetTipBlockHeader(EChainType::CANDIDATE);
+	auto pCandidateHeader = pLockedState->GetTipBlockHeader(EChainType::CANDIDATE);
 	if (header.GetTotalDifficulty() > pCandidateHeader->GetTotalDifficulty())
 	{
-		std::vector<std::shared_ptr<const BlockHeader>> reorgHeaders;
-		std::shared_ptr<const BlockHeader> pHeader = std::make_shared<const BlockHeader>(header);
+		std::vector<BlockHeaderPtr> reorgHeaders;
+		auto pHeader = std::make_shared<const BlockHeader>(header);
 		while (pHeader != nullptr)
 		{
 			reorgHeaders.push_back(pHeader);
-			std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
+			auto pIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
 			if (pIndex != nullptr && pIndex->GetHash() == pHeader->GetHash())
 			{
 				// All headers exist. Reorg.
@@ -93,7 +93,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 				return processChunkStatus;
 			}
 
-			const Hash previousHash = pHeader->GetPreviousBlockHash();
+			const Hash& previousHash = pHeader->GetPreviousBlockHash();
 			pHeader = pOrphanPool->GetOrphanHeader(previousHash);
 			if (pHeader == nullptr)
 			{
@@ -107,14 +107,14 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	return EBlockChainStatus::ORPHANED;
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<BlockHeader>& headers)
+EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<BlockHeaderPtr>& headers)
 {
 	if (headers.empty())
 	{
 		return EBlockChainStatus::SUCCESS;
 	}
 
-	uint64_t height = headers.front().GetHeight();
+	uint64_t height = headers.front()->GetHeight();
 	if (height == 0)
 	{
 		LOG_ERROR("Header with height 0 received.");
@@ -123,7 +123,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 
 	for (size_t i = 1; i < headers.size(); i++)
 	{
-		if (headers[i].GetHeight() != (headers[i - 1].GetHeight() + 1))
+		if (headers[i]->GetHeight() != (headers[i - 1]->GetHeight() + 1))
 		{
 			LOG_ERROR("Headers not sorted.");
 			throw BAD_DATA_EXCEPTION("Headers not sorted.");
@@ -133,11 +133,11 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 	const size_t size = headers.size();
 	size_t index = 0;
 
-	std::vector<std::shared_ptr<const BlockHeader>> chunkedHeaders;
+	std::vector<BlockHeaderPtr> chunkedHeaders;
 	chunkedHeaders.reserve(SYNC_BATCH_SIZE);
 	while (index < size)
 	{
-		chunkedHeaders.push_back(std::make_shared<BlockHeader>(headers[index++]));
+		chunkedHeaders.push_back(headers[index++]);
 		if (index % SYNC_BATCH_SIZE == 0 || index == size)
 		{
 			auto pChainStateBatch = m_pChainState->BatchWrite();
@@ -158,7 +158,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 	return EBlockChainStatus::SUCCESS;
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers)
+EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
 {
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 	auto pChainStore = pLockedState->GetChainStore();
@@ -167,11 +167,11 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainSt
 	PrepareSyncChain(pLockedState, headers);
 
 	// Filter out headers that are already part of sync chain.
-	std::vector<std::shared_ptr<const BlockHeader>> newHeaders;
+	std::vector<BlockHeaderPtr> newHeaders;
 	for (size_t i = 0; i < headers.size(); i++)
 	{
-		std::shared_ptr<const BlockHeader> pHeader = headers[i];
-		std::shared_ptr<const BlockIndex> pSyncHeader = pSyncChain->GetByHeight(pHeader->GetHeight());
+		auto pHeader = headers[i];
+		auto pSyncHeader = pSyncChain->GetByHeight(pHeader->GetHeight());
 		if (pSyncHeader == nullptr || pHeader->GetHash() != pSyncHeader->GetHash())
 		{
 			newHeaders.push_back(pHeader);
@@ -212,7 +212,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainSt
 	return EBlockChainStatus::SUCCESS;
 }
 
-void BlockHeaderProcessor::PrepareSyncChain(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers)
+void BlockHeaderProcessor::PrepareSyncChain(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
 {
 	LOG_TRACE("Preparing sync chain");
 
@@ -222,7 +222,7 @@ void BlockHeaderProcessor::PrepareSyncChain(Writer<ChainState> pLockedState, con
 
 	// Check if previous header exists and matches previous hash.
 	const Hash& previousHash = headers.front()->GetPreviousBlockHash();
-	std::shared_ptr<const BlockIndex> pPrevSync = pSyncChain->GetByHeight(headers.front()->GetHeight() - 1);
+	auto pPrevSync = pSyncChain->GetByHeight(headers.front()->GetHeight() - 1);
 	if (pPrevSync == nullptr || pPrevSync->GetHash() != previousHash)
 	{
 		auto pPrevCandidate = pCandidateChain->GetByHeight(headers.front()->GetHeight() - 1);
@@ -238,7 +238,7 @@ void BlockHeaderProcessor::PrepareSyncChain(Writer<ChainState> pLockedState, con
 	}
 }
 
-void BlockHeaderProcessor::RewindMMR(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers)
+void BlockHeaderProcessor::RewindMMR(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
 {
 	LOG_TRACE("Rewinding MMR");
 
@@ -268,7 +268,7 @@ void BlockHeaderProcessor::RewindMMR(Writer<ChainState> pLockedState, const std:
 	}
 }
 
-void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers)
+void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
 {
 	LOG_TRACE("Validating headers");
 
@@ -277,14 +277,14 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 	BlockHeaderValidator validator(m_config, pBlockDB, pHeaderMMR);
 
 	const Hash& previousHash = headers.front()->GetPreviousBlockHash();
-	std::shared_ptr<const BlockHeader> pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
+	auto pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
 	if (pPreviousHeader == nullptr)
 	{
 		LOG_ERROR_F("Previous header (%s) not found.", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Failed to retrieve previous header");
 	}
 
-	for (std::shared_ptr<const BlockHeader> pHeader : headers)
+	for (auto pHeader : headers)
 	{
 		if (!validator.IsValidHeader(*pHeader, *pPreviousHeader))
 		{
@@ -298,7 +298,7 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 	}
 }
 
-void BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<std::shared_ptr<const BlockHeader>>& headers)
+void BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
 {
 	LOG_TRACE("Applying headers to sync chain");
 
@@ -320,7 +320,7 @@ void BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const
 		pSyncChain->Rewind(firstHeaderHeight - 1);
 	}
 
-	for (std::shared_ptr<const BlockHeader> pHeader : headers)
+	for (auto pHeader : headers)
 	{
 		pSyncChain->AddBlock(pHeader->GetHash());
 	}

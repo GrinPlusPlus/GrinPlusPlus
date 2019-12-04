@@ -38,7 +38,7 @@ int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& se
 		numBlocks = std::stoi(numBlocksOpt.value());
 	}
 
-	std::unique_ptr<BlockHeader> pTipHeader = server.m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+	auto pTipHeader = server.m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTipHeader != nullptr)
 	{
 		const uint64_t tipHeight = pTipHeader->GetHeight();
@@ -49,7 +49,7 @@ int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& se
 		numBlocks = (int)(std::min)((uint64_t)numBlocks, tipHeight + 1);
 		for (int i = 0; i < numBlocks; i++)
 		{
-			std::unique_ptr<BlockHeader> pBlockHeader = server.m_pBlockChainServer->GetBlockHeaderByHeight(tipHeight - i, EChainType::CONFIRMED);
+			auto pBlockHeader = server.m_pBlockChainServer->GetBlockHeaderByHeight(tipHeight - i, EChainType::CONFIRMED);
 			if (pBlockHeader != nullptr)
 			{
 				Json::Value blockNode;

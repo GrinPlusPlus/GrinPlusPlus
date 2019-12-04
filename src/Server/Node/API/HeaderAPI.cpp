@@ -20,7 +20,7 @@
 int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	const std::string requestedHeader = HTTPUtil::GetURIParam(conn, "/v1/headers/");
-	std::unique_ptr<BlockHeader> pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
+	auto pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
 
 	if (nullptr != pBlockHeader)
 	{
@@ -34,14 +34,14 @@ int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 	}
 }
 
-std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer)
+BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer)
 {
 	if (requestedHeader.length() == 64 && HexUtil::IsValidHex(requestedHeader))
 	{
 		try
 		{
 			const Hash hash = Hash::FromHex(requestedHeader);
-			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
+			auto pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header with hash %s.", requestedHeader);
@@ -62,7 +62,7 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 		try
 		{
 			const Commitment outputCommitment(CBigInteger<33>::FromHex(requestedHeader));
-			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
+			auto pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header with output commitment %s.", requestedHeader);
@@ -85,7 +85,7 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 			std::string::size_type sz = 0;
 			const uint64_t height = std::stoull(requestedHeader, &sz, 0);
 
-			std::unique_ptr<BlockHeader> pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
+			auto pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header at height %s.", requestedHeader);
@@ -102,5 +102,5 @@ std::unique_ptr<BlockHeader> HeaderAPI::GetHeader(const std::string& requestedHe
 		}
 	}
 
-	return std::unique_ptr<BlockHeader>(nullptr);
+	return nullptr;
 }

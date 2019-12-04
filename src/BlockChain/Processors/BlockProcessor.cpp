@@ -171,7 +171,7 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	const uint64_t commonHeight = pChainStore->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight();
 
 	const Hash& commonHash = pCandidateChain->GetByHeight(commonHeight)->GetHash();
-	std::unique_ptr<BlockHeader> pCommonHeader = pBlockDB->GetBlockHeader(commonHash);
+	auto pCommonHeader = pBlockDB->GetBlockHeader(commonHash);
 	if (pCommonHeader == nullptr)
 	{
 		LOG_ERROR_F("Failed to find header %s", commonHash);
@@ -189,8 +189,8 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 
 	for (uint64_t i = commonHeight + 1; i < block.GetHeight(); i++)
 	{
-		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
-		std::shared_ptr<const FullBlock> pBlock = pOrphanPool->GetOrphanBlock(i, pIndex->GetHash());
+		auto pIndex = pCandidateChain->GetByHeight(i);
+		auto pBlock = pOrphanPool->GetOrphanBlock(i, pIndex->GetHash());
 		if (pBlock == nullptr)
 		{
 			pBlock = pBlockDB->GetBlock(pIndex->GetHash());
@@ -218,7 +218,7 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 	auto pTxPool = pBatch->GetTransactionPool();
 
 	const Hash& previousHash = block.GetPreviousHash();
-	std::unique_ptr<BlockHeader> pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
+	auto pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
 	if (pPreviousHeader == nullptr)
 	{
 		LOG_ERROR_F("Failed to find header %s", previousHash);

@@ -49,7 +49,7 @@ public:
 		return m_pBlockChainServer->GetHeight(EChainType::CONFIRMED);
 	}
 
-	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const uint64_t height) const override final
+	virtual BlockHeaderPtr GetBlockHeader(const uint64_t height) const override final
 	{
 		return m_pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);
 	}
@@ -94,7 +94,7 @@ public:
 
 	virtual bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final
 	{
-		std::unique_ptr<BlockHeader> pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+		auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTipHeader != nullptr)
 		{
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();

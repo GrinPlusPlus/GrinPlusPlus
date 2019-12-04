@@ -4,7 +4,7 @@
 #include <lru/cache.hpp>
 
 // TODO: A FIFO cache would be more appropriate.
-LRU::Cache<Hash, std::shared_ptr<BlockHeader>> BLOCK_HEADERS_CACHE(128);
+LRU::Cache<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
 
 DifficultyLoader::DifficultyLoader(std::shared_ptr<const IBlockDB> pBlockDB)
 	: m_pBlockDB(pBlockDB)
@@ -18,7 +18,7 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 	std::vector<HeaderInfo> difficultyData;
 	difficultyData.reserve(numBlocksNeeded);
 
-	std::shared_ptr<BlockHeader> pHeader = LoadHeader(header.GetPreviousBlockHash());
+	BlockHeaderPtr pHeader = LoadHeader(header.GetPreviousBlockHash());
 	while (difficultyData.size() < numBlocksNeeded && pHeader != nullptr)
 	{
 		const int64_t timestamp = pHeader->GetTimestamp();
@@ -39,12 +39,12 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 		}
 	}
 
-	BLOCK_HEADERS_CACHE.insert(header.GetHash(), std::make_shared<BlockHeader>(BlockHeader(header)));
+	BLOCK_HEADERS_CACHE.insert(header.GetHash(), std::make_shared<BlockHeader>(header));
 
 	return PadDifficultyData(difficultyData);
 }
 
-std::shared_ptr<BlockHeader> DifficultyLoader::LoadHeader(const Hash& headerHash) const
+BlockHeaderPtr DifficultyLoader::LoadHeader(const Hash& headerHash) const
 {
 	auto iter = BLOCK_HEADERS_CACHE.find(headerHash);
 	if (iter != BLOCK_HEADERS_CACHE.end())
@@ -53,7 +53,7 @@ std::shared_ptr<BlockHeader> DifficultyLoader::LoadHeader(const Hash& headerHash
 	}
 	else
 	{
-		std::shared_ptr<BlockHeader> pHeader = m_pBlockDB->GetBlockHeader(headerHash);
+		BlockHeaderPtr pHeader = m_pBlockDB->GetBlockHeader(headerHash);
 		if (pHeader != nullptr)
 		{
 			BLOCK_HEADERS_CACHE.insert(headerHash, pHeader);

@@ -182,7 +182,7 @@ Status BlockDB::Write(ColumnFamilyHandle* pFamilyHandle, const Slice& key, const
 	}
 }
 
-std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
+BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 {
 	try
 	{
@@ -194,7 +194,7 @@ std::unique_ptr<BlockHeader> BlockDB::GetBlockHeader(const Hash& hash) const
 		{
 			std::vector<unsigned char> data(value.data(), value.data() + value.size());
 			ByteBuffer byteBuffer(std::move(data));
-			return std::make_unique<BlockHeader>(BlockHeader::Deserialize(byteBuffer));
+			return std::make_unique<const BlockHeader>(BlockHeader::Deserialize(byteBuffer));
 		}
 		else if (status.IsNotFound())
 		{
@@ -249,19 +249,19 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 	}
 }
 
-void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
+void BlockDB::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 {
 	LOG_TRACE_F("Adding (%llu) headers.", blockHeaders.size());
 
 	try
 	{
 		Status status;
-		for (const BlockHeader& blockHeader : blockHeaders)
+		for (auto pBlockHeader : blockHeaders)
 		{
-			const Hash& hash = blockHeader.GetHash();
+			const Hash& hash = pBlockHeader->GetHash();
 
 			Serializer serializer;
-			blockHeader.Serialize(serializer);
+			pBlockHeader->Serialize(serializer);
 
 			Slice key((const char*)hash.data(), hash.size());
 			Slice value((const char*)serializer.data(), serializer.size());
@@ -269,7 +269,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
 			status = m_pTransaction->Put(m_pHeaderHandle, key, value);
 			if (!status.ok())
 			{
-				LOG_ERROR_F("WriteBatch::put failed for header (%s) with error (%s)", blockHeader, status.getState());
+				LOG_ERROR_F("WriteBatch::put failed for header (%s) with error (%s)", *pBlockHeader, status.getState());
 				throw DATABASE_EXCEPTION("WriteBatch::put failed with error: " + std::string(status.getState()));
 			}
 		}

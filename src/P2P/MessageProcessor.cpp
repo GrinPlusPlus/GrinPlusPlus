@@ -170,9 +170,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			case GetHeaders:
 			{
 				const GetHeadersMessage getHeadersMessage = GetHeadersMessage::Deserialize(byteBuffer);
-				const std::vector<CBigInteger<32>>& hashes = getHeadersMessage.GetHashes();
+				const std::vector<Hash>& hashes = getHeadersMessage.GetHashes();
 
-				std::vector<BlockHeader> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
+				std::vector<BlockHeaderPtr> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
 				LOG_DEBUG_F("Sending %llu headers to %s.", blockHeaders.size(), formattedIPAddress);
                 
 				const HeadersMessage headersMessage(std::move(blockHeaders));
@@ -220,7 +220,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				IBlockChainServerPtr pBlockChainServer = m_pBlockChainServer;
 
 				const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
-				const std::vector<BlockHeader>& blockHeaders = headersMessage.GetHeaders();
+				const std::vector<BlockHeaderPtr>& blockHeaders = headersMessage.GetHeaders();
 
 				LOG_DEBUG_F("%lld headers received from %s", blockHeaders.size(), formattedIPAddress);
 
@@ -416,7 +416,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 	LOG_INFO_F("Sending TxHashSet snapshot to %s", socket.GetIPAddress());
 	peer.GetPeer().UpdateLastTxHashSetRequest();
 
-	std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
+	auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
 	if (pHeader == nullptr)
 	{
 		return EStatus::UNKNOWN_ERROR;

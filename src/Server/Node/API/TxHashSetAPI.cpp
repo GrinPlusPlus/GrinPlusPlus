@@ -20,7 +20,7 @@
 int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
-	std::unique_ptr<BlockHeader> pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+	auto pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTipHeader != nullptr)
 	{
 		Json::Value rootNode;

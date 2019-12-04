@@ -20,7 +20,7 @@ TxHashSetProcessor::TxHashSetProcessor(
 
 bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
 {
-	std::unique_ptr<BlockHeader> pHeader = m_pChainState->Read()->GetBlockHeaderByHash(blockHash);
+	auto pHeader = m_pChainState->Read()->GetBlockHeaderByHash(blockHash);
 	if (pHeader == nullptr)
 	{
 		LOG_ERROR_F("Header not found for hash %s.", blockHash);
@@ -43,7 +43,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 	}
 
 	// 3. Validate entire TxHashSet
-	std::unique_ptr<BlockSums> pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
+	auto pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
 	if (pBlockSums == nullptr)
 	{
 		LOG_ERROR_F("Validation of %S failed.", path);
@@ -62,7 +62,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 		uint64_t firstOutput = 0;
 		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)
 		{
-			std::unique_ptr<BlockHeader> pNextHeader = pChainStateBatch->GetBlockHeaderByHeight(i, EChainType::CANDIDATE);
+			auto pNextHeader = pChainStateBatch->GetBlockHeaderByHeight(i, EChainType::CANDIDATE);
 			if (pNextHeader != nullptr)
 			{
 				pTxHashSet->SaveOutputPositions(pChainStateBatch->GetBlockDB(), *pNextHeader, firstOutput);

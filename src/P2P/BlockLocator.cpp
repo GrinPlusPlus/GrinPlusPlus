@@ -9,15 +9,15 @@ BlockLocator::BlockLocator(IBlockChainServerPtr pBlockChainServer)
 
 }
 
-std::vector<CBigInteger<32>> BlockLocator::GetLocators(const SyncStatus& syncStatus) const
+std::vector<Hash> BlockLocator::GetLocators(const SyncStatus& syncStatus) const
 {
 	const std::vector<uint64_t> locatorHeights = GetLocatorHeights(syncStatus);
 
-	std::vector<CBigInteger<32>> locators;
+	std::vector<Hash> locators;
 	locators.reserve(locatorHeights.size());
 	for (const uint64_t locatorHeight : locatorHeights)
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(locatorHeight, EChainType::SYNC);
+		auto pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(locatorHeight, EChainType::SYNC);
 		if (pHeader != nullptr)
 		{
 			locators.push_back(pHeader->GetHash());
@@ -57,11 +57,11 @@ std::vector<uint64_t> BlockLocator::GetLocatorHeights(const SyncStatus& syncStat
 	return heights;
 }
 
-std::vector<BlockHeader> BlockLocator::LocateHeaders(const std::vector<CBigInteger<32>>& locatorHashes) const
+std::vector<BlockHeaderPtr> BlockLocator::LocateHeaders(const std::vector<Hash>& locatorHashes) const
 {
-	std::vector<BlockHeader> blockHeaders;
+	std::vector<BlockHeaderPtr> blockHeaders;
 
-	std::unique_ptr<BlockHeader> pCommonHeader = FindCommonHeader(locatorHashes);
+	auto pCommonHeader = FindCommonHeader(locatorHashes);
 	if (pCommonHeader != nullptr)
 	{
 		const uint64_t totalHeight = m_pBlockChainServer->GetHeight(EChainType::SYNC);
@@ -70,29 +70,29 @@ std::vector<BlockHeader> BlockLocator::LocateHeaders(const std::vector<CBigInteg
 
 		for (int i = 1; i <= numHeadersToSend; i++)
 		{
-			std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(headerHeight + i, EChainType::SYNC);
+			auto pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(headerHeight + i, EChainType::SYNC);
 			if (pHeader == nullptr)
 			{
 				break;
 			}
 
-			blockHeaders.push_back(*pHeader);
+			blockHeaders.push_back(pHeader);
 		}
 	}
 	
 	return blockHeaders;
 }
 
-std::unique_ptr<BlockHeader> BlockLocator::FindCommonHeader(const std::vector<CBigInteger<32>>& locatorHashes) const
+BlockHeaderPtr BlockLocator::FindCommonHeader(const std::vector<Hash>& locatorHashes) const
 {
-	for (CBigInteger<32> locatorHash : locatorHashes)
+	for (Hash locatorHash : locatorHashes)
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_pBlockChainServer->GetBlockHeaderByHash(locatorHash);
+		auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(locatorHash);
 		if (pHeader != nullptr)
 		{
 			return pHeader;
 		}
 	}
 
-	return std::unique_ptr<BlockHeader>(nullptr);
+	return nullptr;
 }

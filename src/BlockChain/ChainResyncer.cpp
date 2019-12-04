@@ -11,18 +11,18 @@ bool ChainResyncer::ResyncChain()
 {
 	auto pLockedState = m_pChainState->BatchWrite();
 
-	std::shared_ptr<Chain> pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
+	auto pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 	pConfirmedChain->Rewind(0);
 
-	std::shared_ptr<Chain> pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
+	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 	
 	pLockedState->GetHeaderMMR()->Rewind(1);
 	for (uint64_t i = 1; i <= pCandidateChain->GetTip()->GetHeight(); i++)
 	{
-		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(i);
+		auto pIndex = pCandidateChain->GetByHeight(i);
 		const Hash hash = pIndex->GetHash();
 
-		std::unique_ptr<BlockHeader> pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);
+		auto pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);
 		if (pHeader == nullptr)
 		{
 			pCandidateChain->Rewind(i - 1);
@@ -32,7 +32,7 @@ bool ChainResyncer::ResyncChain()
 		pLockedState->GetHeaderMMR()->AddHeader(*pHeader);
 	}
 
-	std::shared_ptr<Chain> pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
+	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	pSyncChain->Rewind(pCandidateChain->GetTip()->GetHeight());
 
 	pLockedState->Commit();

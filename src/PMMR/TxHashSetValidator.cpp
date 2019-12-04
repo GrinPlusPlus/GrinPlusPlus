@@ -190,7 +190,7 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 	const uint64_t totalHeight = blockHeader.GetHeight();
 	for (uint64_t height = 0; height <= totalHeight; height++)
 	{
-		std::unique_ptr<BlockHeader> pHeader = m_blockChainServer.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
+		auto pHeader = m_blockChainServer.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 		if (pHeader == nullptr)
 		{
 			LOG_ERROR_F("No header found at height (%llu)", height);

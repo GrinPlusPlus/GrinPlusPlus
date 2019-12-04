@@ -26,7 +26,7 @@ public:
 	//
 	// Returns the header of the confirmed block at the given height, if it exists.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeader(const uint64_t height) const = 0;
+	virtual BlockHeaderPtr GetBlockHeader(const uint64_t height) const = 0;
 
 	//
 	// Returns the location (block height and mmr index) of each requested output, if it is *unspent*.

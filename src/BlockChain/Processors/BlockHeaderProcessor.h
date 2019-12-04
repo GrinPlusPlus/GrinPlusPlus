@@ -26,7 +26,7 @@ public:
 	// Throws BadDataException if any of the headers are invalid.
 	// Throws BlockChainException if any other errors occur.
 	//
-	EBlockChainStatus ProcessSyncHeaders(const std::vector<BlockHeader>& headers);
+	EBlockChainStatus ProcessSyncHeaders(const std::vector<BlockHeaderPtr>& headers);
 
 private:
 	EBlockChainStatus ProcessOrphan(
@@ -36,27 +36,27 @@ private:
 
 	EBlockChainStatus ProcessChunkedSyncHeaders(
 		Writer<ChainState> pLockedState,
-		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+		const std::vector<BlockHeaderPtr>& headers
 	);
 
 	void PrepareSyncChain(
 		Writer<ChainState> pLockedState,
-		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+		const std::vector<BlockHeaderPtr>& headers
 	);
 
 	void RewindMMR(
 		Writer<ChainState> pLockedState,
-		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+		const std::vector<BlockHeaderPtr>& headers
 	);
 
 	void ValidateHeaders(
 		Writer<ChainState> pLockedState,
-		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+		const std::vector<BlockHeaderPtr>& headers
 	);
 
 	void AddSyncHeaders(
 		Writer<ChainState> pLockedState,
-		const std::vector<std::shared_ptr<const BlockHeader>>& headers
+		const std::vector<BlockHeaderPtr>& headers
 	);
 
 	const Config& m_config;

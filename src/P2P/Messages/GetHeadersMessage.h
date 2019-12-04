@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Hash.h>
 
 class GetHeadersMessage : public IMessage
 {
@@ -10,7 +10,7 @@ public:
 	//
 	// Constructors
 	//
-	GetHeadersMessage(std::vector<CBigInteger<32>>&& hashes)
+	GetHeadersMessage(std::vector<Hash>&& hashes)
 		: m_hashes(std::move(hashes))
 	{
 
@@ -38,14 +38,14 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::GetHeaders; }
-	const std::vector<CBigInteger<32>>& GetHashes() const { return m_hashes; }
+	const std::vector<Hash>& GetHashes() const { return m_hashes; }
 
 	//
 	// Deserialization
 	//
 	static GetHeadersMessage Deserialize(ByteBuffer& byteBuffer)
 	{
-		std::vector<CBigInteger<32>> hashes;
+		std::vector<Hash> hashes;
 
 		const uint8_t numHashes = byteBuffer.ReadU8();
 		for (uint8_t i = 0; i < numHashes; i++)
@@ -67,5 +67,5 @@ protected:
 	}
 
 private:
-	std::vector<CBigInteger<32>> m_hashes;
+	std::vector<Hash> m_hashes;
 };

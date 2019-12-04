@@ -63,35 +63,35 @@ public:
 	// All block headers that are successfully validated will be saved out to the database.
 	// NOTE: For now, the block headers must be supplied in ascending order.
 	//
-	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) = 0;
+	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) = 0;
 
 	//
 	// Returns the block header at the given height.
 	// This will be null if no matching block header is found.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const = 0;
+	virtual BlockHeaderPtr GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const = 0;
 
 	//
 	// Returns the block header matching the given hash.
 	// This will be null if no matching block header is found.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const Hash& blockHeaderHash) const = 0;
+	virtual BlockHeaderPtr GetBlockHeaderByHash(const Hash& blockHeaderHash) const = 0;
 
 	//
 	// Returns the block header containing the output commitment.
 	// This will be null if the output commitment is not found.
 	//
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const = 0;
+	virtual BlockHeaderPtr GetBlockHeaderByCommitment(const Commitment& outputCommitment) const = 0;
 
 	//
 	// Returns the block header at the tip of the specified chain type.
 	//
-	virtual std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const = 0;
+	virtual BlockHeaderPtr GetTipBlockHeader(const EChainType chainType) const = 0;
 
 	//
 	// Returns the block headers matching the given hashes.
 	//
-	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
+	virtual std::vector<BlockHeaderPtr> GetBlockHeadersByHash(const std::vector<Hash>& blockHeaderHashes) const = 0;
 
 	//
 	// Creates a compact block to represent the block with the given hash, if it exists.

@@ -194,7 +194,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, 
 	try
 	{
 		auto pReader = m_pChainState->Read();
-		std::unique_ptr<BlockHeader> pLastConfimedHeader = pReader->GetTipBlockHeader(EChainType::CONFIRMED);
+		auto pLastConfimedHeader = pReader->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pLastConfimedHeader != nullptr)
 		{
 			const EAddTransactionStatus status = m_pTransactionPool->AddTransaction(
@@ -243,7 +243,7 @@ EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeade
 	}
 }
 
-EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders)
+EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 {
 	try
 	{
@@ -259,39 +259,39 @@ EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeade
 	}
 }
 
-std::vector<BlockHeader> BlockChainServer::GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const
+std::vector<BlockHeaderPtr> BlockChainServer::GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const
 {
 	auto pReader = m_pChainState->Read();
 
-	std::vector<BlockHeader> headers;
+	std::vector<BlockHeaderPtr> headers;
 	for (const CBigInteger<32>& hash : hashes)
 	{
-		std::unique_ptr<BlockHeader> pHeader = pReader->GetBlockHeaderByHash(hash);
+		BlockHeaderPtr pHeader = pReader->GetBlockHeaderByHash(hash);
 		if (pHeader != nullptr)
 		{
-			headers.push_back(*pHeader);
+			headers.push_back(pHeader);
 		}
 	}
 
 	return headers;
 }
 
-std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
+BlockHeaderPtr BlockChainServer::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByHeight(height, chainType);
 }
 
-std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByHash(const CBigInteger<32>& hash) const
+BlockHeaderPtr BlockChainServer::GetBlockHeaderByHash(const CBigInteger<32>& hash) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByHash(hash);
 }
 
-std::unique_ptr<BlockHeader> BlockChainServer::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
+BlockHeaderPtr BlockChainServer::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByCommitment(outputCommitment);
 }
 
-std::unique_ptr<BlockHeader> BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
+BlockHeaderPtr BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetTipBlockHeader(chainType);
 }
@@ -309,7 +309,7 @@ std::unique_ptr<CompactBlock> BlockChainServer::GetCompactBlockByHash(const Hash
 
 std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Commitment& outputCommitment) const
 {
-	std::unique_ptr<BlockHeader> pHeader = m_pChainState->Read()->GetBlockHeaderByCommitment(outputCommitment);
+	auto pHeader = m_pChainState->Read()->GetBlockHeaderByCommitment(outputCommitment);
 	if (pHeader != nullptr)
 	{
 		return GetBlockByHash(pHeader->GetHash());
@@ -358,7 +358,7 @@ std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const u
 
 bool BlockChainServer::ProcessNextOrphanBlock()
 {
-	std::unique_ptr<BlockHeader> pNextHeader = nullptr;
+	BlockHeaderPtr pNextHeader = nullptr;
 	std::shared_ptr<const FullBlock> pOrphanBlock = nullptr;
 
 	{

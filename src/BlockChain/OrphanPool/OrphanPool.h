@@ -18,9 +18,9 @@ public:
 	void RemoveOrphan(const uint64_t height, const Hash& hash);
 
 	void AddOrphanHeader(const BlockHeader& header);
-	std::shared_ptr<const BlockHeader> GetOrphanHeader(const Hash& hash) const;
+	BlockHeaderPtr GetOrphanHeader(const Hash& hash) const;
 
 private:
 	std::unordered_map<uint64_t, std::vector<Orphan>> m_orphansByHeight;
-	LRU::Cache<Hash, std::shared_ptr<const BlockHeader>> m_orphanHeadersByHash;
+	LRU::Cache<Hash, BlockHeaderPtr> m_orphanHeadersByHash;
 };

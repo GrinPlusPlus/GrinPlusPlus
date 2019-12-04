@@ -41,8 +41,8 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 		pHeaderMMR->Write()->AddHeader(genesisHeader);
 	}
 
-	std::shared_ptr<const BlockIndex> pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
-	const std::unique_ptr<BlockHeader> pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
+	auto pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
+	auto pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
 	pTxHashSetManager->Open(*pConfirmedHeader);
 
 	std::shared_ptr<ChainState> pChainState(new ChainState(config, pChainStore, pDatabase, pHeaderMMR, pTransactionPool, pTxHashSetManager));
@@ -52,14 +52,14 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
 	const Hash& candidateHeadHash = GetChainStore()->GetChain(EChainType::CANDIDATE)->GetTip()->GetHash();
-	std::unique_ptr<BlockHeader> pCandidateHead = GetBlockDB()->GetBlockHeader(candidateHeadHash);
+	auto pCandidateHead = GetBlockDB()->GetBlockHeader(candidateHeadHash);
 	if (pCandidateHead != nullptr)
 	{
 		syncStatus.UpdateHeaderStatus(pCandidateHead->GetHeight(), pCandidateHead->GetTotalDifficulty());
 	}
 
 	const Hash& confirmedHeadHash = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetTip()->GetHash();
-	std::unique_ptr<BlockHeader> pConfirmedHead = GetBlockDB()->GetBlockHeader(confirmedHeadHash);
+	auto pConfirmedHead = GetBlockDB()->GetBlockHeader(confirmedHeadHash);
 	if (pConfirmedHead != nullptr)
 	{
 		syncStatus.UpdateBlockStatus(pConfirmedHead->GetHeight(), pConfirmedHead->GetTotalDifficulty());
@@ -73,7 +73,7 @@ uint64_t ChainState::GetHeight(const EChainType chainType) const
 
 uint64_t ChainState::GetTotalDifficulty(const EChainType chainType) const
 {
-	std::unique_ptr<BlockHeader> pHead = GetTipBlockHeader(chainType);
+	auto pHead = GetTipBlockHeader(chainType);
 	if (pHead != nullptr)
 	{
 		return pHead->GetTotalDifficulty();
@@ -82,19 +82,19 @@ uint64_t ChainState::GetTotalDifficulty(const EChainType chainType) const
 	return 0;
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetTipBlockHeader(const EChainType chainType) const
+BlockHeaderPtr ChainState::GetTipBlockHeader(const EChainType chainType) const
 {
 	const Hash& headHash = GetChainStore()->GetChain(chainType)->GetTip()->GetHash();
 
 	return GetBlockDB()->GetBlockHeader(headHash);
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHash(const Hash& hash) const
+BlockHeaderPtr ChainState::GetBlockHeaderByHash(const Hash& hash) const
 {
 	return GetBlockDB()->GetBlockHeader(hash);
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
+BlockHeaderPtr ChainState::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
 	auto pBlockIndex = GetChainStore()->GetChain(chainType)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
@@ -102,24 +102,24 @@ std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByHeight(const uint64_t h
 		return GetBlockDB()->GetBlockHeader(pBlockIndex->GetHash());
 	}
 
-	return std::unique_ptr<BlockHeader>(nullptr);
+	return BlockHeaderPtr(nullptr);
 }
 
-std::unique_ptr<BlockHeader> ChainState::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
+BlockHeaderPtr ChainState::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
 {
-	std::unique_ptr<BlockHeader> pHeader(nullptr);
+	BlockHeaderPtr pHeader(nullptr);
 
 	std::unique_ptr<OutputLocation> pOutputLocation = GetBlockDB()->GetOutputPosition(outputCommitment);
 	if (pOutputLocation != nullptr)
 	{
-		std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(pOutputLocation->GetBlockHeight());
+		auto pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(pOutputLocation->GetBlockHeight());
 		if (pBlockIndex != nullptr)
 		{
 			return GetBlockDB()->GetBlockHeader(pBlockIndex->GetHash());
 		}
 	}
 
-	return std::unique_ptr<BlockHeader>(nullptr);
+	return BlockHeaderPtr(nullptr);
 }
 
 std::unique_ptr<FullBlock> ChainState::GetBlockByHash(const Hash& hash) const
@@ -151,7 +151,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 		return std::unique_ptr<BlockWithOutputs>(nullptr);
 	}
 
-	std::shared_ptr<const BlockIndex> pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
+	auto pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
 		std::unique_ptr<FullBlock> pBlock = GetBlockDB()->GetBlock(pBlockIndex->GetHash());
@@ -189,7 +189,7 @@ std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_
 	uint64_t nextHeight = GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 	while (nextHeight <= candidateHeight)
 	{
-		std::shared_ptr<const BlockIndex> pIndex = pCandidateChain->GetByHeight(nextHeight);
+		auto pIndex = pCandidateChain->GetByHeight(nextHeight);
 		if (!m_pOrphanPool->IsOrphan(nextHeight, pIndex->GetHash()))
 		{
 			blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight, pIndex->GetHash()));

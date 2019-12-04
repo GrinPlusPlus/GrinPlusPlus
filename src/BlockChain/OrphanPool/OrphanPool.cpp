@@ -87,7 +87,7 @@ void OrphanPool::RemoveOrphan(const uint64_t height, const Hash& hash)
 	}
 }
 
-std::shared_ptr<const BlockHeader> OrphanPool::GetOrphanHeader(const Hash& hash) const
+BlockHeaderPtr OrphanPool::GetOrphanHeader(const Hash& hash) const
 {
 	auto iter = m_orphanHeadersByHash.find(hash);
 	if (iter != m_orphanHeadersByHash.cend())
@@ -95,7 +95,7 @@ std::shared_ptr<const BlockHeader> OrphanPool::GetOrphanHeader(const Hash& hash)
 		return iter->value();
 	}
 
-	return std::shared_ptr<const BlockHeader>(nullptr);
+	return nullptr;
 }
 
 void OrphanPool::AddOrphanHeader(const BlockHeader& header)

@@ -10,7 +10,7 @@ public:
 	//
 	// Constructors
 	//
-	HeadersMessage(std::vector<BlockHeader>&& headers)
+	HeadersMessage(std::vector<BlockHeaderPtr>&& headers)
 		: m_headers(std::move(headers))
 	{
 
@@ -38,19 +38,19 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Headers; }
-	const std::vector<BlockHeader>& GetHeaders() const { return m_headers; }
+	const std::vector<BlockHeaderPtr>& GetHeaders() const { return m_headers; }
 
 	//
 	// Deserialization
 	//
 	static HeadersMessage Deserialize(ByteBuffer& byteBuffer)
 	{
-		std::vector<BlockHeader> headers;
+		std::vector<BlockHeaderPtr> headers;
 
 		const uint16_t numHeaders = byteBuffer.ReadU16();
 		for (uint16_t i = 0; i < numHeaders; i++)
 		{
-			headers.emplace_back(BlockHeader::Deserialize(byteBuffer));
+			headers.emplace_back(std::make_shared<const BlockHeader>(BlockHeader::Deserialize(byteBuffer)));
 		}
 
 		return HeadersMessage(std::move(headers));
@@ -62,10 +62,10 @@ protected:
 		serializer.Append<uint16_t>((uint16_t)m_headers.size());
 		for (auto iter = m_headers.cbegin(); iter != m_headers.cend(); iter++)
 		{
-			iter->Serialize(serializer);
+			(*iter)->Serialize(serializer);
 		}
 	}
 
 private:
-	std::vector<BlockHeader> m_headers;
+	std::vector<BlockHeaderPtr> m_headers;
 };

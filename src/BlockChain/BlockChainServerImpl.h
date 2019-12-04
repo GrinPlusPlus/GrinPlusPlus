@@ -36,18 +36,18 @@ public:
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& block) override final;
 
 	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) override final;
-	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeader>& blockHeaders) override final;
+	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) override final;
 
 	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) override final;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) override final;
 	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final;
 	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const override final;
 
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;
-	virtual std::unique_ptr<BlockHeader> GetBlockHeaderByCommitment(const Commitment& outputCommitment) const override final;
-	virtual std::unique_ptr<BlockHeader> GetTipBlockHeader(const EChainType chainType) const override final;
-	virtual std::vector<BlockHeader> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
+	virtual BlockHeaderPtr GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
+	virtual BlockHeaderPtr GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;
+	virtual BlockHeaderPtr GetBlockHeaderByCommitment(const Commitment& outputCommitment) const override final;
+	virtual BlockHeaderPtr GetTipBlockHeader(const EChainType chainType) const override final;
+	virtual std::vector<BlockHeaderPtr> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
 
 	virtual std::unique_ptr<CompactBlock> GetCompactBlockByHash(const Hash& hash) const override final;
 	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& blockHash) const override final;

@@ -16,12 +16,12 @@ public:
 		std::shared_ptr<KernelMMR> pKernelMMR,
 		std::shared_ptr<OutputPMMR> pOutputPMMR,
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR,
-		const BlockHeader& blockHeader
+		BlockHeaderPtr pBlockHeader
 	);
 	virtual ~TxHashSet() = default;
 
-	inline const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
-	virtual const BlockHeader& GetFlushedBlockHeader() const override final { return m_blockHeaderBackup; }
+	inline const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
+	virtual BlockHeaderPtr GetFlushedBlockHeader() const override final { return m_pBlockHeaderBackup; }
 
 	virtual bool IsUnspent(const OutputLocation& location) const override final;
 	virtual bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const override final;
@@ -50,6 +50,6 @@ private:
 	std::shared_ptr<OutputPMMR> m_pOutputPMMR;
 	std::shared_ptr<RangeProofPMMR> m_pRangeProofPMMR;
 
-	BlockHeader m_blockHeader;
-	BlockHeader m_blockHeaderBackup;
+	BlockHeaderPtr m_pBlockHeader;
+	BlockHeaderPtr m_pBlockHeaderBackup;
 };

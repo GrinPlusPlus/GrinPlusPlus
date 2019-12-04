@@ -16,9 +16,9 @@ BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, std::shared_ptr
 
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& header)
+EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHeader)
 {
-	LOG_TRACE_F("Validating %s", header);
+	LOG_TRACE_F("Validating %s", *pHeader);
 
 	auto pLockedState = m_pChainState->BatchWrite();
 
@@ -28,58 +28,58 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeader& h
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Check if header already processed
-	auto pCandidateIndex = pCandidateChain->GetByHeight(header.GetHeight());
-	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == header.GetHash())
+	auto pCandidateIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
+	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == pHeader->GetHash())
 	{
-		LOG_DEBUG_F("Header %s already processed.", header);
+		LOG_DEBUG_F("Header %s already processed.", *pHeader);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
 	// If this is not the next header needed, process as an orphan.
 	auto pLastIndex = pCandidateChain->GetTip();
-	if (pLastIndex->GetHash() != header.GetPreviousBlockHash())
+	if (pLastIndex->GetHash() != pHeader->GetPreviousBlockHash())
 	{
-		return ProcessOrphan(pLockedState, header);
+		return ProcessOrphan(pLockedState, pHeader);
 	}
 
-	LOG_TRACE_F("Processing next candidate header: %s", header);
+	LOG_TRACE_F("Processing next candidate header: %s", *pHeader);
 
 	// Validate the header.
 	auto pPreviousHeaderPtr = pBlockDB->GetBlockHeader(pLastIndex->GetHash());
-	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(header, *pPreviousHeaderPtr))
+	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(*pHeader, *pPreviousHeaderPtr))
 	{
-		LOG_ERROR_F("Header %s failed to validate", header);
+		LOG_ERROR_F("Header %s failed to validate", *pHeader);
 		throw BAD_DATA_EXCEPTION("Header failed to validate.");
 	}
 
-	pBlockDB->AddBlockHeader(header);
-	pHeaderMMR->AddHeader(header);
-	pSyncChain->AddBlock(header.GetHash());
-	pCandidateChain->AddBlock(header.GetHash());
+	pBlockDB->AddBlockHeader(pHeader);
+	pHeaderMMR->AddHeader(*pHeader);
+	pSyncChain->AddBlock(pHeader->GetHash());
+	pCandidateChain->AddBlock(pHeader->GetHash());
 
 	pLockedState->Commit();
 
-	LOG_DEBUG_F("Successfully validated %s", header);
+	LOG_DEBUG_F("Successfully validated %s", *pHeader);
 
 	return EBlockChainStatus::SUCCESS;
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLockedState, const BlockHeader& header)
+EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLockedState, BlockHeaderPtr pHeader)
 {
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pOrphanPool = pLockedState->GetOrphanPool();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	auto pCandidateHeader = pLockedState->GetTipBlockHeader(EChainType::CANDIDATE);
-	if (header.GetTotalDifficulty() > pCandidateHeader->GetTotalDifficulty())
+	if (pHeader->GetTotalDifficulty() > pCandidateHeader->GetTotalDifficulty())
 	{
 		std::vector<BlockHeaderPtr> reorgHeaders;
-		auto pHeader = std::make_shared<const BlockHeader>(header);
-		while (pHeader != nullptr)
+		auto pTempHeader = pHeader;
+		while (pTempHeader != nullptr)
 		{
-			reorgHeaders.push_back(pHeader);
-			auto pIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
-			if (pIndex != nullptr && pIndex->GetHash() == pHeader->GetHash())
+			reorgHeaders.push_back(pTempHeader);
+			auto pIndex = pCandidateChain->GetByHeight(pTempHeader->GetHeight());
+			if (pIndex != nullptr && pIndex->GetHash() == pTempHeader->GetHash())
 			{
 				// All headers exist. Reorg.
 				std::reverse(reorgHeaders.begin(), reorgHeaders.end());
@@ -93,17 +93,17 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 				return processChunkStatus;
 			}
 
-			const Hash& previousHash = pHeader->GetPreviousBlockHash();
-			pHeader = pOrphanPool->GetOrphanHeader(previousHash);
-			if (pHeader == nullptr)
+			const Hash& previousHash = pTempHeader->GetPreviousBlockHash();
+			pTempHeader = pOrphanPool->GetOrphanHeader(previousHash);
+			if (pTempHeader == nullptr)
 			{
-				pHeader = pBlockDB->GetBlockHeader(previousHash);
+				pTempHeader = pBlockDB->GetBlockHeader(previousHash);
 			}
 		}
 	}
 
-	LOG_DEBUG_F("Processing header %s as an orphan.", header);
-	pOrphanPool->AddOrphanHeader(header);
+	LOG_DEBUG_F("Processing header %s as an orphan.", *pHeader);
+	pOrphanPool->AddOrphanHeader(pHeader);
 	return EBlockChainStatus::ORPHANED;
 }
 
@@ -293,7 +293,7 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 		}
 
 		pHeaderMMR->AddHeader(*pHeader);
-		pBlockDB->AddBlockHeader(*pHeader);
+		pBlockDB->AddBlockHeader(pHeader);
 		pPreviousHeader = pHeader;
 	}
 }

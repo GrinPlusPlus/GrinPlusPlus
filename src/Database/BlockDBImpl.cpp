@@ -234,16 +234,16 @@ BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 	}
 }
 
-void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
+void BlockDB::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
-	LOG_TRACE_F("Adding header %s", blockHeader);
+	LOG_TRACE_F("Adding header %s", *pBlockHeader);
 
 	try
 	{
-		const Hash& hash = blockHeader.GetHash();
+		const Hash& hash = pBlockHeader->GetHash();
 
 		Serializer serializer;
-		blockHeader.Serialize(serializer);
+		pBlockHeader->Serialize(serializer);
 
 		Slice key((const char*)hash.data(), hash.size());
 		Slice value((const char*)serializer.data(), serializer.size());
@@ -256,11 +256,11 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 		
 		if (m_pTransaction != nullptr)
 		{
-			m_uncommitted.push_back(std::make_shared<const BlockHeader>(blockHeader));
+			m_uncommitted.push_back(pBlockHeader);
 		}
 		else
 		{
-			BLOCK_HEADERS_CACHE.Put(blockHeader.GetHash(), std::make_shared<const BlockHeader>(blockHeader));
+			BLOCK_HEADERS_CACHE.Put(pBlockHeader->GetHash(), pBlockHeader);
 		}
 	}
 	catch (DatabaseException&)

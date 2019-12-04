@@ -17,7 +17,7 @@ public:
 	std::shared_ptr<const FullBlock> GetOrphanBlock(const uint64_t height, const Hash& hash) const;
 	void RemoveOrphan(const uint64_t height, const Hash& hash);
 
-	void AddOrphanHeader(const BlockHeader& header);
+	void AddOrphanHeader(BlockHeaderPtr pHeader);
 	BlockHeaderPtr GetOrphanHeader(const Hash& hash) const;
 
 private:

@@ -18,7 +18,13 @@ public:
 	//
 	// Constructors
 	//
-	CompactBlock(BlockHeader&& blockHeader, const uint64_t nonce, std::vector<TransactionOutput>&& fullOutputs, std::vector<TransactionKernel>&& fullKernels, std::vector<ShortId>&& shortIds);
+	CompactBlock(
+		BlockHeaderPtr pBlockHeader,
+		const uint64_t nonce,
+		std::vector<TransactionOutput>&& fullOutputs,
+		std::vector<TransactionKernel>&& fullKernels,
+		std::vector<ShortId>&& shortIds
+	);
 	CompactBlock(const CompactBlock& other) = default;
 	CompactBlock(CompactBlock&& other) noexcept = default;
 	CompactBlock() = default;
@@ -37,12 +43,16 @@ public:
 	//
 	// Getters
 	//
-	const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
-	uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
+	const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
 	uint64_t GetNonce() const { return m_nonce; }
+
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
 	const std::vector<ShortId>& GetShortIds() const { return m_shortIds; }
+
+	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousBlockHash(); }
+	uint64_t GetHeight() const { return m_pBlockHeader->GetHeight(); }
+	uint64_t GetTotalDifficulty() const { return m_pBlockHeader->GetTotalDifficulty(); }
 
 	//
 	// Serialization/Deserialization
@@ -53,10 +63,10 @@ public:
 	//
 	// Hashing
 	//
-	const Hash& GetHash() const { return m_blockHeader.GetHash(); }
+	const Hash& GetHash() const { return m_pBlockHeader->GetHash(); }
 
 private:
-	BlockHeader m_blockHeader;
+	BlockHeaderPtr m_pBlockHeader;
 	uint64_t m_nonce;
 	std::vector<TransactionOutput> m_outputs;
 	std::vector<TransactionKernel> m_kernels;

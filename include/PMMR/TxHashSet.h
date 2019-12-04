@@ -2,6 +2,7 @@
 
 #include <string>
 #include <Core/Models/BlockSums.h>
+#include <Core/Models/BlockHeader.h>
 #include <Core/Models/OutputLocation.h>
 #include <Core/Models/DTOs/OutputRange.h>
 #include <Core/Traits/Batchable.h>
@@ -10,7 +11,6 @@
 // Forward Declarations
 class Config;
 class FullBlock;
-class BlockHeader;
 class Commitment;
 class OutputIdentifier;
 class IBlockChainServer;
@@ -116,7 +116,7 @@ public:
 		const uint64_t lastIndex
 	) const = 0;
 
-	virtual const BlockHeader& GetFlushedBlockHeader() const = 0;
+	virtual BlockHeaderPtr GetFlushedBlockHeader() const = 0;
 
 
 

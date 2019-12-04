@@ -30,7 +30,7 @@ public:
 
 	virtual BlockHeaderPtr GetBlockHeader(const Hash& hash) const override final;
 
-	virtual void AddBlockHeader(const BlockHeader& blockHeader) override final;
+	virtual void AddBlockHeader(BlockHeaderPtr pBlockHeader) override final;
 	virtual void AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) override final;
 
 	virtual void AddBlock(const FullBlock& block) override final;

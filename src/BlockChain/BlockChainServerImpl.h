@@ -35,10 +35,10 @@ public:
 	virtual EBlockChainStatus AddBlock(const FullBlock& block) override final;
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& block) override final;
 
-	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) override final;
+	virtual EBlockChainStatus AddBlockHeader(BlockHeaderPtr pBlockHeader) override final;
 	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) override final;
 
-	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) override final;
+	virtual std::string SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) override final;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) override final;
 	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final;
 	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const override final;

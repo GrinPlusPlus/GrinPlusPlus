@@ -35,7 +35,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 	}
 
 	// 2. Load and Extract TxHashSet Zip
-	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, path, *pHeader);
+	ITxHashSetPtr pTxHashSet = TxHashSetManager::LoadFromZip(m_config, path, pHeader);
 	if (pTxHashSet == nullptr)
 	{
 		LOG_ERROR_F("Failed to load %S", path);

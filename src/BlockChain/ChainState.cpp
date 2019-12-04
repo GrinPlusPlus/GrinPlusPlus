@@ -31,19 +31,19 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
 	std::shared_ptr<TxHashSetManager> pTxHashSetManager,
-	const BlockHeader& genesisHeader)
+	BlockHeaderPtr pGenesisHeader)
 {
 	std::shared_ptr<const Chain> pCandidateChain = pChainStore->Read()->GetCandidateChain();
 	const uint64_t candidateHeight = pCandidateChain->GetTip()->GetHeight();
 	if (candidateHeight == 0)
 	{
-		pDatabase->Write()->AddBlockHeader(genesisHeader);
-		pHeaderMMR->Write()->AddHeader(genesisHeader);
+		pDatabase->Write()->AddBlockHeader(pGenesisHeader);
+		pHeaderMMR->Write()->AddHeader(*pGenesisHeader);
 	}
 
 	auto pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
 	auto pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
-	pTxHashSetManager->Open(*pConfirmedHeader);
+	pTxHashSetManager->Open(pConfirmedHeader);
 
 	std::shared_ptr<ChainState> pChainState(new ChainState(config, pChainStore, pDatabase, pHeaderMMR, pTransactionPool, pTxHashSetManager));
 	return std::make_shared<Locked<ChainState>>(Locked<ChainState>(pChainState));
@@ -171,7 +171,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 				}
 			}
 
-			return std::make_unique<BlockWithOutputs>(BlockWithOutputs(BlockIdentifier::FromHeader(pBlock->GetBlockHeader()), std::move(outputsFound)));
+			return std::make_unique<BlockWithOutputs>(BlockWithOutputs(BlockIdentifier::FromHeader(*pBlock->GetBlockHeader()), std::move(outputsFound)));
 		}
 	}
 

@@ -51,12 +51,12 @@ public:
 	virtual EBlockChainStatus AddBlock(const FullBlock& block) = 0;
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& compactBlock) = 0;
 
-	virtual std::string SnapshotTxHashSet(const BlockHeader& blockHeader) = 0;
+	virtual std::string SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) = 0;
 	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) = 0;
 	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) = 0;
 	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const = 0;
 
-	virtual EBlockChainStatus AddBlockHeader(const BlockHeader& blockHeader) = 0;
+	virtual EBlockChainStatus AddBlockHeader(BlockHeaderPtr pBlockHeader) = 0;
 
 	//
 	// Validates and adds the given block headers to the block chain.

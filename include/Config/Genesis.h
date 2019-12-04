@@ -9,7 +9,7 @@ namespace Genesis
 	static FullBlock FLOONET_GENESIS
 	(
 
-		BlockHeader
+		std::make_shared<const BlockHeader>
 		(
 		(uint16_t)1 /* version */,
 			0 /*height*/,
@@ -236,7 +236,7 @@ namespace Genesis
 	static FullBlock MAINNET_GENESIS
 	(
 
-		BlockHeader
+		std::make_shared<const BlockHeader>
 		(
 		(uint16_t)1 /* version */,
 			0 /*height*/,

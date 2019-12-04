@@ -17,7 +17,7 @@ public:
 	// Throws BadDataException if the header is invalid.
 	// Throws BlockChainException if any other errors occur.
 	//
-	EBlockChainStatus ProcessSingleHeader(const BlockHeader& header);
+	EBlockChainStatus ProcessSingleHeader(BlockHeaderPtr pHeader);
 
 	//
 	// Validates and adds multiple headers to the sync chain.
@@ -31,7 +31,7 @@ public:
 private:
 	EBlockChainStatus ProcessOrphan(
 		Writer<ChainState> pLockedState,
-		const BlockHeader& header
+		BlockHeaderPtr pHeader
 	);
 
 	EBlockChainStatus ProcessChunkedSyncHeaders(

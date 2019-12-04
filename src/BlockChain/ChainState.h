@@ -28,7 +28,7 @@ public:
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 		std::shared_ptr<ITransactionPool> pTransactionPool,
 		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
-		const BlockHeader& genesisHeader
+		BlockHeaderPtr pGenesisHeader
 	);
 
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;

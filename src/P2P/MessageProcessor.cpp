@@ -181,11 +181,11 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			case Header:
 			{
 				const HeaderMessage headerMessage = HeaderMessage::Deserialize(byteBuffer);
-				const BlockHeader& blockHeader = headerMessage.GetHeader();
+				auto pBlockHeader = headerMessage.GetHeader();
 
-				if (blockHeader.GetTotalDifficulty() > connectedPeer.GetTotalDifficulty())
+				if (pBlockHeader->GetTotalDifficulty() > connectedPeer.GetTotalDifficulty())
 				{
-					connectedPeer.UpdateTotals(blockHeader.GetTotalDifficulty(), blockHeader.GetHeight());
+					connectedPeer.UpdateTotals(pBlockHeader->GetTotalDifficulty(), pBlockHeader->GetHeight());
 				}
 
 				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
@@ -193,14 +193,14 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 					return EStatus::SUCCESS;
 				}
 
-				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(blockHeader);
+				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(pBlockHeader);
 				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
 				{
-					LOG_DEBUG_F("Valid header %s received from %s. Requesting compact block", blockHeader, formattedIPAddress);
+					LOG_DEBUG_F("Valid header %s received from %s. Requesting compact block", *pBlockHeader, formattedIPAddress);
 
-					if (!m_pBlockChainServer->HasBlock(blockHeader.GetHeight(), blockHeader.GetHash()))
+					if (!m_pBlockChainServer->HasBlock(pBlockHeader->GetHeight(), pBlockHeader->GetHash()))
 					{
-						const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
+						const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
 						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 					}
 				}
@@ -210,7 +210,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				}
 				else
 				{
-					LOG_TRACE_F("Header %s from %s not needed", blockHeader, formattedIPAddress);
+					LOG_TRACE_F("Header %s from %s not needed", *pBlockHeader, formattedIPAddress);
 				}
 
 				return (status == EBlockChainStatus::SUCCESS) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
@@ -263,9 +263,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 					}
 					else if (added == EBlockChainStatus::ORPHANED)
 					{
-						if (block.GetBlockHeader().GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
+						if (block.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
-							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetBlockHeader().GetPreviousBlockHash());
+							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetPreviousHash());
 							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
@@ -310,9 +310,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				{
 					if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING)
 					{
-						if (compactBlock.GetBlockHeader().GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
+						if (compactBlock.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
-							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetBlockHeader().GetPreviousBlockHash());
+							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetPreviousHash());
 							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
@@ -422,7 +422,7 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		return EStatus::UNKNOWN_ERROR;
 	}
 
-	const std::string zipFilePath = m_pBlockChainServer->SnapshotTxHashSet(*pHeader);
+	const std::string zipFilePath = m_pBlockChainServer->SnapshotTxHashSet(pHeader);
 	if (zipFilePath.empty())
 	{
 		return EStatus::UNKNOWN_ERROR;

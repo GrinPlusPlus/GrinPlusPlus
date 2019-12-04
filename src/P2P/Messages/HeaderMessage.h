@@ -10,13 +10,8 @@ public:
 	//
 	// Constructors
 	//
-	HeaderMessage(BlockHeader&& header)
-		: m_header(std::move(header))
-	{
-
-	}
-	HeaderMessage(const BlockHeader& header)
-		: m_header(std::move(header))
+	HeaderMessage(BlockHeaderPtr pHeader)
+		: m_pHeader(pHeader)
 	{
 
 	}
@@ -43,23 +38,23 @@ public:
 	// Getters
 	//
 	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Header; }
-	const BlockHeader& GetHeader() const { return m_header; }
+	const BlockHeaderPtr& GetHeader() const { return m_pHeader; }
 
 	//
 	// Deserialization
 	//
 	static HeaderMessage Deserialize(ByteBuffer& byteBuffer)
 	{
-		BlockHeader header = BlockHeader::Deserialize(byteBuffer);
-		return HeaderMessage(std::move(header));
+		BlockHeaderPtr pHeader = std::make_shared<const BlockHeader>(BlockHeader::Deserialize(byteBuffer));
+		return HeaderMessage(pHeader);
 	}
 
 protected:
 	virtual void SerializeBody(Serializer& serializer) const override final
 	{
-		m_header.Serialize(serializer);
+		m_pHeader->Serialize(serializer);
 	}
 
 private:
-	BlockHeader m_header;
+	BlockHeaderPtr m_pHeader;
 };

@@ -16,7 +16,7 @@ public:
 
 	virtual BlockHeaderPtr GetBlockHeader(const Hash& hash) const = 0;
 
-	virtual void AddBlockHeader(const BlockHeader& blockHeader) = 0;
+	virtual void AddBlockHeader(BlockHeaderPtr pBlockHeader) = 0;
 	virtual void AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) = 0;
 
 	virtual void AddBlock(const FullBlock& block) = 0;

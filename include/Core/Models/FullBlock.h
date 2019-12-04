@@ -17,7 +17,7 @@ public:
 	//
 	// Constructors
 	//
-	FullBlock(BlockHeader&& blockHeader, TransactionBody&& transactionBody);
+	FullBlock(BlockHeaderPtr pBlockHeader, TransactionBody&& transactionBody);
 	FullBlock(const FullBlock& other) = default;
 	FullBlock(FullBlock&& other) noexcept = default;
 	FullBlock() = default;
@@ -36,13 +36,18 @@ public:
 	//
 	// Getters
 	//
-	const BlockHeader& GetBlockHeader() const { return m_blockHeader; }
+	const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
 	const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
+
 	const std::vector<TransactionInput>& GetInputs() const { return m_transactionBody.GetInputs(); }
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
-	uint64_t GetHeight() const { return m_blockHeader.GetHeight(); }
-	const Hash& GetPreviousHash() const { return m_blockHeader.GetPreviousBlockHash(); }
+
+	uint64_t GetHeight() const { return m_pBlockHeader->GetHeight(); }
+	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousBlockHash(); }
+	uint64_t GetTotalDifficulty() const { return m_pBlockHeader->GetTotalDifficulty(); }
+	const BlindingFactor& GetTotalKernelOffset() const { return m_pBlockHeader->GetTotalKernelOffset(); }
+
 
 	//
 	// Serialization/Deserialization
@@ -53,7 +58,7 @@ public:
 	//
 	// Hashing
 	//
-	const Hash& GetHash() const { return m_blockHeader.GetHash(); }
+	const Hash& GetHash() const { return m_pBlockHeader->GetHash(); }
 
 	//
 	// Validation Status
@@ -67,7 +72,7 @@ public:
 	virtual std::string Format() const override final { return GetHash().ToHex(); }
 
 private:
-	BlockHeader m_blockHeader;
+	BlockHeaderPtr m_pBlockHeader;
 	TransactionBody m_transactionBody;
 	mutable bool m_validated;
 };

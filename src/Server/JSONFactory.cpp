@@ -7,11 +7,11 @@
 Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 {
 	Json::Value blockNode;
-	blockNode["header"] = BuildHeaderJSON(block.GetBlockHeader());
+	blockNode["header"] = BuildHeaderJSON(*block.GetBlockHeader());
 
 	// Transaction Inputs
 	Json::Value inputsNode;
-	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
+	for (const TransactionInput& input : block.GetInputs())
 	{
 		inputsNode.append(BuildTransactionInputJSON(input));
 	}
@@ -19,15 +19,15 @@ Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 
 	// Transaction Outputs
 	Json::Value outputsNode;
-	for (const TransactionOutput& output : block.GetTransactionBody().GetOutputs())
+	for (const TransactionOutput& output : block.GetOutputs())
 	{
-		outputsNode.append(BuildTransactionOutputJSON(output, block.GetBlockHeader().GetHeight()));
+		outputsNode.append(BuildTransactionOutputJSON(output, block.GetHeight()));
 	}
 	blockNode["outputs"] = outputsNode;
 
 	// Transaction Kernels
 	Json::Value kernelsNode;
-	for (const TransactionKernel& kernel : block.GetTransactionBody().GetKernels())
+	for (const TransactionKernel& kernel : block.GetKernels())
 	{
 		kernelsNode.append(BuildTransactionKernelJSON(kernel));
 	}
@@ -39,7 +39,7 @@ Json::Value JSONFactory::BuildBlockJSON(const FullBlock& block)
 Json::Value JSONFactory::BuildCompactBlockJSON(const CompactBlock& compactBlock)
 {
 	Json::Value blockNode;
-	blockNode["header"] = BuildHeaderJSON(compactBlock.GetBlockHeader());
+	blockNode["header"] = BuildHeaderJSON(*compactBlock.GetBlockHeader());
 
 
 	// Short Ids
@@ -54,7 +54,7 @@ Json::Value JSONFactory::BuildCompactBlockJSON(const CompactBlock& compactBlock)
 	Json::Value outputsNode;
 	for (const TransactionOutput& output : compactBlock.GetOutputs())
 	{
-		outputsNode.append(BuildTransactionOutputJSON(output, compactBlock.GetBlockHeader().GetHeight()));
+		outputsNode.append(BuildTransactionOutputJSON(output, compactBlock.GetHeight()));
 	}
 	blockNode["out_full"] = outputsNode;
 

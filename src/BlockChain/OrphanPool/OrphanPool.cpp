@@ -26,7 +26,7 @@ void OrphanPool::AddOrphanBlock(const FullBlock& block)
 {
 	if (!m_orphanHeadersByHash.Cached(block.GetHash()))
 	{
-		m_orphanHeadersByHash.Put(block.GetHash(), std::make_shared<const BlockHeader>(block.GetBlockHeader()));
+		m_orphanHeadersByHash.Put(block.GetHash(), block.GetBlockHeader());
 	}
 
 	auto heightIter = m_orphansByHeight.find(block.GetHeight());
@@ -96,7 +96,7 @@ BlockHeaderPtr OrphanPool::GetOrphanHeader(const Hash& hash) const
 	return nullptr;
 }
 
-void OrphanPool::AddOrphanHeader(const BlockHeader& header)
+void OrphanPool::AddOrphanHeader(BlockHeaderPtr pHeader)
 {
-	m_orphanHeadersByHash.Put(header.GetHash(), std::make_shared<const BlockHeader>(header));
+	m_orphanHeadersByHash.Put(pHeader->GetHash(), pHeader);
 }

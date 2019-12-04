@@ -13,7 +13,7 @@ public:
 	}
 
 	inline const FullBlock& GetGenesisBlock() const { return m_block; }
-	inline const Hash& GetGenesisHash() const { return m_block.GetBlockHeader().GetHash(); }
+	inline const Hash& GetGenesisHash() const { return m_block.GetBlockHeader()->GetHash(); }
 	inline const std::vector<uint8_t>& GetMagicBytes() const { return m_magicBytes; }
 	inline uint16_t GetP2PPort() const { return m_port; }
 	inline EEnvironmentType GetEnvironmentType() const { return m_environmentType; }

@@ -21,15 +21,15 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	const uint64_t candidateHeight = m_pChainState->Read()->GetHeight(EChainType::CANDIDATE);
 	const uint64_t horizonHeight = Consensus::GetHorizonHeight(candidateHeight);
 
-	const BlockHeader& header = block.GetBlockHeader();
-	if (header.GetHeight() <= horizonHeight)
+	BlockHeaderPtr pHeader = block.GetBlockHeader();
+	if (pHeader->GetHeight() <= horizonHeight)
 	{
 		LOG_WARNING("Can't process blocks beyond horizon.");
 		throw BAD_DATA_EXCEPTION("Can't process blocks beyond horizon.");
 	}
 
 	// Make sure header is processed and valid before processing block.
-	const EBlockChainStatus headerStatus = BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(header);
+	const EBlockChainStatus headerStatus = BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(pHeader);
 	if (headerStatus == EBlockChainStatus::SUCCESS
 		|| headerStatus == EBlockChainStatus::ALREADY_EXISTS
 		|| headerStatus == EBlockChainStatus::ORPHANED)
@@ -40,7 +40,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LOG_TRACE_F("Block %s successfully processed.", header);
+			LOG_TRACE_F("Block %s successfully processed.", *pHeader);
 		}
 
 		return returnStatus;

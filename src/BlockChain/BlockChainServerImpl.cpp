@@ -141,11 +141,11 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
 }
 
-std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
+std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 {
 	auto pReader = m_pChainState->Read();
 	const uint64_t horizon = Consensus::GetHorizonHeight(pReader->GetHeight(EChainType::CONFIRMED));
-	if (blockHeader.GetHeight() < horizon)
+	if (pBlockHeader->GetHeight() < horizon)
 	{
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
@@ -155,10 +155,10 @@ std::string BlockChainServer::SnapshotTxHashSet(const BlockHeader& blockHeader)
 		const std::string destination = StringUtil::Format(
 			"%sSnapshots/TxHashSet.%s.zip",
 			fs::temp_directory_path().string(),
-			blockHeader.ShortHash()
+			pBlockHeader->ShortHash()
 		);
 
-		if (m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), blockHeader, destination))
+		if (m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader, destination))
 		{
 			return destination;
 		}
@@ -231,11 +231,11 @@ TransactionPtr BlockChainServer::GetTransactionByKernelHash(const Hash& kernelHa
 	return m_pTransactionPool->FindTransactionByKernelHash(kernelHash);
 }
 
-EBlockChainStatus BlockChainServer::AddBlockHeader(const BlockHeader& blockHeader)
+EBlockChainStatus BlockChainServer::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
 	try
 	{
-		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(blockHeader);
+		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(pBlockHeader);
 	}
 	catch (std::exception&)
 	{

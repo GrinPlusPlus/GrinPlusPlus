@@ -37,13 +37,13 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 		}
 	}
 
-	if (!m_pTxHashSet->ValidateRoots(block.GetBlockHeader()))
+	if (!m_pTxHashSet->ValidateRoots(*block.GetBlockHeader()))
 	{
 		LOG_ERROR_F("Failed to validate TxHashSet roots for block %s", block);
 		throw BAD_DATA_EXCEPTION("Failed to validate TxHashSet roots.");
 	}
 
-	const Hash previousHash = block.GetBlockHeader().GetPreviousBlockHash();
+	const Hash previousHash = block.GetPreviousHash();
 	std::unique_ptr<BlockSums> pPreviousBlockSums = m_pBlockDB->GetBlockSums(previousHash);
 	if (pPreviousBlockSums == nullptr)
 	{
@@ -54,7 +54,7 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 	return KernelSumValidator::ValidateKernelSums(
 		block.GetTransactionBody(),
 		0 - Consensus::REWARD,
-		block.GetBlockHeader().GetTotalKernelOffset(),
+		block.GetTotalKernelOffset(),
 		std::make_optional(*pPreviousBlockSums)
 	);
 }
@@ -98,8 +98,8 @@ void BlockValidator::VerifyBody(const FullBlock& block) const
 // no tx can be included in a block earlier than its lock_height
 void BlockValidator::VerifyKernelLockHeights(const FullBlock& block) const
 {
-	const uint64_t blockHeight = block.GetBlockHeader().GetHeight();
-	const std::vector<TransactionKernel>& kernels = block.GetTransactionBody().GetKernels();
+	const uint64_t blockHeight = block.GetHeight();
+	const std::vector<TransactionKernel>& kernels = block.GetKernels();
 	const bool invalid = std::any_of(
 		kernels.cbegin(),
 		kernels.cend(),
@@ -117,7 +117,7 @@ void BlockValidator::VerifyKernelLockHeights(const FullBlock& block) const
 bool BlockValidator::IsCoinbaseValid(const FullBlock& block) const
 {
 	// Get Coinbase Output Commitments
-	const std::vector<TransactionOutput>& blockOutputs = block.GetTransactionBody().GetOutputs();
+	const std::vector<TransactionOutput>& blockOutputs = block.GetOutputs();
 	std::vector<Commitment> coinbaseCommitments;
 	FunctionalUtil::transform_if(
 		blockOutputs.cbegin(),
@@ -128,7 +128,7 @@ bool BlockValidator::IsCoinbaseValid(const FullBlock& block) const
 	);
 
 	// Get Coinbase Kernel Commitments
-	const std::vector<TransactionKernel>& blockKernels = block.GetTransactionBody().GetKernels();
+	const std::vector<TransactionKernel>& blockKernels = block.GetKernels();
 	std::vector<Commitment> coinbaseKernelExcesses;
 	FunctionalUtil::transform_if(
 		blockKernels.cbegin(),

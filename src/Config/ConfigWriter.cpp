@@ -14,7 +14,7 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 	WriteDandelion(root, config.GetDandelionConfig());
 	WriteServer(root, config.GetServerConfig());
 	WriteLogLevel(root, config.GetLogLevel());
-	WriteWalletConfig(root, "SQLITE");
+	WriteWalletConfig(root, config.GetWalletConfig());
 	WriteGrinJoinKey(root, config.GetGrinJoinSecretKey());
 
 	fs::path path(StringUtil::ToWide(configPath));
@@ -129,11 +129,12 @@ void ConfigWriter::WriteLogLevel(Json::Value& root, const std::string& logLevel)
 	root[ConfigProps::Logger::LOGGER] = loggerJSON;
 }
 
-void ConfigWriter::WriteWalletConfig(Json::Value& root, const std::string& databaseType) const
+void ConfigWriter::WriteWalletConfig(Json::Value& root, const WalletConfig& walletConfig) const
 {
 	Json::Value walletJSON;
 
-	walletJSON[ConfigProps::Wallet::DATABASE] = databaseType;
+	walletJSON[ConfigProps::Wallet::DATABASE] = walletConfig.GetDatabaseType();
+	walletJSON[ConfigProps::Wallet::MIN_CONFIRMATIONS] = walletConfig.GetMinimumConfirmations();
 
 	root[ConfigProps::Wallet::WALLET] = walletJSON;
 }

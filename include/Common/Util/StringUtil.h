@@ -136,7 +136,7 @@ private:
 
 	static decltype(auto) convert_for_snprintf(const fs::path& path)
 	{
-		return path.wstring();
+		return path.wstring().c_str();
 	}
 
 	template <class T>

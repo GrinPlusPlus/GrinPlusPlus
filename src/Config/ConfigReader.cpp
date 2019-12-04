@@ -165,14 +165,14 @@ WalletConfig ConfigReader::ReadWalletConfig(const Json::Value& root, const EEnvi
 {
 	const std::string walletPath = dataPath + "WALLET/";
 
-	std::string databaseType = "ROCKSDB";
+	std::string databaseType = "SQLITE";
 	uint32_t minimumConfirmations = 10;
 	if (root.isMember(ConfigProps::Wallet::WALLET))
 	{
 		const Json::Value& walletRoot = root[ConfigProps::Wallet::WALLET];
 		if (walletRoot.isMember(ConfigProps::Wallet::DATABASE))
 		{
-			databaseType = walletRoot.get(ConfigProps::Wallet::DATABASE, "ROCKSDB").asString();
+			databaseType = walletRoot.get(ConfigProps::Wallet::DATABASE, "SQLITE").asString();
 		}
 		if (walletRoot.isMember(ConfigProps::Wallet::MIN_CONFIRMATIONS))
 		{

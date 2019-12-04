@@ -2,14 +2,6 @@ set(TARGET_NAME WalletDB)
 
 # Wallet
 
-if(LINUX)
-    set(ROCKS_SRC "")
-    set(OS_LIBS "")
-else(LINUX)
-    set(ROCKS_SRC "WalletRocksDB.cpp")
-    set(OS_LIBS ${ROCKS_DB_LIB})
-endif(LINUX)
-
 file(GLOB SOURCE_CODE
     "WalletDBImpl.cpp"
     "WalletSqlite.cpp"
@@ -19,7 +11,6 @@ file(GLOB SOURCE_CODE
 	"Sqlite/Tables/OutputsTable.cpp"
 	"Sqlite/Tables/TransactionsTable.cpp"
 	"Sqlite/Tables/MetadataTable.cpp"
-    ${ROCKS_SRC}
 )
 
 if(GRINPP_STATIC)
@@ -31,4 +22,4 @@ endif(GRINPP_STATIC)
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_WalletDB)
 
 add_dependencies(${TARGET_NAME} sqlite3)
-target_link_libraries(${TARGET_NAME} Core sqlite3 ${OS_LIBS})
+target_link_libraries(${TARGET_NAME} Core sqlite3)

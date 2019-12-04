@@ -67,7 +67,7 @@ public:
 	//
 	// Destructor
 	//
-	~IPAddress() = default;
+	virtual ~IPAddress() = default;
 
 	//
 	// Operators

@@ -71,4 +71,6 @@ private:
 	ColumnFamilyHandle* m_pBlockSumsHandle;
 	ColumnFamilyHandle* m_pOutputPosHandle;
 	ColumnFamilyHandle* m_pInputBitmapHandle;
+
+	std::vector<BlockHeaderPtr> m_uncommitted;
 };

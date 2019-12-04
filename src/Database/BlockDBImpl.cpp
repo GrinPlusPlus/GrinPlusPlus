@@ -3,9 +3,16 @@
 #include <Database/DatabaseException.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
+#include <caches/include/cache.hpp>
+#include <caches/include/fifo_cache_policy.hpp>
 #include <utility>
 #include <string>
 #include <filesystem.h>
+
+template <typename Key, typename Value>
+using fifo_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::FIFOCachePolicy<Key>>;
+
+fifo_cache_t<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
 
 BlockDB::BlockDB(
 	const Config& config,
@@ -135,10 +142,18 @@ void BlockDB::Commit()
 		LOG_ERROR_F("Transaction::Commit failed with error (%s)", status.getState());
 		throw DATABASE_EXCEPTION("Transaction::Commit Failed with error: " + std::string(status.getState()));
 	}
+
+	for (auto pHeader : m_uncommitted)
+	{
+		BLOCK_HEADERS_CACHE.Put(pHeader->GetHash(), pHeader);
+	}
+
+	m_uncommitted.clear();
 }
 
 void BlockDB::Rollback()
 {
+	m_uncommitted.clear();
 	const Status status = m_pTransaction->Rollback();
 	if (!status.ok())
 	{
@@ -186,6 +201,11 @@ BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 {
 	try
 	{
+		if (BLOCK_HEADERS_CACHE.Cached(hash))
+		{
+			return BLOCK_HEADERS_CACHE.Get(hash);
+		}
+
 		Slice key((const char*)hash.data(), hash.size());
 
 		std::string value;
@@ -236,6 +256,15 @@ void BlockDB::AddBlockHeader(const BlockHeader& blockHeader)
 		{
 			LOG_ERROR_F("DB::Put failed for header (%s) with error (%s)", hash, status.getState());
 			throw DATABASE_EXCEPTION("DB::Put Failed with error: " + std::string(status.getState()));
+		}
+		
+		if (m_pTransaction != nullptr)
+		{
+			m_uncommitted.push_back(std::make_shared<const BlockHeader>(blockHeader));
+		}
+		else
+		{
+			BLOCK_HEADERS_CACHE.Put(blockHeader.GetHash(), std::make_shared<const BlockHeader>(blockHeader));
 		}
 	}
 	catch (DatabaseException&)

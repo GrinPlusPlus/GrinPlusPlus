@@ -198,7 +198,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				{
 					LOG_DEBUG_F("Valid header %s received from %s. Requesting compact block", blockHeader, formattedIPAddress);
 
-					if (m_pBlockChainServer->GetBlockByHash(blockHeader.GetHash()) == nullptr)
+					if (!m_pBlockChainServer->HasBlock(blockHeader.GetHeight(), blockHeader.GetHash()))
 					{
 						const GetCompactBlockMessage getCompactBlockMessage(blockHeader.GetHash());
 						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;

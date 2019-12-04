@@ -116,6 +116,11 @@ public:
 	//
 	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& outputCommitment) const = 0;
 
+	//
+	// Returns true if full block found matching the given hash.
+	//
+	virtual bool HasBlock(const uint64_t height, const Hash& blockHash) const = 0;
+
 
 	virtual std::vector<BlockWithOutputs> GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const = 0;
 

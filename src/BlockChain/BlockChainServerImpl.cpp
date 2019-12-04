@@ -351,6 +351,15 @@ std::vector<BlockWithOutputs> BlockChainServer::GetOutputsByHeight(const uint64_
 	return blocksWithOutputs;
 }
 
+bool BlockChainServer::HasBlock(const uint64_t height, const Hash& hash) const
+{
+	auto pChainStateReader = m_pChainState->Read();
+	
+	auto pIndex = pChainStateReader->GetChainStore()->GetConfirmedChain()->GetByHeight(height);
+
+	return pIndex != nullptr && pIndex->GetHash() == hash;
+}
+
 std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {
 	return m_pChainState->Read()->GetBlocksNeeded(maxNumBlocks);

@@ -17,6 +17,7 @@ public:
 	//
 	// Constructors
 	//
+	Commitment() = default;
 	Commitment(CBigInteger<33>&& commitmentBytes)
 		: m_commitmentBytes(std::move(commitmentBytes))
 	{
@@ -33,7 +34,7 @@ public:
 	//
 	// Destructor
 	//
-	~Commitment() = default;
+	virtual ~Commitment() = default;
 
 	//
 	// Operators

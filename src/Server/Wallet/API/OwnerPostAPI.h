@@ -27,7 +27,6 @@ private:
 	int Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 	int Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 	int Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
-	int PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json);
 	int Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 	int Cancel(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 

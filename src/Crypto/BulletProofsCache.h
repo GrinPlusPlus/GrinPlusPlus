@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lru/cache.hpp>
+#include <caches/Cache.h>
 #include <Crypto/Commitment.h>
 #include <mutex>
 
@@ -17,17 +17,16 @@ public:
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
-		m_bulletproofsCache.insert(commitment, commitment);
+		m_bulletproofsCache.Put(commitment, commitment);
 	}
 
 	bool WasAlreadyVerified(const Commitment& commitment) const
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
-		auto iter = m_bulletproofsCache.find(commitment);
-		if (iter != m_bulletproofsCache.end() && iter->value() == commitment)
+		if (m_bulletproofsCache.Cached(commitment))
 		{
-			return true;
+			return m_bulletproofsCache.Get(commitment) == commitment;
 		}
 
 		return false;
@@ -35,5 +34,5 @@ public:
 
 private:
 	mutable std::mutex m_mutex;
-	mutable LRU::Cache<Commitment, Commitment> m_bulletproofsCache;
+	mutable LRUCache<Commitment, Commitment> m_bulletproofsCache;
 };

@@ -5,7 +5,7 @@
 #include <Crypto/Hash.h>
 #include <Core/Models/FullBlock.h>
 #include <unordered_map>
-#include <lru/cache.hpp>
+#include <Caches/Cache.h>
 
 class OrphanPool
 {
@@ -22,5 +22,5 @@ public:
 
 private:
 	std::unordered_map<uint64_t, std::vector<Orphan>> m_orphansByHeight;
-	LRU::Cache<Hash, BlockHeaderPtr> m_orphanHeadersByHash;
+	LRUCache<Hash, BlockHeaderPtr> m_orphanHeadersByHash;
 };

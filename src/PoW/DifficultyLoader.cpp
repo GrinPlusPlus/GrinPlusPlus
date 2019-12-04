@@ -1,10 +1,6 @@
 #include "DifficultyLoader.h"
 
 #include <Consensus/BlockDifficulty.h>
-#include <lru/cache.hpp>
-
-// TODO: A FIFO cache would be more appropriate.
-LRU::Cache<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
 
 DifficultyLoader::DifficultyLoader(std::shared_ptr<const IBlockDB> pBlockDB)
 	: m_pBlockDB(pBlockDB)
@@ -39,28 +35,12 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 		}
 	}
 
-	BLOCK_HEADERS_CACHE.insert(header.GetHash(), std::make_shared<BlockHeader>(header));
-
 	return PadDifficultyData(difficultyData);
 }
 
 BlockHeaderPtr DifficultyLoader::LoadHeader(const Hash& headerHash) const
 {
-	auto iter = BLOCK_HEADERS_CACHE.find(headerHash);
-	if (iter != BLOCK_HEADERS_CACHE.end())
-	{
-		return iter->second;
-	}
-	else
-	{
-		BlockHeaderPtr pHeader = m_pBlockDB->GetBlockHeader(headerHash);
-		if (pHeader != nullptr)
-		{
-			BLOCK_HEADERS_CACHE.insert(headerHash, pHeader);
-		}
-
-		return pHeader;
-	}
+	return m_pBlockDB->GetBlockHeader(headerHash);
 }
 
 // Converts an iterator of block difficulty data to more a more manageable

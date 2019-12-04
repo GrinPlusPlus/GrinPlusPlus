@@ -70,11 +70,6 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		return Finalize(pConnection, walletManager, token, requestBodyOpt.value());
 	}
-	else if (action == "post_tx")
-	{
-		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return PostTx(pConnection, nodeClient, token, requestBodyOpt.value());
-	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
 }
@@ -236,20 +231,6 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 	Slate finalizedSlate = walletManager.Finalize(finalizeCriteria);
 
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, finalizedSlate.ToJSON());
-}
-
-int OwnerPostAPI::PostTx(mg_connection* pConnection, INodeClient& nodeClient, const SessionToken& token, const Json::Value& json)
-{
-	Transaction transaction = Transaction::FromJSON(json);
-
-	if (nodeClient.PostTransaction(std::make_shared<Transaction>(transaction), EPoolType::STEMPOOL))
-	{
-		return HTTPUtil::BuildSuccessResponse(pConnection, "");
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
-	}
 }
 
 int OwnerPostAPI::Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)

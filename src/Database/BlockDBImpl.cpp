@@ -3,16 +3,12 @@
 #include <Database/DatabaseException.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <caches/include/cache.hpp>
-#include <caches/include/fifo_cache_policy.hpp>
+#include <caches/Cache.h>
 #include <utility>
 #include <string>
 #include <filesystem.h>
 
-template <typename Key, typename Value>
-using fifo_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::FIFOCachePolicy<Key>>;
-
-fifo_cache_t<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
+FIFOCache<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
 
 BlockDB::BlockDB(
 	const Config& config,

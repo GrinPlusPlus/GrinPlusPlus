@@ -69,7 +69,6 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps
 	${PROJECT_SOURCE_DIR}/deps/mio/include
 	${PROJECT_SOURCE_DIR}/deps/stduuid/include
-	${PROJECT_SOURCE_DIR}/deps/lru
 	${PROJECT_SOURCE_DIR}/deps/asio/asio/include
 	${PROJECT_SOURCE_DIR}/deps/ghc
 	${PROJECT_SOURCE_DIR}/deps/rocksdb/include

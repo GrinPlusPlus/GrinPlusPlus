@@ -36,7 +36,7 @@ Commitment Pedersen::PedersenCommit(const uint64_t value, const BlindingFactor& 
 		return Commitment(CBigInteger<33>(std::move(serializedCommitment)));
 	}
 
-	LOG_ERROR_F("Failed to create commitment. Result: %d, Value: %llu", result, value);
+	LOG_ERROR_F("Failed to create commitment. Result: {}, Value: {}", result, value);
 	throw CryptoException("Failed to create commitment.");
 }
 
@@ -62,7 +62,7 @@ Commitment Pedersen::PedersenCommitSum(const std::vector<Commitment>& positive, 
 
 	if (result != 1)
 	{
-		LOG_ERROR_F("secp256k1_pedersen_commit_sum returned result: %d", result);
+		LOG_ERROR_F("secp256k1_pedersen_commit_sum returned result: {}", result);
 		throw CryptoException("secp256k1_pedersen_commit_sum error");
 	}
 
@@ -71,7 +71,7 @@ Commitment Pedersen::PedersenCommitSum(const std::vector<Commitment>& positive, 
 	const int serializeResult = secp256k1_pedersen_commitment_serialize(m_pContext, &serializedCommitment[0], &commitment);
 	if (serializeResult != 1)
 	{
-		LOG_ERROR_F("secp256k1_pedersen_commitment_serialize returned result: %d", serializeResult);
+		LOG_ERROR_F("secp256k1_pedersen_commitment_serialize returned result: {}", serializeResult);
 		throw CryptoException("secp256k1_pedersen_commitment_serialize error");
 	}
 
@@ -107,7 +107,7 @@ BlindingFactor Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& pos
 		return BlindingFactor(std::move(blindingFactorBytes));
 	}
 
-	LOG_ERROR_F("secp256k1_pedersen_blind_sum returned result: %d", result);
+	LOG_ERROR_F("secp256k1_pedersen_blind_sum returned result: {}", result);
 	throw CryptoException("secp256k1_pedersen_blind_sum error");
 }
 

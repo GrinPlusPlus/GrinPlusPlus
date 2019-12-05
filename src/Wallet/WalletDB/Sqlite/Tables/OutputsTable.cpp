@@ -17,7 +17,7 @@ void OutputsTable::CreateTable(sqlite3& database)
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Create outputs table failed with error: %s", error);
+		WALLET_ERROR_F("Create outputs table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error creating outputs table.");
 	}
@@ -35,7 +35,7 @@ void OutputsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSee
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Create new_outputs table failed with error: %s", error);
+		WALLET_ERROR_F("Create new_outputs table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error creating new_outputs table.");
 	}
@@ -50,7 +50,7 @@ void OutputsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSee
 	const std::string dropTable = "DROP TABLE outputs";
 	if (sqlite3_exec(&database, dropTable.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Dropping outputs table failed with error: %s", error);
+		WALLET_ERROR_F("Dropping outputs table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error dropping outputs table.");
 	}
@@ -59,7 +59,7 @@ void OutputsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSee
 	const std::string renameTable = "ALTER TABLE new_outputs RENAME TO outputs";
 	if (sqlite3_exec(&database, renameTable.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Renaming new_outputs table failed with error: %s", error);
+		WALLET_ERROR_F("Renaming new_outputs table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error renaming new_outputs table.");
 	}
@@ -79,7 +79,7 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 		insert += " ON CONFLICT(commitment) DO UPDATE SET status=excluded.status, transaction_id=excluded.transaction_id, encrypted=excluded.encrypted";
 		if (sqlite3_prepare_v2(&database, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+			WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 			sqlite3_finalize(stmt);
 			throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 		}
@@ -107,7 +107,7 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 
 		if (sqlite3_finalize(stmt) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+			WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 			throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 		}
 	}
@@ -125,7 +125,7 @@ std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const Secure
 	const std::string query = "select encrypted from outputs";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -147,12 +147,12 @@ std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const Secure
 
 	if (ret_code != SQLITE_DONE)
 	{
-		WALLET_ERROR_F("Error while performing sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while performing sql: {}", sqlite3_errmsg(&database));
 	}
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 

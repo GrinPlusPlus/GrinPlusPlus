@@ -39,12 +39,12 @@ public:
 		}
 		else
 		{
-			LOG_INFO_F("File (%s) does not exist. Creating it now.", m_path);
+			LOG_INFO_F("File {} does not exist. Creating it now.", m_path);
 			std::ofstream outFile(m_path, std::ios::out | std::ios::binary | std::ios::app);
 			if (!outFile.is_open())
 			{
-				LOG_ERROR_F("Failed to create file: %s", m_path);
-				throw FILE_EXCEPTION_F("Failed to create file: %s", m_path);
+				LOG_ERROR_F("Failed to create file: {}", m_path);
+				throw FILE_EXCEPTION_F("Failed to create file: {}", m_path);
 			}
 
 			outFile.close();
@@ -59,8 +59,8 @@ public:
 			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
-				LOG_ERROR_F("Failed to mmap file: %d", error.value());
-				throw FILE_EXCEPTION_F("Failed to mmap file: %s", m_path);
+				LOG_ERROR_F("Failed to mmap file: {}", error.value());
+				throw FILE_EXCEPTION_F("Failed to mmap file: {}", m_path);
 			}
 		}
 	}
@@ -113,7 +113,7 @@ public:
 			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
 			if (error.value() > 0)
 			{
-				LOG_ERROR_F("Failed to mmap file: %d", error.value());
+				LOG_ERROR_F("Failed to mmap file: {}", error.value());
 			}
 		}
 

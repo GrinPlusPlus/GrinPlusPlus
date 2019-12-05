@@ -21,7 +21,7 @@ public:
 	static std::shared_ptr<Server> Create(const EServerType type, const std::optional<uint16_t>& port)
 	{
 		std::string listenerAddr = type == EServerType::LOCAL ? "127.0.0.1" : "0.0.0.0";
-		std::string listeningPort = StringUtil::Format("%s:%lu", listenerAddr, port.value_or(0));
+		std::string listeningPort = StringUtil::Format("{}:{}", listenerAddr, port.value_or(0));
 
 		const char* pOptions[] = {
 			"num_threads", "4",

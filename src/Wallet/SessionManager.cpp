@@ -33,7 +33,7 @@ Locked<SessionManager> SessionManager::Create(
 
 SessionToken SessionManager::Login(const std::string& username, const SecureString& password)
 {
-	WALLET_DEBUG_F("Logging in with username: %s", username);
+	WALLET_DEBUG_F("Logging in with username: {}", username);
 	try
 	{
 		EncryptedSeed seed = m_pWalletDB->LoadWalletSeed(username);

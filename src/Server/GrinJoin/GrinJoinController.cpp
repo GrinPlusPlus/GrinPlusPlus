@@ -52,7 +52,7 @@ void GrinJoinController::Thread_Process(GrinJoinController* pController, ITransa
 		}
 		catch (std::exception& e)
 		{
-			LOG_ERROR_F("Exception thrown: %s", e.what());
+			LOG_ERROR_F("Exception thrown: {}", e.what());
 		}
 	}
 }

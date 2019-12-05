@@ -43,7 +43,7 @@ bool TxHashSetZip::Extract(const fs::path& path, const BlockHeader& header) cons
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Failed to extract %s. Exception thrown: %s", path, e.what());
+		LOG_ERROR_F("Failed to extract {}. Exception thrown: {}", path, e.what());
 	}
 
 	return false;
@@ -116,7 +116,7 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 		LOG_DEBUG("RangeProof folder exists. Deleting its contents now.");
 		std::error_code errorCode;
 		const uint64_t removedFiles = fs::remove_all(rangeProofPath, errorCode);
-		LOG_DEBUG_F("%llu files removed with error_code %d", removedFiles, errorCode.value());
+		LOG_DEBUG_F("{} files removed with error_code {}", removedFiles, errorCode.value());
 	}
 
 	const bool rangeProofDirCreated = fs::create_directories(rangeProofPath);

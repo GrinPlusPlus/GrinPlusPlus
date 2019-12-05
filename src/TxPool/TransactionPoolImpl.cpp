@@ -36,7 +36,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 
 	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(*pTransaction))
 	{
-		LOG_TRACE_F("Duplicate transaction (%s)", *pTransaction);
+		LOG_TRACE_F("Duplicate transaction ({})", *pTransaction);
 		return EAddTransactionStatus::DUPLICATE;
 	}
 
@@ -44,7 +44,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	const uint64_t feeBase = 1000000; // TODO: Read from config.
 	if (FeeUtil::CalculateMinimumFee(feeBase, *pTransaction) > FeeUtil::CalculateActualFee(*pTransaction))
 	{
-		LOG_WARNING_F("Fee too low for transaction (%s)", *pTransaction);
+		LOG_WARNING_F("Fee too low for transaction ({})", *pTransaction);
 		return EAddTransactionStatus::LOW_FEE;
 	}
 	
@@ -53,7 +53,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	{
 		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
 		{
-			LOG_INFO_F("Invalid lock height (%s)", *pTransaction);
+			LOG_INFO_F("Invalid lock height ({})", *pTransaction);
 			return EAddTransactionStatus::NOT_ADDED;
 		}
 	}
@@ -64,14 +64,14 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 	catch (std::exception& e)
 	{
-		LOG_WARNING_F("Invalid transaction (%s). Error: (%s)", *pTransaction, e.what());
+		LOG_WARNING_F("Invalid transaction ({}). Error: ({})", *pTransaction, e.what());
 		return EAddTransactionStatus::TX_INVALID;
 	}
 
 	// Check all inputs are in current UTXO set & all outputs unique in current UTXO set
 	if (pTxHashSet == nullptr || !pTxHashSet->IsValid(pBlockDB, *pTransaction))
 	{
-		LOG_WARNING_F("Transaction inputs/outputs not valid (%s)", *pTransaction);
+		LOG_WARNING_F("Transaction inputs/outputs not valid ({})", *pTransaction);
 		return EAddTransactionStatus::NOT_ADDED;
 	}
 
@@ -85,12 +85,12 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 		const uint8_t random = (uint8_t)RandomNumberGenerator::GenerateRandom(0, 100);
 		if (random <= m_config.GetDandelionConfig().GetStemProbability())
 		{
-			LOG_INFO_F("Stemming transaction (%s)", *pTransaction);
+			LOG_INFO_F("Stemming transaction ({})", *pTransaction);
 			m_stemPool.AddTransaction(pTransaction, EDandelionStatus::TO_STEM);
 		}
 		else
 		{
-			LOG_INFO_F("Fluffing transaction (%s)", *pTransaction);
+			LOG_INFO_F("Fluffing transaction ({})", *pTransaction);
 			m_stemPool.AddTransaction(pTransaction, EDandelionStatus::TO_FLUFF);
 		}
 	}
@@ -214,7 +214,7 @@ void TransactionPool::FluffJoinPool()
 	TransactionPtr pAggregatedTx = m_joinPool.Aggregate();
 	if (pAggregatedTx != nullptr)
 	{
-		LOG_INFO_F("Fluffing transaction with (%llu) kernels", pAggregatedTx->GetKernels().size());
+		LOG_INFO_F("Fluffing transaction with {} kernels", pAggregatedTx->GetKernels().size());
 		m_stemPool.AddTransaction(pAggregatedTx, EDandelionStatus::TO_FLUFF);
 	}
 

@@ -39,6 +39,41 @@ public:
 		return SlatePaymentProof(senderAddress, receiverAddress, receiverSignatureOpt);
 	}
 
+	void Serialize(Serializer& serializer) const
+	{
+		serializer.AppendBigInteger<32>(CBigInteger<32>(m_senderAddress.pubkey));
+		serializer.AppendBigInteger<32>(CBigInteger<32>(m_receiverAddress.pubkey));
+
+		if (m_receiverSignatureOpt.has_value())
+		{
+			serializer.Append<uint8_t>(1);
+			serializer.AppendBigInteger<64>(m_receiverSignatureOpt.value().GetSignatureBytes());
+		}
+		else
+		{
+			serializer.Append<uint8_t>(0);
+		}
+	}
+
+	static SlatePaymentProof Deserialize(ByteBuffer& byteBuffer)
+	{
+		ed25519_public_key_t senderAddress;
+		senderAddress.pubkey = byteBuffer.ReadBigInteger<32>().GetData();
+
+		ed25519_public_key_t receiverAddress;
+		receiverAddress.pubkey = byteBuffer.ReadBigInteger<32>().GetData();
+
+		std::optional<Signature> receiverSignatureOpt = std::nullopt;
+
+		const uint8_t hasSignature = byteBuffer.ReadU8();
+		if (hasSignature == 1)
+		{
+			receiverSignatureOpt = std::make_optional(Signature::Deserialize(byteBuffer));
+		}
+
+		return SlatePaymentProof(senderAddress, receiverAddress, receiverSignatureOpt);
+	}
+
 private:
 	SlatePaymentProof(
 		const ed25519_public_key_t& senderAddress,

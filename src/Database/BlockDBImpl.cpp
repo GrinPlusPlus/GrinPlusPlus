@@ -135,7 +135,7 @@ void BlockDB::Commit()
 	const Status status = m_pTransaction->Commit();
 	if (!status.ok())
 	{
-		LOG_ERROR_F("Transaction::Commit failed with error (%s)", status.getState());
+		LOG_ERROR_F("Transaction::Commit failed with error ({})", status.getState());
 		throw DATABASE_EXCEPTION("Transaction::Commit Failed with error: " + std::string(status.getState()));
 	}
 
@@ -153,7 +153,7 @@ void BlockDB::Rollback()
 	const Status status = m_pTransaction->Rollback();
 	if (!status.ok())
 	{
-		LOG_ERROR_F("Transaction::Rollback failed with error (%s)", status.getState());
+		LOG_ERROR_F("Transaction::Rollback failed with error ({})", status.getState());
 		throw DATABASE_EXCEPTION("Transaction::Rollback Failed with error: " + std::string(status.getState()));
 	}
 }
@@ -214,12 +214,12 @@ BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 		}
 		else if (status.IsNotFound())
 		{
-			LOG_ERROR_F("Header not found for hash %s", hash);
+			LOG_ERROR_F("Header not found for hash {}", hash);
 			return nullptr;
 		}
 		else
 		{
-			LOG_ERROR_F("DB::Get failed for hash (%s) with error (%s)", hash, status.getState());
+			LOG_ERROR_F("DB::Get failed for hash ({}) with error ({})", hash, status.getState());
 			throw DATABASE_EXCEPTION("DB::Get Failed with error: " + std::string(status.getState()));
 		}
 	}
@@ -229,14 +229,14 @@ BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION(e.what());
 	}
 }
 
 void BlockDB::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
-	LOG_TRACE_F("Adding header %s", *pBlockHeader);
+	LOG_TRACE_F("Adding header {}", *pBlockHeader);
 
 	try
 	{
@@ -250,7 +250,7 @@ void BlockDB::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 		const Status status = Write(m_pHeaderHandle, Slice(key), value);
 		if (!status.ok())
 		{
-			LOG_ERROR_F("DB::Put failed for header (%s) with error (%s)", hash, status.getState());
+			LOG_ERROR_F("DB::Put failed for header ({}) with error ({})", hash, status.getState());
 			throw DATABASE_EXCEPTION("DB::Put Failed with error: " + std::string(status.getState()));
 		}
 		
@@ -269,14 +269,14 @@ void BlockDB::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION("Error occurred: " + std::string(e.what()));
 	}
 }
 
 void BlockDB::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 {
-	LOG_TRACE_F("Adding (%llu) headers.", blockHeaders.size());
+	LOG_TRACE_F("Adding {} headers.", blockHeaders.size());
 
 	try
 	{
@@ -294,7 +294,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 			status = m_pTransaction->Put(m_pHeaderHandle, key, value);
 			if (!status.ok())
 			{
-				LOG_ERROR_F("WriteBatch::put failed for header (%s) with error (%s)", *pBlockHeader, status.getState());
+				LOG_ERROR_F("WriteBatch::put failed for header ({}) with error ({})", *pBlockHeader, status.getState());
 				throw DATABASE_EXCEPTION("WriteBatch::put failed with error: " + std::string(status.getState()));
 			}
 		}
@@ -305,7 +305,7 @@ void BlockDB::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION("Error occurred: " + std::string(e.what()));
 	}
 
@@ -325,7 +325,7 @@ void BlockDB::AddBlock(const FullBlock& block)
 	const Status status = Write(m_pBlockHandle, Slice(key), value);
 	if (!status.ok())
 	{
-		LOG_ERROR_F("Failed to save Block: %s", block);
+		LOG_ERROR_F("Failed to save Block: {}", block);
 		throw DATABASE_EXCEPTION("Failed to save Block.");
 	}
 }
@@ -349,7 +349,7 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 {
-	LOG_TRACE_F("Adding BlockSums for block %s", blockHash);
+	LOG_TRACE_F("Adding BlockSums for block {}", blockHash);
 
 	Slice key((const char*)blockHash.data(), blockHash.size());
 
@@ -362,7 +362,7 @@ void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 	const Status status = Write(m_pBlockSumsHandle, key, value);
 	if (!status.ok())
 	{
-		LOG_ERROR_F("Failed to save BlockSums for %s", blockHash);
+		LOG_ERROR_F("Failed to save BlockSums for {}", blockHash);
 		throw DATABASE_EXCEPTION("Failed to save BlockSums.");
 	}
 }
@@ -399,7 +399,7 @@ void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const Output
 	const Status status = Write(m_pOutputPosHandle, key, value);
 	if (!status.ok())
 	{
-		LOG_ERROR_F("Failed to save location for output %s", outputCommitment);
+		LOG_ERROR_F("Failed to save location for output {}", outputCommitment);
 		throw DATABASE_EXCEPTION("Failed to save output location.");
 	}
 }
@@ -436,7 +436,7 @@ void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 		const size_t bytesWritten = bitmap.write(serializedBitmap.data(), true);
 		if (bytesWritten != bitmapSize)
 		{
-			LOG_ERROR_F("Expected to write %llu bytes but wrote %llu", bitmapSize, bytesWritten);
+			LOG_ERROR_F("Expected to write {} bytes but wrote {}", bitmapSize, bytesWritten);
 			throw DATABASE_EXCEPTION("Roaring bitmap did not serialize to expected number of bytes.");
 		}
 
@@ -451,7 +451,7 @@ void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION(e.what());
 	}
 }
@@ -472,12 +472,12 @@ std::unique_ptr<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) con
 		}
 		else if (s.IsNotFound())
 		{
-			LOG_ERROR_F("Block input bitmap not found for block %s", blockHash);
+			LOG_ERROR_F("Block input bitmap not found for block {}", blockHash);
 			return nullptr;
 		}
 		else
 		{
-			LOG_ERROR_F("DB::Get failed for block (%s) with error (%s)", blockHash, s.getState());
+			LOG_ERROR_F("DB::Get failed for block ({}) with error ({})", blockHash, s.getState());
 			throw DATABASE_EXCEPTION("DB::Get Failed with error: " + std::string(s.getState()));
 		}
 	}
@@ -487,7 +487,7 @@ std::unique_ptr<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) con
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION(e.what());
 	}
 }

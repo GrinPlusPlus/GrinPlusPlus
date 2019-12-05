@@ -21,7 +21,7 @@ bool ConfigWriter::SaveConfig(const Config& config, const std::string& configPat
 	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!file.is_open())
 	{
-		LOG_ERROR_F("Failed to save config file at: %S", path.wstring());
+		LOG_ERROR_F("Failed to save config file at: {}", path.wstring());
 		return false;
 	}
 

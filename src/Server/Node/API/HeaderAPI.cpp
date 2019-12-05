@@ -44,17 +44,17 @@ BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockCh
 			auto pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
 			if (pHeader != nullptr)
 			{
-				LOG_INFO_F("Found header with hash %s.", requestedHeader);
+				LOG_INFO_F("Found header with hash {}.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LOG_INFO_F("No header found with hash %s.", requestedHeader);
+				LOG_INFO_F("No header found with hash {}.", requestedHeader);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LOG_ERROR_F("Failed converting %s to a Hash.", requestedHeader);
+			LOG_ERROR_F("Failed converting {} to a Hash.", requestedHeader);
 		}
 	}
 	else if (requestedHeader.length() == 66 && HexUtil::IsValidHex(requestedHeader))
@@ -65,17 +65,17 @@ BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockCh
 			auto pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
 			if (pHeader != nullptr)
 			{
-				LOG_INFO_F("Found header with output commitment %s.", requestedHeader);
+				LOG_INFO_F("Found header with output commitment {}.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LOG_INFO_F("No header found with commitment %s.", requestedHeader);
+				LOG_INFO_F("No header found with commitment {}.", requestedHeader);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LOG_ERROR_F("Failed converting %s to a Commitment.", requestedHeader);
+			LOG_ERROR_F("Failed converting {} to a Commitment.", requestedHeader);
 		}
 	}
 	else
@@ -88,17 +88,17 @@ BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockCh
 			auto pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 			if (pHeader != nullptr)
 			{
-				LOG_INFO_F("Found header at height %s.", requestedHeader);
+				LOG_INFO_F("Found header at height {}.", requestedHeader);
 				return pHeader;
 			}
 			else
 			{
-				LOG_INFO_F("No header found at height %s.", requestedHeader);
+				LOG_INFO_F("No header found at height {}.", requestedHeader);
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			LOG_ERROR_F("Failed converting %s to height.", requestedHeader);
+			LOG_ERROR_F("Failed converting {} to height.", requestedHeader);
 		}
 	}
 

@@ -61,17 +61,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHash(hash);
 			if (pBlock != nullptr)
 			{
-				LOG_DEBUG_F("Found block with hash %s.", requestedBlock);
+				LOG_DEBUG_F("Found block with hash {}.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LOG_INFO_F("No block found with hash %s.", requestedBlock);
+				LOG_INFO_F("No block found with hash {}.", requestedBlock);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LOG_ERROR_F("Failed converting %s to a Hash.", requestedBlock);
+			LOG_ERROR_F("Failed converting {} to a Hash.", requestedBlock);
 		}
 	}
 	else if (requestedBlock.length() == 66 && HexUtil::IsValidHex(requestedBlock))
@@ -82,17 +82,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByCommitment(outputCommitment);
 			if (pBlock != nullptr)
 			{
-				LOG_DEBUG_F("Found block with output commitment %s.", requestedBlock);
+				LOG_DEBUG_F("Found block with output commitment {}.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LOG_INFO_F("No block found with commitment %s.", requestedBlock);
+				LOG_INFO_F("No block found with commitment {}.", requestedBlock);
 			}
 		}
 		catch (const std::exception&)
 		{
-			LOG_ERROR_F("Failed converting %s to a Commitment.", requestedBlock);
+			LOG_ERROR_F("Failed converting {} to a Commitment.", requestedBlock);
 		}
 	}
 	else
@@ -105,17 +105,17 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHeight(height);
 			if (pBlock != nullptr)
 			{
-				LOG_INFO_F("Found block at height %s.", requestedBlock);
+				LOG_INFO_F("Found block at height {}.", requestedBlock);
 				return pBlock;
 			}
 			else
 			{
-				LOG_INFO_F("No block found at height %s.", requestedBlock);
+				LOG_INFO_F("No block found at height {}.", requestedBlock);
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			LOG_ERROR_F("Failed converting %s to height.", requestedBlock);
+			LOG_ERROR_F("Failed converting {} to height.", requestedBlock);
 		}
 	}
 

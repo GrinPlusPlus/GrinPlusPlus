@@ -41,7 +41,7 @@ public:
 	//
 	// Destructor
 	//
-	~BlockHeader() = default;
+	virtual ~BlockHeader() = default;
 
 	//
 	// Operators

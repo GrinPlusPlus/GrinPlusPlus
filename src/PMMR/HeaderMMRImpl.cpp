@@ -24,7 +24,7 @@ void HeaderMMR::Commit()
 	if (IsDirty())
 	{
 		const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
-		LOG_TRACE_F("Flushing - Height: %llu, Size: %llu", height, m_batchDataOpt.value().hashFile->GetSize());
+		LOG_TRACE_F("Flushing - Height: {}, Size: {}", height, m_batchDataOpt.value().hashFile->GetSize());
 		m_batchDataOpt.value().hashFile->Commit();
 		SetDirty(false);
 	}
@@ -45,7 +45,7 @@ void HeaderMMR::Rewind(const uint64_t size)
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
 	if (mmrSize != m_batchDataOpt.value().hashFile->GetSize())
 	{
-		LOG_DEBUG_F("Rewinding to height %llu - %llu hashes", size, mmrSize);
+		LOG_DEBUG_F("Rewinding to height {} - {} hashes", size, mmrSize);
 		m_batchDataOpt.value().hashFile->Rewind(mmrSize);
 		SetDirty(true);
 	}
@@ -53,7 +53,7 @@ void HeaderMMR::Rewind(const uint64_t size)
 
 void HeaderMMR::AddHeader(const BlockHeader& header)
 {
-	LOG_TRACE_F("Adding header at height %llu - MMR size %llu", header.GetHeight(), m_batchDataOpt.value().hashFile->GetSize());
+	LOG_TRACE_F("Adding header at height {} - MMR size {}", header.GetHeight(), m_batchDataOpt.value().hashFile->GetSize());
 
 	// Serialize header
 	Serializer serializer;

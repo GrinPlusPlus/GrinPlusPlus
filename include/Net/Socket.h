@@ -14,7 +14,7 @@ class Socket : public Traits::IPrintable
 {
 public:
 	Socket(const SocketAddress& address);
-	~Socket();
+	virtual ~Socket();
 
 	bool Connect(std::shared_ptr<asio::io_context> pContext);
 	bool Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);

@@ -38,11 +38,11 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 
 	for (auto seed : dnsSeeds)
 	{
-		LOG_TRACE_F("Checking seed: %s", seed);
+		LOG_TRACE_F("Checking seed: {}", seed);
 		const std::vector<IPAddress> ipAddresses = Resolve(seed);
 		for (const IPAddress ipAddress : ipAddresses)
 		{
-			LOG_TRACE_F("IP Address: %s", ipAddress);
+			LOG_TRACE_F("IP Address: {}", ipAddress);
 			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
 		}
 
@@ -74,13 +74,13 @@ std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
 				}
 				catch (std::exception& e)
 				{
-					LOG_INFO_F("Exception thrown: %s", e.what());
+					LOG_INFO_F("Exception thrown: {}", e.what());
 				}
 			});
 	}
 	else
 	{
-		LOG_TRACE_F("Error: %s", errorCode.message());
+		LOG_TRACE_F("Error: {}", errorCode.message());
 	}
 	
 

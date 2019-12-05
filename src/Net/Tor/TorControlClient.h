@@ -18,7 +18,7 @@ public:
 		}
 		catch (asio::system_error& e)
 		{
-			LOG_ERROR_F("Connection to %s failed with error %s.", address, e.what());
+			LOG_ERROR_F("Connection to {} failed with error {}.", address, e.what());
 			return false;
 		}
 	}

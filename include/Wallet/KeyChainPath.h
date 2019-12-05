@@ -18,6 +18,8 @@ public:
 
 	}
 
+	virtual ~KeyChainPath() = default;
+
 	//
 	// Operators
 	//

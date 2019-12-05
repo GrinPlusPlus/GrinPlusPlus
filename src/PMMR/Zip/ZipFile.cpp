@@ -20,7 +20,7 @@ std::shared_ptr<ZipFile> ZipFile::Load(const fs::path& zipFilePath)
 	unzFile unzFile = unzOpen(zipFilePath.u8string().c_str());
 	if (unzFile == NULL)
 	{
-		LOG_ERROR_F("Zip file (%s) failed to open.", zipFilePath);
+		LOG_ERROR_F("Zip file ({}) failed to open.", zipFilePath);
 		throw FILE_EXCEPTION("Failed to open zip file");
 	}
 
@@ -31,21 +31,21 @@ void ZipFile::ExtractFile(const std::string& path, const fs::path& destination) 
 {
 	if (unzLocateFile(m_unzFile, path.c_str(), 0) != UNZ_OK)
 	{
-		LOG_INFO_F("Path (%s) in zip file (%s) was not found.", path, m_zipFilePath);
+		LOG_INFO_F("Path ({}) in zip file ({}) was not found.", path, m_zipFilePath);
 		throw FILE_EXCEPTION("File not found");
 	}
 
 	int openResult = unzOpenCurrentFile(m_unzFile);
 	if (openResult != UNZ_OK)
 	{
-		LOG_INFO_F("Failed to open path (%s) in zip file (%s).", path, m_zipFilePath);
+		LOG_INFO_F("Failed to open path ({}) in zip file ({}).", path, m_zipFilePath);
 		throw FILE_EXCEPTION("Failed to open file");
 	}
 
 	std::ofstream destinationFile(destination, std::ios::out | std::ios::binary | std::ios::ate);
 	if (!destinationFile.is_open())
 	{
-		LOG_WARNING_F("Failed to write to destination (%s).", destination);
+		LOG_WARNING_F("Failed to write to destination ({}).", destination);
 		throw FILE_EXCEPTION("Failed to write to destination");
 	}
 

@@ -129,7 +129,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxById(const SecureVector& masterSeed, cons
 		}
 	}
 
-	WALLET_INFO_F("Could not find transaction %lu", walletTxId);
+	WALLET_INFO_F("Could not find transaction {}", walletTxId);
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 

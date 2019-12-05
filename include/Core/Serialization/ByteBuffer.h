@@ -179,7 +179,7 @@ public:
 
 		m_index += NUM_BYTES;
 
-		return CBigInteger<NUM_BYTES>(data);
+		return CBigInteger<NUM_BYTES>(std::move(data));
 	}
 
 	std::vector<unsigned char> ReadVector(const uint64_t numBytes)

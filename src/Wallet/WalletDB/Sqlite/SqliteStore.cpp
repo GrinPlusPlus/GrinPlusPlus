@@ -20,7 +20,7 @@ std::shared_ptr<SqliteStore> SqliteStore::Open(const Config& config)
 
 std::string SqliteStore::GetDBFile(const std::string& username) const
 {
-	return StringUtil::Format("%s/%s/wallet.db", m_walletDirectory, username);
+	return StringUtil::Format("{}/{}/wallet.db", m_walletDirectory, username);
 }
 
 std::vector<std::string> SqliteStore::GetAccounts() const
@@ -33,7 +33,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 	auto iter = m_userDBs.find(username);
 	if (iter != m_userDBs.end())
 	{
-		WALLET_DEBUG_F("wallet.db already open for user: %s", username);
+		WALLET_DEBUG_F("wallet.db already open for user: {}", username);
 		return iter->second;
 	}
 
@@ -49,7 +49,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 	{
 		if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Failed to open wallet.db for user (%s) with error (%s)", username, sqlite3_errmsg(pDatabase));
+			WALLET_ERROR_F("Failed to open wallet.db for user ({}) with error ({})", username, sqlite3_errmsg(pDatabase));
 			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
 		}
 
@@ -93,7 +93,7 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 
 	if (!FileUtil::CreateDirectories(userDBPath))
 	{
-		WALLET_ERROR_F("Failed to create wallet directory for user: %s", username);
+		WALLET_ERROR_F("Failed to create wallet directory for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to create directory.");
 	}
 
@@ -101,7 +101,7 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 	const std::vector<unsigned char> seedBytes(seedJSON.data(), seedJSON.data() + seedJSON.size());
 	if (!FileUtil::SafeWriteToFile(seedFile, seedBytes))
 	{
-		WALLET_ERROR_F("Failed to create seed.json for user: %s", username);
+		WALLET_ERROR_F("Failed to create seed.json for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to create seed.json");
 	}
 
@@ -118,7 +118,7 @@ sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 	sqlite3* pDatabase = nullptr;
 	if (sqlite3_open(walletDBFile.c_str(), &pDatabase) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Failed to create wallet.db for user (%s) with error (%s)", username, sqlite3_errmsg(pDatabase));
+		WALLET_ERROR_F("Failed to create wallet.db for user ({}) with error ({})", username, sqlite3_errmsg(pDatabase));
 		sqlite3_close(pDatabase);
 		FileUtil::RemoveFile(walletDBFile);
 
@@ -145,7 +145,7 @@ sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 		char* error = nullptr;
 		if (sqlite3_exec(pDatabase, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Failed to create DB tables for user: %s", username);
+			WALLET_ERROR_F("Failed to create DB tables for user: {}", username);
 			sqlite3_free(error);
 		}
 
@@ -163,19 +163,19 @@ sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 
 EncryptedSeed SqliteStore::LoadWalletSeed(const std::string& username) const
 {
-	WALLET_TRACE_F("Loading wallet seed for %s", username);
+	WALLET_TRACE_F("Loading wallet seed for {}", username);
 
 	const std::string seedPath = m_walletDirectory + "/" + username + "/seed.json";
 	if (!FileUtil::Exists(seedPath))
 	{
-		WALLET_WARNING_F("Wallet not found for user: %s", username);
+		WALLET_WARNING_F("Wallet not found for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Wallet not found.");
 	}
 
 	std::vector<unsigned char> seedBytes;
 	if (!FileUtil::ReadFile(seedPath, seedBytes))
 	{
-		WALLET_ERROR_F("Failed to load seed.json for user: %s", username);
+		WALLET_ERROR_F("Failed to load seed.json for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to load seed.json");
 	}
 
@@ -184,7 +184,7 @@ EncryptedSeed SqliteStore::LoadWalletSeed(const std::string& username) const
 	Json::Value seedJSON;
 	if (!JsonUtil::Parse(seed, seedJSON))
 	{
-		WALLET_ERROR_F("Failed to deserialize seed.json for user: %s", username);
+		WALLET_ERROR_F("Failed to deserialize seed.json for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to deserialize seed.json");
 	}
 

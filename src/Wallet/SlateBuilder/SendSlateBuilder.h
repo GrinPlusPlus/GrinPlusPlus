@@ -38,7 +38,8 @@ private:
 		const std::vector<OutputData>& changeOutputs,
 		const Slate& slate,
 		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt
+		const std::optional<std::string>& messageOpt,
+		const std::optional<SlatePaymentProof>& proofOpt
 	) const;
 
 	void UpdateDatabase(

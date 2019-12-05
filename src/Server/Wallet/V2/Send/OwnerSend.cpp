@@ -64,7 +64,7 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 	params.append(criteria.GetMsg().has_value() ? criteria.GetMsg().value() : Json::Value(Json::nullValue));
 	RPC::Request receiveTxRequest = RPC::Request::BuildRequest("receive_tx", params);
 	std::string result = receiveTxRequest.ToJSON().toStyledString();
-	LOG_ERROR_F("%s", result);
+	LOG_ERROR_F("{}", result);
 	RPC::Response receiveTxResponse = pTorConnection->Invoke(receiveTxRequest, "/v2/foreign");
 
 	if (receiveTxResponse.GetError().has_value())
@@ -75,7 +75,7 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 	else
 	{
 		result = receiveTxResponse.GetResult().value().toStyledString();
-		LOG_ERROR_F("%s", result);
+		LOG_ERROR_F("{}", result);
 		Json::Value okJson = JsonUtil::GetRequiredField(receiveTxResponse.GetResult().value(), "Ok");
 		try
 		{
@@ -127,7 +127,7 @@ uint16_t OwnerSend::CheckVersion(TorConnection& connection) const
 		const RPC::Response response = connection.Invoke(checkVersionRequest, "/v2/foreign");
 		if (response.GetError().has_value())
 		{
-			LOG_ERROR_F("check_version failed with error: %s", response.GetError().value().GetMsg());
+			LOG_ERROR_F("check_version failed with error: {}", response.GetError().value().GetMsg());
 			throw HTTP_EXCEPTION("check_version call failed");
 		}
 
@@ -158,7 +158,7 @@ uint16_t OwnerSend::CheckVersion(TorConnection& connection) const
 	}
 	catch (const std::exception& e)
 	{
-		LOG_ERROR_F("Exception thrown: %s", e.what());
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 		throw HTTP_EXCEPTION("Error occurred during check_version.");
 	}
 }

@@ -25,7 +25,7 @@ public:
 	//
 	// Destructor
 	//
-	~FullBlock() = default;
+	virtual ~FullBlock() = default;
 
 	//
 	// Operators

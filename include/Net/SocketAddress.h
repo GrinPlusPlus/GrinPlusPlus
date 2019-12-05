@@ -34,6 +34,11 @@ public:
 	SocketAddress(SocketAddress&& other) noexcept = default;
 
 	//
+	// Destructor
+	//
+	virtual ~SocketAddress() = default;
+
+	//
 	// Operators
 	//
 	SocketAddress& operator=(const SocketAddress& other) = default;

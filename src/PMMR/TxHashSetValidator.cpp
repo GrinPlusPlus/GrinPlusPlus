@@ -125,19 +125,19 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 {
 	if (txHashSet.GetKernelMMR()->GetSize() != blockHeader.GetKernelMMRSize())
 	{
-		LOG_ERROR_F("Kernel size not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("Kernel size not matching for header ({})", blockHeader);
 		return false;
 	}
 
 	if (txHashSet.GetOutputPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LOG_ERROR_F("Output size not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("Output size not matching for header ({})", blockHeader);
 		return false;
 	}
 
 	if (txHashSet.GetRangeProofPMMR()->GetSize() != blockHeader.GetOutputMMRSize())
 	{
-		LOG_ERROR_F("RangeProof size not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("RangeProof size not matching for header ({})", blockHeader);
 		return false;
 	}
 
@@ -169,7 +169,7 @@ bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) cons
 						const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
 						if (*pParentHash != expectedHash)
 						{
-							LOG_ERROR_F("Invalid parent hash at index (%llu)", i);
+							LOG_ERROR_F("Invalid parent hash at index ({})", i);
 							return false;
 						}
 					}
@@ -193,13 +193,13 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 		auto pHeader = m_blockChainServer.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 		if (pHeader == nullptr)
 		{
-			LOG_ERROR_F("No header found at height (%llu)", height);
+			LOG_ERROR_F("No header found at height ({})", height);
 			return false;
 		}
 		
 		if (kernelMMR.Root(pHeader->GetKernelMMRSize()) != pHeader->GetKernelRoot())
 		{
-			LOG_ERROR_F("Kernel root not matching for header at height (%llu)", height);
+			LOG_ERROR_F("Kernel root not matching for header at height ({})", height);
 			return false;
 		}
 
@@ -266,7 +266,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetAt(mmrIndex);
 			if (pRangeProof == nullptr)
 			{
-				LOG_ERROR_F("No rangeproof found at mmr index (%llu)", mmrIndex);
+				LOG_ERROR_F("No rangeproof found at mmr index ({})", mmrIndex);
 				return false;
 			}
 
@@ -295,7 +295,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHe
 		}
 	}
 
-	LOG_INFO_F("SUCCESS (%llu)", i);
+	LOG_INFO_F("SUCCESS ({})", i);
 	return true;
 }
 

@@ -58,6 +58,7 @@ public:
 	const Transaction& GetTransaction() const { return m_transaction; }
 	const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
 	std::vector<ParticipantData>& GetParticipantData() { return m_participantData; }
+	const std::optional<SlatePaymentProof>& GetPaymentProof() const { return m_proofOpt; }
 
 	void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
 	void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }

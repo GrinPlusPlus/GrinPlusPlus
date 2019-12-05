@@ -26,7 +26,7 @@ SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Exception thrown: %s", e.what());
+		WALLET_ERROR_F("Exception thrown: {}", e.what());
 	}
 
 	throw KEYCHAIN_EXCEPTION("Failed to decrypt seed.");

@@ -68,7 +68,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Exception thrown: %s", e.what());
+		WALLET_ERROR_F("Exception thrown: {}", e.what());
 	}
 
 	return pContext->m_torAddress;

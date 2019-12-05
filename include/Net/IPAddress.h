@@ -131,7 +131,7 @@ public:
 
 		if (m_family == EAddressFamily::IPv4)
 		{
-			return StringUtil::Format("%d.%d.%d.%d", m_address[0], m_address[1], m_address[2], m_address[3]);
+			return StringUtil::Format("{}.{}.{}.{}", m_address[0], m_address[1], m_address[2], m_address[3]);
 		}
 		else
 		{

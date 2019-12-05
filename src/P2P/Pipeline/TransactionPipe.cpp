@@ -64,7 +64,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 		}
 		catch (std::exception& e)
 		{
-			LOG_ERROR_F("Exception caught: %s", e.what());
+			LOG_ERROR_F("Exception caught: {}", e.what());
 		}
 	}
 

@@ -56,7 +56,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 			{
 				if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
 				{
-					LOG_TRACE_F("Retrieved message (%s) from (%s)", MessageTypes::ToString(messageHeader.GetMessageType()), connectedPeer);
+					LOG_TRACE_F("Retrieved message ({}) from ({})", MessageTypes::ToString(messageHeader.GetMessageType()), connectedPeer);
 				}
 
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
@@ -74,7 +74,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 		}
 		else
 		{
-			LOG_TRACE_F("Failed to receive message from (%s)", connectedPeer);
+			LOG_TRACE_F("Failed to receive message from ({})", connectedPeer);
 		}
 	}
 

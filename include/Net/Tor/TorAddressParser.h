@@ -109,7 +109,7 @@ public:
 		}
 		catch (std::exception& e)
 		{
-			LOG_ERROR_F("Exception thrown: %s", e.what());
+			LOG_ERROR_F("Exception thrown: {}", e.what());
 			return std::nullopt;
 		}
 
@@ -125,7 +125,7 @@ private:
 		const bool checksumBuilt = BuildChecksum(pubkey, version, expectedChecksum);
 		if (!checksumBuilt || CBigInteger<2>(checksum) != CBigInteger<2>(expectedChecksum))
 		{
-			LOG_WARNING_F("Checksum invalid for TOR address. Expected %s but got %s", CBigInteger<2>(checksum).ToHex(), CBigInteger<2>(expectedChecksum).ToHex());
+			LOG_WARNING_F("Checksum invalid for TOR address. Expected {} but got {}", CBigInteger<2>(checksum).ToHex(), CBigInteger<2>(expectedChecksum).ToHex());
 			return false;
 		}
 

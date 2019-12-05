@@ -39,7 +39,7 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 	Status status = DB::Open(options, dbPath, &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
 	if (!status.ok())
 	{
-		LOG_ERROR_F("DB::Open failed with error: %s", status.getState());
+		LOG_ERROR_F("DB::Open failed with error: {}", status.getState());
 		throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
 	}
 
@@ -94,7 +94,7 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 
 void PeerDB::SavePeers(const std::vector<Peer>& peers)
 {
-	LOG_TRACE_F("Saving peers: %llu", peers.size());
+	LOG_TRACE_F("Saving peers: {}", peers.size());
 
 	WriteBatch writeBatch;
 	for (const Peer& peer : peers)

@@ -44,14 +44,14 @@ KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 	const std::string query = "SELECT next_child_index FROM accounts WHERE parent_path='" + parentPath.Format() + "'";
 	if (sqlite3_prepare_v2(m_pDatabase, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(m_pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 	{
-		WALLET_ERROR_F("Account not found for user: %s", m_username);
+		WALLET_ERROR_F("Account not found for user: {}", m_username);
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Account not found.");
 	}
@@ -61,7 +61,7 @@ KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(m_pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -69,7 +69,7 @@ KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 	const std::string update = "UPDATE accounts SET next_child_index=" + std::to_string(nextChildPath.GetKeyIndices().back() + 1) + " WHERE parent_path='" + parentPath.Format() + "';";
 	if (sqlite3_exec(m_pDatabase, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Failed to update account for user: %s. Error: %s", m_username, error);
+		WALLET_ERROR_F("Failed to update account for user: {}. Error: {}", m_username, error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Failed to update account");
 	}
@@ -85,14 +85,14 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector&
 	const std::string query = "SELECT enc_blind, enc_nonce FROM slate_contexts WHERE slate_id='" + uuids::to_string(slateId) + "'";
 	if (sqlite3_prepare_v2(m_pDatabase, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(m_pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		WALLET_DEBUG_F("Slate context found for user %s", m_username);
+		WALLET_DEBUG_F("Slate context found for user {}", m_username);
 
 		const int blindBytes = sqlite3_column_bytes(stmt, 0);
 		const int nonceBytes = sqlite3_column_bytes(stmt, 1);
@@ -109,16 +109,16 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector&
 		CBigInteger<32> encryptedNonce((const unsigned char*)sqlite3_column_blob(stmt, 1));
 		SecretKey nonce = encryptedNonce ^ SlateContext::DeriveXORKey(masterSeed, slateId, "nonce");
 
-		pSlateContext = std::make_unique<SlateContext>(SlateContext(std::move(blindingFactor), std::move(nonce), std::nullopt, std::nullopt)); // TODO: Pass in keypath and pubkey
+		pSlateContext = std::make_unique<SlateContext>(SlateContext(std::move(blindingFactor), std::move(nonce))); // TODO: Pass in keypath and pubkey
 	}
 	else
 	{
-		WALLET_INFO_F("Slate context not found for user %s", m_username);
+		WALLET_INFO_F("Slate context not found for user {}", m_username);
 	}
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(m_pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -131,7 +131,7 @@ void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids:
 	std::string insert = "insert into slate_contexts values(?, ?, ?)";
 	if (sqlite3_prepare_v2(m_pDatabase, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(m_pDatabase));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -149,7 +149,7 @@ void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids:
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(m_pDatabase));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(m_pDatabase));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 }

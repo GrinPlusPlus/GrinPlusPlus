@@ -72,7 +72,7 @@ public:
 	//
 	// Destructor
 	//
-	~Peer() = default;
+	virtual ~Peer() = default;
 
 	//
 	// Operators

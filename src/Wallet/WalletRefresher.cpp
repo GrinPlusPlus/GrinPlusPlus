@@ -42,7 +42,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 	// 2. For each restored output, look for OutputData with matching commitment.
 	for (OutputData& restoredOutput : restoredOutputs)
 	{
-		WALLET_INFO_F("Output found at index %llu", restoredOutput.GetMMRIndex().value_or(0));
+		WALLET_INFO_F("Output found at index {}", restoredOutput.GetMMRIndex().value_or(0));
 
 		if (restoredOutput.GetStatus() != EOutputStatus::SPENT)
 		{
@@ -50,7 +50,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 			std::unique_ptr<OutputData> pExistingOutput = FindOutput(walletOutputs, commitment);
 			if (pExistingOutput == nullptr)
 			{
-				WALLET_INFO_F("Restoring unknown output with commitment: %s", commitment);
+				WALLET_INFO_F("Restoring unknown output with commitment: {}", commitment);
 
 				auto blockTimeOpt = GetBlockTime(restoredOutput);
 
@@ -67,6 +67,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 					restoredOutput.GetBlockHeight(),
 					restoredOutput.GetAmount(),
 					0,
+					std::nullopt,
 					std::nullopt,
 					std::nullopt
 				);
@@ -110,7 +111,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 		}*/
 
 		// TODO: What if commitment has mmr_index?
-		WALLET_DEBUG_F("Refreshing output with commitment: %s", commitment);
+		WALLET_TRACE_F("Refreshing output with commitment: {}", commitment);
 		commitments.push_back(commitment);		
 	}
 
@@ -133,7 +134,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 				{
 					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
 					{
-						WALLET_DEBUG_F("Marking output as immature: %s", outputData);
+						WALLET_DEBUG_F("Marking output as immature: {}", outputData);
 
 						outputData.SetBlockHeight(outputBlockHeight);
 						outputData.SetStatus(EOutputStatus::IMMATURE);
@@ -142,7 +143,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 				}
 				else if (outputData.GetStatus() != EOutputStatus::SPENDABLE)
 				{
-					WALLET_DEBUG_F("Marking output as spendable: %s", outputData);
+					WALLET_DEBUG_F("Marking output as spendable: {}", outputData);
 
 					outputData.SetBlockHeight(outputBlockHeight);
 					outputData.SetStatus(EOutputStatus::SPENDABLE);
@@ -156,7 +157,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 			outputData.GetStatus() != EOutputStatus::CANCELED)
 		{
 			// TODO: Check if (lastConfirmedHeight > outputData.GetConfirmedHeight)
-			WALLET_DEBUG_F("Marking output as spent: %s", outputData);
+			WALLET_DEBUG_F("Marking output as spent: {}", outputData);
 
 			outputData.SetStatus(EOutputStatus::SPENT);
 			outputsToUpdate.push_back(outputData);
@@ -190,14 +191,14 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 
 					if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
 					{
-						WALLET_DEBUG_F("Marking transaction as received: %lu", walletTx.GetId());
+						WALLET_DEBUG_F("Marking transaction as received: {}", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::RECEIVED);
 						pBatch->AddTransaction(masterSeed, walletTx);
 					}
 					else if (walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 					{
-						WALLET_DEBUG_F("Marking transaction as sent: %lu", walletTx.GetId());
+						WALLET_DEBUG_F("Marking transaction as sent: {}", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::SENT);
 						pBatch->AddTransaction(masterSeed, walletTx);
@@ -219,7 +220,7 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 				{
 					if (pOutputData->GetStatus() == EOutputStatus::SPENT)
 					{
-						WALLET_DEBUG_F("Output is spent. Marking transaction as sent: %lu", walletTx.GetId());
+						WALLET_DEBUG_F("Output is spent. Marking transaction as sent: {}", walletTx.GetId());
 
 						walletTx.SetType(EWalletTxType::SENT);
 						pBatch->AddTransaction(masterSeed, walletTx);

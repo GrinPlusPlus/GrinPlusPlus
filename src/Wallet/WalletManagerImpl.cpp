@@ -31,7 +31,7 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const std::string& username, const SecureString& password)
 {
-	WALLET_INFO_F("Creating new wallet with username: %s", username);
+	WALLET_INFO_F("Creating new wallet with username: {}", username);
 	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const SecureVector walletSeedBytes(walletSeed.GetBytes().GetData().begin(), walletSeed.GetBytes().GetData().end());
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeedBytes, password);
@@ -40,7 +40,7 @@ std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const s
 	const std::string usernameLower = StringUtil::ToLower(username);
 	m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
 
-	WALLET_INFO_F("Wallet created with username: %s", username);
+	WALLET_INFO_F("Wallet created with username: {}", username);
 
 	SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeedBytes);
 
@@ -49,7 +49,7 @@ std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const s
 
 std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& username, const SecureString& password, const SecureString& walletWords)
 {
-	WALLET_INFO_F("Attempting to restore account with username: %s", username);
+	WALLET_INFO_F("Attempting to restore account with username: {}", username);
 	try
 	{
 		SecureVector entropy = Mnemonic::ToEntropy(walletWords);
@@ -59,12 +59,12 @@ std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& us
 
 		m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
 
-		WALLET_INFO_F("Wallet restored for username: %s", username);
+		WALLET_INFO_F("Wallet restored for username: {}", username);
 		return std::make_optional(m_sessionManager.Write()->Login(usernameLower, entropy));
 	}
 	catch (std::exception& e)
 	{
-		WALLET_WARNING_F("Mnemonic invalid for username (%s). Error: %s", username, e.what());
+		WALLET_WARNING_F("Mnemonic invalid for username ({}). Error: {}", username, e.what());
 		throw InvalidMnemonicException();
 	}
 
@@ -88,7 +88,7 @@ void WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 	}
 	catch(const std::exception& e)
 	{
-		WALLET_ERROR_F("Exception thrown: %s", e.what());
+		WALLET_ERROR_F("Exception thrown: {}", e.what());
 		throw WALLET_EXCEPTION(e.what());
 	}
 }
@@ -113,21 +113,21 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 
 SessionToken WalletManager::Login(const std::string& username, const SecureString& password)
 {
-	WALLET_INFO_F("Attempting to login with username: %s", username);
+	WALLET_INFO_F("Attempting to login with username: {}", username);
 
 	try
 	{
 		const std::string usernameLower = StringUtil::ToLower(username);
 		SessionToken token = m_sessionManager.Write()->Login(usernameLower, password);
 
-		WALLET_INFO_F("Login successful for username: %s", username);
+		WALLET_INFO_F("Login successful for username: {}", username);
 		CheckForOutputs(token, false);
 
 		return token;
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Error (%s) while attempting to login as: %s", e.what(), username);
+		WALLET_ERROR_F("Error ({}) while attempting to login as: {}", e.what(), username);
 		throw WALLET_EXCEPTION(e.what());
 	}
 }
@@ -139,7 +139,7 @@ void WalletManager::Logout(const SessionToken& token)
 
 void WalletManager::DeleteWallet(const std::string& username, const SecureString& password)
 {
-	WALLET_INFO_F("Attempting to delete wallet with username: %s", username);
+	WALLET_INFO_F("Attempting to delete wallet with username: {}", username);
 
 	try
 	{
@@ -152,7 +152,7 @@ void WalletManager::DeleteWallet(const std::string& username, const SecureString
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Error (%s) while attempting to delete wallet: %s", e.what(), username);
+		WALLET_ERROR_F("Error ({}) while attempting to delete wallet: {}", e.what(), username);
 		throw WALLET_EXCEPTION(e.what());
 	}
 }
@@ -168,7 +168,7 @@ WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Exception occurred while building wallet summary: %s", e.what());
+		WALLET_ERROR_F("Exception occurred while building wallet summary: {}", e.what());
 		throw WALLET_EXCEPTION(e.what());
 	}
 }
@@ -326,7 +326,7 @@ bool WalletManager::PostTransaction(const SessionToken& token, const Transaction
 		}
 		catch (std::exception& e)
 		{
-			WALLET_ERROR_F("Exception thrown: %s", e.what());
+			WALLET_ERROR_F("Exception thrown: {}", e.what());
 		}
 	}
 	else

@@ -37,10 +37,10 @@ public:
 	std::string ToString() const
 	{
 		return StringUtil::Format(
-			"%s %s HTTP/1.1\r\n"
-			"Host: %s\r\n"
-			"Content-Length: %llu\r\n"
-			"Content-Type: application/json-rpc\r\n\r\n%s",
+			"{} {} HTTP/1.1\r\n"
+			"Host: {}\r\n"
+			"Content-Length: {}\r\n"
+			"Content-Type: application/json-rpc\r\n\r\n{}",
 			m_method == EHTTPMethod::GET ? "GET" : "POST",
 			m_location.c_str(),
 			m_host.c_str(),

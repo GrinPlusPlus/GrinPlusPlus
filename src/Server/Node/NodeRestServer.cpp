@@ -32,7 +32,7 @@ NodeRestServer::~NodeRestServer()
 	}
 	catch (const std::system_error& e)
 	{
-		LOG_ERROR_F("Exception thrown while stopping node API listener: %s", e.what());
+		LOG_ERROR_F("Exception thrown while stopping node API listener: {}", e.what());
 	}
 }
 
@@ -53,7 +53,7 @@ void NodeRestServer::Initialize()
 {
 	/* Start the server */
 	const uint32_t port = m_config.GetServerConfig().GetRestAPIPort();
-	const std::string listeningPorts = StringUtil::Format("127.0.0.1:%lu", port);
+	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", port);
 	const char* mg_options[] = {
 		"num_threads", "5",
 		"listening_ports", listeningPorts.c_str(),

@@ -40,7 +40,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LOG_TRACE_F("Block %s successfully processed.", *pHeader);
+			LOG_TRACE_F("Block {} successfully processed.", *pHeader);
 		}
 
 		return returnStatus;
@@ -60,7 +60,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight());
 	if (pConfirmedIndex != nullptr && pConfirmedIndex->GetHash() == block.GetHash())
 	{
-		LOG_TRACE_F("Block %s already part of confirmed chain.", block);
+		LOG_TRACE_F("Block {} already part of confirmed chain.", block);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -72,7 +72,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 		{
 			if (pOrphanPool->IsOrphan(block.GetHeight(), block.GetHash()))
 			{
-				LOG_TRACE_F("Block %s already processed as an orphan.", block);
+				LOG_TRACE_F("Block {} already processed as an orphan.", block);
 				return EBlockChainStatus::ALREADY_EXISTS;
 			}
 
@@ -116,7 +116,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	auto pCandidateIndex = pCandidateChain->GetByHeight(block.GetHeight());
 	if (nullptr == pCandidateIndex || pCandidateIndex->GetHash() != block.GetHash())
 	{
-		LOG_DEBUG_F("Candidate block mismatch. Treating %s as orphan.", block);
+		LOG_DEBUG_F("Candidate block mismatch. Treating {} as orphan.", block);
 		return EBlockStatus::ORPHAN;
 	}
 
@@ -124,7 +124,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	auto pPreviousConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight() - 1);
 	if (pPreviousConfirmedIndex == nullptr)
 	{
-		LOG_TRACE_F("Previous confirmed block missing. Treating %s as orphan.", block);
+		LOG_TRACE_F("Previous confirmed block missing. Treating {} as orphan.", block);
 		return EBlockStatus::ORPHAN;
 	}
 	
@@ -132,7 +132,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	{
 		const uint64_t forkPoint = pChainStore->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
 
-		LOG_WARNING_F("Fork detected at height (%lld).", forkPoint);
+		LOG_WARNING_F("Fork detected at height {}.", forkPoint);
 
 		// If all previous blocks exist (in orphan pool or in block store), return reorg. Otherwise, orphan until they exist.
 		for (uint64_t i = forkPoint; i < block.GetHeight(); i++)
@@ -151,7 +151,7 @@ EBlockStatus BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer
 	std::shared_ptr<const BlockIndex> pConfirmedIndex = pConfirmedChain->GetByHeight(block.GetHeight());
 	if (nullptr != pConfirmedIndex && pConfirmedIndex->GetHash() != block.GetHash())
 	{
-		LOG_DEBUG_F("Confirmed block mismatch. Treating %s as orphan.", block);
+		LOG_DEBUG_F("Confirmed block mismatch. Treating {} as orphan.", block);
 
 		return EBlockStatus::REORG;
 	}
@@ -174,7 +174,7 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	auto pCommonHeader = pBlockDB->GetBlockHeader(commonHash);
 	if (pCommonHeader == nullptr)
 	{
-		LOG_ERROR_F("Failed to find header %s", commonHash);
+		LOG_ERROR_F("Failed to find header {}", commonHash);
 		throw BLOCK_CHAIN_EXCEPTION("Failed to find header.");
 	}
 
@@ -183,7 +183,7 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 
 	if (pTxHashSet == nullptr || !pTxHashSet->Rewind(pBlockDB, *pCommonHeader))
 	{
-		LOG_ERROR_F("Failed to rewind TxHashSet to block %s", pCommonHeader->GetHash());
+		LOG_ERROR_F("Failed to rewind TxHashSet to block {}", pCommonHeader->GetHash());
 		throw BLOCK_CHAIN_EXCEPTION("Failed to rewind TxHashSet");
 	}
 
@@ -198,7 +198,7 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 
 		if (pBlock == nullptr)
 		{
-			LOG_ERROR_F("Failed to find block %s", pIndex->GetHash());
+			LOG_ERROR_F("Failed to find block {}", pIndex->GetHash());
 			throw BAD_DATA_EXCEPTION("Missing block");
 		}
 
@@ -221,13 +221,13 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 	auto pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
 	if (pPreviousHeader == nullptr)
 	{
-		LOG_ERROR_F("Failed to find header %s", previousHash);
+		LOG_ERROR_F("Failed to find header {}", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Previous header not found.");
 	}
 
 	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBlockDB, block))
 	{
-		LOG_ERROR_F("Failed to apply block %s to the TxHashSet", block);
+		LOG_ERROR_F("Failed to apply block {} to the TxHashSet", block);
 		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
 	}
 

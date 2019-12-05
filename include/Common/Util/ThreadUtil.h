@@ -37,9 +37,16 @@ public:
 
 	static void Join(std::thread& thread)
 	{
-		if (thread.joinable())
+		try
 		{
-			thread.join();
+			if (thread.joinable())
+			{
+				thread.join();
+			}
+		}
+		catch (...)
+		{
+
 		}
 	}
 

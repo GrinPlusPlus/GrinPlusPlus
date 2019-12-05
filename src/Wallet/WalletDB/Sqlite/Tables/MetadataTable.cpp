@@ -17,7 +17,7 @@ void MetadataTable::CreateTable(sqlite3& database)
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Create metadata table failed with error: %s", error);
+		WALLET_ERROR_F("Create metadata table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error creating transactions table.");
 	}
@@ -47,7 +47,7 @@ UserMetadata MetadataTable::GetMetadata(sqlite3& database)
 
 	if (sqlite3_prepare_v2(&database, "SELECT next_tx_id, refresh_block_height, restore_leaf_index FROM metadata WHERE ID=1", -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -62,14 +62,14 @@ UserMetadata MetadataTable::GetMetadata(sqlite3& database)
 	}
 	else
 	{
-		WALLET_ERROR_F("Error while performing sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while performing sql: {}", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("No metadata found.");
 	}
 
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -79,7 +79,7 @@ UserMetadata MetadataTable::GetMetadata(sqlite3& database)
 void MetadataTable::SaveMetadata(sqlite3& database, const UserMetadata& userMetadata)
 {
 	std::string update = StringUtil::Format(
-		"update metadata set next_tx_id=%llu, refresh_block_height=%llu, restore_leaf_index=%llu where id=1;",
+		"update metadata set next_tx_id={}, refresh_block_height={}, restore_leaf_index={} where id=1;",
 		userMetadata.GetNextTxId(),
 		userMetadata.GetRefreshBlockHeight(),
 		userMetadata.GetRestoreLeafIndex()
@@ -88,7 +88,7 @@ void MetadataTable::SaveMetadata(sqlite3& database, const UserMetadata& userMeta
 	char* error = nullptr;
 	if (sqlite3_exec(&database, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Failed to save metadata for user. Error: %s", error);
+		WALLET_ERROR_F("Failed to save metadata for user. Error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Failed to save metadata.");
 	}

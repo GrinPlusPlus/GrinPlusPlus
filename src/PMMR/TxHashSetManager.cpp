@@ -33,7 +33,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 	const TxHashSetZip zip(config);
 	if (zip.Extract(zipFilePath, *pHeader))
 	{
-		LOG_INFO_F("%s extracted successfully", zipFilePath);
+		LOG_INFO_F("{} extracted successfully", zipFilePath);
 		FileUtil::RemoveFile(zipFilePath.u8string());
 
 		// Rewind Kernel MMR
@@ -84,7 +84,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		return false;
 	}
 
-	const std::string snapshotDir = StringUtil::Format("%sSnapshots/%s/", fs::temp_directory_path().string(), pHeader->ShortHash());
+	const std::string snapshotDir = StringUtil::Format("{}Snapshots/{}/", fs::temp_directory_path().string(), pHeader->ShortHash());
 	BlockHeaderPtr pFlushedHeader = nullptr;
 
 	{

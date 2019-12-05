@@ -14,7 +14,7 @@ public:
 private:
 	bool AddPartialSignature(std::shared_ptr<const Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const;
 	bool AddFinalTransaction(Slate& slate, const Hash& kernelMessage) const;
-	bool VerifyPaymentProofs(std::shared_ptr<const Wallet> pWallet, Slate& slate) const;
+	bool VerifyPaymentProofs(const std::unique_ptr<WalletTx>& pWalletTx, Slate& slate) const;
 
 	void UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const;
 };

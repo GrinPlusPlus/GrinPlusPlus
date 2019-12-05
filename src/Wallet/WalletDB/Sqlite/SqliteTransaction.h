@@ -32,7 +32,7 @@ public:
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "BEGIN;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Failed with error: %s", error);
+			WALLET_ERROR_F("Failed with error: {}", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to begin transaction");
 		}
@@ -53,7 +53,7 @@ public:
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "COMMIT;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Failed with error: %s", error);
+			WALLET_ERROR_F("Failed with error: {}", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to commit transaction");
 		}
@@ -72,7 +72,7 @@ public:
 		char* error = nullptr;
 		if (sqlite3_exec(&m_database, "ROLLBACK;", NULL, NULL, &error) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Failed with error: %s", error);
+			WALLET_ERROR_F("Failed with error: {}", error);
 			sqlite3_free(error);
 			throw WALLET_STORE_EXCEPTION("Failed to rollback transaction");
 		}

@@ -135,7 +135,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	}
 	catch (std::exception& e)
 	{
-		LOG_WARNING_F("Exception thrown (%s)", e.what());
+		LOG_WARNING_F("Exception thrown: {}", e.what());
 	}
 
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
@@ -153,7 +153,7 @@ std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 	try
 	{
 		const std::string destination = StringUtil::Format(
-			"%sSnapshots/TxHashSet.%s.zip",
+			"{}Snapshots/TxHashSet.{}.zip",
 			fs::temp_directory_path().string(),
 			pBlockHeader->ShortHash()
 		);
@@ -165,7 +165,7 @@ std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("TxHashSet snapshot failed with exception: %s", e.what());
+		LOG_ERROR_F("TxHashSet snapshot failed with exception: {}", e.what());
 	}
 
 	return "";
@@ -183,7 +183,7 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Failed to process TxHashSet: %s", e.what());
+		LOG_ERROR_F("Failed to process TxHashSet: {}", e.what());
 	}
 
 	return EBlockChainStatus::INVALID;
@@ -220,7 +220,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, 
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception thrown: %s", e.what());
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
 
 	return EBlockChainStatus::INVALID;

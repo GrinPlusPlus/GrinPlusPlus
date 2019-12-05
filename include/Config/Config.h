@@ -41,7 +41,7 @@ public:
 		std::wstring nodePath = m_dataPath.wstring() + L"NODE/";
 		m_nodePath = fs::path(nodePath);
 
-		m_logPath = fs::path(nodePath + L"LOGS/");
+		m_logPath = fs::path(m_dataPath.wstring() + L"LOGS/");
 		fs::create_directories(m_logPath);
 
 		m_chainPath = fs::path(nodePath + L"CHAIN/");

@@ -157,7 +157,7 @@ bool Socket::IsActive() const
 
 	if (m_errorCode)
 	{
-		LOG_INFO_F("Connection with (%s) not active. Error: %s", m_address, m_errorCode.message());
+		LOG_INFO_F("Connection with ({}) not active. Error: {}", m_address, m_errorCode.message());
 	}
 	
 	return false;

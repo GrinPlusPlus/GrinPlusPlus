@@ -101,7 +101,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 		}
 		catch (std::exception& e)
 		{
-			LOG_ERROR_F("Exception thrown: %s", e.what());
+			LOG_ERROR_F("Exception thrown: {}", e.what());
 		}
 	}
 
@@ -136,7 +136,7 @@ bool Dandelion::ProcessStemPhase()
 	);
 	if (pTransactionToStem != nullptr)
 	{
-		LOG_DEBUG_F("Stemming transaction (%s)", *pTransactionToStem);
+		LOG_DEBUG_F("Stemming transaction ({})", *pTransactionToStem);
 
 		// Send Transaction to next Dandelion Relay.
 		const StemTransactionMessage stemTransactionMessage(pTransactionToStem);
@@ -171,7 +171,7 @@ bool Dandelion::ProcessFluffPhase()
 	);
 	if (pTransactionToFluff != nullptr)
 	{
-		LOG_DEBUG_F("Fluffing transaction (%s)", *pTransactionToFluff);
+		LOG_DEBUG_F("Fluffing transaction ({})", *pTransactionToFluff);
 		m_connectionManager.BroadcastMessage(TransactionMessage(pTransactionToFluff), 0);
 	}
 
@@ -183,7 +183,7 @@ bool Dandelion::ProcessExpiredEntries()
 	const std::vector<TransactionPtr> expiredTransactions = m_pTransactionPool->GetExpiredTransactions();
 	if (!expiredTransactions.empty())
 	{
-		LOG_INFO_F("%llu transactions expired, fluffing now", expiredTransactions.size());
+		LOG_INFO_F("{} transactions expired, fluffing now", expiredTransactions.size());
 		for (auto& pTransaction : expiredTransactions)
 		{
 			if (m_pBlockChainServer->AddTransaction(pTransaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)

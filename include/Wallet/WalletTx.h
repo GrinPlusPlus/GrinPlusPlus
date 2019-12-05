@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Wallet/WalletTxType.h>
+#include <Wallet/Models/SlatePaymentProof.h>
 #include <Core/Models/Transaction.h>
+#include <Crypto/ED25519.h>
 #include <Common/Util/TimeUtil.h>
 #include <Crypto/Signature.h>
 #include <json/json.h>
@@ -9,7 +11,7 @@
 #include <chrono>
 #include <optional>
 
-static const uint8_t WALLET_TX_DATA_FORMAT = 2;
+static const uint8_t WALLET_TX_DATA_FORMAT = 3;
 
 class WalletTx
 {
@@ -26,7 +28,8 @@ public:
 		const uint64_t amountCredited,
 		const uint64_t amountDebited,
 		const std::optional<uint64_t>& feeOpt,
-		std::optional<Transaction>&& transactionOpt
+		std::optional<Transaction>&& transactionOpt,
+		std::optional<SlatePaymentProof>&& paymentProofOpt
 	)	
 		: m_walletTxId(walletTxId),
 		m_type(type),
@@ -39,7 +42,8 @@ public:
 		m_amountCredited(amountCredited),
 		m_amountDebited(amountDebited),
 		m_feeOpt(feeOpt),
-		m_transactionOpt(std::move(transactionOpt))
+		m_transactionOpt(std::move(transactionOpt)),
+		m_paymentProofOpt(std::move(paymentProofOpt))
 	{
 
 	}
@@ -56,6 +60,7 @@ public:
 	uint64_t GetAmountDebited() const { return m_amountDebited; }
 	std::optional<uint64_t> GetFee() const { return m_feeOpt; }
 	const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
+	const std::optional<SlatePaymentProof>& GetPaymentProof() const { return m_paymentProofOpt; }
 
 	void SetType(const EWalletTxType type) { m_type = type; }
 	void SetConfirmedHeight(const uint64_t blockHeight) { m_confirmedHeightOpt = std::make_optional(blockHeight); }
@@ -79,6 +84,17 @@ public:
 		{
 			serializer.Append<uint8_t>(1);
 			serializer.Append<uint64_t>(m_feeOpt.value());
+		}
+		else
+		{
+			serializer.Append<uint8_t>(0);
+		}
+
+		// Payment proof addresses
+		if (m_paymentProofOpt.has_value())
+		{
+			serializer.Append<uint8_t>(1);
+			m_paymentProofOpt.value().Serialize(serializer);
 		}
 		else
 		{
@@ -154,6 +170,16 @@ public:
 			feeOpt = std::make_optional(byteBuffer.ReadU64());
 		}
 
+		// Payment proofs added in version 3
+		std::optional<SlatePaymentProof> paymentProofOpt;
+		if (walletTxFormat >= 3)
+		{
+			if (byteBuffer.ReadU8() == 1)
+			{
+				paymentProofOpt = std::make_optional(SlatePaymentProof::Deserialize(byteBuffer));
+			}
+		}
+
 		std::optional<Transaction> transactionOpt = std::nullopt;
 		if (byteBuffer.GetRemainingSize() > 0)
 		{
@@ -172,7 +198,8 @@ public:
 			amountCredited, 
 			amountDebited, 
 			feeOpt, 
-			std::move(transactionOpt)
+			std::move(transactionOpt),
+			std::move(paymentProofOpt)
 		);
 	}
 
@@ -189,4 +216,5 @@ private:
 	uint64_t m_amountDebited;
 	std::optional<uint64_t> m_feeOpt;
 	std::optional<Transaction> m_transactionOpt;
+	std::optional<SlatePaymentProof> m_paymentProofOpt;
 };

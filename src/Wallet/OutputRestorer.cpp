@@ -70,7 +70,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 	if (pRewoundProof != nullptr)
 	{
-		WALLET_INFO_F("Found own output: %s", output.GetIdentifier().GetCommitment());
+		WALLET_INFO_F("Found own output: {}", output.GetIdentifier().GetCommitment());
 
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();

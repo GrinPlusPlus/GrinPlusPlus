@@ -6,7 +6,7 @@
 void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
-	WALLET_DEBUG_F("Canceling WalletTx (%lu) of type (%s).", walletTx.GetId(), WalletTxType::ToString(type));
+	WALLET_DEBUG_F("Canceling WalletTx ({}) of type ({}).", walletTx.GetId(), WalletTxType::ToString(type));
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
@@ -52,7 +52,7 @@ std::vector<OutputData> CancelTx::GetOutputsToUpdate(
 		if (iter != inputCommitments.end())
 		{
 			const EOutputStatus status = output.GetStatus();
-			WALLET_DEBUG_F("Found input with status (%s)", OutputStatus::ToString(status));
+			WALLET_DEBUG_F("Found input with status ({})", OutputStatus::ToString(status));
 
 			if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 			{
@@ -66,14 +66,14 @@ std::vector<OutputData> CancelTx::GetOutputsToUpdate(
 			}
 			else if (walletTx.GetType() != EWalletTxType::SENT_CANCELED)
 			{
-				WALLET_ERROR_F("Can't cancel output with status (%s)", OutputStatus::ToString(status));
+				WALLET_ERROR_F("Can't cancel output with status ({})", OutputStatus::ToString(status));
 				throw WALLET_EXCEPTION("Output not in a cancelable status.");
 			}
 		}
 		else if (output.GetWalletTxId() == walletTx.GetId())
 		{
 			const EOutputStatus status = output.GetStatus();
-			WALLET_DEBUG_F("Found output with status (%s)", OutputStatus::ToString(status));
+			WALLET_DEBUG_F("Found output with status ({})", OutputStatus::ToString(status));
 
 			if (status == EOutputStatus::NO_CONFIRMATIONS || status == EOutputStatus::SPENT)
 			{
@@ -82,7 +82,7 @@ std::vector<OutputData> CancelTx::GetOutputsToUpdate(
 			}
 			else if (status != EOutputStatus::CANCELED)
 			{
-				WALLET_ERROR_F("Can't cancel output with status (%s)", OutputStatus::ToString(status));
+				WALLET_ERROR_F("Can't cancel output with status ({})", OutputStatus::ToString(status));
 				throw WALLET_EXCEPTION("Output not in a cancelable status.");
 			}
 		}

@@ -50,7 +50,7 @@ public:
 		SetDirty(true);
 		if (!m_pFile->Rewind(size * NUM_BYTES))
 		{
-			throw FILE_EXCEPTION(StringUtil::Format("Failed to rewind to size %llu", size));
+			throw FILE_EXCEPTION(StringUtil::Format("Failed to rewind to size {}", size));
 		}
 	}
 
@@ -64,7 +64,7 @@ public:
 		std::vector<unsigned char> data;
 		if (!m_pFile->Read(position * NUM_BYTES, NUM_BYTES, data))
 		{
-			throw FILE_EXCEPTION(StringUtil::Format("Failed to read data at position %llu", position));
+			throw FILE_EXCEPTION(StringUtil::Format("Failed to read data at position {}", position));
 		}
 
 		return data;

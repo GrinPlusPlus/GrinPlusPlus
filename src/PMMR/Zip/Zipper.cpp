@@ -12,7 +12,7 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	zipFile zf = zipOpen(destination.c_str(), APPEND_STATUS_CREATE);
 	if (zf == nullptr)
 	{
-		LOG_ERROR_F("Failed to create zip file at (%s)", destination);
+		LOG_ERROR_F("Failed to create zip file at ({})", destination);
 		return false;
 	}
 
@@ -33,14 +33,14 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Failed to create zip file: %s", e.what());
+		LOG_ERROR_F("Failed to create zip file: {}", e.what());
 		zipClose(zf, NULL);
 		return false;
 	}
 
 	if (zipClose(zf, NULL))
 	{
-		LOG_ERROR_F("Failed to close zip file (%s)", destination);
+		LOG_ERROR_F("Failed to close zip file ({})", destination);
 		return false;
 	}
 
@@ -80,12 +80,12 @@ void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 			{
 				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], (unsigned int)size))
 				{
-					throw FILE_EXCEPTION(StringUtil::Format("Failed to write to file %s", fileName));
+					throw FILE_EXCEPTION(StringUtil::Format("Failed to write to file {}", fileName));
 				}
 
 				if (zipCloseFileInZip(zf))
 				{
-					throw FILE_EXCEPTION(StringUtil::Format("Failed to close file %s", fileName));
+					throw FILE_EXCEPTION(StringUtil::Format("Failed to close file {}", fileName));
 				}
 
 				return;
@@ -93,5 +93,5 @@ void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 		}
 	}
 
-	throw FILE_EXCEPTION(StringUtil::Format("Failed to add file %s", destDir));
+	throw FILE_EXCEPTION(StringUtil::Format("Failed to add file {}", destDir));
 }

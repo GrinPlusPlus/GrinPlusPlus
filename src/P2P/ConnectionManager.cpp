@@ -227,7 +227,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			if (iter != peersToBan->end())
 			{
 				const EBanReason banReason = iter->second;
-				LOG_WARNING_F("Banning peer (%d) at (%s) for (%s).", connectionId, pConnection->GetPeer(), BanReason::Format(banReason));
+				LOG_WARNING_F("Banning peer ({}) at ({}) for ({}).", connectionId, pConnection->GetIPAddress(), BanReason::Format(banReason));
 
 				pConnection->GetPeer().UpdateLastBanTime();
 				pConnection->GetPeer().UpdateBanReason(banReason);
@@ -242,7 +242,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			{
 				if (!pConnection->IsConnectionActive())
 				{
-					LOG_DEBUG_F("Disconnecting from inactive peer (%d) at (%s)", connectionId, pConnection->GetPeer());
+					LOG_DEBUG_F("Disconnecting from inactive peer ({}) at ({})", connectionId, pConnection->GetIPAddress());
 				}
 
 				connectionsToClose.push_back(pConnection);

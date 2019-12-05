@@ -32,7 +32,7 @@ std::vector<TransactionPtr> Pool::GetTransactionsByShortId(const Hash& hash, con
 
 void Pool::AddTransaction(TransactionPtr pTransaction, const EDandelionStatus status)
 {
-	LOG_DEBUG_F("Transaction added: %s", pTransaction->GetHash());
+	LOG_DEBUG_F("Transaction added: {}", pTransaction->GetHash());
 
 	m_transactions.emplace_back(TxPoolEntry(pTransaction, status, std::time_t()));
 }
@@ -206,7 +206,7 @@ TransactionPtr Pool::Aggregate() const
 		return nullptr;
 	}
 
-	LOG_INFO_F("Aggregation %llu transactions", m_transactions.size());
+	LOG_INFO_F("Aggregating {} transactions", m_transactions.size());
 
 	std::vector<TransactionPtr> transactions;
 	for (const TxPoolEntry& entry : m_transactions)

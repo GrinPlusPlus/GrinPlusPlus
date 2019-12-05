@@ -30,7 +30,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey,
 				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
 				if (!torAddress.has_value())
 				{
-					LOG_ERROR_F("Failed to parse listener address: %s", address);
+					LOG_ERROR_F("Failed to parse listener address: {}", address);
 				}
 				else
 				{
@@ -41,7 +41,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey,
 	}
 	catch (const TorException& e)
 	{
-		LOG_ERROR_F("Failed to add listener: %s", e.what());
+		LOG_ERROR_F("Failed to add listener: {}", e.what());
 	}
 
 	return nullptr;
@@ -59,7 +59,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const std::string& serialize
 				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
 				if (!torAddress.has_value())
 				{
-					LOG_ERROR_F("Failed to parse listener address: %s", address);
+					LOG_ERROR_F("Failed to parse listener address: {}", address);
 				}
 				else
 				{
@@ -70,7 +70,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const std::string& serialize
 	}
 	catch (const TorException& e)
 	{
-		LOG_ERROR_F("Failed to add listener: %s", e.what());
+		LOG_ERROR_F("Failed to add listener: {}", e.what());
 	}
 
 	return nullptr;
@@ -87,7 +87,7 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 	}
 	catch (const TorException& e)
 	{
-		LOG_ERROR_F("Failed to remove listener: %s", e.what());
+		LOG_ERROR_F("Failed to remove listener: {}", e.what());
 	}
 
 	return false;
@@ -103,7 +103,7 @@ std::shared_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Failed to create TorConnection: %s", e.what());
+		LOG_ERROR_F("Failed to create TorConnection: {}", e.what());
 		return nullptr;
 	}
 }

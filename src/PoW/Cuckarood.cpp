@@ -22,7 +22,7 @@ bool Cuckarood::Validate(const BlockHeader& blockHeader)
 	const int result = verify((const word_t*)proofNonces.data(), keys);
 	if (result != POW_OK)
 	{
-		LOG_ERROR_F("Failed with result: %d", result);
+		LOG_ERROR_F("Failed with result: {}", result);
 	}
 
 	return result == POW_OK;

@@ -24,7 +24,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 	try
 	{
 		const std::string command = StringUtil::Format(
-			fs::current_path().string() + "/tor/tor --ControlPort %d --SocksPort %d --HashedControlPassword %s",
+			fs::current_path().string() + "/tor/tor --ControlPort {} --SocksPort {} --HashedControlPassword {}",
 			torConfig.GetControlPort(),
 			torConfig.GetSocksPort(),
 			torConfig.GetHashedControlPassword()
@@ -49,7 +49,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception caught: %s", e.what());
+		LOG_ERROR_F("Exception caught: {}", e.what());
 	}
 
 	return nullptr;
@@ -57,7 +57,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 
 bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password)
 {
-	std::string command = StringUtil::Format("AUTHENTICATE \"%s\"\n", password);
+	std::string command = StringUtil::Format("AUTHENTICATE \"{}\"\n", password);
 
 	try
 	{
@@ -80,7 +80,7 @@ std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t ext
 std::string TorControl::AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort)
 {
 	// ADD_ONION ED25519-V3:<SERIALIZED_KEY> PORT=External,Internal
-	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:%s Flags=DiscardPK Port=%d,%d\n", serializedKey, externalPort, internalPort);
+	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:{} Flags=DiscardPK Port={},{}\n", serializedKey, externalPort, internalPort);
 
 	std::vector<std::string> response = m_pClient->Invoke(command);
 	for (std::string& line : response)
@@ -98,7 +98,7 @@ std::string TorControl::AddOnion(const std::string& serializedKey, const uint16_
 bool TorControl::DelOnion(const TorAddress& torAddress)
 {
 	// DEL_ONION ServiceId
-	std::string command = StringUtil::Format("DEL_ONION %s\n", torAddress.ToString());
+	std::string command = StringUtil::Format("DEL_ONION {}\n", torAddress.ToString());
 
 	m_pClient->Invoke(command);
 	return true;

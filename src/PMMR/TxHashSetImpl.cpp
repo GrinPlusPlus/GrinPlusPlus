@@ -48,7 +48,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
 		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
 		{
-			LOG_DEBUG_F("Output (%s) not found at mmrIndex (%llu)",  commitment, pOutputPosition->GetMMRIndex());
+			LOG_DEBUG_F("Output ({}) not found at mmrIndex ({})",  commitment, pOutputPosition->GetMMRIndex());
 			return false;
 		}
 
@@ -56,7 +56,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 		{
 			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight)
 			{
-				LOG_INFO_F("Coinbase (%s) not mature", transaction);
+				LOG_INFO_F("Coinbase ({}) not mature", transaction);
 				return false;
 			}
 		}
@@ -111,7 +111,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(commitment);
 		if (pOutputPosition == nullptr)
 		{
-			LOG_WARNING_F("Output position not found for commitment (%s) in block (%llu)", commitment, block);
+			LOG_WARNING_F("Output position not found for commitment ({}) in block ({})", commitment, block);
 			return false;
 		}
 
@@ -164,19 +164,19 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 {
 	if (m_pKernelMMR->Root(blockHeader.GetKernelMMRSize()) != blockHeader.GetKernelRoot())
 	{
-		LOG_ERROR_F("Kernel root not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("Kernel root not matching for header ({})", blockHeader);
 		return false;
 	}
 
 	if (m_pOutputPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetOutputRoot())
 	{
-		LOG_ERROR_F("Output root not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("Output root not matching for header ({})", blockHeader);
 		return false;
 	}
 
 	if (m_pRangeProofPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetRangeProofRoot())
 	{
-		LOG_ERROR_F("RangeProof root not matching for header (%s)", blockHeader);
+		LOG_ERROR_F("RangeProof root not matching for header ({})", blockHeader);
 		return false;
 	}
 
@@ -233,7 +233,7 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 			std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(pOutput->GetCommitment());
 			if (pRangeProof == nullptr || pOutputPosition == nullptr || pOutputPosition->GetMMRIndex() != mmrIndex)
 			{
-				throw TXHASHSET_EXCEPTION(StringUtil::Format("Failed to build OutputDTO at index %d", mmrIndex));
+				throw TXHASHSET_EXCEPTION(StringUtil::Format("Failed to build OutputDTO at index {}", mmrIndex));
 			}
 
 			outputs.emplace_back(OutputDTO(false, *pOutput, *pOutputPosition, *pRangeProof));

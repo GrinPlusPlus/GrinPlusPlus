@@ -99,7 +99,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
 	if (m_connectionId > 0)
 	{
-		LOG_WARNING_F("Banning peer: %llu", m_connectionId);
+		LOG_WARNING_F("Banning peer: {}", m_connectionId);
 		m_pConnectionManager.lock()->BanConnection(m_connectionId, EBanReason::FraudHeight);
 	}
 

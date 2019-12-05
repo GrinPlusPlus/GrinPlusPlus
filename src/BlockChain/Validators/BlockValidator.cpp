@@ -31,7 +31,7 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 			const std::unique_ptr<OutputLocation> pOutputLocation = m_pBlockDB->GetOutputPosition(input.GetCommitment());
 			if (pOutputLocation == nullptr || pOutputLocation->GetBlockHeight() > maximumBlockHeight)
 			{
-				LOG_INFO_F("Coinbase not mature for block %s", block);
+				LOG_INFO_F("Coinbase not mature for block {}", block);
 				throw BAD_DATA_EXCEPTION("Failed to validate coinbase maturity.");
 			}
 		}
@@ -39,7 +39,7 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 
 	if (!m_pTxHashSet->ValidateRoots(*block.GetBlockHeader()))
 	{
-		LOG_ERROR_F("Failed to validate TxHashSet roots for block %s", block);
+		LOG_ERROR_F("Failed to validate TxHashSet roots for block {}", block);
 		throw BAD_DATA_EXCEPTION("Failed to validate TxHashSet roots.");
 	}
 
@@ -47,7 +47,7 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 	std::unique_ptr<BlockSums> pPreviousBlockSums = m_pBlockDB->GetBlockSums(previousHash);
 	if (pPreviousBlockSums == nullptr)
 	{
-		LOG_WARNING_F("Failed to retrieve block sums for block %s", previousHash);
+		LOG_WARNING_F("Failed to retrieve block sums for block {}", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Failed to retrieve block sums.");
 	}
 
@@ -65,7 +65,7 @@ void BlockValidator::VerifySelfConsistent(const FullBlock& block) const
 {
 	if (block.WasValidated())
 	{
-		LOG_TRACE_F("Block (%s) already validated", block);
+		LOG_TRACE_F("Block {} already validated", block);
 		return;
 	}
 
@@ -74,7 +74,7 @@ void BlockValidator::VerifySelfConsistent(const FullBlock& block) const
 
 	if (!IsCoinbaseValid(block))
 	{
-		LOG_ERROR_F("Failed to validate coinbase for %s", block);
+		LOG_ERROR_F("Failed to validate coinbase for {}", block);
 		throw BAD_DATA_EXCEPTION("Failed to validate coinbase");
 	}
 
@@ -89,7 +89,7 @@ void BlockValidator::VerifyBody(const FullBlock& block) const
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Transaction body for block (%s) failed with error: %s", block, e.what());
+		LOG_ERROR_F("Transaction body for block {} failed with error: {}", block, e.what());
 		throw BAD_DATA_EXCEPTION("Failed to validate transaction body");
 	}
 }
@@ -107,7 +107,7 @@ void BlockValidator::VerifyKernelLockHeights(const FullBlock& block) const
 	);
 	if (invalid)
 	{
-		LOG_ERROR_F("Failed to validate kernel lock heights for %s", block);
+		LOG_ERROR_F("Failed to validate kernel lock heights for {}", block);
 		throw BAD_DATA_EXCEPTION("Failed to validate kernel lock heights");
 	}
 }

@@ -18,6 +18,8 @@ public:
 
 	}
 
+	virtual ~ConnectedPeer() = default;
+
 	void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height)
 	{
 		m_totalDifficulty.exchange(totalDifficulty);

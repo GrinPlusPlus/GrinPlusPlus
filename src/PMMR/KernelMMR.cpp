@@ -58,7 +58,7 @@ bool KernelMMR::Rewind(const uint64_t size)
 
 void KernelMMR::Commit()
 {
-	//LOG_TRACE_F("Flushing with size (%llu)", GetSize());
+	//LOG_TRACE_F("Flushing with size ({})", GetSize());
 	m_pHashFile->Commit();
 	m_pDataFile->Commit();
 }

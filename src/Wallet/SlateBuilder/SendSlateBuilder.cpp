@@ -94,7 +94,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
 		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(hashedTorKey);
 
-		proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
+		proofOpt = std::make_optional(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
 	}
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
@@ -112,14 +112,9 @@ Slate SendSlateBuilder::BuildSendSlate(
 	);
 	AddSenderInfo(slate, secretKey, secretNonce, messageOpt);
 
-	WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt);
+	WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt, proofOpt);
 
-	SlateContext slateContext(
-		std::move(secretKey),
-		std::move(secretNonce),
-		proofOpt.has_value() ? std::make_optional<KeyChainPath>(torPath) : std::nullopt,
-		proofOpt.has_value() ? std::make_optional<ed25519_public_key_t>(torAddressOpt.value().GetPublicKey()) : std::nullopt 
-	);
+	SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
 	UpdateDatabase(pBatch, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
 
 	pBatch->Commit();
@@ -169,7 +164,7 @@ void SendSlateBuilder::AddSenderInfo(
 		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, messageOpt.value());
 		if (pMessageSignature == nullptr)
 		{
-			WALLET_ERROR_F("Failed to sign message for slate %s", uuids::to_string(slate.GetSlateId()));
+			WALLET_ERROR_F("Failed to sign message for slate {}", uuids::to_string(slate.GetSlateId()));
 			throw CryptoException();
 		}
 
@@ -185,7 +180,8 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 	const std::vector<OutputData>& outputs,
 	const Slate& slate,
 	const std::optional<std::string>& addressOpt,
-	const std::optional<std::string>& messageOpt) const
+	const std::optional<std::string>& messageOpt,
+	const std::optional<SlatePaymentProof>& proofOpt) const
 {
 	uint64_t amountDebited = 0;
 	for (const OutputData& input : inputs)
@@ -211,7 +207,8 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 		amountCredited,
 		amountDebited,
 		std::make_optional(slate.GetFee()),
-		std::make_optional(slate.GetTransaction())
+		std::make_optional(slate.GetTransaction()),
+		proofOpt.has_value() ? std::make_optional(proofOpt.value()) : std::nullopt
 	);
 }
 

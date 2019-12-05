@@ -49,18 +49,18 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 {
 	if (m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
 	{
-		LOG_WARNING_F("Received TxHashSet from Peer (%s) when not requested.", socket.GetIPAddress());
+		LOG_WARNING_F("Received TxHashSet from Peer ({}) when not requested.", socket.GetIPAddress());
 		return false;
 	}
 
 	const bool processing = m_processing.exchange(true);
 	if (processing)
 	{
-		LOG_WARNING_F("Received TxHashSet from Peer (%s) when already processing another.", socket.GetIPAddress());
+		LOG_WARNING_F("Received TxHashSet from Peer ({}) when already processing another.", socket.GetIPAddress());
 		return false;
 	}
 
-	LOG_INFO_F("Downloading TxHashSet from %s", socket);
+	LOG_INFO_F("Downloading TxHashSet from {}", socket);
 
 	m_pSyncStatus->UpdateDownloaded(0);
 	m_pSyncStatus->UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
@@ -69,7 +69,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 	socket.SetReceiveBufferSize(BUFFER_SIZE);
 
 	const std::string txHashSetPath =  StringUtil::Format(
-		"%stxhashset_%s.zip",
+		"{}txhashset_{}.zip",
 		fs::temp_directory_path().string()/*m_config.GetTxHashSetDirectory()*/,
 		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);

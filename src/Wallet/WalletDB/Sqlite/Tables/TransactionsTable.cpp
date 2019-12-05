@@ -15,7 +15,7 @@ void TransactionsTable::CreateTable(sqlite3& database)
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Create transactions table failed with error: %s", error);
+		WALLET_ERROR_F("Create transactions table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Error creating transactions table.");
 	}
@@ -35,7 +35,7 @@ void TransactionsTable::AddTransactions(sqlite3& database, const SecureVector& m
 		insert += " ON CONFLICT(id) DO UPDATE SET slate_id=excluded.slate_id, encrypted=excluded.encrypted";
 		if (sqlite3_prepare_v2(&database, insert.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+			WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 			sqlite3_finalize(stmt);
 			throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 		}
@@ -61,7 +61,7 @@ void TransactionsTable::AddTransactions(sqlite3& database, const SecureVector& m
 
 		if (sqlite3_finalize(stmt) != SQLITE_OK)
 		{
-			WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+			WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 			throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 		}
 	}
@@ -73,7 +73,7 @@ std::vector<WalletTx> TransactionsTable::GetTransactions(sqlite3& database, cons
 	const std::string query = "select encrypted from transactions";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -95,12 +95,12 @@ std::vector<WalletTx> TransactionsTable::GetTransactions(sqlite3& database, cons
 
 	if (ret_code != SQLITE_DONE)
 	{
-		WALLET_ERROR_F("Error while performing sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while performing sql: {}", sqlite3_errmsg(&database));
 	}
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 
@@ -113,7 +113,7 @@ std::unique_ptr<WalletTx> TransactionsTable::GetTransactionById(sqlite3& databas
 	const std::string query = "select encrypted from transactions where id=?";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error while compiling sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));
 		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
@@ -139,12 +139,12 @@ std::unique_ptr<WalletTx> TransactionsTable::GetTransactionById(sqlite3& databas
 
 	if (ret_code != SQLITE_DONE)
 	{
-		WALLET_ERROR_F("Error while performing sql: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error while performing sql: {}", sqlite3_errmsg(&database));
 	}
 
 	if (sqlite3_finalize(stmt) != SQLITE_OK)
 	{
-		WALLET_ERROR_F("Error finalizing statement: %s", sqlite3_errmsg(&database));
+		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(&database));
 		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
 	}
 

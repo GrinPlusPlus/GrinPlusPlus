@@ -55,19 +55,19 @@ public:
 
 	void Remove(const uint64_t mmrIndex)
 	{
-		LOG_TRACE_F("Spending output at index (%llu)", mmrIndex);
+		LOG_TRACE_F("Spending output at index ({})", mmrIndex);
 		SetDirty(true);
 
 		if (!MMRUtil::IsLeaf(mmrIndex))
 		{
-			LOG_WARNING_F("Output is not a leaf (%llu)", mmrIndex);
-			throw TXHASHSET_EXCEPTION(StringUtil::Format("Output is not a leaf (%llu)", mmrIndex));
+			LOG_WARNING_F("Output is not a leaf ({})", mmrIndex);
+			throw TXHASHSET_EXCEPTION(StringUtil::Format("Output is not a leaf ({})", mmrIndex));
 		}
 
 		if (!m_pLeafSet->Contains(mmrIndex))
 		{
-			LOG_WARNING_F("LeafSet does not contain output (%llu)", mmrIndex);
-			throw TXHASHSET_EXCEPTION(StringUtil::Format("LeafSet does not contain output (%llu)", mmrIndex));
+			LOG_WARNING_F("LeafSet does not contain output ({})", mmrIndex);
+			throw TXHASHSET_EXCEPTION(StringUtil::Format("LeafSet does not contain output ({})", mmrIndex));
 		}
 
 		m_pLeafSet->Remove((uint32_t)mmrIndex);
@@ -153,7 +153,7 @@ public:
 	{
 		if (IsDirty())
 		{
-			LOG_TRACE_F("Flushing with size (%llu)", GetSize());
+			LOG_TRACE_F("Flushing with size ({})", GetSize());
 			m_pHashFile->Commit();
 			m_pDataFile->Commit();
 			m_pLeafSet->Commit();

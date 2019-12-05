@@ -64,7 +64,7 @@ void TransactionValidator::ValidateKernelSums(const Transaction& transaction) co
 	}
 	catch (std::exception& e)
 	{
-		LOG_WARNING_F("Kernel sum validation failed with error: %s", e.what());
+		LOG_WARNING_F("Kernel sum validation failed with error: {}", e.what());
 		throw BAD_DATA_EXCEPTION("Kernel sum validation failed.");
 	}
 }

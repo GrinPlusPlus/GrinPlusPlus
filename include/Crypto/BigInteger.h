@@ -50,7 +50,7 @@ public:
 	//
 	// Destructor
 	//
-	~CBigInteger() = default;
+	virtual ~CBigInteger() = default;
 
 	void erase()
 	{

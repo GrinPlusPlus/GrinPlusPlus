@@ -49,7 +49,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	const uint64_t blocksDownloaded = (chainHeight - m_lastHeight);
 	if (blocksDownloaded > 0)
 	{
-		LOG_TRACE_F("%llu blocks received since last check.", blocksDownloaded);
+		LOG_TRACE_F("{} blocks received since last check.", blocksDownloaded);
 	}
 
 	// Remove downloaded blocks from queue.
@@ -177,7 +177,7 @@ bool BlockSyncer::RequestBlocks()
 
 	if (!blocksToRequest.empty())
 	{
-		LOG_TRACE_F("%llu blocks requested from %llu peers.", blocksToRequest.size(), numPeers);
+		LOG_TRACE_F("{} blocks requested from %llu peers.", blocksToRequest.size(), numPeers);
 	}
 
 	return true;

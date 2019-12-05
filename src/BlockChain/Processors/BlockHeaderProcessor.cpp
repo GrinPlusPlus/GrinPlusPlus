@@ -18,7 +18,7 @@ BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, std::shared_ptr
 
 EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHeader)
 {
-	LOG_TRACE_F("Validating %s", *pHeader);
+	LOG_TRACE_F("Validating {}", *pHeader);
 
 	auto pLockedState = m_pChainState->BatchWrite();
 
@@ -31,7 +31,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHead
 	auto pCandidateIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == pHeader->GetHash())
 	{
-		LOG_DEBUG_F("Header %s already processed.", *pHeader);
+		LOG_DEBUG_F("Header {} already processed.", *pHeader);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
@@ -42,13 +42,13 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHead
 		return ProcessOrphan(pLockedState, pHeader);
 	}
 
-	LOG_TRACE_F("Processing next candidate header: %s", *pHeader);
+	LOG_TRACE_F("Processing next candidate header: {}", *pHeader);
 
 	// Validate the header.
 	auto pPreviousHeaderPtr = pBlockDB->GetBlockHeader(pLastIndex->GetHash());
 	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(*pHeader, *pPreviousHeaderPtr))
 	{
-		LOG_ERROR_F("Header %s failed to validate", *pHeader);
+		LOG_ERROR_F("Header {} failed to validate", *pHeader);
 		throw BAD_DATA_EXCEPTION("Header failed to validate.");
 	}
 
@@ -59,7 +59,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHead
 
 	pLockedState->Commit();
 
-	LOG_DEBUG_F("Successfully validated %s", *pHeader);
+	LOG_DEBUG_F("Successfully validated {}", *pHeader);
 
 	return EBlockChainStatus::SUCCESS;
 }
@@ -102,7 +102,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 		}
 	}
 
-	LOG_DEBUG_F("Processing header %s as an orphan.", *pHeader);
+	LOG_DEBUG_F("Processing header {} as an orphan.", *pHeader);
 	pOrphanPool->AddOrphanHeader(pHeader);
 	return EBlockChainStatus::ORPHANED;
 }
@@ -184,7 +184,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainSt
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	LOG_TRACE_F("Processing (%llu) headers.", newHeaders.size());
+	LOG_TRACE_F("Processing {} headers.", newHeaders.size());
 
 	// Rewind MMR
 	RewindMMR(pLockedState, newHeaders);
@@ -280,7 +280,7 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 	auto pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
 	if (pPreviousHeader == nullptr)
 	{
-		LOG_ERROR_F("Previous header (%s) not found.", previousHash);
+		LOG_ERROR_F("Previous header ({}) not found.", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Failed to retrieve previous header");
 	}
 
@@ -288,7 +288,7 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 	{
 		if (!validator.IsValidHeader(*pHeader, *pPreviousHeader))
 		{
-			LOG_ERROR_F("Header invalid: %s", *pHeader);
+			LOG_ERROR_F("Header invalid: {}", *pHeader);
 			throw BAD_DATA_EXCEPTION("Header invalid.");
 		}
 

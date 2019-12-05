@@ -37,7 +37,7 @@ Config ConfigManager::LoadConfig(const EEnvironmentType environment)
 	}
 	else
 	{
-		LOG_WARNING_F("server_config.json not found in %s. Creating server_config.json with defaults.", configPath);
+		LOG_WARNING_F("server_config.json not found in {}. Creating server_config.json with defaults.", configPath);
 
 		Json::Value emptyRoot;
 		const Config defaultConfig = ConfigReader().ReadConfig(emptyRoot, environment);

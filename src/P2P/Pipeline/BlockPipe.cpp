@@ -77,7 +77,7 @@ void BlockPipe::ProcessNewBlock(BlockPipe& pipeline, const BlockEntry& blockEntr
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception (%s) caught while attempting to add block %s.", e.what(), blockEntry.block);
+		LOG_ERROR_F("Exception ({}) caught while attempting to add block {}.", e.what(), blockEntry.block);
 		pipeline.m_pConnectionManager->BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
 	}
 }

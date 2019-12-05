@@ -4,6 +4,7 @@
 #include <ed25519-donna/ed25519_donna_tor.h>
 #include <Crypto/CryptoException.h>
 #include <Crypto/SecretKey.h>
+#include <Crypto/Signature.h>
 #include <vector>
 
 #define ED25519_PUBKEY_LEN 32
@@ -58,6 +59,24 @@ public:
 		}
 
 		return result;
+	}
+
+	static bool VerifySignature(const ed25519_public_key_t& publicKey, const Signature& signature, const std::vector<unsigned char>& message)
+	{
+		return ed25519_donna_open(signature.GetSignatureBytes().data(), message.data(), message.size(), publicKey.pubkey.data()) == 0;
+	}
+
+	static Signature Sign(const SecretKey& secretKey, const ed25519_public_key_t& pubKey, const std::vector<unsigned char>& message)
+	{
+		std::vector<unsigned char> signature(64);
+
+		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), secretKey.data(), pubKey.pubkey.data());
+		if (status != 0)
+		{
+			throw CryptoException("ED25519::Sign");
+		}
+
+		return Signature(CBigInteger<64>(std::move(signature)));
 	}
 
 private:

@@ -72,6 +72,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps/asio/asio/include
 	${PROJECT_SOURCE_DIR}/deps/ghc
 	${PROJECT_SOURCE_DIR}/deps/rocksdb/include
+	${PROJECT_SOURCE_DIR}/deps/fmt/include
 	${PROJECT_SOURCE_DIR}/deps/jsoncpp
 	${PROJECT_SOURCE_DIR}/deps/zlib
 	${PROJECT_SOURCE_DIR}/deps/Catch2
@@ -105,6 +106,7 @@ add_subdirectory(deps/ed25519-donna)
 
 # Grin++ Projects
 add_definitions(-DUNICODE)
+include(fmtlib)
 add_definitions(-DSPDLOG_WCHAR_FILENAMES)
 option(GRINPP_TESTS "Build tests" true)
 option(GRINPP_STATIC "Static build" true)

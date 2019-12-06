@@ -72,8 +72,6 @@ private:
 		{
 			return RPC::Response::BuildError(id, RPC::ErrorCode::INVALID_REQUEST, e.what());
 		}
-
-		return RPC::Response::BuildError(id, RPC::ErrorCode::INVALID_REQUEST, "Unknown error occured");
 	}
 
 	ServerPtr m_pServer;

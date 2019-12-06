@@ -100,6 +100,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		pFlushedHeader = reader->GetFlushedBlockHeader();
 	}
 
+	try
 	{
 		// 4. Load Snapshot TxHashSet
 		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(snapshotDir);
@@ -110,6 +111,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		// 5. Rewind Snapshot TxHashSet
 		if (!snapshotTxHashSet.Rewind(pBlockDB, *pHeader))
 		{
+			FileUtil::RemoveFile(snapshotDir);
 			return false;
 		}
 
@@ -124,8 +126,15 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		const std::vector<std::string> pathsToZip = { snapshotDir + "kernel", snapshotDir + "output", snapshotDir + "rangeproof" };
 		if (!Zipper::CreateZipFile(zipFilePath, pathsToZip))
 		{
+			FileUtil::RemoveFile(snapshotDir);
 			return false;
 		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Failed to snapshot: {}", e.what());
+		FileUtil::RemoveFile(snapshotDir);
+		return false;
 	}
 
 	// 9. Delete Snapshots/Hash folder

@@ -67,8 +67,6 @@ std::optional<SessionToken> WalletManager::RestoreFromSeed(const std::string& us
 		WALLET_WARNING_F("Mnemonic invalid for username ({}). Error: {}", username, e.what());
 		throw InvalidMnemonicException();
 	}
-
-	return std::nullopt;
 }
 
 SecureString WalletManager::GetSeedWords(const SessionToken& token)

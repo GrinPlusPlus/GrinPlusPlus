@@ -4,7 +4,8 @@
 
 ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces)
 	: m_edgeBits(edgeBits),
-	m_proofNonces(std::move(proofNonces))
+	m_proofNonces(std::move(proofNonces)),
+	m_hash(ZERO_HASH)
 {
 
 }
@@ -79,9 +80,9 @@ std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(const std::vector<unsi
 	return proofNonces;
 }
 
-const CBigInteger<32>& ProofOfWork::GetHash() const
+const Hash& ProofOfWork::GetHash() const
 {
-	if (m_hash == CBigInteger<32>())
+	if (m_hash == ZERO_HASH)
 	{
 		Serializer serializer;
 		SerializeCycle(serializer);

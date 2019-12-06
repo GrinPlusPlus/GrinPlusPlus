@@ -5,7 +5,7 @@
 #include <Crypto/Crypto.h>
 
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
-	: m_features(features), m_commitment(std::move(commitment))
+	: m_hash(ZERO_HASH), m_features(features), m_commitment(std::move(commitment))
 {
 
 }
@@ -47,7 +47,7 @@ TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJ
 
 const Hash& TransactionInput::GetHash() const
 {
-	if (m_hash == CBigInteger<32>())
+	if (m_hash == ZERO_HASH)
 	{
 		Serializer serializer;
 		Serialize(serializer);

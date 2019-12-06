@@ -5,9 +5,17 @@
 
 typedef CBigInteger<32> Hash;
 
-static const Hash ZERO_HASH = { Hash::ValueOf(0) };
-static const int HASH_SIZE = 32;
+//static constexpr Hash ZERO_HASH = { Hash::ValueOf(0) };
+static constexpr int HASH_SIZE = 32;
 
+
+class HASH
+{
+public:
+	static inline const Hash ZERO = Hash::ValueOf(0);
+};
+
+#define ZERO_HASH HASH::ZERO
 
 namespace std
 {

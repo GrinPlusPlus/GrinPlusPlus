@@ -89,7 +89,7 @@ public:
 		std::error_code ec;
 		if (fs::exists(StringUtil::ToWide(filePath), ec))
 		{
-			const uintmax_t removed = fs::remove_all(filePath, ec);
+			const uintmax_t removed = fs::remove_all(StringUtil::ToWide(filePath), ec);
 
 			return removed > 0 && ec.value() == 0;
 		}

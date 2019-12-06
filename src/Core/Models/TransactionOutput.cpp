@@ -3,7 +3,7 @@
 #include <Crypto/Crypto.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)
-	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof))
+	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof)), m_hash(ZERO_HASH)
 {
 
 }
@@ -53,7 +53,7 @@ TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutp
 
 const Hash& TransactionOutput::GetHash() const
 {
-	if (m_hash == Hash())
+	if (m_hash == ZERO_HASH)
 	{
 		Serializer serializer;
 		

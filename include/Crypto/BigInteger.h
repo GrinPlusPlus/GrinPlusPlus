@@ -69,7 +69,7 @@ public:
 	{
 		std::vector<unsigned char, ALLOC> data(NUM_BYTES);
 		data[NUM_BYTES - 1] = value;
-		return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
+		return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
 	}
 
 	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex);

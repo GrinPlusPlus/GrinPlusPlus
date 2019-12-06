@@ -5,7 +5,9 @@
 #include <Core/Util/JsonUtil.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
-	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody))
+	: m_offset(std::move(offset)),
+	m_transactionBody(std::move(transactionBody)),
+	m_hash(ZERO_HASH)
 {
 
 }
@@ -52,7 +54,7 @@ Transaction Transaction::FromJSON(const Json::Value& transactionJSON)
 
 const Hash& Transaction::GetHash() const
 {
-	if (m_hash == Hash())
+	if (m_hash == ZERO_HASH)
 	{
 		Serializer serializer;
 		Serialize(serializer);

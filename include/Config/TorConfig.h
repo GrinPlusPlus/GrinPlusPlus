@@ -7,7 +7,7 @@ class TorConfig
 {
 public:
 	TorConfig(const uint16_t socksPort, const uint16_t controlPort, const std::string& password, const std::string& hashedPassword)
-		: m_socksPort(m_socksPort), m_controlPort(controlPort), m_password(password), m_hashedPassword(hashedPassword)
+		: m_socksPort(socksPort), m_controlPort(controlPort), m_password(password), m_hashedPassword(hashedPassword)
 	{
 
 	}

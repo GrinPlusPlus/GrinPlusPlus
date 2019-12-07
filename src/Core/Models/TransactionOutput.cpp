@@ -3,9 +3,16 @@
 #include <Crypto/Crypto.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)
-	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof)), m_hash(ZERO_HASH)
+	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof))
 {
+	Serializer serializer;
 
+	// Serialize OutputFeatures
+	serializer.Append<uint8_t>((uint8_t)m_features);
+	// Serialize Commitment
+	m_commitment.Serialize(serializer);
+
+	m_hash = Crypto::Blake2b(serializer.GetBytes());
 }
 
 void TransactionOutput::Serialize(Serializer& serializer) const
@@ -53,17 +60,5 @@ TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutp
 
 const Hash& TransactionOutput::GetHash() const
 {
-	if (m_hash == ZERO_HASH)
-	{
-		Serializer serializer;
-		
-		// Serialize OutputFeatures
-		serializer.Append<uint8_t>((uint8_t)m_features);
-		// Serialize Commitment
-		m_commitment.Serialize(serializer);
-
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
-	}
-
 	return m_hash;
 }

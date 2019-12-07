@@ -68,7 +68,7 @@ public:
 
 		if (!m_deque.empty())
 		{
-			return std::make_unique<T>(T(m_deque.front()));
+			return std::make_unique<T>(m_deque.front());
 		}
 
 		return nullptr;

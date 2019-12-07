@@ -347,8 +347,7 @@ bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walle
 	{
 		if (pWalletTx->GetTransaction().has_value())
 		{
-			return PostTransaction(token, pWalletTx->GetTransaction().value(), PostMethodDTO(EPostMethod::JOIN, TorAddressParser::Parse("grinjoin5pzzisnne3naxx4w2knwxsyamqmzfnzywnzdk7ra766u7vid")));
-			//return m_pNodeClient->PostTransaction(std::make_shared<Transaction>(pWalletTx->GetTransaction().value()), EPoolType::MEMPOOL);
+			return m_pNodeClient->PostTransaction(std::make_shared<Transaction>(pWalletTx->GetTransaction().value()), EPoolType::MEMPOOL);
 		}
 	}
 

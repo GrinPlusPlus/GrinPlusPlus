@@ -12,7 +12,7 @@ jobs:
           - name: macos
             os: macos-latest
             compiler: gcc
-            version: "7"
+            version: "9"
           - name: ubuntu
             os: ubuntu-latest
           - name: windows
@@ -22,7 +22,7 @@ jobs:
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |
-          brew install gcc@${{ matrix.version }} cmake
+          brew install gcc cmake
           echo "::set-env name=CC::gcc-${{ matrix.version }}"
           echo "::set-env name=CXX::g++-${{ matrix.version }}"
       - name: setup ubuntu environment

@@ -33,7 +33,7 @@ TEST_CASE("Crypto::AddCommitment")
 
 		std::vector<unsigned char> blindOutBytes(32);
 		std::vector<const unsigned char*> blindingIn({ blind_a.GetBytes().GetData().data(), blind_b.GetBytes().GetData().data() });
-		int result = secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 2);
+		secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 2);
 
 		BlindingFactor blind_c(std::move(blindOutBytes));
 		Commitment commit_c = Crypto::CommitBlinded(5, blind_c);
@@ -53,7 +53,7 @@ TEST_CASE("Crypto::AddCommitment")
 
 		std::vector<unsigned char> blindOutBytes(32);
 		std::vector<const unsigned char*> blindingIn({ blind_a.GetBytes().GetData().data(), blind_b.GetBytes().GetData().data() });
-		int result = secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 1);
+		secp256k1_pedersen_blind_sum(ctx, blindOutBytes.data(), blindingIn.data(), 2, 1);
 
 		BlindingFactor blind_c(std::move(blindOutBytes));
 		Commitment commit_c = Crypto::CommitBlinded(1, blind_c);

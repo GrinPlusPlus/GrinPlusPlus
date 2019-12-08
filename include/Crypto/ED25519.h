@@ -17,6 +17,9 @@ struct ed25519_public_key_t
 		pubkey.resize(ED25519_PUBKEY_LEN);
 	}
 
+	bool operator==(const ed25519_public_key_t& other) const { return pubkey == other.pubkey; }
+	bool operator!=(const ed25519_public_key_t& other) const { return pubkey != other.pubkey; }
+
 	std::vector<uint8_t> pubkey;
 };
 

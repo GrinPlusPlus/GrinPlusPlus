@@ -29,7 +29,7 @@ public:
 		const uint64_t amountDebited,
 		const std::optional<uint64_t>& feeOpt,
 		std::optional<Transaction>&& transactionOpt,
-		std::optional<SlatePaymentProof>&& paymentProofOpt
+		const std::optional<SlatePaymentProof>& paymentProofOpt
 	)	
 		: m_walletTxId(walletTxId),
 		m_type(type),
@@ -43,7 +43,7 @@ public:
 		m_amountDebited(amountDebited),
 		m_feeOpt(feeOpt),
 		m_transactionOpt(std::move(transactionOpt)),
-		m_paymentProofOpt(std::move(paymentProofOpt))
+		m_paymentProofOpt(paymentProofOpt)
 	{
 
 	}
@@ -199,7 +199,7 @@ public:
 			amountDebited, 
 			feeOpt, 
 			std::move(transactionOpt),
-			std::move(paymentProofOpt)
+			paymentProofOpt
 		);
 	}
 

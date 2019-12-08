@@ -84,7 +84,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 	Transaction transaction = TransactionBuilder::BuildTransaction(inputs, changeOutputs, transactionOffset, fee, 0);
 
 	// Payment proof
-	KeyChainPath torPath = pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
+	KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
 
 	std::optional<SlatePaymentProof> proofOpt = std::nullopt;
 	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;

@@ -1,6 +1,7 @@
 #include "FinalizeSlateBuilder.h"
 #include "TransactionBuilder.h"
 #include "SignatureUtil.h"
+#include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Validation/KernelSignatureValidator.h>
@@ -43,8 +44,10 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 		throw WALLET_EXCEPTION_F("Transaction not found for slate ({})", uuids::to_string(finalSlate.GetSlateId()));
 	}
 
+	Commitment finalExcess = SlateUtil::CalculateFinalExcess(slate);
+
 	// Verify payment proof addresses & signatures
-	if (!VerifyPaymentProofs(pWalletTx, finalSlate))
+	if (!VerifyPaymentProofs(pWalletTx, finalSlate, finalExcess))
 	{
 		WALLET_ERROR_F("Failed to verify payment proof for slate {}", uuids::to_string(slate.GetSlateId()));
 		throw WALLET_EXCEPTION("Failed to verify payment proof.");
@@ -58,7 +61,7 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	}
 
 	// Finalize transaction
-	if (!AddFinalTransaction(finalSlate, message))
+	if (!AddFinalTransaction(finalSlate, message, finalExcess))
 	{
 		WALLET_ERROR_F("Failed to verify finalized transaction for slate {}", uuids::to_string(slate.GetSlateId()));
 		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
@@ -104,7 +107,7 @@ bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWa
 	return false;
 }
 
-bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelMessage) const
+bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelMessage, const Commitment& finalExcess) const
 {
 	// Aggregate partial signatures
 	std::unique_ptr<Signature> pAggSignature = SignatureUtil::AggregateSignatures(slate.GetParticipantData());
@@ -118,26 +121,14 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 		return false;
 	}
 
-	const Transaction& transaction = slate.GetTransaction();
 	const TransactionKernel& kernel = slate.GetTransaction().GetBody().GetKernels().front();
-
-	// Build the final excess based on final tx and offset
-	auto getInputCommitments = [](const TransactionInput& input) -> Commitment { return input.GetCommitment(); };
-	std::vector<Commitment> inputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetInputs(), getInputCommitments);
-	inputCommitments.emplace_back(Crypto::CommitBlinded(0, transaction.GetOffset()));
-
-	auto getOutputCommitments = [](const TransactionOutput& output) -> Commitment { return output.GetCommitment(); };
-	std::vector<Commitment> outputCommitments = FunctionalUtil::map<std::vector<Commitment>>(transaction.GetBody().GetOutputs(), getOutputCommitments);
-	outputCommitments.emplace_back(Crypto::CommitTransparent(kernel.GetFee()));
-
-	Commitment finalExcess = Crypto::AddCommitments(outputCommitments, inputCommitments);
 
 	// Update the tx kernel to reflect the offset excess and sig
 	TransactionKernel finalKernel(
 		kernel.GetFeatures(),
 		kernel.GetFee(),
 		kernel.GetLockHeight(),
-		std::move(finalExcess),
+		Commitment(finalExcess),
 		Signature(*pAggSignature)
 	);
 	if (!KernelSignatureValidator().VerifyKernelSignatures(std::vector<TransactionKernel>({ finalKernel })))
@@ -160,7 +151,7 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	return true;
 }
 
-bool FinalizeSlateBuilder::VerifyPaymentProofs(const std::unique_ptr<WalletTx>& pWalletTx, Slate& slate) const
+bool FinalizeSlateBuilder::VerifyPaymentProofs(const std::unique_ptr<WalletTx>& pWalletTx, const Slate& slate, const Commitment& finalExcess) const
 {
 	auto& paymentProofOpt = pWalletTx->GetPaymentProof();
 	if (paymentProofOpt.has_value())
@@ -183,7 +174,7 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(const std::unique_ptr<WalletTx>& 
 		// Check signature - Message: (amount | kernel commitment | sender address)
 		Serializer messageSerializer;
 		messageSerializer.Append<uint64_t>(slate.GetAmount());
-		slate.GetTransaction().GetKernels().front().GetCommitment().Serialize(messageSerializer);
+		finalExcess.Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(CBigInteger<32>(newProof.GetSenderAddress().pubkey));
 
 		return ED25519::VerifySignature(

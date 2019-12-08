@@ -13,19 +13,19 @@ TEST_CASE("AggSig Interaction")
 
 	// Generate sender keypairs
 	SecretKey secretKeySender = RandomNumberGenerator::GenerateRandom32();
-	PublicKey publicKeySender = *Crypto::CalculatePublicKey(secretKeySender);
-	SecretKey secretNonceSender = *Crypto::GenerateSecureNonce();
-	PublicKey publicNonceSender = *Crypto::CalculatePublicKey(secretNonceSender);
+	PublicKey publicKeySender = Crypto::CalculatePublicKey(secretKeySender);
+	SecretKey secretNonceSender = Crypto::GenerateSecureNonce();
+	PublicKey publicNonceSender = Crypto::CalculatePublicKey(secretNonceSender);
 
 	// Generate receiver keypairs
 	SecretKey secretKeyReceiver = RandomNumberGenerator::GenerateRandom32();
-	PublicKey publicKeyReceiver = *Crypto::CalculatePublicKey(secretKeyReceiver);
-	SecretKey secretNonceReceiver = *Crypto::GenerateSecureNonce();
-	PublicKey publicNonceReceiver = *Crypto::CalculatePublicKey(secretNonceReceiver);
+	PublicKey publicKeyReceiver = Crypto::CalculatePublicKey(secretKeyReceiver);
+	SecretKey secretNonceReceiver = Crypto::GenerateSecureNonce();
+	PublicKey publicNonceReceiver = Crypto::CalculatePublicKey(secretNonceReceiver);
 
 	// Add pubKeys and pubNonces
-	PublicKey sumPubKeys = *Crypto::AddPublicKeys(std::vector<PublicKey>({ publicKeySender, publicKeyReceiver }));
-	PublicKey sumPubNonces = *Crypto::AddPublicKeys(std::vector<PublicKey>({ publicNonceSender, publicNonceReceiver }));
+	PublicKey sumPubKeys = Crypto::AddPublicKeys(std::vector<PublicKey>({ publicKeySender, publicKeyReceiver }));
+	PublicKey sumPubNonces = Crypto::AddPublicKeys(std::vector<PublicKey>({ publicNonceSender, publicNonceReceiver }));
 
 	// Generate partial signatures
 	CompactSignature senderPartialSignature = *Crypto::CalculatePartialSignature(secretKeySender, secretNonceSender, sumPubKeys, sumPubNonces, message);
@@ -44,23 +44,22 @@ TEST_CASE("AggSig Interaction")
 	REQUIRE(aggSigValid == true);
 }
 
-
 TEST_CASE("Message Signature")
 {
 	const SecretKey secretKey = RandomNumberGenerator::GenerateRandom32();
-	const std::unique_ptr<PublicKey> pPublicKey = Crypto::CalculatePublicKey(secretKey);
+	const PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
 	const std::string message = "MESSAGE";
 
-	std::unique_ptr<CompactSignature> pSignature = Crypto::SignMessage(secretKey, *pPublicKey, message);
+	std::unique_ptr<CompactSignature> pSignature = Crypto::SignMessage(secretKey, publicKey, message);
 	REQUIRE(pSignature != nullptr);
 
-	const bool valid = Crypto::VerifyMessageSignature(*pSignature, *pPublicKey, message);
+	const bool valid = Crypto::VerifyMessageSignature(*pSignature, publicKey, message);
 	REQUIRE(valid == true);
 
-	const bool wrongMessage = Crypto::VerifyMessageSignature(*pSignature, *pPublicKey, "WRONG_MESSAGE");
+	const bool wrongMessage = Crypto::VerifyMessageSignature(*pSignature, publicKey, "WRONG_MESSAGE");
 	REQUIRE(wrongMessage == false);
 
-	const std::unique_ptr<PublicKey> pPublicKey2 = Crypto::CalculatePublicKey(RandomNumberGenerator::GenerateRandom32());
-	const bool differentPublicKey = Crypto::VerifyMessageSignature(*pSignature, *pPublicKey2, message);
+	const PublicKey publicKey2 = Crypto::CalculatePublicKey(RandomNumberGenerator::GenerateRandom32());
+	const bool differentPublicKey = Crypto::VerifyMessageSignature(*pSignature, publicKey2, message);
 	REQUIRE(differentPublicKey == false);
 }

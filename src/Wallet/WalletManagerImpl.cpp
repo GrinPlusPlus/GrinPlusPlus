@@ -275,7 +275,7 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(receiveCriteria.GetToken());
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(receiveCriteria.GetToken());
 
-	return ReceiveSlateBuilder().AddReceiverData(
+	return ReceiveSlateBuilder(m_config).AddReceiverData(
 		wallet,
 		masterSeed,
 		receiveCriteria.GetSlate(),

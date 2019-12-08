@@ -16,6 +16,7 @@ public:
 	const ed25519_public_key_t& GetSenderAddress() const { return m_senderAddress; }
 	const ed25519_public_key_t& GetReceiverAddress() const { return m_receiverAddress; }
 	const std::optional<Signature>& GetReceiverSignature() const { return m_receiverSignatureOpt; }
+	void AddSignature(Signature&& signature) { m_receiverSignatureOpt = std::make_optional(std::move(signature)); }
 
 	Json::Value ToJSON() const
 	{

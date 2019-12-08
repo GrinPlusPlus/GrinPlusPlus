@@ -7,7 +7,6 @@
 class TransactionBuilder
 {
 public:
-
 	static Transaction BuildTransaction(const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight)
 	{
 		auto getInput = [](OutputData& input) -> TransactionInput { return TransactionInput(input.GetOutput().GetFeatures(), Commitment(input.GetOutput().GetCommitment())); };

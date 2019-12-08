@@ -1,6 +1,7 @@
 #include "ReceiveSlateBuilder.h"
 #include "SignatureUtil.h"
 #include "TransactionBuilder.h"
+#include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
@@ -37,6 +38,8 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 
 	// Add output to Transaction
 	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
+
+	UpdatePaymentProof(pWallet.GetShared(), pBatch.GetShared(), masterSeed, receiveSlate);
 
 	UpdateDatabase(pBatch, masterSeed, receiveSlate, outputData, walletTxId, addressOpt, messageOpt);
 
@@ -122,6 +125,35 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	}
 }
 
+void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IWalletDBPtr pWalletDB, const SecureVector& masterSeed, Slate& slate) const
+{
+	if (slate.GetPaymentProof().has_value())
+	{
+		if (!pWallet->GetTorAddress().has_value())
+		{
+			throw WALLET_EXCEPTION("");
+		}
+
+		auto& proof = slate.GetPaymentProof().value();
+		if (proof.GetReceiverAddress() != pWallet->GetTorAddress().value().GetPublicKey())
+		{
+			throw WALLET_EXCEPTION("");
+		}
+
+		Serializer messageSerializer;
+		messageSerializer.Append<uint64_t>(slate.GetAmount());
+		SlateUtil::CalculateFinalExcess(slate).Serialize(messageSerializer);
+		messageSerializer.AppendBigInteger(CBigInteger<32>(proof.GetSenderAddress().pubkey));
+
+		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+		SecretKey torKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
+		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
+
+		Signature signature = ED25519::Sign(hashedTorKey, proof.GetReceiverAddress(), messageSerializer.GetBytes());
+		proof.AddSignature(std::move(signature));
+	}
+}
+
 void ReceiveSlateBuilder::UpdateDatabase(
 	Writer<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
@@ -151,7 +183,7 @@ void ReceiveSlateBuilder::UpdateDatabase(
 		0,
 		std::optional<uint64_t>(slate.GetFee()),
 		std::nullopt,
-		std::nullopt // TODO: Implement payment proofs
+		slate.GetPaymentProof()
 	);
 
 	pBatch->AddTransaction(masterSeed, walletTx);

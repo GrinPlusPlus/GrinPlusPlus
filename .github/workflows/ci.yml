@@ -1,0 +1,37 @@
+name: ci
+on: [push]
+jobs:
+  ci:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [macos, ubuntu, windows]
+        include:
+          - name: macos
+            os: macos-latest
+            compiler: gcc
+            version: "7"
+          - name: ubuntu
+            os: ubuntu-latest
+          - name: windows
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup macos environment
+        if: runner.os == 'macOS'
+        run: |
+          brew install gcc@${{ matrix.version }} cmake
+          echo "::set-env name=CC::gcc-${{ matrix.version }}"
+          echo "::set-env name=CXX::g++-${{ matrix.version }}"
+      - name: setup ubuntu environment
+        if: runner.os == 'Linux'
+        run: sudo apt install uuid-dev
+      - name: make build directory
+        run: mkdir build
+      - name: configure and compile
+        working-directory: build
+        run: |
+          cmake ..
+          cmake --build .

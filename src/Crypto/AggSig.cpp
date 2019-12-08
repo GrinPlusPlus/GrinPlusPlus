@@ -240,7 +240,7 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 	for (const Commitment* commitment : commitments)
 	{
 		secp256k1_pedersen_commitment parsedCommitment;
-		const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment->GetBytes().data());
+		const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment->data());
 		if (commitmentResult == 1)
 		{
 			secp256k1_pubkey pubKey;

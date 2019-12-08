@@ -388,7 +388,7 @@ std::unique_ptr<BlockSums> BlockDB::GetBlockSums(const Hash& blockHash) const
 
 void BlockDB::AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location)
 {
-	Slice key((const char*)outputCommitment.GetBytes().data(), 32);
+	Slice key((const char*)outputCommitment.data(), 32);
 
 	// Serializes the output position
 	Serializer serializer;
@@ -408,7 +408,7 @@ std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& out
 {
 	std::unique_ptr<OutputLocation> pOutputPosition = nullptr;
 
-	Slice key((const char*)outputCommitment.GetBytes().data(), 32);
+	Slice key((const char*)outputCommitment.data(), 32);
 
 	// Read from DB
 	std::string value;

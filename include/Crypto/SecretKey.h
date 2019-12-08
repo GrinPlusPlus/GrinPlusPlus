@@ -4,38 +4,43 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class SecretKey
+template<size_t NUM_BYTES>
+class secret_key_t
 {
 public:
-	SecretKey(CBigInteger<32>&& seed)
+	secret_key_t(CBigInteger<NUM_BYTES>&& seed)
 		: m_seed(std::move(seed))
 	{
 
 	}
 
-	~SecretKey()
+	~secret_key_t()
 	{
 		m_seed.erase();
 	}
 
-	inline const CBigInteger<32>& GetBytes() const { return m_seed; }
+	inline const CBigInteger<NUM_BYTES>& GetBytes() const { return m_seed; }
+	inline const std::vector<unsigned char>& GetVec() const { return m_seed.GetData(); }
 
-	inline const unsigned char* data() const { return m_seed.GetData().data(); }
-	inline size_t size() const { return m_seed.GetData().size(); }
+	inline const unsigned char* data() const { return m_seed.data(); }
+	inline size_t size() const { return m_seed.size(); }
 
 	//
 	// Serialization/Deserialization
 	//
 	void Serialize(Serializer& serializer) const
 	{
-		serializer.AppendBigInteger<32>(m_seed);
+		serializer.AppendBigInteger<NUM_BYTES>(m_seed);
 	}
 
-	static SecretKey Deserialize(ByteBuffer& byteBuffer)
+	static secret_key_t<NUM_BYTES> Deserialize(ByteBuffer& byteBuffer)
 	{
-		return SecretKey(byteBuffer.ReadBigInteger<32>());
+		return SecretKey(byteBuffer.ReadBigInteger<NUM_BYTES>());
 	}
 
 private:
-	CBigInteger<32> m_seed;
+	CBigInteger<NUM_BYTES> m_seed;
 };
+
+typedef secret_key_t<32> SecretKey;
+typedef secret_key_t<64> SecretKey64;

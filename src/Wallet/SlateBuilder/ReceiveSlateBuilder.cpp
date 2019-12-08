@@ -147,10 +147,9 @@ void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IW
 		messageSerializer.AppendBigInteger(CBigInteger<32>(proof.GetSenderAddress().pubkey));
 
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-		SecretKey torKey = keyChain.DerivePrivateKey(KeyChainPath::FromString("m/0/1/0"));
-		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
+		SecretKey64 torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
-		Signature signature = ED25519::Sign(hashedTorKey, proof.GetReceiverAddress(), messageSerializer.GetBytes());
+		Signature signature = ED25519::Sign(torKey, proof.GetReceiverAddress(), messageSerializer.GetBytes());
 		proof.AddSignature(std::move(signature));
 	}
 }

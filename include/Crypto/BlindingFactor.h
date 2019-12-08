@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Crypto/Hash.h>
+#include <Crypto/SecretKey.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -45,6 +46,8 @@ public:
 	// Getters
 	//
 	inline const CBigInteger<32>& GetBytes() const { return m_blindingFactorBytes; }
+	inline const std::vector<unsigned char>& GetVec() const { return m_blindingFactorBytes.GetData(); }
+	inline const unsigned char* data() const { return m_blindingFactorBytes.data(); }
 
 	//
 	// Serialization/Deserialization
@@ -57,6 +60,15 @@ public:
 	static BlindingFactor Deserialize(ByteBuffer& byteBuffer)
 	{
 		return BlindingFactor(byteBuffer.ReadBigInteger<32>());
+	}
+
+	//
+	// Converts BlindingFactor to SecretKey.
+	// WARNING: BlindingFactor is unusable after calling this.
+	//
+	SecretKey ToSecretKey()
+	{
+		return SecretKey(std::move(m_blindingFactorBytes));
 	}
 
 private:

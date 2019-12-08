@@ -3,7 +3,6 @@
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
-#include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
 #include <json/json.h>
@@ -24,9 +23,9 @@ int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContex
 	if (pTipHeader != nullptr)
 	{
 		Json::Value rootNode;
-		rootNode["output_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetOutputRoot().GetData());
-		rootNode["range_proof_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetRangeProofRoot().GetData());
-		rootNode["kernel_root_hash"] = HexUtil::ConvertToHex(pTipHeader->GetKernelRoot().GetData());
+		rootNode["output_root_hash"] = pTipHeader->GetOutputRoot().ToHex();
+		rootNode["range_proof_root_hash"] = pTipHeader->GetRangeProofRoot().ToHex();
+		rootNode["kernel_root_hash"] = pTipHeader->GetKernelRoot().ToHex();
 
 		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
 	}
@@ -63,7 +62,7 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNode
 		for (const Hash& hash : hashes)
 		{
 			Json::Value kernelNode;
-			kernelNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
+			kernelNode["hash"] = hash.ToHex();
 			rootNode.append(kernelNode);
 		}
 
@@ -102,7 +101,7 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 		for (const Hash& hash : hashes)
 		{
 			Json::Value outputNode;
-			outputNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
+			outputNode["hash"] = hash.ToHex();
 			rootNode.append(outputNode);
 		}
 
@@ -141,7 +140,7 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 		for (const Hash& hash : hashes)
 		{
 			Json::Value rangeProofNode;
-			rangeProofNode["hash"] = HexUtil::ConvertToHex(hash.GetData());
+			rangeProofNode["hash"] = hash.ToHex();
 			rootNode.append(rangeProofNode);
 		}
 
@@ -230,11 +229,11 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
 			outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
 			outputNode["spent"] = info.IsSpent();
-			outputNode["proof"] = HexUtil::ConvertToHex(info.GetRangeProof().GetProofBytes());
+			outputNode["proof"] = info.GetRangeProof().Format();
 
 			Serializer proofSerializer;
 			info.GetRangeProof().Serialize(proofSerializer);
-			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
+			outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
 
 			outputNode["block_height"] = info.GetLocation().GetBlockHeight();
 			outputNode["merkle_proof"] = Json::nullValue;

@@ -22,6 +22,7 @@ public:
 
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath) const;
+	SecretKey64 DeriveED25519Key(const KeyChainPath& keyPath) const;
 
 	std::unique_ptr<RewoundProof> RewindRangeProof(
 		const Commitment& commitment,

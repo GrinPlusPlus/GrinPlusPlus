@@ -74,7 +74,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 		KeyChainPath keyChainPath(pRewoundProof->GetProofMessage().ToKeyIndices(type));
 		const std::unique_ptr<SecretKey>& pBlindingFactor = pRewoundProof->GetBlindingFactor();
-		CBigInteger<32> blindingFactor;
+		BlindingFactor blindingFactor(ZERO_HASH);
 		if (pBlindingFactor != nullptr && type == EBulletproofType::ORIGINAL)
 		{
 			blindingFactor = pBlindingFactor->GetBytes();
@@ -96,7 +96,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 
 		return std::make_unique<OutputData>(
 			std::move(keyChainPath), 
-			SecretKey(std::move(blindingFactor)), 
+			blindingFactor.ToSecretKey(), 
 			std::move(txOutput), 
 			amount, 
 			status, 

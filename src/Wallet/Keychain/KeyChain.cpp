@@ -2,6 +2,7 @@
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
+#include <Crypto/ED25519.h>
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Common/Exceptions/UnimplementedException.h>
 #include <Common/Util/VectorUtil.h>
@@ -46,6 +47,14 @@ SecretKey KeyChain::DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t
 	return Crypto::BlindSwitch(DerivePrivateKey(keyPath), amount);
 }
 
+SecretKey64 KeyChain::DeriveED25519Key(const KeyChainPath& keyPath) const
+{
+	SecretKey preSeed = DerivePrivateKey(keyPath);
+	SecretKey seed = Crypto::Blake2b(preSeed.GetVec());
+
+	return ED25519::CalculateSecretKey(seed);
+}
+
 std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const EBulletproofType& bulletproofType) const
 {
 	if (bulletproofType == EBulletproofType::ORIGINAL)
@@ -82,7 +91,7 @@ RangeProof KeyChain::GenerateRangeProof(
 	}
 	else if (bulletproofType == EBulletproofType::ENHANCED)
 	{
-		const SecretKey privateNonceHash = Crypto::Blake2b(m_masterKey.GetPrivateKey().GetBytes().GetData());
+		const SecretKey privateNonceHash = Crypto::Blake2b(m_masterKey.GetPrivateKey().GetVec());
 
 		PublicKey masterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey());
 		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedBytes().GetData());
@@ -95,5 +104,5 @@ RangeProof KeyChain::GenerateRangeProof(
 
 SecretKey KeyChain::CreateNonce(const Commitment& commitment, const SecretKey& nonceHash) const
 {
-	return Crypto::Blake2b(commitment.GetBytes().GetData(), nonceHash.GetBytes().GetData());
+	return Crypto::Blake2b(commitment.GetVec(), nonceHash.GetVec());
 }

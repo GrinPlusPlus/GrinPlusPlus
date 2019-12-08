@@ -3,7 +3,6 @@
 #include <Node/NodeContext.h>
 
 #include <Net/Util/HTTPUtil.h>
-#include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <json/json.h>
 
@@ -55,7 +54,7 @@ int BlockInfoAPI::GetLatestBlockInfo(struct mg_connection* conn, NodeContext& se
 				Json::Value blockNode;
 
 				blockNode["height"] = pBlockHeader->GetHeight();
-				blockNode["hash"] = HexUtil::ConvertToHex(pBlockHeader->GetHash().GetData());
+				blockNode["hash"] = pBlockHeader->GetHash().ToHex();
 				blockNode["timestamp"] = pBlockHeader->GetTimestamp();
 				blockNode["pow"] = (pBlockHeader->GetProofOfWork().IsPrimary() ? "AT" : "AR") + std::to_string(pBlockHeader->GetProofOfWork().GetEdgeBits());
 				blockNode["total_difficulty"] = pBlockHeader->GetTotalDifficulty();

@@ -13,7 +13,7 @@ public:
 
 	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig);
 
-	std::string AddOnion(const SecretKey& privateKey, const uint16_t externalPort, const uint16_t internalPort);
+	std::string AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort);
 	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);
 	bool DelOnion(const TorAddress& torAddress);
 
@@ -25,8 +25,6 @@ private:
 	);
 
 	static bool Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password);
-	
-	std::string FormatKey(const SecretKey& privateKey) const;
 
 	const TorConfig& m_torConfig;
 	std::shared_ptr<TorControlClient> m_pClient;

@@ -117,7 +117,7 @@ RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretK
 		privateNonce.data(),
 		NULL,
 		0,
-		proofMessage.GetBytes().GetData().data()
+		proofMessage.data()
 	);
 	secp256k1_scratch_space_destroy(pScratchSpace);
 

@@ -85,12 +85,12 @@ BlindingFactor Pedersen::PedersenBlindSum(const std::vector<BlindingFactor>& pos
 	std::vector<const unsigned char*> blindingFactors;
 	for (const BlindingFactor& positiveFactor : positive)
 	{
-		blindingFactors.push_back(positiveFactor.GetBytes().GetData().data());
+		blindingFactors.push_back(positiveFactor.data());
 	}
 
 	for (const BlindingFactor& negativeFactor : negative)
 	{
-		blindingFactors.push_back(negativeFactor.GetBytes().GetData().data());
+		blindingFactors.push_back(negativeFactor.data());
 	}
 
 	CBigInteger<32> blindingFactorBytes;
@@ -138,7 +138,7 @@ std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const s
 	std::vector<secp256k1_pedersen_commitment*> convertedCommitments(commitments.size(), NULL);
 	for (int i = 0; i < commitments.size(); i++)
 	{
-		const std::vector<unsigned char>& commitmentBytes = commitments[i].GetBytes().GetData();
+		const std::vector<unsigned char>& commitmentBytes = commitments[i].GetVec();
 
 		secp256k1_pedersen_commitment* pCommitment = new secp256k1_pedersen_commitment();
 		const int parsed = secp256k1_pedersen_commitment_parse(&context, pCommitment, &commitmentBytes[0]);

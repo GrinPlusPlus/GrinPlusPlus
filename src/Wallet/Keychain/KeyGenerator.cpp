@@ -70,7 +70,7 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 
 	serializer.Append<uint32_t>(childKeyIndex);
 
-	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetBytes().GetData(), serializer.GetBytes());
+	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetVec(), serializer.GetBytes());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();
 
 	std::vector<unsigned char> vchLeft;

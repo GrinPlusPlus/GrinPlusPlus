@@ -21,8 +21,8 @@ public:
 	Json::Value ToJSON() const
 	{
 		Json::Value proofJSON;
-		proofJSON["sender_address"] = HexUtil::ConvertToHex(m_senderAddress.pubkey);
-		proofJSON["receiver_address"] = HexUtil::ConvertToHex(m_receiverAddress.pubkey);
+		proofJSON["sender_address"] = m_senderAddress.Format();
+		proofJSON["receiver_address"] = m_receiverAddress.Format();
 		proofJSON["receiver_signature"] = m_receiverSignatureOpt.has_value() ? m_receiverSignatureOpt.value().ToHex() : Json::Value(Json::nullValue);
 		return proofJSON;
 	}

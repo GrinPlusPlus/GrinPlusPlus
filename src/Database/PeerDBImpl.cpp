@@ -77,7 +77,7 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 		address.Serialize(addressSerializer);
 	}
 
-	Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+	Slice key((const char*)addressSerializer.data(), addressSerializer.size());
 
 	std::string value;
 	const Status status = m_pDatabase->Get(ReadOptions(), key, &value);
@@ -103,11 +103,11 @@ void PeerDB::SavePeers(const std::vector<Peer>& peers)
 
 		Serializer addressSerializer;
 		address.Serialize(addressSerializer);
-		Slice key((const char*)addressSerializer.GetBytes().data(), addressSerializer.GetBytes().size());
+		Slice key((const char*)addressSerializer.data(), addressSerializer.size());
 
 		Serializer peerSerializer;
 		peer.Serialize(peerSerializer);
-		Slice value((const char*)peerSerializer.GetBytes().data(), peerSerializer.GetBytes().size());
+		Slice value((const char*)peerSerializer.data(), peerSerializer.size());
 
 		writeBatch.Put(key, value);
 	}

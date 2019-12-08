@@ -156,7 +156,7 @@ SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& s
 {
 	secp256k1_context* pContext = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
-	CBigInteger<32> result(secretKey1.GetBytes().GetData());
+	CBigInteger<32> result(secretKey1.GetVec());
 	if (secp256k1_ec_privkey_tweak_add(pContext, (unsigned char*)result.data(), secretKey2.data()) == 1)
 	{
 		return SecretKey(std::move(result));
@@ -194,7 +194,7 @@ std::vector<unsigned char> Crypto::AES256_Encrypt(const SecureVector& input, con
 	// max ciphertext len for a n bytes of plaintext is n + AES_BLOCKSIZE bytes
 	ciphertext.resize(input.size() + AES_BLOCKSIZE);
 
-	AES256CBCEncrypt enc(key.data(), iv.GetData().data(), true);
+	AES256CBCEncrypt enc(key.data(), iv.data(), true);
 	const size_t nLen = enc.Encrypt(&input[0], (int)input.size(), ciphertext.data());
 	if (nLen < input.size())
 	{
@@ -215,7 +215,7 @@ SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext
 
 	plaintext.resize(nLen);
 
-	AES256CBCDecrypt dec(key.data(), iv.GetData().data(), true);
+	AES256CBCDecrypt dec(key.data(), iv.data(), true);
 	nLen = dec.Decrypt(ciphertext.data(), (int)ciphertext.size(), plaintext.data());
 	if (nLen == 0)
 	{

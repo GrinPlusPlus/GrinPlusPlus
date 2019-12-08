@@ -10,7 +10,7 @@ public:
 		std::vector<unsigned char> keyBytes;
 		keyBytes.reserve(33);
 		keyBytes.push_back(0);
-		keyBytes.insert(keyBytes.end(), privateKey.GetBytes().GetData().cbegin(), privateKey.GetBytes().GetData().cend());
+		keyBytes.insert(keyBytes.end(), privateKey.GetVec().cbegin(), privateKey.GetVec().cend());
 		return PrivateExtKey(network, depth, parentFingerprint, childNumber, std::move(chainCode), CBigInteger<33>(std::move(keyBytes)), std::move(privateKey));
 	}
 

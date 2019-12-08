@@ -14,6 +14,7 @@ public:
 	}
 
 	inline const CBigInteger<33>& GetCompressedBytes() const { return m_compressedKey; }
+	inline const std::vector<unsigned char>& GetCompressedVec() const { return m_compressedKey.GetData(); }
 
 	inline const unsigned char* data() const { return m_compressedKey.data(); }
 	inline size_t size() const { return m_compressedKey.size(); }

@@ -5,12 +5,14 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Crypto/BigInteger.h>
+#include <Common/Util/HexUtil.h>
+#include <Core/Traits/Printable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
 static const int MAX_PROOF_SIZE = 675;
 
-class RangeProof
+class RangeProof : public Traits::IPrintable
 {
 public:
 	//
@@ -27,7 +29,7 @@ public:
 	//
 	// Destructor
 	//
-	~RangeProof() = default;
+	virtual ~RangeProof() = default;
 
 	//
 	// Operators
@@ -59,6 +61,11 @@ public:
 
 		return RangeProof(byteBuffer.ReadVector(proofSize));
 	}
+
+	//
+	// Traits
+	//
+	virtual std::string Format() const override final { return HexUtil::ConvertToHex(m_proofBytes); }
 
 private:
 	// The proof itself, at most 675 bytes long.

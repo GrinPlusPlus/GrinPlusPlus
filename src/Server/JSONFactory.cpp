@@ -1,6 +1,5 @@
 #include "JSONFactory.h"
 
-#include <Common/Util/HexUtil.h>
 #include <Common/Util/TimeUtil.h>
 #include <Crypto/Crypto.h>
 
@@ -46,7 +45,7 @@ Json::Value JSONFactory::BuildCompactBlockJSON(const CompactBlock& compactBlock)
 	Json::Value inputsNode;
 	for (const ShortId& shortId : compactBlock.GetShortIds())
 	{
-		inputsNode.append(HexUtil::ConvertToHex(shortId.GetId().GetData()));
+		inputsNode.append(shortId.GetId().ToHex());
 	}
 	blockNode["inputs"] = inputsNode;
 
@@ -73,24 +72,24 @@ Json::Value JSONFactory::BuildHeaderJSON(const BlockHeader& header)
 {
 	Json::Value headerNode;
 	headerNode["height"] = header.GetHeight();
-	headerNode["hash"] = HexUtil::ConvertToHex(header.GetHash().GetData());
+	headerNode["hash"] = header.GetHash().ToHex();
 	headerNode["version"] = header.GetVersion();
 
 	headerNode["timestamp_raw"] = header.GetTimestamp();
 	headerNode["timestamp_local"] = TimeUtil::FormatLocal(header.GetTimestamp());
 	headerNode["timestamp"] = TimeUtil::FormatUTC(header.GetTimestamp());
 
-	headerNode["previous"] = HexUtil::ConvertToHex(header.GetPreviousBlockHash().GetData());
-	headerNode["prev_root"] = HexUtil::ConvertToHex(header.GetPreviousRoot().GetData());
+	headerNode["previous"] = header.GetPreviousBlockHash().ToHex();
+	headerNode["prev_root"] = header.GetPreviousRoot().ToHex();
 
-	headerNode["kernel_root"] = HexUtil::ConvertToHex(header.GetKernelRoot().GetData());
-	headerNode["output_root"] = HexUtil::ConvertToHex(header.GetOutputRoot().GetData());
-	headerNode["range_proof_root"] = HexUtil::ConvertToHex(header.GetRangeProofRoot().GetData());
+	headerNode["kernel_root"] = header.GetKernelRoot().ToHex();
+	headerNode["output_root"] = header.GetOutputRoot().ToHex();
+	headerNode["range_proof_root"] = header.GetRangeProofRoot().ToHex();
 
 	headerNode["output_mmr_size"] = header.GetOutputMMRSize();
 	headerNode["kernel_mmr_size"] = header.GetKernelMMRSize();
 
-	headerNode["total_kernel_offset"] = HexUtil::ConvertToHex(header.GetTotalKernelOffset().GetBytes().GetData());
+	headerNode["total_kernel_offset"] = header.GetTotalKernelOffset().GetBytes().ToHex();
 	headerNode["secondary_scaling"] = header.GetScalingDifficulty();
 	headerNode["total_difficulty"] = header.GetTotalDifficulty();
 	headerNode["nonce"] = header.GetNonce();
@@ -132,11 +131,11 @@ Json::Value JSONFactory::BuildTransactionOutputJSON(const TransactionOutput& out
 
 	outputNode["output_type"] = output.IsCoinbase() ? "Coinbase" : "Transaction";
 	// TODO: outputNode["spent"]
-	outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
+	outputNode["proof"] = output.GetRangeProof().Format();
 
 	Serializer proofSerializer;
 	output.GetRangeProof().Serialize(proofSerializer);
-	outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
+	outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
 
 	outputNode["block_height"] = blockHeight;
 	outputNode["mmr_index"] = 0; // TODO: This will be part of OutputDTO

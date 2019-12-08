@@ -90,9 +90,8 @@ Slate SendSlateBuilder::BuildSendSlate(
 	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;
 	if (torAddressOpt.has_value())
 	{
-		SecretKey torKey = KeyChain::FromSeed(m_config, masterSeed).DerivePrivateKey(torPath);
-		SecretKey hashedTorKey = Crypto::Blake2b(torKey.GetBytes().GetData());
-		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(hashedTorKey);
+		SecretKey64 torKey = KeyChain::FromSeed(m_config, masterSeed).DeriveED25519Key(torPath);
+		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(torKey);
 
 		proofOpt = std::make_optional(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
 	}
@@ -143,7 +142,7 @@ SecretKey SendSlateBuilder::CalculatePrivateKey(
 	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
 	BlindingFactor privateKeyBF = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);
 
-	return SecretKey(CBigInteger<32>(privateKeyBF.GetBytes()));
+	return privateKeyBF.ToSecretKey();
 }
 
 void SendSlateBuilder::AddSenderInfo(

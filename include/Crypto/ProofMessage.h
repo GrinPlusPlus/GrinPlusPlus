@@ -72,6 +72,7 @@ public:
 	}
 
 	inline const CBigInteger<20>& GetBytes() const { return m_proofMessageBytes; }
+	inline const unsigned char* data() const { return m_proofMessageBytes.data(); }
 
 private:
 	CBigInteger<20> m_proofMessageBytes;

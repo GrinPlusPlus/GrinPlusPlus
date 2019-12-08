@@ -6,7 +6,6 @@
 
 #include <Crypto/BigInteger.h>
 #include <Common/Util/BitUtil.h>
-#include <Common/Util/HexUtil.h>
 #include <Core/Traits/Printable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
@@ -49,6 +48,8 @@ public:
 	// Getters
 	//
 	inline const CBigInteger<33>& GetBytes() const { return m_commitmentBytes; }
+	inline const std::vector<unsigned char>& GetVec() const { return m_commitmentBytes.GetData(); }
+	inline const unsigned char* data() const { return m_commitmentBytes.data(); }
 
 	//
 	// Serialization/Deserialization
@@ -65,7 +66,7 @@ public:
 
 	std::string ToHex() const
 	{
-		return HexUtil::ConvertToHex(m_commitmentBytes.GetData());
+		return m_commitmentBytes.ToHex();
 	}
 
 	//
@@ -85,7 +86,7 @@ namespace std
 	{
 		size_t operator()(const Commitment& commitment) const
 		{
-			const std::vector<unsigned char>& bytes = commitment.GetBytes().GetData();
+			const std::vector<unsigned char>& bytes = commitment.GetVec();
 			return BitUtil::ConvertToU64(bytes[0], bytes[4], bytes[8], bytes[12], bytes[16], bytes[20], bytes[24], bytes[28]);
 		}
 	};

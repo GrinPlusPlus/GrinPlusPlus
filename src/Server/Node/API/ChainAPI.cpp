@@ -2,7 +2,6 @@
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
-#include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
 #include <json/json.h>
@@ -17,8 +16,8 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 	{
 		Json::Value chainNode;
 		chainNode["height"] = pTip->GetHeight();
-		chainNode["last_block_pushed"] = HexUtil::ConvertToHex(pTip->GetHash().GetData());
-		chainNode["prev_block_to_last"] = HexUtil::ConvertToHex(pTip->GetPreviousBlockHash().GetData());
+		chainNode["last_block_pushed"] = pTip->GetHash().ToHex();
+		chainNode["prev_block_to_last"] = pTip->GetPreviousBlockHash().ToHex();
 		chainNode["total_difficulty"] = pTip->GetTotalDifficulty();
 
 		return HTTPUtil::BuildSuccessResponse(conn, chainNode.toStyledString());
@@ -97,9 +96,9 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 		Json::Value blockNode;
 
 		Json::Value headerNode;
-		headerNode["hash"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetHash().GetData());
+		headerNode["hash"] = block.GetBlockIdentifier().GetHash().ToHex();
 		headerNode["height"] = block.GetBlockIdentifier().GetHeight();
-		headerNode["previous"] = HexUtil::ConvertToHex(block.GetBlockIdentifier().GetPreviousHash().GetData());
+		headerNode["previous"] = block.GetBlockIdentifier().GetPreviousHash().ToHex();
 		blockNode["header"] = headerNode;
 
 		Json::Value outputsNode;
@@ -111,11 +110,11 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
 			outputNode["commit"] = output.GetIdentifier().GetCommitment().ToHex();
 			outputNode["spent"] = false;
-			outputNode["proof"] = HexUtil::ConvertToHex(output.GetRangeProof().GetProofBytes());
+			outputNode["proof"] = output.GetRangeProof().Format();
 
 			Serializer proofSerializer;
 			output.GetRangeProof().Serialize(proofSerializer);
-			outputNode["proof_hash"] = HexUtil::ConvertToHex(Crypto::Blake2b(proofSerializer.GetBytes()).GetData());
+			outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
 
 			outputNode["block_height"] = output.GetLocation().GetBlockHeight();
 			outputNode["merkle_proof"] = Json::nullValue;
@@ -166,7 +165,7 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 		if (pOutputPosition != nullptr)
 		{
 			Json::Value outputNode;
-			outputNode["commit"] = commitment.GetBytes().ToHex();
+			outputNode["commit"] = commitment.Format();
 			outputNode["height"] = pOutputPosition->GetBlockHeight();
 			outputNode["mmr_index"] = pOutputPosition->GetMMRIndex() + 1;
 

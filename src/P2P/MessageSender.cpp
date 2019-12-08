@@ -16,7 +16,7 @@ bool MessageSender::Send(Socket& socket, const IMessage& message) const
 
 	Serializer bodySerializer;
 	message.SerializeBody(bodySerializer);
-	serializer.Append<uint64_t>(bodySerializer.GetBytes().size());
+	serializer.Append<uint64_t>(bodySerializer.size());
 	serializer.AppendByteVector(bodySerializer.GetBytes());
 
 	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong)

@@ -74,7 +74,7 @@ public:
 	//
 	static Json::Value ConvertToJSON(const BlindingFactor& blindingFactor)
 	{
-		return ConvertToJSON(blindingFactor.GetBytes().GetData());
+		return ConvertToJSON(blindingFactor.GetVec());
 	}
 
 	static BlindingFactor ConvertToBlindingFactor(const Json::Value& blindingFactorJSON)
@@ -92,7 +92,7 @@ public:
 	//
 	static Json::Value ConvertToJSON(const Commitment& commitment)
 	{
-		return ConvertToJSON(commitment.GetBytes().GetData());
+		return ConvertToJSON(commitment.GetVec());
 	}
 
 	static Commitment ConvertToCommitment(const Json::Value& commitmentJSON)

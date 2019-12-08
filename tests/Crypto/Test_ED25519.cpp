@@ -6,7 +6,8 @@
 
 TEST_CASE("ED25519 Signature")
 {
-	const SecretKey secretKey = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey seed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey64 secretKey = ED25519::CalculateSecretKey(seed);
 	const ed25519_public_key_t publicKey = ED25519::CalculatePubKey(secretKey);
 	const std::string messageStr = "MESSAGE";
 	std::vector<unsigned char> message(messageStr.begin(), messageStr.end());
@@ -21,7 +22,8 @@ TEST_CASE("ED25519 Signature")
 	const bool wrongMessageResult = ED25519::VerifySignature(publicKey, signature, wrongMessage);
 	REQUIRE(wrongMessageResult == false);
 
-	const ed25519_public_key_t publicKey2 = ED25519::CalculatePubKey(RandomNumberGenerator::GenerateRandom32());
+	const SecretKey seed2 = RandomNumberGenerator::GenerateRandom32();
+	const ed25519_public_key_t publicKey2 = ED25519::CalculatePubKey(ED25519::CalculateSecretKey(seed2));
 	const bool differentPublicKey = ED25519::VerifySignature(publicKey2, signature, message);
 	REQUIRE(differentPublicKey == false);
 }

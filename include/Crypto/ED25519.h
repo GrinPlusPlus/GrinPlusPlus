@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 #include <ed25519-donna/ed25519_donna_tor.h>
+#include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
 #include <Crypto/SecretKey.h>
@@ -20,6 +21,8 @@ struct ed25519_public_key_t
 
 	bool operator==(const ed25519_public_key_t& other) const { return pubkey == other.pubkey; }
 	bool operator!=(const ed25519_public_key_t& other) const { return pubkey != other.pubkey; }
+
+	std::string Format() const { return HexUtil::ConvertToHex(pubkey); }
 
 	std::vector<uint8_t> pubkey;
 };
@@ -53,15 +56,20 @@ public:
 		return result;
 	}
 
-	static ed25519_public_key_t CalculatePubKey(const SecretKey& secretKey)
+	static SecretKey64 CalculateSecretKey(const SecretKey& seed)
 	{
-		CBigInteger<64> hash = Crypto::SHA512(secretKey.GetBytes().GetData());
+		CBigInteger<64> hash = Crypto::SHA512(seed.GetVec());
 		hash[0] &= 248;
 		hash[31] &= 127;
 		hash[31] |= 64;
 
+		return SecretKey64(std::move(hash));
+	}
+
+	static ed25519_public_key_t CalculatePubKey(const SecretKey64& secretKey)
+	{
 		ed25519_public_key_t result;
-		const int status = ed25519_donna_pubkey(result.pubkey.data(), hash.data());
+		const int status = ed25519_donna_pubkey(result.pubkey.data(), secretKey.data());
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::CalculatePubKey");
@@ -75,16 +83,11 @@ public:
 		return ed25519_donna_open(signature.GetSignatureBytes().data(), message.data(), message.size(), publicKey.pubkey.data()) == 0;
 	}
 
-	static Signature Sign(const SecretKey& secretKey, const ed25519_public_key_t& pubKey, const std::vector<unsigned char>& message)
+	static Signature Sign(const SecretKey64& secretKey, const ed25519_public_key_t& pubKey, const std::vector<unsigned char>& message)
 	{
 		std::vector<unsigned char> signature(64);
 
-		CBigInteger<64> hash = Crypto::SHA512(secretKey.GetBytes().GetData());
-		hash[0] &= 248;
-		hash[31] &= 127;
-		hash[31] |= 64;
-
-		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), hash.data(), pubKey.pubkey.data());
+		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), secretKey.data(), pubKey.pubkey.data());
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::Sign");

@@ -18,13 +18,13 @@ TorManager::TorManager(const TorConfig& config)
 	m_pControl = TorControl::Create(config);
 }
 
-std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey& privateKey, const uint16_t portNumber)
+std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
 {
 	try
 	{
 		if (m_pControl != nullptr)
 		{
-			const std::string address = m_pControl->AddOnion(privateKey, 80, portNumber);
+			const std::string address = m_pControl->AddOnion(secretKey, 80, portNumber);
 			if (!address.empty())
 			{
 				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);

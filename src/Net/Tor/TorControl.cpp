@@ -70,9 +70,9 @@ bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const s
 	}
 }
 
-std::string TorControl::AddOnion(const SecretKey& privateKey, const uint16_t externalPort, const uint16_t internalPort)
+std::string TorControl::AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort)
 {
-	std::string serializedKey = FormatKey(privateKey);
+	std::string serializedKey = Base64::EncodeBase64(secretKey.GetVec());
 
 	return AddOnion(serializedKey, externalPort, internalPort);
 }
@@ -102,28 +102,4 @@ bool TorControl::DelOnion(const TorAddress& torAddress)
 
 	m_pClient->Invoke(command);
 	return true;
-}
-
-std::string TorControl::FormatKey(const SecretKey& privateKey) const
-{
-	/*
-		For a "ED25519-V3" key is
-		the Base64 encoding of the concatenation of the 32-byte ed25519 secret
-		scalar in little-endian and the 32-byte ed25519 PRF secret.)
-
-		[Note: The ED25519-V3 format is not the same as, e.g., SUPERCOP
-		ed25519/ref, which stores the concatenation of the 32-byte ed25519
-		hash seed concatenated with the 32-byte public key, and which derives
-		the secret scalar and PRF secret by expanding the hash seed with
-		SHA-512.  Our key blinding scheme is incompatible with storing
-		private keys as seeds, so we store the secret scalar alongside the
-		PRF secret, and just pay the cost of recomputing the public key when
-		importing an ED25519-V3 key.]
-	*/
-	CBigInteger<64> hash = Crypto::SHA512(privateKey.GetBytes().GetData());
-	hash[0] &= 248;
-	hash[31] &= 127;
-	hash[31] |= 64;
-
-	return Base64::EncodeBase64(hash.GetData());
 }

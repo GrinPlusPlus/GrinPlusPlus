@@ -35,7 +35,7 @@ public:
 
 	static secret_key_t<NUM_BYTES> Deserialize(ByteBuffer& byteBuffer)
 	{
-		return SecretKey(byteBuffer.ReadBigInteger<NUM_BYTES>());
+		return secret_key_t<NUM_BYTES>(byteBuffer.ReadBigInteger<NUM_BYTES>());
 	}
 
 private:

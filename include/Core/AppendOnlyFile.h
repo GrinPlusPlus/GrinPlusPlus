@@ -15,6 +15,12 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+#define MPATH_STR m_path.wstring()
+#else
+#define MPATH_STR m_path.string()
+#endif
+
 class AppendOnlyFile
 {
 public:
@@ -56,7 +62,7 @@ public:
 		if (m_fileSize > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
+			m_mmap = mio::make_mmap_source(MPATH_STR, error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: {}", error.value());
@@ -110,7 +116,7 @@ public:
 		if (m_fileSize > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
+			m_mmap = mio::make_mmap_source(MPATH_STR, error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: {}", error.value());

@@ -87,11 +87,18 @@ public:
 		return converter.to_bytes(wstr);
 	}
 
+#ifdef _WIN32
 	static std::wstring ToWide(const std::string& str)
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		return converter.from_bytes(str);
 	}
+#else
+	static std::string ToWide(const std::string& str)
+	{
+		return str;
+	}
+#endif
 
 	static inline std::string Trim(const std::string& s)
 	{

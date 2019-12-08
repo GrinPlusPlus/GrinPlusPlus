@@ -9,6 +9,12 @@
 #include <map>
 #include <memory>
 
+#ifdef _WIN32
+#define MPATH_STR m_path.wstring()
+#else
+#define MPATH_STR m_path.string()
+#endif
+
 // NOTE: Uses bit positions numbered from 0-7, starting at the left.
 // For example, 65 (01000001) has bit positions 1 and 7 set.
 class BitmapFile : public Traits::IBatchable
@@ -47,7 +53,7 @@ public:
 			file.close();
 
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
+			m_mmap = mio::make_mmap_source(MPATH_STR, error);
 			if (error.value() > 0)
 			{
 				// TODO: Handle this
@@ -165,7 +171,7 @@ private:
 		if (m_size > 0)
 		{
 			std::error_code error;
-			m_mmap = mio::make_mmap_source(m_path.wstring(), error);
+			m_mmap = mio::make_mmap_source(MPATH_STR, error);
 			if (error.value() > 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: {}", error.value());

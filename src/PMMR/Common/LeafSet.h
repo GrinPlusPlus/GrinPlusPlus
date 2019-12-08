@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PruneList.h"
+#include "MMRUtil.h"
+#include "MMRHashUtil.h"
 
 #include <string>
 #include <Crypto/Hash.h>
@@ -8,6 +10,7 @@
 #include <Core/BitmapFile.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
+#include <Core/Serialization/Serializer.h>
 
 class LeafSet
 {
@@ -43,6 +46,43 @@ public:
 		{
 			throw std::exception(); // TODO: Handle this.
 		}
+	}
+
+	Hash Root(const uint64_t numOutputs)
+	{
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(fs::temp_directory_path().string() + "UBMT");
+
+		//const uint64_t numLeaves = MMRUtil::GetNumLeaves(bitmap.maximum());
+		const uint64_t numChunks = (numOutputs + 1023) / 1024;
+		for (size_t i = 0; i < (numOutputs + 1023) / 1024; i++)
+		{
+			Serializer serializer;
+			for (size_t j = 0; j < (1024 / 8); j++)
+			{
+				uint8_t power = 128;
+				uint8_t byte = 0;
+				for (size_t k = 0; k < 8; k++)
+				{
+					const size_t index = (1024 * i) + (j * 8) + k;
+					if (index < numOutputs && m_pBitmap->IsSet(MMRUtil::GetPMMRIndex(index)))
+					{
+						byte += power;
+					}
+
+					power /= 2;
+				}
+
+				serializer.Append(byte);
+			}
+
+			MMRHashUtil::AddHashes(pHashFile, serializer.GetBytes(), nullptr);
+			//if (i + 1 == numChunks)
+			//{
+			//	serializer.GetSecureBytes();
+			//}
+		}
+
+		return MMRHashUtil::Root(pHashFile, pHashFile->GetSize(), nullptr);
 	}
 
 private:

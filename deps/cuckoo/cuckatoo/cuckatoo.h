@@ -28,7 +28,7 @@ word_t sipnode(siphash_keys *keys, word_t edge, u32 uorv, const word_t edgeMask)
 }
 
 // verify that edges are ascending and form a cycle in header-generated graph
-int verify(const word_t edges[PROOFSIZE], siphash_keys *keys, const uint8_t edgeBits) {
+int verify_cuckatoo(const word_t edges[PROOFSIZE], siphash_keys *keys, const uint8_t edgeBits) {
   word_t uvs[2*PROOFSIZE], xor0, xor1;
   xor0 = xor1 = (PROOFSIZE/2) & 1;
 

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "HashFile.h"
-#include "LeafSet.h"
 #include "PruneList.h"
 
+#include <Crypto/Hash.h>
 #include <Core/Traits/Lockable.h>
 #include <vector>
+
+// Forward Declarations
+class LeafSet;
 
 class MMRHashUtil
 {

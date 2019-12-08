@@ -18,6 +18,11 @@ typedef uint64_t u64;
 enum verify_code { POW_OK, POW_HEADER_LENGTH, POW_TOO_BIG, POW_TOO_SMALL, POW_NON_MATCHING, POW_BRANCH, POW_DEAD_END, POW_SHORT_CYCLE, POW_UNBALANCED};
 static const char* errstr[] = { "OK", "wrong header length", "edge too big", "edges not ascending", "endpoints don't match up", "branch in cycle", "cycle dead ends", "cycle too short", "edges not balanced" };
 
+#define MAX_NAME_LEN 256
+// last error reason, to be picked up by stats
+// to be returned to caller
+static char LAST_ERROR_REASON[MAX_NAME_LEN];
+
 // convenience function for extracting siphash keys from header
 static void setheader(const char *header, const u32 headerlen, siphash_keys *keys) {
 	char hdrkey[32];

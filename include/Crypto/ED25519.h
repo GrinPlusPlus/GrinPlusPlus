@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 #include <ed25519-donna/ed25519_donna_tor.h>
+#include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/Signature.h>
@@ -54,8 +55,13 @@ public:
 
 	static ed25519_public_key_t CalculatePubKey(const SecretKey& secretKey)
 	{
+		CBigInteger<64> hash = Crypto::SHA512(secretKey.GetBytes().GetData());
+		hash[0] &= 248;
+		hash[31] &= 127;
+		hash[31] |= 64;
+
 		ed25519_public_key_t result;
-		const int status = ed25519_donna_pubkey(result.pubkey.data(), secretKey.data());
+		const int status = ed25519_donna_pubkey(result.pubkey.data(), hash.data());
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::CalculatePubKey");
@@ -73,7 +79,12 @@ public:
 	{
 		std::vector<unsigned char> signature(64);
 
-		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), secretKey.data(), pubKey.pubkey.data());
+		CBigInteger<64> hash = Crypto::SHA512(secretKey.GetBytes().GetData());
+		hash[0] &= 248;
+		hash[31] &= 127;
+		hash[31] |= 64;
+
+		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), hash.data(), pubKey.pubkey.data());
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::Sign");

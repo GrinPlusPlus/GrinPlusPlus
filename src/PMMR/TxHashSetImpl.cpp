@@ -168,10 +168,24 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 		return false;
 	}
 
-	if (m_pOutputPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetOutputRoot())
+	Hash outputRoot = m_pOutputPMMR->Root(blockHeader.GetOutputMMRSize());
+	if (blockHeader.GetVersion() < 3)
 	{
-		LOG_ERROR_F("Output root not matching for header ({})", blockHeader);
-		return false;
+		if (outputRoot != blockHeader.GetOutputRoot())
+		{
+			LOG_ERROR_F("Output root not matching for header ({})", blockHeader);
+			return false;
+		}
+	}
+	else
+	{
+		Hash UBMT = m_pOutputPMMR->UBMTRoot(blockHeader.GetOutputMMRSize());
+		Hash merged = MMRHashUtil::HashParentWithIndex(outputRoot, UBMT, blockHeader.GetOutputMMRSize());
+		if (merged != blockHeader.GetOutputRoot())
+		{
+			LOG_ERROR_F("Output root not matching for header ({}). Output: {}, UBMT: {}", blockHeader, outputRoot, UBMT);
+			return false;
+		}
 	}
 
 	if (m_pRangeProofPMMR->Root(blockHeader.GetOutputMMRSize()) != blockHeader.GetRangeProofRoot())

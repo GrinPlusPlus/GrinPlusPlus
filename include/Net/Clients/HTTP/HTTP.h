@@ -42,10 +42,10 @@ public:
 			"Content-Length: {}\r\n"
 			"Content-Type: application/json-rpc\r\n\r\n{}",
 			m_method == EHTTPMethod::GET ? "GET" : "POST",
-			m_location.c_str(),
-			m_host.c_str(),
+			m_location,
+			m_host,
 			m_body.size(),
-			m_body.c_str()
+			m_body
 		);
 	}
 

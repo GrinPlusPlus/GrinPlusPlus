@@ -44,7 +44,7 @@ static u64 sipblock(siphash_keys &keys, const word_t edge, u64 *buf) {
 }
 
 // verify that edges are ascending and form a cycle in header-generated graph
-int verify(const word_t edges[PROOFSIZE], siphash_keys &keys, const uint8_t edgeBits) {
+int verify_cuckaroo(const word_t edges[PROOFSIZE], siphash_keys &keys, const uint8_t edgeBits) {
   word_t xor0 = 0, xor1 = 0;
   u64 sips[EDGE_BLOCK_SIZE];
   word_t uvs[2*PROOFSIZE];

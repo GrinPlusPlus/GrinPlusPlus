@@ -64,11 +64,10 @@ namespace Consensus
 	// This can wait until end of 2019 at latest
 	static uint64_t GraphWeight(const uint64_t height, const uint8_t edge_bits)
 	{
-		const uint64_t bits_over_min = edge_bits - (std::min)(edge_bits, DEFAULT_MIN_EDGE_BITS);
-		const uint64_t expiry_height = (((uint64_t)1) << bits_over_min) * YEAR_HEIGHT;
+		const uint64_t expiry_height = YEAR_HEIGHT;
 
 		uint64_t xpr_edge_bits = (uint64_t)edge_bits;
-		if (edge_bits < 32 && height >= expiry_height)
+		if (edge_bits == 31 && height >= expiry_height)
 		{
 			xpr_edge_bits = xpr_edge_bits -= (std::min)(xpr_edge_bits, 1 + (height - expiry_height) / WEEK_HEIGHT);
 		}

@@ -140,6 +140,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IW
 			throw WALLET_EXCEPTION("");
 		}
 
+		// Message: (amount | kernel commitment | sender address)
 		Serializer messageSerializer;
 		messageSerializer.Append<uint64_t>(slate.GetAmount());
 		SlateUtil::CalculateFinalExcess(slate).Serialize(messageSerializer);

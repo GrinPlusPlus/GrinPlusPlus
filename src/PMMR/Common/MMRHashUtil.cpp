@@ -1,5 +1,6 @@
 #include "MMRHashUtil.h"
 #include "MMRUtil.h"
+#include "LeafSet.h"
 
 #include <Crypto/Crypto.h>
 #include <Core/Serialization/Serializer.h>

@@ -16,7 +16,7 @@ bool Cuckatoo::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-	const int result = verify(proofNonces.data(), &keys, proofOfWork.GetEdgeBits());
+	const int result = verify_cuckatoo(proofNonces.data(), &keys, proofOfWork.GetEdgeBits());
 
 	return result == POW_OK;
 }

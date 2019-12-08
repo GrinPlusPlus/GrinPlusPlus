@@ -1,5 +1,7 @@
 #include "PoWUtil.h"
 
+#include <cassert>
+
 PoWUtil::PoWUtil(const Config& config)
 	: m_config(config)
 {
@@ -8,6 +10,8 @@ PoWUtil::PoWUtil(const Config& config)
 
 EPoWType PoWUtil::DeterminePoWType(const uint64_t headerVersion, const uint8_t edgeBits) const
 {
+	assert(headerVersion <= 3);
+
 	// MAINNET: Check environment
 	if (edgeBits == 29)
 	{
@@ -15,9 +19,13 @@ EPoWType PoWUtil::DeterminePoWType(const uint64_t headerVersion, const uint8_t e
 		{
 			return EPoWType::CUCKAROO;
 		}
-		else
+		else if (headerVersion == 2)
 		{
 			return EPoWType::CUCKAROOD;
+		}
+		else
+		{
+			return EPoWType::CUCKAROOM;
 		}
 	}
 	else

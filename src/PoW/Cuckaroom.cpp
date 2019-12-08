@@ -1,10 +1,10 @@
-#include "Cuckarood.h"
+#include "Cuckaroom.h"
 
-#include "cuckoo/cuckarood/cuckarood.hpp"
+#include "cuckoo/cuckaroom/cuckaroom.hpp"
 
 #include <Infrastructure/Logger.h>
 
-bool Cuckarood::Validate(const BlockHeader& blockHeader)
+bool Cuckaroom::Validate(const BlockHeader& blockHeader)
 {
 	const std::vector<unsigned char> preProofOfWork = blockHeader.GetPreProofOfWork();
 
@@ -19,7 +19,7 @@ bool Cuckarood::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-	const int result = verify_cuckarood((const word_t*)proofNonces.data(), keys);
+	const int result = verify_cuckaroom((const word_t*)proofNonces.data(), keys);
 	if (result != POW_OK)
 	{
 		LOG_ERROR_F("Failed with result: {}", result);

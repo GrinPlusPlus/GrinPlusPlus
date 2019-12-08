@@ -17,6 +17,9 @@ namespace Consensus
 	// Floonet-only first hardfork
 	static const uint64_t FLOONET_FIRST_HARD_FORK = 185040;
 
+	// Floonet-only second hardfork
+	static const uint64_t FLOONET_SECOND_HARD_FORK = 298080;
+
 	static uint16_t GetHeaderVersion(const EEnvironmentType& environment, const uint64_t height)
 	{
 		if (environment == EEnvironmentType::FLOONET)
@@ -25,9 +28,13 @@ namespace Consensus
 			{
 				return 1;
 			}
-			else if (height < 2 * HARD_FORK_INTERVAL)
+			else if (height < FLOONET_SECOND_HARD_FORK)
 			{
 				return 2;
+			}
+			else if (height < 3 * HARD_FORK_INTERVAL)
+			{
+				return 3;
 			}
 		}
 		else
@@ -39,6 +46,10 @@ namespace Consensus
 			else if (height < 2 * HARD_FORK_INTERVAL)
 			{
 				return 2;
+			}
+			else if (height < 3 * HARD_FORK_INTERVAL)
+			{
+				return 3;
 			}
 		}
 

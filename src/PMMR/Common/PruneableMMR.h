@@ -87,6 +87,11 @@ public:
 		return MMRHashUtil::Root(m_pHashFile, size, m_pPruneList);
 	}
 
+	Hash UBMTRoot(const uint64_t size) const
+	{
+		return m_pLeafSet->Root(size);
+	}
+
 	virtual uint64_t GetSize() const override final
 	{
 		const uint64_t totalShift = m_pPruneList->GetTotalShift();

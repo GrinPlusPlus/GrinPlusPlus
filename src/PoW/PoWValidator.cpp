@@ -4,6 +4,7 @@
 #include "PoWUtil.h"
 #include "Cuckaroo.h"
 #include "Cuckarood.h"
+#include "Cuckaroom.h"
 #include "Cuckatoo.h"
 
 #include <Consensus/BlockTime.h>
@@ -51,6 +52,10 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 	else if (powType == EPoWType::CUCKAROOD)
 	{
 		return Cuckarood::Validate(header);
+	}
+	else if (powType == EPoWType::CUCKAROOM)
+	{
+		return Cuckaroom::Validate(header);
 	}
 	else if (powType == EPoWType::CUCKATOO)
 	{

@@ -1,5 +1,6 @@
 #include <catch.hpp>
 
+#include <Crypto/Crypto.h>
 #include <Crypto/ED25519.h>
 #include <Crypto/RandomNumberGenerator.h>
 

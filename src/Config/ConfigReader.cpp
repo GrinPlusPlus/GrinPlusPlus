@@ -237,8 +237,8 @@ std::string ConfigReader::ReadLogLevel(const Json::Value& root) const
 
 TorConfig ConfigReader::ReadTorConfig(const Json::Value& root) const
 {
-	uint16_t socksPort = 3421;
-	uint16_t controlPort = 3422;
+	uint16_t socksPort = 13421;
+	uint16_t controlPort = 13422;
 	std::string password = "MyPassword";
 	std::string hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
 	if (root.isMember(ConfigProps::Tor::TOR))

@@ -20,18 +20,18 @@ class FileUtil
 public:
 	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
 	{
-		if (!fs::exists(StringUtil::ToWide(filePath)))
+		if (!fs::exists(StringUtil::ToWide(filePath).c_str()))
 		{
 			return false;
 		}
 
-		std::ifstream file(StringUtil::ToWide(filePath), std::ios::in | std::ios::binary | std::ios::ate);
+		std::ifstream file(StringUtil::ToWide(filePath).c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
 			return false;
 		}
 
-		auto size = fs::file_size(StringUtil::ToWide(filePath));
+		auto size = fs::file_size(StringUtil::ToWide(filePath).c_str());
 		data.resize((size_t)size);
 
 		file.seekg(0, std::ios::beg);
@@ -43,14 +43,14 @@ public:
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
 	{
-		const fs::path destinationPath(StringUtil::ToWide(destination));
+		const fs::path destinationPath(StringUtil::ToWide(destination).c_str());
 		if (fs::exists(destinationPath))
 		{
 			fs::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const fs::path sourcePath(StringUtil::ToWide(source));
+		const fs::path sourcePath(StringUtil::ToWide(source).c_str());
 		fs::rename(sourcePath, destinationPath, error);
 
 		return !error;
@@ -59,7 +59,7 @@ public:
 	static bool SafeWriteToFile(const std::string& filePath, const std::vector<unsigned char>& data)
 	{
 		const std::string tmpFilePath = filePath + ".tmp";
-		std::ofstream file(StringUtil::ToWide(tmpFilePath), std::ios::out | std::ios::binary | std::ios::ate);
+		std::ofstream file(StringUtil::ToWide(tmpFilePath).c_str(), std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
 			return false;
@@ -73,7 +73,7 @@ public:
 
 	static bool WriteTextToFile(const std::string& filePath, const std::string& text)
 	{
-		std::ofstream file(StringUtil::ToWide(filePath), std::ios::out | std::ios::trunc);
+		std::ofstream file(StringUtil::ToWide(filePath).c_str(), std::ios::out | std::ios::trunc);
 		if (!file.is_open())
 		{
 			return false;
@@ -87,9 +87,9 @@ public:
 	static bool RemoveFile(const std::string& filePath)
 	{
 		std::error_code ec;
-		if (fs::exists(StringUtil::ToWide(filePath), ec))
+		if (fs::exists(StringUtil::ToWide(filePath).c_str(), ec))
 		{
-			const uintmax_t removed = fs::remove_all(StringUtil::ToWide(filePath), ec);
+			const uintmax_t removed = fs::remove_all(StringUtil::ToWide(filePath).c_str(), ec);
 
 			return removed > 0 && ec.value() == 0;
 		}
@@ -100,14 +100,14 @@ public:
 	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
 	{
 		std::error_code ec;
-		fs::create_directories(StringUtil::ToWide(destDir), ec);
+		fs::create_directories(StringUtil::ToWide(destDir).c_str(), ec);
 
-		if (!fs::exists(StringUtil::ToWide(sourceDir), ec) || !fs::exists(StringUtil::ToWide(destDir), ec))
+		if (!fs::exists(StringUtil::ToWide(sourceDir).c_str(), ec) || !fs::exists(StringUtil::ToWide(destDir).c_str(), ec))
 		{
 			return false;
 		}
 
-		fs::copy(StringUtil::ToWide(sourceDir), StringUtil::ToWide(destDir), fs::copy_options::recursive, ec);
+		fs::copy(StringUtil::ToWide(sourceDir).c_str(), StringUtil::ToWide(destDir).c_str(), fs::copy_options::recursive, ec);
 
 		return ec.value() == 0;
 	}
@@ -115,13 +115,13 @@ public:
 	static bool CreateDirectories(const std::string& directory)
 	{
 		std::error_code ec;
-		return fs::create_directories(StringUtil::ToWide(directory), ec);
+		return fs::create_directories(StringUtil::ToWide(directory).c_str(), ec);
 	}
 
 	static bool Exists(const std::string& path)
 	{
 		std::error_code ec;
-		if (fs::exists(StringUtil::ToWide(path), ec))
+		if (fs::exists(StringUtil::ToWide(path).c_str(), ec))
 		{
 			return true;
 		}
@@ -167,7 +167,7 @@ public:
 
 		return success;
 #else
-		return truncate(filePath.c_str(), size) == 0;
+		return truncate(StringUtil::ToWide(filePath).c_str(), size) == 0;
 #endif
 	}
 
@@ -221,7 +221,7 @@ public:
 	static size_t GetFileSize(const std::string& file)
 	{
 		std::error_code error;
-		size_t fileSize = fs::file_size(StringUtil::ToWide(file), error);
+		size_t fileSize = fs::file_size(StringUtil::ToWide(file).c_str(), error);
 		if (error.value() != 0)
 		{
 			return 0;

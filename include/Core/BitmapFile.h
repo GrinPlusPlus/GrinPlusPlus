@@ -36,7 +36,7 @@ public:
 		{
 			m_mmap.unmap();
 
-			std::ofstream file(m_path, std::ios_base::binary | std::ios_base::out | std::ios_base::in);
+			std::ofstream file(m_path.c_str(), std::ios_base::binary | std::ios_base::out | std::ios_base::in);
 
 			for (auto iter : m_modifiedBytes)
 			{
@@ -142,7 +142,7 @@ private:
 
 	void Load()
 	{
-		std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+		std::ifstream inFile(m_path.c_str(), std::ios::in | std::ifstream::ate | std::ifstream::binary);
 		if (inFile.is_open())
 		{
 			inFile.close();
@@ -150,7 +150,7 @@ private:
 		else
 		{
 			LOG_INFO_F("File {} does not exist. Creating it now.", m_path);
-			std::ofstream outFile(m_path, std::ios::out | std::ios::binary | std::ios::app);
+			std::ofstream outFile(m_path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
 			if (!outFile.is_open())
 			{
 				LOG_ERROR_F("Failed to create file: {}", m_path);

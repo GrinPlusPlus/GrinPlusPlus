@@ -96,12 +96,20 @@ SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
 	return m_sessionManager.Read()->GetGrinboxAddress(token);
 }
 
-std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token)
+std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token) const
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
 	return wallet.Read()->GetTorAddress();
+}
+
+uint16_t WalletManager::GetListenerPort(const SessionToken& token) const
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+
+	return wallet.Read()->GetListenerPort();
 }
 
 std::vector<std::string> WalletManager::GetAllAccounts() const
@@ -354,7 +362,7 @@ bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walle
 	return false;
 }
 
-bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
+void WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
@@ -364,8 +372,6 @@ bool WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walle
 	{
 		CancelTx::CancelWalletTx(masterSeed, wallet.Write()->GetDatabase(), *pWalletTx);
 	}
-
-	return false;
 }
 
 namespace WalletAPI

@@ -27,7 +27,8 @@ public:
 	virtual SecureString GetSeedWords(const SessionToken& token) override final;
 	virtual void CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
-	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) override final;
+	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const override final;
+	virtual uint16_t GetListenerPort(const SessionToken& token) const override final;
 
 	virtual SessionToken Login(const std::string& username, const SecureString& password) override final;
 	virtual void Logout(const SessionToken& token) override final;
@@ -57,7 +58,7 @@ public:
 	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction, const PostMethodDTO& postMethod) override final;
 	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
 
-	virtual bool CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
+	virtual void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
 
 private:
 	const Config& m_config;

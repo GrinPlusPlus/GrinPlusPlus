@@ -63,7 +63,6 @@ add_definitions(-DNOMINMAX)
 add_definitions(-DASIO_STANDALONE)
 add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
-add_definitions(-DNDEBUG)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include

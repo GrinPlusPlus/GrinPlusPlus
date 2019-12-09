@@ -259,8 +259,20 @@ public:
 
 	Response BuildError(const int code, const std::string& message, const std::optional<Json::Value>& data = std::nullopt) const
 	{
-		Error error(code, message, data.value_or(Json::nullValue));
 		return Response::BuildError(m_id, code, message, data);
+	}
+
+	// TODO: Use enum and lookup id, type, and message
+	Response BuildError(const std::string& type, const std::string& message) const
+	{
+		Json::Value errorData;
+		errorData["type"] = type;
+		return Response::BuildError(m_id, -100, message, errorData);
+	}
+
+	Response BuildError(const Error& error) const
+	{
+		return Response::BuildError(m_id, error.GetCode(), error.GetMsg(), error.GetData());
 	}
 
 	Json::Value ToJSON() const

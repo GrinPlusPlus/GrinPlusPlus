@@ -26,7 +26,7 @@ ForeignController::~ForeignController()
 	}
 }
 
-std::optional<TorAddress> ForeignController::StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed)
+std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed)
 {
 	std::unique_lock<std::mutex> lock(m_contextsMutex);
 
@@ -34,7 +34,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 	if (iter != m_contextsByUsername.end())
 	{
 		iter->second->m_numReferences++;
-		return iter->second->m_torAddress;
+		return std::make_pair(iter->second->m_portNumber, iter->second->m_torAddress);
 	}
 
 	const char* pOptions[] = {
@@ -70,7 +70,7 @@ std::optional<TorAddress> ForeignController::StartListener(const std::string& us
 		WALLET_ERROR_F("Exception thrown: {}", e.what());
 	}
 
-	return pContext->m_torAddress;
+	return std::make_pair(portNumber, pContext->m_torAddress);
 }
 
 bool ForeignController::StopListener(const std::string& username)

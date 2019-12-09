@@ -1,4 +1,5 @@
 #include "OwnerSend.h"
+#include "../Errors.h"
 
 #include <Net/Tor/TorManager.h>
 #include <Net/Tor/TorAddressParser.h>
@@ -46,13 +47,22 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 	TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
 	if (pTorConnection == nullptr)
 	{
-		throw HTTP_EXCEPTION("Failed to establish TOR connection.");
+		return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
 	}
 
-	const uint16_t version = CheckVersion(*pTorConnection);
-	if (version < MIN_SLATE_VERSION)
+	uint16_t version = 0;
+
+	try
 	{
-		throw HTTP_EXCEPTION("Slate version incompatibility.");
+		version = CheckVersion(*pTorConnection);
+		if (version < MIN_SLATE_VERSION)
+		{
+			return request.BuildError(RPC::Errors::SLATE_VERSION_MISMATCH);
+		}
+	}
+	catch (const HTTPException&)
+	{
+		return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
 	}
 
 	criteria.SetSlateVersion(version);
@@ -69,8 +79,7 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 
 	if (receiveTxResponse.GetError().has_value())
 	{
-		const RPC::Error& error = receiveTxResponse.GetError().value();
-		return request.BuildError(error.GetCode(), error.GetMsg(), error.GetData());
+		return request.BuildError(receiveTxResponse.GetError().value());
 	}
 	else
 	{
@@ -155,6 +164,11 @@ uint16_t OwnerSend::CheckVersion(TorConnection& connection) const
 		}
 
 		return highestVersion;
+	}
+	catch (const HTTPException& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
+		throw e;
 	}
 	catch (const std::exception& e)
 	{

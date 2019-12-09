@@ -84,10 +84,11 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
 	m_sessionsById[sessionId] = std::shared_ptr<LoggedInSession>(pSession);
 
-	std::optional<TorAddress> torAddressOpt = m_pForeignController->StartListener(username, token, seed);
-	if (torAddressOpt.has_value())
+	std::pair<uint16_t, std::optional<TorAddress>> listenerInfo = m_pForeignController->StartListener(username, token, seed);
+	wallet.Write()->SetListenerPort(listenerInfo.first);
+	if (listenerInfo.second.has_value())
 	{
-		wallet.Write()->SetTorAddress(torAddressOpt.value());
+		wallet.Write()->SetTorAddress(listenerInfo.second.value());
 	}
 
 	return token;

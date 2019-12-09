@@ -18,7 +18,7 @@ public:
 	ForeignController(const Config& config, IWalletManager& walletManager);
 	~ForeignController();
 
-	std::optional<TorAddress> StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
+	std::pair<uint16_t, std::optional<TorAddress>> StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
 	bool StopListener(const std::string& username);
 
 private:

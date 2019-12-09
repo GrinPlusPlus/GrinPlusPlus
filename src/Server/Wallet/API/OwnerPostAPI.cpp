@@ -141,6 +141,8 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 			responseJSON["tor_address"] = torAddressOpt.value().ToString();
 		}
 
+		responseJSON["listener_port"] = walletManager.GetListenerPort(sessionToken);
+
 		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 	}
 	catch (const WalletException&)
@@ -260,14 +262,8 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	if (idOpt.has_value())
 	{
 		const uint32_t id = std::stoul(idOpt.value());
-		if (walletManager.CancelByTxId(token, id))
-		{
-			return HTTPUtil::BuildSuccessResponse(pConnection, "");
-		}
-		else
-		{
-			return HTTPUtil::BuildInternalErrorResponse(pConnection, "Unknown error occurred.");
-		}
+		walletManager.CancelByTxId(token, id);
+		return HTTPUtil::BuildSuccessResponse(pConnection, "");
 	}
 	else
 	{

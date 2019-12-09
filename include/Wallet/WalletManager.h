@@ -66,7 +66,9 @@ public:
 
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const = 0;
 
-	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) = 0;
+	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const = 0;
+
+	virtual uint16_t GetListenerPort(const SessionToken& token) const = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
@@ -133,7 +135,7 @@ public:
 		const uint32_t walletTxId
 	) = 0;
 
-	virtual bool CancelByTxId(
+	virtual void CancelByTxId(
 		const SessionToken& token,
 		const uint32_t walletTxId
 	) = 0;

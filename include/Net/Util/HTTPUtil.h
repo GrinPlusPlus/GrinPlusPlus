@@ -158,7 +158,7 @@ public:
 		{
 			mg_printf(conn,
 				"HTTP/1.1 200 OK\r\n"
-				"Content-Length: %llu\r\n"
+				"Content-Length: %lu\r\n"
 				"Content-Type: application/json\r\n"
 				"Connection: close\r\n\r\n",
 				len);
@@ -175,7 +175,7 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 400 Bad Request\r\n"
-			"Content-Length: %llu\r\n"
+			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
 			len);
@@ -191,7 +191,7 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 409 Conflict\r\n"
-			"Content-Length: %llu\r\n"
+			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
 			len);
@@ -207,7 +207,7 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 401 Unauthorized\r\n"
-			"Content-Length: %llu\r\n"
+			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
 			len);
@@ -223,7 +223,7 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 404 Not Found\r\n"
-			"Content-Length: %llu\r\n"
+			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
 			len);
@@ -239,7 +239,7 @@ public:
 
 		mg_printf(conn,
 			"HTTP/1.1 500 Internal Server Error\r\n"
-			"Content-Length: %llu\r\n"
+			"Content-Length: %lu\r\n"
 			"Content-Type: text/plain\r\n"
 			"Connection: close\r\n\r\n",
 			len);

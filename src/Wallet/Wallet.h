@@ -35,6 +35,8 @@ public:
 
 	void SetTorAddress(const TorAddress& address) { m_torAddressOpt = std::make_optional(address); }
 	std::optional<TorAddress> GetTorAddress() const { return m_torAddressOpt; }
+	void SetListenerPort(const uint16_t port) { m_listenerPort = port; }
+	uint16_t GetListenerPort() const { return m_listenerPort; }
 
 	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
 
@@ -68,4 +70,5 @@ private:
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
 	std::optional<TorAddress> m_torAddressOpt;
+	uint16_t m_listenerPort;
 };

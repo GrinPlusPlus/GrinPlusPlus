@@ -17,11 +17,11 @@ public:
 	virtual EncryptedSeed LoadWalletSeed(const std::string& username) const override final;
 
 private:
-	SqliteStore(const std::string& walletDirectory) : m_walletDirectory(walletDirectory) { }
+	SqliteStore(const fs::path& walletDirectory) : m_walletDirectory(walletDirectory) { }
 
 	sqlite3* CreateWalletDB(const std::string& username);
 	std::string GetDBFile(const std::string& username) const;
 
-	const std::string& m_walletDirectory;
+	const fs::path& m_walletDirectory;
 	std::unordered_map<std::string, Locked<IWalletDB>> m_userDBs;
 };

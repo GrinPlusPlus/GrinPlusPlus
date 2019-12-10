@@ -10,7 +10,7 @@
 class WalletSqlite : public IWalletDB
 {
 public:
-	explicit WalletSqlite(const std::string& walletDirectory, const std::string& username, sqlite3* pDatabase)
+	explicit WalletSqlite(const fs::path& walletDirectory, const std::string& username, sqlite3* pDatabase)
 		: m_walletDirectory(walletDirectory), m_username(username), m_pDatabase(pDatabase), m_pTransaction(nullptr)
 	{
 	
@@ -45,7 +45,7 @@ private:
 	UserMetadata GetMetadata() const;
 	void SaveMetadata(const UserMetadata& userMetadata);
 
-	std::string m_walletDirectory;
+	fs::path m_walletDirectory;
 	std::string m_username;
 	sqlite3* m_pDatabase;
 	std::unique_ptr<SqliteTransaction> m_pTransaction;

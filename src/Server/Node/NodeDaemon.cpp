@@ -4,7 +4,6 @@
 
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>
-#include <Config/ConfigManager.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Crypto/Crypto.h>
 #include <Consensus/BlockDifficulty.h>
@@ -27,9 +26,9 @@ std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
 	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(config, pNodeClient->GetNodeContext());
 
 	std::shared_ptr<GrinJoinController> pGrinJoinController = nullptr;
-	if (!config.GetGrinJoinSecretKey().empty())
+	if (!config.GetServerConfig().GetGrinJoinSecretKey().empty())
 	{
-		pGrinJoinController = GrinJoinController::Create(config, pNodeClient->GetNodeContext(), config.GetGrinJoinSecretKey());
+		pGrinJoinController = GrinJoinController::Create(config, pNodeClient->GetNodeContext(), config.GetServerConfig().GetGrinJoinSecretKey());
 	}
 
 	return std::make_shared<NodeDaemon>(NodeDaemon(config, pNodeRestServer, pNodeClient, pGrinJoinController));

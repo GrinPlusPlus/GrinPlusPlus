@@ -68,7 +68,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 	ThreadManagerAPI::SetCurrentThreadName("DANDELION");
 	LOG_DEBUG("BEGIN");
 
-	const DandelionConfig& config = dandelion.m_config.GetDandelionConfig();
+	const DandelionConfig& config = dandelion.m_config.GetNodeConfig().GetDandelion();
 	while (!dandelion.m_terminate)
 	{
 		// This is the patience timer, we loop every n secs.
@@ -118,7 +118,7 @@ bool Dandelion::ProcessStemPhase()
 			return false;
 		}
 
-		const uint16_t relaySeconds = m_config.GetDandelionConfig().GetRelaySeconds();
+		const uint16_t relaySeconds = m_config.GetNodeConfig().GetDandelion().GetRelaySeconds();
 		m_relayExpirationTime = std::chrono::system_clock::now() + std::chrono::seconds(relaySeconds);
 		const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
 		m_relayNodeId = mostWorkPeers[index];

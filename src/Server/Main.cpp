@@ -3,7 +3,7 @@
 #include "civetweb/include/civetweb.h"
 
 #include <Wallet/WalletManager.h>
-#include <Config/ConfigManager.h>
+#include <Config/ConfigLoader.h>
 #include <Infrastructure/ShutdownManager.h>
 #include <Infrastructure/ThreadManager.h>
 #include <Infrastructure/Logger.h>
@@ -53,11 +53,11 @@ int main(int argc, char* argv[])
 	signal(SIGABRT, SigIntHandler);
 	signal(9, SigIntHandler);
 
-	const Config config = ConfigManager::LoadConfig(environment);
-	LoggerAPI::Initialize(config.GetLogDirectory().u8string(), config.GetLogLevel());
+	const ConfigPtr pConfig = ConfigLoader::Load(environment);
+	LoggerAPI::Initialize(pConfig->GetLogDirectory().u8string(), pConfig->GetLogLevel());
 	mg_init_library(0);
 
-	StartServer(config, headless);
+	StartServer(*pConfig, headless);
 
 	mg_exit_library();
 	LoggerAPI::Flush();

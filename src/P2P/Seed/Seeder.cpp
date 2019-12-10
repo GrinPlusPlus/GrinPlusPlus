@@ -72,7 +72,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 
 	std::chrono::system_clock::time_point lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(10);
 
-	const size_t minimumConnections = seeder.m_config.GetP2PConfig().GetPreferredMinConnections();
+	const size_t minimumConnections = seeder.m_config.GetNodeConfig().GetP2P().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
 		seeder.m_connectionManager.PruneConnections(true);
@@ -111,7 +111,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 
 	if (!errorCode)
 	{
-		const int maximumConnections = seeder.m_config.GetP2PConfig().GetMaxConnections();
+		const int maximumConnections = seeder.m_config.GetNodeConfig().GetP2P().GetMaxConnections();
 		while (!seeder.m_terminate)
 		{
 			SocketPtr pSocket = SocketPtr(new Socket(SocketAddress(IPAddress(), portNumber)));

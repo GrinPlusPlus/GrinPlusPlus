@@ -18,9 +18,9 @@ std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::Open(BlockHeaderPtr pConfi
 {
 	Close();
 
-	std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(m_config.GetTxHashSetDirectory());
-	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetDirectory());
-	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetDirectory());
+	std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath());
+	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath());
+	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath());
 
 	auto pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
 	m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet));
@@ -37,37 +37,37 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		FileUtil::RemoveFile(zipFilePath.u8string());
 
 		// Rewind Kernel MMR
-		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(config.GetTxHashSetDirectory());
+		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
 		pKernelMMR->Rewind(pHeader->GetKernelMMRSize());
 		pKernelMMR->Commit();
 
 		// Create output BitmapFile from Roaring file
-		const std::string leafPath = config.GetTxHashSetDirectory().u8string() + "output/pmmr_leaf.bin";
+		const std::string leafPath = config.GetNodeConfig().GetTxHashSetPath().u8string() + "output/pmmr_leaf.bin";
 		Roaring outputBitmap;
 		std::vector<unsigned char> outputBytes;
 		if (FileUtil::ReadFile(leafPath, outputBytes))
 		{
 			outputBitmap = Roaring::readSafe((const char*)outputBytes.data(), outputBytes.size());
 		}
-		BitmapFile::Create(config.GetTxHashSetDirectory().u8string() + "output/pmmr_leafset.bin", outputBitmap);
+		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath().u8string() + "output/pmmr_leafset.bin", outputBitmap);
 
 		// Rewind Output MMR
-		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(config.GetTxHashSetDirectory());
+		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
 		pOutputPMMR->Rewind(pHeader->GetOutputMMRSize(), Roaring());
 		pOutputPMMR->Commit();
 
 		// Create rangeproof BitmapFile from Roaring file
-		const std::string rangeproofPath = config.GetTxHashSetDirectory().u8string() + "rangeproof/pmmr_leaf.bin";
+		const std::string rangeproofPath = config.GetNodeConfig().GetTxHashSetPath().u8string() + "rangeproof/pmmr_leaf.bin";
 		Roaring rangeproofBitmap;
 		std::vector<unsigned char> rangeproofBytes;
 		if (FileUtil::ReadFile(rangeproofPath, rangeproofBytes))
 		{
 			rangeproofBitmap = Roaring::readSafe((const char*)rangeproofBytes.data(), rangeproofBytes.size());
 		}
-		BitmapFile::Create(config.GetTxHashSetDirectory().u8string() + "rangeproof/pmmr_leafset.bin", rangeproofBitmap);
+		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath().u8string() + "rangeproof/pmmr_leafset.bin", rangeproofBitmap);
 
 		// Rewind RangeProof MMR
-		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(config.GetTxHashSetDirectory());
+		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
 		pRangeProofPMMR->Rewind(pHeader->GetOutputMMRSize(), Roaring());
 		pRangeProofPMMR->Commit();
 
@@ -92,7 +92,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		auto reader = m_pTxHashSet->Read();
 
 		// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
-		if (!FileUtil::CopyDirectory(m_config.GetTxHashSetDirectory().u8string(), snapshotDir))
+		if (!FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath().u8string(), snapshotDir))
 		{
 			return false;
 		}

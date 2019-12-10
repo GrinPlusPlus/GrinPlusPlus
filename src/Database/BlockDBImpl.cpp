@@ -54,8 +54,8 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 	options.compression = kNoCompression;
 
 	// open DB
-	std::wstring dbPath = config.GetDatabaseDirectory().wstring() + L"CHAIN/";
-	fs::create_directories(dbPath);
+	std::string dbPath = config.GetNodeConfig().GetDatabasePath().u8string() + "CHAIN/";
+	fs::create_directories(FileUtil::ToPath(dbPath));
 
 	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
@@ -64,7 +64,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 	ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 	std::vector<std::string> columnFamilies;
-	Status status = OptimisticTransactionDB::ListColumnFamilies(options, StringUtil::ToUTF8(dbPath), &columnFamilies);
+	Status status = OptimisticTransactionDB::ListColumnFamilies(options, dbPath, &columnFamilies);
 
 	OptimisticTransactionDB* pTransactionDB = nullptr;
 	DB* pDatabase = nullptr;
@@ -80,7 +80,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
 		std::vector<ColumnFamilyHandle*> columnHandles;
 
-		status = OptimisticTransactionDB::Open(options, StringUtil::ToUTF8(dbPath), columnDescriptors, &columnHandles, &pTransactionDB);
+		status = OptimisticTransactionDB::Open(options, dbPath, columnDescriptors, &columnHandles, &pTransactionDB);
 		if (!status.ok())
 		{
 			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));
@@ -101,7 +101,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 
 		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor() });
 		std::vector<ColumnFamilyHandle*> columnHandles;
-		status = OptimisticTransactionDB::Open(options, StringUtil::ToUTF8(dbPath), columnDescriptors, &columnHandles, &pTransactionDB);
+		status = OptimisticTransactionDB::Open(options, dbPath, columnDescriptors, &columnHandles, &pTransactionDB);
 		if (!status.ok())
 		{
 			throw DATABASE_EXCEPTION("DB::Open failed with error: " + std::string(status.getState()));

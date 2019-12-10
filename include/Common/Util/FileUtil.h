@@ -8,30 +8,34 @@
 #include <Common/Util/StringUtil.h>
 
 #if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#define SEPARATOR "\\"
 #else
 #include <unistd.h>
-#define SEPARATOR "/"
 #endif
 
 class FileUtil
 {
 public:
-	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
+	static fs::path ToPath(const std::string& pathStr)
 	{
-		if (!fs::exists(StringUtil::ToWide(filePath).c_str()))
+		return fs::path(StringUtil::ToWide(pathStr));
+	}
+
+	static bool ReadFile(const fs::path& filePath, std::vector<unsigned char>& data)
+	{
+		if (!fs::exists(filePath))
 		{
 			return false;
 		}
 
-		std::ifstream file(StringUtil::ToWide(filePath).c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+		std::ifstream file(filePath, std::ios::in | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
 			return false;
 		}
 
-		auto size = fs::file_size(StringUtil::ToWide(filePath).c_str());
+		auto size = fs::file_size(filePath);
 		data.resize((size_t)size);
 
 		file.seekg(0, std::ios::beg);
@@ -39,6 +43,11 @@ public:
 		file.close();
 
 		return true;
+	}
+
+	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
+	{
+		return ReadFile(ToPath(filePath), data);
 	}
 
 	static bool RenameFile(const std::string& source, const std::string& destination)
@@ -112,21 +121,26 @@ public:
 		return ec.value() == 0;
 	}
 
-	static bool CreateDirectories(const std::string& directory)
+	static bool CreateDirectories(const fs::path& directory)
 	{
 		std::error_code ec;
-		return fs::create_directories(StringUtil::ToWide(directory).c_str(), ec);
+		return fs::create_directories(directory, ec);
+	}
+
+	static bool CreateDirectories(const std::string& directory)
+	{
+		return CreateDirectories(ToPath(directory));
+	}
+
+	static bool Exists(const fs::path& path)
+	{
+		std::error_code ec;
+		return fs::exists(path, ec);
 	}
 
 	static bool Exists(const std::string& path)
 	{
-		std::error_code ec;
-		if (fs::exists(StringUtil::ToWide(path).c_str(), ec))
-		{
-			return true;
-		}
-
-		return false;
+		return Exists(ToPath(path));
 	}
 
 	static std::string GetHomeDirectory()
@@ -171,7 +185,7 @@ public:
 #endif
 	}
 
-	static std::vector<std::string> GetSubDirectories(const std::string& filePath, const bool includeHidden)
+	static std::vector<std::string> GetSubDirectories(const fs::path& filePath, const bool includeHidden)
 	{
 		std::vector<std::string> listOfFiles;
 		try {
@@ -216,6 +230,11 @@ public:
 		}
 
 		return listOfFiles;
+	}
+
+	static std::vector<std::string> GetSubDirectories(const std::string& filePath, const bool includeHidden)
+	{
+		return GetSubDirectories(ToPath(filePath), includeHidden);
 	}
 
 	static size_t GetFileSize(const std::string& file)

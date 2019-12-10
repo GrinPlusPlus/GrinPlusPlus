@@ -1,28 +1,57 @@
 #pragma once
 
-#include <stdint.h>
+#include <Config/ConfigProps.h>
+
+#include <json/json.h>
+#include <cstdint>
 #include <string>
 
 class TorConfig
 {
 public:
-	TorConfig(const uint16_t socksPort, const uint16_t controlPort, const std::string& password, const std::string& hashedPassword)
-		: m_socksPort(socksPort), m_controlPort(controlPort), m_password(password), m_hashedPassword(hashedPassword)
-	{
-
-	}
-
 	// The "SocksPort" https://2019.www.torproject.org/docs/tor-manual.html.en#SocksPort
-	inline const uint16_t GetSocksPort() const { return m_socksPort; }
+	uint16_t GetSocksPort() const { return m_socksPort; }
 
 	// The "ControlPort" https://2019.www.torproject.org/docs/tor-manual.html.en#ControlPort
-	inline const uint16_t GetControlPort() const { return m_controlPort; }
+	uint16_t GetControlPort() const { return m_controlPort; }
 
 	// The pre-hashed "ControlPassword" https://2019.www.torproject.org/docs/tor-manual.html.en#HashedControlPassword
-	inline const std::string& GetControlPassword() const { return m_password; }
+	const std::string& GetControlPassword() const { return m_password; }
 
 	// The "HashedControlPassword" https://2019.www.torproject.org/docs/tor-manual.html.en#HashedControlPassword
-	inline const std::string& GetHashedControlPassword() const { return m_hashedPassword; }
+	const std::string& GetHashedControlPassword() const { return m_hashedPassword; }
+
+	//
+	// Constructor
+	//
+	TorConfig(const Json::Value& json)
+	{
+		m_socksPort = 3421;
+		m_controlPort = 3422;
+		m_password = "MyPassword";
+		m_hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
+
+		if (json.isMember(ConfigProps::Tor::TOR))
+		{
+			const Json::Value& torJSON = json[ConfigProps::Tor::TOR];
+
+			if (torJSON.isMember(ConfigProps::Tor::SOCKS_PORT))
+			{
+				m_socksPort = (uint16_t)torJSON[ConfigProps::Tor::SOCKS_PORT].asUInt();
+			}
+
+			if (torJSON.isMember(ConfigProps::Tor::CONTROL_PORT))
+			{
+				m_controlPort = (uint16_t)torJSON[ConfigProps::Tor::CONTROL_PORT].asUInt();
+			}
+
+			if (torJSON.isMember(ConfigProps::Tor::PASSWORD) && torJSON.isMember(ConfigProps::Tor::HASHED_PASSWORD))
+			{
+				m_password = torJSON[ConfigProps::Tor::PASSWORD].asCString();
+				m_hashedPassword = torJSON[ConfigProps::Tor::HASHED_PASSWORD].asCString();
+			}
+		}
+	}
 
 private:
 	uint16_t m_socksPort;

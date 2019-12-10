@@ -7,13 +7,32 @@
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
 #include <Core/Exceptions/DeserializationException.h>
+#include <Infrastructure/Logger.h>
 #include <json/json.h>
+#include <sstream>
 #include <optional>
 #include <vector>
 
 class JsonUtil
 {
 public:
+	static Json::Value Parse(const std::vector<unsigned char>& bytes)
+	{
+		Json::Value json;
+		std::string errors;
+
+		std::string str((const char*)bytes.data(), bytes.size());
+		std::stringstream ss(str);
+		const bool jsonParsed = Json::parseFromStream(Json::CharReaderBuilder(), ss, &json, &errors);
+		if (!jsonParsed)
+		{
+			LOG_ERROR_F("Failed to parse json");
+			throw DESERIALIZATION_EXCEPTION();
+		}
+
+		return json;
+	}
+
 	static Json::Value ConvertToJSON(const std::vector<unsigned char>& bytes)
 	{
 		return Json::Value(HexUtil::ConvertToHex(bytes));

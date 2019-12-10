@@ -83,7 +83,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	else if (poolType == EPoolType::STEMPOOL)
 	{
 		const uint8_t random = (uint8_t)RandomNumberGenerator::GenerateRandom(0, 100);
-		if (random <= m_config.GetDandelionConfig().GetStemProbability())
+		if (random <= m_config.GetNodeConfig().GetDandelion().GetStemProbability())
 		{
 			LOG_INFO_F("Stemming transaction ({})", *pTransaction);
 			m_stemPool.AddTransaction(pTransaction, EDandelionStatus::TO_STEM);
@@ -203,7 +203,7 @@ std::vector<TransactionPtr> TransactionPool::GetExpiredTransactions() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
-	const uint16_t embargoSeconds = m_config.GetDandelionConfig().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
+	const uint16_t embargoSeconds = m_config.GetNodeConfig().GetDandelion().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
 }
 

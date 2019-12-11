@@ -10,7 +10,7 @@
 #include <Wallet/SessionToken.h>
 #include <Wallet/Enums/SelectionStrategy.h>
 #include <Wallet/Models/Slate/Slate.h>
-#include <Wallet/WalletSummary.h>
+#include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/Models/Criteria/SendCriteria.h>
 #include <Wallet/Models/Criteria/ReceiveCriteria.h>
@@ -91,7 +91,7 @@ public:
 		const SecureString& password
 	) = 0;
 
-	virtual WalletSummary GetWalletSummary(const SessionToken& token) = 0;
+	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) = 0;
 
 	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) = 0;
 

@@ -163,7 +163,7 @@ void WalletManager::DeleteWallet(const std::string& username, const SecureString
 	}
 }
 
-WalletSummary WalletManager::GetWalletSummary(const SessionToken& token)
+WalletSummaryDTO WalletManager::GetWalletSummary(const SessionToken& token)
 {
 	try
 	{

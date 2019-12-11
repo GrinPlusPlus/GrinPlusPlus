@@ -18,7 +18,7 @@ Locked<Wallet> Wallet::LoadWallet(const Config& config, INodeClientConstPtr pNod
 	return Locked<Wallet>(std::make_shared<Wallet>(Wallet(config, pNodeClient, walletDB, username, std::move(userPath))));
 }
 
-WalletSummary Wallet::GetWalletSummary(const SecureVector& masterSeed)
+WalletSummaryDTO Wallet::GetWalletSummary(const SecureVector& masterSeed)
 {
 	uint64_t awaitingConfirmation = 0;
 	uint64_t immature = 0;
@@ -50,7 +50,7 @@ WalletSummary Wallet::GetWalletSummary(const SecureVector& masterSeed)
 
 	const uint64_t total = awaitingConfirmation + immature + spendable;
 	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
-	return WalletSummary(
+	return WalletSummaryDTO(
 		lastConfirmedHeight,
 		m_config.GetWalletConfig().GetMinimumConfirmations(),
 		total,

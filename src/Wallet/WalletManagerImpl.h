@@ -35,7 +35,7 @@ public:
 	virtual void DeleteWallet(const std::string& username, const SecureString& password) override final;
 	virtual std::vector<std::string> GetAllAccounts() const override final;
 
-	virtual WalletSummary GetWalletSummary(const SessionToken& token) override final;
+	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) override final;
 	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) override final;
 	virtual std::vector<WalletOutputDTO> GetOutputs(
 		const SessionToken& token,

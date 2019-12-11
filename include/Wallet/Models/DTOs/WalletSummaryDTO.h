@@ -7,10 +7,10 @@
 #include <stdint.h>
 #include <vector>
 
-class WalletSummary
+class WalletSummaryDTO
 {
 public:
-	WalletSummary(const uint64_t lastConfirmedHeight, const uint64_t minimumConfirmations, const uint64_t total, const uint64_t unconfirmed, 
+	WalletSummaryDTO(const uint64_t lastConfirmedHeight, const uint64_t minimumConfirmations, const uint64_t total, const uint64_t unconfirmed,
 		const uint64_t immature, const uint64_t locked, const uint64_t spendable, std::vector<WalletTx>&& transactions)
 		: m_lastConfirmedHeight(lastConfirmedHeight),
 		m_minimumConfirmations(minimumConfirmations),

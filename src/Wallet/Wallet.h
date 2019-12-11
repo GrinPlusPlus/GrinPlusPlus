@@ -8,7 +8,7 @@
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/Enums/SelectionStrategy.h>
-#include <Wallet/WalletSummary.h>
+#include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Net/Tor/TorAddress.h>
@@ -37,7 +37,7 @@ public:
 	void SetListenerPort(const uint16_t port) { m_listenerPort = port; }
 	uint16_t GetListenerPort() const { return m_listenerPort; }
 
-	WalletSummary GetWalletSummary(const SecureVector& masterSeed);
+	WalletSummaryDTO GetWalletSummary(const SecureVector& masterSeed);
 
 	std::unique_ptr<WalletTx> GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId) const;
 	std::unique_ptr<WalletTx> GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId) const;

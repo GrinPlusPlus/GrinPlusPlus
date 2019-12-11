@@ -84,7 +84,7 @@ int OwnerGetAPI::GetNodeHeight(mg_connection* pConnection, INodeClient& nodeClie
 // GET /v1/wallet/owner/retrieve_summary_info
 int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
-	WalletSummary walletSummary = walletManager.GetWalletSummary(token);
+	WalletSummaryDTO walletSummary = walletManager.GetWalletSummary(token);
 
 	return HTTPUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
 }

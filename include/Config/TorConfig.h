@@ -26,8 +26,8 @@ public:
 	//
 	TorConfig(const Json::Value& json)
 	{
-		m_socksPort = 3421;
-		m_controlPort = 3422;
+		m_socksPort = 3422;
+		m_controlPort = 3423;
 		m_password = "MyPassword";
 		m_hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
 

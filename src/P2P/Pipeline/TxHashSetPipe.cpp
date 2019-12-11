@@ -70,7 +70,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 
 	const std::string txHashSetPath =  StringUtil::Format(
 		"{}txhashset_{}.zip",
-		fs::temp_directory_path().string()/*m_config.GetTxHashSetDirectory()*/,
+		fs::temp_directory_path().string(),
 		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);
 
@@ -85,11 +85,10 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 		const bool received = socket.Receive(bytesToRead, false, buffer);
 		if (!received || ShutdownManagerAPI::WasShutdownRequested())
 		{
-			m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-
 			LOG_ERROR("Transmission ended abruptly");
 			fout.close();
 			FileUtil::RemoveFile(txHashSetPath);
+			m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 
 			m_processing = false;
 			return false;

@@ -1,16 +1,13 @@
 #pragma once
 
-#include <Wallet/OutputData.h>
+#include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Core/Util/JsonUtil.h>
 
 class WalletOutputDTO
 {
 public:
-	WalletOutputDTO(const OutputData& outputData)
-		: m_outputData(outputData)
-	{
-
-	}
+	WalletOutputDTO(const OutputDataEntity& outputData) : m_outputData(outputData) { }
+	WalletOutputDTO(OutputDataEntity&& outputData) : m_outputData(std::move(outputData)) { }
 
 	Json::Value ToJSON() const
 	{
@@ -30,5 +27,5 @@ public:
 	}
 
 private:
-	OutputData m_outputData;
+	OutputDataEntity m_outputData;
 };

@@ -9,7 +9,7 @@
 #include <Wallet/NodeClient.h>
 #include <Wallet/SessionToken.h>
 #include <Wallet/Enums/SelectionStrategy.h>
-#include <Wallet/Slate.h>
+#include <Wallet/Models/Slate/Slate.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/Models/Criteria/SendCriteria.h>

@@ -9,10 +9,11 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Serializable.h>
 #include <Common/Util/HexUtil.h>
 #include <memory>
 
-class BlockHeader : public Traits::IPrintable
+class BlockHeader : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
 	//
@@ -77,7 +78,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	void Serialize(Serializer& serializer) const;
+	virtual void Serialize(Serializer& serializer) const override final;
 	static BlockHeader Deserialize(ByteBuffer& byteBuffer);
 	std::vector<unsigned char> GetPreProofOfWork() const;
 

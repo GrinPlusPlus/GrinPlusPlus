@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Wallet/WalletTxType.h>
-#include <Wallet/Models/SlatePaymentProof.h>
+#include <Wallet/Models/Slate/SlatePaymentProof.h>
 #include <Core/Models/Transaction.h>
 #include <Crypto/ED25519.h>
 #include <Common/Util/TimeUtil.h>

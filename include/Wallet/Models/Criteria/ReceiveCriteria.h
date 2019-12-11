@@ -2,7 +2,7 @@
 
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/SessionToken.h>
-#include <Wallet/Slate.h>
+#include <Wallet/Models/Slate/Slate.h>
 
 class ReceiveCriteria
 {

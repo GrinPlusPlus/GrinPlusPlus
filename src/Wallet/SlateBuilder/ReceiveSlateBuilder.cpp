@@ -5,8 +5,8 @@
 
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
-#include <Wallet/SlateContext.h>
 #include <Infrastructure/Logger.h>
+#include <Wallet/WalletDB/Models/SlateContextEntity.h>
 
 Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,
@@ -29,7 +29,7 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	// Generate output
 	KeyChainPath keyChainPath = pBatch->GetNextChildPath(pWallet->GetUserPath());
 	const uint32_t walletTxId = pBatch->GetNextTransactionId();
-	OutputData outputData = pWallet->CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), keyChainPath, walletTxId, EBulletproofType::ENHANCED, messageOpt);
+	OutputDataEntity outputData = pWallet->CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), keyChainPath, walletTxId, EBulletproofType::ENHANCED, messageOpt);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = Crypto::GenerateSecureNonce();
 
@@ -158,7 +158,7 @@ void ReceiveSlateBuilder::UpdateDatabase(
 	Writer<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
 	const Slate& slate,
-	const OutputData& outputData,
+	const OutputDataEntity& outputData,
 	const uint32_t walletTxId,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt) const
@@ -166,8 +166,8 @@ void ReceiveSlateBuilder::UpdateDatabase(
 	// Save secretKey and secretNonce
 	//pBatch->SaveSlateContext(masterSeed, slate.GetSlateId(), context);
 
-	// Save OutputData
-	pBatch->AddOutputs(masterSeed, std::vector<OutputData>({ outputData }));
+	// Save OutputDataEntity
+	pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>({ outputData }));
 
 	// Save WalletTx
 	WalletTx walletTx(

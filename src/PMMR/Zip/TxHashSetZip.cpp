@@ -99,7 +99,7 @@ bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader
 	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : outputFiles)
 	{
-		zipFile.ExtractFile("output/" + file, fs::path(StringUtil::ToWide(outputDir + "/" + file)));
+		zipFile.ExtractFile("output/" + file, FileUtil::ToPath(outputDir + "/" + file));
 	}
 
 	FileUtil::RenameFile(outputDir + "/pmmr_leaf.bin." + header.ShortHash(), outputDir + "/pmmr_leaf.bin");
@@ -129,10 +129,10 @@ bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHe
 	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
 	for (const std::string& file : rangeProofFiles)
 	{
-		zipFile.ExtractFile("rangeproof/" + file, fs::path(StringUtil::ToWide(rangeProofDir + "/" + file)));
+		zipFile.ExtractFile("rangeproof/" + file, FileUtil::ToPath(rangeProofDir + "/" + file));
 	}
 
-	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "pmmr_leaf.bin");
+	FileUtil::RenameFile(rangeProofDir + "/pmmr_leaf.bin." + header.ShortHash(), rangeProofDir + "/pmmr_leaf.bin");
 
 	return true;
 }

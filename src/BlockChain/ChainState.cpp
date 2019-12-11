@@ -19,7 +19,7 @@ ChainState::ChainState(
 	m_pHeaderMMR(pHeaderMMR),
 	m_pTransactionPool(pTransactionPool),
 	m_pTxHashSetManager(pTxHashSetManager),
-	m_pOrphanPool(std::shared_ptr<OrphanPool>(new OrphanPool()))
+	m_pOrphanPool(std::make_shared<OrphanPool>())
 {
 
 }

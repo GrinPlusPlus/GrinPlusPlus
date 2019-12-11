@@ -173,7 +173,12 @@ void PeerManager::SetPeerConnected(const Peer& peer, const bool connected)
 	if (iter != m_peersByAddress.end())
 	{
 		iter->second.m_connected = connected;
-		iter->second.m_peer = peer;
+
+		if (!iter->second.m_peer.IsBanned())
+		{
+			iter->second.m_peer = peer;
+		}
+
 		iter->second.m_dirty = true;
 	}
 	else
@@ -197,6 +202,25 @@ void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
 	}
 	else
 	{
+		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
+	}
+}
+
+void PeerManager::BanPeer(const IPAddress& address, const EBanReason banReason)
+{
+	auto iter = m_peersByAddress.find(address);
+	if (iter != m_peersByAddress.end())
+	{
+		iter->second.m_connected = false;
+		iter->second.m_peer.UpdateBanReason(banReason);
+		iter->second.m_peer.UpdateLastBanTime();
+		iter->second.m_dirty = true;
+	}
+	else
+	{
+		Peer peer(SocketAddress(address, 0), 0, Capabilities(0), "");
+		peer.UpdateBanReason(banReason);
+		peer.UpdateLastBanTime();
 		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
 	}
 }

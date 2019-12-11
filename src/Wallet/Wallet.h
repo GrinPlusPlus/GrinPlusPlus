@@ -8,7 +8,6 @@
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/Enums/SelectionStrategy.h>
-#include <Wallet/SlateContext.h>
 #include <Wallet/WalletSummary.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
@@ -43,10 +42,10 @@ public:
 	std::unique_ptr<WalletTx> GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId) const;
 	std::unique_ptr<WalletTx> GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId) const;
 
-	std::vector<OutputData> RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis);
+	std::vector<OutputDataEntity> RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis);
 
-	std::vector<OutputData> GetAllAvailableCoins(const SecureVector& masterSeed);
-	OutputData CreateBlindedOutput(
+	std::vector<OutputDataEntity> GetAllAvailableCoins(const SecureVector& masterSeed);
+	OutputDataEntity CreateBlindedOutput(
 		const SecureVector& masterSeed,
 		const uint64_t amount,
 		const KeyChainPath& keyChainPath,

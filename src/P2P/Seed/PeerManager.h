@@ -32,6 +32,7 @@ public:
 	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
 	void SetPeerConnected(const Peer& peer, const bool connected);
 	void BanPeer(Peer& peer, const EBanReason banReason);
+	void BanPeer(const IPAddress& address, const EBanReason banReason);
 	void UnbanPeer(const IPAddress& address);
 	// TODO: RemovePeer
 

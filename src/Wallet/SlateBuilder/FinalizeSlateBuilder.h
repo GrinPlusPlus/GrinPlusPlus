@@ -4,7 +4,7 @@
 
 #include <Common/Secure.h>
 #include <Crypto/SecretKey.h>
-#include <Wallet/Slate.h>
+#include <Wallet/Models/Slate/Slate.h>
 
 class FinalizeSlateBuilder
 {

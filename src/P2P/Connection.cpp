@@ -50,6 +50,7 @@ void Connection::Disconnect()
 {
 	m_terminate = true;
 	ThreadUtil::Join(m_connectionThread);
+	m_peerManager.Write()->SetPeerConnected(GetConnectedPeer().GetPeer(), false);
 	m_pSocket.reset();
 }
 

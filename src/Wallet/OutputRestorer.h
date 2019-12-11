@@ -11,14 +11,14 @@ class OutputRestorer
 public:
 	OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain);
 
-	std::vector<OutputData> FindAndRewindOutputs(
+	std::vector<OutputDataEntity> FindAndRewindOutputs(
 		const SecureVector& masterSeed,
 		Writer<IWalletDB> pBatch,
 		const bool fromGenesis
 	) const;
 
 private:
-	std::unique_ptr<OutputData> GetWalletOutput(
+	std::unique_ptr<OutputDataEntity> GetWalletOutput(
 		const SecureVector& masterSeed,
 		const OutputDTO& output,
 		const uint64_t currentBlockHeight

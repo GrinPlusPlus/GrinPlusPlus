@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 enum EOutputStatus
 {
 	SPENDABLE = 0,

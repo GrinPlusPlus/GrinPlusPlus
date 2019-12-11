@@ -31,8 +31,8 @@ void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> 
 		}
 	}
 
-	std::vector<OutputData> outputs = walletDB.Read()->GetOutputs(masterSeed);
-	std::vector<OutputData> outputsToUpdate = GetOutputsToUpdate(outputs, inputCommitments, walletTx);
+	std::vector<OutputDataEntity> outputs = walletDB.Read()->GetOutputs(masterSeed);
+	std::vector<OutputDataEntity> outputsToUpdate = GetOutputsToUpdate(outputs, inputCommitments, walletTx);
 
 	auto pBatch = walletDB.BatchWrite();
 	pBatch->AddOutputs(masterSeed, outputsToUpdate);
@@ -40,13 +40,13 @@ void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> 
 	pBatch->Commit();
 }
 
-std::vector<OutputData> CancelTx::GetOutputsToUpdate(
-	std::vector<OutputData>& outputs,
+std::vector<OutputDataEntity> CancelTx::GetOutputsToUpdate(
+	std::vector<OutputDataEntity>& outputs,
 	const std::unordered_set<Commitment>& inputCommitments,
 	const WalletTx& walletTx)
 {
-	std::vector<OutputData> outputsToUpdate;
-	for (OutputData& output : outputs)
+	std::vector<OutputDataEntity> outputsToUpdate;
+	for (OutputDataEntity& output : outputs)
 	{
 		const auto iter = inputCommitments.find(output.GetOutput().GetCommitment());
 		if (iter != inputCommitments.end())

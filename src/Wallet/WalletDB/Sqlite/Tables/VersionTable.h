@@ -1,7 +1,6 @@
 #pragma once
 
 #include <libsqlite3/sqlite3.h>
-#include <Common/Secure.h>
 
 class VersionTable
 {

@@ -1,18 +1,23 @@
 #pragma once
 
-#include <Wallet/OutputData.h>
+#include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Core/Models/Transaction.h>
 #include <Common/Util/FunctionalUtil.h>
 
 class TransactionBuilder
 {
 public:
-	static Transaction BuildTransaction(const std::vector<OutputData>& inputs, const std::vector<OutputData>& changeOutputs, const BlindingFactor& transactionOffset, const uint64_t fee, const uint64_t lockHeight)
+	static Transaction BuildTransaction(
+		const std::vector<OutputDataEntity>& inputs,
+		const std::vector<OutputDataEntity>& changeOutputs,
+		const BlindingFactor& transactionOffset,
+		const uint64_t fee,
+		const uint64_t lockHeight)
 	{
-		auto getInput = [](OutputData& input) -> TransactionInput { return TransactionInput(input.GetOutput().GetFeatures(), Commitment(input.GetOutput().GetCommitment())); };
+		auto getInput = [](OutputDataEntity& input) -> TransactionInput { return TransactionInput(input.GetOutput().GetFeatures(), Commitment(input.GetOutput().GetCommitment())); };
 		std::vector<TransactionInput> transactionInputs = FunctionalUtil::map<std::vector<TransactionInput>>(inputs, getInput);
 
-		auto getOutput = [](OutputData& output) -> TransactionOutput { return output.GetOutput(); };
+		auto getOutput = [](OutputDataEntity& output) -> TransactionOutput { return output.GetOutput(); };
 		std::vector<TransactionOutput> transactionOutputs = FunctionalUtil::map<std::vector<TransactionOutput>>(changeOutputs, getOutput);
 
 		const EKernelFeatures kernelFeatures = (lockHeight == 0) ? EKernelFeatures::DEFAULT_KERNEL : EKernelFeatures::HEIGHT_LOCKED;

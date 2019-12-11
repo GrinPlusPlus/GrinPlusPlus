@@ -77,9 +77,9 @@ KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 	return nextChildPath;
 }
 
-std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const
+std::unique_ptr<SlateContextEntity> WalletSqlite::LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const
 {
-	std::unique_ptr<SlateContext> pSlateContext = nullptr;
+	std::unique_ptr<SlateContextEntity> pSlateContext = nullptr;
 
 	sqlite3_stmt* stmt = nullptr;
 	const std::string query = "SELECT enc_blind, enc_nonce FROM slate_contexts WHERE slate_id='" + uuids::to_string(slateId) + "'";
@@ -104,12 +104,12 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector&
 		}
 
 		CBigInteger<32> encryptedBlindingFactor((const unsigned char*)sqlite3_column_blob(stmt, 0));
-		SecretKey blindingFactor = encryptedBlindingFactor ^ SlateContext::DeriveXORKey(masterSeed, slateId, "blind");
+		SecretKey blindingFactor = encryptedBlindingFactor ^ SlateContextEntity::DeriveXORKey(masterSeed, slateId, "blind");
 
 		CBigInteger<32> encryptedNonce((const unsigned char*)sqlite3_column_blob(stmt, 1));
-		SecretKey nonce = encryptedNonce ^ SlateContext::DeriveXORKey(masterSeed, slateId, "nonce");
+		SecretKey nonce = encryptedNonce ^ SlateContextEntity::DeriveXORKey(masterSeed, slateId, "nonce");
 
-		pSlateContext = std::make_unique<SlateContext>(SlateContext(std::move(blindingFactor), std::move(nonce))); // TODO: Pass in keypath and pubkey
+		pSlateContext = std::make_unique<SlateContextEntity>(SlateContextEntity(std::move(blindingFactor), std::move(nonce))); // TODO: Pass in keypath and pubkey
 	}
 	else
 	{
@@ -125,7 +125,7 @@ std::unique_ptr<SlateContext> WalletSqlite::LoadSlateContext(const SecureVector&
 	return pSlateContext;
 }
 
-void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext)
+void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext)
 {
 	sqlite3_stmt* stmt = nullptr;
 	std::string insert = "insert into slate_contexts values(?, ?, ?)";
@@ -139,10 +139,10 @@ void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids:
 	const std::string slateIdStr = uuids::to_string(slateId);
 	sqlite3_bind_text(stmt, 1, slateIdStr.c_str(), (int)slateIdStr.size(), NULL);
 
-	CBigInteger<32> encryptedBlindingFactor = slateContext.GetSecretKey().GetBytes() ^ SlateContext::DeriveXORKey(masterSeed, slateId, "blind");
+	CBigInteger<32> encryptedBlindingFactor = slateContext.GetSecretKey().GetBytes() ^ SlateContextEntity::DeriveXORKey(masterSeed, slateId, "blind");
 	sqlite3_bind_blob(stmt, 2, (const void*)encryptedBlindingFactor.data(), 32, NULL);
 
-	CBigInteger<32> encryptedNonce = slateContext.GetSecretNonce().GetBytes() ^ SlateContext::DeriveXORKey(masterSeed, slateId, "nonce");
+	CBigInteger<32> encryptedNonce = slateContext.GetSecretNonce().GetBytes() ^ SlateContextEntity::DeriveXORKey(masterSeed, slateId, "nonce");
 	sqlite3_bind_blob(stmt, 3, (const void*)encryptedNonce.data(), 32, NULL);
 
 	sqlite3_step(stmt);
@@ -154,12 +154,12 @@ void WalletSqlite::SaveSlateContext(const SecureVector& masterSeed, const uuids:
 	}
 }
 
-void WalletSqlite::AddOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
+void WalletSqlite::AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs)
 {
 	OutputsTable::AddOutputs(*m_pDatabase, masterSeed, outputs);
 }
 
-std::vector<OutputData> WalletSqlite::GetOutputs(const SecureVector& masterSeed) const
+std::vector<OutputDataEntity> WalletSqlite::GetOutputs(const SecureVector& masterSeed) const
 {
 	return OutputsTable::GetOutputs(*m_pDatabase, masterSeed);
 }

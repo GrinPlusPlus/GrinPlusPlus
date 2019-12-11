@@ -3,7 +3,6 @@
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
-#include <Wallet/OutputData.h>
 
 void VersionTable::CreateTable(sqlite3& database)
 {

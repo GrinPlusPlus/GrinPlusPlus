@@ -76,7 +76,7 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
 {
 	// Load secretKey and secretNonce
-	std::unique_ptr<SlateContext> pSlateContext = pWallet->GetDatabase().Read()->LoadSlateContext(masterSeed, slate.GetSlateId());
+	std::unique_ptr<SlateContextEntity> pSlateContext = pWallet->GetDatabase().Read()->LoadSlateContext(masterSeed, slate.GetSlateId());
 	if (pSlateContext == nullptr)
 	{
 		return false;

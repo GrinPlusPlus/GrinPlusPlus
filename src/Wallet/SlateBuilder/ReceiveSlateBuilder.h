@@ -3,7 +3,7 @@
 #include "../Wallet.h"
 
 #include <Common/Secure.h>
-#include <Wallet/Slate.h>
+#include <Wallet/Models/Slate/Slate.h>
 #include <optional>
 
 class ReceiveSlateBuilder
@@ -31,7 +31,7 @@ private:
 		Writer<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
 		const Slate& slate,
-		const OutputData& outputData,
+		const OutputDataEntity& outputData,
 		const uint32_t walletTxId,
 		const std::optional<std::string>& addressOpt,
 		const std::optional<std::string>& messageOpt

@@ -5,21 +5,26 @@
 
 enum class ESelectionStrategy
 {
-	ALL,
-	CUSTOM
+	SMALLEST,
+	CUSTOM,
+	ALL
 };
 
 namespace SelectionStrategy
 {
 	static ESelectionStrategy FromString(const std::string& input)
 	{
-		if (input == "ALL")
+		if (input == "SMALLEST")
 		{
-			return ESelectionStrategy::ALL;
+			return ESelectionStrategy::SMALLEST;
 		}
 		else if (input == "CUSTOM")
 		{
 			return ESelectionStrategy::CUSTOM;
+		}
+		else if (input == "ALL")
+		{
+			return ESelectionStrategy::ALL;
 		}
 
 		throw DESERIALIZATION_EXCEPTION();

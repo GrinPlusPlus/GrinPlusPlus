@@ -26,8 +26,8 @@ WalletSummary Wallet::GetWalletSummary(const SecureVector& masterSeed)
 	uint64_t spendable = 0;
 
 	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
-	const std::vector<OutputData> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputData& outputData : outputs)
+	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
+	for (const OutputDataEntity& outputData : outputs)
 	{
 		const EOutputStatus status = outputData.GetStatus();
 		if (status == EOutputStatus::LOCKED)
@@ -62,31 +62,31 @@ WalletSummary Wallet::GetWalletSummary(const SecureVector& masterSeed)
 	);
 }
 
-std::vector<OutputData> Wallet::RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis)
+std::vector<OutputDataEntity> Wallet::RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis)
 {
 	return WalletRefresher(m_config, m_pNodeClient).Refresh(masterSeed, m_walletDB, fromGenesis);
 }
 
-std::vector<OutputData> Wallet::GetAllAvailableCoins(const SecureVector& masterSeed)
+std::vector<OutputDataEntity> Wallet::GetAllAvailableCoins(const SecureVector& masterSeed)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
-	std::vector<OutputData> coins;
+	std::vector<OutputDataEntity> coins;
 
 	std::vector<Commitment> commitments;
-	const std::vector<OutputData> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputData& output : outputs)
+	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
+	for (const OutputDataEntity& output : outputs)
 	{
 		if (output.GetStatus() == EOutputStatus::SPENDABLE)
 		{
-			coins.emplace_back(OutputData(output));
+			coins.emplace_back(output);
 		}
 	}
 
 	return coins;
 }
 
-OutputData Wallet::CreateBlindedOutput(
+OutputDataEntity Wallet::CreateBlindedOutput(
 	const SecureVector& masterSeed,
 	const uint64_t amount,
 	const KeyChainPath& keyChainPath,
@@ -107,7 +107,7 @@ OutputData Wallet::CreateBlindedOutput(
 		std::move(rangeProof)
 	);
 			
-	return OutputData(
+	return OutputDataEntity(
 		KeyChainPath(keyChainPath),
 		std::move(blindingFactor),
 		std::move(transactionOutput),

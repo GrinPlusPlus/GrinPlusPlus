@@ -20,10 +20,10 @@ static const uint8_t SLATE_CONTEXT_FORMAT = 0;
 // VarStr - sender address keychain path
 // 32 bytes - receiver address// 
 //
-class SlateContext
+class SlateContextEntity
 {
 public:
-	SlateContext(SecretKey&& secretKey, SecretKey&& secretNonce)
+	SlateContextEntity(SecretKey&& secretKey, SecretKey&& secretNonce)
 		: m_secretKey(std::move(secretKey)), m_secretNonce(std::move(secretNonce))
 	{
 
@@ -45,7 +45,7 @@ public:
 		return serializer.GetBytes();
 	}
 
-	static SlateContext Decrypt(const std::vector<unsigned char>& encrypted, const SecureVector& masterSeed, const uuids::uuid& slateId)
+	static SlateContextEntity Decrypt(const std::vector<unsigned char>& encrypted, const SecureVector& masterSeed, const uuids::uuid& slateId)
 	{
 		ByteBuffer byteBuffer(encrypted);
 		const uint8_t formatVersion = byteBuffer.ReadU8();
@@ -57,7 +57,7 @@ public:
 		CBigInteger<32> decryptedBlind = byteBuffer.ReadBigInteger<32>() ^ DeriveXORKey(masterSeed, slateId, "blind");
 		CBigInteger<32> decryptedNonce = byteBuffer.ReadBigInteger<32>() ^ DeriveXORKey(masterSeed, slateId, "nonce");
 
-		return SlateContext(SecretKey(std::move(decryptedBlind)), SecretKey(std::move(decryptedNonce)));
+		return SlateContextEntity(SecretKey(std::move(decryptedBlind)), SecretKey(std::move(decryptedNonce)));
 	}
 
 	static Hash DeriveXORKey(const SecureVector& masterSeed, const uuids::uuid& slateId, const std::string& extra)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Wallet/Models/SlateVersionInfo.h>
-#include <Wallet/Models/SlatePaymentProof.h>
-#include <Wallet/ParticipantData.h>
+#include <Wallet/Models/Slate/SlateVersionInfo.h>
+#include <Wallet/Models/Slate/SlatePaymentProof.h>
+#include <Wallet/Models/Slate/ParticipantData.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <json/json.h>

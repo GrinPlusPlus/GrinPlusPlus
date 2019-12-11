@@ -16,8 +16,8 @@
 #include <Crypto/RandomNumberGenerator.h>
 
 ConnectionManager::ConnectionManager()
-	: m_connections(std::shared_ptr<std::vector<ConnectionPtr>>(new std::vector<ConnectionPtr>())),
-	m_peersToBan(std::shared_ptr<std::unordered_map<uint64_t, EBanReason>>(new std::unordered_map<uint64_t, EBanReason>())),
+	: m_connections(std::make_shared<std::vector<ConnectionPtr>>()),
+	m_peersToBan(std::make_shared<std::unordered_map<uint64_t, EBanReason>>()),
 	m_numOutbound(0),
 	m_numInbound(0)
 {

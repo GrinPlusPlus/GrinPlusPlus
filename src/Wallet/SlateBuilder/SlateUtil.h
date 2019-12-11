@@ -3,7 +3,7 @@
 #include <Common/Util/FunctionalUtil.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/Crypto.h>
-#include <Wallet/Slate.h>
+#include <Wallet/Models/Slate/Slate.h>
 
 class SlateUtil
 {

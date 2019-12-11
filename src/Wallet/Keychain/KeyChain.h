@@ -1,14 +1,15 @@
 #pragma once
 
-#include <Wallet/EncryptedSeed.h>
+#include <Wallet/WalletDB/Models/EncryptedSeed.h>
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/PublicExtKey.h>
 #include <Wallet/KeyChainPath.h>
-#include <Wallet/OutputData.h>
 
 #include <Config/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BlindingFactor.h>
+#include <Crypto/RangeProof.h>
+#include <Crypto/RewoundProof.h>
 #include <Crypto/BulletproofType.h>
 #include <Common/Secure.h>
 #include <vector>

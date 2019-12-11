@@ -4,6 +4,7 @@
 #include "SqliteTransaction.h"
 
 #include <Wallet/WalletDB/WalletDB.h>
+#include <Wallet/WalletDB/Models/SlateContextEntity.h>
 #include <libsqlite3/sqlite3.h>
 #include <unordered_map>
 
@@ -25,11 +26,11 @@ public:
 
 	virtual KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) override final;
 
-	virtual std::unique_ptr<SlateContext> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const override final;
-	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) override final;
+	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const override final;
+	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext) override final;
 
-	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs) override final;
-	virtual std::vector<OutputData> GetOutputs(const SecureVector& masterSeed) const override final;
+	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs) override final;
+	virtual std::vector<OutputDataEntity> GetOutputs(const SecureVector& masterSeed) const override final;
 
 	virtual void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) override final;
 	virtual std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const override final;

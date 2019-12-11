@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Crypto/SecretKey.h>
-#include <Wallet/EncryptedSeed.h>
+#include <Wallet/WalletDB/Models/EncryptedSeed.h>
 #include <Common/Secure.h>
 #include <vector>
 #include <memory>

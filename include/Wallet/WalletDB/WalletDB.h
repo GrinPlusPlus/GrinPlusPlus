@@ -6,10 +6,10 @@
 #include <uuid.h>
 #include <Core/Traits/Batchable.h>
 #include <Core/Traits/Lockable.h>
-#include <Wallet/EncryptedSeed.h>
+#include <Wallet/WalletDB/Models/EncryptedSeed.h>
 #include <Wallet/KeyChainPath.h>
-#include <Wallet/SlateContext.h>
-#include <Wallet/OutputData.h>
+#include <Wallet/WalletDB/Models/SlateContextEntity.h>
+#include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Wallet/WalletTx.h>
 
 class IWalletDB : public Traits::IBatchable
@@ -19,11 +19,11 @@ public:
 
 	virtual KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) = 0;
 
-	virtual std::unique_ptr<SlateContext> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;
-	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContext& slateContext) = 0;
+	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;
+	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext) = 0;
 
-	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputData>& outputs) = 0;
-	virtual std::vector<OutputData> GetOutputs(const SecureVector& masterSeed) const = 0;
+	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs) = 0;
+	virtual std::vector<OutputDataEntity> GetOutputs(const SecureVector& masterSeed) const = 0;
 
 	virtual void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) = 0;
 	virtual std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const = 0;

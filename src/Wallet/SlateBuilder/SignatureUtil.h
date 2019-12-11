@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Wallet/ParticipantData.h>
+#include <Wallet/Models/Slate/ParticipantData.h>
 #include <Crypto/Crypto.h>
 
 class SignatureUtil

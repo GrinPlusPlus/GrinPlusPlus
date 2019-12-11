@@ -14,29 +14,29 @@ OutputRestorer::OutputRestorer(const Config& config, INodeClientConstPtr pNodeCl
 
 }
 
-std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const bool fromGenesis) const
+std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_pNodeClient->GetChainHeight();
 
 	uint64_t nextLeafIndex = fromGenesis ? 0 : pBatch->GetRestoreLeafIndex() + 1;
 
-	std::vector<OutputData> walletOutputs;
+	std::vector<OutputDataEntity> walletOutputs;
 	while (true)
 	{
 		std::unique_ptr<OutputRange> pOutputRange = m_pNodeClient->GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
 		if (pOutputRange == nullptr || pOutputRange->GetLastRetrievedIndex() == 0)
 		{
 			// No new outputs since last restore
-			return std::vector<OutputData>();
+			return std::vector<OutputDataEntity>();
 		}
 
 		const std::vector<OutputDTO>& outputs = pOutputRange->GetOutputs();
 		for (const OutputDTO& output : outputs)
 		{
-			std::unique_ptr<OutputData> pOutputData = GetWalletOutput(masterSeed, output, chainHeight);
-			if (pOutputData != nullptr)
+			std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(masterSeed, output, chainHeight);
+			if (pOutputDataEntity != nullptr)
 			{
-				walletOutputs.emplace_back(*pOutputData);
+				walletOutputs.emplace_back(*pOutputDataEntity);
 			}
 		}
 
@@ -52,7 +52,7 @@ std::vector<OutputData> OutputRestorer::FindAndRewindOutputs(const SecureVector&
 	return walletOutputs;
 }
 
-std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDTO& output, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDTO& output, const uint64_t currentBlockHeight) const
 {
 	EBulletproofType type = EBulletproofType::ORIGINAL;
 	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;
@@ -94,7 +94,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 		const uint64_t mmrIndex = output.GetLocation().GetMMRIndex();
 		const uint64_t blockHeight = output.GetLocation().GetBlockHeight();
 
-		return std::make_unique<OutputData>(
+		return std::make_unique<OutputDataEntity>(
 			std::move(keyChainPath), 
 			blindingFactor.ToSecretKey(), 
 			std::move(txOutput), 
@@ -107,7 +107,7 @@ std::unique_ptr<OutputData> OutputRestorer::GetWalletOutput(const SecureVector& 
 		);
 	}
 
-	return std::unique_ptr<OutputData>(nullptr);
+	return nullptr;
 }
 
 EOutputStatus OutputRestorer::DetermineStatus(const OutputDTO& output, const uint64_t currentBlockHeight) const

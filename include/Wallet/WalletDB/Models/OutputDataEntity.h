@@ -2,21 +2,24 @@
 
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/KeyChainPath.h>
-#include <Wallet/OutputStatus.h>
+#include <Wallet/Enums/OutputStatus.h>
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Serializable.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/SecretKey.h>
 #include <optional>
 
 static const uint8_t OUTPUT_DATA_FORMAT = 1;
 
-class OutputData : Traits::IPrintable
+class OutputDataEntity : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
-	OutputData(
+	//
+	// Constructors
+	//
+	OutputDataEntity(
 		KeyChainPath&& keyChainPath, 
 		SecretKey&& blindingFactor, 
 		TransactionOutput&& output, 
@@ -38,7 +41,7 @@ public:
 
 	}
 
-	OutputData(
+	OutputDataEntity(
 		KeyChainPath&& keyChainPath,
 		SecretKey&& blindingFactor,
 		TransactionOutput&& output,
@@ -63,6 +66,11 @@ public:
 	}
 
 	//
+	// Destructor
+	//
+	virtual ~OutputDataEntity() = default;
+
+	//
 	// Getters
 	//
 	const KeyChainPath& GetKeyChainPath() const { return m_keyChainPath; }
@@ -85,12 +93,12 @@ public:
 	//
 	// Operators
 	//
-	bool operator<(const OutputData& other) const { return GetAmount() < other.GetAmount(); }
+	bool operator<(const OutputDataEntity& other) const { return GetAmount() < other.GetAmount(); }
 
 	//
 	// Serialization
 	//
-	void Serialize(Serializer& serializer) const
+	virtual void Serialize(Serializer& serializer) const override final
 	{
 		serializer.Append<uint8_t>(OUTPUT_DATA_FORMAT);
 		serializer.AppendVarStr(m_keyChainPath.Format());
@@ -111,7 +119,7 @@ public:
 	//
 	// Deserialization
 	//
-	static OutputData Deserialize(ByteBuffer& byteBuffer)
+	static OutputDataEntity Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint8_t formatVersion = byteBuffer.ReadU8();
 		if (formatVersion > OUTPUT_DATA_FORMAT)
@@ -147,7 +155,7 @@ public:
 			walletTxIdOpt = std::make_optional(byteBuffer.ReadU32());
 		}
 
-		return OutputData(
+		return OutputDataEntity(
 			std::move(keyChainPath),
 			std::move(blindingFactor),
 			std::move(output),
@@ -160,6 +168,9 @@ public:
 		);
 	}
 
+	//
+	// Traits
+	//
 	virtual std::string Format() const override final { return m_output.GetCommitment().Format(); }
 
 private:

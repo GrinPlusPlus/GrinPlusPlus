@@ -2,13 +2,13 @@
 
 #include "../Wallet.h"
 
-#include <Wallet/OutputData.h>
+#include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
 
 class OutputBuilder
 {
 public:
-	static std::vector<OutputData> CreateOutputs(
+	static std::vector<OutputDataEntity> CreateOutputs(
 		std::shared_ptr<Wallet> pWallet,
 		Writer<IWalletDB> pBatch,
 		const SecureVector& masterSeed, 
@@ -23,7 +23,7 @@ public:
 			throw InsufficientFundsException();
 		}
 
-		std::vector<OutputData> outputs;
+		std::vector<OutputDataEntity> outputs;
 		for (uint8_t i = 0; i < numOutputs; i++)
 		{
 			// If 3 outputs are requested for 11 nanogrins, the first output will contain 5, while the others contain 3.

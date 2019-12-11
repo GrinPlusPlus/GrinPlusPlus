@@ -24,6 +24,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const uint64_t amount, 
 	const uint64_t feeBase,
 	const uint8_t numOutputs,
+	const bool noChange,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt, 
 	const SelectionStrategyDTO& strategy,
@@ -34,11 +35,11 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const uint16_t headerVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), blockHeight);
 
 	// Select inputs using desired selection strategy.
-	const uint8_t totalNumOutputs = numOutputs + 1;
+	const uint8_t totalNumOutputs = numOutputs + (noChange ? 0 : 1);
 	const uint64_t numKernels = 1;
 	auto pWallet = wallet.Write();
-	const std::vector<OutputData> availableCoins = pWallet->GetAllAvailableCoins(masterSeed);
-	std::vector<OutputData> inputs = CoinSelection::SelectCoinsToSpend(
+	const std::vector<OutputDataEntity> availableCoins = pWallet->GetAllAvailableCoins(masterSeed);
+	std::vector<OutputDataEntity> inputs = CoinSelection::SelectCoinsToSpend(
 		availableCoins,
 		amount,
 		feeBase,
@@ -53,7 +54,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 
 	// Create change outputs with total blinding factor xC
 	uint64_t inputTotal = 0;
-	for (const OutputData& input : inputs)
+	for (const OutputDataEntity& input : inputs)
 	{
 		inputTotal += input.GetAmount();
 	}
@@ -62,7 +63,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const uint32_t walletTxId = pBatch->GetNextTransactionId();
 	const uint64_t changeAmount = inputTotal - (amount + fee);
 	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
-	const std::vector<OutputData> changeOutputs = OutputBuilder::CreateOutputs(
+	const std::vector<OutputDataEntity> changeOutputs = OutputBuilder::CreateOutputs(
 		pWallet.GetShared(),
 		pBatch,
 		masterSeed,
@@ -113,7 +114,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 
 	WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt, proofOpt);
 
-	SlateContext slateContext(std::move(secretKey), std::move(secretNonce));
+	SlateContextEntity slateContext(std::move(secretKey), std::move(secretNonce));
 	UpdateDatabase(pBatch, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
 
 	pBatch->Commit();
@@ -123,10 +124,10 @@ Slate SendSlateBuilder::BuildSendSlate(
 
 SecretKey SendSlateBuilder::CalculatePrivateKey(
 	const BlindingFactor& transactionOffset,
-	const std::vector<OutputData>& inputs,
-	const std::vector<OutputData>& changeOutputs) const
+	const std::vector<OutputDataEntity>& inputs,
+	const std::vector<OutputDataEntity>& changeOutputs) const
 {
-	auto getBlindingFactors = [](OutputData& output) -> BlindingFactor { return BlindingFactor(output.GetBlindingFactor().GetBytes()); };
+	auto getBlindingFactors = [](OutputDataEntity& output) -> BlindingFactor { return BlindingFactor(output.GetBlindingFactor().GetBytes()); };
 
 	// Calculate sum inputs blinding factors xI.
 	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getBlindingFactors);
@@ -175,21 +176,21 @@ void SendSlateBuilder::AddSenderInfo(
 
 WalletTx SendSlateBuilder::BuildWalletTx(
 	const uint32_t walletTxId,
-	const std::vector<OutputData>& inputs,
-	const std::vector<OutputData>& outputs,
+	const std::vector<OutputDataEntity>& inputs,
+	const std::vector<OutputDataEntity>& outputs,
 	const Slate& slate,
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt,
 	const std::optional<SlatePaymentProof>& proofOpt) const
 {
 	uint64_t amountDebited = 0;
-	for (const OutputData& input : inputs)
+	for (const OutputDataEntity& input : inputs)
 	{
 		amountDebited += input.GetAmount();
 	}
 
 	uint64_t amountCredited = 0;
-	for (const OutputData& output : outputs)
+	for (const OutputDataEntity& output : outputs)
 	{
 		amountCredited += output.GetAmount();
 	}
@@ -215,9 +216,9 @@ void SendSlateBuilder::UpdateDatabase(
 	Writer<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
 	const uuids::uuid& slateId,
-	const SlateContext& context,
-	const std::vector<OutputData>& changeOutputs,
-	std::vector<OutputData>& coinsToLock,
+	const SlateContextEntity& context,
+	const std::vector<OutputDataEntity>& changeOutputs,
+	std::vector<OutputDataEntity>& coinsToLock,
 	const WalletTx& walletTx) const
 {
 	// Save secretKey and secretNonce
@@ -227,7 +228,7 @@ void SendSlateBuilder::UpdateDatabase(
 	pBatch->AddOutputs(masterSeed, changeOutputs);
 
 	// Lock coins
-	for (OutputData& coin : coinsToLock)
+	for (OutputDataEntity& coin : coinsToLock)
 	{
 		coin.SetStatus(EOutputStatus::LOCKED);
 	}

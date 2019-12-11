@@ -185,14 +185,14 @@ std::vector<WalletTxDTO> WalletManager::GetTransactions(const SessionToken& toke
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
 	auto pReader = wallet.Read()->GetDatabase().Read();
-	std::vector<OutputData> outputs = pReader->GetOutputs(masterSeed);
+	std::vector<OutputDataEntity> outputs = pReader->GetOutputs(masterSeed);
 	std::vector<WalletTx> walletTransactions = pReader->GetTransactions(masterSeed);
 
 	std::vector<WalletTxDTO> walletTxDTOs;
 	for (const WalletTx& walletTx : walletTransactions)
 	{
 		std::vector<WalletOutputDTO> outputDTOs;
-		for (const OutputData& output : outputs)
+		for (const OutputDataEntity& output : outputs)
 		{
 			if (output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId())
 			{
@@ -213,8 +213,8 @@ std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
-	std::vector<OutputData> outputs = wallet.Read()->GetDatabase().Read()->GetOutputs(masterSeed);
-	for (const OutputData& output : outputs)
+	std::vector<OutputDataEntity> outputs = wallet.Read()->GetDatabase().Read()->GetOutputs(masterSeed);
+	for (const OutputDataEntity& output : outputs)
 	{
 		if (output.GetStatus() == EOutputStatus::SPENT && !includeSpent)
 		{
@@ -245,17 +245,17 @@ FeeEstimateDTO WalletManager::EstimateFee(
 	// Select inputs using desired selection strategy.
 	const uint8_t totalNumOutputs = numChangeOutputs + 1;
 	const uint64_t numKernels = 1;
-	const std::vector<OutputData> availableCoins = wallet.Write()->GetAllAvailableCoins(masterSeed);
-	std::vector<OutputData> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amountToSend, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
-	
-	std::vector<WalletOutputDTO> inputDTOs;
-	for (const OutputData& input : inputs)
-	{
-		inputDTOs.emplace_back(WalletOutputDTO(input));
-	}
+	const std::vector<OutputDataEntity> availableCoins = wallet.Write()->GetAllAvailableCoins(masterSeed);
+	std::vector<OutputDataEntity> inputs = CoinSelection().SelectCoinsToSpend(availableCoins, amountToSend, feeBase, strategy.GetStrategy(), strategy.GetInputs(), totalNumOutputs, numKernels);
 
 	// Calculate the fee
 	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
+
+	std::vector<WalletOutputDTO> inputDTOs;
+	for (const OutputDataEntity& input : inputs)
+	{
+		inputDTOs.emplace_back(WalletOutputDTO(input));
+	}
 
 	return FeeEstimateDTO(fee, std::move(inputDTOs));
 }
@@ -271,6 +271,7 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 		sendCriteria.GetAmount(),
 		sendCriteria.GetFeeBase(),
 		sendCriteria.GetNumOutputs(),
+		false, // TODO: Implement
 		sendCriteria.GetAddress(),
 		sendCriteria.GetMsg(),
 		sendCriteria.GetSelectionStrategy(),

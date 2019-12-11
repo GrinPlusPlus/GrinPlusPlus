@@ -73,6 +73,10 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 
 		return std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));
 	}
+	else
+	{
+		FileUtil::RemoveFile(zipFilePath.u8string());
+	}
 
 	return nullptr;
 }

@@ -17,7 +17,7 @@ endif()
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
-set(VERSION_REVISION 5)
+set(VERSION_REVISION 6)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
@@ -145,7 +145,7 @@ if(GRINPP_TESTS AND NOT LINUX)
 	add_subdirectory(tests/Core)
 	add_subdirectory(tests/Crypto)
 	add_subdirectory(tests/Net)
-	#add_subdirectory(tests/PMMR)
+	add_subdirectory(tests/PMMR)
 	#add_subdirectory(tests/Wallet)
 	add_subdirectory(tests/Server)
 	add_executable(RunAllTests tests/RunAllTests.cpp)

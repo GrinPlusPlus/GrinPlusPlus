@@ -14,47 +14,47 @@ WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNode
 }
 
 // TODO: Rewrite this
-// 0. Initial login after upgrade - for every output, find matching WalletTx and update OutputData TxId. If none found, create new WalletTx.
+// 0. Initial login after upgrade - for every output, find matching WalletTx and update OutputDataEntity TxId. If none found, create new WalletTx.
 //
 // 1. Check for own outputs in new blocks.
-// 2. For each output, look for OutputData with matching commitment. If no output found, create new WalletTx and OutputData.
-// 3. Refresh status for all OutputData by calling m_pNodeClient->GetOutputsByCommitment
-// 4. For all OutputData, update matching WalletTx status.
+// 2. For each output, look for OutputDataEntity with matching commitment. If no output found, create new WalletTx and OutputDataEntity.
+// 3. Refresh status for all OutputDataEntity by calling m_pNodeClient->GetOutputsByCommitment
+// 4. For all OutputDataEntity, update matching WalletTx status.
 
-std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, const bool fromGenesis)
+std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, const bool fromGenesis)
 {
 	auto pBatch = walletDB.BatchWrite();
 
 	if (m_pNodeClient->GetChainHeight() < pBatch->GetRefreshBlockHeight())
 	{
 		WALLET_INFO("Skipping refresh since node is resyncing.");
-		return std::vector<OutputData>();
+		return std::vector<OutputDataEntity>();
 	}
 
 
-	std::vector<OutputData> walletOutputs = pBatch->GetOutputs(masterSeed);
+	std::vector<OutputDataEntity> walletOutputs = pBatch->GetOutputs(masterSeed);
 	std::vector<WalletTx> walletTransactions = pBatch->GetTransactions(masterSeed);
 
 	// 1. Check for own outputs in new blocks.
 	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-	std::vector<OutputData> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(masterSeed, pBatch, fromGenesis);
+	std::vector<OutputDataEntity> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(masterSeed, pBatch, fromGenesis);
 
-	// 2. For each restored output, look for OutputData with matching commitment.
-	for (OutputData& restoredOutput : restoredOutputs)
+	// 2. For each restored output, look for OutputDataEntity with matching commitment.
+	for (OutputDataEntity& restoredOutput : restoredOutputs)
 	{
 		WALLET_INFO_F("Output found at index {}", restoredOutput.GetMMRIndex().value_or(0));
 
 		if (restoredOutput.GetStatus() != EOutputStatus::SPENT)
 		{
 			const Commitment& commitment = restoredOutput.GetOutput().GetCommitment();
-			std::unique_ptr<OutputData> pExistingOutput = FindOutput(walletOutputs, commitment);
+			std::unique_ptr<OutputDataEntity> pExistingOutput = FindOutput(walletOutputs, commitment);
 			if (pExistingOutput == nullptr)
 			{
 				WALLET_INFO_F("Restoring unknown output with commitment: {}", commitment);
 
 				auto blockTimeOpt = GetBlockTime(restoredOutput);
 
-				// If no output found, create new WalletTx and OutputData.
+				// If no output found, create new WalletTx and OutputDataEntity.
 				const uint32_t walletTxId = pBatch->GetNextTransactionId();
 				WalletTx walletTx(
 					walletTxId,
@@ -73,7 +73,7 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 				);
 
 				restoredOutput.SetWalletTxId(walletTxId);
-				pBatch->AddOutputs(masterSeed, std::vector<OutputData>({ restoredOutput }));
+				pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>({ restoredOutput }));
 				pBatch->AddTransaction(masterSeed, walletTx);
 
 				walletOutputs.push_back(restoredOutput);
@@ -86,21 +86,21 @@ std::vector<OutputData> WalletRefresher::Refresh(const SecureVector& masterSeed,
 		}
 	}
 
-	// 3. Refresh status for all OutputData by calling m_pNodeClient->GetOutputsByCommitment
+	// 3. Refresh status for all OutputDataEntity by calling m_pNodeClient->GetOutputsByCommitment
 	RefreshOutputs(masterSeed, pBatch, walletOutputs);
 
-	// 4. For all OutputData, update matching WalletTx status.
+	// 4. For all OutputDataEntity, update matching WalletTx status.
 	RefreshTransactions(masterSeed, pBatch, walletOutputs, walletTransactions);
 
 	pBatch->Commit();
 	return walletOutputs;
 }
 
-void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, std::vector<OutputData>& walletOutputs)
+void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, std::vector<OutputDataEntity>& walletOutputs)
 {
 	std::vector<Commitment> commitments;
 
-	for (const OutputData& outputData : walletOutputs)
+	for (const OutputDataEntity& outputData : walletOutputs)
 	{
 		const Commitment& commitment = outputData.GetOutput().GetCommitment();
 
@@ -117,9 +117,9 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 
 	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
 
-	std::vector<OutputData> outputsToUpdate;
+	std::vector<OutputDataEntity> outputsToUpdate;
 	const std::map<Commitment, OutputLocation> outputLocations = m_pNodeClient->GetOutputsByCommitment(commitments);
-	for (OutputData& outputData : walletOutputs)
+	for (OutputDataEntity& outputData : walletOutputs)
 	{
 		auto iter = outputLocations.find(outputData.GetOutput().GetCommitment());
 		if (iter != outputLocations.cend())
@@ -168,7 +168,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 	pBatch->UpdateRefreshBlockHeight(lastConfirmedHeight);
 }
 
-void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const std::vector<OutputData>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
+void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const std::vector<OutputDataEntity>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
 {
 	std::unordered_map<uint32_t, WalletTx> walletTransactionsById;
 	for (WalletTx& walletTx : walletTransactions)
@@ -176,7 +176,7 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 		walletTransactionsById.insert({ walletTx.GetId(), walletTx });
 	}
 
-	for (const OutputData& output : refreshedOutputs)
+	for (const OutputDataEntity& output : refreshedOutputs)
 	{
 		if (output.GetWalletTxId().has_value())
 		{
@@ -215,7 +215,7 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetBody().GetOutputs();
 			for (const TransactionOutput& output : outputs)
 			{
-				std::unique_ptr<OutputData> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
+				std::unique_ptr<OutputDataEntity> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
 				if (pOutputData != nullptr)
 				{
 					if (pOutputData->GetStatus() == EOutputStatus::SPENT)
@@ -233,7 +233,7 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 	}
 }
 
-std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTime(const OutputData& output) const
+std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTime(const OutputDataEntity& output) const
 {
 	if (output.GetBlockHeight().has_value())
 	{
@@ -247,15 +247,15 @@ std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTi
 	return std::nullopt;
 }
 
-std::unique_ptr<OutputData> WalletRefresher::FindOutput(const std::vector<OutputData>& walletOutputs, const Commitment& commitment) const
+std::unique_ptr<OutputDataEntity> WalletRefresher::FindOutput(const std::vector<OutputDataEntity>& walletOutputs, const Commitment& commitment) const
 {
-	for (const OutputData& outputData : walletOutputs)
+	for (const OutputDataEntity& outputData : walletOutputs)
 	{
 		if (commitment == outputData.GetOutput().GetCommitment())
 		{
-			return std::make_unique<OutputData>(outputData);
+			return std::make_unique<OutputDataEntity>(outputData);
 		}
 	}
 
-	return std::unique_ptr<OutputData>(nullptr);
+	return std::unique_ptr<OutputDataEntity>(nullptr);
 }

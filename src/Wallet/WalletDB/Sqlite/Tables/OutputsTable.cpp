@@ -41,7 +41,7 @@ void OutputsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSee
 	}
 
 	// Load all outputs from existing table
-	std::vector<OutputData> outputs = GetOutputs(database, masterSeed, previousVersion);
+	std::vector<OutputDataEntity> outputs = GetOutputs(database, masterSeed, previousVersion);
 
 	// Add outputs to "new_outputs" table
 	AddOutputs(database, masterSeed, outputs, "new_outputs");
@@ -65,14 +65,14 @@ void OutputsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSee
 	}
 }
 
-void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed, const std::vector<OutputData>& outputs)
+void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs)
 {
 	AddOutputs(database, masterSeed, outputs, "outputs");
 }
 
-void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed, const std::vector<OutputData>& outputs, const std::string& tableName)
+void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs, const std::string& tableName)
 {
-	for (const OutputData& output : outputs)
+	for (const OutputDataEntity& output : outputs)
 	{
 		sqlite3_stmt* stmt = nullptr;
 		std::string insert = "insert into " + tableName + "(commitment, status, transaction_id, encrypted) values(?, ?, ?, ?)";
@@ -113,12 +113,12 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 	}
 }
 
-std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed)
+std::vector<OutputDataEntity> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed)
 {
 	return GetOutputs(database, masterSeed, 1);
 }
 
-std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed, const int version)
+std::vector<OutputDataEntity> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed, const int version)
 {
 	// Prepare statement
 	sqlite3_stmt* stmt = nullptr;
@@ -130,7 +130,7 @@ std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const Secure
 		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
 	}
 
-	std::vector<OutputData> outputs;
+	std::vector<OutputDataEntity> outputs;
 
 	int ret_code = 0;
 	while ((ret_code = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -142,7 +142,7 @@ std::vector<OutputData> OutputsTable::GetOutputs(sqlite3& database, const Secure
 		const std::vector<unsigned char> decryptedUnsafe(decrypted.begin(), decrypted.end());
 
 		ByteBuffer byteBuffer(std::move(decryptedUnsafe));
-		outputs.emplace_back(OutputData::Deserialize(byteBuffer));
+		outputs.emplace_back(OutputDataEntity::Deserialize(byteBuffer));
 	}
 
 	if (ret_code != SQLITE_DONE)

@@ -41,25 +41,21 @@ public:
 	//
 	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const = 0;
 
-	virtual std::vector<Peer> GetAllPeers() const = 0;
+	virtual std::vector<PeerConstPtr> GetAllPeers() const = 0;
 
 	virtual std::vector<ConnectedPeer> GetConnectedPeers() const = 0;
 
-
-	virtual std::optional<Peer> GetPeer(
-		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt
+	virtual std::optional<PeerConstPtr> GetPeer(
+		const IPAddress& address
 	) const = 0;
 
 	virtual bool BanPeer(
 		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt,
 		const EBanReason banReason
 	) = 0;
 
-	virtual bool UnbanPeer(
-		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt
+	virtual void UnbanPeer(
+		const IPAddress& address
 	) = 0;
 
 	virtual bool UnbanAllPeers() = 0;

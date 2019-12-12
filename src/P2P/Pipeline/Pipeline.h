@@ -18,9 +18,9 @@ public:
 		IBlockChainServerPtr pBlockChainServer,
 		SyncStatusPtr pSyncStatus)
 	{
-		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pConnectionManager, pBlockChainServer);
+		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pBlockChainServer);
 		std::shared_ptr<TransactionPipe> pTransactionPipe = TransactionPipe::Create(config, pConnectionManager, pBlockChainServer);
-		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pConnectionManager, pBlockChainServer, pSyncStatus);
+		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pBlockChainServer, pSyncStatus);
 
 		return std::shared_ptr<Pipeline>(new Pipeline(pBlockPipe, pTransactionPipe, pTxHashSetPipe));
 	}

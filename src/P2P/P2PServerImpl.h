@@ -27,23 +27,20 @@ public:
 	virtual SyncStatusConstPtr GetSyncStatus() const override final { return m_pSyncStatus; }
 
 	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const override final;
-	virtual std::vector<Peer> GetAllPeers() const override final;
+	virtual std::vector<PeerConstPtr> GetAllPeers() const override final;
 	virtual std::vector<ConnectedPeer> GetConnectedPeers() const override final;
 
-	virtual std::optional<Peer> GetPeer(
-		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt
+	virtual std::optional<PeerConstPtr> GetPeer(
+		const IPAddress& address
 	) const override final;
 
 	virtual bool BanPeer(
 		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt,
 		const EBanReason banReason
 	) override final;
 
-	virtual bool UnbanPeer(
-		const IPAddress& address,
-		const std::optional<uint16_t>& portOpt
+	virtual void UnbanPeer(
+		const IPAddress& address
 	) override final;
 
 	virtual bool UnbanAllPeers() override final;

@@ -46,11 +46,11 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 	return std::shared_ptr<PeerDB>(new PeerDB(config, pDatabase));
 }
 
-std::vector<Peer> PeerDB::LoadAllPeers() const
+std::vector<PeerPtr> PeerDB::LoadAllPeers() const
 {
 	LOG_TRACE("Loading all peers.");
 
-	std::vector<Peer> peers;
+	std::vector<PeerPtr> peers;
 
 	rocksdb::Iterator* it = m_pDatabase->NewIterator(rocksdb::ReadOptions());
 	for (it->SeekToFirst(); it->Valid(); it->Next())
@@ -63,7 +63,7 @@ std::vector<Peer> PeerDB::LoadAllPeers() const
 	return peers;
 }
 
-std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+std::optional<PeerPtr> PeerDB::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
 {
 	LOG_TRACE("Loading peer: " + (portOpt.has_value() ? SocketAddress(address, portOpt.value()).Format() : address.Format()));
 
@@ -92,21 +92,21 @@ std::optional<Peer> PeerDB::GetPeer(const IPAddress& address, const std::optiona
 	return std::nullopt;
 }
 
-void PeerDB::SavePeers(const std::vector<Peer>& peers)
+void PeerDB::SavePeers(const std::vector<PeerPtr>& peers)
 {
 	LOG_TRACE_F("Saving peers: {}", peers.size());
 
 	WriteBatch writeBatch;
-	for (const Peer& peer : peers)
+	for (const PeerPtr& peer : peers)
 	{
-		const IPAddress& address = peer.GetIPAddress();
+		const IPAddress& address = peer->GetIPAddress();
 
 		Serializer addressSerializer;
 		address.Serialize(addressSerializer);
 		Slice key((const char*)addressSerializer.data(), addressSerializer.size());
 
 		Serializer peerSerializer;
-		peer.Serialize(peerSerializer);
+		peer->Serialize(peerSerializer);
 		Slice value((const char*)peerSerializer.data(), peerSerializer.size());
 
 		writeBatch.Put(key, value);

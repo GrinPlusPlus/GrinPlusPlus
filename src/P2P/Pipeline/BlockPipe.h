@@ -1,10 +1,7 @@
 #pragma once
 
-#include "../ConnectionManager.h"
-
 #include <Crypto/Hash.h>
-#include <Net/Socket.h>
-#include <TxPool/PoolType.h>
+#include <P2P/Peer.h>
 #include <Core/Models/FullBlock.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Common/ConcurrentQueue.h>
@@ -23,31 +20,29 @@ class BlockPipe
 public:
 	static std::shared_ptr<BlockPipe> Create(
 		const Config& config,
-		ConnectionManagerPtr pConnectionManager,
 		IBlockChainServerPtr pBlockChainServer
 	);
 	~BlockPipe();
 
-	bool AddBlockToProcess(const uint64_t connectionId, const FullBlock& block);
+	bool AddBlockToProcess(PeerPtr pPeer, const FullBlock& block);
 	bool IsProcessingBlock(const Hash& hash) const;
 
 private:
-	BlockPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);
+	BlockPipe(const Config& config, IBlockChainServerPtr pBlockChainServer);
 
 	const Config& m_config;
-	ConnectionManagerPtr m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
 
 	struct BlockEntry
 	{
-		BlockEntry(const uint64_t connId, const FullBlock& fullBlock)
-			: connectionId(connId), block(fullBlock)
+		BlockEntry(PeerPtr pPeer, const FullBlock& fullBlock)
+			: m_peer(pPeer), m_block(fullBlock)
 		{
 
 		}
 
-		uint64_t connectionId;
-		FullBlock block;
+		PeerPtr m_peer;
+		FullBlock m_block;
 	};
 
 	// Pre-Process New Blocks

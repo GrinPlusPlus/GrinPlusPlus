@@ -14,11 +14,9 @@ static const int BUFFER_SIZE = 256 * 1024;
 
 TxHashSetPipe::TxHashSetPipe(
 	const Config& config,
-	ConnectionManagerPtr pConnectionManager,
 	IBlockChainServerPtr pBlockChainServer,
 	SyncStatusPtr pSyncStatus)
 	: m_config(config),
-	m_pConnectionManager(pConnectionManager),
 	m_pBlockChainServer(pBlockChainServer),
 	m_pSyncStatus(pSyncStatus),
 	m_processing(false)
@@ -33,34 +31,32 @@ TxHashSetPipe::~TxHashSetPipe()
 
 std::shared_ptr<TxHashSetPipe> TxHashSetPipe::Create(
 	const Config& config,
-	ConnectionManagerPtr pConnectionManager,
 	IBlockChainServerPtr pBlockChainServer,
 	SyncStatusPtr pSyncStatus)
 {
 	return std::shared_ptr<TxHashSetPipe>(new TxHashSetPipe(
 		config,
-		pConnectionManager,
 		pBlockChainServer,
 		pSyncStatus
 	));
 }
 
-bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
+bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
 	if (m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
 	{
-		LOG_WARNING_F("Received TxHashSet from Peer ({}) when not requested.", socket.GetIPAddress());
+		LOG_WARNING_F("Received TxHashSet from Peer ({}) when not requested.", pPeer);
 		return false;
 	}
 
 	const bool processing = m_processing.exchange(true);
 	if (processing)
 	{
-		LOG_WARNING_F("Received TxHashSet from Peer ({}) when already processing another.", socket.GetIPAddress());
+		LOG_WARNING_F("Received TxHashSet from Peer ({}) when already processing another.", pPeer);
 		return false;
 	}
 
-	LOG_INFO_F("Downloading TxHashSet from {}", socket);
+	LOG_INFO_F("Downloading TxHashSet from {}", pPeer);
 
 	m_pSyncStatus->UpdateDownloaded(0);
 	m_pSyncStatus->UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
@@ -106,12 +102,12 @@ bool TxHashSetPipe::ReceiveTxHashSet(const uint64_t connectionId, Socket& socket
 
 	ThreadUtil::Join(m_txHashSetThread);
 
-	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), connectionId, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
+	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
 
 	return true;
 }
 
-void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, const uint64_t connectionId, const Hash blockHash, const std::string path)
+void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const std::string path)
 {
 	try
 	{
@@ -128,7 +124,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, const uint6
 		{
 			LOG_ERROR("Invalid TxHashSet received.");
 			pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-			pipeline.m_pConnectionManager->BanConnection(connectionId, EBanReason::BadTxHashSet); // TODO: Ban by IP address instead.
+			pPeer->Ban(EBanReason::BadTxHashSet);
 		}
 		else
 		{
@@ -139,7 +135,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, const uint6
 	}
 	catch (...)
 	{
-		pipeline.m_pConnectionManager->BanConnection(connectionId, EBanReason::BadTxHashSet);
+		pPeer->Ban(EBanReason::BadTxHashSet);
 		LOG_ERROR("Exception thrown in thread.");
 	}
 

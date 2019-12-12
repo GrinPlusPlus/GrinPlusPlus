@@ -8,10 +8,11 @@
 #include <Core/Traits/Printable.h>
 
 #include <string>
-#include <stdint.h>
+#include <cstdint>
 #include <ctime>
 #include <atomic>
 #include <chrono>
+#include <memory>
 
 class Peer : public Traits::IPrintable
 {
@@ -20,7 +21,9 @@ public:
 	// Constructors
 	//
 	Peer(const SocketAddress& socketAddress)
-		: m_socketAddress(socketAddress),
+		: m_dirty(false),
+		m_connected(false),
+		m_socketAddress(socketAddress),
 		m_version(0),
 		m_capabilities(Capabilities(Capabilities::UNKNOWN)),
 		m_userAgent(""),
@@ -32,7 +35,9 @@ public:
 
 	}
 	Peer(const SocketAddress& socketAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent)
-		: m_socketAddress(socketAddress),
+		: m_dirty(false),
+		m_connected(false),
+		m_socketAddress(socketAddress),
 		m_version(version),
 		m_capabilities(capabilities),
 		m_userAgent(userAgent),
@@ -44,7 +49,9 @@ public:
 
 	}
 	Peer(SocketAddress&& socketAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent, const std::time_t lastContactTime, const std::time_t lastBanTime, const EBanReason banReason)
-		: m_socketAddress(std::move(socketAddress)), 
+		: m_dirty(false),
+		m_connected(false),
+		m_socketAddress(std::move(socketAddress)),
 		m_version(version), 
 		m_capabilities(capabilities), 
 		m_userAgent(userAgent), 
@@ -55,18 +62,18 @@ public:
 	{
 
 	}
-	Peer(const Peer& other)
-		: m_socketAddress(other.m_socketAddress), 
-		m_version(other.m_version), 
-		m_capabilities(other.m_capabilities.load()), 
-		m_userAgent(other.m_userAgent), 
-		m_lastContactTime(other.m_lastContactTime.load()), 
-		m_lastBanTime(other.m_lastBanTime.load()),
-		m_banReason(other.m_banReason.load())
-	{
+	Peer(const Peer& other) = delete;
+	//	: m_socketAddress(other.m_socketAddress), 
+	//	m_version(other.m_version), 
+	//	m_capabilities(other.m_capabilities.load()), 
+	//	m_userAgent(other.m_userAgent), 
+	//	m_lastContactTime(other.m_lastContactTime.load()), 
+	//	m_lastBanTime(other.m_lastBanTime.load()),
+	//	m_banReason(other.m_banReason.load())
+	//{
 
-	}
-	Peer(Peer&& other) = default;
+	//}
+	Peer(Peer&& other) = delete;
 	Peer() = default;
 
 	//
@@ -94,18 +101,34 @@ public:
 	//
 	// Setters
 	//
+	void SetDirty(const bool value) { m_dirty = value; }
+	void SetConnected(const bool connected)
+	{
+		m_connected = connected;
+		m_dirty = true;
+	}
 	void UpdateVersion(const uint32_t version) { m_version = version; }
 	void UpdateCapabilities(const Capabilities& capabilities) { m_capabilities = capabilities; }
 	void UpdateLastContactTime() const { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
-	void UpdateLastBanTime() { m_lastBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
-	void UpdateBanReason(const EBanReason banReason) { m_banReason = banReason; }
-	void Unban() { m_lastBanTime = 0; }
+	void Ban(const EBanReason banReason)
+	{
+		m_lastBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		m_banReason = banReason;
+		m_dirty = true;
+	}
+	void Unban()
+	{
+		m_lastBanTime = 0;
+		m_dirty = true;
+	}
 	void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
 	void UpdateLastTxHashSetRequest() { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 
 	//
 	// Getters
 	//
+	bool IsDirty() const { return m_dirty; }
+	bool IsConnected() const { return m_connected; }
 	const SocketAddress& GetSocketAddress() const { return m_socketAddress; }
 	const IPAddress& GetIPAddress() const { return m_socketAddress.GetIPAddress(); }
 	uint16_t GetPortNumber() const { return m_socketAddress.GetPortNumber(); }
@@ -136,7 +159,7 @@ public:
 		serializer.Append<int32_t>(m_banReason.load());
 	}
 
-	static Peer Deserialize(ByteBuffer& byteBuffer)
+	static std::shared_ptr<Peer> Deserialize(ByteBuffer& byteBuffer)
 	{
 		SocketAddress socketAddress = SocketAddress::Deserialize(byteBuffer);
 		uint32_t version = byteBuffer.ReadU32();
@@ -146,12 +169,14 @@ public:
 		std::time_t lastBanTime = (std::time_t)byteBuffer.Read64();
 		EBanReason banReason = (EBanReason)byteBuffer.Read32();
 
-		return Peer(std::move(socketAddress), version, capabilities, userAgent, lastContactTime, lastBanTime, banReason);
+		return std::shared_ptr<Peer>(new Peer(std::move(socketAddress), version, capabilities, userAgent, lastContactTime, lastBanTime, banReason));
 	}
 
 	virtual std::string Format() const override final { return m_socketAddress.GetIPAddress().Format(); }
 
 private:
+	std::atomic_bool m_dirty;
+	std::atomic_bool m_connected;
 	SocketAddress m_socketAddress;
 	uint32_t m_version;
 	std::atomic<Capabilities> m_capabilities;
@@ -161,3 +186,6 @@ private:
 	std::atomic<EBanReason> m_banReason;
 	std::atomic<std::time_t> m_lastTxHashSetRequest;
 };
+
+typedef std::shared_ptr<Peer> PeerPtr;
+typedef std::shared_ptr<const Peer> PeerConstPtr;

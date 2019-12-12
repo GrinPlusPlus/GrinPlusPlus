@@ -76,19 +76,19 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessage(
 	}
 	catch (const BadDataException&)
 	{
-		LOG_ERROR_F("Bad data received in message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer.GetPeer());
+		LOG_ERROR_F("Bad data received in message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
 
 		return EStatus::BAN_PEER;
 	}
 	catch (const BlockChainException&)
 	{
-		LOG_ERROR_F("BlockChain exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer.GetPeer());
+		LOG_ERROR_F("BlockChain exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
 
 		return EStatus::BAN_PEER;
 	}
 	catch (const DeserializationException&)
 	{
-		LOG_ERROR_F("Deserialization exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer.GetPeer());
+		LOG_ERROR_F("Deserialization exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
 
 		return EStatus::BAN_PEER;
 	}
@@ -100,7 +100,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 	ConnectedPeer& connectedPeer,
 	const RawMessage& rawMessage)
 {
-	const std::string formattedIPAddress = connectedPeer.GetPeer().GetIPAddress().Format();
+	const std::string formattedIPAddress = connectedPeer.GetPeer()->GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
 	ByteBuffer byteBuffer(rawMessage.GetPayload());
 
@@ -111,14 +111,14 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			case Error:
 			{
 				const ErrorMessage errorMessage = ErrorMessage::Deserialize(byteBuffer);
-				LOG_WARNING("Error message retrieved from peer(" + formattedIPAddress + "): " + errorMessage.GetErrorMessage());
+				LOG_WARNING_F("Error message retrieved from peer({}): ", formattedIPAddress, errorMessage.GetErrorMessage());
 
 				return EStatus::BAN_PEER;
 			}
 			case BanReasonMsg:
 			{
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
-				LOG_WARNING("BanReason message retrieved from peer(" + formattedIPAddress + "): " + BanReason::Format((EBanReason)banReasonMessage.GetBanReason()));
+				LOG_WARNING_F("BanReason message retrieved from peer({}): ", formattedIPAddress, BanReason::Format((EBanReason)banReasonMessage.GetBanReason()));
 
 				return EStatus::BAN_PEER;
 			}
@@ -144,13 +144,13 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const GetPeerAddressesMessage getPeerAddressesMessage = GetPeerAddressesMessage::Deserialize(byteBuffer);
 				const Capabilities capabilities = getPeerAddressesMessage.GetCapabilities();
 
-				const std::vector<Peer> peers = m_peerManager.Read()->GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
+				const std::vector<PeerPtr> peers = m_peerManager.Read()->GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
 				std::vector<SocketAddress> socketAddresses;
 				std::transform(
 					peers.cbegin(),
 					peers.cend(),
 					std::back_inserter(socketAddresses),
-					[](const Peer& peer) { return peer.GetSocketAddress(); }
+					[](const PeerPtr& peer) { return peer->GetSocketAddress(); }
 				);
 
 				LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), formattedIPAddress);
@@ -251,7 +251,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 
 				if (m_pSyncStatus->GetStatus() == ESyncStatus::SYNCING_BLOCKS)
 				{
-					m_pipeline.GetBlockPipe()->AddBlockToProcess(connectionId, block);
+					m_pipeline.GetBlockPipe()->AddBlockToProcess(connectedPeer.GetPeer(), block);
 				}
 				else
 				{
@@ -331,7 +331,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, pTransaction, EPoolType::STEMPOOL);
+				m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::STEMPOOL);
 
 				return EStatus::SUCCESS;
 			}
@@ -345,7 +345,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -357,7 +357,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			{
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return m_pipeline.GetTxHashSetPipe()->ReceiveTxHashSet(connectionId, socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
+				return m_pipeline.GetTxHashSetPipe()->ReceiveTxHashSet(connectedPeer.GetPeer(), socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
 			}
 			case GetTransactionMsg:
 			{
@@ -408,14 +408,14 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 	const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
 	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
-	if (peer.GetPeer().GetLastTxHashSetRequest() > maxTxHashSetRequest)
+	if (peer.GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest)
 	{
 		LOG_WARNING_F("Peer ({}) requested multiple TxHashSet's within 2 hours.", socket.GetIPAddress());
 		return EStatus::BAN_PEER;
 	}
 
 	LOG_INFO_F("Sending TxHashSet snapshot to {}", socket.GetIPAddress());
-	peer.GetPeer().UpdateLastTxHashSetRequest();
+	peer.GetPeer()->UpdateLastTxHashSetRequest();
 
 	auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
 	if (pHeader == nullptr)

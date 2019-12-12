@@ -24,10 +24,10 @@ Locked<PeerManager> PeerManager::Create(const Config& config, std::shared_ptr<Lo
 	std::shared_ptr<PeerManager> pPeerManager = std::shared_ptr<PeerManager>(new PeerManager(config, pPeerDB));
 
 	pPeerManager->m_peersByAddress.clear();
-	const std::vector<Peer> peers = pPeerDB->Read()->LoadAllPeers();
-	for (const Peer& peer : peers)
+	const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
+	for (const PeerPtr& peer : peers)
 	{
-		pPeerManager->m_peersByAddress.emplace(peer.GetIPAddress(), PeerEntry(Peer(peer)));
+		pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
 	}
 
 	Locked<PeerManager> peerManager(pPeerManager);
@@ -45,17 +45,17 @@ void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std:
 	{
 		ThreadUtil::SleepFor(std::chrono::seconds(15), terminate);
 
-		std::vector<Peer> peersToUpdate;
+		std::vector<PeerPtr> peersToUpdate;
 
 		{
 			auto pReader = peerManager.Read();
 			for (auto iter = pReader->m_peersByAddress.begin(); iter != pReader->m_peersByAddress.end(); iter++)
 			{
 				PeerEntry& peerEntry = iter->second;
-				if (peerEntry.m_dirty)
+				if (peerEntry.m_peer->IsDirty())
 				{
 					peersToUpdate.push_back(peerEntry.m_peer);
-					peerEntry.m_dirty = false;
+					peerEntry.m_peer->SetDirty(false);
 				}
 			}
 		}
@@ -75,17 +75,17 @@ bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapab
 	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
 	{
 		PeerEntry& peerEntry = iter->second;
-		const Peer& peer = peerEntry.m_peer;
+		const PeerPtr& peer = peerEntry.m_peer;
 
-		if (peer.GetLastBanTime() > maxBanTime)
+		if (peer->GetLastBanTime() > maxBanTime)
 		{
 			continue;
 		}
 
-		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
+		const bool hasCapability = peer->GetCapabilities().HasCapability(preferredCapability);
 		if (hasCapability)
 		{
-			if (!peerEntry.m_connected && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW)
+			if (!peerEntry.m_peer->IsConnected() && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW)
 			{
 				++peersFound;
 				if (peersFound >= 100)
@@ -99,7 +99,7 @@ bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapab
 	return peersFound < 100;
 }
 
-std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+std::optional<PeerPtr> PeerManager::GetPeer(const IPAddress& address)
 {
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.cend())
@@ -107,12 +107,23 @@ std::optional<Peer> PeerManager::GetPeer(const IPAddress& address, const std::op
 		return std::make_optional(iter->second.m_peer);
 	}
 
-	return m_pPeerDB->Read()->GetPeer(address, portOpt);
+	return m_pPeerDB->Read()->GetPeer(address, std::nullopt);
 }
 
-std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability) const
+std::optional<PeerConstPtr> PeerManager::GetPeer(const IPAddress& address) const
 {
-	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, 1, true);
+	auto iter = m_peersByAddress.find(address);
+	if (iter != m_peersByAddress.cend())
+	{
+		return std::make_optional(iter->second.m_peer);
+	}
+
+	return m_pPeerDB->Read()->GetPeer(address, std::nullopt);
+}
+
+PeerPtr PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability)
+{
+	std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, 1, true);
 	if (peers.empty())
 	{
 		peers = GetPeersWithCapability(Capabilities::UNKNOWN, 1, true);
@@ -120,21 +131,19 @@ std::unique_ptr<Peer> PeerManager::GetNewPeer(const Capabilities::ECapability& p
 	
 	if (peers.empty())
 	{
-		return std::unique_ptr<Peer>(nullptr);
+		return nullptr;
 	}
 
-	return std::make_unique<Peer>(peers.front());
+	return peers.front();
 }
 
-std::vector<Peer> PeerManager::GetAllPeers() const
+std::vector<PeerPtr> PeerManager::GetAllPeers()
 {
-	std::vector<Peer> peers;
+	std::vector<PeerPtr> peers;
 	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
 	{
-		PeerEntry& peerEntry = iter->second;
-		const Peer& peer = peerEntry.m_peer;
-
-		if (peer.GetLastContactTime() > 0)
+		PeerPtr peer = iter->second.m_peer;
+		if (peer->GetLastContactTime() > 0)
 		{
 			peers.push_back(peer);
 		}
@@ -143,9 +152,24 @@ std::vector<Peer> PeerManager::GetAllPeers() const
 	return peers;
 }
 
-std::vector<Peer> PeerManager::GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
+std::vector<PeerConstPtr> PeerManager::GetAllPeers() const
 {
-	std::vector<Peer> peers = GetPeersWithCapability(preferredCapability, maxPeers, false);
+	std::vector<PeerConstPtr> peers;
+	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
+	{
+		PeerConstPtr peer = iter->second.m_peer;
+		if (peer->GetLastContactTime() > 0)
+		{
+			peers.push_back(peer);
+		}
+	}
+
+	return peers;
+}
+
+std::vector<PeerPtr> PeerManager::GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
+{
+	std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, maxPeers, false);
 	if (peers.empty())
 	{
 		peers = GetPeersWithCapability(Capabilities::UNKNOWN, maxPeers, false);
@@ -161,67 +185,65 @@ void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 		const IPAddress& ipAddress = socketAddress.GetIPAddress();
 		if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end())
 		{
-			m_peersByAddress.emplace(ipAddress, PeerEntry(Peer(socketAddress)));
+			m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(socketAddress)));
 		}
 	}
 }
 
-void PeerManager::SetPeerConnected(const Peer& peer, const bool connected)
-{
-	const IPAddress& address = peer.GetIPAddress();
-	auto iter = m_peersByAddress.find(address);
-	if (iter != m_peersByAddress.end())
-	{
-		iter->second.m_connected = connected;
+//void PeerManager::SetPeerConnected(const PeerPtr& peer, const bool connected)
+//{
+//	const IPAddress& address = peer->GetIPAddress();
+//	auto iter = m_peersByAddress.find(address);
+//	if (iter != m_peersByAddress.end())
+//	{
+//		iter->second.m_connected = connected;
+//
+//		if (!iter->second.m_peer.IsBanned())
+//		{
+//			iter->second.m_peer = peer;
+//		}
+//
+//		iter->second.m_dirty = true;
+//	}
+//	else
+//	{
+//		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), connected, true));
+//	}
+//}
 
-		if (!iter->second.m_peer.IsBanned())
-		{
-			iter->second.m_peer = peer;
-		}
-
-		iter->second.m_dirty = true;
-	}
-	else
-	{
-		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), connected, true));
-	}
-}
-
-void PeerManager::BanPeer(Peer& peer, const EBanReason banReason)
-{
-	peer.UpdateLastBanTime();
-	peer.UpdateBanReason(banReason);
-
-	const IPAddress& address = peer.GetIPAddress();
-	auto iter = m_peersByAddress.find(address);
-	if (iter != m_peersByAddress.end())
-	{
-		iter->second.m_connected = false;
-		iter->second.m_peer = peer;
-		iter->second.m_dirty = true;
-	}
-	else
-	{
-		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
-	}
-}
+//void PeerManager::BanPeer(PeerPtr peer, const EBanReason banReason)
+//{
+//	peer->UpdateLastBanTime();
+//	peer->UpdateBanReason(banReason);
+//
+//	const IPAddress& address = peer->GetIPAddress();
+//	auto iter = m_peersByAddress.find(address);
+//	if (iter != m_peersByAddress.end())
+//	{
+//		iter->second.m_connected = false;
+//		iter->second.m_peer = peer;
+//		iter->second.m_dirty = true;
+//	}
+//	else
+//	{
+//		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
+//	}
+//}
 
 void PeerManager::BanPeer(const IPAddress& address, const EBanReason banReason)
 {
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
 	{
-		iter->second.m_connected = false;
-		iter->second.m_peer.UpdateBanReason(banReason);
-		iter->second.m_peer.UpdateLastBanTime();
-		iter->second.m_dirty = true;
+		//iter->second.m_connected = false;
+		iter->second.m_peer->Ban(banReason);
+		//iter->second.m_dirty = true;
 	}
 	else
 	{
-		Peer peer(SocketAddress(address, 0), 0, Capabilities(0), "");
-		peer.UpdateBanReason(banReason);
-		peer.UpdateLastBanTime();
-		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
+		PeerPtr peer = std::make_shared<Peer>(SocketAddress(address, 0), 0, Capabilities(0), "");
+		peer->Ban(banReason);
+		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now()));
 	}
 }
 
@@ -230,31 +252,31 @@ void PeerManager::UnbanPeer(const IPAddress& address)
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
 	{
-		iter->second.m_peer.Unban();
-		iter->second.m_dirty = true;
+		iter->second.m_peer->Unban();
+		//iter->second.m_dirty = true;
 	}
 }
 
-std::vector<Peer> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
+std::vector<PeerPtr> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
 {
-	std::vector<Peer> peersFound;
+	std::vector<PeerPtr> peersFound;
 	const time_t currentTime = TimeUtil::Now();
 	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 
 	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
 	{
 		PeerEntry& peerEntry = iter->second;
-		const Peer& peer = peerEntry.m_peer;
+		const PeerPtr& peer = peerEntry.m_peer;
 
-		if (connectingToPeer && peer.GetLastBanTime() > maxBanTime)
+		if (connectingToPeer && peer->GetLastBanTime() > maxBanTime)
 		{
 			continue;
 		}
 
-		const bool hasCapability = peer.GetCapabilities().HasCapability(preferredCapability);
+		const bool hasCapability = peer->GetCapabilities().HasCapability(preferredCapability);
 		if (hasCapability)
 		{
-			if (!connectingToPeer || (!peerEntry.m_connected && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW))
+			if (!connectingToPeer || (!peerEntry.m_peer->IsConnected() && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW))
 			{
 				if (connectingToPeer)
 				{

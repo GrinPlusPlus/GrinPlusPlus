@@ -17,7 +17,6 @@
 
 ConnectionManager::ConnectionManager()
 	: m_connections(std::make_shared<std::vector<ConnectionPtr>>()),
-	m_peersToBan(std::make_shared<std::unordered_map<uint64_t, EBanReason>>()),
 	m_numOutbound(0),
 	m_numInbound(0)
 {
@@ -57,19 +56,16 @@ std::shared_ptr<ConnectionManager> ConnectionManager::Create()
 void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
 	auto connections = m_connections.Read();
-	const uint64_t numActiveConnections = connections->size();
+
 	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
 	if (pMostWorkPeer != nullptr)
 	{
-		const uint64_t networkHeight = pMostWorkPeer->GetHeight();
-		const uint64_t networkDifficulty = pMostWorkPeer->GetTotalDifficulty();
-		syncStatus.UpdateNetworkStatus(numActiveConnections, networkHeight, networkDifficulty);
+		syncStatus.UpdateNetworkStatus(
+			connections->size(),
+			pMostWorkPeer->GetHeight(),
+			pMostWorkPeer->GetTotalDifficulty()
+		);
 	}
-}
-
-bool ConnectionManager::IsConnected(const uint64_t connectionId) const
-{
-	return GetConnectionById(connectionId, *m_connections.Read()) != nullptr;
 }
 
 bool ConnectionManager::IsConnected(const IPAddress& address) const
@@ -85,9 +81,9 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 	);
 }
 
-std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
+std::vector<PeerPtr> ConnectionManager::GetMostWorkPeers() const
 {
-	std::vector<uint64_t> mostWorkPeers;
+	std::vector<PeerPtr> mostWorkPeers;
 
 	auto connections = m_connections.Read();
 
@@ -99,7 +95,7 @@ std::vector<uint64_t> ConnectionManager::GetMostWorkPeers() const
 		{
 			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0)
 			{
-				mostWorkPeers.push_back(pConnection->GetId());
+				mostWorkPeers.push_back(pConnection->GetPeer());
 			}
 		}
 	}
@@ -122,19 +118,16 @@ std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
 	return connectedPeers;
 }
 
-std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnectedPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnectedPeer(const IPAddress& address) const
 {
 	auto connections = m_connections.Read();
 
 	for (ConnectionPtr pConnection : *connections)
 	{
 		ConnectedPeer connectedPeer = pConnection->GetConnectedPeer();
-		if (connectedPeer.GetPeer().GetIPAddress() == address)
+		if (connectedPeer.GetPeer()->GetIPAddress() == address)
 		{
-			if (!portOpt.has_value() || portOpt.value() == connectedPeer.GetPeer().GetPortNumber() || !connectedPeer.GetPeer().GetIPAddress().IsLocalhost())
-			{
-				return std::make_optional(std::make_pair(pConnection->GetId(), std::move(connectedPeer)));
-			}
+			return std::make_optional(std::make_pair(pConnection->GetId(), std::move(connectedPeer)));
 		}
 	}
 
@@ -165,27 +158,29 @@ uint64_t ConnectionManager::GetHighestHeight() const
 	return 0;
 }
 
-uint64_t ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
+PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 {
 	auto connections = m_connections.Read();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
 	if (pConnection != nullptr)
 	{
 		pConnection->Send(message);
-		return pConnection->GetId();
+		return pConnection->GetPeer();
 	}
 
-	return 0;
+	return nullptr;
 }
 
-bool ConnectionManager::SendMessageToPeer(const IMessage& message, const uint64_t connectionId)
+bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer)
 {
 	auto connections = m_connections.Read();
-	ConnectionPtr pConnection = GetConnectionById(connectionId, *connections);
-	if (pConnection != nullptr)
+	for (auto pConnection : *connections)
 	{
-		pConnection->Send(message);
-		return true;
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress())
+		{
+			pConnection->Send(message);
+			return true;
+		}
 	}
 
 	return false;
@@ -208,49 +203,26 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		auto connectionsWriter = m_connections.Write();
 		std::vector<ConnectionPtr>& connections = *connectionsWriter;
 
-		auto peersToBan = m_peersToBan.Write();
-
-		size_t numOutbound = 0;
-		size_t numInbound = 0;
 		for (int i = (int)connections.size() - 1; i >= 0; i--)
 		{
 			ConnectionPtr pConnection = connections[i];
-			const uint64_t connectionId = pConnection->GetId();
-
-			auto iter = peersToBan->find(connectionId);
-			if (iter == peersToBan->end() && pConnection->ExceedsRateLimit())
+			if (!bInactiveOnly)
 			{
-				peersToBan->insert(std::make_pair(connectionId, EBanReason::Abusive));
-				iter = peersToBan->find(connectionId);
-			}
-
-			if (iter != peersToBan->end())
-			{
-				const EBanReason banReason = iter->second;
-				LOG_WARNING_F("Banning peer ({}) at ({}) for ({}).", connectionId, pConnection->GetIPAddress(), BanReason::Format(banReason));
-
-				pConnection->GetPeer().UpdateLastBanTime();
-				pConnection->GetPeer().UpdateBanReason(banReason);
-
 				connectionsToClose.push_back(pConnection);
 				VectorUtil::Remove<ConnectionPtr>(connections, i);
-
-				continue;
 			}
-
-			if (!bInactiveOnly || !pConnection->IsConnectionActive())
+			else if (!pConnection->IsConnectionActive())
 			{
-				if (!pConnection->IsConnectionActive())
-				{
-					LOG_DEBUG_F("Disconnecting from inactive peer ({}) at ({})", connectionId, pConnection->GetIPAddress());
-				}
-
+				LOG_DEBUG_F("Disconnecting from inactive peer ({}) at ({})", pConnection->GetId(), pConnection->GetIPAddress());
 				connectionsToClose.push_back(pConnection);
 				VectorUtil::Remove<ConnectionPtr>(connections, i);
-
-				continue;
 			}
+		}
 
+		size_t numOutbound = 0;
+		size_t numInbound = 0;
+		for (auto pConnection : connections)
+		{
 			if (pConnection->GetConnectedPeer().GetDirection() == EDirection::INBOUND)
 			{
 				numInbound++;
@@ -263,7 +235,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 
 		m_numInbound = numInbound;
 		m_numOutbound = numOutbound;
-		peersToBan->clear();
 	}
 
 	for (ConnectionPtr pConnection : connectionsToClose)
@@ -277,11 +248,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 			LOG_ERROR("Error disconnecting: " + std::string(e.what()));
 		}
 	}
-}
-
-void ConnectionManager::BanConnection(const uint64_t connectionId, const EBanReason banReason)
-{
-	m_peersToBan.Write()->insert(std::pair<uint64_t, EBanReason>(connectionId, banReason));
 }
 
 ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const
@@ -326,17 +292,6 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 	const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
 
 	return mostWorkPeers[index];
-}
-
-ConnectionPtr ConnectionManager::GetConnectionById(const uint64_t connectionId, const std::vector<ConnectionPtr>& connections) const
-{
-	auto iter = std::find_if(
-		connections.cbegin(),
-		connections.cend(),
-		[connectionId](ConnectionPtr pConnection) { return pConnection->GetId() == connectionId; }
-	);
-
-	return iter != connections.cend() ? *iter : nullptr;
 }
 
 void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)

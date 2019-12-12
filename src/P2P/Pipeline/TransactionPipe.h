@@ -3,7 +3,7 @@
 #include "../ConnectionManager.h"
 
 #include <Crypto/Hash.h>
-#include <Net/Socket.h>
+#include <P2P/Peer.h>
 #include <TxPool/PoolType.h>
 #include <Core/Models/Transaction.h>
 #include <BlockChain/BlockChainServer.h>
@@ -28,7 +28,7 @@ public:
 	);
 	~TransactionPipe();
 
-	bool AddTransactionToProcess(const uint64_t connectionId, TransactionPtr pTransaction, const EPoolType poolType);
+	bool AddTransactionToProcess(const uint64_t connectionId, PeerPtr pPeer, TransactionPtr pTransaction, const EPoolType poolType);
 
 private:
 	TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);
@@ -41,13 +41,14 @@ private:
 	std::thread m_transactionThread;
 	struct TxEntry
 	{
-		TxEntry(const uint64_t connId, TransactionPtr txn, const EPoolType type)
-			: connectionId(connId), pTransaction(txn), poolType(type)
+		TxEntry(const uint64_t connectionId, PeerPtr pPeer, TransactionPtr txn, const EPoolType type)
+			: m_connectionId(connectionId), m_peer(pPeer), pTransaction(txn), poolType(type)
 		{
 
 		}
 
-		uint64_t connectionId;
+		uint64_t m_connectionId;
+		PeerPtr m_peer;
 		TransactionPtr pTransaction;
 		EPoolType poolType;
 	};

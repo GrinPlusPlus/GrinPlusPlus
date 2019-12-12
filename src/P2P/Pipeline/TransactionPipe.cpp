@@ -47,12 +47,12 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 					for (auto& kernel : kernels)
 					{
 						const TransactionKernelMessage message(kernel.GetHash());
-						pipeline.m_pConnectionManager->BroadcastMessage(message, pTxEntry->connectionId);
+						pipeline.m_pConnectionManager->BroadcastMessage(message, pTxEntry->m_connectionId);
 					}
 				}
 				else if (status == EBlockChainStatus::INVALID)
 				{
-					pipeline.m_pConnectionManager->BanConnection(pTxEntry->connectionId, EBanReason::BadTransaction);
+					pTxEntry->m_peer->Ban(EBanReason::BadTransaction);
 				}
 
 				pipeline.m_transactionsToProcess.pop_front(1);
@@ -71,12 +71,12 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 	LOG_TRACE("END");
 }
 
-bool TransactionPipe::AddTransactionToProcess(const uint64_t connectionId, TransactionPtr pTransaction, const EPoolType poolType)
+bool TransactionPipe::AddTransactionToProcess(const uint64_t connectionId, PeerPtr pPeer, TransactionPtr pTransaction, const EPoolType poolType)
 {
 	std::function<bool(const TxEntry&, const TxEntry&)> comparator = [](const TxEntry& txEntry1, const TxEntry& txEntry2)
 	{
 		return txEntry1.pTransaction->GetHash() == txEntry2.pTransaction->GetHash();
 	};
 
-	return m_transactionsToProcess.push_back_unique(TxEntry(connectionId, pTransaction, poolType), comparator);
+	return m_transactionsToProcess.push_back_unique(TxEntry(connectionId, pPeer, pTransaction, poolType), comparator);
 }

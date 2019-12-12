@@ -23,7 +23,7 @@ Dandelion::Dandelion(
 	m_pTxHashSetManager(pTxHashSetManager),
 	m_pTransactionPool(pTransactionPool),
 	m_pBlockDB(pBlockDB),
-	m_relayNodeId(0), 
+	m_relayPeer(nullptr),
 	m_relayExpirationTime(std::chrono::system_clock::now()),
 	m_terminate(false)
 {
@@ -110,9 +110,9 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 
 bool Dandelion::ProcessStemPhase()
 {
-	if (m_relayNodeId == 0 || m_relayExpirationTime < std::chrono::system_clock::now())
+	if (m_relayPeer == nullptr || m_relayExpirationTime < std::chrono::system_clock::now())
 	{
-		const std::vector<uint64_t> mostWorkPeers = m_connectionManager.GetMostWorkPeers();
+		const std::vector<PeerPtr> mostWorkPeers = m_connectionManager.GetMostWorkPeers();
 		if (mostWorkPeers.empty())
 		{
 			return false;
@@ -121,7 +121,7 @@ bool Dandelion::ProcessStemPhase()
 		const uint16_t relaySeconds = m_config.GetNodeConfig().GetDandelion().GetRelaySeconds();
 		m_relayExpirationTime = std::chrono::system_clock::now() + std::chrono::seconds(relaySeconds);
 		const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
-		m_relayNodeId = mostWorkPeers[index];
+		m_relayPeer = mostWorkPeers[index];
 	}
 
 	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
@@ -140,7 +140,7 @@ bool Dandelion::ProcessStemPhase()
 
 		// Send Transaction to next Dandelion Relay.
 		const StemTransactionMessage stemTransactionMessage(pTransactionToStem);
-		const bool success = m_connectionManager.SendMessageToPeer(stemTransactionMessage, m_relayNodeId);
+		const bool success = m_connectionManager.SendMessageToPeer(stemTransactionMessage, m_relayPeer);
 		
 		// If failed to send, fluff instead.
 		if (!success)

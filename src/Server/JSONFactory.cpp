@@ -188,13 +188,13 @@ Json::Value JSONFactory::BuildConnectedPeerJSON(const ConnectedPeer& connectedPe
 	Json::Value peerNode;
 
 	Json::Value capabilitiesNode;
-	capabilitiesNode["bits"] = connectedPeer.GetPeer().GetCapabilities().GetCapability();
+	capabilitiesNode["bits"] = connectedPeer.GetPeer()->GetCapabilities().GetCapability();
 	peerNode["capabilities"] = capabilitiesNode;
 
-	const Peer& peer = connectedPeer.GetPeer();
-	peerNode["user_agent"] = peer.GetUserAgent();
-	peerNode["version"] = peer.GetVersion();
-	peerNode["addr"] = peer.GetIPAddress().Format() + ":" + std::to_string(peer.GetPortNumber());
+	PeerConstPtr peer = connectedPeer.GetPeer();
+	peerNode["user_agent"] = peer->GetUserAgent();
+	peerNode["version"] = peer->GetVersion();
+	peerNode["addr"] = peer->GetIPAddress().Format() + ":" + std::to_string(peer->GetPortNumber());
 	peerNode["direction"] = connectedPeer.GetDirection() == EDirection::OUTBOUND ? "Outbound" : "Inbound";
 	peerNode["total_difficulty"] = connectedPeer.GetTotalDifficulty();
 	peerNode["height"] = connectedPeer.GetHeight();

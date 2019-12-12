@@ -150,6 +150,17 @@ private:
 		return x.Format();
 	}
 
+	template <class T>
+	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, std::string>::type convert_for_snprintf(const std::shared_ptr<const T>& x)
+	{
+		return x->Format();
+	}
+
+	template <class T>
+	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, std::string>::type convert_for_snprintf(const std::shared_ptr<T>& x)
+	{
+		return x->Format();
+	}
 
 	template <class T>
 	static typename std::enable_if<!std::is_base_of<Traits::IPrintable, T>::value, T>::type convert_for_snprintf(const T& x)

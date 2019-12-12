@@ -50,7 +50,7 @@ void Connection::Disconnect()
 {
 	m_terminate = true;
 	ThreadUtil::Join(m_connectionThread);
-	m_peerManager.Write()->SetPeerConnected(GetConnectedPeer().GetPeer(), false);
+	m_connectedPeer.GetPeer()->SetConnected(false);
 	m_pSocket.reset();
 }
 
@@ -167,15 +167,22 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		return;
 	}
 
-	pConnection->m_peerManager.Write()->SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), true);
+	pConnection->m_connectedPeer.GetPeer()->SetConnected(true);
 
 	SyncStatusConstPtr pSyncStatus = pConnection->m_pSyncStatus;
 
 	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
 	std::chrono::system_clock::time_point lastReceivedMessageTime = std::chrono::system_clock::now();
 
-	while (!pConnection->m_terminate)
+	while (!pConnection->m_terminate && !pConnection->GetPeer()->IsBanned())
 	{
+		if (pConnection->ExceedsRateLimit())
+		{
+			LOG_WARNING_F("Banning peer ({}) for exceeding rate limit.", pConnection->GetIPAddress());
+			pConnection->GetPeer()->Ban(EBanReason::Abusive);
+			break;
+		}
+
 		auto now = std::chrono::system_clock::now();
 		if (lastPingTime + std::chrono::seconds(10) < now)
 		{
@@ -207,7 +214,10 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 
                 if (status == MessageProcessor::EStatus::BAN_PEER)
                 {
-                    pConnection->m_connectionManager.BanConnection(pConnection->m_connectionId, EBanReason::BadBlock); // TODO: Determine real reason.
+					EBanReason banReason = EBanReason::Abusive; // TODO: Determine real reason.
+					LOG_WARNING_F("Banning peer ({}) for ({}).", pConnection->GetIPAddress(), BanReason::Format(banReason));
+					pConnection->GetPeer()->Ban(banReason);
+					break;
                 }
                 
                 lastReceivedMessageTime = std::chrono::system_clock::now();
@@ -270,6 +280,5 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 	}
 
 	pConnection->GetSocket()->CloseSocket();
-
-	pConnection->m_peerManager.Write()->SetPeerConnected(pConnection->GetConnectedPeer().GetPeer(), false);
+	pConnection->m_connectedPeer.GetPeer()->SetConnected(false);
 }

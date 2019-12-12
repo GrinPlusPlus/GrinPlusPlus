@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <BlockChain/BlockChainServer.h>
 #include <TxPool/TransactionPool.h>
+#include <P2P/Peer.h>
 
 #include <thread>
 #include <atomic>
@@ -50,6 +51,6 @@ private:
 	std::atomic_bool m_terminate = true;
 	std::thread m_dandelionThread;
 
-	uint64_t m_relayNodeId;
+	PeerPtr m_relayPeer;
 	std::chrono::time_point<std::chrono::system_clock> m_relayExpirationTime;
 };

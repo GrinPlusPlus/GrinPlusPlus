@@ -63,7 +63,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 				const bool bPayloadRetrieved = socket.Receive(messageHeader.GetMessageLength(), false, payload);
 				if (bPayloadRetrieved)
 				{
-					connectedPeer.GetPeer().UpdateLastContactTime();
+					connectedPeer.GetPeer()->UpdateLastContactTime();
 					return std::make_unique<RawMessage>(RawMessage(std::move(messageHeader), std::move(payload)));
 				}
 				else

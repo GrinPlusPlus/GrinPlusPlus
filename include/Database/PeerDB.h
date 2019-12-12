@@ -13,12 +13,12 @@ class IPeerDB : public Traits::IBatchable
 public:
 	virtual ~IPeerDB() = default;
 
-	virtual std::vector<Peer> LoadAllPeers() const = 0;
+	virtual std::vector<PeerPtr> LoadAllPeers() const = 0;
 
-	virtual std::optional<Peer> GetPeer(
+	virtual std::optional<PeerPtr> GetPeer(
 		const IPAddress& address,
 		const std::optional<uint16_t>& portOpt
 	) const = 0;
 
-	virtual void SavePeers(const std::vector<Peer>& peers) = 0;
+	virtual void SavePeers(const std::vector<PeerPtr>& peers) = 0;
 };

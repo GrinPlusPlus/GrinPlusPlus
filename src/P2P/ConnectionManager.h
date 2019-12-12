@@ -23,32 +23,27 @@ public:
 	size_t GetNumOutbound() const { return m_numOutbound; }
 	size_t GetNumberOfActiveConnections() const { return m_connections.Read()->size(); }
 
-	bool IsConnected(const uint64_t connectionId) const;
 	bool IsConnected(const IPAddress& address) const;
-	std::vector<uint64_t> GetMostWorkPeers() const;
+	std::vector<PeerPtr> GetMostWorkPeers() const;
 	std::vector<ConnectedPeer> GetConnectedPeers() const;
-	std::optional<std::pair<uint64_t, ConnectedPeer>> GetConnectedPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const;
+	std::optional<std::pair<uint64_t, ConnectedPeer>> GetConnectedPeer(const IPAddress& address) const;
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 
-	uint64_t SendMessageToMostWorkPeer(const IMessage& message);
-	bool SendMessageToPeer(const IMessage& message, const uint64_t connectionId);
+	PeerPtr SendMessageToMostWorkPeer(const IMessage& message);
+	bool SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer);
 	void BroadcastMessage(const IMessage& message, const uint64_t sourceId);
 
 	void PruneConnections(const bool bInactiveOnly);
 	void AddConnection(ConnectionPtr pConnection);
 
-	void BanConnection(const uint64_t connectionId, const EBanReason banReason);
-
 private:
 	ConnectionManager();
 
 	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const;
-	ConnectionPtr GetConnectionById(const uint64_t connectionId, const std::vector<ConnectionPtr>& connections) const;
 	static void Thread_Broadcast(ConnectionManager& connectionManager);
 	
-	Locked<std::vector<ConnectionPtr>> m_connections;	
-	Locked<std::unordered_map<uint64_t, EBanReason>> m_peersToBan;
+	Locked<std::vector<ConnectionPtr>> m_connections;
 
 	struct MessageToBroadcast
 	{

@@ -78,7 +78,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 			return true;
 		}
 
-		if (m_slowPeers.count(requestedBlocksIter->second.PEER_ID) > 0)
+		if (IsSlowPeer(requestedBlocksIter->second.PEER))
 		{
 			LOG_TRACE("Waiting on block from banned peer. Requesting from valid peer now.");
 			return true;
@@ -103,7 +103,7 @@ bool BlockSyncer::RequestBlocks()
 {
 	LOG_TRACE("Requesting blocks.");
 
-	std::vector<uint64_t> mostWorkPeers = m_pConnectionManager.lock()->GetMostWorkPeers();
+	std::vector<PeerPtr> mostWorkPeers = m_pConnectionManager.lock()->GetMostWorkPeers();
 	const uint64_t numPeers = mostWorkPeers.size();
 	if (mostWorkPeers.empty())
 	{
@@ -134,10 +134,15 @@ bool BlockSyncer::RequestBlocks()
 		auto iter = m_requestedBlocks.find(blocksNeeded[blockIndex].first);
 		if (iter != m_requestedBlocks.end())
 		{
-			if (m_slowPeers.count(iter->second.PEER_ID) > 0 || iter->second.TIMEOUT < std::chrono::system_clock::now())
+			if (IsSlowPeer(iter->second.PEER) || iter->second.TIMEOUT < std::chrono::system_clock::now())
 			{
-				m_pConnectionManager.lock()->BanConnection(iter->second.PEER_ID, EBanReason::FraudHeight);
-				m_slowPeers.insert(iter->second.PEER_ID);
+				if (!iter->second.PEER->IsBanned())
+				{
+					LOG_ERROR_F("Banning peer {} for fraud height.", iter->second.PEER);
+					iter->second.PEER->Ban(EBanReason::FraudHeight);
+				}
+
+				m_slowPeers.insert(iter->second.PEER->GetIPAddress());
 
 				blocksToRequest.emplace_back(blocksNeeded[blockIndex]);
 			}
@@ -163,7 +168,7 @@ bool BlockSyncer::RequestBlocks()
 		{
 			RequestedBlock blockRequested;
 			blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
-			blockRequested.PEER_ID = mostWorkPeers[nextPeer];
+			blockRequested.PEER = mostWorkPeers[nextPeer];
 			blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(10);
 
 			m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);

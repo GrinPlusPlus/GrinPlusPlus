@@ -108,7 +108,7 @@ std::pair<size_t, size_t> P2PServer::GetNumberOfConnectedPeers() const
 	);
 }
 
-std::vector<Peer> P2PServer::GetAllPeers() const
+std::vector<PeerConstPtr> P2PServer::GetAllPeers() const
 {
 	return m_peerManager.Read()->GetAllPeers();
 }
@@ -118,62 +118,42 @@ std::vector<ConnectedPeer> P2PServer::GetConnectedPeers() const
 	return m_pConnectionManager->GetConnectedPeers();
 }
 
-std::optional<Peer> P2PServer::GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const
+std::optional<PeerConstPtr> P2PServer::GetPeer(const IPAddress& address) const
 {
-	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address, portOpt);
+	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address);
 	if (connectedPeerOpt.has_value())
 	{
 		return std::make_optional(connectedPeerOpt.value().second.GetPeer());
 	}
 
-	return m_peerManager.Read()->GetPeer(address, portOpt);
+	return m_peerManager.Read()->GetPeer(address);
 }
 
-bool P2PServer::BanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt, const EBanReason banReason)
+bool P2PServer::BanPeer(const IPAddress& address, const EBanReason banReason)
 {
-	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address, portOpt);
-	if (connectedPeerOpt.has_value())
-	{
-		m_pConnectionManager->BanConnection(connectedPeerOpt.value().first, EBanReason::ManualBan);
-		return true;
-	}
-
-	std::optional<Peer> peerOpt = m_peerManager.Read()->GetPeer(address, portOpt);
+	std::optional<PeerPtr> peerOpt = m_peerManager.Write()->GetPeer(address);
 	if (peerOpt.has_value())
 	{
-		m_peerManager.Write()->BanPeer(peerOpt.value(), EBanReason::ManualBan);
+		peerOpt.value()->Ban(EBanReason::ManualBan);
 		return true;
 	}
 
 	return false;
 }
 
-bool P2PServer::UnbanPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt)
+void P2PServer::UnbanPeer(const IPAddress& address)
 {
-	std::optional<Peer> peerOpt = m_peerManager.Read()->GetPeer(address, portOpt);
-	if (peerOpt.has_value())
-	{
-		Peer peer = peerOpt.value();
-		if (peer.IsBanned())
-		{
-			m_peerManager.Write()->UnbanPeer(address);
-		}
-
-		return true;
-	}
-
-	return false;
+	m_peerManager.Write()->UnbanPeer(address);
 }
 
 bool P2PServer::UnbanAllPeers()
 {
-	std::vector<Peer> peers = m_peerManager.Read()->GetAllPeers();
-	for (const Peer& peer : peers)
+	std::vector<PeerPtr> peers = m_peerManager.Write()->GetAllPeers();
+	for (PeerPtr peer : peers)
 	{
-		if (peer.IsBanned())
+		if (peer->IsBanned())
 		{
-			const IPAddress& address = peer.GetIPAddress();
-			m_peerManager.Write()->UnbanPeer(address);
+			peer->Unban();
 		}
 	}
 

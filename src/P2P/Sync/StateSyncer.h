@@ -21,7 +21,7 @@ private:
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeRequested;
 	uint64_t m_requestedHeight;
-	uint64_t m_connectionId;
+	PeerPtr m_pPeer;
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;

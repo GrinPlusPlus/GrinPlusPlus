@@ -99,7 +99,7 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 	return false;
 }
 
-bool HandShake::PerformInboundHandshake(Socket & socket, ConnectedPeer & connectedPeer) const
+bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
 	// Get Hand Message
 	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config, m_connectionManager).RetrieveMessage(socket, connectedPeer, MessageRetriever::BLOCKING);
@@ -110,7 +110,7 @@ bool HandShake::PerformInboundHandshake(Socket & socket, ConnectedPeer & connect
 			ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
 			const HandMessage handMessage = HandMessage::Deserialize(byteBuffer);
 
-			if (handMessage.GetNonce() != NONCE && !m_connectionManager.IsConnected(connectedPeer.GetPeer().GetIPAddress()))
+			if (handMessage.GetNonce() != NONCE && !m_connectionManager.IsConnected(connectedPeer.GetPeer()->GetIPAddress()))
 			{
 				connectedPeer.UpdateVersion(handMessage.GetVersion());
 				connectedPeer.UpdateCapabilities(handMessage.GetCapabilities());
@@ -124,17 +124,17 @@ bool HandShake::PerformInboundHandshake(Socket & socket, ConnectedPeer & connect
 				}
 				else
 				{
-					LOG_DEBUG_F("Failed to transmit shake message to ({})", socket.GetSocketAddress());
+					LOG_DEBUG_F("Failed to transmit shake message to ({})", socket);
 					return false;
 				}
 			}
 			else if (handMessage.GetNonce() == NONCE)
 			{
-				LOG_DEBUG_F("Connected to self ({}). Nonce: {}", socket.GetSocketAddress(), NONCE);
+				LOG_DEBUG_F("Connected to self ({}). Nonce: {}", socket, NONCE);
 			}
 			else
 			{
-				LOG_DEBUG_F("Already connected to ({})", connectedPeer.GetPeer());
+				LOG_DEBUG_F("Already connected to ({})", connectedPeer);
 			}
 		}
 		else

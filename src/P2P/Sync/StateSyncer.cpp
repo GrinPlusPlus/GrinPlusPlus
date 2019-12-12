@@ -10,7 +10,7 @@ StateSyncer::StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IB
 {
 	m_timeRequested = std::chrono::system_clock::now();
 	m_requestedHeight = 0;
-	m_connectionId = 0;
+	m_pPeer = nullptr;
 }
 
 bool StateSyncer::SyncState(SyncStatus& syncStatus)
@@ -86,7 +86,7 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 		}
 	}
 
-	if (m_connectionId > 0 && !m_pConnectionManager.lock()->IsConnected(m_connectionId))
+	if (m_pPeer != nullptr && !m_pConnectionManager.lock()->IsConnected(m_pPeer->GetIPAddress()))
 	{
 		LOG_WARNING("Sync peer no longer connected.");
 		return true;
@@ -97,10 +97,10 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 
 bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
-	if (m_connectionId > 0)
+	if (m_pPeer != nullptr)
 	{
-		LOG_WARNING_F("Banning peer: {}", m_connectionId);
-		m_pConnectionManager.lock()->BanConnection(m_connectionId, EBanReason::FraudHeight);
+		LOG_WARNING_F("Banning peer: {}", m_pPeer);
+		m_pPeer->Ban(EBanReason::BadTxHashSet);
 	}
 
 	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
@@ -108,13 +108,13 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 
 	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
-	m_connectionId = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);
+	m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);
 
-	if (m_connectionId > 0)
+	if (m_pPeer != nullptr)
 	{
 		m_timeRequested = std::chrono::system_clock::now();
 		m_requestedHeight = requestedHeight;
 	}
 
-	return m_connectionId > 0;
+	return m_pPeer != nullptr;
 }

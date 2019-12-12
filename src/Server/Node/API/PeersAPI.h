@@ -12,6 +12,5 @@ public:
 
 private:
 	static std::string ParseIPAddress(const std::string& request);
-	static std::string ParsePort(const std::string& request);
 	static std::string ParseCommand(const std::string& request);
 };

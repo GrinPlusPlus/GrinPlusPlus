@@ -27,6 +27,7 @@ public:
 private:
 	bool IsBlockSyncDue(const SyncStatus& syncStatus);
 	bool RequestBlocks();
+	bool IsSlowPeer(PeerConstPtr pPeer) const { return m_slowPeers.find(pPeer->GetIPAddress()) != m_slowPeers.end(); }
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
@@ -38,10 +39,11 @@ private:
 
 	struct RequestedBlock
 	{
-		uint64_t PEER_ID;
+		PeerPtr PEER;
 		uint64_t BLOCK_HEIGHT;
 		std::chrono::time_point<std::chrono::system_clock> TIMEOUT;
+		// TODO: Add retry?
 	};
 	std::unordered_map<uint64_t, RequestedBlock> m_requestedBlocks;
-	std::unordered_set<uint64_t> m_slowPeers;
+	std::unordered_set<IPAddress> m_slowPeers;
 };

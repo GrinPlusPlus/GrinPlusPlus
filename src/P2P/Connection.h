@@ -54,13 +54,13 @@ public:
 	void Send(const IMessage& message);
 
 	SocketPtr GetSocket() const { return m_pSocket; }
-	Peer& GetPeer() { return m_connectedPeer.GetPeer(); }
-	const Peer& GetPeer() const { return m_connectedPeer.GetPeer(); }
+	PeerPtr GetPeer() { return m_connectedPeer.GetPeer(); }
+	PeerConstPtr GetPeer() const { return m_connectedPeer.GetPeer(); }
 	const ConnectedPeer& GetConnectedPeer() const { return m_connectedPeer; }
-	const IPAddress& GetIPAddress() const { return GetPeer().GetIPAddress(); }
+	const IPAddress& GetIPAddress() const { return GetPeer()->GetIPAddress(); }
 	uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
 	uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
-	Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer().GetCapabilities(); }
+	Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer()->GetCapabilities(); }
 
 	bool ExceedsRateLimit() const;
 

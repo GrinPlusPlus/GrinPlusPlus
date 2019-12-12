@@ -24,14 +24,18 @@ public:
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
 
-	std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const;
-	std::unique_ptr<Peer> GetNewPeer(const Capabilities::ECapability& preferredCapability) const;
-	std::vector<Peer> GetAllPeers() const;
-	std::vector<Peer> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
+	std::optional<PeerPtr> GetPeer(const IPAddress& address);
+	std::optional<PeerConstPtr> GetPeer(const IPAddress& address) const;
+
+	std::vector<PeerPtr> GetAllPeers();
+	std::vector<PeerConstPtr> GetAllPeers() const;
+
+	PeerPtr GetNewPeer(const Capabilities::ECapability& preferredCapability);
+	std::vector<PeerPtr> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
 
 	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
-	void SetPeerConnected(const Peer& peer, const bool connected);
-	void BanPeer(Peer& peer, const EBanReason banReason);
+	//void SetPeerConnected(const PeerPtr& peer, const bool connected);
+	//void BanPeer(PeerPtr peer, const EBanReason banReason);
 	void BanPeer(const IPAddress& address, const EBanReason banReason);
 	void UnbanPeer(const IPAddress& address);
 	// TODO: RemovePeer
@@ -41,27 +45,25 @@ private:
 
 	struct PeerEntry
 	{
-		PeerEntry(Peer&& peer)
-			: m_peer(std::move(peer)), m_lastAttempt(0), m_connected(false), m_dirty(false)
+		PeerEntry(PeerPtr pPeer)
+			: m_peer(pPeer), m_lastAttempt(0)//, m_connected(false), m_dirty(false)
 		{
 
 		}
 
-		PeerEntry(const Peer& peer, const time_t& lastAttempt, const bool connected, const bool dirty)
-			: m_peer(peer), m_lastAttempt(lastAttempt), m_connected(connected), m_dirty(dirty)
+		PeerEntry(PeerPtr pPeer, const time_t& lastAttempt)
+			: m_peer(pPeer), m_lastAttempt(lastAttempt)
 		{
 
 		}
 
-		Peer m_peer;
+		PeerPtr m_peer;
 		time_t m_lastAttempt;
-		bool m_connected;
-		bool m_dirty;
 	};
 
 	static void Thread_ManagePeers(Locked<PeerManager> peerManager, const std::atomic_bool& terminate);
 
-	std::vector<Peer> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
+	std::vector<PeerPtr> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
 	const Config& m_config;
 	std::shared_ptr<Locked<IPeerDB>> m_pPeerDB;

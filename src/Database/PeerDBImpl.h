@@ -17,10 +17,10 @@ public:
 
 	static std::shared_ptr<PeerDB> OpenDB(const Config& config);
 
-	virtual std::vector<Peer> LoadAllPeers() const override final;
-	virtual std::optional<Peer> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
+	virtual std::vector<PeerPtr> LoadAllPeers() const override final;
+	virtual std::optional<PeerPtr> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
 
-	virtual void SavePeers(const std::vector<Peer>& peers) override final;
+	virtual void SavePeers(const std::vector<PeerPtr>& peers) override final;
 
 	virtual void Commit() override final {} // FUTURE: Handle this
 	virtual void Rollback() override final {} // FUTURE: Handle this

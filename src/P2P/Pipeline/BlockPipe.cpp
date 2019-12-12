@@ -7,8 +7,8 @@
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
-BlockPipe::BlockPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
+BlockPipe::BlockPipe(const Config& config, IBlockChainServerPtr pBlockChainServer)
+	: m_config(config), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
 {
 }
 
@@ -20,9 +20,9 @@ BlockPipe::~BlockPipe()
 	ThreadUtil::Join(m_processThread);
 }
 
-std::shared_ptr<BlockPipe> BlockPipe::Create(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+std::shared_ptr<BlockPipe> BlockPipe::Create(const Config& config, IBlockChainServerPtr pBlockChainServer)
 {
-	std::shared_ptr<BlockPipe> pBlockPipe = std::shared_ptr<BlockPipe>(new BlockPipe(config, pConnectionManager, pBlockChainServer));
+	std::shared_ptr<BlockPipe> pBlockPipe = std::shared_ptr<BlockPipe>(new BlockPipe(config, pBlockChainServer));
 	pBlockPipe->m_blockThread = std::thread(Thread_ProcessNewBlocks, std::ref(*pBlockPipe.get()));
 	pBlockPipe->m_processThread = std::thread(Thread_PostProcessBlocks, std::ref(*pBlockPipe.get()));
 
@@ -69,16 +69,16 @@ void BlockPipe::ProcessNewBlock(BlockPipe& pipeline, const BlockEntry& blockEntr
 {
 	try
 	{
-		const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddBlock(blockEntry.block);
+		const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddBlock(blockEntry.m_block);
 		if (status == EBlockChainStatus::INVALID)
 		{
-			pipeline.m_pConnectionManager->BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+			blockEntry.m_peer->Ban(EBanReason::BadBlock);
 		}
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Exception ({}) caught while attempting to add block {}.", e.what(), blockEntry.block);
-		pipeline.m_pConnectionManager->BanConnection(blockEntry.connectionId, EBanReason::BadBlock);
+		LOG_ERROR_F("Exception ({}) caught while attempting to add block {}.", e.what(), blockEntry.m_block);
+		blockEntry.m_peer->Ban(EBanReason::BadBlock);
 	}
 }
 
@@ -98,21 +98,21 @@ void BlockPipe::Thread_PostProcessBlocks(BlockPipe& pipeline)
 	LOG_TRACE("END");
 }
 
-bool BlockPipe::AddBlockToProcess(const uint64_t connectionId, const FullBlock& block)
+bool BlockPipe::AddBlockToProcess(PeerPtr pPeer, const FullBlock& block)
 {
 	std::function<bool(const BlockEntry&, const BlockEntry&)> comparator = [](const BlockEntry& blockEntry1, const BlockEntry& blockEntry2)
 	{
-		return blockEntry1.block.GetHash() == blockEntry2.block.GetHash();
+		return blockEntry1.m_block.GetHash() == blockEntry2.m_block.GetHash();
 	};
 
-	return m_blocksToProcess.push_back_unique(BlockEntry(connectionId, block), comparator);
+	return m_blocksToProcess.push_back_unique(BlockEntry(pPeer, block), comparator);
 }
 
 bool BlockPipe::IsProcessingBlock(const Hash& hash) const
 {
 	std::function<bool(const BlockEntry&, const Hash&)> comparator = [](const BlockEntry& blockEntry, const Hash& hash)
 	{
-		return blockEntry.block.GetHash() == hash;
+		return blockEntry.m_block.GetHash() == hash;
 	};
 
 	return m_blocksToProcess.contains<Hash>(hash, comparator);

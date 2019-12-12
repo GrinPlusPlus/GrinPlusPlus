@@ -10,7 +10,7 @@ HeaderSyncer::HeaderSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, 
 {
 	m_timeout = std::chrono::system_clock::now();
 	m_lastHeight = 0;
-	m_connectionId = 0;
+	m_pPeer = nullptr;
 	m_retried = false;
 }
 
@@ -35,7 +35,7 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 		return true;
 	}
 
-	m_connectionId = 0;
+	m_pPeer = nullptr;
 	m_retried = false;
 
 	return false;
@@ -43,7 +43,7 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 
 bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 {
-	if (m_connectionId == 0)
+	if (m_pPeer == nullptr)
 	{
 		return true;
 	}
@@ -58,10 +58,10 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 		return true;
 	}
 
-	if (!m_pConnectionManager.lock()->IsConnected(m_connectionId))
+	if (!m_pConnectionManager.lock()->IsConnected(m_pPeer->GetIPAddress()))
 	{
 		LOG_TRACE("Peer disconnected. Requesting from new peer.");
-		m_connectionId = 0;
+		m_pPeer = nullptr;
 		return true;
 	}
 
@@ -70,12 +70,13 @@ bool HeaderSyncer::IsHeaderSyncDue(const SyncStatus& syncStatus)
 	{
 		LOG_DEBUG("Timed out. Banning then requesting from new peer.");
 
-		if (m_connectionId != 0)
+		if (m_pPeer != nullptr)
 		{
 			if (m_retried)
 			{
-				m_pConnectionManager.lock()->BanConnection(m_connectionId, EBanReason::FraudHeight);
-				m_connectionId = 0;
+				LOG_ERROR_F("Banning peer {} for fraud height.", m_pPeer);
+				m_pPeer->Ban(EBanReason::FraudHeight);
+				m_pPeer = nullptr;
 				m_retried = false;
 			}
 			else
@@ -94,27 +95,27 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
 	LOG_TRACE("Requesting headers.");
 
-	std::vector<CBigInteger<32>> locators = BlockLocator(m_pBlockChainServer).GetLocators(syncStatus);
+	std::vector<Hash> locators = BlockLocator(m_pBlockChainServer).GetLocators(syncStatus);
 
 	const GetHeadersMessage getHeadersMessage(std::move(locators));
 
 	bool messageSent = false;
-	if (m_connectionId != 0)
+	if (m_pPeer != nullptr)
 	{
-		messageSent = m_pConnectionManager.lock()->SendMessageToPeer(getHeadersMessage, m_connectionId);
+		messageSent = m_pConnectionManager.lock()->SendMessageToPeer(getHeadersMessage, m_pPeer);
 	}
 	
 	if (!messageSent)
 	{
-		m_connectionId = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(getHeadersMessage);
+		m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(getHeadersMessage);
 	}
 
-	if (m_connectionId != 0)
+	if (m_pPeer != nullptr)
 	{
 		LOG_TRACE("Headers requested.");
 		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(12);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}
 
-	return m_connectionId != 0;
+	return m_pPeer != nullptr;
 }

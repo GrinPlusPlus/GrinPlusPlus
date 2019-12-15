@@ -8,13 +8,12 @@
 
 struct LoggedInSession
 {
-	LoggedInSession(Locked<Wallet> wallet, SecureVector&& encryptedSeedWithCS, SecureVector&& encryptedGrinboxAddress)
-		: m_wallet(wallet), m_encryptedSeedWithCS(std::move(encryptedSeedWithCS)), m_encryptedGrinboxAddress(std::move(encryptedGrinboxAddress))
+	LoggedInSession(Locked<Wallet> wallet, SecureVector&& encryptedSeedWithCS)
+		: m_wallet(wallet), m_encryptedSeedWithCS(std::move(encryptedSeedWithCS))
 	{
 
 	}
 
 	Locked<Wallet> m_wallet;
 	SecureVector m_encryptedSeedWithCS;
-	SecureVector m_encryptedGrinboxAddress;
 };

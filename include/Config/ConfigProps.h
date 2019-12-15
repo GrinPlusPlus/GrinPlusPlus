@@ -47,6 +47,7 @@ namespace ConfigProps
 
 		static const std::string DATABASE = "DATABASE";
 		static const std::string MIN_CONFIRMATIONS = "MIN_CONFIRMATIONS";
+		static const std::string ENABLE_GRINBOX = "ENABLE_GRINBOX";
 	}
 
 	namespace Tor

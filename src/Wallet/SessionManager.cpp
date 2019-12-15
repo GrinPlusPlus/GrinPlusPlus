@@ -67,21 +67,12 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 		encryptedSeedWithCS[i] = seedWithChecksum[i] ^ tokenKey[i];
 	}
 
-	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
-
-	SecretKey grinboxAddress = grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
-	SecureVector encryptedGrinboxAddress(32);
-	for (size_t i = 0; i < 32; i++)
-	{
-		encryptedGrinboxAddress[i] = grinboxAddress.GetBytes()[i] ^ hash[i];
-	}
-
 	const uint64_t sessionId = m_nextSessionId++;
 	SessionToken token(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
 
 	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB->OpenWallet(username, seed), username);
 
-	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS), std::move(encryptedGrinboxAddress));
+	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS));
 	m_sessionsById[sessionId] = std::shared_ptr<LoggedInSession>(pSession);
 
 	std::pair<uint16_t, std::optional<TorAddress>> listenerInfo = m_pForeignController->StartListener(username, token, seed);
@@ -128,27 +119,6 @@ SecureVector SessionManager::GetSeed(const SessionToken& token) const
 		}
 
 		return seed;
-	}
-
-	throw SessionTokenException();
-}
-
-SecretKey SessionManager::GetGrinboxAddress(const SessionToken& token) const
-{
-	auto iter = m_sessionsById.find(token.GetSessionId());
-	if (iter != m_sessionsById.end())
-	{
-		const SecureVector seed = GetSeed(token);
-		const SecretKey hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
-
-		std::shared_ptr<const LoggedInSession> pSession = iter->second;
-		SecureVector grinboxAddress(32);
-		for (size_t i = 0; i < 32; i++)
-		{
-			grinboxAddress[i] = pSession->m_encryptedGrinboxAddress[i] ^ hash.GetBytes()[i];
-		}
-
-		return SecretKey(CBigInteger<32>((const std::vector<unsigned char>&)grinboxAddress));
 	}
 
 	throw SessionTokenException();

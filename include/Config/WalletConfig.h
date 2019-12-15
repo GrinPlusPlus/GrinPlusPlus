@@ -34,17 +34,14 @@ public:
 
 		m_databaseType = "SQLITE";
 		m_minimumConfirmations = 10;
+		m_enableGrinbox = false;
 		if (json.isMember(ConfigProps::Wallet::WALLET))
 		{
 			const Json::Value& walletJSON = json[ConfigProps::Wallet::WALLET];
-			if (walletJSON.isMember(ConfigProps::Wallet::DATABASE))
-			{
-				m_databaseType = walletJSON.get(ConfigProps::Wallet::DATABASE, "SQLITE").asString();
-			}
-			if (walletJSON.isMember(ConfigProps::Wallet::MIN_CONFIRMATIONS))
-			{
-				m_minimumConfirmations = walletJSON.get(ConfigProps::Wallet::MIN_CONFIRMATIONS, 10).asUInt();
-			}
+
+			m_databaseType = walletJSON.get(ConfigProps::Wallet::DATABASE, "SQLITE").asString();
+			m_minimumConfirmations = walletJSON.get(ConfigProps::Wallet::MIN_CONFIRMATIONS, 10).asUInt();
+			m_enableGrinbox = walletJSON.get(ConfigProps::Wallet::ENABLE_GRINBOX, false).asBool();
 		}
 	}
 
@@ -55,6 +52,7 @@ public:
 	uint32_t GetPublicKeyVersion() const { return m_publicKeyVersion; }
 	uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
 	uint32_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
+	bool IsGrinboxEnabled() const { return m_enableGrinbox; }
 
 private:
 	fs::path m_walletPath;
@@ -64,4 +62,5 @@ private:
 	uint32_t m_publicKeyVersion;
 	uint32_t m_privateKeyVersion;
 	uint32_t m_minimumConfirmations;
+	bool m_enableGrinbox;
 };

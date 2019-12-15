@@ -33,7 +33,6 @@ public:
 	void Logout(const SessionToken& token);
 
 	SecureVector GetSeed(const SessionToken& token) const;
-	SecretKey GetGrinboxAddress(const SessionToken& token) const;
 	Locked<Wallet> GetWallet(const SessionToken& token) const;
 
 private:

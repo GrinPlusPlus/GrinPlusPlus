@@ -10,7 +10,7 @@ class OutputBuilder
 public:
 	static std::vector<OutputDataEntity> CreateOutputs(
 		std::shared_ptr<Wallet> pWallet,
-		Writer<IWalletDB> pBatch,
+		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed, 
 		const uint64_t totalAmount, 
 		const uint32_t walletTxId, 

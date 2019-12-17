@@ -21,6 +21,7 @@ public:
 	virtual std::optional<PeerPtr> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
 
 	virtual void SavePeers(const std::vector<PeerPtr>& peers) override final;
+	virtual void DeletePeers(const std::vector<PeerPtr>& peers) override final;
 
 	virtual void Commit() override final {} // FUTURE: Handle this
 	virtual void Rollback() override final {} // FUTURE: Handle this

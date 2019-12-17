@@ -9,6 +9,8 @@
 class TorConfig
 {
 public:
+	bool IsEnabled() const { return m_enableTor; }
+
 	// The "SocksPort" https://2019.www.torproject.org/docs/tor-manual.html.en#SocksPort
 	uint16_t GetSocksPort() const { return m_socksPort; }
 
@@ -26,6 +28,7 @@ public:
 	//
 	TorConfig(const Json::Value& json)
 	{
+		m_enableTor = true;
 		m_socksPort = 3422;
 		m_controlPort = 3423;
 		m_password = "MyPassword";
@@ -35,15 +38,9 @@ public:
 		{
 			const Json::Value& torJSON = json[ConfigProps::Tor::TOR];
 
-			if (torJSON.isMember(ConfigProps::Tor::SOCKS_PORT))
-			{
-				m_socksPort = (uint16_t)torJSON[ConfigProps::Tor::SOCKS_PORT].asUInt();
-			}
-
-			if (torJSON.isMember(ConfigProps::Tor::CONTROL_PORT))
-			{
-				m_controlPort = (uint16_t)torJSON[ConfigProps::Tor::CONTROL_PORT].asUInt();
-			}
+			m_enableTor = torJSON.get(ConfigProps::Tor::ENABLE_TOR, m_enableTor).asBool();
+			m_socksPort = (uint16_t)torJSON.get(ConfigProps::Tor::SOCKS_PORT, m_socksPort).asUInt();
+			m_controlPort = (uint16_t)torJSON.get(ConfigProps::Tor::CONTROL_PORT, m_controlPort).asUInt();
 
 			if (torJSON.isMember(ConfigProps::Tor::PASSWORD) && torJSON.isMember(ConfigProps::Tor::HASHED_PASSWORD))
 			{
@@ -54,6 +51,7 @@ public:
 	}
 
 private:
+	bool m_enableTor;
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;
 	std::string m_password;

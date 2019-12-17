@@ -65,7 +65,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 	const EBulletproofType bulletproofType = EBulletproofType::ENHANCED;
 	const std::vector<OutputDataEntity> changeOutputs = OutputBuilder::CreateOutputs(
 		pWallet.GetShared(),
-		pBatch,
+		pBatch.GetShared(),
 		masterSeed,
 		changeAmount,
 		walletTxId,
@@ -115,7 +115,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 	WalletTx walletTx = BuildWalletTx(walletTxId, inputs, changeOutputs, slate, addressOpt, messageOpt, proofOpt);
 
 	SlateContextEntity slateContext(std::move(secretKey), std::move(secretNonce));
-	UpdateDatabase(pBatch, masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
+	UpdateDatabase(pBatch.GetShared(), masterSeed, slate.GetSlateId(), slateContext, changeOutputs, inputs, walletTx);
 
 	pBatch->Commit();
 
@@ -213,7 +213,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 }
 
 void SendSlateBuilder::UpdateDatabase(
-	Writer<IWalletDB> pBatch,
+	std::shared_ptr<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
 	const uuids::uuid& slateId,
 	const SlateContextEntity& context,

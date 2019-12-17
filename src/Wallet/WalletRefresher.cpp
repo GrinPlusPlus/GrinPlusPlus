@@ -79,10 +79,6 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 				walletOutputs.push_back(restoredOutput);
 				walletTransactions.emplace_back(std::move(walletTx));
 			}
-			//else if (pExistingOutput->GetStatus() == EOutputStatus::SPENT || pExistingOutput->GetStatus() == EOutputStatus::CANCELED)
-			//{
-
-			//}
 		}
 	}
 

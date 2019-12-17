@@ -114,3 +114,22 @@ void PeerDB::SavePeers(const std::vector<PeerPtr>& peers)
 
 	m_pDatabase->Write(WriteOptions(), &writeBatch);
 }
+
+void PeerDB::DeletePeers(const std::vector<PeerPtr>& peers)
+{
+	LOG_TRACE_F("Deleting peers: {}", peers.size());
+
+	WriteBatch writeBatch;
+	for (const PeerPtr& peer : peers)
+	{
+		const IPAddress& address = peer->GetIPAddress();
+
+		Serializer addressSerializer;
+		address.Serialize(addressSerializer);
+		Slice key((const char*)addressSerializer.data(), addressSerializer.size());
+
+		writeBatch.Delete(key);
+	}
+
+	m_pDatabase->Write(WriteOptions(), &writeBatch);
+}

@@ -74,6 +74,8 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 {
 	for (const OutputDataEntity& output : outputs)
 	{
+		WALLET_DEBUG_F("Saving output: {}", output.GetOutput());
+
 		sqlite3_stmt* stmt = nullptr;
 		std::string insert = "insert into " + tableName + "(commitment, status, transaction_id, encrypted) values(?, ?, ?, ?)";
 		insert += " ON CONFLICT(commitment) DO UPDATE SET status=excluded.status, transaction_id=excluded.transaction_id, encrypted=excluded.encrypted";

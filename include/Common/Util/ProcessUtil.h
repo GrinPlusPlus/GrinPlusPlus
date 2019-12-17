@@ -76,7 +76,7 @@ public:
 		return false;
 	}
 
-	static long GetProcessId(const std::string processName)
+	static long GetProcessId(const std::string& processName)
 	{
 #ifdef _WIN32
 		PROCESSENTRY32 entry;

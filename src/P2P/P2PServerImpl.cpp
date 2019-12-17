@@ -3,6 +3,7 @@
 #include "Seed/Seeder.h"
 #include "Pipeline/Pipeline.h"
 #include "Sync/Syncer.h"
+#include "Messages/TransactionKernelMessage.h"
 #include <BlockChain/BlockChainServer.h>
 
 P2PServer::P2PServer(
@@ -158,6 +159,15 @@ bool P2PServer::UnbanAllPeers()
 	}
 
 	return true;
+}
+
+void P2PServer::BroadcastTransaction(const TransactionPtr& pTransaction)
+{
+	for (auto& kernel : pTransaction->GetKernels())
+	{
+		const TransactionKernelMessage message(kernel.GetHash());
+		m_pConnectionManager->BroadcastMessage(message, 0);
+	}
 }
 
 namespace P2PAPI

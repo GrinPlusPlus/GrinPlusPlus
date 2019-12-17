@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Config/ConfigProps.h>
-#include <Config/TorConfig.h>
 #include <Config/EnvironmentType.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/FileUtil.h>

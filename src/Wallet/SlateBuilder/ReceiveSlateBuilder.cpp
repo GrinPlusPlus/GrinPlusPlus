@@ -15,6 +15,8 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	const std::optional<std::string>& addressOpt,
 	const std::optional<std::string>& messageOpt) const
 {
+	WALLET_INFO_F("Receiving {} from {}", slate.GetAmount(), addressOpt.value_or("UNKNOWN"));
+
 	auto pWallet = wallet.Write();
 	Slate receiveSlate = slate;
 
@@ -41,7 +43,7 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 
 	UpdatePaymentProof(pWallet.GetShared(), pBatch.GetShared(), masterSeed, receiveSlate);
 
-	UpdateDatabase(pBatch, masterSeed, receiveSlate, outputData, walletTxId, addressOpt, messageOpt);
+	UpdateDatabase(pBatch.GetShared(), masterSeed, receiveSlate, outputData, walletTxId, addressOpt, messageOpt);
 
 	pBatch->Commit();
 
@@ -155,7 +157,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IW
 }
 
 void ReceiveSlateBuilder::UpdateDatabase(
-	Writer<IWalletDB> pBatch,
+	std::shared_ptr<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
 	const Slate& slate,
 	const OutputDataEntity& outputData,

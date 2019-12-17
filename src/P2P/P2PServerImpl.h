@@ -45,6 +45,8 @@ public:
 
 	virtual bool UnbanAllPeers() override final;
 
+	virtual void BroadcastTransaction(const TransactionPtr& pTransaction) override final;
+
 private:
 	P2PServer(
 		SyncStatusConstPtr pSyncStatus,

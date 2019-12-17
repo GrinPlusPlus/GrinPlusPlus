@@ -28,7 +28,7 @@ private:
 	void AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
 	void UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IWalletDBPtr pWalletDB, const SecureVector& masterSeed, Slate& slate) const;
 	void UpdateDatabase(
-		Writer<IWalletDB> pBatch,
+		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
 		const Slate& slate,
 		const OutputDataEntity& outputData,

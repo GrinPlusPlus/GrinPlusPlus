@@ -54,6 +54,7 @@ namespace ConfigProps
 	{
 		static const std::string TOR = "TOR";
 
+		static const std::string ENABLE_TOR = "ENABLE_TOR";
 		static const std::string SOCKS_PORT = "SOCKS_PORT";
 		static const std::string CONTROL_PORT = "CONTROL_PORT";
 		static const std::string PASSWORD = "PASSWORD";

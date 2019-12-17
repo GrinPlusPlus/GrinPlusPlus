@@ -63,16 +63,6 @@ public:
 
 	}
 	Peer(const Peer& other) = delete;
-	//	: m_socketAddress(other.m_socketAddress), 
-	//	m_version(other.m_version), 
-	//	m_capabilities(other.m_capabilities.load()), 
-	//	m_userAgent(other.m_userAgent), 
-	//	m_lastContactTime(other.m_lastContactTime.load()), 
-	//	m_lastBanTime(other.m_lastBanTime.load()),
-	//	m_banReason(other.m_banReason.load())
-	//{
-
-	//}
 	Peer(Peer&& other) = delete;
 	Peer() = default;
 
@@ -169,7 +159,15 @@ public:
 		std::time_t lastBanTime = (std::time_t)byteBuffer.Read64();
 		EBanReason banReason = (EBanReason)byteBuffer.Read32();
 
-		return std::shared_ptr<Peer>(new Peer(std::move(socketAddress), version, capabilities, userAgent, lastContactTime, lastBanTime, banReason));
+		return std::shared_ptr<Peer>(new Peer(
+			std::move(socketAddress),
+			version,
+			capabilities,
+			userAgent,
+			lastContactTime,
+			lastBanTime,
+			banReason
+		));
 	}
 
 	virtual std::string Format() const override final { return m_socketAddress.GetIPAddress().Format(); }

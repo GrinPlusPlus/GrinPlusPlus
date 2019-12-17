@@ -112,7 +112,15 @@ public:
 						*pTipHeader
 					);
 					
-					return result == EAddTransactionStatus::ADDED;
+					if (result == EAddTransactionStatus::ADDED)
+					{
+						if (poolType == EPoolType::MEMPOOL)
+						{
+							m_pP2PServer->BroadcastTransaction(pTransaction);
+						}
+
+						return true;
+					}
 				}
 				catch (std::exception&)
 				{

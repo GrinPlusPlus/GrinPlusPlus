@@ -18,7 +18,7 @@
 ////////////////////////////////////////
 // TRANSACTION OUTPUT
 ////////////////////////////////////////
-class TransactionOutput : public Traits::ICommitted, Traits::IHashable
+class TransactionOutput : public Traits::ICommitted, Traits::IHashable, Traits::IPrintable
 {
 public:
 	//
@@ -63,6 +63,7 @@ public:
 	// Traits
 	//
 	virtual const Hash& GetHash() const override final;
+	virtual std::string Format() const override final { return m_commitment.Format(); }
 
 private:
 	// Options for an output's structure or use

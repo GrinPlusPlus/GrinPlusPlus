@@ -21,4 +21,5 @@ public:
 	) const = 0;
 
 	virtual void SavePeers(const std::vector<PeerPtr>& peers) = 0;
+	virtual void DeletePeers(const std::vector<PeerPtr>& peers) = 0;
 };

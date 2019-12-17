@@ -65,11 +65,7 @@ private:
 		if (json.isMember(ConfigProps::Logger::LOGGER))
 		{
 			const Json::Value& loggerJSON = json[ConfigProps::Logger::LOGGER];
-
-			if (loggerJSON.isMember(ConfigProps::Logger::LOG_LEVEL))
-			{
-				m_logLevel = loggerJSON.get(ConfigProps::Logger::LOG_LEVEL, "DEBUG").asString();
-			}
+			m_logLevel = loggerJSON.get(ConfigProps::Logger::LOG_LEVEL, "DEBUG").asString();
 		}
 	}
 

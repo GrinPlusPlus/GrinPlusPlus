@@ -46,21 +46,36 @@ void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std:
 		ThreadUtil::SleepFor(std::chrono::seconds(15), terminate);
 
 		std::vector<PeerPtr> peersToUpdate;
+		std::vector<PeerPtr> peersToDelete;
 
 		{
-			auto pReader = peerManager.Read();
-			for (auto iter = pReader->m_peersByAddress.begin(); iter != pReader->m_peersByAddress.end(); iter++)
+			const time_t minimumContactTime = std::chrono::system_clock::to_time_t(
+				std::chrono::system_clock::now() - std::chrono::hours(24 * 7)
+			);
+
+			auto pWriter = peerManager.Write();
+			for (auto iter : pWriter->m_peersByAddress)
 			{
-				PeerEntry& peerEntry = iter->second;
+				PeerEntry& peerEntry = iter.second;
 				if (peerEntry.m_peer->IsDirty())
 				{
 					peersToUpdate.push_back(peerEntry.m_peer);
 					peerEntry.m_peer->SetDirty(false);
 				}
+				else if (peerEntry.m_peer->GetLastContactTime() < minimumContactTime)
+				{
+					peersToDelete.push_back(peerEntry.m_peer);
+				}
+			}
+
+			for (PeerPtr pPeer : peersToDelete)
+			{
+				pWriter->m_peersByAddress.erase(pPeer->GetIPAddress());
 			}
 		}
 
 		peerManager.Write()->m_pPeerDB->Write()->SavePeers(peersToUpdate);
+		peerManager.Write()->m_pPeerDB->Write()->DeletePeers(peersToDelete);
 	}
 
 	LOG_TRACE("END");
@@ -190,54 +205,12 @@ void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 	}
 }
 
-//void PeerManager::SetPeerConnected(const PeerPtr& peer, const bool connected)
-//{
-//	const IPAddress& address = peer->GetIPAddress();
-//	auto iter = m_peersByAddress.find(address);
-//	if (iter != m_peersByAddress.end())
-//	{
-//		iter->second.m_connected = connected;
-//
-//		if (!iter->second.m_peer.IsBanned())
-//		{
-//			iter->second.m_peer = peer;
-//		}
-//
-//		iter->second.m_dirty = true;
-//	}
-//	else
-//	{
-//		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), connected, true));
-//	}
-//}
-
-//void PeerManager::BanPeer(PeerPtr peer, const EBanReason banReason)
-//{
-//	peer->UpdateLastBanTime();
-//	peer->UpdateBanReason(banReason);
-//
-//	const IPAddress& address = peer->GetIPAddress();
-//	auto iter = m_peersByAddress.find(address);
-//	if (iter != m_peersByAddress.end())
-//	{
-//		iter->second.m_connected = false;
-//		iter->second.m_peer = peer;
-//		iter->second.m_dirty = true;
-//	}
-//	else
-//	{
-//		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now(), false, true));
-//	}
-//}
-
 void PeerManager::BanPeer(const IPAddress& address, const EBanReason banReason)
 {
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.end())
 	{
-		//iter->second.m_connected = false;
 		iter->second.m_peer->Ban(banReason);
-		//iter->second.m_dirty = true;
 	}
 	else
 	{
@@ -253,7 +226,6 @@ void PeerManager::UnbanPeer(const IPAddress& address)
 	if (iter != m_peersByAddress.end())
 	{
 		iter->second.m_peer->Unban();
-		//iter->second.m_dirty = true;
 	}
 }
 

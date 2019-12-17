@@ -59,6 +59,8 @@ public:
 	) = 0;
 
 	virtual bool UnbanAllPeers() = 0;
+
+	virtual void BroadcastTransaction(const TransactionPtr& pTransaction) = 0;
 };
 
 typedef std::shared_ptr<IP2PServer> IP2PServerPtr;

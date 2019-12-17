@@ -15,7 +15,10 @@ TorManager& TorManager::GetInstance(const TorConfig& config)
 TorManager::TorManager(const TorConfig& config)
 	: m_torConfig(config)
 {
-	m_pControl = TorControl::Create(config);
+	if (m_torConfig.IsEnabled())
+	{
+		m_pControl = TorControl::Create(config);
+	}
 }
 
 std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
@@ -95,6 +98,11 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 
 std::shared_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
 {
+	if (!m_torConfig.IsEnabled())
+	{
+		return nullptr;
+	}
+
 	try
 	{
 		SocketAddress proxyAddress("127.0.0.1", m_torConfig.GetSocksPort());

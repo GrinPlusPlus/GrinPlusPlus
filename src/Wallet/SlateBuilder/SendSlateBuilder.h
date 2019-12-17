@@ -45,7 +45,7 @@ private:
 	) const;
 
 	void UpdateDatabase(
-		Writer<IWalletDB> pBatch,
+		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
 		const SlateContextEntity& context,

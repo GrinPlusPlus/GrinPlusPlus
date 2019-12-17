@@ -23,17 +23,23 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 {
 	try
 	{
-		const std::string command = StringUtil::Format(
-			fs::current_path().string() + "/tor/tor --ControlPort {} --SocksPort {} --HashedControlPassword {}",
-			torConfig.GetControlPort(),
-			torConfig.GetSocksPort(),
-			torConfig.GetHashedControlPassword()
-		);
+		#ifdef _WIN32
+		const std::string command = fs::current_path().string() + "/tor/tor";
+		#else
+		const std::string command = "./tor/tor";
+		#endif
+		
+		std::vector<std::string> args({
+			"--ControlPort", std::to_string(torConfig.GetControlPort()),
+			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
+			"--HashedControlPassword", torConfig.GetHashedControlPassword()
+		});
 
 		// TODO: Determine if process is already running.
-		long processId = (long)ProcessUtil::CreateProc(command);
+		long processId = (long)ProcessUtil::CreateProc(command, args);
 		if (processId > 0)
 		{
+			std::this_thread::sleep_for(std::chrono::seconds(2));
 			// Open control socket
 			std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
 			bool connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));

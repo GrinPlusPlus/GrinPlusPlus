@@ -12,7 +12,7 @@
 class ProcessUtil
 {
 public:
-	static intptr_t CreateProc(const std::string& command)
+	static intptr_t CreateProc(const std::string& command, const std::vector<std::string>& args)
 	{
 	#ifdef _WIN32
 		// Allocate STARTUPINFO and PROCESS_INFORMATION objects
@@ -22,9 +22,15 @@ public:
     
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&pi, sizeof(pi));
+
+		std::string cmd = command;
+		for (const std::string& arg : args)
+		{
+			cmd += (" " + arg);
+		}
     
 		// Create the process
-		if (!CreateProcess(NULL, (LPTSTR)StringUtil::ToWide(command).c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		if (!CreateProcess(NULL, (LPTSTR)StringUtil::ToWide(cmd).c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 		{
 			//wchar_t buf[256];
 			//FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -38,8 +44,38 @@ public:
 		return (intptr_t)pi.hProcess;
 
 	#else
-		pid_t processId;
-		if ((processId = fork()) == 0)
+		pid_t processId = fork();
+		if (processId == 0)
+    	{
+			std::vector<const char*> cargs;
+			cargs.push_back(command.c_str());
+			for (const std::string& arg : args)
+			{
+				cargs.push_back(arg.c_str());
+			}
+
+			//char* args[] = {"./tor/tor"};
+			execvp(cargs[0], (char* const*)cargs.data());
+			/*try
+			{
+				system(command.c_str());
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+			}
+			catch (...)
+			{
+
+			}
+
+			exit(0);*/
+		}
+		else
+		{
+			return (long)processId;
+		}
+		/*if ((processId = fork()) == 0)
 		{
 			//char app[] = "/bin/echo";
 			std::string app = command;
@@ -60,9 +96,8 @@ public:
         
 			delete[] successArray;
 			delete[] appArray;
-		}
+		}*/
 
-		return (long)processId;
 	#endif
 	}
 

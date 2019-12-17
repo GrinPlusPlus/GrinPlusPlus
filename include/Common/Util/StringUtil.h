@@ -75,7 +75,7 @@ public:
 
 		for (char elem : str)
 		{
-			output += static_cast<char>(std::tolower(static_cast<unsigned char>(elem), loc));
+			output += std::tolower(elem, loc);
 		}
 
 		return output;

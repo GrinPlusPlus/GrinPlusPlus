@@ -26,7 +26,7 @@ public:
 		const bool jsonParsed = Json::parseFromStream(Json::CharReaderBuilder(), ss, &json, &errors);
 		if (!jsonParsed)
 		{
-			LOG_ERROR_F("Failed to parse json");
+			LOG_ERROR("Failed to parse json");
 			throw DESERIALIZATION_EXCEPTION();
 		}
 

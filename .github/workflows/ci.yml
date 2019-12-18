@@ -33,5 +33,5 @@ jobs:
       - name: configure and compile
         working-directory: build
         run: |
-          cmake .. -DNDEBUG
+          cmake ..
           cmake --build . --config RelWithDebInfo

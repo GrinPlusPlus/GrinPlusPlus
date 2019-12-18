@@ -54,22 +54,8 @@ public:
 				cargs.push_back(arg.c_str());
 			}
 
-			//char* args[] = {"./tor/tor"};
 			execvp(cargs[0], (char* const*)cargs.data());
-			/*try
-			{
-				system(command.c_str());
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-			}
-			catch (...)
-			{
-
-			}
-
-			exit(0);*/
+			return 0;
 		}
 		else
 		{
@@ -103,6 +89,14 @@ public:
 
 	static bool KillProc(const long processId)
 	{
+		if (processId == 0)
+		{
+			return false;
+		}
+
+#ifndef _WIN32
+		kill(processId, SIGTERM);
+#endif
 		// Wait for the process to finish
 		//WaitForSingleObject(pi.hProcess, INFINITE);
 		//CloseHandle(pi.hProcess);

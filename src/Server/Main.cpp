@@ -20,7 +20,7 @@ void StartServer(const Config& config, const bool headless);
 
 static void SigIntHandler(int signum)
 {
-	printf("\n\nCtrl-C Pressed\n\n");
+	printf("\n\n%d signal received\n\n", signum);
 	ShutdownManagerAPI::Shutdown();
 }
 

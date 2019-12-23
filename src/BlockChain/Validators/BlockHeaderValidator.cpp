@@ -35,8 +35,8 @@ bool BlockHeaderValidator::IsValidHeader(const BlockHeader& header, const BlockH
 	}
 
 	// Validate Version
-	const bool validHeaderVersion = Consensus::IsValidHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), header.GetHeight(), header.GetVersion());
-	if (!validHeaderVersion)
+	const uint64_t validHeaderVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), header.GetHeight());
+	if (header.GetVersion() != validHeaderVersion)
 	{
 		LOG_WARNING_F("Invalid version for header {}", header);
 		return false;

@@ -51,10 +51,12 @@ public:
 	Hash Root(const uint64_t numOutputs)
 	{
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(fs::temp_directory_path().string() + "UBMT");
+		pHashFile->Rewind(0);
 
+		size_t index = 0;
 		//const uint64_t numLeaves = MMRUtil::GetNumLeaves(bitmap.maximum());
 		const uint64_t numChunks = (numOutputs + 1023) / 1024;
-		for (size_t i = 0; i < (numOutputs + 1023) / 1024; i++)
+		for (size_t i = 0; i < numChunks; i++)
 		{
 			Serializer serializer;
 			for (size_t j = 0; j < (1024 / 8); j++)
@@ -63,23 +65,19 @@ public:
 				uint8_t byte = 0;
 				for (size_t k = 0; k < 8; k++)
 				{
-					const size_t index = (1024 * i) + (j * 8) + k;
 					if (index < numOutputs && m_pBitmap->IsSet(MMRUtil::GetPMMRIndex(index)))
 					{
 						byte += power;
 					}
 
 					power /= 2;
+					++index;
 				}
 
 				serializer.Append(byte);
 			}
 
 			MMRHashUtil::AddHashes(pHashFile, serializer.GetBytes(), nullptr);
-			//if (i + 1 == numChunks)
-			//{
-			//	serializer.GetSecureBytes();
-			//}
 		}
 
 		return MMRHashUtil::Root(pHashFile, pHashFile->GetSize(), nullptr);

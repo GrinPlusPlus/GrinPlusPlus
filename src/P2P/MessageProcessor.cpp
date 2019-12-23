@@ -118,7 +118,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			case BanReasonMsg:
 			{
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
-				LOG_WARNING_F("BanReason message retrieved from peer({}): ", formattedIPAddress, BanReason::Format((EBanReason)banReasonMessage.GetBanReason()));
+				LOG_WARNING_F("BanReason message retrieved from peer({}): {}", formattedIPAddress, BanReason::Format((EBanReason)banReasonMessage.GetBanReason()));
 
 				return EStatus::BAN_PEER;
 			}

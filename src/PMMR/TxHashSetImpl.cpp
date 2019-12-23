@@ -179,7 +179,7 @@ bool TxHashSet::ValidateRoots(const BlockHeader& blockHeader) const
 	}
 	else
 	{
-		Hash UBMT = m_pOutputPMMR->UBMTRoot(blockHeader.GetOutputMMRSize());
+		Hash UBMT = m_pOutputPMMR->UBMTRoot(MMRUtil::GetNumLeaves(blockHeader.GetOutputMMRSize() - 1));
 		Hash merged = MMRHashUtil::HashParentWithIndex(outputRoot, UBMT, blockHeader.GetOutputMMRSize());
 		if (merged != blockHeader.GetOutputRoot())
 		{

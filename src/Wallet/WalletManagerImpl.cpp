@@ -305,7 +305,6 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria)
 	if (finalizeCriteria.GetPostMethod().has_value())
 	{
 		PostTransaction(
-			finalizeCriteria.GetToken(),
 			finalizedSlate.GetTransaction(),
 			finalizeCriteria.GetPostMethod().value()
 		);
@@ -314,7 +313,7 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria)
 	return finalizedSlate;
 }
 
-bool WalletManager::PostTransaction(const SessionToken& token, const Transaction& transaction, const PostMethodDTO& postMethod)
+bool WalletManager::PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod)
 {
 	const EPostMethod method = postMethod.GetMethod();
 	if (method == EPostMethod::JOIN)

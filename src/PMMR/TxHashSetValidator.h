@@ -25,7 +25,7 @@ private:
 
 	bool ValidateKernelHistory(const KernelMMR& kernelMMR, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
 	BlockSums ValidateKernelSums(TxHashSet& txHashSet, const BlockHeader& blockHeader) const;
-	bool ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const;
+	bool ValidateRangeProofs(TxHashSet& txHashSet, SyncStatus& syncStatus) const;
 	bool ValidateKernelSignatures(const KernelMMR& kernelMMR, SyncStatus& syncStatus) const;
 
 	const IBlockChainServer& m_blockChainServer;

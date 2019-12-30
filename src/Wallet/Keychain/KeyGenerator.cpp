@@ -92,11 +92,6 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 	);
 }
 
-PublicExtKey KeyGenerator::GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const
-{
-	throw std::exception();
-}
-
 std::vector<unsigned char> KeyGenerator::GetSeed(const EKeyChainType& keyChainType) const
 {
 	if (keyChainType == EKeyChainType::GRINBOX)

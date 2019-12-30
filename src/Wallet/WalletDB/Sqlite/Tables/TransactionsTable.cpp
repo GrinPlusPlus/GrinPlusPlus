@@ -21,7 +21,7 @@ void TransactionsTable::CreateTable(sqlite3& database)
 	}
 }
 
-void TransactionsTable::UpdateSchema(sqlite3& database, const SecureVector& masterSeed, const int previousVersion)
+void TransactionsTable::UpdateSchema(sqlite3& /*database*/, const SecureVector& /*masterSeed*/, const int /*previousVersion*/)
 {
 	return;
 }

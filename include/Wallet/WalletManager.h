@@ -125,7 +125,6 @@ public:
 	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) = 0;
 
 	virtual bool PostTransaction(
-		const SessionToken& token,
 		const Transaction& transaction,
 		const PostMethodDTO& postMethod
 	) = 0;

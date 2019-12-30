@@ -96,7 +96,7 @@ std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, co
 	// Validate the rangeproof associated with each unspent output.
 	LOG_DEBUG("Validating range proofs");
 	LoggerAPI::Flush();
-	if (!ValidateRangeProofs(txHashSet, blockHeader, syncStatus))
+	if (!ValidateRangeProofs(txHashSet, syncStatus))
 	{
 		LOG_ERROR("Failed to verify rangeproofs");
 		return std::unique_ptr<BlockSums>(nullptr);
@@ -251,7 +251,7 @@ BlockSums TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const Blo
 	);
 }
 
-bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
+bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, SyncStatus& syncStatus) const
 {
 	std::vector<std::pair<Commitment, RangeProof>> rangeProofs;
 

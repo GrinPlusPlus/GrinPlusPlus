@@ -159,7 +159,7 @@ public:
 					continue;
 				}
 
-				formatted += HexUtil::ConvertToHex(words[i], true);
+				formatted += HexUtil::ConvertToHex(words[i]);
 			}
 
 			return formatted;

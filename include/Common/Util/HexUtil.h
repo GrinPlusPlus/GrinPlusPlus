@@ -67,7 +67,7 @@ namespace HexUtil
 		return ConvertToHex(firstNBytes);
 	}
 
-	static std::string ConvertToHex(const uint16_t value, const bool abbreviate)
+	static std::string ConvertToHex(const uint16_t value)
 	{
 		const uint16_t bigEndian = EndianHelper::GetBigEndian16(value);
 

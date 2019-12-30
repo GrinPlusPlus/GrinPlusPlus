@@ -120,7 +120,7 @@ std::vector<OutputDataEntity> OutputsTable::GetOutputs(sqlite3& database, const 
 	return GetOutputs(database, masterSeed, 1);
 }
 
-std::vector<OutputDataEntity> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed, const int version)
+std::vector<OutputDataEntity> OutputsTable::GetOutputs(sqlite3& database, const SecureVector& masterSeed, const int /*version*/)
 {
 	// Prepare statement
 	sqlite3_stmt* stmt = nullptr;

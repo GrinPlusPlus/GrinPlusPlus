@@ -14,7 +14,7 @@ OutputRestorer::OutputRestorer(const Config& config, INodeClientConstPtr pNodeCl
 
 }
 
-std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const bool fromGenesis) const
+std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(Writer<IWalletDB> pBatch, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_pNodeClient->GetChainHeight();
 
@@ -33,7 +33,7 @@ std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const SecureV
 		const std::vector<OutputDTO>& outputs = pOutputRange->GetOutputs();
 		for (const OutputDTO& output : outputs)
 		{
-			std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(masterSeed, output, chainHeight);
+			std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(output, chainHeight);
 			if (pOutputDataEntity != nullptr)
 			{
 				walletOutputs.emplace_back(*pOutputDataEntity);
@@ -52,7 +52,7 @@ std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const SecureV
 	return walletOutputs;
 }
 
-std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const SecureVector& masterSeed, const OutputDTO& output, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDTO& output, const uint64_t currentBlockHeight) const
 {
 	EBulletproofType type = EBulletproofType::ORIGINAL;
 	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;

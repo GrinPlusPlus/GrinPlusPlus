@@ -135,7 +135,7 @@ bool P2PServer::BanPeer(const IPAddress& address, const EBanReason banReason)
 	std::optional<PeerPtr> peerOpt = m_peerManager.Write()->GetPeer(address);
 	if (peerOpt.has_value())
 	{
-		peerOpt.value()->Ban(EBanReason::ManualBan);
+		peerOpt.value()->Ban(banReason);
 		return true;
 	}
 

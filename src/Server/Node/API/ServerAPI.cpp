@@ -22,7 +22,7 @@
 	mg_set_request_handler(ctx, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, &m_nodeContext);
 	mg_set_request_handler(ctx, "/v1/", ServerAPI::V1_Handler, &m_nodeContext);
 */
-int ServerAPI::V1_Handler(struct mg_connection* conn, void* pVoid)
+int ServerAPI::V1_Handler(struct mg_connection* conn, void*)
 {
 	if (HTTPUtil::GetHTTPMethod(conn) == HTTP::EHTTPMethod::GET)
 	{

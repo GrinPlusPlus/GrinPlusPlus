@@ -43,7 +43,7 @@ std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std
 	return pNodeRestServer;
 }
 
-static int Shutdown_Handler(struct mg_connection* conn, void* pNodeContext)
+static int Shutdown_Handler(struct mg_connection* conn, void*)
 {
 	ShutdownManagerAPI::Shutdown();
 	return HTTPUtil::BuildSuccessResponse(conn, "");

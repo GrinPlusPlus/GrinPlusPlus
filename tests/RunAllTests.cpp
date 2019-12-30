@@ -10,7 +10,7 @@ void RunTest(const std::string& test)
 	system(str.c_str());
 }
 
-int main(int argc, char* argv[])
+int main(int, char*[])
 {
 	std::cout << "Preparing to run BlockChain tests\n";
 	system("pause");

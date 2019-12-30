@@ -182,7 +182,7 @@ bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProo
 
 uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)
 {
-	const std::vector<uint64_t>& key = { k0, k1 };
+	const std::vector<uint64_t> key = { k0, k1 };
 
 	return siphash24(&key[0], &data[0], data.size());
 }

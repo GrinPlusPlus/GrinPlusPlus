@@ -14,7 +14,7 @@ OwnerPostAPI::OwnerPostAPI(const Config& config)
 
 }
 
-int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager, INodeClient& nodeClient)
+int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager)
 {
 	if (action == "create_wallet")
 	{
@@ -57,18 +57,15 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 	}
 	else if (action == "issue_send_tx")
 	{
-		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return Send(pConnection, walletManager, token, requestBodyOpt.value());
+		return Send(pConnection, walletManager, requestBodyOpt.value());
 	}
 	else if (action == "receive_tx")
 	{
-		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return Receive(pConnection, walletManager, token, requestBodyOpt.value());
+		return Receive(pConnection, walletManager, requestBodyOpt.value());
 	}
 	else if (action == "finalize_tx")
 	{
-		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return Finalize(pConnection, walletManager, token, requestBodyOpt.value());
+		return Finalize(pConnection, walletManager, requestBodyOpt.value());
 	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
@@ -221,21 +218,21 @@ int OwnerPostAPI::UpdateWallet(mg_connection* pConnection, IWalletManager& walle
 	return HTTPUtil::BuildSuccessResponse(pConnection, "");
 }
 
-int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Send(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
 {
 	Slate slate = walletManager.Send(SendCriteria::FromJSON(json));
 	
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, slate.ToJSON());
 }
 
-int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Receive(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
 {
 	Slate receivedSlate = walletManager.Receive(ReceiveCriteria::FromJSON(json));
 	
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, receivedSlate.ToJSON());
 }
 
-int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletManager, const Json::Value& json)
 {
 	FinalizeCriteria finalizeCriteria = FinalizeCriteria::FromJSON(json);
 

@@ -8,6 +8,7 @@
 
 #pragma warning(push)
 #pragma warning(disable:4018)
+#pragma warning(disable:4100)
 #pragma warning(disable:4127)
 #pragma warning(disable:4211)
 #pragma warning(disable:4244)

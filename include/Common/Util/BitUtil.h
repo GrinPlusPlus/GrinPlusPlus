@@ -43,6 +43,6 @@ namespace BitUtil
 		const uint8_t byte5, const uint8_t byte6, const uint8_t byte7, const uint8_t byte8)
 	{
 		return ((((uint64_t)byte1) << 56) | (((uint64_t)byte2) << 48) | (((uint64_t)byte3) << 40) | ((uint64_t)byte4) << 32
-			| ((uint64_t)byte5) << 24 | ((uint64_t)byte5) << 16 | ((uint64_t)byte5) << 8 | ((uint64_t)byte5));
+			| ((uint64_t)byte5) << 24 | ((uint64_t)byte6) << 16 | ((uint64_t)byte7) << 8 | ((uint64_t)byte8));
 	}
 }

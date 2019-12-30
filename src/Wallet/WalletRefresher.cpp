@@ -37,7 +37,7 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 
 	// 1. Check for own outputs in new blocks.
 	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-	std::vector<OutputDataEntity> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(masterSeed, pBatch, fromGenesis);
+	std::vector<OutputDataEntity> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(pBatch, fromGenesis);
 
 	// 2. For each restored output, look for OutputDataEntity with matching commitment.
 	for (OutputDataEntity& restoredOutput : restoredOutputs)

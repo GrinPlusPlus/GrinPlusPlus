@@ -55,7 +55,7 @@ public:
 	virtual Slate Receive(const ReceiveCriteria& receiveCriteria) override final;
 	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) override final;
 
-	virtual bool PostTransaction(const SessionToken& token, const Transaction& transaction, const PostMethodDTO& postMethod) override final;
+	virtual bool PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod) override final;
 	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
 
 	virtual void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;

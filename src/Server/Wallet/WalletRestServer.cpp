@@ -64,7 +64,7 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 		}
 		else if (method == HTTP::EHTTPMethod::POST)
 		{
-			return OwnerPostAPI(pContext->m_config).HandlePOST(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+			return OwnerPostAPI(pContext->m_config).HandlePOST(pConnection, action, *pContext->m_pWalletManager);
 		}
 	}
 	catch (const SessionTokenException&)

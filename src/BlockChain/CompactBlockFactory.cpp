@@ -5,8 +5,8 @@
 
 CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block)
 {
-	const std::vector<TransactionOutput>& blockOutputs = block.GetTransactionBody().GetOutputs();
-	const std::vector<TransactionKernel>& blockKernels = block.GetTransactionBody().GetKernels();
+	const std::vector<TransactionOutput>& blockOutputs = block.GetOutputs();
+	const std::vector<TransactionKernel>& blockKernels = block.GetKernels();
 
 	// Get Coinbase Outputs
 	std::vector<TransactionOutput> coinbaseOutputs;
@@ -33,7 +33,7 @@ CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block)
 		blockKernels.cbegin(),
 		blockKernels.cend(),
 		std::back_inserter(kernelIds),
-		[](const TransactionKernel& kernel) { return kernel.IsCoinbase(); },
+		[](const TransactionKernel& kernel) { return !kernel.IsCoinbase(); },
 		[&block, nonce](const TransactionKernel& kernel) { return ShortId::Create(kernel.GetHash(), block.GetHash(), nonce); }
 	);
 

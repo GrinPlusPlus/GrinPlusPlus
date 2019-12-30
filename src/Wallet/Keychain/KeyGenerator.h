@@ -37,17 +37,6 @@ public:
 	//
 	PrivateExtKey GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const;
 
-	//
-	// Generates an extended child public key from an extended parent public key (for an HD wallet).
-	// Referred to as CKDpub in BIP0032.
-	//
-	// \param[in] parentExtendedPublicKey - The HD wallet's parent public key plus chain code.
-	// \param[in] childKeyIndex - Must be < 2^31. 'Hardened' child keys need parent private keys to generate.
-	//
-	// \return The generated child CExtendedPublicKey.
-	//
-	PublicExtKey GenerateChildPublicKey(const PublicExtKey& parentExtendedPublicKey, const uint32_t childKeyIndex) const;
-
 private:
 	std::vector<unsigned char> GetSeed(const EKeyChainType& keyChainType) const;
 

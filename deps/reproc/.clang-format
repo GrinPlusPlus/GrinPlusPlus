@@ -1,0 +1,17 @@
+---
+BasedOnStyle: LLVM
+---
+Language: Cpp
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: Empty
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  SplitEmptyRecord: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+Cpp11BracedListStyle: false
+IndentCaseLabels: true
+PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+SpaceAfterCStyleCast: true

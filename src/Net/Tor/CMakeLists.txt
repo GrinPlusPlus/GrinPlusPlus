@@ -7,5 +7,5 @@ file(GLOB SOURCE_CODE
 )
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-add_dependencies(${TARGET_NAME} Infrastructure Core Net)
-target_link_libraries(${TARGET_NAME} Infrastructure Core Net)
+add_dependencies(${TARGET_NAME} reproc++ Infrastructure Core Net)
+target_link_libraries(${TARGET_NAME} reproc++ Infrastructure Core Net)

@@ -5,11 +5,12 @@
 #include <Crypto/SecretKey.h>
 #include <Config/TorConfig.h>
 #include <Net/Tor/TorAddress.h>
+#include <Common/ChildProcess.h>
 
 class TorControl
 {
 public:
-	~TorControl();
+	~TorControl() = default;
 
 	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig);
 
@@ -21,12 +22,12 @@ private:
 	TorControl(
 		const TorConfig& torConfig,
 		std::shared_ptr<TorControlClient> pClient,
-		long processId
+		ChildProcess::CPtr pProcess
 	);
 
 	static bool Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password);
 
 	const TorConfig& m_torConfig;
 	std::shared_ptr<TorControlClient> m_pClient;
-	long m_processId;
+	ChildProcess::CPtr m_pProcess;
 };

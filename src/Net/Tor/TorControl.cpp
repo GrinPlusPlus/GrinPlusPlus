@@ -5,18 +5,12 @@
 #include <Crypto/Crypto.h>
 #include <Common/Base64.h>
 #include <Net/SocketException.h>
-#include <Common/Util/ProcessUtil.h>
 #include <Common/Util/StringUtil.h>
 
-TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, long processId)
-	: m_torConfig(config), m_pClient(pClient), m_processId(processId)
+TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::CPtr pProcess)
+	: m_torConfig(config), m_pClient(pClient), m_pProcess(pProcess)
 {
 
-}
-
-TorControl::~TorControl()
-{
-	ProcessUtil::KillProc(m_processId);
 }
 
 std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
@@ -26,14 +20,14 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 		const std::string command = fs::current_path().string() + "/tor/tor";
 		
 		std::vector<std::string> args({
+			command,
 			"--ControlPort", std::to_string(torConfig.GetControlPort()),
 			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
 			"--HashedControlPassword", torConfig.GetHashedControlPassword()
 		});
 
 		// TODO: Determine if process is already running.
-		long processId = (long)ProcessUtil::CreateProc(command, args);
-		//if (processId > 0)
+		ChildProcess::CPtr pProcess = ChildProcess::Create(args);
 		{
 			bool connected = false;
 			std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
@@ -47,13 +41,9 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 				connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
 			}
 
-			if (!connected || !Authenticate(pClient, torConfig.GetControlPassword()))
+			if (connected && Authenticate(pClient, torConfig.GetControlPassword()))
 			{
-				ProcessUtil::KillProc(processId);
-			}
-			else
-			{
-				return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, processId));
+				return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, pProcess));
 			}
 		}
 	}

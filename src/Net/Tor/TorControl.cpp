@@ -28,23 +28,21 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 
 		// TODO: Determine if process is already running.
 		ChildProcess::CPtr pProcess = ChildProcess::Create(args);
+		std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
+
+		bool connected = false;
+		auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
+		while (!connected && std::chrono::system_clock::now() < timeout)
 		{
-			bool connected = false;
-			std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-			auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
-			while (!connected && std::chrono::system_clock::now() < timeout)
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			// Open control socket
+			connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
+		}
 
-				// Open control socket
-				connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
-			}
-
-			if (connected && Authenticate(pClient, torConfig.GetControlPassword()))
-			{
-				return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, pProcess));
-			}
+		if (connected && Authenticate(pClient, torConfig.GetControlPassword()))
+		{
+			return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, pProcess));
 		}
 	}
 	catch (std::exception& e)

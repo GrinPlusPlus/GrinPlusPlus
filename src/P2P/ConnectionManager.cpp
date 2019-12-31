@@ -57,7 +57,7 @@ void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
 	auto connections = m_connections.Read();
 
-	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
+	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections, false);
 	if (pMostWorkPeer != nullptr)
 	{
 		syncStatus.UpdateNetworkStatus(
@@ -87,7 +87,7 @@ std::vector<PeerPtr> ConnectionManager::GetMostWorkPeers() const
 
 	auto connections = m_connections.Read();
 
-	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
+	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections, false);
 	if (pMostWorkPeer != nullptr)
 	{
 		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
@@ -137,7 +137,7 @@ std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnecte
 uint64_t ConnectionManager::GetMostWork() const
 {
 	auto connections = m_connections.Read();
-	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+	ConnectionPtr pConnection = GetMostWorkPeer(*connections, false);
 	if (pConnection != nullptr)
 	{
 		return pConnection->GetTotalDifficulty();
@@ -149,7 +149,7 @@ uint64_t ConnectionManager::GetMostWork() const
 uint64_t ConnectionManager::GetHighestHeight() const
 {
 	auto connections = m_connections.Read();
-	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+	ConnectionPtr pConnection = GetMostWorkPeer(*connections, false);
 	if (pConnection != nullptr)
 	{
 		return pConnection->GetHeight();
@@ -158,10 +158,10 @@ uint64_t ConnectionManager::GetHighestHeight() const
 	return 0;
 }
 
-PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
+PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message, const bool preferGrinPP)
 {
 	auto connections = m_connections.Read();
-	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+	ConnectionPtr pConnection = GetMostWorkPeer(*connections, preferGrinPP);
 	if (pConnection != nullptr)
 	{
 		pConnection->Send(message);
@@ -250,7 +250,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	}
 }
 
-ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const
+ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr>& connections, const bool preferGrinPP) const
 {
 	std::vector<ConnectionPtr> mostWorkPeers;
 	uint64_t mostWork = 0;
@@ -287,6 +287,18 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 	if (mostWorkPeers.empty())
 	{
 		return nullptr;
+	}
+
+	if (preferGrinPP)
+	{
+		for (size_t i = 0; i < mostWorkPeers.size(); i++)
+		{
+			if (StringUtil::StartsWith(mostWorkPeers[i]->GetPeer()->GetUserAgent(), "Grin++")
+				|| StringUtil::StartsWith(mostWorkPeers[i]->GetPeer()->GetUserAgent(), "MW/Grin 3"))
+			{
+				return mostWorkPeers[i];
+			}
+		}
 	}
 
 	const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);

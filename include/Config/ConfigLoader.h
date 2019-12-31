@@ -39,10 +39,6 @@ public:
 	}
 
 private:
-	static fs::path GetPath()
-	{
-	}
-
 	static void UpdateConfig(const fs::path& path, std::shared_ptr<Config> pConfig)
 	{
 		Json::Value& json = pConfig->GetJSON();

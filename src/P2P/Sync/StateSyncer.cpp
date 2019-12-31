@@ -4,6 +4,7 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
 #include <Infrastructure/Logger.h>
+#include <Infrastructure/ShutdownManager.h>
 
 StateSyncer::StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
 	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)
@@ -101,19 +102,23 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	{
 		LOG_WARNING_F("Banning peer: {}", m_pPeer);
 		m_pPeer->Ban(EBanReason::BadTxHashSet);
+		m_pPeer = nullptr;
 	}
 
-	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
-	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
-	Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
-
-	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
-	m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);
-
-	if (m_pPeer != nullptr)
+	if (!ShutdownManagerAPI::WasShutdownRequested())
 	{
-		m_timeRequested = std::chrono::system_clock::now();
-		m_requestedHeight = requestedHeight;
+		const uint64_t headerHeight = syncStatus.GetHeaderHeight();
+		const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
+		Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
+
+		const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
+		m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage, true);
+
+		if (m_pPeer != nullptr)
+		{
+			m_timeRequested = std::chrono::system_clock::now();
+			m_requestedHeight = requestedHeight;
+		}
 	}
 
 	return m_pPeer != nullptr;

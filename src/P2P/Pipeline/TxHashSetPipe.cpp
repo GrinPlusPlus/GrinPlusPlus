@@ -70,33 +70,43 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);
 
-	std::ofstream fout;
-	fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
-
-	size_t bytesReceived = 0;
-	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
-	while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
+	try
 	{
-		const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
-		const bool received = socket.Receive(bytesToRead, false, buffer);
-		if (!received || ShutdownManagerAPI::WasShutdownRequested())
-		{
-			LOG_ERROR("Transmission ended abruptly");
-			fout.close();
-			FileUtil::RemoveFile(txHashSetPath);
-			m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+		std::ofstream fout;
+		fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
 
-			m_processing = false;
-			return false;
+		size_t bytesReceived = 0;
+		std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
+		while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
+		{
+			const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
+			const bool received = socket.Receive(bytesToRead, false, buffer);
+			if (!received || ShutdownManagerAPI::WasShutdownRequested())
+			{
+				LOG_ERROR("Transmission ended abruptly");
+				fout.close();
+				FileUtil::RemoveFile(txHashSetPath);
+				m_processing = false;
+				m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+
+				return false;
+			}
+
+			fout.write((char*)&buffer[0], bytesToRead);
+			bytesReceived += bytesToRead;
+
+			m_pSyncStatus->UpdateDownloaded(bytesReceived);
 		}
 
-		fout.write((char*)& buffer[0], bytesToRead);
-		bytesReceived += bytesToRead;
-
-		m_pSyncStatus->UpdateDownloaded(bytesReceived);
+		fout.close();
 	}
-
-	fout.close();
+	catch (...)
+	{
+		LOG_ERROR_F("Exception thrown while downloading TxHashSet from {}", *pPeer);
+		m_processing = false;
+		m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+		throw;
+	}
 
 	LOG_INFO("Downloading successful");
 

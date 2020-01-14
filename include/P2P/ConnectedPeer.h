@@ -7,13 +7,13 @@
 class ConnectedPeer : public Traits::IPrintable
 {
 public:
-	ConnectedPeer(PeerPtr peer, const EDirection direction)
-		: m_pPeer(peer), m_direction(direction), m_height(0), m_totalDifficulty(0)
+	ConnectedPeer(PeerPtr peer, const EDirection direction, const uint16_t portNumber)
+		: m_pPeer(peer), m_direction(direction), m_portNumber(portNumber), m_totalDifficulty(0), m_height(0)
 	{
 
 	}
 	ConnectedPeer(const ConnectedPeer& peer)
-		: m_pPeer(peer.m_pPeer), m_direction(peer.m_direction), m_height(peer.m_height.load()), m_totalDifficulty(peer.m_totalDifficulty.load())
+		: m_pPeer(peer.m_pPeer), m_direction(peer.m_direction), m_portNumber(peer.m_portNumber), m_totalDifficulty(peer.m_totalDifficulty.load()), m_height(peer.m_height.load())
 	{
 
 	}
@@ -26,11 +26,12 @@ public:
 		m_height.exchange(height);
 	}
 
-	PeerConstPtr GetPeer() const { return m_pPeer; }
-	PeerPtr GetPeer() { return m_pPeer; }
-	const EDirection GetDirection() const { return m_direction; }
-	const uint64_t GetTotalDifficulty() const { return m_totalDifficulty.load(); }
-	const uint64_t GetHeight() const { return m_height.load(); }
+	PeerConstPtr GetPeer() const noexcept { return m_pPeer; }
+	PeerPtr GetPeer() noexcept { return m_pPeer; }
+	const EDirection GetDirection() const noexcept { return m_direction; }
+	uint16_t GetPort() const noexcept { return m_portNumber; }
+	uint64_t GetTotalDifficulty() const noexcept { return m_totalDifficulty.load(); }
+	uint64_t GetHeight() const noexcept { return m_height.load(); }
 
 	void UpdateVersion(const uint32_t version) { m_pPeer->UpdateVersion(version); }
 	void UpdateCapabilities(const Capabilities& capabilities) { m_pPeer->UpdateCapabilities(capabilities); }
@@ -42,6 +43,7 @@ public:
 private:
 	EDirection m_direction;
 	PeerPtr m_pPeer;
+	uint16_t m_portNumber;
 	std::atomic<uint64_t> m_totalDifficulty;
 	std::atomic<uint64_t> m_height;
 	// TODO: Add Connection Stats

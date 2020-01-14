@@ -24,7 +24,7 @@ public:
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
 
-	std::optional<PeerPtr> GetPeer(const IPAddress& address);
+	PeerPtr GetPeer(const IPAddress& address);
 	std::optional<PeerConstPtr> GetPeer(const IPAddress& address) const;
 
 	std::vector<PeerPtr> GetAllPeers();
@@ -72,5 +72,5 @@ private:
 	std::thread m_peerThread;
 
 	mutable std::unordered_set<IPAddress> m_peersServed;
-	mutable std::unordered_map<IPAddress, PeerEntry> m_peersByAddress;
+	mutable std::map<IPAddress, PeerEntry> m_peersByAddress;
 };

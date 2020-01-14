@@ -38,7 +38,7 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 	}
 
 	const char* pOptions[] = {
-		"num_threads", "1",
+		"num_threads", "5",
 		"listening_ports", "0",
 		NULL
 	};

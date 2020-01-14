@@ -114,15 +114,18 @@ bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapab
 	return peersFound < 100;
 }
 
-std::optional<PeerPtr> PeerManager::GetPeer(const IPAddress& address)
+PeerPtr PeerManager::GetPeer(const IPAddress& address)
 {
 	auto iter = m_peersByAddress.find(address);
 	if (iter != m_peersByAddress.cend())
 	{
-		return std::make_optional(iter->second.m_peer);
+		return iter->second.m_peer;
 	}
 
-	return m_pPeerDB->Read()->GetPeer(address, std::nullopt);
+	PeerPtr pPeer = std::make_shared<Peer>(address);
+	m_peersByAddress.emplace(address, PeerEntry(pPeer));
+	return pPeer;
+	//return m_pPeerDB->Read()->GetPeer(address, std::nullopt);
 }
 
 std::optional<PeerConstPtr> PeerManager::GetPeer(const IPAddress& address) const
@@ -200,7 +203,7 @@ void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 		const IPAddress& ipAddress = socketAddress.GetIPAddress();
 		if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end())
 		{
-			m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(socketAddress)));
+			m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(ipAddress)));
 		}
 	}
 }
@@ -214,7 +217,7 @@ void PeerManager::BanPeer(const IPAddress& address, const EBanReason banReason)
 	}
 	else
 	{
-		PeerPtr peer = std::make_shared<Peer>(SocketAddress(address, 0), 0, Capabilities(0), "");
+		PeerPtr peer = std::make_shared<Peer>(address, 0, Capabilities(0), "");
 		peer->Ban(banReason);
 		m_peersByAddress.emplace(address, PeerEntry(peer, TimeUtil::Now()));
 	}

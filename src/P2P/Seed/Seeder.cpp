@@ -128,7 +128,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 						seeder.m_connectionManager,
 						seeder.m_peerManager,
 						seeder.m_pBlockChainServer,
-						ConnectedPeer(std::make_shared<Peer>(pSocket->GetSocketAddress()), EDirection::INBOUND),
+						ConnectedPeer(seeder.m_peerManager.Write()->GetPeer(pSocket->GetIPAddress()), EDirection::INBOUND, pSocket->GetPort()),
 						seeder.m_pPipeline,
 						seeder.m_pSyncStatus
 					);
@@ -151,7 +151,7 @@ ConnectionPtr Seeder::SeedNewConnection()
 	PeerPtr pPeer = m_peerManager.Write()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND);
+		ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND, m_config.GetEnvironment().GetP2PPort());
 		SocketAddress address(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort());
 		SocketPtr pSocket = SocketPtr(new Socket(std::move(address)));
 		ConnectionPtr pConnection = Connection::Create(

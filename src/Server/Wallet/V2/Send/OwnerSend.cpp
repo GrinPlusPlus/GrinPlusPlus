@@ -44,16 +44,17 @@ RPC::Response OwnerSend::Handle(const RPC::Request& request) const
 
 RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& criteria, const TorAddress& torAddress) const
 {
-	TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
-	if (pTorConnection == nullptr)
-	{
-		return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
-	}
 
 	uint16_t version = 0;
 
 	try
 	{
+		TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
+		if (pTorConnection == nullptr)
+		{
+			return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
+		}
+
 		version = CheckVersion(*pTorConnection);
 		if (version < MIN_SLATE_VERSION)
 		{
@@ -61,6 +62,12 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 		}
 	}
 	catch (const HTTPException&)
+	{
+		return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
+	}
+
+	TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
+	if (pTorConnection == nullptr)
 	{
 		return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
 	}
@@ -75,6 +82,7 @@ RPC::Response OwnerSend::SendViaTOR(const RPC::Request& request, SendCriteria& c
 	RPC::Request receiveTxRequest = RPC::Request::BuildRequest("receive_tx", params);
 	std::string result = receiveTxRequest.ToJSON().toStyledString();
 	LOG_ERROR_F("{}", result);
+
 	RPC::Response receiveTxResponse = pTorConnection->Invoke(receiveTxRequest, "/v2/foreign");
 
 	if (receiveTxResponse.GetError().has_value())

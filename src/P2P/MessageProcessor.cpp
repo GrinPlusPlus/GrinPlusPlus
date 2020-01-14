@@ -150,7 +150,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 					peers.cbegin(),
 					peers.cend(),
 					std::back_inserter(socketAddresses),
-					[](const PeerPtr& peer) { return peer->GetSocketAddress(); }
+					[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), this->m_config.GetEnvironment().GetP2PPort()); }
 				);
 
 				LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), formattedIPAddress);

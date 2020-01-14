@@ -34,7 +34,7 @@ private:
 public:
 	static File Load(const std::string& path, const std::ios_base::openmode mode)
 	{
-		std::shared_ptr<Stream> pStream(new Stream());
+		std::shared_ptr<Stream> pStream = std::make_shared<Stream>();
 		pStream->Open(path, mode);
 
 		return File(pStream);

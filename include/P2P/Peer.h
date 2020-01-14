@@ -20,10 +20,10 @@ public:
 	//
 	// Constructors
 	//
-	Peer(const SocketAddress& socketAddress)
+	Peer(const IPAddress& ipAddress)
 		: m_dirty(false),
 		m_connected(false),
-		m_socketAddress(socketAddress),
+		m_ipAddress(ipAddress),
 		m_version(0),
 		m_capabilities(Capabilities(Capabilities::UNKNOWN)),
 		m_userAgent(""),
@@ -34,10 +34,10 @@ public:
 	{
 
 	}
-	Peer(const SocketAddress& socketAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent)
+	Peer(const IPAddress& ipAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent)
 		: m_dirty(false),
 		m_connected(false),
-		m_socketAddress(socketAddress),
+		m_ipAddress(ipAddress),
 		m_version(version),
 		m_capabilities(capabilities),
 		m_userAgent(userAgent),
@@ -48,10 +48,10 @@ public:
 	{
 
 	}
-	Peer(SocketAddress&& socketAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent, const std::time_t lastContactTime, const std::time_t lastBanTime, const EBanReason banReason)
+	Peer(const IPAddress& ipAddress, const uint32_t version, const Capabilities& capabilities, const std::string& userAgent, const std::time_t lastContactTime, const std::time_t lastBanTime, const EBanReason banReason)
 		: m_dirty(false),
 		m_connected(false),
-		m_socketAddress(std::move(socketAddress)),
+		m_ipAddress(ipAddress),
 		m_version(version), 
 		m_capabilities(capabilities), 
 		m_userAgent(userAgent), 
@@ -76,7 +76,7 @@ public:
 	//
 	Peer& operator=(const Peer& other)
 	{
-		m_socketAddress = other.m_socketAddress;
+		m_ipAddress = other.m_ipAddress;
 		m_version = other.m_version;
 		m_capabilities = other.m_capabilities.load();
 		m_userAgent = other.m_userAgent;
@@ -119,9 +119,7 @@ public:
 	//
 	bool IsDirty() const { return m_dirty; }
 	bool IsConnected() const { return m_connected; }
-	const SocketAddress& GetSocketAddress() const { return m_socketAddress; }
-	const IPAddress& GetIPAddress() const { return m_socketAddress.GetIPAddress(); }
-	uint16_t GetPortNumber() const { return m_socketAddress.GetPortNumber(); }
+	const IPAddress& GetIPAddress() const { return m_ipAddress; }
 	uint32_t GetVersion() const { return m_version; }
 	Capabilities GetCapabilities() const { return m_capabilities; }
 	const std::string& GetUserAgent() const { return m_userAgent; }
@@ -140,7 +138,7 @@ public:
 	//
 	void Serialize(Serializer& serializer) const
 	{
-		m_socketAddress.Serialize(serializer);
+		SocketAddress(m_ipAddress, 0).Serialize(serializer);
 		serializer.Append<uint32_t>(m_version);
 		m_capabilities.load().Serialize(serializer);
 		serializer.AppendVarStr(m_userAgent);
@@ -160,7 +158,7 @@ public:
 		EBanReason banReason = (EBanReason)byteBuffer.Read32();
 
 		return std::shared_ptr<Peer>(new Peer(
-			std::move(socketAddress),
+			socketAddress.GetIPAddress(),
 			version,
 			capabilities,
 			userAgent,
@@ -170,12 +168,12 @@ public:
 		));
 	}
 
-	virtual std::string Format() const override final { return m_socketAddress.GetIPAddress().Format(); }
+	virtual std::string Format() const override final { return m_ipAddress.Format(); }
 
 private:
 	std::atomic_bool m_dirty;
 	std::atomic_bool m_connected;
-	SocketAddress m_socketAddress;
+	IPAddress m_ipAddress;
 	uint32_t m_version;
 	std::atomic<Capabilities> m_capabilities;
 	std::string m_userAgent;

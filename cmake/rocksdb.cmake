@@ -1,7 +1,7 @@
 
 set(WITH_WINDOWS_UTF8_FILENAMES TRUE)
 set(WITH_TESTS FALSE)
-if (UNIX AND NOT APPLE)
+if (UNIX)
     set(USE_RTTI 1)
 endif ()
 

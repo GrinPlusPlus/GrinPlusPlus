@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-SET(CMAKE_BUILD_TYPE RelWithDebInfo) 
+SET(CMAKE_BUILD_TYPE Release) 
 set(PORTABLE 1)
 
 if(UNIX AND NOT APPLE)
@@ -18,7 +18,7 @@ endif()
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 7)
-set(VERSION_REVISION 2)
+set(VERSION_REVISION 3)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 
@@ -103,6 +103,7 @@ include(reproc)
 add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/ed25519-donna)
+add_subdirectory(deps/stduuid)
 
 # Grin++ Projects
 add_definitions(-DUNICODE)

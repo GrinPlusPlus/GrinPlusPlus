@@ -113,7 +113,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 
 	ThreadUtil::Join(m_txHashSetThread);
 
-	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
+	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath.u8string());
 
 	return true;
 }

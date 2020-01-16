@@ -88,7 +88,8 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		return false;
 	}
 
-	const std::string snapshotDir = StringUtil::Format("{}Snapshots/{}/", fs::temp_directory_path().string(), pHeader->ShortHash());
+	fs::path snapshotPath = fs::temp_directory_path() / "Snapshots" / pHeader->ShortHash();
+	const std::string snapshotDir = snapshotPath.u8string();
 	BlockHeaderPtr pFlushedHeader = nullptr;
 
 	{
@@ -96,7 +97,7 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		auto reader = m_pTxHashSet->Read();
 
 		// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
-		if (!FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath().u8string(), snapshotDir))
+		if (!FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath().u8string(), snapshotPath.u8string()))
 		{
 			return false;
 		}

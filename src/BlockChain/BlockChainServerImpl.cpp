@@ -152,9 +152,9 @@ std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 
 	try
 	{
-		const std::string destination = StringUtil::Format(
-			"{}Snapshots/TxHashSet.{}.zip",
-			fs::temp_directory_path().string(),
+		fs::path destination = fs::temp_directory_path() / "Snapshots";
+		destination /= StringUtil::Format(
+			"TxHashSet.{}.zip",
 			pBlockHeader->ShortHash()
 		);
 

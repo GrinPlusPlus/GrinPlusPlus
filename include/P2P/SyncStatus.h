@@ -49,20 +49,20 @@ public:
 
 	}
 
-	inline bool IsSyncing() const { return m_syncStatus != ESyncStatus::NOT_SYNCING; }
-	inline ESyncStatus GetStatus() const { return m_syncStatus; }
-	inline uint64_t GetNumActiveConnections() const { return m_numActiveConnections; }
-	inline uint64_t GetNetworkHeight() const { return m_networkHeight; }
-	inline uint64_t GetNetworkDifficulty() const { return m_networkDifficulty; }
-	inline uint64_t GetHeaderHeight() const { return m_headerHeight; }
-	inline uint64_t GetHeaderDifficulty() const { return m_headerDifficulty; }
-	inline uint64_t GetBlockHeight() const { return m_blockHeight; }
-	inline uint64_t GetBlockDifficulty() const { return m_blockDifficulty; }
-	inline uint64_t GetDownloaded() const { return m_txHashSetDownloaded; }
-	inline uint64_t GetDownloadSize() const { return m_txHashSetTotalSize; }
-	inline uint8_t GetProcessingStatus() const { return m_txHashSetProcessingStatus; }
+	bool IsSyncing() const { return m_syncStatus != ESyncStatus::NOT_SYNCING; }
+	ESyncStatus GetStatus() const { return m_syncStatus; }
+	uint64_t GetNumActiveConnections() const { return m_numActiveConnections; }
+	uint64_t GetNetworkHeight() const { return m_networkHeight; }
+	uint64_t GetNetworkDifficulty() const { return m_networkDifficulty; }
+	uint64_t GetHeaderHeight() const { return m_headerHeight; }
+	uint64_t GetHeaderDifficulty() const { return m_headerDifficulty; }
+	uint64_t GetBlockHeight() const { return m_blockHeight; }
+	uint64_t GetBlockDifficulty() const { return m_blockDifficulty; }
+	uint64_t GetDownloaded() const { return m_txHashSetDownloaded; }
+	uint64_t GetDownloadSize() const { return m_txHashSetTotalSize; }
+	uint8_t GetProcessingStatus() const { return m_txHashSetProcessingStatus; }
 
-	inline void UpdateStatus(const ESyncStatus syncStatus) { m_syncStatus = syncStatus; }
+	void UpdateStatus(const ESyncStatus syncStatus) { m_syncStatus = syncStatus; }
 
 	void UpdateNetworkStatus(const uint64_t numActiveConnections, const uint64_t networkHeight, const uint64_t networkDifficulty)
 	{
@@ -83,9 +83,9 @@ public:
 		m_blockDifficulty = blockDifficulty;
 	}
 
-	inline void UpdateDownloaded(const uint64_t downloaded) { m_txHashSetDownloaded = downloaded; }
-	inline void UpdateDownloadSize(const uint64_t downloadSize) { m_txHashSetTotalSize = downloadSize; }
-	inline void UpdateProcessingStatus(const uint8_t processingStatus) { m_txHashSetProcessingStatus = processingStatus; }
+	void UpdateDownloaded(const uint64_t downloaded) { m_txHashSetDownloaded = downloaded; }
+	void UpdateDownloadSize(const uint64_t downloadSize) { m_txHashSetTotalSize = downloadSize; }
+	void UpdateProcessingStatus(const uint8_t processingStatus) { m_txHashSetProcessingStatus = processingStatus; }
 
 private:
 	std::atomic<ESyncStatus> m_syncStatus;

@@ -165,45 +165,62 @@ bool Socket::IsActive() const
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
-	if (m_receiveTimeout != milliseconds)
+#ifdef _WIN32
+	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
+#else
+	struct timeval timeout;      
+	timeout.tv_sec = 0;
+	timeout.tv_usec = milliseconds * 1000;
+	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+#endif
+	if (result == 0)
 	{
-		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
-		if (result == 0)
-		{
-			m_receiveTimeout = milliseconds;
-		}
+		m_receiveTimeout = milliseconds;
+	}
+	else
+	{
+		return false;
 	}
 
-	return m_receiveTimeout == milliseconds;
+	return true;
 }
 
 bool Socket::SetReceiveBufferSize(const int bufferSize)
 {
-	if (m_receiveBufferSize != bufferSize)
+	const int socketRcvBuff = bufferSize;
+	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
+	if (result == 0)
 	{
-		const int socketRcvBuff = bufferSize;
-		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
-		if (result == 0)
-		{
-			m_receiveBufferSize = bufferSize;
-		}
+		m_receiveBufferSize = bufferSize;
+	}
+	else
+	{
+		return false;
 	}
 
-	return m_receiveBufferSize == bufferSize;
+	return true;
 }
 
 bool Socket::SetSendTimeout(const unsigned long milliseconds)
 {
-	if (m_sendTimeout != milliseconds)
-	{
-		const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
-		if (result == 0)
-		{
-			m_sendTimeout = milliseconds;
-		}
-	}
+#ifdef _WIN32
+	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
+#else
+	struct timeval timeout;      
+	timeout.tv_sec = 0;
+	timeout.tv_usec = milliseconds * 1000;
+	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout));
+#endif
 
-	return m_sendTimeout == milliseconds;
+	if (result == 0)
+	{
+		m_sendTimeout = milliseconds;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 bool Socket::SetBlocking(const bool blocking)

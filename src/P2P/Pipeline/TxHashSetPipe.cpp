@@ -46,7 +46,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 	if (m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
 	{
 		LOG_WARNING_F("Received TxHashSet from Peer ({}) when not requested.", pPeer);
-		return false;
+		//return false;
 	}
 
 	const bool processing = m_processing.exchange(true);
@@ -64,11 +64,11 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 	socket.SetReceiveTimeout(10 * 1000);
 	socket.SetReceiveBufferSize(BUFFER_SIZE);
 
-	const std::string txHashSetPath =  StringUtil::Format(
-		"{}txhashset_{}.zip",
-		fs::temp_directory_path().string(),
+	const std::string fileName = StringUtil::Format(
+		"txhashset_{}.zip",
 		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);
+	const fs::path txHashSetPath =  fs::temp_directory_path() / fileName;
 
 	try
 	{
@@ -80,12 +80,13 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 		while (bytesReceived < txHashSetArchiveMessage.GetZippedSize())
 		{
 			const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
+
 			const bool received = socket.Receive(bytesToRead, false, buffer);
 			if (!received || ShutdownManagerAPI::WasShutdownRequested())
 			{
 				LOG_ERROR("Transmission ended abruptly");
 				fout.close();
-				FileUtil::RemoveFile(txHashSetPath);
+				FileUtil::RemoveFile(txHashSetPath.u8string());
 				m_processing = false;
 				m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 

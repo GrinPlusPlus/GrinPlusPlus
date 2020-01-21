@@ -4,6 +4,7 @@
 #include <Core/Traits/Batchable.h>
 #include <memory>
 #include <shared_mutex>
+#include <mutex>
 #include <tuple>
 
 template<class T>

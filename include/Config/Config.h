@@ -58,7 +58,7 @@ private:
 	{
 		fs::create_directories(m_dataPath);
 
-		m_logPath = FileUtil::ToPath(m_dataPath.u8string() + "LOGS/");
+		m_logPath = m_dataPath / "LOGS";
 		fs::create_directories(m_logPath);
 
 		m_logLevel = "DEBUG";

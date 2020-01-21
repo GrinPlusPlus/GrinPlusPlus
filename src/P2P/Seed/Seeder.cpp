@@ -75,21 +75,29 @@ void Seeder::Thread_Seed(Seeder& seeder)
 	const size_t minimumConnections = seeder.m_config.GetNodeConfig().GetP2P().GetPreferredMinConnections();
 	while (!seeder.m_terminate)
 	{
-		seeder.m_connectionManager.PruneConnections(true);
-
-		auto now = std::chrono::system_clock::now();
-		const size_t numOutbound = seeder.m_connectionManager.GetNumOutbound();
-		if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now)
+		try
 		{
-			lastConnectTime = now;
-			const size_t connectionsToAdd = (std::min)((size_t)15, (minimumConnections - numOutbound));
-			for (size_t i = 0; i < connectionsToAdd; i++)
+			seeder.m_connectionManager.PruneConnections(true);
+
+			auto now = std::chrono::system_clock::now();
+			const size_t numOutbound = seeder.m_connectionManager.GetNumOutbound();
+			if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now)
 			{
-				seeder.SeedNewConnection();
+				lastConnectTime = now;
+				const size_t connectionsToAdd = (std::min)((size_t)15, (minimumConnections - numOutbound));
+				LOG_TRACE_F("Attempting to add {} connections", connectionsToAdd);
+				for (size_t i = 0; i < connectionsToAdd; i++)
+				{
+					seeder.SeedNewConnection();
+				}
 			}
 		}
+		catch (std::exception& e)
+		{
+			LOG_WARNING_F("Exception thrown: {}", e.what());
+		}
 
-		ThreadUtil::SleepFor(std::chrono::milliseconds(250), seeder.m_terminate);
+		ThreadUtil::SleepFor(std::chrono::milliseconds(100), seeder.m_terminate);
 	}
 
 	LOG_TRACE("END");
@@ -151,6 +159,7 @@ ConnectionPtr Seeder::SeedNewConnection()
 	PeerPtr pPeer = m_peerManager.Write()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
+		LOG_TRACE_F("Trying to seed: {}", pPeer);
 		ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND, m_config.GetEnvironment().GetP2PPort());
 		SocketAddress address(pPeer->GetIPAddress(), m_config.GetEnvironment().GetP2PPort());
 		SocketPtr pSocket = SocketPtr(new Socket(std::move(address)));
@@ -174,8 +183,10 @@ ConnectionPtr Seeder::SeedNewConnection()
 
 		m_peerManager.Write()->AddFreshPeers(peerAddresses);
 	}
-
-	// TODO: Request new peers
+	else
+	{
+		m_connectionManager.BroadcastMessage(GetPeerAddressesMessage(Capabilities::FAST_SYNC_NODE), 0);
+	}
 
 	return nullptr;
 }

@@ -19,7 +19,7 @@ public:
 	P2PConfig(const Json::Value& json)
 	{
 		m_maxConnections = 50;
-		m_minConnections = 10;
+		m_minConnections = 15;
 
 		if (json.isMember(ConfigProps::P2P::P2P))
 		{
@@ -32,7 +32,7 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS))
 			{
-				m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 10).asInt();
+				m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 15).asInt();
 			}
 		}
 	}

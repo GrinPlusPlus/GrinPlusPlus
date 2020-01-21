@@ -52,7 +52,7 @@ std::vector<PeerPtr> PeerDB::LoadAllPeers() const
 
 	std::vector<PeerPtr> peers;
 
-	rocksdb::Iterator* it = m_pDatabase->NewIterator(rocksdb::ReadOptions());
+	std::unique_ptr<rocksdb::Iterator> it(m_pDatabase->NewIterator(rocksdb::ReadOptions()));
 	for (it->SeekToFirst(); it->Valid(); it->Next())
 	{
 		std::vector<unsigned char> data(it->value().data(), it->value().data() + it->value().size());

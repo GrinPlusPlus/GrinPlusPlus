@@ -72,7 +72,7 @@ namespace HexUtil
 		const uint16_t bigEndian = EndianHelper::GetBigEndian16(value);
 
 		std::vector<unsigned char> bytes(2);
-		memcpy(&bytes, (unsigned char*)&bigEndian, 2);
+		memcpy(bytes.data(), (unsigned char*)&bigEndian, 2);
 
 		std::string hex = ConvertToHex(bytes);
 		const size_t firstNonZero = hex.find_first_not_of('0');

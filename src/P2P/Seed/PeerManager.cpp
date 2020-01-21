@@ -6,6 +6,7 @@
 #include <Config/Config.h>
 #include <Infrastructure/Logger.h>
 #include <Infrastructure/ThreadManager.h>
+#include <Crypto/RandomNumberGenerator.h>
 
 PeerManager::PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
 	: m_config(config), m_pPeerDB(pPeerDB), m_terminate(false)
@@ -238,8 +239,21 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(const Capabilities::ECa
 	const time_t currentTime = TimeUtil::Now();
 	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 
-	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
+	size_t nextPeer = RandomNumberGenerator::GenerateRandom(0, m_peersByAddress.size() - 1);
+	auto iter = m_peersByAddress.begin();
+	for (size_t i = 0; i < nextPeer; i++)
 	{
+		iter++;
+	}
+
+	for (size_t i = 0; i < m_peersByAddress.size(); i++)
+	{
+		iter++;
+		if (iter == m_peersByAddress.end())
+		{
+			iter = m_peersByAddress.begin();
+		}
+
 		PeerEntry& peerEntry = iter->second;
 		const PeerPtr& peer = peerEntry.m_peer;
 

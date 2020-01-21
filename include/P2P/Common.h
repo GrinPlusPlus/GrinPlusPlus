@@ -36,5 +36,5 @@ namespace P2P
 	static const int64_t BAN_WINDOW = 10800;
 
 	// Number of seconds to wait before retrying to connect to peer
-	static const uint32_t RETRY_WINDOW = 3 * 60;
+	static const uint32_t RETRY_WINDOW = 5 * 60;
 }

@@ -193,6 +193,7 @@ void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t
 
 void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 {
+	LOG_DEBUG_F("Adding connection: {}", pConnection->GetPeer());
 	m_connections.Write()->emplace_back(pConnection);
 }
 

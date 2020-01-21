@@ -8,6 +8,8 @@
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
+#include <filesystem.h>
+
 TxHashSetManager::TxHashSetManager(const Config& config)
 	: m_config(config), m_pTxHashSet(nullptr)
 {

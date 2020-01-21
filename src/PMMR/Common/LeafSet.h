@@ -12,6 +12,8 @@
 #include <Common/Util/FileUtil.h>
 #include <Core/Serialization/Serializer.h>
 
+#include <filesystem.h>
+
 class LeafSet
 {
 public:

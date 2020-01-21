@@ -45,29 +45,24 @@ public:
 		return true;
 	}
 
-	static bool ReadFile(const std::string& filePath, std::vector<unsigned char>& data)
+	static bool RenameFile(const fs::path& source, const fs::path& destination)
 	{
-		return ReadFile(ToPath(filePath), data);
-	}
-
-	static bool RenameFile(const std::string& source, const std::string& destination)
-	{
-		const fs::path destinationPath(StringUtil::ToWide(destination).c_str());
+		const fs::path destinationPath(destination);
 		if (fs::exists(destinationPath))
 		{
 			fs::remove(destinationPath);
 		}
 
 		std::error_code error;
-		const fs::path sourcePath(StringUtil::ToWide(source).c_str());
+		const fs::path sourcePath(source);
 		fs::rename(sourcePath, destinationPath, error);
 
 		return !error;
 	}
 
-	static bool SafeWriteToFile(const std::string& filePath, const std::vector<unsigned char>& data)
+	static bool SafeWriteToFile(const fs::path& filePath, const std::vector<unsigned char>& data)
 	{
-		const std::string tmpFilePath = filePath + ".tmp";
+		const std::string tmpFilePath = filePath.u8string() + ".tmp";
 		std::ofstream file(StringUtil::ToWide(tmpFilePath).c_str(), std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
@@ -93,12 +88,12 @@ public:
 		return true;
 	}
 
-	static bool RemoveFile(const std::string& filePath)
+	static bool RemoveFile(const fs::path& filePath)
 	{
 		std::error_code ec;
-		if (fs::exists(StringUtil::ToWide(filePath).c_str(), ec))
+		if (fs::exists(filePath, ec))
 		{
-			const uintmax_t removed = fs::remove_all(StringUtil::ToWide(filePath).c_str(), ec);
+			const uintmax_t removed = fs::remove_all(filePath, ec);
 
 			return removed > 0 && ec.value() == 0;
 		}
@@ -106,19 +101,21 @@ public:
 		return false;
 	}
 
-	static bool CopyDirectory(const std::string& sourceDir, const std::string& destDir)
+	static void CopyDirectory(const fs::path& sourceDir, const fs::path& destDir)
 	{
 		std::error_code ec;
-		fs::create_directories(StringUtil::ToWide(destDir).c_str(), ec);
+		fs::create_directories(destDir, ec);
 
-		if (!fs::exists(StringUtil::ToWide(sourceDir).c_str(), ec) || !fs::exists(StringUtil::ToWide(destDir).c_str(), ec))
+		if (!fs::exists(sourceDir, ec) || !fs::exists(destDir, ec))
 		{
-			return false;
+			throw std::system_error(ec);
 		}
 
-		fs::copy(StringUtil::ToWide(sourceDir).c_str(), StringUtil::ToWide(destDir).c_str(), fs::copy_options::recursive, ec);
-
-		return ec.value() == 0;
+		fs::copy(sourceDir, destDir, fs::copy_options::recursive, ec);
+		if (ec)
+		{
+			throw std::system_error(ec);
+		}
 	}
 
 	static bool CreateDirectories(const fs::path& directory)
@@ -127,23 +124,13 @@ public:
 		return fs::create_directories(directory, ec);
 	}
 
-	static bool CreateDirectories(const std::string& directory)
-	{
-		return CreateDirectories(ToPath(directory));
-	}
-
 	static bool Exists(const fs::path& path)
 	{
 		std::error_code ec;
 		return fs::exists(path, ec);
 	}
 
-	static bool Exists(const std::string& path)
-	{
-		return Exists(ToPath(path));
-	}
-
-	static std::string GetHomeDirectory()
+	static fs::path GetHomeDirectory()
 	{
 		#ifdef _WIN32
 		char homeDriveBuf[MAX_PATH_LEN];
@@ -159,19 +146,19 @@ public:
 		char* pHomePath = getenv("HOME");
 		if (pHomePath != nullptr)
 		{
-			return std::string(pHomePath);
+			return fs::path(pHomePath);
 		}
 		else
 		{
-			return "~";
+			return fs::path("~");
 		}
 		#endif
 	}
 
-	static bool TruncateFile(const std::string& filePath, const uint64_t size)
+	static bool TruncateFile(const fs::path& filePath, const uint64_t size)
 	{
 #if defined(WIN32)
-		HANDLE hFile = CreateFile(StringUtil::ToWide(filePath).c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFile = CreateFile(StringUtil::ToWide(filePath.u8string()).c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		LARGE_INTEGER li;
 		li.QuadPart = size;
@@ -181,7 +168,7 @@ public:
 
 		return success;
 #else
-		return truncate(StringUtil::ToWide(filePath).c_str(), size) == 0;
+		return truncate(filePath.c_str(), size) == 0;
 #endif
 	}
 
@@ -232,15 +219,10 @@ public:
 		return listOfFiles;
 	}
 
-	static std::vector<std::string> GetSubDirectories(const std::string& filePath, const bool includeHidden)
-	{
-		return GetSubDirectories(ToPath(filePath), includeHidden);
-	}
-
-	static size_t GetFileSize(const std::string& file)
+	static size_t GetFileSize(const fs::path& file)
 	{
 		std::error_code error;
-		size_t fileSize = fs::file_size(StringUtil::ToWide(file).c_str(), error);
+		size_t fileSize = fs::file_size(file, error);
 		if (error.value() != 0)
 		{
 			return 0;

@@ -7,6 +7,7 @@
 #include <string>
 #include <Crypto/Hash.h>
 #include <Roaring.h>
+#include <filesystem.h>
 #include <Core/BitmapFile.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
@@ -15,7 +16,7 @@
 class LeafSet
 {
 public:
-	static std::shared_ptr<LeafSet> Load(const std::string& path)
+	static std::shared_ptr<LeafSet> Load(const fs::path& path)
 	{
 		auto pBitmapFile = BitmapFile::Load(path);
 
@@ -31,7 +32,7 @@ public:
 	void Rollback() { m_pBitmap->Rollback(); }
 	void Snapshot(const Hash& blockHash)
 	{
-		std::string path = m_path + "." + HexUtil::ShortHash(blockHash);
+		std::string path = m_path.u8string() + "." + HexUtil::ShortHash(blockHash);
 		Roaring snapshotBitmap = m_pBitmap->ToRoaring();
 
 		const size_t numBytes = snapshotBitmap.getSizeInBytes();
@@ -42,7 +43,7 @@ public:
 			throw std::exception(); // TODO: Handle this.
 		}
 
-		if (!FileUtil::SafeWriteToFile(path, bytes))
+		if (!FileUtil::SafeWriteToFile(FileUtil::ToPath(path), bytes))
 		{
 			throw std::exception(); // TODO: Handle this.
 		}
@@ -84,12 +85,12 @@ public:
 	}
 
 private:
-	LeafSet(const std::string& path, std::shared_ptr<BitmapFile> pBitmap)
+	LeafSet(const fs::path& path, std::shared_ptr<BitmapFile> pBitmap)
 		: m_path(path), m_pBitmap(pBitmap)
 	{
 
 	}
 
-	std::string m_path;
+	fs::path m_path;
 	std::shared_ptr<BitmapFile> m_pBitmap;
 };

@@ -12,7 +12,7 @@ public:
 	static Logger& GetInstance();
 
 	void StartLogger(
-		const std::string& logDirectory,
+		const fs::path& logDirectory,
 		const spdlog::level::level_enum& logLevel
 	);
 	void Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText);

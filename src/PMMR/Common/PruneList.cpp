@@ -5,13 +5,13 @@
 
 #pragma warning(disable:4244)
 
-PruneList::PruneList(const std::string& filePath, Roaring&& prunedRoots)
+PruneList::PruneList(const fs::path& filePath, Roaring&& prunedRoots)
 	: m_filePath(filePath), m_prunedRoots(std::move(prunedRoots))
 {
 
 }
 
-std::shared_ptr<PruneList> PruneList::Load(const std::string& filePath)
+std::shared_ptr<PruneList> PruneList::Load(const fs::path& filePath)
 {
 	std::vector<unsigned char> data;
 	if (FileUtil::ReadFile(filePath, data))

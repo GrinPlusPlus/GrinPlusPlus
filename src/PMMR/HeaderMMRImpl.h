@@ -10,7 +10,7 @@
 class HeaderMMR : public IHeaderMMR
 {
 public:
-	static std::shared_ptr<HeaderMMR> Load(const std::string& path);
+	static std::shared_ptr<HeaderMMR> Load(const fs::path& path);
 
 	virtual void AddHeader(const BlockHeader& header) override final;
 	virtual Hash Root(const uint64_t lastHeight) const override final;

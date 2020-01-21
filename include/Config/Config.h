@@ -17,16 +17,16 @@ class Config
 public:
 	static std::shared_ptr<Config> Load(const Json::Value& json, const EEnvironmentType environment)
 	{
-		std::string dataDir = StringUtil::Format("{}/.GrinPP/{}/", FileUtil::GetHomeDirectory(), Env::ToString(environment));
+		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
 
 		if (json.isMember(ConfigProps::DATA_PATH))
 		{
-			dataDir = json.get(ConfigProps::DATA_PATH, dataDir).asString();
+			dataDir = fs::path(json.get(ConfigProps::DATA_PATH, "").asString());
 		}
 
 		FileUtil::CreateDirectories(dataDir);
 		
-		return std::make_shared<Config>(Config(json, environment, FileUtil::ToPath(dataDir)));
+		return std::make_shared<Config>(Config(json, environment, dataDir));
 	}
 
 	static std::shared_ptr<Config> Default(const EEnvironmentType environment)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem.h>
 #include <string>
 #include <fstream>
 #include <memory>
@@ -15,7 +16,7 @@ private:
 	public:
 		Stream() = default;
 
-		void Open(const std::string& path, const std::ios_base::openmode mode)
+		void Open(const fs::path& path, const std::ios_base::openmode mode)
 		{
 			m_stream.open(path, mode);
 		}
@@ -32,7 +33,7 @@ private:
 	};
 
 public:
-	static File Load(const std::string& path, const std::ios_base::openmode mode)
+	static File Load(const fs::path& path, const std::ios_base::openmode mode)
 	{
 		std::shared_ptr<Stream> pStream = std::make_shared<Stream>();
 		pStream->Open(path, mode);

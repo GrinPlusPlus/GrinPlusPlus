@@ -11,7 +11,7 @@ template<size_t NUM_BYTES>
 class DataFile : public Traits::IBatchable
 {
 public:
-	static std::shared_ptr<DataFile> Load(const std::string& path)
+	static std::shared_ptr<DataFile> Load(const fs::path& path)
 	{ 
 		std::shared_ptr<AppendOnlyFile> pFile = std::make_shared<AppendOnlyFile>(path);
 		pFile->Load();
@@ -32,14 +32,11 @@ public:
 		SetDirty(false);
 	}
 
-	virtual void Rollback() override final
+	virtual void Rollback() noexcept override final
 	{
 		if (IsDirty())
 		{
-			if (!m_pFile->Discard())
-			{
-				throw FILE_EXCEPTION("Rollback failed.");
-			}
+			m_pFile->Discard();
 		}
 
 		SetDirty(false);
@@ -54,7 +51,7 @@ public:
 		}
 	}
 
-	uint64_t GetSize() const
+	uint64_t GetSize() const noexcept
 	{
 		return m_pFile->GetSize() / NUM_BYTES;
 	}

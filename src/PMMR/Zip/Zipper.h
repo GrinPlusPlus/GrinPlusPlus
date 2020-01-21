@@ -9,9 +9,9 @@
 class Zipper
 {
 public:
-	static bool CreateZipFile(const std::string& destination, const std::vector<std::string>& paths);
+	static bool CreateZipFile(const fs::path& destination, const std::vector<fs::path>& paths);
 
 private:
-	static void AddDirectory(zipFile zf, const fs::path& sourceDir, const std::string& destDir);
-	static void AddFile(zipFile zf, const std::string& sourceFile, const std::string& destDir);
+	static void AddDirectory(zipFile zf, const fs::path& sourceDir, const fs::path& destDir);
+	static void AddFile(zipFile zf, const fs::path& sourceFile, const fs::path& destDir);
 };

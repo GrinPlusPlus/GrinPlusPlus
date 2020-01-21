@@ -5,6 +5,7 @@
 #include <Net/Socket.h>
 #include <P2P/Peer.h>
 #include <BlockChain/BlockChainServer.h>
+#include <Common/Util/FileUtil.h>
 #include <string>
 #include <cstdint>
 #include <atomic>
@@ -41,7 +42,7 @@ private:
 	IBlockChainServerPtr m_pBlockChainServer;
 	SyncStatusPtr m_pSyncStatus;
 
-	static void Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const std::string path);
+	static void Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const fs::path path);
 	std::thread m_txHashSetThread;
 
 	std::atomic_bool m_processing;

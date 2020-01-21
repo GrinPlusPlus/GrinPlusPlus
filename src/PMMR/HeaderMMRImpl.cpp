@@ -12,7 +12,7 @@ HeaderMMR::HeaderMMR(std::shared_ptr<Locked<HashFile>> pHashFile)
 
 }
 
-std::shared_ptr<HeaderMMR> HeaderMMR::Load(const std::string& path)
+std::shared_ptr<HeaderMMR> HeaderMMR::Load(const fs::path& path)
 {
 	std::shared_ptr<HashFile> pHashFile = HashFile::Load(path);
 	auto locked = std::make_shared<Locked<HashFile>>(pHashFile);
@@ -83,7 +83,7 @@ namespace HeaderMMRAPI
 {
 	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config)
 	{
-		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetNodeConfig().GetChainPath().u8string() + "header_mmr.bin");
+		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetNodeConfig().GetChainPath() / "header_mmr.bin");
 		return std::make_shared<Locked<IHeaderMMR>>(pHeaderMMR);
 	}
 }

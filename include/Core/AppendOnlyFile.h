@@ -24,8 +24,8 @@
 class AppendOnlyFile
 {
 public:
-	AppendOnlyFile(const std::string& path)
-		: m_path(StringUtil::ToWide(path)),
+	AppendOnlyFile(const fs::path& path)
+		: m_path(path),
 		m_bufferIndex(0),
 		m_fileSize(0)
 	{
@@ -38,7 +38,7 @@ public:
 
 	void Load()
 	{
-		std::ifstream inFile(m_path.c_str(), std::ios::in | std::ifstream::ate | std::ifstream::binary);
+		std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
 		if (inFile.is_open())
 		{
 			inFile.close();
@@ -46,7 +46,7 @@ public:
 		else
 		{
 			LOG_INFO_F("File {} does not exist. Creating it now.", m_path);
-			std::ofstream outFile(m_path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+			std::ofstream outFile(m_path, std::ios::out | std::ios::binary | std::ios::app);
 			if (!outFile.is_open())
 			{
 				LOG_ERROR_F("Failed to create file: {}", m_path);
@@ -56,7 +56,7 @@ public:
 			outFile.close();
 		}
 
-		m_fileSize = FileUtil::GetFileSize(m_path.u8string());
+		m_fileSize = FileUtil::GetFileSize(m_path);
 		m_bufferIndex = m_fileSize;
 
 		if (m_fileSize > 0)
@@ -87,12 +87,12 @@ public:
 
 		if (m_fileSize > m_bufferIndex)
 		{
-			FileUtil::TruncateFile(m_path.u8string(), m_bufferIndex);
+			FileUtil::TruncateFile(m_path, m_bufferIndex);
 		}
 
 		if (!m_buffer.empty())
 		{
-			std::ofstream file(m_path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+			std::ofstream file(m_path, std::ios::out | std::ios::binary | std::ios::app);
 			if (!file.is_open())
 			{
 				return false;
@@ -156,15 +156,13 @@ public:
 		return true;
 	}
 
-	bool Discard()
+	void Discard() noexcept
 	{
 		m_bufferIndex = m_fileSize;
 		m_buffer.clear();
-
-		return true;
 	}
 
-	uint64_t GetSize() const
+	uint64_t GetSize() const noexcept
 	{
 		return m_bufferIndex + m_buffer.size();
 	}

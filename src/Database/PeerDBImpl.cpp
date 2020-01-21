@@ -32,11 +32,11 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 	options.compression = kNoCompression;
 
 	// open DB
-	const std::string dbPath = config.GetNodeConfig().GetDatabasePath().u8string() + "PEERS/";
-	fs::create_directories(StringUtil::ToWide(dbPath));
+	const fs::path dbPath = config.GetNodeConfig().GetDatabasePath() / "PEERS";
+	fs::create_directories(dbPath);
 
 	DB* pDatabase = nullptr;
-	Status status = DB::Open(options, dbPath, &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
+	Status status = DB::Open(options, dbPath.u8string(), &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
 	if (!status.ok())
 	{
 		LOG_ERROR_F("DB::Open failed with error: {}", status.getState());

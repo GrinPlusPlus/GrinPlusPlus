@@ -16,6 +16,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/BigInteger.h>
+#include <filesystem.h>
 
 #include <vector>
 #include <memory>
@@ -51,8 +52,8 @@ public:
 	virtual EBlockChainStatus AddBlock(const FullBlock& block) = 0;
 	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& compactBlock) = 0;
 
-	virtual std::string SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) = 0;
-	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus) = 0;
+	virtual fs::path SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) = 0;
+	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus) = 0;
 	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) = 0;
 	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const = 0;
 

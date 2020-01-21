@@ -423,8 +423,13 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		return EStatus::UNKNOWN_ERROR;
 	}
 
-	const std::string zipFilePath = m_pBlockChainServer->SnapshotTxHashSet(pHeader);
-	if (zipFilePath.empty())
+	fs::path zipFilePath;
+	
+	try
+	{
+		zipFilePath = m_pBlockChainServer->SnapshotTxHashSet(pHeader);
+	}
+	catch (std::exception&)
 	{
 		return EStatus::UNKNOWN_ERROR;
 	}
@@ -434,37 +439,46 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 	{
 		return EStatus::UNKNOWN_ERROR;
 	}
-
-	const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
-	file.seekg(0);
-	TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-	MessageSender(m_config).Send(socket, archiveMessage);
-
-	socket.SetBlocking(false);
-
-	std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
-	uint64_t totalBytesRead = 0;
-	while (totalBytesRead < fileSize)
+	
+	try
 	{
-		file.read((char*)&buffer[0], BUFFER_SIZE);
-		const uint64_t bytesRead = file.gcount();
+		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
+		file.seekg(0);
+		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
+		MessageSender(m_config).Send(socket, archiveMessage);
 
-		const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-		const bool sent = socket.Send(bytesToSend, false);
+		socket.SetBlocking(false);
 
-		if (!sent || ShutdownManagerAPI::WasShutdownRequested())
+		std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
+		uint64_t totalBytesRead = 0;
+		while (totalBytesRead < fileSize)
 		{
-			LOG_ERROR("Transmission ended abruptly");
-			file.close();
-			FileUtil::RemoveFile(zipFilePath);
+			file.read((char*)&buffer[0], BUFFER_SIZE);
+			const uint64_t bytesRead = file.gcount();
 
-			return EStatus::BAN_PEER;
+			const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
+			const bool sent = socket.Send(bytesToSend, false);
+
+			if (!sent || ShutdownManagerAPI::WasShutdownRequested())
+			{
+				LOG_ERROR("Transmission ended abruptly");
+				file.close();
+				FileUtil::RemoveFile(zipFilePath);
+
+				return EStatus::BAN_PEER;
+			}
+
+			totalBytesRead += bytesRead;
 		}
 
-		totalBytesRead += bytesRead;
+		socket.SetBlocking(true);
 	}
-
-	socket.SetBlocking(true);
+	catch (...)
+	{
+		file.close();
+		FileUtil::RemoveFile(zipFilePath);
+		throw;
+	}
 
 	file.close();
 	FileUtil::RemoveFile(zipFilePath);

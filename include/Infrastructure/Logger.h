@@ -18,7 +18,7 @@ namespace LoggerAPI
 		WALLET
 	};
 
-	LOGGER_API void Initialize(const std::string& logDirectory, const std::string& logLevel);
+	LOGGER_API void Initialize(const fs::path& logDirectory, const std::string& logLevel);
 
 	LOGGER_API void LogTrace(const std::string& message);
 	LOGGER_API void LogDebug(const std::string& message);

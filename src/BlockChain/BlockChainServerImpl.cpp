@@ -141,7 +141,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
 }
 
-std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
+fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 {
 	auto pReader = m_pChainState->Read();
 	const uint64_t horizon = Consensus::GetHorizonHeight(pReader->GetHeight(EChainType::CONFIRMED));
@@ -150,28 +150,16 @@ std::string BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
 
-	try
-	{
-		const std::string destination = StringUtil::Format(
-			"{}Snapshots/TxHashSet.{}.zip",
-			fs::temp_directory_path().string(),
-			pBlockHeader->ShortHash()
-		);
+	const std::string destination = StringUtil::Format(
+		"{}Snapshots/TxHashSet.{}.zip",
+		fs::temp_directory_path().string(),
+		pBlockHeader->ShortHash()
+	);
 
-		if (m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader, destination))
-		{
-			return destination;
-		}
-	}
-	catch (std::exception& e)
-	{
-		LOG_ERROR_F("TxHashSet snapshot failed with exception: {}", e.what());
-	}
-
-	return "";
+	return m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader);
 }
 
-EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const std::string& path, SyncStatus& syncStatus)
+EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
 {
 	try
 	{

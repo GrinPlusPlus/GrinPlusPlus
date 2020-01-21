@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Roaring.h>
+#include <filesystem.h>
 
 #include <string>
 #include <vector>
@@ -10,7 +11,7 @@
 class PruneList
 {
 public:
-	static std::shared_ptr<PruneList> Load(const std::string& filePath);
+	static std::shared_ptr<PruneList> Load(const fs::path& filePath);
 
 	bool Flush();
 
@@ -31,12 +32,12 @@ public:
 	uint64_t GetLeafShift(const uint64_t mmrIndex) const;
 
 private:
-	PruneList(const std::string& filePath, Roaring&& prunedRoots);
+	PruneList(const fs::path& filePath, Roaring&& prunedRoots);
 
 	void BuildPrunedCache();
 	void BuildShiftCaches();
 
-	const std::string m_filePath;
+	fs::path m_filePath;
 
 	Roaring m_prunedRoots;
 	Roaring m_prunedCache;

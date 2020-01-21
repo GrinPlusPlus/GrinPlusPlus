@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	signal(9, SigIntHandler);
 
 	const ConfigPtr pConfig = ConfigLoader::Load(environment);
-	LoggerAPI::Initialize(pConfig->GetLogDirectory().u8string(), pConfig->GetLogLevel());
+	LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
 	mg_init_library(0);
 
 	StartServer(*pConfig, headless);

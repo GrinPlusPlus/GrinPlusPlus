@@ -11,13 +11,13 @@ Logger& Logger::GetInstance()
 	return instance;
 }
 
-void Logger::StartLogger(const std::string& logDirectory, const spdlog::level::level_enum& logLevel)
+void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::level_enum& logLevel)
 {
 	FileUtil::CreateDirectories(logDirectory);
 
 	{
-		const std::string logPath = logDirectory + "Node.log";
-		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath), 5 * 1024 * 1024, 10);
+		const fs::path logPath = logDirectory / "Node.log";
+		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath.u8string()), 5 * 1024 * 1024, 10);
 		m_pNodeLogger = spdlog::create_async("NODE", sink, 32768, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
 		if (m_pNodeLogger != nullptr)
@@ -26,8 +26,8 @@ void Logger::StartLogger(const std::string& logDirectory, const spdlog::level::l
 		}
 	}
 	{
-		const std::string logPath = logDirectory + "Wallet.log";
-		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath), 5 * 1024 * 1024, 10);
+		const fs::path logPath = logDirectory / "Wallet.log";
+		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath.u8string()), 5 * 1024 * 1024, 10);
 		m_pWalletLogger = spdlog::create_async("WALLET", sink, 8192, spdlog::async_overflow_policy::block_retry, nullptr, std::chrono::seconds(5));
 		spdlog::set_pattern("[%D %X.%e%z] [%l] %v");
 		if (m_pWalletLogger != nullptr)
@@ -95,7 +95,7 @@ std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
 
 namespace LoggerAPI
 {
-	LOGGER_API void Initialize(const std::string& logDirectory, const std::string& logLevel)
+	LOGGER_API void Initialize(const fs::path& logDirectory, const std::string& logLevel)
 	{
 		spdlog::level::level_enum logLevelEnum = spdlog::level::level_enum::debug;
 		if (logLevel == "TRACE")

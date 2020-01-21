@@ -27,20 +27,20 @@ public:
 	NodeConfig(const Json::Value& json, const fs::path& dataPath)
 		: m_p2pConfig(json), m_dandelion(json)
 	{
-		const fs::path nodePath = FileUtil::ToPath(dataPath.u8string() + "NODE/");
+		const fs::path nodePath = dataPath / "NODE";
 
-		m_chainPath = FileUtil::ToPath(nodePath.u8string() + "CHAIN/");
+		m_chainPath = nodePath / "CHAIN";
 		fs::create_directories(m_chainPath);
 
-		m_databasePath = FileUtil::ToPath(nodePath.u8string() + "DB/");
+		m_databasePath = nodePath / "DB";
 		fs::create_directories(m_databasePath);
 
-		m_txHashSetPath = FileUtil::ToPath(nodePath.u8string() + "TXHASHSET/");
+		m_txHashSetPath = nodePath / "TXHASHSET";
 		fs::create_directories(m_txHashSetPath);
 
-		fs::create_directories(FileUtil::ToPath(m_txHashSetPath.u8string() + "kernel/"));
-		fs::create_directories(FileUtil::ToPath(m_txHashSetPath.u8string() + "output/"));
-		fs::create_directories(FileUtil::ToPath(m_txHashSetPath.u8string() + "rangeproof/"));
+		fs::create_directories(m_txHashSetPath / "kernel");
+		fs::create_directories(m_txHashSetPath / "output");
+		fs::create_directories(m_txHashSetPath / "rangeproof");
 	}
 
 private:

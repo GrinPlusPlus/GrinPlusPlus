@@ -83,8 +83,8 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 
 Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
-	const std::string userDBPath = m_walletDirectory.u8string() + "/" + username;
-	const std::string seedFile = userDBPath + "/seed.json";
+	const fs::path userDBPath = m_walletDirectory / username;
+	const fs::path seedFile = userDBPath / "seed.json";
 	if (FileUtil::Exists(seedFile))
 	{
 		WALLET_WARNING("Wallet already exists for user: " + username);
@@ -165,7 +165,7 @@ EncryptedSeed SqliteStore::LoadWalletSeed(const std::string& username) const
 {
 	WALLET_TRACE_F("Loading wallet seed for {}", username);
 
-	const std::string seedPath = m_walletDirectory.u8string() + "/" + username + "/seed.json";
+	const fs::path seedPath = m_walletDirectory / username / "seed.json";
 	if (!FileUtil::Exists(seedPath))
 	{
 		WALLET_WARNING_F("Wallet not found for user: {}", username);

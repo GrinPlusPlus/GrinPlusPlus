@@ -20,14 +20,14 @@
 class BitmapFile : public Traits::IBatchable
 {
 public:
-	static std::shared_ptr<BitmapFile> Load(const std::string& path)
+	static std::shared_ptr<BitmapFile> Load(const fs::path& path)
 	{
 		auto pBitmapFile = std::make_shared<BitmapFile>(BitmapFile(path));
 		pBitmapFile->Load();
 		return pBitmapFile;
 	}
 
-	static std::shared_ptr<BitmapFile> Create(const std::string& path, const Roaring& bitmap)
+	static std::shared_ptr<BitmapFile> Create(const fs::path& path, const Roaring& bitmap)
 	{
 		auto pBitmapFile = Load(path);
 		pBitmapFile->Set(bitmap);
@@ -144,7 +144,7 @@ public:
 	}
 
 private:
-	BitmapFile(const std::string& path) : m_path(StringUtil::ToWide(path)) { }
+	BitmapFile(const fs::path& path) : m_path(path) { }
 
 	void Load()
 	{
@@ -166,7 +166,7 @@ private:
 			outFile.close();
 		}
 
-		m_size = FileUtil::GetFileSize(m_path.u8string());
+		m_size = FileUtil::GetFileSize(m_path);
 
 		if (m_size > 0)
 		{

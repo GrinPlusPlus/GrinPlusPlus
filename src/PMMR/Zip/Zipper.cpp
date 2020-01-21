@@ -7,9 +7,9 @@
 #include <fstream>
 #include <filesystem.h>
 
-bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std::string>& paths)
+bool Zipper::CreateZipFile(const fs::path& destination, const std::vector<fs::path>& paths)
 {
-	zipFile zf = zipOpen(destination.c_str(), APPEND_STATUS_CREATE);
+	zipFile zf = zipOpen(destination.u8string().c_str(), APPEND_STATUS_CREATE);
 	if (zf == nullptr)
 	{
 		LOG_ERROR_F("Failed to create zip file at ({})", destination);
@@ -20,9 +20,9 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	{
 		for (size_t i = 0; i < paths.size(); i++)
 		{
-			if (fs::is_directory(fs::path(paths[i])))
+			if (fs::is_directory(paths[i]))
 			{
-				const std::string destinationPath = paths[i].substr(std::max(paths[i].rfind('\\'), paths[i].rfind('/')) + 1);
+				const fs::path destinationPath = paths[i].filename();
 				AddDirectory(zf, paths[i], destinationPath);
 			}
 			else
@@ -47,13 +47,13 @@ bool Zipper::CreateZipFile(const std::string& destination, const std::vector<std
 	return true;
 }
 
-void Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const std::string& destDir)
+void Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const fs::path& destDir)
 {
 	for (const auto& entry : fs::directory_iterator(sourceDir))
 	{
 		if (fs::is_directory(entry))
 		{
-			AddDirectory(zf, entry, destDir + "/" + entry.path().filename().string());
+			AddDirectory(zf, entry, destDir / entry.path().filename());
 		}
 		else
 		{
@@ -62,7 +62,7 @@ void Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const std::stri
 	}
 }
 
-void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::string& destDir)
+void Zipper::AddFile(zipFile zf, const fs::path& sourceFile, const fs::path& destDir)
 {
 	File pFile = File::Load(sourceFile, std::ios::binary | std::ios::in);
 	if (pFile->is_open())
@@ -74,9 +74,9 @@ void Zipper::AddFile(zipFile zf, const std::string& sourceFile, const std::strin
 		if (size == 0 || pFile->read(&buffer[0], size))
 		{
 			zip_fileinfo zfi;
-			std::string fileName = destDir + "/" + sourceFile.substr((std::max)(sourceFile.rfind('\\'), sourceFile.rfind('/')) + 1);
+			fs::path fileName = destDir / sourceFile.filename();
 
-			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
+			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.string().c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
 			{
 				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], (unsigned int)size))
 				{

@@ -12,22 +12,22 @@ class RangeProofPMMR : public PruneableMMR<RANGE_PROOF_SIZE, RangeProof>
 public:
 	static std::shared_ptr<RangeProofPMMR> Load(const fs::path& txHashSetPath)
 	{
-		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath.u8string() + "rangeproof/pmmr_hash.bin");
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "rangeproof" / "pmmr_hash.bin");
 
-		if (!FileUtil::Exists(txHashSetPath.u8string() + "rangeproof/pmmr_leafset.bin") && FileUtil::Exists(txHashSetPath.u8string() + "rangeproof/pmmr_leaf.bin"))
+		if (!FileUtil::Exists(txHashSetPath / "rangeproof" / "pmmr_leafset.bin") && FileUtil::Exists(txHashSetPath / "rangeproof" / "pmmr_leaf.bin"))
 		{
 			Roaring outputBitmap;
 			std::vector<unsigned char> outputBytes;
-			if (FileUtil::ReadFile(txHashSetPath.u8string() + "rangeproof/pmmr_leaf.bin", outputBytes))
+			if (FileUtil::ReadFile(txHashSetPath / "rangeproof" / "pmmr_leaf.bin", outputBytes))
 			{
 				outputBitmap = Roaring::readSafe((const char*)outputBytes.data(), outputBytes.size());
 			}
-			BitmapFile::Create(txHashSetPath.u8string() + "rangeproof/pmmr_leafset.bin", outputBitmap);
+			BitmapFile::Create(txHashSetPath / "rangeproof" / "pmmr_leafset.bin", outputBitmap);
 		}
 
-		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetPath.u8string() + "rangeproof/pmmr_leafset.bin");
-		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetPath.u8string() + "rangeproof/pmmr_prun.bin");
-		std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile = DataFile<RANGE_PROOF_SIZE>::Load(txHashSetPath.u8string() + "rangeproof/pmmr_data.bin");
+		std::shared_ptr<LeafSet> pLeafSet = LeafSet::Load(txHashSetPath / "rangeproof" / "pmmr_leafset.bin");
+		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetPath / "rangeproof" / "pmmr_prun.bin");
+		std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile = DataFile<RANGE_PROOF_SIZE>::Load(txHashSetPath / "rangeproof" / "pmmr_data.bin");
 
 		return std::make_shared<RangeProofPMMR>(RangeProofPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
 	}

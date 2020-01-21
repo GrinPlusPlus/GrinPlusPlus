@@ -86,7 +86,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 			{
 				LOG_ERROR("Transmission ended abruptly");
 				fout.close();
-				FileUtil::RemoveFile(txHashSetPath.u8string());
+				FileUtil::RemoveFile(txHashSetPath);
 				m_processing = false;
 				m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
 
@@ -118,7 +118,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 	return true;
 }
 
-void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const std::string path)
+void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const fs::path path)
 {
 	try
 	{

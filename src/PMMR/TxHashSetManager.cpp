@@ -34,7 +34,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 	if (zip.Extract(zipFilePath, *pHeader))
 	{
 		LOG_INFO_F("{} extracted successfully", zipFilePath);
-		FileUtil::RemoveFile(zipFilePath.u8string());
+		FileUtil::RemoveFile(zipFilePath);
 
 		// Rewind Kernel MMR
 		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
@@ -42,14 +42,14 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		pKernelMMR->Commit();
 
 		// Create output BitmapFile from Roaring file
-		const std::string leafPath = config.GetNodeConfig().GetTxHashSetPath().u8string() + "output/pmmr_leaf.bin";
+		const fs::path leafPath = config.GetNodeConfig().GetTxHashSetPath() / "output" / "pmmr_leaf.bin";
 		Roaring outputBitmap;
 		std::vector<unsigned char> outputBytes;
 		if (FileUtil::ReadFile(leafPath, outputBytes))
 		{
 			outputBitmap = Roaring::readSafe((const char*)outputBytes.data(), outputBytes.size());
 		}
-		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath().u8string() + "output/pmmr_leafset.bin", outputBitmap);
+		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath() / "output" / "pmmr_leafset.bin", outputBitmap);
 
 		// Rewind Output MMR
 		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
@@ -57,14 +57,14 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 		pOutputPMMR->Commit();
 
 		// Create rangeproof BitmapFile from Roaring file
-		const std::string rangeproofPath = config.GetNodeConfig().GetTxHashSetPath().u8string() + "rangeproof/pmmr_leaf.bin";
+		const fs::path rangeproofPath = config.GetNodeConfig().GetTxHashSetPath() / "rangeproof" / "pmmr_leaf.bin";
 		Roaring rangeproofBitmap;
 		std::vector<unsigned char> rangeproofBytes;
 		if (FileUtil::ReadFile(rangeproofPath, rangeproofBytes))
 		{
 			rangeproofBitmap = Roaring::readSafe((const char*)rangeproofBytes.data(), rangeproofBytes.size());
 		}
-		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath().u8string() + "rangeproof/pmmr_leafset.bin", rangeproofBitmap);
+		BitmapFile::Create(config.GetNodeConfig().GetTxHashSetPath() / "rangeproof" / "pmmr_leafset.bin", rangeproofBitmap);
 
 		// Rewind RangeProof MMR
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(config.GetNodeConfig().GetTxHashSetPath());
@@ -75,20 +75,20 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 	}
 	else
 	{
-		FileUtil::RemoveFile(zipFilePath.u8string());
+		FileUtil::RemoveFile(zipFilePath);
 	}
 
 	return nullptr;
 }
 
-bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader, const std::string& zipFilePath)
+fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader)
 {
 	if (m_pTxHashSet == nullptr)
 	{
-		return false;
+		throw std::exception();
 	}
 
-	const std::string snapshotDir = StringUtil::Format("{}Snapshots/{}/", fs::temp_directory_path().string(), pHeader->ShortHash());
+	fs::path snapshotDir = fs::temp_directory_path() / "Snapshots" / pHeader->ShortHash();
 	BlockHeaderPtr pFlushedHeader = nullptr;
 
 	{
@@ -96,47 +96,38 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 		auto reader = m_pTxHashSet->Read();
 
 		// 2. Copy to Snapshots/Hash // TODO: If already exists, just use that.
-		if (!FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath().u8string(), snapshotDir))
-		{
-			return false;
-		}
+		FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath(), snapshotDir);
 
 		pFlushedHeader = reader->GetFlushedBlockHeader();
 	}
 
-	try
+	// 4. Load Snapshot TxHashSet
+	std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(snapshotDir);
+	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(snapshotDir);
+	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
+	TxHashSet snapshotTxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pFlushedHeader);
+
+	// 5. Rewind Snapshot TxHashSet
+	if (!snapshotTxHashSet.Rewind(pBlockDB, *pHeader))
 	{
-		// 4. Load Snapshot TxHashSet
-		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(snapshotDir);
-		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(snapshotDir);
-		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
-		TxHashSet snapshotTxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pFlushedHeader);
-
-		// 5. Rewind Snapshot TxHashSet
-		if (!snapshotTxHashSet.Rewind(pBlockDB, *pHeader))
-		{
-			FileUtil::RemoveFile(snapshotDir);
-			return false;
-		}
-
-		// 6. Flush Snapshot TxHashSet
-		snapshotTxHashSet.Commit();
-
-		// 7. Rename pmmr_leaf files
-		FileUtil::RenameFile(snapshotDir + "output/pmmr_leaf.bin", snapshotDir + "output/pmmr_leaf.bin." + pHeader->ShortHash());
-		FileUtil::RenameFile(snapshotDir + "rangeproof/pmmr_leaf.bin", snapshotDir + "rangeproof/pmmr_leaf.bin." + pHeader->ShortHash());
-
-		// 8. Create Zip
-		const std::vector<std::string> pathsToZip = { snapshotDir + "kernel", snapshotDir + "output", snapshotDir + "rangeproof" };
-		if (!Zipper::CreateZipFile(zipFilePath, pathsToZip))
-		{
-			FileUtil::RemoveFile(snapshotDir);
-			return false;
-		}
+		FileUtil::RemoveFile(snapshotDir);
+		return false;
 	}
-	catch (std::exception& e)
+
+	// 6. Flush Snapshot TxHashSet
+	snapshotTxHashSet.Commit();
+
+	// 7. Rename pmmr_leaf files
+	FileUtil::RenameFile(snapshotDir / "output" / "pmmr_leaf.bin", snapshotDir / "output" / StringUtil::Format("pmmr_leaf.bin.{}", pHeader->ShortHash()));
+	FileUtil::RenameFile(snapshotDir / "rangeproof" / "pmmr_leaf.bin", snapshotDir / "rangeproof" / StringUtil::Format("pmmr_leaf.bin.{}", pHeader->ShortHash()));
+
+	// 8. Create Zip
+	const std::string fileName = StringUtil::Format("TxHashSet.{}.zip", pHeader->ShortHash());
+	fs::path zipFilePath = fs::temp_directory_path() / "Snapshots" / fileName;
+
+	const std::vector<fs::path> pathsToZip = { snapshotDir / "kernel", snapshotDir / "output", snapshotDir / "rangeproof" };
+	if (!Zipper::CreateZipFile(zipFilePath, pathsToZip))
 	{
-		LOG_ERROR_F("Failed to snapshot: {}", e.what());
 		FileUtil::RemoveFile(snapshotDir);
 		return false;
 	}
@@ -144,5 +135,5 @@ bool TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, Bl
 	// 9. Delete Snapshots/Hash folder
 	FileUtil::RemoveFile(snapshotDir);
 
-	return true;
+	return zipFilePath;
 }

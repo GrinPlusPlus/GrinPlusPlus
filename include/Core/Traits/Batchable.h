@@ -24,8 +24,8 @@ namespace Traits
 		// This can be overridden
 		virtual void OnEndWrite() { }
 
-		bool IsDirty() const { return m_dirty; }
-		void SetDirty(const bool dirty) { m_dirty = dirty; }
+		bool IsDirty() const noexcept { return m_dirty; }
+		void SetDirty(const bool dirty) noexcept { m_dirty = dirty; }
 
 	private:
 		bool m_dirty;

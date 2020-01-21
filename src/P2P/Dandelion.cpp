@@ -130,9 +130,11 @@ bool Dandelion::ProcessStemPhase()
 		return false;
 	}
 
+	// TODO: Use std::lock(m_pBlockDB, pTxHashSet) - use std::adopt_lock
+	auto locked = MultiLocker().LockShared(*m_pBlockDB, *pTxHashSet);
 	TransactionPtr pTransactionToStem = m_pTransactionPool->GetTransactionToStem(
-		m_pBlockDB->Read().GetShared(),
-		pTxHashSet->Read().GetShared()
+		std::get<0>(locked).GetShared(),
+		std::get<1>(locked).GetShared()
 	);
 	if (pTransactionToStem != nullptr)
 	{

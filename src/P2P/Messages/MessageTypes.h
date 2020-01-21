@@ -28,7 +28,9 @@ namespace MessageTypes
 		TxHashSetArchive = 17,
 		BanReasonMsg = 18,
 		GetTransactionMsg = 19,
-		TransactionKernelMsg = 20
+		TransactionKernelMsg = 20,
+		GetKernels = 21,
+		Kernels = 22
 	};
 
 	static uint64_t GetMaximumSize(const EMessageType messageType)

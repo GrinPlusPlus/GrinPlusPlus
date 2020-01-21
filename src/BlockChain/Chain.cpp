@@ -21,7 +21,7 @@ Chain::Chain(
 std::shared_ptr<Chain> Chain::Load(
 	std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
 	const EChainType chainType,
-	const std::string& path,
+	const fs::path& path,
 	std::shared_ptr<const BlockIndex> pGenesisIndex)
 {
 	std::shared_ptr<DataFile<32>> pDataFile = DataFile<32>::Load(path);

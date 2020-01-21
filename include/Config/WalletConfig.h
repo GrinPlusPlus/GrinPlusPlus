@@ -28,7 +28,7 @@ public:
 			m_publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3E, 0x4B);
 		}
 
-		m_walletPath = FileUtil::ToPath(dataPath.u8string() + "WALLET/");
+		m_walletPath = dataPath / "WALLET";
 		FileUtil::CreateDirectories(m_walletPath);
 
 		m_databaseType = "SQLITE";

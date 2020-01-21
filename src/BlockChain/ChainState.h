@@ -142,7 +142,7 @@ public:
 			}
 			else
 			{
-				return Reader<ITxHashSet>::Create(nullptr, nullptr, false);
+				return Reader<ITxHashSet>::Create(nullptr, nullptr, false, false);
 			}
 		}
 

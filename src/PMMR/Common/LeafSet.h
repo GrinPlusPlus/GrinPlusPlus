@@ -13,6 +13,8 @@
 #include <Common/Util/FileUtil.h>
 #include <Core/Serialization/Serializer.h>
 
+#include <filesystem.h>
+
 class LeafSet
 {
 public:
@@ -51,7 +53,8 @@ public:
 
 	Hash Root(const uint64_t numOutputs)
 	{
-		std::shared_ptr<HashFile> pHashFile = HashFile::Load(fs::temp_directory_path().string() + "UBMT");
+		const fs::path path = fs::temp_directory_path() / "UBMT";
+		std::shared_ptr<HashFile> pHashFile = HashFile::Load(path);
 		pHashFile->Rewind(0);
 
 		size_t index = 0;

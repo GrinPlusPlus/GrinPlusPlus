@@ -150,12 +150,6 @@ fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
 
-	const std::string destination = StringUtil::Format(
-		"{}Snapshots/TxHashSet.{}.zip",
-		fs::temp_directory_path().string(),
-		pBlockHeader->ShortHash()
-	);
-
 	return m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader);
 }
 

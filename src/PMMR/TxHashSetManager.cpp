@@ -8,6 +8,8 @@
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
+#include <filesystem.h>
+
 TxHashSetManager::TxHashSetManager(const Config& config)
 	: m_config(config), m_pTxHashSet(nullptr)
 {
@@ -111,7 +113,7 @@ fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB
 	if (!snapshotTxHashSet.Rewind(pBlockDB, *pHeader))
 	{
 		FileUtil::RemoveFile(snapshotDir);
-		return false;
+		throw std::exception();
 	}
 
 	// 6. Flush Snapshot TxHashSet
@@ -129,7 +131,7 @@ fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB
 	if (!Zipper::CreateZipFile(zipFilePath, pathsToZip))
 	{
 		FileUtil::RemoveFile(snapshotDir);
-		return false;
+		throw std::exception();
 	}
 
 	// 9. Delete Snapshots/Hash folder

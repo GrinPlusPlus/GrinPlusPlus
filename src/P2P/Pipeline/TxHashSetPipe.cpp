@@ -10,6 +10,8 @@
 #include <Infrastructure/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
+#include <filesystem.h>
+
 static const int BUFFER_SIZE = 256 * 1024;
 
 TxHashSetPipe::TxHashSetPipe(
@@ -113,7 +115,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 
 	ThreadUtil::Join(m_txHashSetThread);
 
-	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath);
+	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath.u8string());
 
 	return true;
 }

@@ -116,14 +116,14 @@ public:
 		const uint64_t lastIndex
 	) const = 0;
 
-	virtual BlockHeaderPtr GetFlushedBlockHeader() const = 0;
+	virtual BlockHeaderPtr GetFlushedBlockHeader() const noexcept = 0;
 
 
 
 	//
 	// Rewinds the kernel, output, and rangeproof MMRs to the given block.
 	//
-	virtual bool Rewind(
+	virtual void Rewind(
 		std::shared_ptr<const IBlockDB> pBlockDB,
 		const BlockHeader& header
 	) = 0;

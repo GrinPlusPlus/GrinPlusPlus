@@ -82,7 +82,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 			// to the next Dandelion relay along the stem.
 			if (!dandelion.ProcessStemPhase())
 			{
-				LOG_ERROR("Problem with stem phase");
+				LOG_TRACE("Problem with stem phase");
 			}
 
 			// Step 2: find all "ToFluff" entries in stempool from last run.
@@ -90,18 +90,18 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 			// to our pool with stem=false (which will then broadcast it).
 			if (!dandelion.ProcessFluffPhase())
 			{
-				LOG_ERROR("Problem with fluff phase");
+				LOG_TRACE("Problem with fluff phase");
 			}
 
 			// Step 3: now find all expired entries based on embargo timer.
 			if (!dandelion.ProcessExpiredEntries())
 			{
-				LOG_ERROR("Problem processing expired pool entries");
+				LOG_TRACE("Problem processing expired pool entries");
 			}
 		}
 		catch (std::exception& e)
 		{
-			LOG_ERROR_F("Exception thrown: {}", e.what());
+			LOG_DEBUG_F("Exception thrown: {}", e.what());
 		}
 	}
 

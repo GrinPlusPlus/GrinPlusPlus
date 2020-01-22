@@ -235,18 +235,20 @@ void PeerManager::UnbanPeer(const IPAddress& address)
 
 std::vector<PeerPtr> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
 {
+	const size_t numPeers = m_peersByAddress.size();
+	if (numPeers == 0)
+	{
+		return {};
+	}
+
 	std::vector<PeerPtr> peersFound;
 	const time_t currentTime = TimeUtil::Now();
 	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
-
-	size_t nextPeer = RandomNumberGenerator::GenerateRandom(0, m_peersByAddress.size() - 1);
+	
 	auto iter = m_peersByAddress.begin();
-	for (size_t i = 0; i < nextPeer; i++)
-	{
-		iter++;
-	}
+	std::advance(iter, RandomNumberGenerator::GenerateRandom(0, numPeers));
 
-	for (size_t i = 0; i < m_peersByAddress.size(); i++)
+	for (size_t i = 0; i < numPeers; i++)
 	{
 		iter++;
 		if (iter == m_peersByAddress.end())

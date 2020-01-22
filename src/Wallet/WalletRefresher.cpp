@@ -236,7 +236,7 @@ std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTi
 		auto pHeader = m_pNodeClient->GetBlockHeader(output.GetBlockHeight().value());
 		if (pHeader != nullptr)
 		{
-			return std::make_optional(TimeUtil::ToTimePoint(pHeader->GetTimestamp()));
+			return std::make_optional(TimeUtil::ToTimePoint(pHeader->GetTimestamp() * 1000));
 		}
 	}
 

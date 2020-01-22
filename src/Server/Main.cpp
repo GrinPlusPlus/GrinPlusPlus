@@ -16,6 +16,8 @@
 #include <chrono>
 #include <atomic>
 
+using namespace std::chrono;
+
 void StartServer(const Config& config, const bool headless);
 
 static void SigIntHandler(int signum)
@@ -53,13 +55,44 @@ int main(int argc, char* argv[])
 	signal(SIGABRT, SigIntHandler);
 	signal(9, SigIntHandler);
 
-	const ConfigPtr pConfig = ConfigLoader::Load(environment);
-	LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
-	mg_init_library(0);
+	ConfigPtr pConfig = nullptr;
+	try
+	{
+		pConfig = ConfigLoader::Load(environment);
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Failed to open config: \n" << e.what() << std::endl;
+		throw;
+	}
 
-	StartServer(*pConfig, headless);
+	try
+	{
+		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << "Failed to initialize logger: \n" << e.what() << std::endl;
+		throw;
+	}
 
-	mg_exit_library();
+	try
+	{
+		mg_init_library(0);
+
+		StartServer(*pConfig, headless);
+
+		mg_exit_library();
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
+		LoggerAPI::Flush();
+
+		std::cerr << e.what() << std::endl;
+		throw;
+	}
+
 	LoggerAPI::Flush();
 
 	return 0;
@@ -70,7 +103,7 @@ void StartServer(const Config& config, const bool headless)
 	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(config);
 	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(config, pNode->GetNodeClient());
 
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+	system_clock::time_point startTime = system_clock::now();
 	while (true)
 	{
 		if (ShutdownManagerAPI::WasShutdownRequested())
@@ -80,11 +113,11 @@ void StartServer(const Config& config, const bool headless)
 
 		if (!headless)
 		{
-			const int secondsRunning = (int)(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() - startTime.time_since_epoch()).count());
+			const int secondsRunning = (int)(duration_cast<seconds>(system_clock::now().time_since_epoch() - startTime.time_since_epoch()).count());
 			pNode->UpdateDisplay(secondsRunning);
 		}
 
-		ThreadUtil::SleepFor(std::chrono::seconds(1), ShutdownManagerAPI::WasShutdownRequested());
+		ThreadUtil::SleepFor(seconds(1), ShutdownManagerAPI::WasShutdownRequested());
 	}
 
 	if (!headless)

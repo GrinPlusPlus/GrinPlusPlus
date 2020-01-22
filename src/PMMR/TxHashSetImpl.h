@@ -21,7 +21,7 @@ public:
 	virtual ~TxHashSet() = default;
 
 	inline const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
-	virtual BlockHeaderPtr GetFlushedBlockHeader() const override final { return m_pBlockHeaderBackup; }
+	virtual BlockHeaderPtr GetFlushedBlockHeader() const noexcept override final { return m_pBlockHeaderBackup; }
 
 	virtual bool IsUnspent(const OutputLocation& location) const override final;
 	virtual bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const override final;
@@ -36,7 +36,7 @@ public:
 	virtual OutputRange GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
 	virtual std::vector<OutputDTO> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const override final;
 
-	virtual bool Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header) override final;
+	virtual void Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header) override final;
 	virtual void Commit() override final;
 	virtual void Rollback() override final;
 	virtual void Compact() override final;

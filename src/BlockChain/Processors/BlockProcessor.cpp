@@ -181,11 +181,13 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	// TODO: Add rewound blocks to orphan pool
 	// TODO: Add rewound transactions back to TxPool
 
-	if (pTxHashSet == nullptr || !pTxHashSet->Rewind(pBlockDB, *pCommonHeader))
+	if (pTxHashSet == nullptr)
 	{
-		LOG_ERROR_F("Failed to rewind TxHashSet to block {}", pCommonHeader->GetHash());
-		throw BLOCK_CHAIN_EXCEPTION("Failed to rewind TxHashSet");
+		LOG_ERROR("TxHashSet is null");
+		throw BLOCK_CHAIN_EXCEPTION("TxHashSet is null");
 	}
+
+	pTxHashSet->Rewind(pBlockDB, *pCommonHeader);
 
 	for (uint64_t i = commonHeight + 1; i < block.GetHeight(); i++)
 	{

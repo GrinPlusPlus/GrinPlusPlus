@@ -30,7 +30,7 @@ public:
 	fs::path SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader);
 
 private:
-	const Config& m_config;
+	const NodeConfig& m_config;
 	std::shared_ptr<Locked<ITxHashSet>> m_pTxHashSet;
 
 	// TODO: Needs mutex

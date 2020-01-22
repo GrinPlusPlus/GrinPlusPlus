@@ -281,7 +281,7 @@ std::vector<OutputDTO> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBl
 	return outputs;
 }
 
-bool TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header)
+void TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header)
 {
 	Roaring leavesToAdd;
 	while (*m_pBlockHeader != header)
@@ -293,7 +293,7 @@ bool TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHead
 		}
 		else
 		{
-			return false;
+			throw TXHASHSET_EXCEPTION(StringUtil::Format("Input bitmap not found for {}", *m_pBlockHeader));
 		}
 
 		m_pBlockHeader = pBlockDB->GetBlockHeader(m_pBlockHeader->GetPreviousBlockHash());
@@ -302,8 +302,6 @@ bool TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHead
 	m_pKernelMMR->Rewind(header.GetKernelMMRSize());
 	m_pOutputPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
 	m_pRangeProofPMMR->Rewind(header.GetOutputMMRSize(), leavesToAdd);
-
-	return true;
 }
 
 void TxHashSet::Commit()

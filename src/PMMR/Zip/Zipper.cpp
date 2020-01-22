@@ -7,13 +7,13 @@
 #include <fstream>
 #include <filesystem.h>
 
-bool Zipper::CreateZipFile(const fs::path& destination, const std::vector<fs::path>& paths)
+void Zipper::CreateZipFile(const fs::path& destination, const std::vector<fs::path>& paths)
 {
 	zipFile zf = zipOpen(destination.u8string().c_str(), APPEND_STATUS_CREATE);
 	if (zf == nullptr)
 	{
 		LOG_ERROR_F("Failed to create zip file at ({})", destination);
-		return false;
+		throw FILE_EXCEPTION_F("Failed to create zip file at ({})", destination);
 	}
 
 	try
@@ -35,16 +35,14 @@ bool Zipper::CreateZipFile(const fs::path& destination, const std::vector<fs::pa
 	{
 		LOG_ERROR_F("Failed to create zip file: {}", e.what());
 		zipClose(zf, NULL);
-		return false;
+		throw;
 	}
 
 	if (zipClose(zf, NULL))
 	{
 		LOG_ERROR_F("Failed to close zip file ({})", destination);
-		return false;
+		throw FILE_EXCEPTION_F("Failed to close zip file ({})", destination);
 	}
-
-	return true;
 }
 
 void Zipper::AddDirectory(zipFile zf, const fs::path& sourceDir, const fs::path& destDir)

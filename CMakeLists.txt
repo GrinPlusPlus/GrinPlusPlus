@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-SET(CMAKE_BUILD_TYPE Release) 
+if(MSVC)
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
+else()
+    SET(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(PORTABLE 1)
 
 if(UNIX AND NOT APPLE)
@@ -18,7 +23,7 @@ endif()
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 7)
-set(VERSION_REVISION 3)
+set(VERSION_REVISION 4)
 
 project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 

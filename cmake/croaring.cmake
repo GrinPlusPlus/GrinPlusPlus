@@ -1,2 +1,2 @@
 
-add_library(croaring STATIC ${PROJECT_SOURCE_DIR}/deps/CRoaring/roaring.c)
+add_subdirectory(${PROJECT_SOURCE_DIR}/deps/CRoaring-0.2.65)

@@ -12,5 +12,6 @@
 #pragma warning(disable:4127)
 #pragma warning(disable:4211)
 #pragma warning(disable:4244)
-#include <CRoaring/roaring.hh>
+#pragma warning(disable:4702)
+#include <roaring/roaring64map.hh>
 #pragma warning(pop)

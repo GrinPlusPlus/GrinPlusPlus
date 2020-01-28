@@ -68,7 +68,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 
 	const std::string fileName = StringUtil::Format(
 		"txhashset_{}.zip",
-		HexUtil::ShortHash(txHashSetArchiveMessage.GetBlockHash())
+		HASH::ShortHash(txHashSetArchiveMessage.GetBlockHash())
 	);
 	const fs::path txHashSetPath =  fs::temp_directory_path() / fileName;
 

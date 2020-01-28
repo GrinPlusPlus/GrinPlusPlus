@@ -86,7 +86,7 @@ public:
 	// Hashing
 	//
 	const Hash& GetHash() const { return m_proofOfWork.GetHash(); }
-	std::string ShortHash() const { return HexUtil::ShortHash(GetHash()); }
+	std::string ShortHash() const { return HASH::ShortHash(GetHash()); }
 
 	//
 	// Traits

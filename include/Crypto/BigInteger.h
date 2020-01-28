@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Core/Traits/Printable.h>
+#include <Common/Util/HexUtil.h>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -60,7 +61,7 @@ public:
 		}
 	}
 
-	inline const std::vector<unsigned char, ALLOC>& GetData() const
+	const std::vector<unsigned char, ALLOC>& GetData() const
 	{
 		return m_data;
 	}
@@ -72,7 +73,16 @@ public:
 		return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
 	}
 
-	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex);
+	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex)
+	{
+		std::vector<unsigned char, ALLOC> data = HexUtil::FromHex<ALLOC>(hex);
+		if (data.size() != NUM_BYTES)
+		{
+			throw std::exception();
+		}
+
+		return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
+	}
 
 	static CBigInteger<NUM_BYTES, ALLOC> GetMaximumValue()
 	{
@@ -85,9 +95,9 @@ public:
 		return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
 	}
 
-	inline size_t size() const { return NUM_BYTES; }
-	inline unsigned char* data() { return m_data.data(); }
-	inline const unsigned char* data() const { return m_data.data(); }
+	size_t size() const { return NUM_BYTES; }
+	unsigned char* data() { return m_data.data(); }
+	const unsigned char* data() const { return m_data.data(); }
 
 	const unsigned char* ToCharArray() const { return &m_data[0]; }
 	std::string ToHex() const
@@ -124,7 +134,7 @@ public:
 	unsigned char& operator[] (const size_t x) { return m_data[x]; }
 	const unsigned char& operator[] (const size_t x) const { return m_data[x]; }
 
-	inline bool operator<(const CBigInteger& rhs) const
+	bool operator<(const CBigInteger& rhs) const
 	{
 		if (this == &rhs)
 		{
@@ -145,12 +155,12 @@ public:
 		return false;
 	}
 
-	inline bool operator>(const CBigInteger& rhs) const
+	bool operator>(const CBigInteger& rhs) const
 	{
 		return rhs < *this;
 	}
 
-	inline bool operator==(const CBigInteger& rhs) const
+	bool operator==(const CBigInteger& rhs) const
 	{
 		if (this == &rhs)
 		{
@@ -168,22 +178,22 @@ public:
 		return true;
 	}
 
-	inline bool operator!=(const CBigInteger& rhs) const
+	bool operator!=(const CBigInteger& rhs) const
 	{
 		return !(*this == rhs);
 	}
 
-	inline bool operator<=(const CBigInteger& rhs) const
+	bool operator<=(const CBigInteger& rhs) const
 	{
 		return *this < rhs || *this == rhs;
 	}
 
-	inline bool operator>=(const CBigInteger& rhs) const
+	bool operator>=(const CBigInteger& rhs) const
 	{
 		return *this > rhs || *this == rhs;
 	}
 
-	inline CBigInteger operator^=(const CBigInteger& rhs)
+	CBigInteger operator^=(const CBigInteger& rhs)
 	{
 		*this = *this ^ rhs;
 
@@ -193,18 +203,6 @@ public:
 private:
 	std::vector<unsigned char, ALLOC> m_data;
 };
-
-template<size_t NUM_BYTES, class ALLOC>
-CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::string& hex)
-{
-	std::vector<unsigned char, ALLOC> data = HexUtil::FromHex<ALLOC>(hex);
-	if (data.size() != NUM_BYTES)
-	{
-		throw std::exception();
-	}
-
-	return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
-}
 
 #ifdef INCLUDE_TEST_MATH
 

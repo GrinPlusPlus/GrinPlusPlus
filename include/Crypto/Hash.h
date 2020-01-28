@@ -2,6 +2,7 @@
 
 #include <Crypto/BigInteger.h>
 #include <Common/Util/BitUtil.h>
+#include <Common/Util/HexUtil.h>
 
 typedef CBigInteger<32> Hash;
 
@@ -13,6 +14,7 @@ class HASH
 {
 public:
 	static inline const Hash ZERO = Hash::ValueOf(0);
+	static std::string ShortHash(const Hash& hash) { return HexUtil::ConvertToHex(hash.GetData(), 6); }
 };
 
 #define ZERO_HASH HASH::ZERO

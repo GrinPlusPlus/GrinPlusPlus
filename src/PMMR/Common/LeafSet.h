@@ -34,7 +34,7 @@ public:
 	void Rollback() { m_pBitmap->Rollback(); }
 	void Snapshot(const Hash& blockHash)
 	{
-		std::string path = m_path.u8string() + "." + HexUtil::ShortHash(blockHash);
+		std::string path = m_path.u8string() + "." + HASH::ShortHash(blockHash);
 		Roaring snapshotBitmap = m_pBitmap->ToRoaring();
 
 		const size_t numBytes = snapshotBitmap.getSizeInBytes();

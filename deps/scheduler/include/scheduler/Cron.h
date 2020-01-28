@@ -11,7 +11,11 @@ namespace Bosma {
       auto tp = Clock::from_time_t(std::mktime(&tm));
       auto tp_adjusted = tp + time;
       auto tm_adjusted = Clock::to_time_t(tp_adjusted);
+      #ifdef _WIN32
       localtime_s(&tm, &tm_adjusted);
+      #else
+      tm = *std::localtime(&tm_adjusted);
+      #endif
     }
 
     class BadCronExpression : public std::exception {
@@ -69,7 +73,13 @@ namespace Bosma {
           // get current time as a tm object
           auto now = Clock::to_time_t(from);
           std::tm next;
+
+          #ifdef _WIN32
           localtime_s(&next, &now);
+          #else
+          next = *std::localtime(&now);
+          #endif
+
           // it will always at least run the next minute
           next.tm_sec = 0;
           add(next, std::chrono::minutes(1));

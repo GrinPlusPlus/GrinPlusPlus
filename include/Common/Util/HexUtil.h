@@ -6,14 +6,14 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
-#include <Crypto/Hash.h>
 #include <Core/Serialization/EndianHelper.h>
 #include <cppcodec/hex_lower.hpp>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
-namespace HexUtil
+class HexUtil
 {
+public:
 	static bool IsValidHex(const std::string& data)
 	{
 		if (data.compare(0, 2, "0x") == 0 && data.size() > 2)
@@ -81,9 +81,4 @@ namespace HexUtil
 
 		return hex;
 	}
-
-	static std::string ShortHash(const Hash& hash)
-	{
-		return ConvertToHex(hash.GetData(), 6);
-	}
-}
+};

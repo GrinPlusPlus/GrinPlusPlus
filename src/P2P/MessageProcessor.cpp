@@ -29,6 +29,7 @@
 #include "Messages/GetTransactionMessage.h"
 #include "Messages/TransactionKernelMessage.h"
 
+#include <Core/File/FileRemover.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <P2P/Common.h>
@@ -50,13 +51,13 @@ MessageProcessor::MessageProcessor(
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
 	IBlockChainServerPtr pBlockChainServer,
-	Pipeline& pipeline,
+	const std::shared_ptr<Pipeline>& pPipeline,
 	SyncStatusConstPtr pSyncStatus)
 	: m_config(config),
 	m_connectionManager(connectionManager),
 	m_peerManager(peerManager),
 	m_pBlockChainServer(pBlockChainServer),
-	m_pipeline(pipeline),
+	m_pPipeline(pPipeline),
 	m_pSyncStatus(pSyncStatus)
 {
 
@@ -251,7 +252,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 
 				if (m_pSyncStatus->GetStatus() == ESyncStatus::SYNCING_BLOCKS)
 				{
-					m_pipeline.GetBlockPipe()->AddBlockToProcess(connectedPeer.GetPeer(), block);
+					m_pPipeline->GetBlockPipe()->AddBlockToProcess(connectedPeer.GetPeer(), block);
 				}
 				else
 				{
@@ -331,7 +332,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
 				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::STEMPOOL);
+				m_pPipeline->GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::STEMPOOL);
 
 				return EStatus::SUCCESS;
 			}
@@ -345,7 +346,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
 				TransactionPtr pTransaction = transactionMessage.GetTransaction();
 
-				return m_pipeline.GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
+				return m_pPipeline->GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
 			case TxHashSetRequest:
 			{
@@ -357,7 +358,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			{
 				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
 
-				return m_pipeline.GetTxHashSetPipe()->ReceiveTxHashSet(connectedPeer.GetPeer(), socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
+				return m_pPipeline->GetTxHashSetPipe()->ReceiveTxHashSet(connectedPeer.GetPeer(), socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
 			}
 			case GetTransactionMsg:
 			{
@@ -434,9 +435,13 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		return EStatus::UNKNOWN_ERROR;
 	}
 
+	// Hack until I can determine why zips aren't deleted.
+	FileRemover remover(zipFilePath);
+
 	std::ifstream file(zipFilePath, std::ios::in | std::ios::ate | std::ios::binary);
 	if (!file.is_open())
 	{
+		FileUtil::RemoveFile(zipFilePath);
 		return EStatus::UNKNOWN_ERROR;
 	}
 	
@@ -475,7 +480,10 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 	}
 	catch (...)
 	{
-		file.close();
+		if (file.is_open())
+		{
+			file.close();
+		}
 		FileUtil::RemoveFile(zipFilePath);
 		throw;
 	}

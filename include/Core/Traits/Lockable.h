@@ -39,7 +39,7 @@ class Reader
 public:
 	static Reader Create(std::shared_ptr<T> pObject, std::shared_ptr<std::shared_mutex> pMutex, const bool lock, const bool unlock)
 	{
-		return Reader(std::shared_ptr<InnerReader<T>>(new InnerReader<T>(pObject, pMutex, lock, unlock)));
+		return Reader(std::make_shared<InnerReader<T>>(pObject, pMutex, lock, unlock));
 	}
 
 	Reader() = default;
@@ -94,7 +94,7 @@ private:
 };
 
 template<class T>
-class Writer : virtual public Reader<T>
+class Writer : public Reader<T>
 {
 	template<class U>
 	class InnerWriter
@@ -111,28 +111,34 @@ class Writer : virtual public Reader<T>
 			OnInitWrite();
 		}
 
-		virtual ~InnerWriter()
+		~InnerWriter()
 		{
-			// Using MutexUnlocker in case exception is thrown.
-			MutexUnlocker unlocker(m_pMutex);
-
-			if (m_batched)
+			try
 			{
-				Rollback();
-			}
-			else
-			{
-				Commit();
-			}
+				// Using MutexUnlocker in case exception is thrown.
+				MutexUnlocker unlocker(m_pMutex);
+				if (m_batched)
+				{
+					Rollback();
+				}
+				else
+				{
+					Commit();
+				}
 
-			OnEndWrite();
+				OnEndWrite();
+			}
+			catch (std::exception&)
+			{
+				// TODO: Handle
+			}
 		}
 
 		void Commit()
 		{
-			if (std::is_base_of<Traits::IBatchable, U>::value)
+			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
+			if (pBatchable != nullptr)
 			{
-				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				if (pBatchable->IsDirty())
 				{
 					pBatchable->Commit();
@@ -143,9 +149,9 @@ class Writer : virtual public Reader<T>
 
 		void Rollback()
 		{
-			if (std::is_base_of<Traits::IBatchable, U>::value)
+			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
+			if (pBatchable != nullptr)
 			{
-				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				if (pBatchable->IsDirty())
 				{
 					pBatchable->Rollback();
@@ -156,9 +162,9 @@ class Writer : virtual public Reader<T>
 
 		void OnInitWrite()
 		{
-			if (std::is_base_of<Traits::IBatchable, U>::value)
+			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
+			if (pBatchable != nullptr)
 			{
-				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				pBatchable->SetDirty(true);
 				pBatchable->OnInitWrite();
 			}
@@ -166,9 +172,9 @@ class Writer : virtual public Reader<T>
 
 		void OnEndWrite()
 		{
-			if (std::is_base_of<Traits::IBatchable, U>::value)
+			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
+			if (pBatchable != nullptr)
 			{
-				auto pBatchable = (Traits::IBatchable*)m_pObject.get();
 				pBatchable->OnEndWrite();
 			}
 		}
@@ -176,10 +182,23 @@ class Writer : virtual public Reader<T>
 		bool m_batched;
 		std::shared_ptr<U> m_pObject;
 		std::shared_ptr<std::shared_mutex> m_pMutex;
+
+	private:
+		template<typename V = void, typename std::enable_if_t<std::is_polymorphic_v<U>, V>* = nullptr>
+		Traits::IBatchable* GetBatchable(const std::shared_ptr<U>& pObject) const
+		{
+			return dynamic_cast<Traits::IBatchable*>(pObject.get());
+		}
+
+		template<typename V = void, typename std::enable_if_t<!std::is_polymorphic_v<U>, V>* = nullptr>
+		Traits::IBatchable* GetBatchable(const std::shared_ptr<U>&) const
+		{
+			return nullptr;
+		}
 	};
 
 public:
-	static Writer Create(const bool batched, std::shared_ptr<T> pObject, std::shared_ptr<std::shared_mutex> pMutex, const bool lock)
+	static Writer Create(const bool batched, const std::shared_ptr<T>& pObject, const std::shared_ptr<std::shared_mutex>& pMutex, const bool lock)
 	{
 		return Writer(std::shared_ptr<InnerWriter<T>>(new InnerWriter<T>(batched, pObject, pMutex, lock)));
 	}
@@ -228,7 +247,7 @@ public:
 	}
 
 private:
-	Writer(std::shared_ptr<InnerWriter<T>> pWriter)
+	Writer(const std::shared_ptr<InnerWriter<T>>& pWriter)
 		: m_pWriter(pWriter), Reader<T>(Reader<T>::Create(pWriter->m_pObject, pWriter->m_pMutex, false, false))
 	{
 
@@ -243,13 +262,11 @@ class Locked
 	friend class MultiLocker;
 
 public:
-	Locked(std::shared_ptr<T> pObject)
+	Locked(const std::shared_ptr<T>& pObject)
 		: m_pObject(pObject), m_pMutex(std::make_shared<std::shared_mutex>())
 	{
 
 	}
-
-	virtual ~Locked() = default;
 
 	Reader<T> Read() const
 	{
@@ -273,7 +290,8 @@ public:
 
 	Writer<T> BatchWrite()
 	{
-		if (!std::is_base_of<Traits::IBatchable, T>::value)
+		Traits::IBatchable* pBatchable = dynamic_cast<Traits::IBatchable*>(m_pObject.get());
+		if (pBatchable == nullptr)
 		{
 			throw UNIMPLEMENTED_EXCEPTION;
 		}
@@ -283,7 +301,8 @@ public:
 
 	Writer<T> BatchWrite(std::adopt_lock_t)
 	{
-		if (!std::is_base_of<Traits::IBatchable, T>::value)
+		Traits::IBatchable* pBatchable = dynamic_cast<Traits::IBatchable*>(m_pObject.get());
+		if (pBatchable == nullptr)
 		{
 			throw UNIMPLEMENTED_EXCEPTION;
 		}

@@ -6,6 +6,7 @@
 #include <filesystem.h>
 #include <stdlib.h>
 #include <Common/Util/StringUtil.h>
+#include <Infrastructure/Logger.h>
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -48,10 +49,7 @@ public:
 	static bool RenameFile(const fs::path& source, const fs::path& destination)
 	{
 		const fs::path destinationPath(destination);
-		if (fs::exists(destinationPath))
-		{
-			fs::remove(destinationPath);
-		}
+		fs::remove(destinationPath);
 
 		std::error_code error;
 		const fs::path sourcePath(source);
@@ -91,20 +89,21 @@ public:
 	static bool RemoveFile(const fs::path& filePath)
 	{
 		std::error_code ec;
-		if (fs::exists(filePath, ec))
-		{
-			const uintmax_t removed = fs::remove_all(filePath, ec);
+		const uintmax_t removed = fs::remove_all(filePath, ec);
 
-			return removed > 0 && ec.value() == 0;
-		}
+		LOG_INFO_F("Removed {} with status {}", filePath, ec.message());
 
-		return false;
+		return removed > 0 && ec.value() == 0;
 	}
 
 	static void CopyDirectory(const fs::path& sourceDir, const fs::path& destDir)
 	{
 		std::error_code ec;
 		fs::create_directories(destDir, ec);
+		if (ec)
+		{
+			throw std::system_error(ec);
+		}
 
 		if (!fs::exists(sourceDir, ec) || !fs::exists(destDir, ec))
 		{
@@ -136,12 +135,14 @@ public:
 		char homeDriveBuf[MAX_PATH_LEN];
 		size_t homeDriveLen = MAX_PATH_LEN;
 		getenv_s(&homeDriveLen, homeDriveBuf, sizeof(homeDriveBuf) - 1, "HOMEDRIVE");
+		std::string homeDrive(homeDriveBuf, (std::max)(1ULL, homeDriveLen) - 1);
 
 		char homePathBuf[MAX_PATH_LEN];
 		size_t homePathLen = MAX_PATH_LEN;
 		getenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, "HOMEPATH");
+		std::string homePath(homePathBuf, (std::max)(1ULL, homePathLen) - 1);
 
-		return std::string(&homeDriveBuf[0]) + std::string(&homePathBuf[0]);
+		return fs::path(homeDrive + homePath);
 		#else
 		char* pHomePath = getenv("HOME");
 		if (pHomePath != nullptr)
@@ -206,14 +207,15 @@ public:
 					iter.increment(ec);
 					if (ec)
 					{
-						//std::cerr << "Error While Accessing : " << iter->path().string() << " :: " << ec.message() << '\n';
+						LOG_ERROR_F("Error While Accessing: ({}) - {}", iter->path().string(), ec.message());
+						break;
 					}
 				}
 			}
 		}
-		catch (std::system_error&)
+		catch (const std::exception& e)
 		{
-			//std::cerr << "Exception :: " << e.what();
+			LOG_ERROR_F("Exception thrown: {}", e);
 		}
 
 		return listOfFiles;

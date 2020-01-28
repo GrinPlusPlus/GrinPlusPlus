@@ -4,7 +4,7 @@
 #include <optional>
 #include <json/json.h>
 
-#define RPC_EXCEPTION(msg, id) RPCException(__FUNCTION__, msg, id)
+#define RPC_EXCEPTION(msg, id) RPCException(__func__, msg, id)
 
 class RPCException : public std::exception
 {

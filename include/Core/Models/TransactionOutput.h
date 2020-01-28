@@ -18,7 +18,7 @@
 ////////////////////////////////////////
 // TRANSACTION OUTPUT
 ////////////////////////////////////////
-class TransactionOutput : public Traits::ICommitted, Traits::IHashable, Traits::IPrintable
+class TransactionOutput : public Traits::ICommitted, public Traits::IHashable, public Traits::IPrintable
 {
 public:
 	//

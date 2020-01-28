@@ -3,7 +3,7 @@
 #include <exception>
 #include <string>
 
-#define SOCKS_EXCEPTION(msg) SOCKSException(__FUNCTION__, msg)
+#define SOCKS_EXCEPTION(msg) SOCKSException(__func__, msg)
 
 class SOCKSException : public std::exception
 {

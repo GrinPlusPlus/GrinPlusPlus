@@ -36,7 +36,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 {
 	// Validate inputs
 	const uint64_t maximumBlockHeight = (std::max)(m_pBlockHeader->GetHeight() + 1, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
-	for (const TransactionInput& input : transaction.GetBody().GetInputs())
+	for (const TransactionInput& input : transaction.GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(commitment);
@@ -63,7 +63,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 	}
 
 	// Validate outputs
-	for (const TransactionOutput& output : transaction.GetBody().GetOutputs())
+	for (const TransactionOutput& output : transaction.GetOutputs())
 	{
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(output.GetCommitment());
 		if (pOutputPosition != nullptr)

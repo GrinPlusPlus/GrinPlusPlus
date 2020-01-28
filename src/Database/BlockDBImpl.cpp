@@ -41,7 +41,7 @@ BlockDB::~BlockDB()
 	delete m_pBlockSumsHandle;
 	delete m_pOutputPosHandle;
 	delete m_pInputBitmapHandle;
-	delete m_pDatabase;
+	delete m_pTransactionDB;
 }
 
 std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)

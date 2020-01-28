@@ -2,7 +2,7 @@
 
 #include <exception>
 
-#define WALLET_STORE_EXCEPTION(msg) WalletStoreException(msg, __FUNCTION__)
+#define WALLET_STORE_EXCEPTION(msg) WalletStoreException(msg, __func__)
 
 class WalletStoreException : public std::exception
 {

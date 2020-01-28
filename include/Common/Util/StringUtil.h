@@ -21,7 +21,7 @@ public:
 	template<typename ... Args>
 	static std::string Format(const std::string& format, const Args& ... args)
 	{
-		return Format2(format, convert_for_snprintf(args) ...);
+		return fmt::format(format, ConvertParam(args) ...);
 	}
 
 	static bool StartsWith(const std::string& value, const std::string& beginning)
@@ -129,41 +129,48 @@ private:
 		return fmt::format(format, args ...);
 	}
 
-	static decltype(auto) convert_for_snprintf(const std::string& x)
+	static std::string ConvertParam(const std::string& x)
 	{
 		return x;
 	}
 
-	static decltype(auto) convert_for_snprintf(const std::wstring& x)
+	static std::string ConvertParam(const char* x)
+	{
+		return std::string(x);
+	}
+
+	static std::string ConvertParam(const std::wstring& x)
 	{
 		return StringUtil::ToUTF8(x);
 	}
 
-	static decltype(auto) convert_for_snprintf(const fs::path& path)
+	static std::string ConvertParam(const fs::path& path)
 	{
 		return path.u8string();
 	}
 
-	template <class T>
-	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, std::string>::type convert_for_snprintf(const T& x)
+	static std::string ConvertParam(const Traits::IPrintable& x)
 	{
 		return x.Format();
 	}
 
-	template <class T>
-	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, std::string>::type convert_for_snprintf(const std::shared_ptr<const T>& x)
+	static std::string ConvertParam(const std::shared_ptr<const Traits::IPrintable>& x)
 	{
+		if (x == nullptr)
+		{
+			return "NULL";
+		}
+
 		return x->Format();
 	}
 
-	template <class T>
-	static typename std::enable_if<std::is_base_of<Traits::IPrintable, T>::value, std::string>::type convert_for_snprintf(const std::shared_ptr<T>& x)
+	static std::string ConvertParam(const std::exception& e)
 	{
-		return x->Format();
+		return std::string(e.what());
 	}
 
-	template <class T>
-	static typename std::enable_if<!std::is_base_of<Traits::IPrintable, T>::value, T>::type convert_for_snprintf(const T& x)
+	template <class T, typename SFINAE = std::enable_if_t<std::is_fundamental_v<T>>>
+	static decltype(auto) ConvertParam(const T& x)
 	{
 		return x;
 	}

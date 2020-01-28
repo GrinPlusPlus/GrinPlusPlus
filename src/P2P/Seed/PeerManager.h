@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Context.h>
 #include <Net/IPAddress.h>
 #include <Net/SocketAddress.h>
 #include <P2P/Peer.h>
@@ -19,7 +20,7 @@
 class PeerManager
 {
 public:
-	static Locked<PeerManager> Create(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	static Locked<PeerManager> Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 	~PeerManager();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
@@ -41,7 +42,7 @@ public:
 	// TODO: RemovePeer
 
 private:
-	PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 
 	struct PeerEntry
 	{
@@ -61,11 +62,11 @@ private:
 		time_t m_lastAttempt;
 	};
 
-	static void Thread_ManagePeers(Locked<PeerManager> peerManager, const std::atomic_bool& terminate);
+	static void Thread_ManagePeers(PeerManager& peerManager);
 
 	std::vector<PeerPtr> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
-	const Config& m_config;
+	Context::Ptr m_pContext;
 	std::shared_ptr<Locked<IPeerDB>> m_pPeerDB;
 
 	std::atomic_bool m_terminate;

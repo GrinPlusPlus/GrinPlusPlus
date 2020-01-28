@@ -1,7 +1,6 @@
 #include <catch.hpp>
 
 #include <Net/Tor/TorAddressParser.h>
-#include <Common/Base64.h>
 
 TEST_CASE("TorAddressParser - Valid Addresses")
 {

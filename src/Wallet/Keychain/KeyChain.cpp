@@ -66,7 +66,7 @@ std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commi
 	{
 		PublicKey masterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey());
 
-		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedBytes().GetData());
+		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedVec());
 
 		return Crypto::RewindRangeProof(commitment, rangeProof, CreateNonce(commitment, rewindNonceHash));
 	}
@@ -94,7 +94,7 @@ RangeProof KeyChain::GenerateRangeProof(
 		const SecretKey privateNonceHash = Crypto::Blake2b(m_masterKey.GetPrivateKey().GetVec());
 
 		PublicKey masterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey());
-		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedBytes().GetData());
+		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedVec());
 
 		return Crypto::GenerateRangeProof(amount, blindingFactor, CreateNonce(commitment, privateNonceHash), CreateNonce(commitment, rewindNonceHash), proofMessage);
 	}

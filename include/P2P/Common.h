@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <Consensus/BlockWeight.h>
+#include <GrinVersion.h>
 
 namespace P2P
 {
@@ -12,7 +13,7 @@ namespace P2P
 	static const uint32_t PROTOCOL_VERSION = 1;
 
 	// Grin's user agent with current version
-	static const std::string USER_AGENT = GRINPP_USER_AGENT;
+	static const std::string USER_AGENT = "Grin++ " + GRINPP_VERSION;
 
 	// Size in bytes of a message header
 	static const uint64_t HEADER_LENGTH = 11;

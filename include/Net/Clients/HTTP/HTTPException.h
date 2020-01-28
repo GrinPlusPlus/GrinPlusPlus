@@ -3,7 +3,7 @@
 #include <exception>
 #include <string>
 
-#define HTTP_EXCEPTION(msg) HTTPException(__FUNCTION__, msg)
+#define HTTP_EXCEPTION(msg) HTTPException(__func__, msg)
 
 class HTTPException : public std::exception
 {

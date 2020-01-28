@@ -3,37 +3,37 @@
 #include <string>
 #include <chrono>
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <stdint.h>
 
 class TimeUtil
 {
 public:
-	static std::string FormatLocal(const int64_t timestamp, const std::string format = "%Y-%m-%d %H:%M:%S%z")
+	static std::string FormatLocal(const int64_t timestamp)
 	{
-		std::time_t time(timestamp);
-		std::tm tm;
-		#ifdef _WIN32
-		localtime_s(&tm, &time);
-		#else
-		tm = *localtime(&time);
-		#endif
-		char buffer[32];
-		std::strftime(buffer, 32, format.c_str(), &tm);
-		return std::string(buffer);
+		return Format(timestamp, "%Y-%m-%d %H:%M:%S%z");
 	}
 
-	static std::string FormatUTC(const int64_t timestamp, const std::string format = "%Y-%m-%d %H:%M:%S UTC")
+	static std::string FormatUTC(const int64_t timestamp)
+	{
+		return Format(timestamp, "%Y-%m-%d %H:%M:%S UTC");
+	}
+
+	static std::string Format(const int64_t timestamp, const std::string& format)
 	{
 		std::time_t time(timestamp);
+
 		std::tm tm;
-		#ifdef _WIN32
+#ifdef _WIN32
 		localtime_s(&tm, &time);
-		#else
+#else
 		tm = *localtime(&time);
-		#endif
-		char buffer[32];
-		std::strftime(buffer, 32, format.c_str(), &tm);
-		return std::string(buffer);
+#endif
+
+		std::ostringstream stream;
+		stream << std::put_time(&tm, format.c_str());
+		return stream.str();
 	}
 
 	static int64_t ToInt64(const std::chrono::system_clock::time_point& timePoint)

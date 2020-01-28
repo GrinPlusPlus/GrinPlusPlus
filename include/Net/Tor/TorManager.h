@@ -19,6 +19,8 @@ public:
 
 	std::shared_ptr<TorConnection> Connect(const TorAddress& address);
 
+	void RetryInit();
+
 private:
 	TorManager(const TorConfig& config);
 

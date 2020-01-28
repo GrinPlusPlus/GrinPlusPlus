@@ -6,6 +6,7 @@
 
 #include <Common/ImportExport.h>
 #include <Crypto/BigInteger.h>
+#include <Core/Context.h>
 #include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/Peer.h>
@@ -21,7 +22,6 @@
 #endif
 
 // Forward Declarations
-class Config;
 class IBlockChainServer;
 class IDatabase;
 
@@ -71,7 +71,7 @@ namespace P2PAPI
 	// Creates a new instance of the P2P Server.
 	//
 	P2P_API IP2PServerPtr StartP2PServer(
-		const Config& config,
+		const Context::Ptr& pContext,
 		IBlockChainServerPtr pBlockChainServer,
 		TxHashSetManagerConstPtr pTxHashSetManager,
 		IDatabasePtr pDatabase,

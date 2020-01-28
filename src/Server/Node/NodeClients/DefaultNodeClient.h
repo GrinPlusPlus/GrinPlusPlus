@@ -1,7 +1,8 @@
 #pragma once
 
-#include "..//NodeContext.h"
+#include "../NodeContext.h"
 
+#include <Core/Context.h>
 #include <Wallet/NodeClient.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Database/Database.h>
@@ -26,13 +27,13 @@ public:
 
 	}
 
-	static std::shared_ptr<DefaultNodeClient> Create(const Config& config)
+	static std::shared_ptr<DefaultNodeClient> Create(const Context::Ptr& pContext)
 	{
-		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(config);
-		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(config));
-		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(config, pTxHashSetManager);
-		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(config, pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
-		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(config, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
+		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(pContext->GetConfig());
+		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(pContext->GetConfig()));
+		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig(), pTxHashSetManager);
+		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(pContext->GetConfig(), pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
+		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(pContext, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
 
 		return std::make_shared<DefaultNodeClient>(DefaultNodeClient(pDatabase, pTxHashSetManager, pTransactionPool, pBlockChainServer, pP2PServer));
 	}

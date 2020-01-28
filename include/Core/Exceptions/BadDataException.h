@@ -2,7 +2,7 @@
 
 #include <Core/Exceptions/GrinException.h>
 
-#define BAD_DATA_EXCEPTION(msg) BadDataException(msg, __FUNCTION__)
+#define BAD_DATA_EXCEPTION(msg) BadDataException(msg, __func__)
 
 class BadDataException : public GrinException
 {

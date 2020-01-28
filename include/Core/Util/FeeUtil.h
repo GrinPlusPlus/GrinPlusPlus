@@ -11,7 +11,7 @@ public:
 	static uint64_t CalculateActualFee(const Transaction& transaction)
 	{
 		uint64_t fee = 0;
-		for (auto& kernel : transaction.GetBody().GetKernels())
+		for (auto& kernel : transaction.GetKernels())
 		{
 			fee += kernel.GetFee();
 		}
@@ -21,9 +21,9 @@ public:
 
 	static uint64_t CalculateMinimumFee(const uint64_t feeBase, const Transaction& transaction)
 	{
-		const size_t numInputs = transaction.GetBody().GetInputs().size();
-		const size_t numOutputs = transaction.GetBody().GetOutputs().size();
-		const size_t numKernels = transaction.GetBody().GetKernels().size();
+		const size_t numInputs = transaction.GetInputs().size();
+		const size_t numOutputs = transaction.GetOutputs().size();
+		const size_t numKernels = transaction.GetKernels().size();
 
 		return CalculateFee(feeBase, (int64_t)numInputs, (int64_t)numOutputs, (int64_t)numKernels);
 	}

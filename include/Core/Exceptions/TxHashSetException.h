@@ -2,7 +2,7 @@
 
 #include <Core/Exceptions/GrinException.h>
 
-#define TXHASHSET_EXCEPTION(msg) TxHashSetException(msg, __FUNCTION__)
+#define TXHASHSET_EXCEPTION(msg) TxHashSetException(msg, __func__)
 
 class TxHashSetException : public GrinException
 {

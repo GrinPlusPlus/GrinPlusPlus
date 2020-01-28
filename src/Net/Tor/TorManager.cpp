@@ -15,9 +15,17 @@ TorManager& TorManager::GetInstance(const TorConfig& config)
 TorManager::TorManager(const TorConfig& config)
 	: m_torConfig(config)
 {
-	if (m_torConfig.IsEnabled())
+	//if (m_torConfig.IsEnabled())
 	{
 		m_pControl = TorControl::Create(config);
+	}
+}
+
+void TorManager::RetryInit()
+{
+	if (m_pControl == nullptr)
+	{
+		m_pControl = TorControl::Create(m_torConfig);
 	}
 }
 

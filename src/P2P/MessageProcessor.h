@@ -36,7 +36,7 @@ public:
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		IBlockChainServerPtr pBlockChainServer,
-		Pipeline& pipeline,
+		const std::shared_ptr<Pipeline>& pipeline,
 		SyncStatusConstPtr pSyncStatus
 	);
 
@@ -50,6 +50,6 @@ private:
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
 	IBlockChainServerPtr m_pBlockChainServer;
-	Pipeline& m_pipeline;
+	std::shared_ptr<Pipeline> m_pPipeline;
 	SyncStatusConstPtr m_pSyncStatus;
 };

@@ -194,51 +194,16 @@ private:
 	std::vector<unsigned char, ALLOC> m_data;
 };
 
-static inline unsigned char FromHexChar(const char value)
-{
-	if (value <= '9' && value >= 0)
-	{
-		return (unsigned char)(value - '0');
-	}
-
-	if (value >= 'a')
-	{
-		return (unsigned char)(10 + value - 'a');
-	}
-
-	return (unsigned char)(10 + value - 'A');
-}
-
 template<size_t NUM_BYTES, class ALLOC>
 CBigInteger<NUM_BYTES, ALLOC> CBigInteger<NUM_BYTES, ALLOC>::FromHex(const std::string& hex)
 {
-	size_t index = 0;
-	if (hex[0] == '0' && hex[1] == 'x')
-	{
-		index = 2;
-	}
-
-	std::string hexNoSpaces = "";
-	for (size_t i = index; i < hex.length(); i++)
-	{
-		if (hex[i] != ' ')
-		{
-			hexNoSpaces += hex[i];
-		}
-	}
-
-	if (hexNoSpaces.length() != NUM_BYTES * 2)
+	std::vector<unsigned char, ALLOC> data = HexUtil::FromHex<ALLOC>(hex);
+	if (data.size() != NUM_BYTES)
 	{
 		throw std::exception();
 	}
 
-	std::vector<unsigned char, ALLOC> data(NUM_BYTES);
-	for (size_t i = 0; i < hexNoSpaces.length(); i += 2)
-	{
-		data[i / 2] = (FromHexChar(hexNoSpaces[i]) * 16 + FromHexChar(hexNoSpaces[i + 1]));
-	}
-
-	return CBigInteger<NUM_BYTES, ALLOC>(&data[0]);
+	return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
 }
 
 #ifdef INCLUDE_TEST_MATH

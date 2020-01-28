@@ -11,7 +11,7 @@ public:
 	static Commitment CalculateFinalExcess(const Slate& slate)
 	{
 		const Transaction& transaction = slate.GetTransaction();
-		const TransactionKernel& kernel = slate.GetTransaction().GetBody().GetKernels().front();
+		const TransactionKernel& kernel = slate.GetTransaction().GetKernels().front();
 
 		// Build the final excess based on final tx and offset
 		std::vector<Commitment> inputCommitments;

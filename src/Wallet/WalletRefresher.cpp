@@ -208,7 +208,7 @@ void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer
 	{
 		if (walletTx.GetTransaction().has_value() && walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 		{
-			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetBody().GetOutputs();
+			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetOutputs();
 			for (const TransactionOutput& output : outputs)
 			{
 				std::unique_ptr<OutputDataEntity> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());

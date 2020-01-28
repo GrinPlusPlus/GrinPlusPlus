@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Common/Base64.h>
 #include <Common/Secure.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
+#include <cppcodec/base64_rfc4648.hpp>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -28,12 +28,12 @@ public:
 		serializer.AppendByteVector(m_tokenKey);
 		const std::vector<unsigned char> serialized = serializer.GetBytes();
 		
-		return Base64::EncodeBase64(serialized);
+		return cppcodec::base64_rfc4648::encode(serialized);
 	}
 
 	static SessionToken FromBase64(const std::string& encoded)
 	{
-		const std::vector<unsigned char> serialized = Base64::DecodeBase64(encoded);
+		const std::vector<unsigned char> serialized = cppcodec::base64_rfc4648::decode(encoded);
 		ByteBuffer byteBuffer(serialized);
 
 		const uint64_t sessionId = byteBuffer.ReadU64();

@@ -183,10 +183,6 @@ ConnectionPtr Seeder::SeedNewConnection()
 
 		m_peerManager.Write()->AddFreshPeers(peerAddresses);
 	}
-	else
-	{
-		m_connectionManager.BroadcastMessage(GetPeerAddressesMessage(Capabilities::FAST_SYNC_NODE), 0);
-	}
 
 	return nullptr;
 }

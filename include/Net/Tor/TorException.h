@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#define TOR_EXCEPTION(message) TorException(message, __FUNCTION__)
+#define TOR_EXCEPTION(message) TorException(message, __func__)
 
 class TorException : public std::logic_error
 {

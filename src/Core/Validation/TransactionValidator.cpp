@@ -50,7 +50,7 @@ void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 void TransactionValidator::ValidateKernelSums(const Transaction& transaction) const
 {
 	// Calculate overage
-	const std::vector<TransactionKernel>& blockKernels = transaction.GetBody().GetKernels();
+	const std::vector<TransactionKernel>& blockKernels = transaction.GetKernels();
 	const int64_t overage = std::accumulate(
 		blockKernels.cbegin(),
 		blockKernels.cend(),

@@ -2,7 +2,7 @@
 
 #include <Core/Exceptions/GrinException.h>
 
-#define DESERIALIZATION_EXCEPTION() DeserializationException("Attempted to read past end of ByteBuffer.", __FUNCTION__)
+#define DESERIALIZATION_EXCEPTION() DeserializationException("Attempted to read past end of ByteBuffer.", __func__)
 
 class DeserializationException : public GrinException
 {

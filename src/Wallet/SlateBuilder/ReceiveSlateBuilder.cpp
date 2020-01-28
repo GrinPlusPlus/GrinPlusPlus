@@ -70,7 +70,7 @@ bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, con
 	// TODO: Verify fees
 
 	// Generate message
-	const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetBody().GetKernels();
+	const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetKernels();
 	if (kernels.size() != 1)
 	{
 		WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
@@ -82,7 +82,7 @@ bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, con
 
 void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const
 {
-	const Hash kernelMessage = slate.GetTransaction().GetBody().GetKernels().front().GetSignatureMessage();
+	const Hash kernelMessage = slate.GetTransaction().GetKernels().front().GetSignatureMessage();
 
 	PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
 	PublicKey publicNonce = Crypto::CalculatePublicKey(secretNonce);

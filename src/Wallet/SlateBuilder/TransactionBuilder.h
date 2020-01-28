@@ -33,9 +33,9 @@ public:
 
 	static Transaction AddOutput(const Transaction& transaction, const TransactionOutput& output)
 	{
-		std::vector<TransactionInput> inputs = transaction.GetBody().GetInputs();
-		std::vector<TransactionKernel> kernels = transaction.GetBody().GetKernels();
-		std::vector<TransactionOutput> outputs = transaction.GetBody().GetOutputs();
+		std::vector<TransactionInput> inputs = transaction.GetInputs();
+		std::vector<TransactionKernel> kernels = transaction.GetKernels();
+		std::vector<TransactionOutput> outputs = transaction.GetOutputs();
 		outputs.push_back(output);
 		std::sort(outputs.begin(), outputs.end(), SortOutputsByHash);
 
@@ -45,8 +45,8 @@ public:
 
 	static Transaction ReplaceKernel(const Transaction& transaction, const TransactionKernel& kernel)
 	{
-		std::vector<TransactionInput> inputs = transaction.GetBody().GetInputs();
-		std::vector<TransactionOutput> outputs = transaction.GetBody().GetOutputs();
+		std::vector<TransactionInput> inputs = transaction.GetInputs();
+		std::vector<TransactionOutput> outputs = transaction.GetOutputs();
 		std::vector<TransactionKernel> kernels = std::vector<TransactionKernel>({ kernel });
 		TransactionBody transactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
 		return Transaction(BlindingFactor(transaction.GetOffset()), std::move(transactionBody));

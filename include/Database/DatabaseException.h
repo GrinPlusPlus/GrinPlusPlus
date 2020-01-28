@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#define DATABASE_EXCEPTION(msg) DatabaseException(msg, __FUNCTION__)
+#define DATABASE_EXCEPTION(msg) DatabaseException(msg, __func__)
 
 class DatabaseException : public std::exception
 {

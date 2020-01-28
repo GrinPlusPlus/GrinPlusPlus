@@ -35,7 +35,7 @@ P2PServer::~P2PServer()
 }
 
 std::shared_ptr<P2PServer> P2PServer::Create(
-	const Config& config,
+	const Context::Ptr& pContext,
 	std::shared_ptr<IBlockChainServer> pBlockChainServer,
 	TxHashSetManagerConstPtr pTxHashSetManager,
 	std::shared_ptr<IDatabase> pDatabase,
@@ -46,12 +46,14 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 
 	// Peer Manager
 	Locked<PeerManager> peerManager = PeerManager::Create(
-		config,
+		pContext,
 		pDatabase->GetPeerDB()
 	);
 
 	// Connection Manager
 	ConnectionManagerPtr pConnectionManager = ConnectionManager::Create();
+
+	const Config& config = pContext->GetConfig();
 
 	// Pipeline
 	std::shared_ptr<Pipeline> pPipeline = Pipeline::Create(
@@ -173,12 +175,12 @@ void P2PServer::BroadcastTransaction(const TransactionPtr& pTransaction)
 namespace P2PAPI
 {
 	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(
-		const Config& config,
+		const Context::Ptr& pContext,
 		IBlockChainServerPtr pBlockChainServer,
 		TxHashSetManagerConstPtr pTxHashSetManager,
 		IDatabasePtr pDatabase,
 		ITransactionPoolPtr pTransactionPool)
 	{
-		return P2PServer::Create(config, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
+		return P2PServer::Create(pContext, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
 	}
 }

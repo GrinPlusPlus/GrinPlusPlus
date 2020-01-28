@@ -2,7 +2,7 @@
 
 #include <Core/Exceptions/GrinException.h>
 
-#define BLOCK_CHAIN_EXCEPTION(msg) BlockChainException(msg, __FUNCTION__)
+#define BLOCK_CHAIN_EXCEPTION(msg) BlockChainException(msg, __func__)
 
 class BlockChainException : public GrinException
 {

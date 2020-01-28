@@ -4,7 +4,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment ve
 if(MSVC)
     SET(CMAKE_BUILD_TYPE RelWithDebInfo)
 else()
-    SET(CMAKE_BUILD_TYPE Release)
+    #SET(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(PORTABLE 1)
@@ -21,11 +21,7 @@ elseif(LINUX)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 7)
-set(VERSION_REVISION 4)
-
-project(GRIN_PLUS_PLUS VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
+project(GRIN_PLUS_PLUS)
 
 message("Grin++ Version: ${PROJECT_VERSION}")
 
@@ -65,8 +61,14 @@ set(WITH_GFLAGS OFF)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
 add_definitions(-DASIO_STANDALONE)
-add_definitions(-DGRINPP_USER_AGENT="Grin++ ${PROJECT_VERSION}")
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
+
+include(CheckFunctionExists)
+set(CMAKE_REQUIRED_INCLUDES string.h)
+CHECK_FUNCTION_EXISTS(memset_s HAS_MEMSET_S)
+if (HAS_MEMSET_S)
+	add_definitions(-DHAS_MEMSET_S)
+endif ()
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include

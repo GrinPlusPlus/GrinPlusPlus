@@ -8,21 +8,20 @@
 #include <Infrastructure/ThreadManager.h>
 #include <Crypto/RandomNumberGenerator.h>
 
-PeerManager::PeerManager(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
-	: m_config(config), m_pPeerDB(pPeerDB), m_terminate(false)
+PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
+	: m_pContext(pContext), m_pPeerDB(pPeerDB), m_terminate(false)
 {
 
 }
 
 PeerManager::~PeerManager()
 {
-	m_terminate = true;
-	ThreadUtil::Join(m_peerThread);
+	Thread_ManagePeers(*this);
 }
 
-Locked<PeerManager> PeerManager::Create(const Config& config, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
+Locked<PeerManager> PeerManager::Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
 {
-	std::shared_ptr<PeerManager> pPeerManager = std::shared_ptr<PeerManager>(new PeerManager(config, pPeerDB));
+	std::shared_ptr<PeerManager> pPeerManager = std::shared_ptr<PeerManager>(new PeerManager(pContext, pPeerDB));
 
 	pPeerManager->m_peersByAddress.clear();
 	const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
@@ -32,20 +31,22 @@ Locked<PeerManager> PeerManager::Create(const Config& config, std::shared_ptr<Lo
 	}
 
 	Locked<PeerManager> peerManager(pPeerManager);
-	pPeerManager->m_peerThread = std::thread(PeerManager::Thread_ManagePeers, peerManager, std::ref(pPeerManager->m_terminate));
+
+	pContext->GetScheduler()->interval(std::chrono::seconds(15), [peerManager]() {
+		auto pWriter = Locked<PeerManager>(peerManager).Write();
+		PeerManager::Thread_ManagePeers(*pWriter.GetShared());
+	});
 
 	return peerManager;
 }
 
-void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std::atomic_bool& terminate)
+void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 {
 	ThreadManagerAPI::SetCurrentThreadName("PEER_MANAGER");
 	LOG_TRACE("BEGIN");
 
-	while (!terminate)
+	try
 	{
-		ThreadUtil::SleepFor(std::chrono::seconds(15), terminate);
-
 		std::vector<PeerPtr> peersToUpdate;
 		std::vector<PeerPtr> peersToDelete;
 
@@ -54,8 +55,7 @@ void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std:
 				std::chrono::system_clock::now() - std::chrono::hours(24 * 7)
 			);
 
-			auto pWriter = peerManager.Write();
-			for (auto iter : pWriter->m_peersByAddress)
+			for (auto iter : peerManager.m_peersByAddress)
 			{
 				PeerEntry& peerEntry = iter.second;
 				if (peerEntry.m_peer->IsDirty())
@@ -71,12 +71,16 @@ void PeerManager::Thread_ManagePeers(Locked<PeerManager> peerManager, const std:
 
 			for (PeerPtr pPeer : peersToDelete)
 			{
-				pWriter->m_peersByAddress.erase(pPeer->GetIPAddress());
+				peerManager.m_peersByAddress.erase(pPeer->GetIPAddress());
 			}
 		}
 
-		peerManager.Write()->m_pPeerDB->Write()->SavePeers(peersToUpdate);
-		peerManager.Write()->m_pPeerDB->Write()->DeletePeers(peersToDelete);
+		peerManager.m_pPeerDB->Write()->SavePeers(peersToUpdate);
+		peerManager.m_pPeerDB->Write()->DeletePeers(peersToDelete);
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
 
 	LOG_TRACE("END");

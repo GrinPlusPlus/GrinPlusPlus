@@ -71,7 +71,7 @@ std::shared_ptr<Connection> Connection::Create(
 		connectionManager,
 		peerManager,
 		pBlockChainServer,
-		*pPipeline,
+		pPipeline,
 		pSyncStatus
 	);
 	auto pMessageRetriever = std::make_shared<MessageRetriever>(config, connectionManager);

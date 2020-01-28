@@ -3,9 +3,9 @@
 #include <Net/Tor/TorException.h>
 #include <filesystem.h>
 #include <Crypto/Crypto.h>
-#include <Common/Base64.h>
 #include <Net/SocketException.h>
 #include <Common/Util/StringUtil.h>
+#include <cppcodec/base64_rfc4648.hpp>
 
 TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::CPtr pProcess)
 	: m_torConfig(config), m_pClient(pClient), m_pProcess(pProcess)
@@ -28,6 +28,13 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 
 		// TODO: Determine if process is already running.
 		ChildProcess::CPtr pProcess = ChildProcess::Create(args);
+		if (pProcess = nullptr)
+		{
+			// Fallback to tor on path
+			args[0] = "tor";
+			pProcess = ChildProcess::Create(args);
+		}
+
 		std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
 
 		bool connected = false;
@@ -70,7 +77,7 @@ bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const s
 
 std::string TorControl::AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort)
 {
-	std::string serializedKey = Base64::EncodeBase64(secretKey.GetVec());
+	std::string serializedKey = cppcodec::base64_rfc4648::encode(secretKey.GetVec());
 
 	return AddOnion(serializedKey, externalPort, internalPort);
 }

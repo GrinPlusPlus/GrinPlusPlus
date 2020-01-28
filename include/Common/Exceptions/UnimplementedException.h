@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#define UNIMPLEMENTED_EXCEPTION UnimplementedException("Not Implemented", __FUNCTION__)
+#define UNIMPLEMENTED_EXCEPTION UnimplementedException("Not Implemented", __func__)
 
 class UnimplementedException : public std::logic_error
 {

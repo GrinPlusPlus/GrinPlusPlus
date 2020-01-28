@@ -2,6 +2,7 @@
 #include "Wallet/WalletDaemon.h"
 #include "civetweb/include/civetweb.h"
 
+#include <Core/Context.h>
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
 #include <Infrastructure/ShutdownManager.h>
@@ -18,7 +19,7 @@
 
 using namespace std::chrono;
 
-void StartServer(const Config& config, const bool headless);
+void StartServer(const ConfigPtr& pConfig, const bool headless);
 
 static void SigIntHandler(int signum)
 {
@@ -80,7 +81,7 @@ int main(int argc, char* argv[])
 	{
 		mg_init_library(0);
 
-		StartServer(*pConfig, headless);
+		StartServer(pConfig, headless);
 
 		mg_exit_library();
 	}
@@ -98,16 +99,38 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void StartServer(const Config& config, const bool headless)
+void StartServer(const ConfigPtr& pConfig, const bool headless)
 {
-	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(config);
-	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(config, pNode->GetNodeClient());
+	Context::Ptr pContext = nullptr;
+	try
+	{
+		pContext = Context::Create(pConfig);
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << "Failed to create context: \n" << e.what() << std::endl;
+		throw;
+	}
+
+	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(pContext);
+	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(pContext->GetConfig(), pNode->GetNodeClient());
 
 	system_clock::time_point startTime = system_clock::now();
 	while (true)
 	{
 		if (ShutdownManagerAPI::WasShutdownRequested())
 		{
+			if (!headless)
+			{
+#ifdef _WIN32
+				std::system("cls");
+#else
+				std::system("clear");
+#endif
+
+				std::cout << "SHUTTING DOWN...";
+			}
+
 			break;
 		}
 
@@ -118,16 +141,5 @@ void StartServer(const Config& config, const bool headless)
 		}
 
 		ThreadUtil::SleepFor(seconds(1), ShutdownManagerAPI::WasShutdownRequested());
-	}
-
-	if (!headless)
-	{
-#ifdef _WIN32
-		std::system("cls");
-#else
-		std::system("clear");
-#endif
-
-		std::cout << "SHUTTING DOWN...";
 	}
 }

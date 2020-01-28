@@ -20,9 +20,11 @@
 class BitmapFile : public Traits::IBatchable
 {
 public:
+	virtual ~BitmapFile() = default;
+
 	static std::shared_ptr<BitmapFile> Load(const fs::path& path)
 	{
-		auto pBitmapFile = std::make_shared<BitmapFile>(BitmapFile(path));
+		auto pBitmapFile = std::shared_ptr<BitmapFile>(new BitmapFile(path));
 		pBitmapFile->Load();
 		return pBitmapFile;
 	}
@@ -144,7 +146,7 @@ public:
 	}
 
 private:
-	BitmapFile(const fs::path& path) : m_path(path) { }
+	BitmapFile(const fs::path& path) : m_path(path), m_size(0) { }
 
 	void Load()
 	{

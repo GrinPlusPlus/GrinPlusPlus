@@ -36,6 +36,8 @@ public:
 	AppendOnlyFile(AppendOnlyFile&& file) = delete;
 	AppendOnlyFile& operator=(const AppendOnlyFile&) = delete;
 
+	virtual ~AppendOnlyFile() = default;
+
 	void Load()
 	{
 		std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);

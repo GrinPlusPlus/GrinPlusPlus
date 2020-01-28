@@ -16,7 +16,7 @@ class P2PServer : public IP2PServer
 {
 public:
 	static std::shared_ptr<P2PServer> Create(
-		const Config& config,
+		const Context::Ptr& pContext,
 		std::shared_ptr<IBlockChainServer> pBlockChainServer,
 		TxHashSetManagerConstPtr pTxHashSetManager,
 		std::shared_ptr<IDatabase> pDatabase,

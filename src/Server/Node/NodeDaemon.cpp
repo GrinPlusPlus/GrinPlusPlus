@@ -14,24 +14,35 @@
 #include <iostream>
 #include <thread>
 
-NodeDaemon::NodeDaemon(const Config& config, std::shared_ptr<NodeRestServer> pNodeRestServer, std::shared_ptr<DefaultNodeClient> pNodeClient, std::shared_ptr<GrinJoinController> pGrinJoinController)
-	: m_config(config), m_pNodeRestServer(pNodeRestServer), m_pNodeClient(pNodeClient), m_pGrinJoinController(pGrinJoinController)
+NodeDaemon::NodeDaemon(
+	const Context::Ptr& pContext,
+	std::shared_ptr<NodeRestServer> pNodeRestServer,
+	std::shared_ptr<DefaultNodeClient> pNodeClient,
+	std::shared_ptr<GrinJoinController> pGrinJoinController)
+	: m_pContext(pContext),
+	m_pNodeRestServer(pNodeRestServer),
+	m_pNodeClient(pNodeClient),
+	m_pGrinJoinController(pGrinJoinController)
 {
 
 }
 
-std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Config& config)
+std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 {
-	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(config);
-	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(config, pNodeClient->GetNodeContext());
+	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(pContext);
+	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(pContext->GetConfig(), pNodeClient->GetNodeContext());
 
 	std::shared_ptr<GrinJoinController> pGrinJoinController = nullptr;
-	if (!config.GetServerConfig().GetGrinJoinSecretKey().empty())
+	if (!pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey().empty())
 	{
-		pGrinJoinController = GrinJoinController::Create(config, pNodeClient->GetNodeContext(), config.GetServerConfig().GetGrinJoinSecretKey());
+		pGrinJoinController = GrinJoinController::Create(
+			pContext->GetConfig(),
+			pNodeClient->GetNodeContext(),
+			pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey()
+		);
 	}
 
-	return std::make_shared<NodeDaemon>(NodeDaemon(config, pNodeRestServer, pNodeClient, pGrinJoinController));
+	return std::make_shared<NodeDaemon>(pContext, pNodeRestServer, pNodeClient, pGrinJoinController);
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)

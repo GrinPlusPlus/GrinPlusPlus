@@ -14,7 +14,7 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 
 	// Verify transaction contains exactly one kernel
 	const Transaction& transaction = finalSlate.GetTransaction();
-	const std::vector<TransactionKernel>& kernels = transaction.GetBody().GetKernels();
+	const std::vector<TransactionKernel>& kernels = transaction.GetKernels();
 	if (kernels.size() != 1)
 	{
 		WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
@@ -121,7 +121,7 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 		return false;
 	}
 
-	const TransactionKernel& kernel = slate.GetTransaction().GetBody().GetKernels().front();
+	const TransactionKernel& kernel = slate.GetTransaction().GetKernels().front();
 
 	// Update the tx kernel to reflect the offset excess and sig
 	TransactionKernel finalKernel(

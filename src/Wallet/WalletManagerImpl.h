@@ -28,6 +28,7 @@ public:
 	virtual void CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
 	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const override final;
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const override final;
+	virtual std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path);
 	virtual uint16_t GetListenerPort(const SessionToken& token) const override final;
 
 	virtual SessionToken Login(const std::string& username, const SecureString& password) override final;

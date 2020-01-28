@@ -28,7 +28,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 
 		// TODO: Determine if process is already running.
 		ChildProcess::CPtr pProcess = ChildProcess::Create(args);
-		if (pProcess = nullptr)
+		if (pProcess == nullptr)
 		{
 			// Fallback to tor on path
 			args[0] = "tor";

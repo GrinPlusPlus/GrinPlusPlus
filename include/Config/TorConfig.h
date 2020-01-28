@@ -38,7 +38,7 @@ public:
 		{
 			const Json::Value& torJSON = json[ConfigProps::Tor::TOR];
 
-			m_enableTor = torJSON.get(ConfigProps::Tor::ENABLE_TOR, m_enableTor).asBool();
+			m_enableTor = true;//torJSON.get(ConfigProps::Tor::ENABLE_TOR, m_enableTor).asBool();
 			m_socksPort = (uint16_t)torJSON.get(ConfigProps::Tor::SOCKS_PORT, m_socksPort).asUInt();
 			m_controlPort = (uint16_t)torJSON.get(ConfigProps::Tor::CONTROL_PORT, m_controlPort).asUInt();
 

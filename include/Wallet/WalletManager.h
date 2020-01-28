@@ -68,6 +68,8 @@ public:
 
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const = 0;
 
+	virtual std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path) = 0;
+
 	virtual uint16_t GetListenerPort(const SessionToken& token) const = 0;
 
 	//

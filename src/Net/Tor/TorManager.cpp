@@ -15,18 +15,20 @@ TorManager& TorManager::GetInstance(const TorConfig& config)
 TorManager::TorManager(const TorConfig& config)
 	: m_torConfig(config)
 {
-	//if (m_torConfig.IsEnabled())
+	if (m_torConfig.IsEnabled())
 	{
 		m_pControl = TorControl::Create(config);
 	}
 }
 
-void TorManager::RetryInit()
+bool TorManager::RetryInit()
 {
 	if (m_pControl == nullptr)
 	{
 		m_pControl = TorControl::Create(m_torConfig);
 	}
+
+	return m_pControl != nullptr;
 }
 
 std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)

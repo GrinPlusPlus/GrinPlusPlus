@@ -19,7 +19,8 @@ public:
 
 	std::shared_ptr<TorConnection> Connect(const TorAddress& address);
 
-	void RetryInit();
+	// Returns true if TorControl connection is established.
+	bool RetryInit();
 
 private:
 	TorManager(const TorConfig& config);

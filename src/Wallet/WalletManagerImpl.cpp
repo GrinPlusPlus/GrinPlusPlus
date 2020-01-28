@@ -107,6 +107,24 @@ std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token
 	return wallet.Read()->GetTorAddress();
 }
 
+std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& token, const KeyChainPath& path)
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+
+	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
+	SecretKey64 torKey = keyChain.DeriveED25519Key(path);
+
+	std::shared_ptr<TorAddress> pTorAddress = 
+		TorManager::GetInstance(m_config.GetTorConfig()).AddListener(torKey, wallet.Read()->GetListenerPort());
+	if (pTorAddress != nullptr)
+	{
+		wallet.Write()->SetTorAddress(*pTorAddress);
+	}
+
+	return wallet.Read()->GetTorAddress();
+}
+
 uint16_t WalletManager::GetListenerPort(const SessionToken& token) const
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);

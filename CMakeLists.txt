@@ -82,6 +82,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/ed25519-donna
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
+    ${PROJECT_SOURCE_DIR}/deps/scheduler/include
     ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 

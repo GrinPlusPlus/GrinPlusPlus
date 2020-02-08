@@ -11,6 +11,7 @@
 #include <Core/Traits/Printable.h>
 #include <Core/Traits/Serializable.h>
 #include <Common/Util/HexUtil.h>
+#include <json/json.h>
 #include <memory>
 
 class BlockHeader : public Traits::IPrintable, public Traits::ISerializable
@@ -80,6 +81,7 @@ public:
 	//
 	virtual void Serialize(Serializer& serializer) const override final;
 	static BlockHeader Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
 	std::vector<unsigned char> GetPreProofOfWork() const;
 
 	//

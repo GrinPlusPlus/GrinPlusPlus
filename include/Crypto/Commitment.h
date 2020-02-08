@@ -69,6 +69,11 @@ public:
 		return m_commitmentBytes.ToHex();
 	}
 
+	static Commitment FromHex(const std::string& hex)
+	{
+		return Commitment(CBigInteger<33>::FromHex(hex));
+	}
+
 	//
 	// Traits
 	//

@@ -9,19 +9,20 @@
 #include <Crypto/RandomNumberGenerator.h>
 
 PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
-	: m_pContext(pContext), m_pPeerDB(pPeerDB), m_terminate(false)
+	: m_taskId(0), m_pContext(pContext), m_pPeerDB(pPeerDB)
 {
 
 }
 
 PeerManager::~PeerManager()
 {
+	m_pContext->GetScheduler()->RemoveTask(m_taskId);
 	Thread_ManagePeers(*this);
 }
 
 Locked<PeerManager> PeerManager::Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
 {
-	std::shared_ptr<PeerManager> pPeerManager = std::shared_ptr<PeerManager>(new PeerManager(pContext, pPeerDB));
+	std::shared_ptr<PeerManager> pPeerManager(new PeerManager(pContext, pPeerDB));
 
 	pPeerManager->m_peersByAddress.clear();
 	const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
@@ -32,10 +33,12 @@ Locked<PeerManager> PeerManager::Create(const Context::Ptr& pContext, std::share
 
 	Locked<PeerManager> peerManager(pPeerManager);
 
-	pContext->GetScheduler()->interval(std::chrono::seconds(15), [peerManager]() {
+	const uint64_t taskId = pContext->GetScheduler()->interval(std::chrono::seconds(15), [peerManager]() {
 		auto pWriter = Locked<PeerManager>(peerManager).Write();
 		PeerManager::Thread_ManagePeers(*pWriter.GetShared());
 	});
+
+	pPeerManager->SetTaskId(taskId);
 
 	return peerManager;
 }
@@ -89,7 +92,9 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
 bool PeerManager::ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const
 {
 	const time_t currentTime = TimeUtil::Now();
-	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
+	const time_t maxBanTime = std::chrono::system_clock::to_time_t(
+		std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW)
+	);
 
 	uint64_t peersFound = 0;
 	for (auto iter = m_peersByAddress.begin(); iter != m_peersByAddress.end(); iter++)
@@ -130,7 +135,6 @@ PeerPtr PeerManager::GetPeer(const IPAddress& address)
 	PeerPtr pPeer = std::make_shared<Peer>(address);
 	m_peersByAddress.emplace(address, PeerEntry(pPeer));
 	return pPeer;
-	//return m_pPeerDB->Read()->GetPeer(address, std::nullopt);
 }
 
 std::optional<PeerConstPtr> PeerManager::GetPeer(const IPAddress& address) const
@@ -190,7 +194,9 @@ std::vector<PeerConstPtr> PeerManager::GetAllPeers() const
 	return peers;
 }
 
-std::vector<PeerPtr> PeerManager::GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const
+std::vector<PeerPtr> PeerManager::GetPeers(
+	const Capabilities::ECapability& preferredCapability,
+	const uint16_t maxPeers) const
 {
 	std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, maxPeers, false);
 	if (peers.empty())
@@ -237,7 +243,10 @@ void PeerManager::UnbanPeer(const IPAddress& address)
 	}
 }
 
-std::vector<PeerPtr> PeerManager::GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const
+std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
+	const Capabilities::ECapability& preferredCapability,
+	const uint16_t maxPeers,
+	const bool connectingToPeer) const
 {
 	const size_t numPeers = m_peersByAddress.size();
 	if (numPeers == 0)
@@ -247,7 +256,9 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(const Capabilities::ECa
 
 	std::vector<PeerPtr> peersFound;
 	const time_t currentTime = TimeUtil::Now();
-	const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
+	const time_t maxBanTime = std::chrono::system_clock::to_time_t(
+		std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW)
+	);
 	
 	auto iter = m_peersByAddress.begin();
 	std::advance(iter, RandomNumberGenerator::GenerateRandom(0, numPeers));

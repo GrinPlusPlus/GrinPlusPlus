@@ -19,7 +19,6 @@ Connection::Connection(
 	SocketPtr pSocket,
 	const uint64_t connectionId,
 	ConnectionManager& connectionManager,
-	Locked<PeerManager> peerManager,
 	const ConnectedPeer& connectedPeer,
 	SyncStatusConstPtr pSyncStatus,
 	std::shared_ptr<HandShake> pHandShake,
@@ -29,7 +28,6 @@ Connection::Connection(
 	: m_pSocket(pSocket),
 	m_connectionId(connectionId),
 	m_connectionManager(connectionManager),
-	m_peerManager(peerManager),
 	m_connectedPeer(connectedPeer),
 	m_pSyncStatus(pSyncStatus),
 	m_pHandShake(pHandShake),
@@ -59,21 +57,12 @@ std::shared_ptr<Connection> Connection::Create(
 	const uint64_t connectionId,
 	const Config& config,
 	ConnectionManager& connectionManager,
-	Locked<PeerManager> peerManager,
 	IBlockChainServerPtr pBlockChainServer,
 	const ConnectedPeer& connectedPeer,
-	std::shared_ptr<Pipeline> pPipeline,
+	std::shared_ptr<MessageProcessor> pMessageProcessor,
 	SyncStatusConstPtr pSyncStatus)
 {
 	auto pHandShake = std::make_shared<HandShake>(config, connectionManager, pBlockChainServer);
-	auto pMessageProcessor = std::make_shared<MessageProcessor>(
-		config,
-		connectionManager,
-		peerManager,
-		pBlockChainServer,
-		pPipeline,
-		pSyncStatus
-	);
 	auto pMessageRetriever = std::make_shared<MessageRetriever>(config, connectionManager);
 	auto pMessageSender = std::make_shared<MessageSender>(config);
 
@@ -81,7 +70,6 @@ std::shared_ptr<Connection> Connection::Create(
 		pSocket,
 		connectionId,
 		connectionManager,
-		peerManager,
 		connectedPeer,
 		pSyncStatus,
 		pHandShake,
@@ -146,10 +134,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		{
 			LOG_DEBUG("Successful Handshake");
 			pConnection->m_connectionManager.AddConnection(pConnection);
-			if (pConnection->m_peerManager.Read()->ArePeersNeeded(Capabilities::ECapability::FAST_SYNC_NODE))
-			{
-				pConnection->Send(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-			}
+			pConnection->Send(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
 		}
 		else
 		{

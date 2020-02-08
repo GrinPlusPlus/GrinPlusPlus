@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <Json/json.h>
 
 class Capabilities
 {
@@ -38,10 +39,10 @@ public:
 
 	}
 
-	inline bool IsUnknown() const { return m_value == UNKNOWN; }
-	inline bool HasCapability(const ECapability capability) const { return (m_value & (uint32_t)capability) == (uint32_t)capability; }
-	inline void AddCapability(const ECapability capability) { m_value = (m_value | capability); }
-	inline ECapability GetCapability() const { return (ECapability)m_value; }
+	inline bool IsUnknown() const noexcept { return m_value == UNKNOWN; }
+	inline bool HasCapability(const ECapability capability) const noexcept { return (m_value & (uint32_t)capability) == (uint32_t)capability; }
+	inline void AddCapability(const ECapability capability) noexcept { m_value = (m_value | capability); }
+	inline ECapability GetCapability() const noexcept { return (ECapability)m_value; }
 
 	void Serialize(Serializer& serializer) const
 	{
@@ -52,6 +53,13 @@ public:
 	{
 		const uint32_t value = byteBuffer.ReadU32();
 		return Capabilities(value);
+	}
+
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["bits"] = Json::UInt(m_value);
+		return json;
 	}
 
 private:

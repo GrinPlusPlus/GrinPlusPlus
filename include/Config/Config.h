@@ -36,15 +36,16 @@ public:
 
 	Json::Value& GetJSON() { return m_json; }
 
-	const std::string& GetLogLevel() const { return m_logLevel; }
-	const Environment& GetEnvironment() const { return m_environment; }
-	const fs::path& GetDataDirectory() const { return m_dataPath; }
-	const fs::path& GetLogDirectory() const { return m_logPath; }
-	const NodeConfig& GetNodeConfig() const { return m_nodeConfig; }
+	const std::string& GetLogLevel() const noexcept { return m_logLevel; }
+	const Environment& GetEnvironment() const noexcept { return m_environment; }
+	const fs::path& GetDataDirectory() const noexcept { return m_dataPath; }
+	const fs::path& GetLogDirectory() const noexcept { return m_logPath; }
+	const NodeConfig& GetNodeConfig() const noexcept { return m_nodeConfig; }
+	const P2PConfig& GetP2PConfig() const noexcept { return m_nodeConfig.GetP2P(); }
 
-	const WalletConfig& GetWalletConfig() const { return m_walletConfig; }
-	const ServerConfig& GetServerConfig() const { return m_serverConfig; }
-	const TorConfig& GetTorConfig() const { return m_torConfig; }
+	const WalletConfig& GetWalletConfig() const noexcept { return m_walletConfig; }
+	const ServerConfig& GetServerConfig() const noexcept { return m_serverConfig; }
+	const TorConfig& GetTorConfig() const noexcept { return m_torConfig; }
 
 private:
 	Config(const Json::Value& json, const EEnvironmentType environment, const fs::path& dataPath)

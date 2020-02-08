@@ -12,7 +12,7 @@
 namespace Consensus
 {
 	// Fork every 6 months.
-	static const uint64_t HARD_FORK_INTERVAL = YEAR_HEIGHT / 2;
+	static constexpr uint64_t HARD_FORK_INTERVAL = YEAR_HEIGHT / 2;
 
 	// Floonet-only first hardfork
 	static const uint64_t FLOONET_FIRST_HARD_FORK = 185040;

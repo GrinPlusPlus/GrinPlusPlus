@@ -11,7 +11,7 @@ public:
 	// Getters
 	//
 	int GetMaxConnections() const { return m_maxConnections; }
-	int GetPreferredMinConnections() const { return m_minConnections; }
+	int GetMinConnections() const { return m_minConnections; }
 
 	//
 	// Constructor

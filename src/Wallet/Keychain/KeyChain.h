@@ -19,7 +19,6 @@ class KeyChain
 public:
 	// FUTURE: Add FromMnemonic, FromRandom, ToMnemonic, and GetSeed methods
 	static KeyChain FromSeed(const Config& config, const SecureVector& masterSeed);
-	static KeyChain ForGrinbox(const Config& config, const SecureVector& masterSeed);
 
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath) const;

@@ -91,14 +91,6 @@ void WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 	}
 }
 
-SecretKey WalletManager::GetGrinboxAddress(const SessionToken& token) const
-{
-	SecureVector seed = m_sessionManager.Read()->GetSeed(token);
-	KeyChain grinboxKeyChain = KeyChain::ForGrinbox(m_config, seed);
-
-	return grinboxKeyChain.DerivePrivateKey(KeyChainPath(std::vector<uint32_t>({ 0 }))); // TODO: Determine KeyChainPath
-}
-
 std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token) const
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);

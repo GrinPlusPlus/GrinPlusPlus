@@ -38,6 +38,15 @@ public:
 	void UpdateUserAgent(const std::string& userAgent) { m_pPeer->UpdateUserAgent(userAgent); }
 	void UpdateLastContactTime() const { m_pPeer->UpdateLastContactTime(); }
 
+	Json::Value ToJSON() const
+	{
+		Json::Value json = GetPeer()->ToJSON();
+		json["direction"] = GetDirection() == EDirection::OUTBOUND ? "Outbound" : "Inbound";
+		json["total_difficulty"] = GetTotalDifficulty();
+		json["height"] = GetHeight();
+		return json;
+	}
+
 	virtual std::string Format() const override final { return m_pPeer->Format(); }
 
 private:

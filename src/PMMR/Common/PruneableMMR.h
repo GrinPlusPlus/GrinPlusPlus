@@ -8,7 +8,7 @@
 #include "MMRUtil.h"
 #include "MMRHashUtil.h"
 
-#include <Core/DataFile.h>
+#include <Core/File/DataFile.h>
 #include <Roaring.h>
 #include <Core/Exceptions/TxHashSetException.h>
 #include <Core/Serialization/Serializer.h>

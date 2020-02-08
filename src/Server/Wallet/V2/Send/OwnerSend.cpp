@@ -120,15 +120,20 @@ RPC::Response OwnerSend::SendViaFile(const RPC::Request& request, const SendCrit
 	Slate slate = m_pWalletManager->Send(criteria);
 
 	Json::Value slateJSON = slate.ToJSON();
-	if (FileUtil::WriteTextToFile(file, JsonUtil::WriteCondensed(slateJSON)))
+	try
 	{
+		FileUtil::WriteTextToFile(file, JsonUtil::WriteCondensed(slateJSON));
+		WALLET_INFO_F("Slate file saved to: {}", file);
+
 		Json::Value result;
 		result["status"] = "SENT";
 		result["slate"] = slateJSON;
 		return RPC::Response::BuildResult(request.GetId(), result);
 	}
-	else
+	catch (std::exception&)
 	{
+		WALLET_ERROR_F("Slate failed to save to: {}", file);
+
 		Json::Value errorJson;
 		errorJson["status"] = "WRITE_FAILED";
 		errorJson["slate"] = slateJSON;

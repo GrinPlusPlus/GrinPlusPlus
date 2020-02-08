@@ -50,14 +50,14 @@ namespace Consensus
 	static const uint64_t MIN_DIFFICULTY = DAMP_FACTOR;
 
 	// Unit difficulty, equal to graph_weight(SECOND_POW_EDGE_BITS)
-	static const uint64_t UNIT_DIFFICULTY = (((uint64_t)2) << (SECOND_POW_EDGE_BITS - BASE_EDGE_BITS)) * ((uint64_t)SECOND_POW_EDGE_BITS);
+	static constexpr uint64_t UNIT_DIFFICULTY = (2ull << (SECOND_POW_EDGE_BITS - BASE_EDGE_BITS)) * ((uint64_t)SECOND_POW_EDGE_BITS);
 
 	// The initial difficulty at launch. This should be over-estimated
 	// and difficulty should come down at launch rather than up
 	// Currently grossly over-estimated at 10% of current
 	// ethereum GPUs (assuming 1GPU can solve a block at diff 1
 	// in one block interval)
-	static const uint64_t INITIAL_DIFFICULTY = 1000000 * UNIT_DIFFICULTY;
+	static constexpr uint64_t INITIAL_DIFFICULTY = 1000000 * UNIT_DIFFICULTY;
 
 	// Compute weight of a graph as number of siphash bits defining the graph
 	// Must be made dependent on height to phase out smaller size over the years
@@ -69,10 +69,10 @@ namespace Consensus
 		uint64_t xpr_edge_bits = (uint64_t)edge_bits;
 		if (edge_bits == 31 && height >= expiry_height)
 		{
-			xpr_edge_bits = xpr_edge_bits -= (std::min)(xpr_edge_bits, 1 + (height - expiry_height) / WEEK_HEIGHT);
+			xpr_edge_bits -= (std::min)(xpr_edge_bits, 1ull + ((height - expiry_height) / WEEK_HEIGHT));
 		}
 
-		return (((uint64_t)2) << ((uint64_t)(edge_bits - BASE_EDGE_BITS))) * xpr_edge_bits;
+		return (2ull << ((uint64_t)(edge_bits - BASE_EDGE_BITS))) * xpr_edge_bits;
 	}
 
 	// Initial mining secondary scale
@@ -94,6 +94,6 @@ namespace Consensus
 	// Starts at 90% losing a percent approximately every week. Represented as an integer between 0 and 100.
 	static uint64_t SecondaryPOWRatio(const uint64_t height)
 	{
-		return 90 - (std::min)((uint64_t)90, (height / (2 * YEAR_HEIGHT / 90)));
+		return 90 - (std::min)(90ull, (height / (2 * YEAR_HEIGHT / 90)));
 	}
 }

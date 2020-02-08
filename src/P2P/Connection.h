@@ -39,10 +39,9 @@ public:
 		const uint64_t connectionId,
 		const Config& config,
 		ConnectionManager& connectionManager,
-		Locked<PeerManager> peerManager,
 		IBlockChainServerPtr pBlockChainServer,
 		const ConnectedPeer& connectedPeer,
-		std::shared_ptr<Pipeline> pPipeline,
+		std::shared_ptr<MessageProcessor> pMessageProcessor,
 		SyncStatusConstPtr pSyncStatus
 	);
 
@@ -69,7 +68,6 @@ private:
 		SocketPtr pSocket,
 		const uint64_t connectionId,
 		ConnectionManager& connectionManager,
-		Locked<PeerManager> peerManager,
 		const ConnectedPeer& connectedPeer,
 		SyncStatusConstPtr pSyncStatus,
 		std::shared_ptr<HandShake> pHandShake,
@@ -81,7 +79,6 @@ private:
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 
 	ConnectionManager& m_connectionManager;
-	Locked<PeerManager> m_peerManager;
 	SyncStatusConstPtr m_pSyncStatus;
 
 	std::shared_ptr<HandShake> m_pHandShake;

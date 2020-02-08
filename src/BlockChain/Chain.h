@@ -3,7 +3,7 @@
 #include "BlockIndex.h"
 
 #include <Core/Traits/Lockable.h>
-#include <Core/DataFile.h>
+#include <Core/File/DataFile.h>
 
 // Forward Declarations
 class BlockIndexAllocator;

@@ -93,6 +93,6 @@ public:
 private:
 	virtual void EstablishConnection(const std::string& ipAddress, const uint16_t port) override final
 	{
-		Connect(SocketAddress(IPAddress::FromString(ipAddress), port), std::chrono::seconds(2));
+		Connect(SocketAddress(IPAddress::Parse(ipAddress), port), std::chrono::seconds(2));
 	}
 };

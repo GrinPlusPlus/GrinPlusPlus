@@ -3,12 +3,9 @@
 #include <Database/DatabaseException.h>
 #include <Infrastructure/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <caches/Cache.h>
 #include <utility>
 #include <string>
 #include <filesystem.h>
-
-FIFOCache<Hash, BlockHeaderPtr> BLOCK_HEADERS_CACHE(128);
 
 BlockDB::BlockDB(
 	const Config& config,
@@ -29,7 +26,8 @@ BlockDB::BlockDB(
 	m_pHeaderHandle(pHeaderHandle),
 	m_pBlockSumsHandle(pBlockSumsHandle),
 	m_pOutputPosHandle(pOutputPosHandle),
-	m_pInputBitmapHandle(pInputBitmapHandle)
+	m_pInputBitmapHandle(pInputBitmapHandle),
+	m_blockHeadersCache(128)
 {
 
 }
@@ -141,7 +139,7 @@ void BlockDB::Commit()
 
 	for (auto pHeader : m_uncommitted)
 	{
-		BLOCK_HEADERS_CACHE.Put(pHeader->GetHash(), pHeader);
+		m_blockHeadersCache.Put(pHeader->GetHash(), pHeader);
 	}
 
 	m_uncommitted.clear();
@@ -197,9 +195,9 @@ BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const
 {
 	try
 	{
-		if (BLOCK_HEADERS_CACHE.Cached(hash))
+		if (m_blockHeadersCache.Cached(hash))
 		{
-			return BLOCK_HEADERS_CACHE.Get(hash);
+			return m_blockHeadersCache.Get(hash);
 		}
 
 		Slice key((const char*)hash.data(), hash.size());
@@ -260,7 +258,7 @@ void BlockDB::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 		}
 		else
 		{
-			BLOCK_HEADERS_CACHE.Put(pBlockHeader->GetHash(), pBlockHeader);
+			m_blockHeadersCache.Put(pBlockHeader->GetHash(), pBlockHeader);
 		}
 	}
 	catch (DatabaseException&)

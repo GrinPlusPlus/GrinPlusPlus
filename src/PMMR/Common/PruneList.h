@@ -13,7 +13,7 @@ class PruneList
 public:
 	static std::shared_ptr<PruneList> Load(const fs::path& filePath);
 
-	bool Flush();
+	void Flush();
 
 	// Adds the node to the prune list.
 	// Compacts if pruning the node means a parent can get pruned as well.

@@ -14,9 +14,9 @@
 class HexUtil
 {
 public:
-	static bool IsValidHex(const std::string& data)
+	static bool IsValidHex(const std::string& data) noexcept
 	{
-		if (data.compare(0, 2, "0x") == 0 && data.size() > 2)
+		if (data.size() > 2 && data.compare(0, 2, "0x") == 0)
 		{
 			return data.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
 		}
@@ -72,8 +72,8 @@ public:
 	{
 		const uint16_t bigEndian = EndianHelper::GetBigEndian16(value);
 
-		std::vector<unsigned char> bytes(2);
-		memcpy(bytes.data(), (unsigned char*)&bigEndian, 2);
+		std::vector<uint8_t> bytes(2);
+		memcpy(bytes.data(), (uint8_t*)&bigEndian, 2);
 
 		std::string hex = ConvertToHex(bytes);
 		const size_t firstNonZero = hex.find_first_not_of('0');

@@ -18,25 +18,14 @@ bool TxHashSetZip::Extract(const fs::path& path, const BlockHeader& header) cons
 	{
 		std::shared_ptr<ZipFile> pZipFile = ZipFile::Load(path);
 
-		std::vector<std::string> files = pZipFile->ListFiles();
-
 		// Extract kernel folder.
-		if (!ExtractKernelFolder(*pZipFile))
-		{
-			return false;
-		}
+		ExtractKernelFolder(*pZipFile);
 
 		// Extract output folder.
-		if (!ExtractOutputFolder(*pZipFile, header))
-		{
-			return false;
-		}
+		ExtractFolder(*pZipFile, "output", header);
 
 		// Extract rangeProof folder.
-		if (!ExtractRangeProofFolder(*pZipFile, header))
-		{
-			return false;
-		}
+		ExtractFolder(*pZipFile, "rangeproof", header);
 
 		LOG_INFO("Successfully extracted zip file.");
 		return true;
@@ -49,22 +38,36 @@ bool TxHashSetZip::Extract(const fs::path& path, const BlockHeader& header) cons
 	return false;
 }
 
-bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
+void TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 {
+	std::error_code ec;
+
 	const fs::path kernelPath = m_config.GetNodeConfig().GetTxHashSetPath() / "kernel";
-	if (fs::exists(kernelPath))
+	const bool exists = fs::exists(kernelPath, ec);
+	if (ec)
 	{
-		LOG_DEBUG("Kernel folder exists. Deleting its contents now.");
-		std::error_code errorCode;
-		const uint64_t removedFiles = fs::remove_all(kernelPath, errorCode);
-		LOG_DEBUG_F("{} files removed with error_code {}", removedFiles, errorCode.value());
+		LOG_ERROR_F("fs::exists failed with error: {}", ec.message());
+		throw FILE_EXCEPTION_F("fs::exists failed with error: {}", ec.message());
 	}
 
-	const bool kernelDirCreated = fs::create_directories(kernelPath);
-	if (!kernelDirCreated)
+	if (exists)
 	{
-		LOG_ERROR("Failed to create Kernel folder.");
-		return false;
+		LOG_DEBUG("Kernel folder exists. Deleting its contents now.");
+		const uint64_t removedFiles = fs::remove_all(kernelPath, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("fs::remove_all failed with error: {}", ec.message());
+			throw FILE_EXCEPTION_F("fs::remove_all failed with error: {}", ec.message());
+		}
+
+		LOG_DEBUG_F("{} files removed", removedFiles);
+	}
+
+	const bool kernelDirCreated = fs::create_directories(kernelPath, ec);
+	if (!kernelDirCreated || ec)
+	{
+		LOG_ERROR_F("Failed to create Kernel folder. Error: {}", ec.message());
+		throw FILE_EXCEPTION_F("Failed to create Kernel folder. Error: {}", ec.message());
 	}
 
 	const std::vector<std::string> kernelFiles = { "pmmr_data.bin", "pmmr_hash.bin" };
@@ -72,64 +75,45 @@ bool TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 	{
 		zipFile.ExtractFile("kernel/" + file, kernelPath / file);
 	}
-
-	return true;
 }
 
-bool TxHashSetZip::ExtractOutputFolder(const ZipFile& zipFile, const BlockHeader& header) const
+void TxHashSetZip::ExtractFolder(const ZipFile& zipFile, const std::string& folderName, const BlockHeader& header) const
 {
-	const fs::path outputDir = m_config.GetNodeConfig().GetTxHashSetPath() / "output";
-	if (fs::exists(outputDir))
+	std::error_code ec;
+
+	const fs::path dir = m_config.GetNodeConfig().GetTxHashSetPath() / folderName;
+	const bool exists = fs::exists(dir, ec);
+	if (ec)
 	{
-		LOG_DEBUG("Output folder exists. Deleting its contents now.");
-		std::error_code errorCode;
-		const uint64_t removedFiles = fs::remove_all(outputDir, errorCode);
-		LOG_DEBUG(std::to_string(removedFiles) + " files removed with error_code " + std::to_string(errorCode.value()));
+		LOG_ERROR_F("fs::exists failed with error: {}", ec.message());
+		throw FILE_EXCEPTION_F("fs::exists failed with error: {}", ec.message());
 	}
 
-	const bool outputDirCreated = fs::create_directories(outputDir);
-	if (!outputDirCreated)
+	if (exists)
 	{
-		LOG_ERROR("Failed to create Output folder.");
-		return false;
+		LOG_DEBUG_F("{} already exists. Deleting its contents now.", dir);
+		const uint64_t removedFiles = fs::remove_all(dir, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("fs::remove_all failed with error: {}", ec.message());
+			throw FILE_EXCEPTION_F("fs::remove_all failed with error: {}", ec.message());
+		}
+
+		LOG_DEBUG_F("{} files removed", removedFiles);
 	}
 
-	const std::vector<std::string> outputFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
-	for (const std::string& file : outputFiles)
+	const bool dirCreated = fs::create_directories(dir, ec);
+	if (!dirCreated || ec)
 	{
-		zipFile.ExtractFile("output/" + file, outputDir / file);
+		LOG_ERROR_F("Failed to create {}. Error: {}", dir, ec.message());
+		throw FILE_EXCEPTION_F("Failed to create {}. Error: {}", dir, ec.message());
 	}
 
-	FileUtil::RenameFile(outputDir / StringUtil::Format("pmmr_leaf.bin.{}", header.ShortHash()), outputDir / "pmmr_leaf.bin");
-
-	return true;
-}
-
-bool TxHashSetZip::ExtractRangeProofFolder(const ZipFile& zipFile, const BlockHeader& header) const
-{
-	const fs::path rangeProofDir = m_config.GetNodeConfig().GetTxHashSetPath() / "rangeproof";
-	if (fs::exists(rangeProofDir))
+	const std::vector<std::string> files = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
+	for (const std::string& file : files)
 	{
-		LOG_DEBUG("RangeProof folder exists. Deleting its contents now.");
-		std::error_code errorCode;
-		const uint64_t removedFiles = fs::remove_all(rangeProofDir, errorCode);
-		LOG_DEBUG_F("{} files removed with error_code {}", removedFiles, errorCode.value());
+		zipFile.ExtractFile(StringUtil::Format("{}/{}", folderName, file), dir / file);
 	}
 
-	const bool rangeProofDirCreated = fs::create_directories(rangeProofDir);
-	if (!rangeProofDirCreated)
-	{
-		LOG_ERROR("Failed to create RangeProof folder.");
-		return false;
-	}
-
-	const std::vector<std::string> rangeProofFiles = { "pmmr_data.bin", "pmmr_hash.bin", "pmmr_prun.bin", "pmmr_leaf.bin." + header.ShortHash() };
-	for (const std::string& file : rangeProofFiles)
-	{
-		zipFile.ExtractFile("rangeproof/" + file, rangeProofDir / file);
-	}
-
-	FileUtil::RenameFile(rangeProofDir / StringUtil::Format("pmmr_leaf.bin.{}", header.ShortHash()), rangeProofDir / "pmmr_leaf.bin");
-
-	return true;
+	FileUtil::RenameFile(dir / StringUtil::Format("pmmr_leaf.bin.{}", header.ShortHash()), dir / "pmmr_leaf.bin");
 }

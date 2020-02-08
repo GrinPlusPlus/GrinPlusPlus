@@ -5,6 +5,7 @@
 #include <vector>
 #include <filesystem.h>
 #include <stdlib.h>
+#include <Core/Exceptions/FileException.h>
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 
@@ -46,47 +47,54 @@ public:
 		return true;
 	}
 
-	static bool RenameFile(const fs::path& source, const fs::path& destination)
+	static void RenameFile(const fs::path& source, const fs::path& destination)
 	{
-		const fs::path destinationPath(destination);
-		fs::remove(destinationPath);
+		std::error_code ec;
+		fs::remove(destination, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("Failed to remove {}. Error: {}", destination, ec.message());
+			throw FILE_EXCEPTION_F("Failed to remove {}. Error: {}", destination, ec.message());
+		}
 
-		std::error_code error;
-		const fs::path sourcePath(source);
-		fs::rename(sourcePath, destinationPath, error);
-
-		return !error;
+		fs::rename(source, destination, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("Failed to rename {} to {}. Error: {}", source, destination, ec.message());
+			throw FILE_EXCEPTION_F("Failed to rename {} to {}. Error: {}", source, destination, ec.message());
+		}
 	}
 
-	static bool SafeWriteToFile(const fs::path& filePath, const std::vector<unsigned char>& data)
+	static void SafeWriteToFile(const fs::path& filePath, const std::vector<unsigned char>& data)
 	{
 		const std::string tmpFilePath = filePath.u8string() + ".tmp";
 		std::ofstream file(StringUtil::ToWide(tmpFilePath).c_str(), std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
-			return false;
+			LOG_ERROR_F("Failed to open {}", ToPath(tmpFilePath));
+			throw FILE_EXCEPTION_F("Failed to open {}", ToPath(tmpFilePath));
 		}
 
 		file.write((const char*)&data[0], data.size());
 		file.close();
 
-		return RenameFile(tmpFilePath, filePath);
+		RenameFile(tmpFilePath, filePath);
 	}
 
-	static bool WriteTextToFile(const std::string& filePath, const std::string& text)
+	static void WriteTextToFile(const std::string& filePath, const std::string& text)
 	{
 		std::ofstream file(StringUtil::ToWide(filePath).c_str(), std::ios::out | std::ios::trunc);
 		if (!file.is_open())
 		{
-			return false;
+			LOG_ERROR_F("Failed to open {}", ToPath(filePath));
+			throw FILE_EXCEPTION_F("Failed to open {}", ToPath(filePath));
 		}
 
 		file.write(text.c_str(), text.size());
 		file.close();
-		return true;
 	}
 
-	static bool RemoveFile(const fs::path& filePath)
+	static bool RemoveFile(const fs::path& filePath) noexcept
 	{
 		std::error_code ec;
 		const uintmax_t removed = fs::remove_all(filePath, ec);
@@ -117,16 +125,28 @@ public:
 		}
 	}
 
-	static bool CreateDirectories(const fs::path& directory)
+	static bool CreateDirectories(const fs::path& directory) noexcept
 	{
 		std::error_code ec;
-		return fs::create_directories(directory, ec);
+		const bool created = fs::create_directories(directory, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("Error while creating {}. Error: ", directory, ec.message());
+		}
+
+		return created;
 	}
 
-	static bool Exists(const fs::path& path)
+	static bool Exists(const fs::path& path) noexcept
 	{
 		std::error_code ec;
-		return fs::exists(path, ec);
+		const bool exists = fs::exists(path, ec);
+		if (ec)
+		{
+			LOG_ERROR_F("Error while checking if {} exists. Error: ", path, ec.message());
+		}
+
+		return exists;
 	}
 
 	static fs::path GetHomeDirectory()

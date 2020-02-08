@@ -70,7 +70,7 @@ std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
 			{
 				try
 				{
-					addresses.push_back(IPAddress::FromString(it.endpoint().address().to_string()));
+					addresses.push_back(IPAddress(it.endpoint().address()));
 				}
 				catch (std::exception& e)
 				{

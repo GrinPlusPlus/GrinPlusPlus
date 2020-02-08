@@ -3,7 +3,7 @@
 #include "Common/MMR.h"
 #include "Common/HashFile.h"
 
-#include <Core/DataFile.h>
+#include <Core/File/DataFile.h>
 #include <Core/Models/TransactionKernel.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/Hash.h>

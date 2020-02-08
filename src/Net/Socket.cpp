@@ -150,7 +150,7 @@ bool Socket::IsActive() const
 		return true;
 	}
 
-	if (m_errorCode.value() == EAGAIN)
+	if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK)
 	{
 		return true;
 	}
@@ -240,7 +240,7 @@ bool Socket::SetBlocking(const bool blocking)
 			int size = sizeof(error);
 			getsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_ERROR, (char*)&error, &size);
 			WSASetLastError(error);
-			throw SocketException();
+			throw SocketException(m_errorCode);
 		}
 		#else
 		m_blocking = blocking;
@@ -258,9 +258,9 @@ bool Socket::Send(const std::vector<unsigned char>& message, const bool incremen
 	}
 
 	const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(message.data(), message.size()), m_errorCode);
-	if (m_errorCode && m_errorCode.value() != EAGAIN)
+	if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK)
 	{
-		throw SocketException();
+		throw SocketException(m_errorCode);
 	}
 
 	return bytesWritten == message.size();
@@ -278,9 +278,9 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 	while (numTries++ < 3)
 	{
 		bytesRead += asio::read(*m_pSocket, asio::buffer(data.data() + bytesRead, numBytes - bytesRead), m_errorCode);
-		if (m_errorCode && m_errorCode.value() != EAGAIN)
+		if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK)
 		{
-			throw SocketException();
+			throw SocketException(m_errorCode);
 		}
 
 		if (bytesRead == numBytes)
@@ -292,7 +292,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 
 			return true;
 		}
-		else if (m_errorCode.value() == EAGAIN)
+		else if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK)
 		{
 			LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
 			std::this_thread::sleep_for(std::chrono::milliseconds(2));
@@ -305,9 +305,9 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 bool Socket::HasReceivedData()
 {
 	const size_t available = m_pSocket->available(m_errorCode);
-	if (m_errorCode && m_errorCode.value() != EAGAIN)
+	if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK)
 	{
-		throw SocketException();
+		throw SocketException(m_errorCode);
 	}
 	
 	return available >= 11;

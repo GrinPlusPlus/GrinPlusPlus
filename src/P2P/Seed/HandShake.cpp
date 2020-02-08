@@ -150,9 +150,7 @@ bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connected
 
 bool HandShake::TransmitHandMessage(Socket & socket) const
 {
-	const unsigned char localhostIP[4] = { 0x7F, 0x00, 0x00, 0x01 };
-	std::vector<unsigned char> address = VectorUtil::MakeVector<unsigned char, 4>(localhostIP);
-	const IPAddress localHostIP(EAddressFamily::IPv4, address);
+	const IPAddress localHostIP = IPAddress::CreateV4({ 0x7F, 0x00, 0x00, 0x01 });
 
 	const uint16_t portNumber = socket.GetPort();
 

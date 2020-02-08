@@ -60,7 +60,15 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
-		pTxHashSet->Write()->Compact();
+		const uint64_t horizon = Consensus::GetHorizonHeight(pChainState->Read()->GetHeight(EChainType::CONFIRMED));
+		if (pTxHashSet->Read()->GetFlushedBlockHeader()->GetHeight() < horizon)
+		{
+			pTxHashSetManager->Close();
+		}
+		else
+		{
+			pTxHashSet->Write()->Compact();
+		}
 	}
 
 	return std::make_shared<BlockChainServer>(BlockChainServer(

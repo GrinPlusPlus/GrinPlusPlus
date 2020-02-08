@@ -8,6 +8,7 @@
 #include <Core/Exceptions/DeserializationException.h>
 #include <Core/Util/JsonUtil.h>
 #include <json/json.h>
+#include <cassert>
 #include <string>
 #include <optional>
 
@@ -18,16 +19,18 @@ public:
 	// Ex: Given "/v1/blocks/<hash>?compact" and baseURI "/v1/blocks/", this would return <hash>.
 	static std::string GetURIParam(struct mg_connection* conn, const std::string& baseURI)
 	{
+		assert(conn != nullptr);
+
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
 		const std::string requestURI(req_info->request_uri);
 		
 		return requestURI.substr(baseURI.size(), requestURI.size() - baseURI.size());
 	}
 
-	static std::string GetQueryString(struct mg_connection* conn)
+	static std::string GetQueryString(struct mg_connection* conn) noexcept
 	{
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
-		if (req_info->query_string == nullptr)
+		if (req_info == nullptr || req_info->query_string == nullptr)
 		{
 			return "";
 		}
@@ -37,24 +40,15 @@ public:
 
 	static bool HasQueryParam(struct mg_connection* conn, const std::string& parameterName)
 	{
-		const std::string queryString = HTTPUtil::GetQueryString(conn);
-		if (!queryString.empty())
-		{
-			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
-			for (const std::string& token : tokens)
-			{
-				if (token == parameterName || StringUtil::StartsWith(token, parameterName + "="))
-				{
-					return true;
-				}
-			}
-		}
+		assert(conn != nullptr);
 
-		return false;
+		return GetQueryParam(conn, parameterName).has_value();
 	}
 
 	static std::optional<std::string> GetQueryParam(struct mg_connection* conn, const std::string& parameterName)
 	{
+		assert(conn != nullptr);
+
 		const std::string queryString = HTTPUtil::GetQueryString(conn);
 		if (!queryString.empty())
 		{
@@ -84,6 +78,8 @@ public:
 
 	static std::optional<std::string> GetHeaderValue(mg_connection* conn, const std::string& headerName)
 	{
+		assert(conn != nullptr);
+
 		const char* pHeaderValue = mg_get_header(conn, headerName.c_str());
 		if (pHeaderValue != nullptr)
 		{
@@ -95,6 +91,8 @@ public:
 
 	static HTTP::EHTTPMethod GetHTTPMethod(struct mg_connection* conn)
 	{
+		assert(conn != nullptr);
+
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
 		if (req_info->request_method == std::string("GET"))
 		{
@@ -110,6 +108,8 @@ public:
 
 	static std::optional<Json::Value> GetRequestBody(mg_connection* conn)
 	{
+		assert(conn != nullptr);
+
 		const struct mg_request_info* req_info = mg_get_request_info(conn);
 		const long long contentLength = req_info->content_length;
 		if (contentLength <= 0)
@@ -137,6 +137,8 @@ public:
 
 	static int BuildSuccessResponseJSON(struct mg_connection* conn, const Json::Value& json)
 	{
+		assert(conn != nullptr);
+
 		Json::StreamWriterBuilder builder;
 		builder["indentation"] = ""; // Removes whitespaces
 		const std::string output = Json::writeString(builder, json);
@@ -145,6 +147,8 @@ public:
 
 	static int BuildSuccessResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		if (response.empty())
@@ -171,6 +175,8 @@ public:
 
 	static int BuildBadRequestResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		mg_printf(conn,
@@ -187,6 +193,8 @@ public:
 
 	static int BuildConflictResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		mg_printf(conn,
@@ -203,6 +211,8 @@ public:
 
 	static int BuildUnauthorizedResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		mg_printf(conn,
@@ -219,6 +229,8 @@ public:
 
 	static int BuildNotFoundResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		mg_printf(conn,
@@ -235,6 +247,8 @@ public:
 
 	static int BuildInternalErrorResponse(struct mg_connection* conn, const std::string& response)
 	{
+		assert(conn != nullptr);
+
 		unsigned long len = (unsigned long)response.size();
 
 		mg_printf(conn,

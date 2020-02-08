@@ -1,5 +1,4 @@
 #include "BlockAPI.h"
-#include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
@@ -18,47 +17,52 @@
 // GET /v1/blocks/<hash>?compact
 int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	const std::string requestedBlock = HTTPUtil::GetURIParam(conn, "/v1/blocks/");
-	const std::string queryString = HTTPUtil::GetQueryString(conn);
-
-	IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
-	if (queryString == "compact")
+	try
 	{
-		std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChainServer);
+		const std::string requestedBlock = HTTPUtil::GetURIParam(conn, "/v1/blocks/");
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
 
-		if (nullptr != pBlock)
+		IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
+		if (queryString == "compact")
 		{
-			std::unique_ptr<CompactBlock> pCompactBlock = pBlockChainServer->GetCompactBlockByHash(pBlock->GetHash());
-			if (pCompactBlock != nullptr)
+			std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChainServer);
+			if (pBlock != nullptr)
 			{
-				const Json::Value compactBlockJSON = JSONFactory::BuildCompactBlockJSON(*pCompactBlock);
-				return HTTPUtil::BuildSuccessResponse(conn, compactBlockJSON.toStyledString());
+				std::unique_ptr<CompactBlock> pCompactBlock =
+					pBlockChainServer->GetCompactBlockByHash(pBlock->GetHash());
+				if (pCompactBlock != nullptr)
+				{
+					return HTTPUtil::BuildSuccessResponse(conn, pCompactBlock->ToJSON().toStyledString());
+				}
+			}
+		}
+		else
+		{
+			std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, pBlockChainServer);
+			if (pFullBlock != nullptr)
+			{
+				return HTTPUtil::BuildSuccessResponse(conn, pFullBlock->ToJSON().toStyledString());
 			}
 		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, pBlockChainServer);
-
-		if (nullptr != pFullBlock)
-		{
-			const Json::Value blockJSON = JSONFactory::BuildBlockJSON(*pFullBlock);
-			return HTTPUtil::BuildSuccessResponse(conn, blockJSON.toStyledString());
-		}
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
 
-	const std::string response = "BLOCK NOT FOUND";
-	return HTTPUtil::BuildBadRequestResponse(conn, response);
+	return HTTPUtil::BuildBadRequestResponse(conn, "BLOCK NOT FOUND");
 }
 
-std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock, IBlockChainServerPtr pBlockChainServer)
+std::unique_ptr<FullBlock> BlockAPI::GetBlock(
+	const std::string& requestedBlock,
+	IBlockChainServerPtr pBlockChainServer)
 {
 	if (requestedBlock.length() == 64 && HexUtil::IsValidHex(requestedBlock))
 	{
 		try
 		{
-			const Hash hash = Hash::FromHex(requestedBlock);
-			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHash(hash);
+			std::unique_ptr<FullBlock> pBlock =
+				pBlockChainServer->GetBlockByHash(Hash::FromHex(requestedBlock));
 			if (pBlock != nullptr)
 			{
 				LOG_DEBUG_F("Found block with hash {}.", requestedBlock);
@@ -78,8 +82,8 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(const std::string& requestedBlock,
 	{
 		try
 		{
-			const Commitment outputCommitment = Commitment(CBigInteger<33>::FromHex(requestedBlock));
-			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByCommitment(outputCommitment);
+			std::unique_ptr<FullBlock> pBlock =
+				pBlockChainServer->GetBlockByCommitment(Commitment::FromHex(requestedBlock));
 			if (pBlock != nullptr)
 			{
 				LOG_DEBUG_F("Found block with output commitment {}.", requestedBlock);

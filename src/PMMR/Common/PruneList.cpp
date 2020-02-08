@@ -29,7 +29,7 @@ std::shared_ptr<PruneList> PruneList::Load(const fs::path& filePath)
 	}
 }
 
-bool PruneList::Flush()
+void PruneList::Flush()
 {
 	// Run the optimization step on the bitmap.
 	m_prunedRoots.runOptimize();
@@ -41,17 +41,13 @@ bool PruneList::Flush()
 		std::vector<unsigned char> buffer(size);
 		m_prunedRoots.write((char*)&buffer[0]);
 
-		const bool flushed = FileUtil::SafeWriteToFile(m_filePath, buffer);
+		FileUtil::SafeWriteToFile(m_filePath, buffer);
 
 		// Rebuild our "shift caches" here as we are flushing changes to disk
 		// and the contents of our prune_list has likely changed.
 		BuildPrunedCache();
 		BuildShiftCaches();
-		
-		return flushed;
 	}
-
-	return false;
 }
 
 // Push the node at the provided position in the prune list.

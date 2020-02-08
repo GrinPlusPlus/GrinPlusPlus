@@ -8,7 +8,7 @@
 #include <Crypto/Hash.h>
 #include <Roaring.h>
 #include <filesystem.h>
-#include <Core/BitmapFile.h>
+#include <Core/File/BitmapFile.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Serialization/Serializer.h>
@@ -45,10 +45,7 @@ public:
 			throw std::exception(); // TODO: Handle this.
 		}
 
-		if (!FileUtil::SafeWriteToFile(FileUtil::ToPath(path), bytes))
-		{
-			throw std::exception(); // TODO: Handle this.
-		}
+		FileUtil::SafeWriteToFile(FileUtil::ToPath(path), bytes);
 	}
 
 	Hash Root(const uint64_t numOutputs)

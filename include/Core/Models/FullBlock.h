@@ -10,6 +10,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
+#include <json/json.h>
 
 class FullBlock : public Traits::IPrintable
 {
@@ -54,6 +55,7 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static FullBlock Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
 
 	//
 	// Hashing

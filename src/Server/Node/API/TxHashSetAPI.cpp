@@ -1,5 +1,4 @@
 #include "TxHashSetAPI.h"
-#include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
@@ -11,7 +10,7 @@
   "get txhashset/roots",
   "get txhashset/lastoutputs?n=10",
   "get txhashset/lastrangeproofs",
-  "get txhashset/lastkernels",
+  "get txhashset/lastkernels?n=100",
   "get txhashset/outputs?start_index=1&max=100",
 */
 
@@ -19,59 +18,70 @@
 int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
-	auto pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
-	if (pTipHeader != nullptr)
-	{
-		Json::Value rootNode;
-		rootNode["output_root_hash"] = pTipHeader->GetOutputRoot().ToHex();
-		rootNode["range_proof_root_hash"] = pTipHeader->GetRangeProofRoot().ToHex();
-		rootNode["kernel_root_hash"] = pTipHeader->GetKernelRoot().ToHex();
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
-	}
-	else
+	try
 	{
-		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
+		auto pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+		if (pTipHeader != nullptr)
+		{
+			Json::Value rootNode;
+			rootNode["output_root_hash"] = pTipHeader->GetOutputRoot().ToHex();
+			rootNode["range_proof_root_hash"] = pTipHeader->GetRangeProofRoot().ToHex();
+			rootNode["kernel_root_hash"] = pTipHeader->GetKernelRoot().ToHex();
+
+			return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		}
+		else
+		{
+			return HTTPUtil::BuildNotFoundResponse(conn, "Failed to find tip.");
+		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
+		return HTTPUtil::BuildBadRequestResponse(conn, e.what());
 	}
 }
 
 int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
-
 	uint64_t numHashes = 10;
 
-	const std::string queryString = HTTPUtil::GetQueryString(conn);
-	if (!queryString.empty())
+	try
 	{
-		if (!StringUtil::StartsWith(queryString, "n="))
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
+		if (!queryString.empty())
 		{
-			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastkernels?n=###");
+			if (!StringUtil::StartsWith(queryString, "n="))
+			{
+				return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastkernels?n=###");
+			}
+
+			std::string numHashesStr = queryString.substr(2);
+			numHashes = std::stoull(numHashesStr);
 		}
 
-		std::string numHashesStr = queryString.substr(2);
-		numHashes = std::stoull(numHashesStr);
-	}
-
-	auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet != nullptr)
-	{
-		Json::Value rootNode;
-
-		std::vector<Hash> hashes = pTxHashSet->Read()->GetLastKernelHashes(numHashes);
-		for (const Hash& hash : hashes)
+		auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet != nullptr)
 		{
-			Json::Value kernelNode;
-			kernelNode["hash"] = hash.ToHex();
-			rootNode.append(kernelNode);
-		}
+			Json::Value json;
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastKernelHashes(numHashes);
+			for (const Hash& hash : hashes)
+			{
+				json.append(hash.ToHex());
+			}
+
+			return HTTPUtil::BuildSuccessResponse(conn, json.toStyledString());
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
+
+	return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 }
 
 int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNodeContext)
@@ -80,37 +90,42 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 
 	uint64_t numHashes = 10;
 
-	const std::string queryString = HTTPUtil::GetQueryString(conn);
-	if (!queryString.empty())
+	try
 	{
-		if (!StringUtil::StartsWith(queryString, "n="))
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
+		if (!queryString.empty())
 		{
-			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastoutputs?n=###");
+			if (!StringUtil::StartsWith(queryString, "n="))
+			{
+				return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastoutputs?n=###");
+			}
+
+			std::string numHashesStr = queryString.substr(2);
+			numHashes = std::stoull(numHashesStr);
 		}
 
-		std::string numHashesStr = queryString.substr(2);
-		numHashes = std::stoull(numHashesStr);
-	}
-
-	auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet != nullptr)
-	{
-		Json::Value rootNode;
-
-		std::vector<Hash> hashes = pTxHashSet->Read()->GetLastOutputHashes(numHashes);
-		for (const Hash& hash : hashes)
+		auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet != nullptr)
 		{
-			Json::Value outputNode;
-			outputNode["hash"] = hash.ToHex();
-			rootNode.append(outputNode);
-		}
+			Json::Value rootNode;
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastOutputHashes(numHashes);
+			for (const Hash& hash : hashes)
+			{
+				Json::Value outputNode;
+				outputNode["hash"] = hash.ToHex();
+				rootNode.append(outputNode);
+			}
+
+			return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
+
+	return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 }
 
 int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* pNodeContext)
@@ -119,37 +134,42 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 
 	uint64_t numHashes = 10;
 
-	const std::string queryString = HTTPUtil::GetQueryString(conn);
-	if (!queryString.empty())
+	try
 	{
-		if (!StringUtil::StartsWith(queryString, "n="))
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
+		if (!queryString.empty())
 		{
-			return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastrangeproofs?n=###");
+			if (!StringUtil::StartsWith(queryString, "n="))
+			{
+				return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/lastrangeproofs?n=###");
+			}
+
+			std::string numHashesStr = queryString.substr(2);
+			numHashes = std::stoull(numHashesStr);
 		}
 
-		std::string numHashesStr = queryString.substr(2);
-		numHashes = std::stoull(numHashesStr);
-	}
-
-	auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet != nullptr)
-	{
-		Json::Value rootNode;
-
-		std::vector<Hash> hashes = pTxHashSet->Read()->GetLastRangeProofHashes(numHashes);
-		for (const Hash& hash : hashes)
+		auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet != nullptr)
 		{
-			Json::Value rangeProofNode;
-			rangeProofNode["hash"] = hash.ToHex();
-			rootNode.append(rangeProofNode);
-		}
+			Json::Value rootNode;
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastRangeProofHashes(numHashes);
+			for (const Hash& hash : hashes)
+			{
+				Json::Value rangeProofNode;
+				rangeProofNode["hash"] = hash.ToHex();
+				rootNode.append(rangeProofNode);
+			}
+
+			return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
+
+	return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 }
 
 // get txhashset/outputs?start_index=1&max=100
@@ -177,76 +197,81 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 	uint64_t startIndex = 1;
 	uint64_t max = 100;
 
-	const std::string queryString = HTTPUtil::GetQueryString(conn);
-	if (!queryString.empty())
+	try
 	{
-		std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
-		for (const std::string& token : tokens)
+		const std::string queryString = HTTPUtil::GetQueryString(conn);
+		if (!queryString.empty())
 		{
-			if (StringUtil::StartsWith(token, "start_index="))
+			std::vector<std::string> tokens = StringUtil::Split(queryString, "&");
+			for (const std::string& token : tokens)
 			{
-				std::vector<std::string> startIndexTokens = StringUtil::Split(token, "=");
-				if (startIndexTokens.size() != 2)
+				if (StringUtil::StartsWith(token, "start_index="))
 				{
-					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
-				}
+					std::vector<std::string> startIndexTokens = StringUtil::Split(token, "=");
+					if (startIndexTokens.size() != 2)
+					{
+						return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
+					}
 
-				startIndex = std::stoull(startIndexTokens[1]);
-			}
-			else if (StringUtil::StartsWith(token, "max="))
-			{
-				std::vector<std::string> maxTokens = StringUtil::Split(token, "=");
-				if (maxTokens.size() != 2)
+					startIndex = std::stoull(startIndexTokens[1]);
+				}
+				else if (StringUtil::StartsWith(token, "max="))
 				{
-					return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
-				}
+					std::vector<std::string> maxTokens = StringUtil::Split(token, "=");
+					if (maxTokens.size() != 2)
+					{
+						return HTTPUtil::BuildBadRequestResponse(conn, "Expected /v1/txhashset/outputs?start_index=1&max=100");
+					}
 
-				max = std::stoull(maxTokens[1]);
+					max = std::stoull(maxTokens[1]);
+				}
 			}
 		}
-	}
 
-	if (max > 1000)
-	{
-		max = 1000;
-	}
-
-	auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet != nullptr)
-	{
-		Json::Value rootNode;
-
-		auto pBlockDB = pServer->m_pDatabase->GetBlockDB()->Read();
-		OutputRange range = pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, max);
-		rootNode["highest_index"] = range.GetHighestIndex();
-		rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
-
-		Json::Value outputsNode;
-		for (const OutputDTO& info : range.GetOutputs())
+		if (max > 1000)
 		{
-			Json::Value outputNode;
-			const EOutputFeatures features = info.GetIdentifier().GetFeatures();
-			outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
-			outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
-			outputNode["spent"] = info.IsSpent();
-			outputNode["proof"] = info.GetRangeProof().Format();
-
-			Serializer proofSerializer;
-			info.GetRangeProof().Serialize(proofSerializer);
-			outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
-
-			outputNode["block_height"] = info.GetLocation().GetBlockHeight();
-			outputNode["merkle_proof"] = Json::nullValue;
-			outputNode["mmr_index"] = info.GetLocation().GetMMRIndex() + 1;
-			outputsNode.append(outputNode);
+			max = 1000;
 		}
 
-		rootNode["outputs"] = outputsNode;
+		auto pTxHashSet = pServer->m_pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet != nullptr)
+		{
+			Json::Value rootNode;
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+			auto pBlockDB = pServer->m_pDatabase->GetBlockDB()->Read();
+			OutputRange range = pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, max);
+			rootNode["highest_index"] = range.GetHighestIndex();
+			rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
+
+			Json::Value outputsNode;
+			for (const OutputDTO& info : range.GetOutputs())
+			{
+				Json::Value outputNode;
+				const EOutputFeatures features = info.GetIdentifier().GetFeatures();
+				outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
+				outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
+				outputNode["spent"] = info.IsSpent();
+				outputNode["proof"] = info.GetRangeProof().Format();
+
+				Serializer proofSerializer;
+				info.GetRangeProof().Serialize(proofSerializer);
+				outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
+
+				outputNode["block_height"] = info.GetLocation().GetBlockHeight();
+				outputNode["merkle_proof"] = Json::nullValue;
+				outputNode["mmr_index"] = info.GetLocation().GetMMRIndex() + 1;
+				outputsNode.append(outputNode);
+			}
+
+			rootNode["outputs"] = outputsNode;
+
+			return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
+
+	return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find TxHashSet.");
 }

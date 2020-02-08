@@ -12,6 +12,7 @@
 #include <cstring>
 #include <stdint.h>
 #include <algorithm>
+#include <array>
 
 #include <Crypto/BigInteger.h>
 
@@ -193,6 +194,22 @@ public:
 		m_index += numBytes;
 
 		return std::vector<unsigned char>(m_bytes.cbegin() + index, m_bytes.cbegin() + index + numBytes);
+	}
+
+	template<size_t T>
+	std::array<uint8_t, T> ReadArray()
+	{
+		if (m_index + T > m_bytes.size())
+		{
+			throw DESERIALIZATION_EXCEPTION();
+		}
+
+		const size_t index = m_index;
+		m_index += T;
+
+		std::array<uint8_t, T> arr;
+		std::copy(m_bytes.begin() + index, m_bytes.begin() + index + T, arr.begin());
+		return arr;
 	}
 
 	size_t GetRemainingSize() const

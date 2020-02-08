@@ -6,6 +6,7 @@
 #include <P2P/Capabilities.h>
 #include <P2P/BanReason.h>
 #include <Core/Traits/Printable.h>
+#include <json/json.h>
 
 #include <string>
 #include <cstdint>
@@ -91,43 +92,43 @@ public:
 	//
 	// Setters
 	//
-	void SetDirty(const bool value) { m_dirty = value; }
-	void SetConnected(const bool connected)
+	void SetDirty(const bool value) noexcept { m_dirty = value; }
+	void SetConnected(const bool connected) noexcept
 	{
 		m_connected = connected;
 		m_dirty = true;
 	}
-	void UpdateVersion(const uint32_t version) { m_version = version; }
-	void UpdateCapabilities(const Capabilities& capabilities) { m_capabilities = capabilities; }
-	void UpdateLastContactTime() const { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
-	void Ban(const EBanReason banReason)
+	void UpdateVersion(const uint32_t version) noexcept { m_version = version; }
+	void UpdateCapabilities(const Capabilities& capabilities) noexcept { m_capabilities = capabilities; }
+	void UpdateLastContactTime() const noexcept { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
+	void Ban(const EBanReason banReason) noexcept
 	{
 		m_lastBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 		m_banReason = banReason;
 		m_dirty = true;
 	}
-	void Unban()
+	void Unban() noexcept
 	{
 		m_lastBanTime = 0;
 		m_dirty = true;
 	}
-	void UpdateUserAgent(const std::string& userAgent) { m_userAgent = userAgent; }
-	void UpdateLastTxHashSetRequest() { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
+	void UpdateUserAgent(const std::string& userAgent) noexcept { m_userAgent = userAgent; }
+	void UpdateLastTxHashSetRequest() noexcept { m_lastTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 
 	//
 	// Getters
 	//
-	bool IsDirty() const { return m_dirty; }
-	bool IsConnected() const { return m_connected; }
-	const IPAddress& GetIPAddress() const { return m_ipAddress; }
-	uint32_t GetVersion() const { return m_version; }
-	Capabilities GetCapabilities() const { return m_capabilities; }
-	const std::string& GetUserAgent() const { return m_userAgent; }
-	std::time_t GetLastContactTime() const { return m_lastContactTime; }
-	std::time_t GetLastBanTime() const { return m_lastBanTime; }
-	EBanReason GetBanReason() const { return m_banReason; }
-	std::time_t GetLastTxHashSetRequest() const { return m_lastTxHashSetRequest; }
-	bool IsBanned() const
+	bool IsDirty() const noexcept { return m_dirty; }
+	bool IsConnected() const noexcept { return m_connected; }
+	const IPAddress& GetIPAddress() const noexcept { return m_ipAddress; }
+	uint32_t GetVersion() const noexcept { return m_version; }
+	Capabilities GetCapabilities() const noexcept { return m_capabilities; }
+	const std::string& GetUserAgent() const noexcept { return m_userAgent; }
+	std::time_t GetLastContactTime() const noexcept { return m_lastContactTime; }
+	std::time_t GetLastBanTime() const noexcept { return m_lastBanTime; }
+	EBanReason GetBanReason() const noexcept { return m_banReason; }
+	std::time_t GetLastTxHashSetRequest() const noexcept { return m_lastTxHashSetRequest; }
+	bool IsBanned() const noexcept
 	{
 		const time_t maxBanTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW));
 		return GetLastBanTime() > maxBanTime;
@@ -166,6 +167,19 @@ public:
 			lastBanTime,
 			banReason
 		));
+	}
+
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["addr"] = GetIPAddress().Format();
+		json["capabilities"] = GetCapabilities().ToJSON();
+		json["user_agent"] = GetUserAgent();
+		json["flags"] = IsBanned() ? "Banned" : "Healthy";
+		json["last_banned"] = Json::UInt64(GetLastBanTime());
+		json["ban_reason"] = BanReason::Format(GetBanReason());
+		json["last_connected"] = Json::UInt64(GetLastContactTime());
+		return json;
 	}
 
 	virtual std::string Format() const override final { return m_ipAddress.Format(); }

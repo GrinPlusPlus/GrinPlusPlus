@@ -25,7 +25,7 @@ public:
 	}
 
 	SocketAddress(const std::string& ipAddress, const uint16_t port)
-		: m_ipAddress(IPAddress::FromString(ipAddress)), m_port(port)
+		: m_ipAddress(IPAddress::Parse(ipAddress)), m_port(port)
 	{
 
 	}

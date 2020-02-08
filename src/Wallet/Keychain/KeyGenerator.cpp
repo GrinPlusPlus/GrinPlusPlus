@@ -12,9 +12,9 @@ KeyGenerator::KeyGenerator(const Config& config)
 
 }
 
-PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed, const EKeyChainType& keyChainType) const
+PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 {
-	const std::vector<unsigned char> key = GetSeed(keyChainType);
+	const std::vector<unsigned char> key({ 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' });
 	const CBigInteger<64> hash = Crypto::HMAC_SHA512(key, (const std::vector<unsigned char>&)seed);
 	const std::vector<unsigned char>& vchHash = hash.GetData();
 
@@ -27,14 +27,7 @@ PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed, const EK
 
 	CBigInteger<32> masterChainCode(&vchHash[32]);
 
-	if (keyChainType == EKeyChainType::GRINBOX)
-	{
-		return PrivateExtKey::Create(BitUtil::ConvertToU32(42, 1, 0, 42), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
-	}
-	else
-	{
-		return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
-	}
+	return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
 }
 
 PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
@@ -90,16 +83,4 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 		std::move(childChainCode),
 		std::move(childPrivateKey)
 	);
-}
-
-std::vector<unsigned char> KeyGenerator::GetSeed(const EKeyChainType& keyChainType) const
-{
-	if (keyChainType == EKeyChainType::GRINBOX)
-	{
-		return std::vector<unsigned char>({ 'G', 'r', 'i', 'n', 'b', 'o', 'x', '_', 's', 'e', 'e', 'd' });
-	}
-	else
-	{
-		return std::vector<unsigned char>({ 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' });
-	}
 }

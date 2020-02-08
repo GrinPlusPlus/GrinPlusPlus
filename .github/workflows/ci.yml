@@ -17,6 +17,9 @@ jobs:
             os: ubuntu-latest
           - name: windows
             os: windows-latest
+          - name: arm64
+            uses: uraimo/run-on-arch-action@v1.0.5
+
     steps:
       - uses: actions/checkout@v1
       - name: setup macos environment
@@ -35,3 +38,20 @@ jobs:
         run: |
           cmake ..
           cmake --build . --config RelWithDebInfo
+  arm64:
+    runs-on: ubuntu-latest
+    name: arm64
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - uses: uraimo/run-on-arch-action@v1.0.5
+      - name: setup arm64 environment
+        id: runcmd
+        with:
+          architecture: aarch64
+          distribution: ubuntu18.04
+          run: |
+            sudo apt install uuid-dev
+            mkdir build
+            cd build
+            cmake ..
+            cmake --build . --config RelWithDebInfo

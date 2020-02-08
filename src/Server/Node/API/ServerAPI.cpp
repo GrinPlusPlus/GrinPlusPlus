@@ -26,25 +26,25 @@ int ServerAPI::V1_Handler(struct mg_connection* conn, void*)
 {
 	if (HTTPUtil::GetHTTPMethod(conn) == HTTP::EHTTPMethod::GET)
 	{
-		Json::Value rootNode;
-		rootNode.append("GET /v1/blocks/<hash>?compact");
-		rootNode.append("GET /v1/blocks/<height>?compact");
-		rootNode.append("GET /v1/blocks/<output commit>?compact");
-		rootNode.append("GET /v1/chain/");
-		rootNode.append("GET /v1/chain/outputs/byids?id=xxx,yyy&id=zzz");
-		rootNode.append("GET /v1/chain/outputs/byheight?start_height=100&end_height=200");
-		rootNode.append("GET /v1/peers/all");
-		rootNode.append("GET /v1/peers/connected");
-		rootNode.append("GET /v1/peers/a.b.c.d");
-		rootNode.append("POST /v1/peers/ban?a.b.c.d");
-		rootNode.append("POST /v1/peers/unban?a.b.c.d");
-		rootNode.append("GET /v1/txhashset/roots");
-		rootNode.append("GET /v1/txhashset/lastkernels?n=###");
-		rootNode.append("GET /v1/txhashset/lastoutputs?n=###");
-		rootNode.append("GET /v1/txhashset/lastrangeproofs?n=###");
-		rootNode.append("GET /v1/txhashset/outputs?start_index=1&max=100");
+		Json::Value json;
+		json.append("GET /v1/blocks/<hash>?compact");
+		json.append("GET /v1/blocks/<height>?compact");
+		json.append("GET /v1/blocks/<output commit>?compact");
+		json.append("GET /v1/chain/");
+		json.append("GET /v1/chain/outputs/byids?id=xxx,yyy&id=zzz");
+		json.append("GET /v1/chain/outputs/byheight?start_height=100&end_height=200");
+		json.append("GET /v1/peers/all");
+		json.append("GET /v1/peers/connected");
+		json.append("GET /v1/peers/a.b.c.d");
+		json.append("POST /v1/peers/ban?a.b.c.d");
+		json.append("POST /v1/peers/unban?a.b.c.d");
+		json.append("GET /v1/txhashset/roots");
+		json.append("GET /v1/txhashset/lastkernels?n=###");
+		json.append("GET /v1/txhashset/lastoutputs?n=###");
+		json.append("GET /v1/txhashset/lastrangeproofs?n=###");
+		json.append("GET /v1/txhashset/outputs?start_index=1&max=100");
 
-		return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		return HTTPUtil::BuildSuccessResponse(conn, json.toStyledString());
 	}
 	else
 	{

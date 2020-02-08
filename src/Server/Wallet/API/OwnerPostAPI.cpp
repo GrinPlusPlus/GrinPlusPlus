@@ -85,28 +85,13 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "password missing.");
 	}
 
-	std::optional<std::pair<SecureString, SessionToken>> walletOpt = walletManager.InitializeNewWallet(usernameOpt.value(), SecureString(passwordOpt.value()));
-	if (walletOpt.has_value())
-	{
-		Json::Value responseJSON;
-		responseJSON["wallet_seed"] = std::string(walletOpt.value().first);
-		responseJSON["session_token"] = std::string(walletOpt.value().second.ToBase64());
+	std::pair<SecureString, SessionToken> wallet = walletManager.InitializeNewWallet(usernameOpt.value(), SecureString(passwordOpt.value()));
 
-		if (m_config.GetWalletConfig().IsGrinboxEnabled())
-		{
-			const SecretKey grinboxKey = walletManager.GetGrinboxAddress(walletOpt.value().second);
-			responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetVec());
+	Json::Value responseJSON;
+	responseJSON["wallet_seed"] = std::string(wallet.first);
+	responseJSON["session_token"] = std::string(wallet.second.ToBase64());
 
-			PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
-			responseJSON["grinbox_address"] = publicKey.GetCompressedBytes().ToHex();
-		}
-
-		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
-	}
-	else
-	{
-		return HTTPUtil::BuildInternalErrorResponse(pConnection, "Username already exists.");
-	}
+	return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 }
 
 int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
@@ -128,15 +113,6 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 		SessionToken sessionToken = walletManager.Login(usernameOpt.value(), SecureString(passwordOpt.value()));
 		Json::Value responseJSON;
 		responseJSON["session_token"] = sessionToken.ToBase64();
-
-		if (m_config.GetWalletConfig().IsGrinboxEnabled())
-		{
-			const SecretKey grinboxKey = walletManager.GetGrinboxAddress(sessionToken);
-			responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetVec());
-
-			PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
-			responseJSON["grinbox_address"] = publicKey.GetCompressedBytes().ToHex();
-		}
 
 		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(sessionToken);
 		if (torAddressOpt.has_value())
@@ -188,15 +164,6 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 		{
 			Json::Value responseJSON;
 			responseJSON["session_token"] = std::string(tokenOpt.value().ToBase64());
-			
-			if (m_config.GetWalletConfig().IsGrinboxEnabled())
-			{
-				const SecretKey grinboxKey = walletManager.GetGrinboxAddress(tokenOpt.value());
-				responseJSON["grinbox_key"] = HexUtil::ConvertToHex(grinboxKey.GetVec());
-
-				PublicKey publicKey = Crypto::CalculatePublicKey(grinboxKey);
-				responseJSON["grinbox_address"] = publicKey.GetCompressedBytes().ToHex();
-			}
 
 			return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
 		}

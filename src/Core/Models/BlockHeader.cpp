@@ -1,5 +1,6 @@
 #include <Core/Models/BlockHeader.h>
 #include <Crypto/Crypto.h>
+#include <Common/Util/TimeUtil.h>
 
 BlockHeader::BlockHeader
 (
@@ -96,6 +97,43 @@ BlockHeader BlockHeader::Deserialize(ByteBuffer& byteBuffer)
 		nonce,
 		std::move(proofOfWork)
 	);
+}
+
+Json::Value BlockHeader::ToJSON() const
+{
+	Json::Value headerJSON;
+	headerJSON["height"] = GetHeight();
+	headerJSON["hash"] = GetHash().ToHex();
+	headerJSON["version"] = GetVersion();
+
+	headerJSON["timestamp_raw"] = GetTimestamp();
+	headerJSON["timestamp_local"] = TimeUtil::FormatLocal(GetTimestamp());
+	headerJSON["timestamp"] = TimeUtil::FormatUTC(GetTimestamp());
+
+	headerJSON["previous"] = GetPreviousBlockHash().ToHex();
+	headerJSON["prev_root"] = GetPreviousRoot().ToHex();
+
+	headerJSON["kernel_root"] = GetKernelRoot().ToHex();
+	headerJSON["output_root"] = GetOutputRoot().ToHex();
+	headerJSON["range_proof_root"] = GetRangeProofRoot().ToHex();
+
+	headerJSON["output_mmr_size"] = GetOutputMMRSize();
+	headerJSON["kernel_mmr_size"] = GetKernelMMRSize();
+
+	headerJSON["total_kernel_offset"] = GetTotalKernelOffset().GetBytes().ToHex();
+	headerJSON["secondary_scaling"] = GetScalingDifficulty();
+	headerJSON["total_difficulty"] = GetTotalDifficulty();
+	headerJSON["nonce"] = GetNonce();
+
+	headerJSON["edge_bits"] = GetProofOfWork().GetEdgeBits();
+
+	Json::Value cuckooSolution;
+	for (const uint64_t proofNonce : GetProofOfWork().GetProofNonces())
+	{
+		cuckooSolution.append(proofNonce);
+	}
+	headerJSON["cuckoo_solution"] = cuckooSolution;
+	return headerJSON;
 }
 
 std::vector<unsigned char> BlockHeader::GetPreProofOfWork() const

@@ -35,11 +35,8 @@ public:
 	std::vector<PeerPtr> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
 
 	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
-	//void SetPeerConnected(const PeerPtr& peer, const bool connected);
-	//void BanPeer(PeerPtr peer, const EBanReason banReason);
 	void BanPeer(const IPAddress& address, const EBanReason banReason);
 	void UnbanPeer(const IPAddress& address);
-	// TODO: RemovePeer
 
 private:
 	PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
@@ -66,12 +63,11 @@ private:
 
 	std::vector<PeerPtr> GetPeersWithCapability(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers, const bool connectingToPeer) const;
 
+	void SetTaskId(const uint64_t taskId) noexcept { m_taskId = taskId; }
+	uint64_t m_taskId;
+
 	Context::Ptr m_pContext;
 	std::shared_ptr<Locked<IPeerDB>> m_pPeerDB;
 
-	std::atomic_bool m_terminate;
-	std::thread m_peerThread;
-
-	mutable std::unordered_set<IPAddress> m_peersServed;
 	mutable std::map<IPAddress, PeerEntry> m_peersByAddress;
 };

@@ -1,5 +1,4 @@
 #include "PeersAPI.h"
-#include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
@@ -16,16 +15,23 @@ int PeersAPI::GetAllPeers_Handler(struct mg_connection* conn, void* pNodeContext
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 
-	const std::vector<PeerConstPtr> peers = pServer->m_pP2PServer->GetAllPeers();
-
-	Json::Value rootNode;
-
-	for (PeerConstPtr peer : peers)
+	try
 	{
-		rootNode.append(JSONFactory::BuildPeerJSON(*peer));
-	}
+		const std::vector<PeerConstPtr> peers = pServer->m_pP2PServer->GetAllPeers();
 
-	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		Json::Value json;
+		for (PeerConstPtr peer : peers)
+		{
+			json.append(peer->ToJSON());
+		}
+
+		return HTTPUtil::BuildSuccessResponse(conn, json.toStyledString());
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Unknown error occurred");
+	}
 }
 
 //
@@ -38,16 +44,23 @@ int PeersAPI::GetConnectedPeers_Handler(struct mg_connection* conn, void* pNodeC
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 
-	const std::vector<ConnectedPeer> connectedPeers = pServer->m_pP2PServer->GetConnectedPeers();
-
-	Json::Value rootNode;
-
-	for (const ConnectedPeer& connectedPeer : connectedPeers)
+	try
 	{
-		rootNode.append(JSONFactory::BuildConnectedPeerJSON(connectedPeer));
-	}
+		const std::vector<ConnectedPeer> connectedPeers = pServer->m_pP2PServer->GetConnectedPeers();
 
-	return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+		Json::Value json;
+		for (const ConnectedPeer& connectedPeer : connectedPeers)
+		{
+			json.append(connectedPeer.ToJSON());
+		}
+
+		return HTTPUtil::BuildSuccessResponse(conn, json.toStyledString());
+	}
+	catch (std::exception & e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
+		return HTTPUtil::BuildInternalErrorResponse(conn, "Unknown error occurred");
+	}
 }
 
 //
@@ -72,7 +85,7 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(conn);
 
 		const std::string ipAddressStr = ParseIPAddress(requestedPeer);
-		IPAddress ipAddress = IPAddress::FromString(ipAddressStr);
+		IPAddress ipAddress = IPAddress::Parse(ipAddressStr);
 
 		const std::string commandStr = ParseCommand(requestedPeer);
 		if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)
@@ -94,10 +107,10 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 			std::optional<PeerConstPtr> peerOpt = pServer->m_pP2PServer->GetPeer(ipAddress);
 			if (peerOpt.has_value())
 			{
-				Json::Value rootNode;
-				rootNode.append(JSONFactory::BuildPeerJSON(*peerOpt.value()));
-
-				return HTTPUtil::BuildSuccessResponse(conn, rootNode.toStyledString());
+				return HTTPUtil::BuildSuccessResponse(
+					conn,
+					Json::Value().append(peerOpt.value()->ToJSON()).toStyledString()
+				);
 			}
 		}
 		else
@@ -108,6 +121,10 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 	catch (const DeserializationException&)
 	{
 		return HTTPUtil::BuildBadRequestResponse(conn, "Invalid IP address.");
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
 
 	return HTTPUtil::BuildNotFoundResponse(conn, "Peer not found.");

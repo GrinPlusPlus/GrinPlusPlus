@@ -8,6 +8,7 @@
 
 #include <Database/BlockDb.h>
 #include <Config/Config.h>
+#include <caches/Cache.h>
 #include <mutex>
 #include <set>
 
@@ -73,4 +74,6 @@ private:
 	ColumnFamilyHandle* m_pInputBitmapHandle;
 
 	std::vector<BlockHeaderPtr> m_uncommitted;
+
+	FIFOCache<Hash, BlockHeaderPtr> m_blockHeadersCache;
 };

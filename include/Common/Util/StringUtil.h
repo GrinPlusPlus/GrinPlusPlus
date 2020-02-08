@@ -19,7 +19,7 @@ class StringUtil
 {
 public:
 	template<typename ... Args>
-	static std::string Format(const std::string& format, const Args& ... args)
+	static std::string Format(const char* format, const Args& ... args)
 	{
 		return fmt::format(format, ConvertParam(args) ...);
 	}
@@ -121,12 +121,6 @@ private:
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
 			return !std::isspace(ch) && ch != '\r' && ch != '\n';
 			}).base(), s.end());
-	}
-
-	template<typename ... Args>
-	static std::string Format2(const std::string& format, const Args& ... args)
-	{
-		return fmt::format(format, args ...);
 	}
 
 	static std::string ConvertParam(const std::string& x)

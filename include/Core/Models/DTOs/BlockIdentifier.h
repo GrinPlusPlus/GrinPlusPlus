@@ -2,6 +2,7 @@
 
 #include <Crypto/Hash.h>
 #include <Core/Models/BlockHeader.h>
+#include <json/json.h>
 
 class BlockIdentifier
 {
@@ -23,6 +24,15 @@ public:
 	const Hash& GetHash() const { return m_hash; }
 	const Hash& GetPreviousHash() const { return m_previousHash; }
 	uint64_t GetHeight() const { return m_height; }
+
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["hash"] = GetHash().ToHex();
+		json["height"] = GetHeight();
+		json["previous"] = GetPreviousHash().ToHex();
+		return json;
+	}
 
 private:
 	Hash m_hash;

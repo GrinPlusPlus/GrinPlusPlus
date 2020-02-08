@@ -1,10 +1,13 @@
 #pragma once
 
 #include "../ConnectionManager.h"
+#include "../MessageProcessor.h"
 
 #include <Config/Config.h>
+#include <Core/Context.h>
 #include <BlockChain/BlockChainServer.h>
 #include <P2P/Direction.h>
+#include <cstdint>
 #include <memory>
 #include <atomic>
 #include <thread>
@@ -20,7 +23,7 @@ class Seeder
 {
 public:
 	static std::shared_ptr<Seeder> Create(
-		const Config& config,
+		Context::Ptr pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		IBlockChainServerPtr pBlockChainServer,
@@ -31,11 +34,11 @@ public:
 
 private:
 	Seeder(
-		const Config& config,
+		Context::Ptr pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		IBlockChainServerPtr pBlockChainServer,
-		std::shared_ptr<Pipeline> pPipeline,
+		std::shared_ptr<MessageProcessor> pMessageProcessor,
 		SyncStatusConstPtr pSyncStatus
 	);
 
@@ -44,16 +47,16 @@ private:
 
 	ConnectionPtr SeedNewConnection();
 
-	const Config& m_config;
+	Context::Ptr m_pContext;
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
 	IBlockChainServerPtr m_pBlockChainServer;
-	std::shared_ptr<Pipeline> m_pPipeline;
+	std::shared_ptr<MessageProcessor> m_pMessageProcessor;
 	SyncStatusConstPtr m_pSyncStatus;
 
 	std::atomic<bool> m_terminate = true;
 
-	std::shared_ptr<asio::io_context> m_pContext;
+	std::shared_ptr<asio::io_context> m_pAsioContext;
 	std::thread m_seedThread;
 	std::thread m_listenerThread;
 	mutable std::atomic_bool m_usedDNS = false;

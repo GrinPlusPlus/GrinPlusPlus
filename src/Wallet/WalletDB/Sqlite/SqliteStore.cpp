@@ -99,11 +99,7 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 
 	const std::string seedJSON = encryptedSeed.ToJSON().toStyledString();
 	const std::vector<unsigned char> seedBytes(seedJSON.data(), seedJSON.data() + seedJSON.size());
-	if (!FileUtil::SafeWriteToFile(seedFile, seedBytes))
-	{
-		WALLET_ERROR_F("Failed to create seed.json for user: {}", username);
-		throw WALLET_STORE_EXCEPTION("Failed to create seed.json");
-	}
+	FileUtil::SafeWriteToFile(seedFile, seedBytes);
 
 	sqlite3* pDatabase = CreateWalletDB(username);
 

@@ -72,8 +72,8 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 
 	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB->OpenWallet(username, seed), username);
 
-	LoggedInSession* pSession = new LoggedInSession(wallet, std::move(encryptedSeedWithCS));
-	m_sessionsById[sessionId] = std::shared_ptr<LoggedInSession>(pSession);
+	auto pSession = std::make_shared<LoggedInSession>(wallet, std::move(encryptedSeedWithCS));
+	m_sessionsById[sessionId] = pSession;
 
 	std::pair<uint16_t, std::optional<TorAddress>> listenerInfo = m_pForeignController->StartListener(username, token, seed);
 	wallet.Write()->SetListenerPort(listenerInfo.first);

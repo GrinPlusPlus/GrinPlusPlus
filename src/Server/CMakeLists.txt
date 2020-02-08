@@ -12,7 +12,6 @@ file(GLOB SOURCE_CODE
 	"Node/API/PeersAPI.cpp"
 	"Node/API/ServerAPI.cpp"
 	"Node/API/TxHashSetAPI.cpp"
-	"Node/API/Explorer/BlockInfoAPI.cpp"
 	"Wallet/WalletDaemon.cpp"
 	"Wallet/WalletRestServer.cpp"
 	"Wallet/API/OwnerGetAPI.cpp"

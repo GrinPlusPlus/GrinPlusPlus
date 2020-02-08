@@ -69,3 +69,38 @@ CompactBlock CompactBlock::Deserialize(ByteBuffer& byteBuffer)
 
 	return CompactBlock(pBlockHeader, nonce, std::move(outputs), std::move(kernels), std::move(shortIds));
 }
+
+Json::Value CompactBlock::ToJSON() const
+{
+	Json::Value json;
+	json["header"] = GetBlockHeader()->ToJSON();
+
+	// Short Ids
+	Json::Value inputsNode;
+	for (const ShortId& shortId : GetShortIds())
+	{
+		json.append(shortId.GetId().ToHex());
+	}
+	json["inputs"] = inputsNode;
+
+	// Transaction Outputs
+	Json::Value outputsNode;
+	for (const TransactionOutput& output : GetOutputs())
+	{
+		// TODO: Include MMR position?
+		Json::Value outputJSON = output.ToJSON();
+		outputJSON["block_height"] = GetHeight();
+		outputsNode.append(outputJSON);
+	}
+	json["outputs"] = outputsNode;
+
+	// Transaction Kernels
+	Json::Value kernelsNode;
+	for (const TransactionKernel& kernel : GetKernels())
+	{
+		kernelsNode.append(kernel.ToJSON());
+	}
+	json["kernels"] = kernelsNode;
+
+	return json;
+}

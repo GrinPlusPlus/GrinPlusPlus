@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/AppendOnlyFile.h>
+#include <Core/File/AppendOnlyFile.h>
 #include <Core/Exceptions/FileException.h>
 #include <Core/Traits/Batchable.h>
 #include <Crypto/BigInteger.h>

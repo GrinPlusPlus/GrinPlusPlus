@@ -1,7 +1,5 @@
 #pragma once
 
-#include "KeyChainType.h"
-
 #include <Wallet/PrivateExtKey.h>
 #include <Wallet/PublicExtKey.h>
 
@@ -24,7 +22,7 @@ public:
 	//
 	// \return The generated master CExtendedPrivateKey.
 	//
-	PrivateExtKey GenerateMasterKey(const SecureVector& seed, const EKeyChainType& keyChainType) const;
+	PrivateExtKey GenerateMasterKey(const SecureVector& seed) const;
 
 	//
 	// Generates an extended child private key from a parent extended key (for an HD wallet).
@@ -38,7 +36,5 @@ public:
 	PrivateExtKey GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const;
 
 private:
-	std::vector<unsigned char> GetSeed(const EKeyChainType& keyChainType) const;
-
 	const Config& m_config;
 };

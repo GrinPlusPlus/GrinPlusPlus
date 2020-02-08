@@ -56,7 +56,7 @@ public:
 
 			std::error_code error;
 			m_mmap = mio::make_mmap_source(MPATH_STR, error);
-			if (error.value() > 0)
+			if (error.value() != 0)
 			{
 				// TODO: Handle this
 			}
@@ -174,7 +174,7 @@ private:
 		{
 			std::error_code error;
 			m_mmap = mio::make_mmap_source(MPATH_STR, error);
-			if (error.value() > 0)
+			if (error.value() != 0)
 			{
 				LOG_ERROR_F("Failed to mmap file: {}", error.value());
 				throw FILE_EXCEPTION_F("Failed to mmap file: {}", m_path);

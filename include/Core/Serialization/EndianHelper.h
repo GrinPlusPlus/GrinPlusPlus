@@ -14,7 +14,7 @@
 class EndianHelper
 {
 public:
-	static bool IsBigEndian()
+	static bool IsBigEndian() noexcept
 	{
 		union 
 		{
@@ -26,14 +26,14 @@ public:
 	}
 
 	// In Visual Studio, _byteswap_ushort could be used.
-	static uint16_t changeEndianness16(const uint16_t val)
+	static uint16_t changeEndianness16(const uint16_t val) noexcept
 	{
 		return (val << 8) |          // left-shift always fills with zeros
 			((val >> 8) & 0x00ff); // right-shift sign-extends, so force to zero
 	}
 
 	// In Visual Studio, _byteswap_ulong could be used.
-	static uint32_t changeEndianness32(const uint32_t val)
+	static uint32_t changeEndianness32(const uint32_t val) noexcept
 	{
 		return (val << 24) |
 			((val << 8) & 0x00ff0000) |
@@ -41,7 +41,7 @@ public:
 			((val >> 24) & 0x000000ff);
 	}
 
-	static uint64_t changeEndianness64(const uint64_t val)
+	static uint64_t changeEndianness64(const uint64_t val) noexcept
 	{
 		uint64_t x = val;
 		x = (x & 0x00000000FFFFFFFF) << 32 | (x & 0xFFFFFFFF00000000) >> 32;
@@ -50,7 +50,7 @@ public:
 		return x;
 	}
 
-	static uint16_t GetBigEndian16(const uint16_t val)
+	static uint16_t GetBigEndian16(const uint16_t val) noexcept
 	{
 		if (IsBigEndian())
 		{
@@ -60,7 +60,7 @@ public:
 		return changeEndianness16(val);
 	}
 
-	static uint32_t GetBigEndian32(const uint32_t val)
+	static uint32_t GetBigEndian32(const uint32_t val) noexcept
 	{
 		if (IsBigEndian())
 		{
@@ -70,7 +70,7 @@ public:
 		return changeEndianness32(val);
 	}
 
-	static uint64_t GetBigEndian64(const uint64_t val)
+	static uint64_t GetBigEndian64(const uint64_t val) noexcept
 	{
 		if (IsBigEndian())
 		{
@@ -80,7 +80,7 @@ public:
 		return changeEndianness64(val);
 	}
 
-	static uint32_t GetLittleEndian32(const uint32_t val)
+	static uint32_t GetLittleEndian32(const uint32_t val) noexcept
 	{
 		if (!IsBigEndian())
 		{
@@ -90,7 +90,7 @@ public:
 		return changeEndianness32(val);
 	}
 
-	static uint64_t GetLittleEndian64(const uint64_t val)
+	static uint64_t GetLittleEndian64(const uint64_t val) noexcept
 	{
 		if (!IsBigEndian())
 		{

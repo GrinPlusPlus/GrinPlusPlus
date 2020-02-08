@@ -9,8 +9,6 @@
 #include "API/PeersAPI.h"
 #include "API/TxHashSetAPI.h"
 
-#include "API/Explorer/BlockInfoAPI.h"
-
 #include <Infrastructure/Logger.h>
 #include <Infrastructure/ShutdownManager.h>
 #include <Net/Util/HTTPUtil.h>
@@ -62,8 +60,6 @@ void NodeRestServer::Initialize()
 	m_pNodeCivetContext = mg_start(NULL, 0, mg_options);
 
 	/* Add handlers */
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/explorer/blockinfo/", BlockInfoAPI::GetBlockInfo_Handler, m_pNodeContext.get());
-
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/status", ServerAPI::GetStatus_Handler, m_pNodeContext.get());
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/resync", ServerAPI::ResyncChain_Handler, m_pNodeContext.get());
 	mg_set_request_handler(m_pNodeCivetContext, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pNodeContext.get());

@@ -1,7 +1,7 @@
 #include "Zipper.h"
 
 #include <Common/Util/FileUtil.h>
-#include <Core/File.h>
+#include <Core/File/File.h>
 #include <Core/Exceptions/FileException.h>
 #include <Infrastructure/Logger.h>
 #include <fstream>
@@ -22,8 +22,7 @@ void Zipper::CreateZipFile(const fs::path& destination, const std::vector<fs::pa
 		{
 			if (fs::is_directory(paths[i]))
 			{
-				const fs::path destinationPath = paths[i].filename();
-				AddDirectory(zf, paths[i], destinationPath);
+				AddDirectory(zf, paths[i], paths[i].filename());
 			}
 			else
 			{
@@ -76,14 +75,14 @@ void Zipper::AddFile(zipFile zf, const fs::path& sourceFile, const fs::path& des
 
 			if (ZIP_OK == zipOpenNewFileInZip(zf, fileName.string().c_str(), &zfi, nullptr, 0, nullptr, 0, nullptr, 0, Z_NO_COMPRESSION))
 			{
-				if (zipWriteInFileInZip(zf, size == 0 ? "" : &buffer[0], (unsigned int)size))
+				if (zipWriteInFileInZip(zf, size == 0 ? "" : buffer.data(), (unsigned int)size))
 				{
-					throw FILE_EXCEPTION(StringUtil::Format("Failed to write to file {}", fileName));
+					throw FILE_EXCEPTION_F("Failed to write to file {}", fileName);
 				}
 
 				if (zipCloseFileInZip(zf))
 				{
-					throw FILE_EXCEPTION(StringUtil::Format("Failed to close file {}", fileName));
+					throw FILE_EXCEPTION_F("Failed to close file {}", fileName);
 				}
 
 				return;
@@ -91,5 +90,5 @@ void Zipper::AddFile(zipFile zf, const fs::path& sourceFile, const fs::path& des
 		}
 	}
 
-	throw FILE_EXCEPTION(StringUtil::Format("Failed to add file {}", destDir));
+	throw FILE_EXCEPTION_F("Failed to add file {}", destDir);
 }

@@ -15,16 +15,7 @@ KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& 
 
 KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed)
 {
-	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed, EKeyChainType::DEFAULT);
-	SecretKey bulletProofNonce = Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
-	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
-}
-
-KeyChain KeyChain::ForGrinbox(const Config& config, const SecureVector& masterSeed)
-{
-	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed, EKeyChainType::DEFAULT);
-	SecretKey rootKey = Crypto::BlindSwitch(masterKey.GetPrivateKey(), 713);
-	masterKey = KeyGenerator(config).GenerateMasterKey(SecureVector(rootKey.data(), rootKey.data() + rootKey.size()), EKeyChainType::GRINBOX);
+	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed);
 	SecretKey bulletProofNonce = Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
 	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
 }

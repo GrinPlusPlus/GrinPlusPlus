@@ -1,5 +1,4 @@
 #include "HeaderAPI.h"
-#include "../../JSONFactory.h"
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
@@ -19,19 +18,23 @@
 //
 int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	const std::string requestedHeader = HTTPUtil::GetURIParam(conn, "/v1/headers/");
-	auto pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
+	try
+	{
+		const std::string requestedHeader = HTTPUtil::GetURIParam(conn, "/v1/headers/");
+		auto pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
 
-	if (nullptr != pBlockHeader)
-	{
-		const Json::Value headerNode = JSONFactory::BuildHeaderJSON(*pBlockHeader);
-		return HTTPUtil::BuildSuccessResponse(conn, headerNode.toStyledString());
+		if (nullptr != pBlockHeader)
+		{
+			return HTTPUtil::BuildSuccessResponse(conn, pBlockHeader->ToJSON().toStyledString());
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		const std::string response = "HEADER NOT FOUND";
-		return HTTPUtil::BuildBadRequestResponse(conn, response);
+		LOG_ERROR_F("Exception thrown: {}", e.what());
 	}
+
+	const std::string response = "HEADER NOT FOUND";
+	return HTTPUtil::BuildBadRequestResponse(conn, response);
 }
 
 BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer)

@@ -11,6 +11,7 @@
 #include <Core/Models/TransactionKernel.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <json/json.h>
 
 class CompactBlock
 {
@@ -59,6 +60,7 @@ public:
 	//
 	void Serialize(Serializer& serializer) const;
 	static CompactBlock Deserialize(ByteBuffer& byteBuffer);
+	Json::Value ToJSON() const;
 
 	//
 	// Hashing

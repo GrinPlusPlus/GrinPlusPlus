@@ -64,8 +64,6 @@ public:
 
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
 
-	virtual SecretKey GetGrinboxAddress(const SessionToken& token) const = 0;
-
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const = 0;
 
 	virtual std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path) = 0;

@@ -19,3 +19,38 @@ FullBlock FullBlock::Deserialize(ByteBuffer& byteBuffer)
 
 	return FullBlock(pBlockHeader, std::move(transactionBody));
 }
+
+Json::Value FullBlock::ToJSON() const
+{
+	Json::Value json;
+	json["header"] = GetBlockHeader()->ToJSON();
+
+	// Transaction Inputs
+	Json::Value inputsJSON;
+	for (const TransactionInput& input : GetInputs())
+	{
+		inputsJSON.append(input.ToJSON());
+	}
+	json["inputs"] = inputsJSON;
+
+	// Transaction Outputs
+	Json::Value outputsJSON;
+	for (const TransactionOutput& output : GetOutputs())
+	{
+		// TODO: Include MMR position?
+		Json::Value outputJSON = output.ToJSON();
+		outputJSON["block_height"] = GetHeight();
+		outputsJSON.append(outputJSON);
+	}
+	json["outputs"] = outputsJSON;
+
+	// Transaction Kernels
+	Json::Value kernelsJSON;
+	for (const TransactionKernel& kernel : GetKernels())
+	{
+		kernelsJSON.append(kernel.ToJSON());
+	}
+	json["kernels"] = kernelsJSON;
+
+	return json;
+}

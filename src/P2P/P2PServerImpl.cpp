@@ -65,7 +65,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 
 	// Seeder
 	std::shared_ptr<Seeder> pSeeder = Seeder::Create(
-		config,
+		pContext,
 		*pConnectionManager,
 		peerManager,
 		pBlockChainServer,

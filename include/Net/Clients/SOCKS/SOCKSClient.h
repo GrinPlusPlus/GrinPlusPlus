@@ -163,8 +163,10 @@ private:
 		{
 			case SOCKS::Atyp::IPV4:
 			{
+				std::array<uint8_t, 4> addressArr;
 				std::vector<uint8_t> address = Read(4, SOCKS_TIMEOUT);
-				destination.ipAddress = std::make_optional(IPAddress::FromIP(address[0], address[1], address[2], address[3]));
+				std::copy_n(address.begin(), 4, addressArr.begin());
+				destination.ipAddress = std::make_optional(IPAddress::CreateV4(addressArr));
 				break;
 			}
 			case SOCKS::Atyp::IPV6:

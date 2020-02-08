@@ -40,8 +40,8 @@ jobs:
     name: arm64
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v1
       - name: setup arm64 environment
-        uses: actions/checkout@v1.0.0
         uses: uraimo/run-on-arch-action@v1.0.5
         id: runcmd
         with:

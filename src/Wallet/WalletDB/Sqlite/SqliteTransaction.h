@@ -59,12 +59,12 @@ public:
 		}
 	}
 
-	void Rollback()
+	void Rollback() noexcept
 	{
 		if (!m_open)
 		{
 			WALLET_ERROR("Tried to rollback a closed transaction");
-			throw WALLET_STORE_EXCEPTION("Tried to rollback a closed transaction.");
+			return;
 		}
 
 		m_open = false;
@@ -74,7 +74,6 @@ public:
 		{
 			WALLET_ERROR_F("Failed with error: {}", error);
 			sqlite3_free(error);
-			throw WALLET_STORE_EXCEPTION("Failed to rollback transaction");
 		}
 	}
 

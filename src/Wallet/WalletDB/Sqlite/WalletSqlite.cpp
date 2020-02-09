@@ -20,7 +20,7 @@ void WalletSqlite::Commit()
 	SetDirty(false);
 }
 
-void WalletSqlite::Rollback()
+void WalletSqlite::Rollback() noexcept
 {
 	m_pTransaction->Rollback();
 	SetDirty(false);

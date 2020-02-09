@@ -24,7 +24,7 @@ public:
 	virtual void DeletePeers(const std::vector<PeerPtr>& peers) override final;
 
 	virtual void Commit() override final {} // FUTURE: Handle this
-	virtual void Rollback() override final {} // FUTURE: Handle this
+	virtual void Rollback() noexcept override final {} // FUTURE: Handle this
 
 private:
 	PeerDB(const Config& config, DB* pDatabase);

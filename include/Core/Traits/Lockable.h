@@ -147,7 +147,7 @@ class Writer : public Reader<T>
 			}
 		}
 
-		void Rollback()
+		void Rollback() noexcept
 		{
 			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
 			if (pBatchable != nullptr)
@@ -236,7 +236,7 @@ public:
 		return m_pWriter->m_pObject;
 	}
 
-	bool IsNull() const
+	bool IsNull() const noexcept
 	{
 		return m_pWriter == nullptr;
 	}

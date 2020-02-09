@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <shared_mutex>
 #include <asio.hpp>
 
 class Socket : public Traits::IPrintable
@@ -50,15 +51,17 @@ public:
 private:
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
 	std::shared_ptr<asio::io_context> m_pContext;
-	asio::error_code m_errorCode;
 
-	bool m_socketOpen;
 	SocketAddress m_address;
 	bool m_blocking;
 	unsigned long m_receiveTimeout;
 	unsigned long m_sendTimeout;
 	int m_receiveBufferSize;
 	RateCounter m_rateCounter;
+
+	mutable std::shared_mutex m_mutex;
+	asio::error_code m_errorCode;
+	bool m_socketOpen;
 };
 
 typedef std::shared_ptr<Socket> SocketPtr;

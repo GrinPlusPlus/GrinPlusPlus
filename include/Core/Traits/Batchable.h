@@ -16,7 +16,7 @@ namespace Traits
 		virtual ~IBatchable() = default;
 
 		virtual void Commit() = 0;
-		virtual void Rollback() = 0;
+		virtual void Rollback() noexcept = 0;
 
 		// This can be overridden
 		virtual void OnInitWrite() { }

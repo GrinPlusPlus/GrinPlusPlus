@@ -49,7 +49,7 @@ public:
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void OnInitWrite() override final;
 	virtual void OnEndWrite() override final;
 

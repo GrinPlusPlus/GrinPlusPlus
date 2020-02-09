@@ -58,14 +58,12 @@ bool KernelMMR::Rewind(const uint64_t size)
 
 void KernelMMR::Commit()
 {
-	//LOG_TRACE_F("Flushing with size ({})", GetSize());
 	m_pHashFile->Commit();
 	m_pDataFile->Commit();
 }
 
-void KernelMMR::Rollback()
+void KernelMMR::Rollback() noexcept
 {
-	//LOG_DEBUG("Discarding changes since last flush");
 	m_pHashFile->Rollback();
 	m_pDataFile->Rollback();
 }

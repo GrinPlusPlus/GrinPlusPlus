@@ -31,7 +31,7 @@ public:
 	void Rewind(const uint64_t lastHeight);
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void OnInitWrite() override final;
 	virtual void OnEndWrite() override final;
 

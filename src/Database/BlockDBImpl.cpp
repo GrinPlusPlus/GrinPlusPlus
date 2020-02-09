@@ -145,14 +145,13 @@ void BlockDB::Commit()
 	m_uncommitted.clear();
 }
 
-void BlockDB::Rollback()
+void BlockDB::Rollback() noexcept
 {
 	m_uncommitted.clear();
 	const Status status = m_pTransaction->Rollback();
 	if (!status.ok())
 	{
 		LOG_ERROR_F("Transaction::Rollback failed with error ({})", status.getState());
-		throw DATABASE_EXCEPTION("Transaction::Rollback Failed with error: " + std::string(status.getState()));
 	}
 }
 

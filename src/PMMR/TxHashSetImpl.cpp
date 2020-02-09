@@ -318,7 +318,7 @@ void TxHashSet::Commit()
 	m_pBlockHeaderBackup = m_pBlockHeader;
 }
 
-void TxHashSet::Rollback()
+void TxHashSet::Rollback() noexcept
 {
 	m_pKernelMMR->Rollback();
 	m_pOutputPMMR->Rollback();

@@ -20,7 +20,7 @@ public:
 	virtual ~WalletSqlite() { sqlite3_close(m_pDatabase); }
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void OnInitWrite() override final;
 	virtual void OnEndWrite() override final;
 

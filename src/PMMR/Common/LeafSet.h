@@ -31,7 +31,7 @@ public:
 
 	void Rewind(const uint64_t size, const Roaring& positionsToAdd) { m_pBitmap->Rewind(size, positionsToAdd); }
 	void Commit() { m_pBitmap->Commit(); }
-	void Rollback() { m_pBitmap->Rollback(); }
+	void Rollback() noexcept { m_pBitmap->Rollback(); }
 	void Snapshot(const Hash& blockHash)
 	{
 		std::string path = m_path.u8string() + "." + HASH::ShortHash(blockHash);

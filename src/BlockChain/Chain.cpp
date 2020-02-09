@@ -97,7 +97,7 @@ void Chain::Commit()
 	SetDirty(false);
 }
 
-void Chain::Rollback()
+void Chain::Rollback() noexcept
 {
 	if (IsDirty())
 	{

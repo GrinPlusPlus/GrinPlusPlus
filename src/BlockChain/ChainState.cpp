@@ -230,7 +230,7 @@ void ChainState::Commit()
 	}
 }
 
-void ChainState::Rollback()
+void ChainState::Rollback() noexcept
 {
 	if (!m_chainStoreWriter.IsNull())
 	{

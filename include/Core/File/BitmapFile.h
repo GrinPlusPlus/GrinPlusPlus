@@ -66,7 +66,7 @@ public:
 		}
 	}
 
-	virtual void Rollback() override final
+	virtual void Rollback() noexcept override final
 	{
 		m_modifiedBytes.clear();
 		SetDirty(false);

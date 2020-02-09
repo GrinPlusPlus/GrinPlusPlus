@@ -136,7 +136,7 @@ public:
 	//
 	// Discards all changes since the last commit.
 	//
-	virtual void Rollback() = 0;
+	virtual void Rollback() noexcept = 0;
 
 	//
 	// Removes pruned leaves and hashes from the output and rangeproof PMMRs to reduce disk usage.

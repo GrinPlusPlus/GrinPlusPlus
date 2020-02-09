@@ -38,7 +38,7 @@ public:
 
 	virtual void Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header) override final;
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void Compact() override final;
 
 	std::shared_ptr<KernelMMR> GetKernelMMR() { return m_pKernelMMR; }

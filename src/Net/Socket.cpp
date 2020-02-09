@@ -126,6 +126,8 @@ bool Socket::Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::a
 
 bool Socket::CloseSocket()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	m_socketOpen = false;
 
 	asio::error_code error;
@@ -140,11 +142,15 @@ bool Socket::CloseSocket()
 
 bool Socket::IsSocketOpen() const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	return m_socketOpen;
 }
 
 bool Socket::IsActive() const
 {
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
 	if (m_socketOpen && !m_errorCode)
 	{
 		return true;
@@ -165,6 +171,8 @@ bool Socket::IsActive() const
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 #ifdef _WIN32
 	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 #else
@@ -187,6 +195,8 @@ bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 
 bool Socket::SetReceiveBufferSize(const int bufferSize)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	const int socketRcvBuff = bufferSize;
 	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
 	if (result == 0)
@@ -203,6 +213,8 @@ bool Socket::SetReceiveBufferSize(const int bufferSize)
 
 bool Socket::SetSendTimeout(const unsigned long milliseconds)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 #ifdef _WIN32
 	const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 #else
@@ -225,6 +237,8 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	if (m_blocking != blocking)
 	{
 		#ifdef _WIN32
@@ -252,6 +266,8 @@ bool Socket::SetBlocking(const bool blocking)
 
 bool Socket::Send(const std::vector<unsigned char>& message, const bool incrementCount)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	if (incrementCount)
 	{
 		m_rateCounter.AddMessageSent();
@@ -268,6 +284,8 @@ bool Socket::Send(const std::vector<unsigned char>& message, const bool incremen
 
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data)
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	if (data.size() < numBytes)
 	{
 		data.resize(numBytes);
@@ -304,6 +322,8 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vect
 
 bool Socket::HasReceivedData()
 {
+	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
 	const size_t available = m_pSocket->available(m_errorCode);
 	if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK)
 	{

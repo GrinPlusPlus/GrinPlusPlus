@@ -30,7 +30,7 @@ void HeaderMMR::Commit()
 	}
 }
 
-void HeaderMMR::Rollback()
+void HeaderMMR::Rollback() noexcept
 {
 	if (IsDirty())
 	{

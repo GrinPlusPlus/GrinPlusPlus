@@ -62,7 +62,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	{
 		try
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(50), syncer.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(10), syncer.m_terminate);
 			syncer.UpdateSyncStatus();
 
 			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= MINIMUM_NUM_PEERS)
@@ -99,9 +99,9 @@ void Syncer::Thread_Sync(Syncer& syncer)
 				syncer.m_pSyncStatus->UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
 			}
 		}
-		catch (std::exception&)
+		catch (std::exception& e)
 		{
-
+			LOG_ERROR_F("Exception thrown: {}", e);
 		}
 	}
 

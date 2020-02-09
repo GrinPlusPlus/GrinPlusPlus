@@ -17,7 +17,7 @@ public:
 	virtual void Rewind(const uint64_t size) override final;
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 
 private:
 	HeaderMMR(std::shared_ptr<Locked<HashFile>> pHashFile);

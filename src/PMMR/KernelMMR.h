@@ -27,7 +27,7 @@ public:
 	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 
 	void ApplyKernel(const TransactionKernel& kernel);
 

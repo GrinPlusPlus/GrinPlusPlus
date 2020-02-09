@@ -11,7 +11,7 @@ public:
 	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, std::shared_ptr<BlockIndex>);
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void OnInitWrite() override final;
 	virtual void OnEndWrite() override final;
 

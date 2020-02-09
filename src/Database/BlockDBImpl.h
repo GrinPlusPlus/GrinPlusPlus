@@ -22,7 +22,7 @@ public:
 	static std::shared_ptr<BlockDB> OpenDB(const Config& config);
 
 	virtual void Commit() override final;
-	virtual void Rollback() override final;
+	virtual void Rollback() noexcept override final;
 	virtual void OnInitWrite() override final;
 	virtual void OnEndWrite() override final;
 

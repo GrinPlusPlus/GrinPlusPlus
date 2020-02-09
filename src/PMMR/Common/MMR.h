@@ -38,5 +38,5 @@ public:
 	//
 	// Discards all working changes since the last flush to disk.
 	//
-	virtual void Rollback() = 0;
+	virtual void Rollback() noexcept = 0;
 };

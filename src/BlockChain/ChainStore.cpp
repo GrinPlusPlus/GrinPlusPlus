@@ -53,7 +53,7 @@ void ChainStore::Commit()
 	m_pConfirmedChain->Commit();
 }
 
-void ChainStore::Rollback()
+void ChainStore::Rollback() noexcept
 {
 	m_pSyncChain->Rollback();
 	m_pCandidateChain->Rollback();

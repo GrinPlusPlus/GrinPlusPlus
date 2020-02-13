@@ -94,6 +94,6 @@ namespace Consensus
 	// Starts at 90% losing a percent approximately every week. Represented as an integer between 0 and 100.
 	static uint64_t SecondaryPOWRatio(const uint64_t height)
 	{
-		return 90 - (std::min)(90ull, (height / (2 * YEAR_HEIGHT / 90)));
+		return 90 - (std::min)(90ull, (uint64_t)(height / (2 * YEAR_HEIGHT / 90)));
 	}
 }

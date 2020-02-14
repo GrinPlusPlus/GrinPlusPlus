@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <Consensus/BlockTime.h>
 #include <algorithm>
@@ -69,7 +69,7 @@ namespace Consensus
 		uint64_t xpr_edge_bits = (uint64_t)edge_bits;
 		if (edge_bits == 31 && height >= expiry_height)
 		{
-			xpr_edge_bits -= (std::min)(xpr_edge_bits, 1ull + ((height - expiry_height) / WEEK_HEIGHT));
+			xpr_edge_bits -= (std::min)(xpr_edge_bits, (uint64_t)(1ull + ((height - expiry_height) / WEEK_HEIGHT)));
 		}
 
 		return (2ull << ((uint64_t)(edge_bits - BASE_EDGE_BITS))) * xpr_edge_bits;
@@ -94,6 +94,6 @@ namespace Consensus
 	// Starts at 90% losing a percent approximately every week. Represented as an integer between 0 and 100.
 	static uint64_t SecondaryPOWRatio(const uint64_t height)
 	{
-		return 90 - (std::min)(90ull, (uint64_t)(height / (2 * YEAR_HEIGHT / 90)));
+		return 90 - (std::min)((uint64_t)90, (uint64_t)(height / (2 * YEAR_HEIGHT / 90)));
 	}
 }

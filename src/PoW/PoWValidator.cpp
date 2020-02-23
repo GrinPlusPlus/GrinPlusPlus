@@ -92,7 +92,7 @@ uint64_t PoWValidator::GetMaximumDifficulty(const BlockHeader& header) const
 	memcpy(&hash64, &temp[0], sizeof(uint64_t));
 
 	uint128_t scaled = scalingDifficulty << 64;
-	uint128_t hash128 = (uint128_t)(std::max)(1ull, hash64);
+	uint128_t hash128 = (uint128_t)(std::max)((uint64_t)1ull, hash64);
 	const uint128_t difference = scaled / hash128;
 
 	if (difference < UINT64_MAX)

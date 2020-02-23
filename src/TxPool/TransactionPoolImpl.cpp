@@ -9,9 +9,8 @@
 #include <Core/Util/FeeUtil.h>
 #include <Core/Validation/TransactionValidator.h>
 
-TransactionPool::TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager)
+TransactionPool::TransactionPool(const Config& config)
 	: m_config(config), 
-	m_pTxHashSetManager(pTxHashSetManager),
 	m_memPool(),
 	m_stemPool()
 {
@@ -223,8 +222,8 @@ void TransactionPool::FluffJoinPool()
 
 namespace TxPoolAPI
 {
-	TX_POOL_API std::shared_ptr<ITransactionPool> CreateTransactionPool(const Config& config, TxHashSetManagerConstPtr txHashSetManager)
+	TX_POOL_API std::shared_ptr<ITransactionPool> CreateTransactionPool(const Config& config)
 	{
-		return std::shared_ptr<TransactionPool>(new TransactionPool(config, txHashSetManager));
+		return std::shared_ptr<TransactionPool>(new TransactionPool(config));
 	}
 }

@@ -27,7 +27,7 @@ public:
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 		std::shared_ptr<ITransactionPool> pTransactionPool,
-		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		BlockHeaderPtr pGenesisHeader
 	);
 
@@ -113,37 +113,39 @@ public:
 		return m_headerMMRWriter;
 	}
 
-	std::shared_ptr<ITxHashSet> GetTxHashSet()
+	std::shared_ptr<TxHashSetManager> GetTxHashSetManager()
 	{
 		if (m_txHashSetWriter.IsNull())
 		{
-			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-			if (pTxHashSet != nullptr)
-			{
-				m_txHashSetWriter = pTxHashSet->BatchWrite();
-			}
-			else
-			{
-				return nullptr;
-			}
+			//auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			//if (pTxHashSet != nullptr)
+			//{
+			//	m_txHashSetWriter = pTxHashSet->BatchWrite();
+			//}
+			//else
+			//{
+			//	return nullptr;
+			//}
+			m_txHashSetWriter = m_pTxHashSetManager->BatchWrite();
 		}
 
 		return m_txHashSetWriter.GetShared();
 	}
 
-	Reader<ITxHashSet> GetTxHashSet() const
+	Reader<TxHashSetManager> GetTxHashSetManager() const
 	{
 		if (m_txHashSetWriter.IsNull())
 		{
-			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-			if (pTxHashSet != nullptr)
-			{
-				return pTxHashSet->Read();
-			}
-			else
-			{
-				return Reader<ITxHashSet>::Create(nullptr, nullptr, false, false);
-			}
+			//auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			//if (pTxHashSet != nullptr)
+			//{
+			//	return pTxHashSet->Read();
+			//}
+			//else
+			//{
+			//	return Reader<ITxHashSet>::Create(nullptr, nullptr, false, false);
+			//}
+			return m_pTxHashSetManager->Read();
 		}
 
 		return m_txHashSetWriter;
@@ -151,7 +153,6 @@ public:
 
 	std::shared_ptr<OrphanPool> GetOrphanPool() { return m_pOrphanPool; }
 	ITransactionPoolPtr GetTransactionPool() { return m_pTransactionPool; }
-	TxHashSetManagerPtr GetTxHashSetManager() { return m_pTxHashSetManager; }
 
 private:
 	ChainState(
@@ -160,7 +161,7 @@ private:
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 		std::shared_ptr<ITransactionPool> pTransactionPool,
-		std::shared_ptr<TxHashSetManager> pTxHashSetManager
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager
 	);
 
 	const Config& m_config;
@@ -168,12 +169,12 @@ private:
 	std::shared_ptr<Locked<IBlockDB>> m_pBlockDB;
 	std::shared_ptr<Locked<IHeaderMMR>> m_pHeaderMMR;
 	std::shared_ptr<ITransactionPool> m_pTransactionPool;
-	std::shared_ptr<TxHashSetManager> m_pTxHashSetManager;
+	std::shared_ptr<Locked<TxHashSetManager>> m_pTxHashSetManager;
 	std::shared_ptr<OrphanPool> m_pOrphanPool;
 
 	// Writers
 	Writer<ChainStore> m_chainStoreWriter;
 	Writer<IBlockDB> m_blockDBWriter;
 	Writer<IHeaderMMR> m_headerMMRWriter;
-	Writer<ITxHashSet> m_txHashSetWriter;
+	Writer<TxHashSetManager> m_txHashSetWriter;
 };

@@ -19,7 +19,7 @@ public:
 		const Config& config,
 		ConnectionManager& connectionManager,
 		IBlockChainServerPtr pBlockChainServer,
-		TxHashSetManagerConstPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		ITransactionPoolPtr pTransactionPool,
 		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
 	);
@@ -30,7 +30,7 @@ private:
 		const Config& config,
 		ConnectionManager& connectionManager,
 		IBlockChainServerPtr pBlockChainServer,
-		TxHashSetManagerConstPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		ITransactionPoolPtr pTransactionPool,
 		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
 	);
@@ -44,7 +44,7 @@ private:
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	IBlockChainServerPtr m_pBlockChainServer;
-	TxHashSetManagerConstPtr m_pTxHashSetManager;
+	std::shared_ptr<Locked<TxHashSetManager>> m_pTxHashSetManager;
 	ITransactionPoolPtr m_pTransactionPool;
 	std::shared_ptr<const Locked<IBlockDB>> m_pBlockDB;
 

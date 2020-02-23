@@ -22,7 +22,7 @@ public:
 	static std::shared_ptr<BlockChainServer> Create(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
-		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool
 	);
 
@@ -64,7 +64,7 @@ private:
 	BlockChainServer(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
-		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool,
 		std::shared_ptr<Locked<ChainState>> pChainState,
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR
@@ -72,7 +72,7 @@ private:
 
 	const Config& m_config;
 	std::shared_ptr<Locked<IBlockDB>> m_pDatabase;
-	TxHashSetManagerPtr m_pTxHashSetManager;
+	std::shared_ptr<Locked<TxHashSetManager>> m_pTxHashSetManager;
 	std::shared_ptr<ITransactionPool> m_pTransactionPool;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 	std::shared_ptr<Locked<IHeaderMMR>> m_pHeaderMMR;

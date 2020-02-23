@@ -10,8 +10,8 @@ TEST_CASE("ValidateTxHashSet")
 	ConfigPtr pConfig = Config::Default(EEnvironmentType::MAINNET);
 	auto pDatabase = DatabaseAPI::OpenDatabase(*pConfig);
 	TxHashSetManagerPtr pTxHashSetManager = std::make_shared<TxHashSetManager>(*pConfig);
-	auto pTransactionPool = TxPoolAPI::CreateTransactionPool(*pConfig, pTxHashSetManager);
-	IBlockChainServerPtr pBlockChain = BlockChainAPI::StartBlockChainServer(*pConfig, pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
+	auto pTransactionPool = TxPoolAPI::CreateTransactionPool(*pConfig);
+	IBlockChainServerPtr pBlockChain = BlockChainAPI::StartBlockChainServer(*pConfig, pDatabase->GetBlockDB(), std::make_shared<Locked<TxHashSetManager>>(pTxHashSetManager), pTransactionPool);
 	auto pHeader = pBlockChain->GetBlockHeaderByHash(Hash::FromHex("00000495026666846c6c0ab1296d78dd033bd044eb790be3e77acaec13e7c8a7"));
 	pTxHashSetManager->Close();
 

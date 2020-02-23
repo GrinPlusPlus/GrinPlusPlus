@@ -12,7 +12,7 @@
 void TransactionValidator::Validate(const Transaction& transaction) const
 {
 	// Validate the "transaction body"
-	TransactionBodyValidator().Validate(transaction.GetBody(), false);
+	TransactionBodyValidator().Validate(transaction.GetBody(), true);
 
 	// Verify no output or kernel includes invalid features (coinbase)
 	ValidateFeatures(transaction.GetBody());

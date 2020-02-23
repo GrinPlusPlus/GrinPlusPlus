@@ -20,7 +20,7 @@
 BlockChainServer::BlockChainServer(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
-	std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
 	std::shared_ptr<Locked<ChainState>> pChainState,
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
@@ -37,7 +37,7 @@ BlockChainServer::BlockChainServer(
 std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
-	std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
 	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
@@ -57,17 +57,17 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	);
 
 	// Trigger Compaction
-	auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
+	auto pTxHashSet = pTxHashSetManager->Write()->GetTxHashSet();
 	if (pTxHashSet != nullptr)
 	{
 		const uint64_t horizon = Consensus::GetHorizonHeight(pChainState->Read()->GetHeight(EChainType::CONFIRMED));
-		if (pTxHashSet->Read()->GetFlushedBlockHeader()->GetHeight() < horizon)
+		if (pTxHashSet->GetFlushedBlockHeader()->GetHeight() < horizon)
 		{
-			pTxHashSetManager->Close();
+			pTxHashSetManager->Write()->Close();
 		}
 		else
 		{
-			pTxHashSet->Write()->Compact();
+			pTxHashSet->Compact();
 		}
 	}
 
@@ -158,7 +158,7 @@ fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
 
-	return m_pTxHashSetManager->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader);
+	return pReader->GetTxHashSetManager()->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader);
 }
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
@@ -189,7 +189,7 @@ EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, 
 		{
 			const EAddTransactionStatus status = m_pTransactionPool->AddTransaction(
 				pReader->GetBlockDB().GetShared(),
-				pReader->GetTxHashSet().GetShared(),
+				pReader->GetTxHashSetManager()->GetTxHashSet(),
 				pTransaction,
 				poolType,
 				*pLastConfimedHeader
@@ -392,7 +392,7 @@ namespace BlockChainAPI
 	BLOCK_CHAIN_API std::shared_ptr<IBlockChainServer> StartBlockChainServer(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
-		TxHashSetManagerPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool)
 	{
 		return BlockChainServer::Create(config, pDatabase, pTxHashSetManager, pTransactionPool);

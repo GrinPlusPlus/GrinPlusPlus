@@ -55,13 +55,6 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 		return RetrieveOutputs(pConnection, walletManager, token);
 	}
 
-	// GET /v1/wallet/owner/estimate_fee
-	if (action == "estimate_fee")
-	{
-		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return EstimateFee(pConnection, walletManager, token);
-	}
-
 	// GET /v1/wallet/owner/retrieve_txs?refresh&id=x
 	if (action == "retrieve_txs")
 	{
@@ -89,43 +82,6 @@ int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager&
 	return HTTPUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
 }
 
-// GET /v1/wallet/owner/estimate_fee
-int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
-{
-	std::optional<Json::Value> requestBodyOpt = HTTPUtil::GetRequestBody(pConnection);
-	if (!requestBodyOpt.has_value())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "Request body not found.");
-	}
-
-	const Json::Value& json = requestBodyOpt.value();
-
-	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
-	if (!amountOpt.has_value())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "amount missing");
-	}
-
-	const Json::Value feeBaseJSON = json.get("fee_base", Json::nullValue);
-	if (feeBaseJSON == Json::nullValue || !feeBaseJSON.isUInt64())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
-	}
-
-	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
-
-	const std::optional<Json::Value> selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
-	if (!selectionStrategyJSON.has_value())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
-	}
-
-	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
-	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
-	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
-
-	return HTTPUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
-}
 
 // GET /v1/wallet/owner/retrieve_txs?refresh&id=x
 int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)

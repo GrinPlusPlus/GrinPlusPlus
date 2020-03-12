@@ -249,7 +249,7 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	}
 }
 
-int OwnerGetAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
 	std::optional<Json::Value> requestBodyOpt = HTTPUtil::GetRequestBody(pConnection);
 	if (!requestBodyOpt.has_value())

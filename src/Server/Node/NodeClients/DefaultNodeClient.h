@@ -31,9 +31,10 @@ public:
 	{
 		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(pContext->GetConfig());
 		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(pContext->GetConfig()));
-		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig(), pTxHashSetManager);
-		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(pContext->GetConfig(), pDatabase->GetBlockDB(), pTxHashSetManager, pTransactionPool);
-		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(pContext, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
+		std::shared_ptr<Locked<TxHashSetManager>> pLockedTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(pTxHashSetManager);
+		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig());
+		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(pContext->GetConfig(), pDatabase->GetBlockDB(), pLockedTxHashSetManager, pTransactionPool);
+		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(pContext, pBlockChainServer, pLockedTxHashSetManager, pDatabase, pTransactionPool);
 
 		return std::make_shared<DefaultNodeClient>(DefaultNodeClient(pDatabase, pTxHashSetManager, pTransactionPool, pBlockChainServer, pP2PServer));
 	}
@@ -67,7 +68,7 @@ public:
 		for (const Commitment& commitment : commitments)
 		{
 			std::unique_ptr<OutputLocation> pOutputPosition = m_pDatabase->GetBlockDB()->Read()->GetOutputPosition(commitment);
-			if (pOutputPosition != nullptr && pTxHashSet->Read()->IsUnspent(*pOutputPosition))
+			if (pOutputPosition != nullptr && pTxHashSet->IsUnspent(*pOutputPosition))
 			{
 				outputs.insert(std::make_pair(commitment, *pOutputPosition));
 			}
@@ -90,7 +91,7 @@ public:
 		}
 
 		auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-		return std::make_unique<OutputRange>(pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
+		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
 	}
 
 	virtual bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final
@@ -102,12 +103,11 @@ public:
 			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
 			if (pTxHashSet != nullptr)
 			{
-				auto pTxHashSetReader = pTxHashSet->Read();
 				try
 				{
 					auto result = m_pTransactionPool->AddTransaction(
 						pBlockDB.GetShared(),
-						pTxHashSetReader.GetShared(),
+						pTxHashSet,
 						pTransaction,
 						poolType,
 						*pTipHeader

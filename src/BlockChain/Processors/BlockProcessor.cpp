@@ -166,7 +166,7 @@ void BlockProcessor::HandleReorg(const FullBlock& block, Writer<ChainState> pBat
 	auto pChainStore = pBatch->GetChainStore();
 	auto pCandidateChain = pChainStore->GetCandidateChain();
 	auto pConfirmedChain = pChainStore->GetConfirmedChain();
-	auto pTxHashSet = pBatch->GetTxHashSet();
+	auto pTxHashSet = pBatch->GetTxHashSetManager()->GetTxHashSet();
 
 	const uint64_t commonHeight = pChainStore->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight();
 
@@ -216,7 +216,7 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 {
 	auto pOrphanPool = pBatch->GetOrphanPool();
 	auto pBlockDB = pBatch->GetBlockDB();
-	auto pTxHashSet = pBatch->GetTxHashSet();
+	auto pTxHashSet = pBatch->GetTxHashSetManager()->GetTxHashSet();
 	auto pTxPool = pBatch->GetTransactionPool();
 
 	const Hash& previousHash = block.GetPreviousHash();

@@ -32,7 +32,7 @@ public:
 
         std::error_code ec = pChildProcess->m_process.start(args, options);
 
-        if (ec == std::errc::no_such_file_or_directory)
+        if (ec.value() == EnumValue(std::errc::no_such_file_or_directory) || ec.value() == EnumValue(std::errc::no_such_device_or_address))
         {
             return nullptr;
         }
@@ -55,6 +55,12 @@ public:
 
 private:
     ChildProcess() = default;
+
+    template<typename T, typename SFINAE = std::enable_if_t<std::is_enum<T>::value, T>>
+    static int EnumValue(const T e)
+    {
+        return static_cast<typename std::underlying_type<T>::type>(e);
+    }
 
     mutable reproc::process m_process;
 };

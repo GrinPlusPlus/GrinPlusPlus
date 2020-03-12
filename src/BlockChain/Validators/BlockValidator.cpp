@@ -85,7 +85,7 @@ void BlockValidator::VerifyBody(const FullBlock& block) const
 {
 	try
 	{
-		TransactionBodyValidator().Validate(block.GetTransactionBody(), true);
+		TransactionBodyValidator().Validate(block.GetTransactionBody(), false);
 	}
 	catch (std::exception& e)
 	{

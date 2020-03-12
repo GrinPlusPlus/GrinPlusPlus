@@ -17,7 +17,7 @@ TxHashSetManager::TxHashSetManager(const Config& config)
 
 }
 
-std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::Open(BlockHeaderPtr pConfirmedTip)
+std::shared_ptr<ITxHashSet> TxHashSetManager::Open(BlockHeaderPtr pConfirmedTip)
 {
 	Close();
 
@@ -25,8 +25,7 @@ std::shared_ptr<Locked<ITxHashSet>> TxHashSetManager::Open(BlockHeaderPtr pConfi
 	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetPath());
 	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetPath());
 
-	auto pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
-	m_pTxHashSet = std::make_shared<Locked<ITxHashSet>>(Locked<ITxHashSet>(pTxHashSet));
+	m_pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
 
 	return m_pTxHashSet;
 }
@@ -91,7 +90,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 	return nullptr;
 }
 
-fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader)
+fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader) const
 {
 	if (m_pTxHashSet == nullptr)
 	{
@@ -109,13 +108,10 @@ fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB
 		BlockHeaderPtr pFlushedHeader = nullptr;
 
 		{
-			// Lock TxHashSet
-			auto reader = m_pTxHashSet->Read();
-
 			// Copy to Snapshots/Hash // TODO: If already exists, just use that.
 			FileUtil::CopyDirectory(m_config.GetTxHashSetPath(), snapshotDir);
 
-			pFlushedHeader = reader->GetFlushedBlockHeader();
+			pFlushedHeader = m_pTxHashSet->GetFlushedBlockHeader();
 		}
 
 		{

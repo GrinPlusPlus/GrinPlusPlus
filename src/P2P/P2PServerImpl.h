@@ -18,7 +18,7 @@ public:
 	static std::shared_ptr<P2PServer> Create(
 		const Context::Ptr& pContext,
 		std::shared_ptr<IBlockChainServer> pBlockChainServer,
-		TxHashSetManagerConstPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<IDatabase> pDatabase,
 		std::shared_ptr<ITransactionPool> pTransactionPool
 	);

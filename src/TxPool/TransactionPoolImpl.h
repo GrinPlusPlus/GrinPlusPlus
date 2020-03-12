@@ -12,7 +12,7 @@
 class TransactionPool : public ITransactionPool
 {
 public:
-	TransactionPool(const Config& config, TxHashSetManagerConstPtr pTxHashSetManager);
+	TransactionPool(const Config& config);
     virtual ~TransactionPool() = default;
 
 	virtual std::vector<TransactionPtr> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
@@ -31,7 +31,6 @@ public:
 
 private:
 	const Config& m_config;
-	TxHashSetManagerConstPtr m_pTxHashSetManager;
 	mutable std::shared_mutex m_mutex;
 
 	Pool m_memPool;

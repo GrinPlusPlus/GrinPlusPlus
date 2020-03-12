@@ -36,7 +36,11 @@ public:
 	AppendOnlyFile(AppendOnlyFile&& file) = delete;
 	AppendOnlyFile& operator=(const AppendOnlyFile&) = delete;
 
-	virtual ~AppendOnlyFile() = default;
+	virtual ~AppendOnlyFile()
+	{
+		LOG_INFO_F("Closing File: {}", m_path);
+		m_mmap.unmap();
+	}
 
 	void Load()
 	{

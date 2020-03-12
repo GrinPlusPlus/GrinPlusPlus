@@ -67,7 +67,7 @@ int TxHashSetAPI::GetLastKernels_Handler(struct mg_connection* conn, void* pNode
 		{
 			Json::Value json;
 
-			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastKernelHashes(numHashes);
+			std::vector<Hash> hashes = pTxHashSet->GetLastKernelHashes(numHashes);
 			for (const Hash& hash : hashes)
 			{
 				json.append(hash.ToHex());
@@ -109,7 +109,7 @@ int TxHashSetAPI::GetLastOutputs_Handler(struct mg_connection* conn, void* pNode
 		{
 			Json::Value rootNode;
 
-			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastOutputHashes(numHashes);
+			std::vector<Hash> hashes = pTxHashSet->GetLastOutputHashes(numHashes);
 			for (const Hash& hash : hashes)
 			{
 				Json::Value outputNode;
@@ -153,7 +153,7 @@ int TxHashSetAPI::GetLastRangeproofs_Handler(struct mg_connection* conn, void* p
 		{
 			Json::Value rootNode;
 
-			std::vector<Hash> hashes = pTxHashSet->Read()->GetLastRangeProofHashes(numHashes);
+			std::vector<Hash> hashes = pTxHashSet->GetLastRangeProofHashes(numHashes);
 			for (const Hash& hash : hashes)
 			{
 				Json::Value rangeProofNode;
@@ -239,7 +239,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 			Json::Value rootNode;
 
 			auto pBlockDB = pServer->m_pDatabase->GetBlockDB()->Read();
-			OutputRange range = pTxHashSet->Read()->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, max);
+			OutputRange range = pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, max);
 			rootNode["highest_index"] = range.GetHighestIndex();
 			rootNode["last_retrieved_index"] = range.GetLastRetrievedIndex();
 

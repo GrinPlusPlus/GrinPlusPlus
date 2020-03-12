@@ -73,7 +73,7 @@ namespace P2PAPI
 	P2P_API IP2PServerPtr StartP2PServer(
 		const Context::Ptr& pContext,
 		IBlockChainServerPtr pBlockChainServer,
-		TxHashSetManagerConstPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		IDatabasePtr pDatabase,
 		ITransactionPoolPtr pTransactionPool
 	);

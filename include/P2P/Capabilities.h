@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Json/json.h>
+#include <json/json.h>
 
 class Capabilities
 {

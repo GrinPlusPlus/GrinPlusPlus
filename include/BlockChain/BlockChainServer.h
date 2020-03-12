@@ -143,7 +143,7 @@ namespace BlockChainAPI
 	BLOCK_CHAIN_API IBlockChainServerPtr StartBlockChainServer(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
-		std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool
 	);
 }

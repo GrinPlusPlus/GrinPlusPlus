@@ -14,7 +14,7 @@ Dandelion::Dandelion(
 	const Config& config,
 	ConnectionManager& connectionManager,
 	IBlockChainServerPtr pBlockChainServer,
-	TxHashSetManagerConstPtr pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	ITransactionPoolPtr pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 	: m_config(config), 
@@ -40,7 +40,7 @@ std::shared_ptr<Dandelion> Dandelion::Create(
 	const Config& config,
 	ConnectionManager& connectionManager,
 	IBlockChainServerPtr pBlockChainServer,
-	TxHashSetManagerConstPtr pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	ITransactionPoolPtr pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 {
@@ -124,18 +124,25 @@ bool Dandelion::ProcessStemPhase()
 		m_relayPeer = mostWorkPeers[index];
 	}
 
-	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr)
+	TransactionPtr pTransactionToStem = nullptr;
+
 	{
-		return false;
+		auto locked = MultiLocker().LockShared(*m_pBlockDB, *m_pTxHashSetManager);
+		auto pBlockDBReader = std::get<0>(locked);
+		auto pTxHashSetManager = std::get<1>(locked);
+
+		auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet == nullptr)
+		{
+			return false;
+		}
+
+		pTransactionToStem = m_pTransactionPool->GetTransactionToStem(
+			pBlockDBReader.GetShared(),
+			pTxHashSet
+		);
 	}
 
-	// TODO: Use std::lock(m_pBlockDB, pTxHashSet) - use std::adopt_lock
-	auto locked = MultiLocker().LockShared(*m_pBlockDB, *pTxHashSet);
-	TransactionPtr pTransactionToStem = m_pTransactionPool->GetTransactionToStem(
-		std::get<0>(locked).GetShared(),
-		std::get<1>(locked).GetShared()
-	);
 	if (pTransactionToStem != nullptr)
 	{
 		LOG_DEBUG_F("Stemming transaction ({})", *pTransactionToStem);
@@ -161,16 +168,25 @@ bool Dandelion::ProcessStemPhase()
 
 bool Dandelion::ProcessFluffPhase()
 {
-	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr)
+	TransactionPtr pTransactionToFluff = nullptr;
+
 	{
-		return false;
+		auto locked = MultiLocker().LockShared(*m_pBlockDB, *m_pTxHashSetManager);
+		auto pBlockDBReader = std::get<0>(locked);
+		auto pTxHashSetManager = std::get<1>(locked);
+
+		auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
+		if (pTxHashSet == nullptr)
+		{
+			return false;
+		}
+
+		pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(
+			pBlockDBReader.GetShared(),
+			pTxHashSet
+		);
 	}
 
-	TransactionPtr pTransactionToFluff = m_pTransactionPool->GetTransactionToFluff(
-		m_pBlockDB->Read().GetShared(),
-		pTxHashSet->Read().GetShared()
-	);
 	if (pTransactionToFluff != nullptr)
 	{
 		LOG_DEBUG_F("Fluffing transaction ({})", *pTransactionToFluff);

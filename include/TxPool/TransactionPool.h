@@ -104,7 +104,6 @@ namespace TxPoolAPI
 	// Creates a new instance of the Transaction Pool.
 	//
 	TX_POOL_API ITransactionPoolPtr CreateTransactionPool(
-		const Config& config,
-		TxHashSetManagerConstPtr pTxHashSetManager
+		const Config& config
 	);
 }

@@ -12,7 +12,7 @@ ChainState::ChainState(
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
-	std::shared_ptr<TxHashSetManager> pTxHashSetManager)
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager)
 	: m_config(config),
 	m_pChainStore(pChainStore),
 	m_pBlockDB(pDatabase),
@@ -30,7 +30,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
-	std::shared_ptr<TxHashSetManager> pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	BlockHeaderPtr pGenesisHeader)
 {
 	std::shared_ptr<const Chain> pCandidateChain = pChainStore->Read()->GetCandidateChain();
@@ -44,7 +44,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 
 	auto pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
 	auto pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
-	pTxHashSetManager->Open(pConfirmedHeader);
+	pTxHashSetManager->Write()->Open(pConfirmedHeader);
 
 	std::shared_ptr<ChainState> pChainState(new ChainState(config, pChainStore, pDatabase, pHeaderMMR, pTransactionPool, pTxHashSetManager));
 	return std::make_shared<Locked<ChainState>>(Locked<ChainState>(pChainState));
@@ -146,8 +146,9 @@ std::shared_ptr<const FullBlock> ChainState::GetOrphanBlock(const uint64_t heigh
 
 std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t height) const
 {
-	Reader<ITxHashSet> pTxHashSet = GetTxHashSet();
-	if (pTxHashSet.IsNull())
+	Reader<TxHashSetManager> pTxHashSetManager = GetTxHashSetManager();
+	auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
+	if (pTxHashSet == nullptr)
 	{
 		return std::unique_ptr<BlockWithOutputs>(nullptr);
 	}
@@ -260,23 +261,23 @@ void ChainState::OnInitWrite()
 	m_headerMMRWriter.Clear();
 	m_txHashSetWriter.Clear();
 
-	auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet != nullptr)
-	{
-		auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR, *pTxHashSet);
-		m_chainStoreWriter = std::get<0>(locked);// m_pChainStore->BatchWrite(std::adopt_lock);
-		m_blockDBWriter = std::get<1>(locked);// m_pBlockDB->BatchWrite(std::adopt_lock);
-		m_headerMMRWriter = std::get<2>(locked);//m_pHeaderMMR->BatchWrite(std::adopt_lock);
-		m_txHashSetWriter = std::get<3>(locked);//pTxHashSet->BatchWrite(std::adopt_lock);
-	}
-	else
-	{
-		auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR);
-		
-		m_chainStoreWriter = std::get<0>(locked);// m_pChainStore->BatchWrite(std::adopt_lock);
-		m_blockDBWriter = std::get<1>(locked);// m_pBlockDB->BatchWrite(std::adopt_lock);
-		m_headerMMRWriter = std::get<2>(locked);//m_pHeaderMMR->BatchWrite(std::adopt_lock);
-	}
+	//auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+	//if (pTxHashSet != nullptr)
+	//{
+		auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR, *m_pTxHashSetManager);
+		m_chainStoreWriter = std::get<0>(locked);
+		m_blockDBWriter = std::get<1>(locked);
+		m_headerMMRWriter = std::get<2>(locked);
+		m_txHashSetWriter = std::get<3>(locked);
+	//}
+	//else
+	//{
+	//	auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR);
+	//	
+	//	m_chainStoreWriter = std::get<0>(locked);
+	//	m_blockDBWriter = std::get<1>(locked);
+	//	m_headerMMRWriter = std::get<2>(locked);
+	//}
 }
 
 void ChainState::OnEndWrite()

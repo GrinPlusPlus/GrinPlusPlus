@@ -41,6 +41,7 @@ void TransactionBodyValidator::ValidateWeight(const TransactionBody& transaction
 
 void TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
 {
+	// TODO: Check for duplicates?
 	const bool sorted = Consensus::IsSorted(transactionBody.GetInputs())
 		&& Consensus::IsSorted(transactionBody.GetOutputs())
 		&& Consensus::IsSorted(transactionBody.GetKernels());

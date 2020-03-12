@@ -37,7 +37,7 @@ P2PServer::~P2PServer()
 std::shared_ptr<P2PServer> P2PServer::Create(
 	const Context::Ptr& pContext,
 	std::shared_ptr<IBlockChainServer> pBlockChainServer,
-	TxHashSetManagerConstPtr pTxHashSetManager,
+	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	std::shared_ptr<IDatabase> pDatabase,
 	std::shared_ptr<ITransactionPool> pTransactionPool)
 {
@@ -177,7 +177,7 @@ namespace P2PAPI
 	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(
 		const Context::Ptr& pContext,
 		IBlockChainServerPtr pBlockChainServer,
-		TxHashSetManagerConstPtr pTxHashSetManager,
+		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		IDatabasePtr pDatabase,
 		ITransactionPoolPtr pTransactionPool)
 	{

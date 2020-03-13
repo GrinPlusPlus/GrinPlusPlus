@@ -67,6 +67,11 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 	{
 		return Finalize(pConnection, walletManager, requestBodyOpt.value());
 	}
+	else if (action == "estimate_fee")
+	{
+		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
+		return EstimateFee(pConnection, walletManager, token, requestBodyOpt.value());
+	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
 }
@@ -242,4 +247,33 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	{
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "id missing");
 	}
+}
+
+int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
+{
+	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
+	if (!amountOpt.has_value())
+	{
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "amount missing");
+	}
+
+	const Json::Value feeBaseJSON = json.get("fee_base", Json::nullValue);
+	if (feeBaseJSON == Json::nullValue || !feeBaseJSON.isUInt64())
+	{
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
+	}
+
+	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
+
+	const std::optional<Json::Value> selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
+	if (!selectionStrategyJSON.has_value())
+	{
+		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
+	}
+
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
+	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
+	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
+
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
 }

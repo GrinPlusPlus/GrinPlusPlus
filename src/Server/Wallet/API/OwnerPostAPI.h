@@ -29,7 +29,7 @@ private:
 	int Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 	int Cancel(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
 
-	int EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token);
+	int EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 
 	const Config& m_config;
 };

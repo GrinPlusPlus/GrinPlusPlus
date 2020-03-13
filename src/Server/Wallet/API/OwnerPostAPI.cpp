@@ -70,7 +70,7 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 	else if (action == "estimate_fee")
 	{
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return EstimateFee(pConnection, walletManager, token);
+		return EstimateFee(pConnection, walletManager, token, requestBodyOpt.value());
 	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
@@ -249,16 +249,8 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	}
 }
 
-int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json)
 {
-	std::optional<Json::Value> requestBodyOpt = HTTPUtil::GetRequestBody(pConnection);
-	if (!requestBodyOpt.has_value())
-	{
-		return HTTPUtil::BuildBadRequestResponse(pConnection, "Request body not found.");
-	}
-
-	const Json::Value& json = requestBodyOpt.value();
-
 	const std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
 	if (!amountOpt.has_value())
 	{

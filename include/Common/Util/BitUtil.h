@@ -22,7 +22,7 @@ namespace BitUtil
 		uint8_t count = 0;
 		while (n)
 		{
-			count += n & 1;
+			count += (uint8_t)(n & 1);
 			n >>= 1;
 		}
 

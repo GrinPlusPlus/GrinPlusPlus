@@ -67,12 +67,12 @@ public:
 
 	static void SafeWriteToFile(const fs::path& filePath, const std::vector<unsigned char>& data)
 	{
-		const std::string tmpFilePath = filePath.u8string() + ".tmp";
-		std::ofstream file(StringUtil::ToWide(tmpFilePath).c_str(), std::ios::out | std::ios::binary | std::ios::ate);
+		const fs::path tmpFilePath = StringUtil::ToWide(filePath.u8string() + ".tmp");
+		std::ofstream file(tmpFilePath, std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
-			LOG_ERROR_F("Failed to open {}", ToPath(tmpFilePath));
-			throw FILE_EXCEPTION_F("Failed to open {}", ToPath(tmpFilePath));
+			LOG_ERROR_F("Failed to open {}", tmpFilePath);
+			throw FILE_EXCEPTION_F("Failed to open {}", tmpFilePath);
 		}
 
 		file.write((const char*)&data[0], data.size());

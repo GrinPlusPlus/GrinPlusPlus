@@ -152,17 +152,17 @@ public:
 	static fs::path GetHomeDirectory()
 	{
 		#ifdef _WIN32
-		char homeDriveBuf[MAX_PATH_LEN];
+		wchar_t homeDriveBuf[MAX_PATH_LEN];
 		size_t homeDriveLen = MAX_PATH_LEN;
-		getenv_s(&homeDriveLen, homeDriveBuf, sizeof(homeDriveBuf) - 1, "HOMEDRIVE");
-		std::string homeDrive(homeDriveBuf, (std::max)(1ULL, homeDriveLen) - 1);
+		_wgetenv_s(&homeDriveLen, homeDriveBuf, sizeof(homeDriveBuf) - 1, L"HOMEDRIVE");
+		std::wstring homeDrive(homeDriveBuf, (std::max)(1ULL, homeDriveLen) - 1);
 
-		char homePathBuf[MAX_PATH_LEN];
+		wchar_t homePathBuf[MAX_PATH_LEN];
 		size_t homePathLen = MAX_PATH_LEN;
-		getenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, "HOMEPATH");
-		std::string homePath(homePathBuf, (std::max)(1ULL, homePathLen) - 1);
+		_wgetenv_s(&homePathLen, homePathBuf, sizeof(homePathBuf) - 1, L"HOMEPATH");
+		std::wstring homePath(homePathBuf, (std::max)(1ULL, homePathLen) - 1);
 
-		return fs::path(homeDrive + homePath);
+		return fs::path(homeDrive) / homePath;
 		#else
 		char* pHomePath = getenv("HOME");
 		if (pHomePath != nullptr)

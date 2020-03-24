@@ -47,7 +47,7 @@ public:
 		Json::Value transactionsJSON;
 		for (const WalletTx& transaction : m_transactions)
 		{
-			transactionsJSON.append(WalletTxDTO(transaction, std::vector<WalletOutputDTO>()).ToJSON());
+			transactionsJSON.append(WalletTxDTO(transaction, {}, {}).ToJSON());
 		}
 		summaryJSON["transactions"] = transactionsJSON;
 

@@ -14,10 +14,10 @@ public:
 	{
 		std::shared_ptr<Config> pConfig = nullptr;
 
-		std::string dataDir = StringUtil::Format("{}/.GrinPP/{}/", FileUtil::GetHomeDirectory(), Env::ToString(environment));
+		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
 		FileUtil::CreateDirectories(dataDir);
 
-		fs::path configPath = FileUtil::ToPath(dataDir + "server_config.json");
+		fs::path configPath = dataDir / "server_config.json";
 		if (FileUtil::Exists(configPath))
 		{
 			std::vector<unsigned char> data;

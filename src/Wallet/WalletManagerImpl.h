@@ -13,52 +13,58 @@ public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	virtual ~WalletManager() = default;
 
-	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(
+	std::pair<SecureString, SessionToken> InitializeNewWallet(
 		const std::string& username,
 		const SecureString& password
-	) override final;
+	) final;
 
-	virtual std::optional<SessionToken> RestoreFromSeed(
+	std::optional<SessionToken> RestoreFromSeed(
 		const std::string& username,
 		const SecureString& password,
 		const SecureString& walletWords
-	) override final;
+	) final;
 
-	virtual SecureString GetSeedWords(const SessionToken& token) override final;
-	virtual void CheckForOutputs(const SessionToken& token, const bool fromGenesis) override final;
-	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const override final;
-	virtual std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path);
-	virtual uint16_t GetListenerPort(const SessionToken& token) const override final;
+	SecureString GetSeedWords(const SessionToken& token) final;
+	void CheckForOutputs(const SessionToken& token, const bool fromGenesis) final;
+	std::optional<TorAddress> GetTorAddress(const SessionToken& token) const final;
+	std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path);
+	uint16_t GetListenerPort(const SessionToken& token) const final;
 
-	virtual SessionToken Login(const std::string& username, const SecureString& password) override final;
-	virtual void Logout(const SessionToken& token) override final;
-	virtual void DeleteWallet(const std::string& username, const SecureString& password) override final;
-	virtual std::vector<std::string> GetAllAccounts() const override final;
+	SessionToken Login(const std::string& username, const SecureString& password) final;
+	void Logout(const SessionToken& token) final;
+	void DeleteWallet(const std::string& username, const SecureString& password) final;
+	void ChangePassword(
+		const std::string& username,
+		const SecureString& currentPassword,
+		const SecureString& newPassword
+	) final;
 
-	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) override final;
-	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) override final;
-	virtual std::vector<WalletOutputDTO> GetOutputs(
+	std::vector<std::string> GetAllAccounts() const final;
+
+	WalletSummaryDTO GetWalletSummary(const SessionToken& token) final;
+	std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) final;
+	std::vector<WalletOutputDTO> GetOutputs(
 		const SessionToken& token,
 		const bool includeSpent,
 		const bool includeCanceled
-	) override final;
+	) final;
 
-	virtual FeeEstimateDTO EstimateFee(
+	FeeEstimateDTO EstimateFee(
 		const SessionToken& token,
 		const uint64_t amountToSend,
 		const uint64_t feeBase,
 		const SelectionStrategyDTO& strategy,
 		const uint8_t numChangeOutputs
-	) override final;
+	) final;
 
-	virtual Slate Send(const SendCriteria& sendCriteria) override final;
-	virtual Slate Receive(const ReceiveCriteria& receiveCriteria) override final;
-	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) override final;
+	Slate Send(const SendCriteria& sendCriteria) final;
+	Slate Receive(const ReceiveCriteria& receiveCriteria) final;
+	Slate Finalize(const FinalizeCriteria& finalizeCriteria) final;
 
-	virtual bool PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod) override final;
-	virtual bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
+	bool PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod) final;
+	bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 
-	virtual void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) override final;
+	void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 
 private:
 	const Config& m_config;

@@ -17,6 +17,7 @@ file(GLOB SOURCE_CODE
 	"Wallet/API/OwnerGetAPI.cpp"
 	"Wallet/API/OwnerPostAPI.cpp"
 	"Wallet/V2/OwnerController.cpp"
+	"Wallet/V2/ChangePassword.cpp"
 	"Wallet/V2/Send/OwnerSend.cpp"
 	"Wallet/V2/Receive/OwnerReceive.cpp"
 	"Wallet/V2/Receive/OwnerReceive.cpp"

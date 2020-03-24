@@ -18,9 +18,9 @@ std::shared_ptr<SqliteStore> SqliteStore::Open(const Config& config)
 	return std::make_shared<SqliteStore>(SqliteStore(config.GetWalletConfig().GetWalletDirectory()));
 }
 
-std::string SqliteStore::GetDBFile(const std::string& username) const
+fs::path SqliteStore::GetDBFile(const std::string& username) const
 {
-	return StringUtil::Format("{}/{}/wallet.db", m_walletDirectory, username);
+	return m_walletDirectory / username / "wallet.db";
 }
 
 std::vector<std::string> SqliteStore::GetAccounts() const
@@ -37,7 +37,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 		return iter->second;
 	}
 
-	const std::string dbFile = GetDBFile(username);
+	const fs::path dbFile = GetDBFile(username);
 	if (!FileUtil::Exists(dbFile))
 	{
 		throw WALLET_STORE_EXCEPTION("Wallet does not exist.");
@@ -47,7 +47,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 
 	try
 	{
-		if (sqlite3_open(dbFile.c_str(), &pDatabase) != SQLITE_OK)
+		if (sqlite3_open(dbFile.u8string().c_str(), &pDatabase) != SQLITE_OK)
 		{
 			WALLET_ERROR_F("Failed to open wallet.db for user ({}) with error ({})", username, sqlite3_errmsg(pDatabase));
 			throw WALLET_STORE_EXCEPTION("Failed to create wallet.db");
@@ -108,11 +108,21 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 	return walletDB;
 }
 
+void SqliteStore::ChangePassword(const std::string& username, const EncryptedSeed& encryptedSeed)
+{
+	const fs::path userDBPath = m_walletDirectory / username;
+	const fs::path seedFile = userDBPath / "seed.json";
+
+	const std::string seedJSON = encryptedSeed.ToJSON().toStyledString();
+	const std::vector<unsigned char> seedBytes(seedJSON.data(), seedJSON.data() + seedJSON.size());
+	FileUtil::SafeWriteToFile(seedFile, seedBytes);
+}
+
 sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 {
-	const std::string walletDBFile = GetDBFile(username);
+	const fs::path walletDBFile = GetDBFile(username);
 	sqlite3* pDatabase = nullptr;
-	if (sqlite3_open(walletDBFile.c_str(), &pDatabase) != SQLITE_OK)
+	if (sqlite3_open(walletDBFile.u8string().c_str(), &pDatabase) != SQLITE_OK)
 	{
 		WALLET_ERROR_F("Failed to create wallet.db for user ({}) with error ({})", username, sqlite3_errmsg(pDatabase));
 		sqlite3_close(pDatabase);

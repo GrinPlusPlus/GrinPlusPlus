@@ -1,6 +1,5 @@
 #include "NodeRestServer.h"
 #include "NodeContext.h"
-#include <civetweb.h>
 
 #include "API/HeaderAPI.h"
 #include "API/BlockAPI.h"
@@ -16,65 +15,36 @@
 #include <BlockChain/BlockChainServer.h>
 #include <Database/Database.h>
 
-NodeRestServer::NodeRestServer(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
-	: m_config(config), m_pNodeContext(pNodeContext), m_pNodeCivetContext(nullptr)
-{
-
-}
-
-NodeRestServer::~NodeRestServer()
-{
-	try
-	{
-		mg_stop(m_pNodeCivetContext);
-	}
-	catch (const std::system_error& e)
-	{
-		LOG_ERROR_F("Exception thrown while stopping node API listener: {}", e.what());
-	}
-}
-
-std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
-{
-	auto pNodeRestServer = std::shared_ptr<NodeRestServer>(new NodeRestServer(config, pNodeContext));
-	pNodeRestServer->Initialize();
-	return pNodeRestServer;
-}
-
 static int Shutdown_Handler(struct mg_connection* conn, void*)
 {
 	ShutdownManagerAPI::Shutdown();
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-void NodeRestServer::Initialize()
+std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
-	/* Start the server */
-	const uint32_t port = m_config.GetServerConfig().GetRestAPIPort();
-	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", port);
-	const char* mg_options[] = {
-		"num_threads", "5",
-		"listening_ports", listeningPorts.c_str(),
-		NULL
-	};
-	m_pNodeCivetContext = mg_start(NULL, 0, mg_options);
+	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
+	RPCServerPtr pRPCServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port), "/v2");
 
-	/* Add handlers */
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/status", ServerAPI::GetStatus_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/resync", ServerAPI::ResyncChain_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/headers/", HeaderAPI::GetHeader_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/blocks/", BlockAPI::GetBlock_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/chain", ChainAPI::GetChain_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/peers/all", PeersAPI::GetAllPeers_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/peers/", PeersAPI::Peer_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/roots", TxHashSetAPI::GetRoots_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/lastkernels", TxHashSetAPI::GetLastKernels_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/shutdown", Shutdown_Handler, m_pNodeContext.get());
-	mg_set_request_handler(m_pNodeCivetContext, "/v1/", ServerAPI::V1_Handler, m_pNodeContext.get());
+	/* Add v1 handlers */
+	auto pServer = pRPCServer->GetServer();
+	pServer->AddListener("/v1/status", ServerAPI::GetStatus_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/resync", ServerAPI::ResyncChain_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/headers/", HeaderAPI::GetHeader_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/blocks/", BlockAPI::GetBlock_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/chain/outputs/byids", ChainAPI::GetChainOutputsByIds_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/chain/outputs/byheight", ChainAPI::GetChainOutputsByHeight_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/chain", ChainAPI::GetChain_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/peers/all", PeersAPI::GetAllPeers_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/peers/connected", PeersAPI::GetConnectedPeers_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/peers/", PeersAPI::Peer_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/txhashset/roots", TxHashSetAPI::GetRoots_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/txhashset/lastkernels", TxHashSetAPI::GetLastKernels_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/txhashset/lastoutputs", TxHashSetAPI::GetLastOutputs_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/txhashset/lastrangeproofs", TxHashSetAPI::GetLastRangeproofs_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/shutdown", Shutdown_Handler, pNodeContext.get());
+	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
+
+	return std::make_shared<NodeRestServer>(pNodeContext, pRPCServer);
 }

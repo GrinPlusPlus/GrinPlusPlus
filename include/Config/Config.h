@@ -21,12 +21,12 @@ public:
 
 		if (json.isMember(ConfigProps::DATA_PATH))
 		{
-			dataDir = fs::path(json.get(ConfigProps::DATA_PATH, "").asString());
+			dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
 		}
 
 		FileUtil::CreateDirectories(dataDir);
 		
-		return std::make_shared<Config>(Config(json, environment, dataDir));
+		return std::shared_ptr<Config>(new Config(json, environment, dataDir));
 	}
 
 	static std::shared_ptr<Config> Default(const EEnvironmentType environment)

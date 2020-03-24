@@ -2,23 +2,18 @@
 
 #include "NodeContext.h"
 #include <Config/Config.h>
-
-// Forward Declarations
-struct mg_context;
+#include <Net/Servers/RPC/RPCServer.h>
 
 class NodeRestServer
 {
 public:
+	NodeRestServer(const std::shared_ptr<NodeContext>& pNodeContext, const RPCServerPtr& pRPCServer)
+		: m_pNodeContext(pNodeContext), m_pRPCServer(pRPCServer) { }
+	~NodeRestServer() = default;
+
 	static std::shared_ptr<NodeRestServer> Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
-	~NodeRestServer();
 
 private:
-	NodeRestServer(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
-
-	void Initialize();
-
-	const Config& m_config;
-
 	std::shared_ptr<NodeContext> m_pNodeContext;
-	mg_context* m_pNodeCivetContext;
+	RPCServerPtr m_pRPCServer;
 };

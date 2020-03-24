@@ -91,6 +91,12 @@ public:
 		const SecureString& password
 	) = 0;
 
+	virtual void ChangePassword(
+		const std::string& username,
+		const SecureString& currentPassword,
+		const SecureString& newPassword
+	) = 0;
+
 	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) = 0;
 
 	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) = 0;

@@ -49,7 +49,14 @@ public:
 
 	virtual ~Server()
 	{
-		mg_stop(m_pContext);
+		try
+		{
+			mg_stop(m_pContext);
+		}
+		catch (const std::system_error& e)
+		{
+			LOG_ERROR_F("Exception thrown while stopping node API listener: {}", e.what());
+		}
 	}
 
 	uint16_t GetPortNumber() const noexcept { return m_portNumber; }

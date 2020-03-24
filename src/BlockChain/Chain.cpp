@@ -42,7 +42,7 @@ std::shared_ptr<Chain> Chain::Load(
 		indices.emplace_back(pBlockIndexAllocator->GetOrCreateIndex(std::move(hash), indices.size()));
 	}
 
-	return std::make_shared<Chain>(Chain(chainType, pBlockIndexAllocator, pDataFile, std::move(indices)));
+	return std::shared_ptr<Chain>(new Chain(chainType, pBlockIndexAllocator, pDataFile, std::move(indices)));
 }
 
 std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) const

@@ -26,6 +26,8 @@ public:
 		m_methods[method] = pMethod;
 	}
 
+	const ServerPtr& GetServer() const { return m_pServer; }
+
 private:
 	RPCServer(ServerPtr pServer) : m_pServer(pServer) { }
 

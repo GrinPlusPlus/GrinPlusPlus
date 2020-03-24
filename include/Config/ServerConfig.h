@@ -11,7 +11,7 @@ public:
 	//
 	// Getters
 	//
-	uint32_t GetRestAPIPort() const { return m_restAPIPort; }
+	uint16_t GetRestAPIPort() const { return m_restAPIPort; }
 	const std::string& GetGrinJoinSecretKey() const { return m_grinjoinSecretKey; }
 
 	//
@@ -34,12 +34,12 @@ public:
 
 			if (serverJSON.isMember(ConfigProps::Server::REST_API_PORT))
 			{
-				m_restAPIPort = serverJSON.get(ConfigProps::Server::REST_API_PORT, m_restAPIPort).asInt();
+				m_restAPIPort = (uint16_t)serverJSON.get(ConfigProps::Server::REST_API_PORT, m_restAPIPort).asInt();
 			}
 		}
 	}
 
 private:
-	uint32_t m_restAPIPort;
+	uint16_t m_restAPIPort;
 	std::string m_grinjoinSecretKey;
 };

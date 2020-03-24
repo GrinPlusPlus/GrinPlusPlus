@@ -8,8 +8,8 @@
 class WalletTxDTO
 {
 public:
-	WalletTxDTO(const WalletTx& walletTx, const std::vector<WalletOutputDTO>& outputs)
-		: m_walletTx(walletTx), m_outputs(outputs)
+	WalletTxDTO(const WalletTx& walletTx, const std::vector<Commitment>& kernels, const std::vector<WalletOutputDTO>& outputs)
+		: m_walletTx(walletTx), m_kernels(kernels), m_outputs(outputs)
 	{
 
 	}
@@ -40,6 +40,16 @@ public:
 			transactionJSON["confirmation_date_time"] = TimeUtil::ToSeconds(m_walletTx.GetConfirmationTime().value());
 		}
 
+		Json::Value kernelsJSON;
+		for (const auto& kernel : m_kernels)
+		{
+			Json::Value kernelJSON;
+			kernelJSON["commitment"] = kernel.ToHex();
+			kernelsJSON.append(kernelJSON);
+		}
+
+		transactionJSON["kernels"] = kernelsJSON;
+
 		Json::Value outputsJSON;
 		for (const WalletOutputDTO& output : m_outputs)
 		{
@@ -53,5 +63,6 @@ public:
 
 private:
 	WalletTx m_walletTx;
+	std::vector<Commitment> m_kernels;
 	std::vector<WalletOutputDTO> m_outputs;
 };

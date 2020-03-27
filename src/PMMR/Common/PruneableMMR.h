@@ -42,7 +42,7 @@ public:
 		// Add to LeafSet
 		const uint64_t totalShift = m_pPruneList->GetTotalShift();
 		const uint64_t mmrIndex = m_pHashFile->GetSize() + totalShift;
-		m_pLeafSet->Add((uint32_t)mmrIndex);
+		m_pLeafSet->Add(MMRUtil::GetLeafIndex(mmrIndex));
 
 		// Add to data file
 		Serializer serializer;
@@ -64,13 +64,14 @@ public:
 			throw TXHASHSET_EXCEPTION(StringUtil::Format("Output is not a leaf ({})", mmrIndex));
 		}
 
-		if (!m_pLeafSet->Contains(mmrIndex))
+		const uint64_t leafIndex = MMRUtil::GetLeafIndex(mmrIndex);
+		if (!m_pLeafSet->Contains(leafIndex))
 		{
 			LOG_WARNING_F("LeafSet does not contain output ({})", mmrIndex);
 			throw TXHASHSET_EXCEPTION(StringUtil::Format("LeafSet does not contain output ({})", mmrIndex));
 		}
 
-		m_pLeafSet->Remove((uint32_t)mmrIndex);
+		m_pLeafSet->Remove(leafIndex);
 	}
 
 	void Rewind(const uint64_t size, const Roaring& leavesToAdd)
@@ -121,7 +122,7 @@ public:
 		{
 			if (mmrIndex < GetSize())
 			{
-				return m_pLeafSet->Contains(mmrIndex);
+				return m_pLeafSet->Contains(MMRUtil::GetLeafIndex(mmrIndex));
 			}
 		}
 

@@ -173,5 +173,25 @@ bool MMRUtil::IsLeaf(const uint64_t mmrIndex)
 
 uint64_t MMRUtil::GetPMMRIndex(const uint64_t leafIndex)
 {
-	return 2 * leafIndex - BitUtil::CountBitsSet(leafIndex);
+	return (2 * leafIndex) - BitUtil::CountBitsSet(leafIndex);
+}
+
+uint64_t MMRUtil::GetLeafIndex(const uint64_t position)
+{
+	uint64_t leafIndex = 0;
+
+	uint64_t peakSize = BitUtil::FillOnesToRight(position);
+	uint64_t numLeft = position;
+	while (peakSize != 0)
+	{
+		if (numLeft >= peakSize)
+		{
+			leafIndex += ((peakSize + 1) / 2);
+			numLeft -= peakSize;
+		}
+
+		peakSize >>= 1;
+	}
+
+	return leafIndex;
 }

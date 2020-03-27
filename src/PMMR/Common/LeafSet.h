@@ -25,9 +25,9 @@ public:
 		return std::shared_ptr<LeafSet>(new LeafSet(path, pBitmapFile));
 	}
 
-	void Add(const uint32_t position) { m_pBitmap->Set(position); }
-	void Remove(const uint32_t position) { m_pBitmap->Unset(position); }
-	bool Contains(const uint64_t position) const { return m_pBitmap->IsSet(position); }
+	void Add(const uint64_t leafIndex) { m_pBitmap->Set(leafIndex); }
+	void Remove(const uint64_t leafIndex) { m_pBitmap->Unset(leafIndex); }
+	bool Contains(const uint64_t leafIndex) const { return m_pBitmap->IsSet(leafIndex); }
 
 	void Rewind(const uint64_t size, const Roaring& positionsToAdd) { m_pBitmap->Rewind(size, positionsToAdd); }
 	void Commit() { m_pBitmap->Commit(); }
@@ -48,37 +48,23 @@ public:
 		FileUtil::SafeWriteToFile(FileUtil::ToPath(path), bytes);
 	}
 
-	Hash Root(const uint64_t numOutputs)
+	Hash Root(const uint64_t numOutputs) const
 	{
 		const fs::path path = fs::temp_directory_path() / "UBMT";
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(path);
 		pHashFile->Rewind(0);
 
 		size_t index = 0;
-		//const uint64_t numLeaves = MMRUtil::GetNumLeaves(bitmap.maximum());
+		std::vector<uint8_t> bytes(128);
 		const uint64_t numChunks = (numOutputs + 1023) / 1024;
 		for (size_t i = 0; i < numChunks; i++)
 		{
-			Serializer serializer;
-			for (size_t j = 0; j < (1024 / 8); j++)
+			for (size_t j = 0; j < 128; j++)
 			{
-				uint8_t power = 128;
-				uint8_t byte = 0;
-				for (size_t k = 0; k < 8; k++)
-				{
-					if (index < numOutputs && m_pBitmap->IsSet(MMRUtil::GetPMMRIndex(index)))
-					{
-						byte += power;
-					}
-
-					power /= 2;
-					++index;
-				}
-
-				serializer.Append(byte);
+				bytes[j] = m_pBitmap->GetByte(index++);
 			}
 
-			MMRHashUtil::AddHashes(pHashFile, serializer.GetBytes(), nullptr);
+			MMRHashUtil::AddHashes(pHashFile, bytes, nullptr);
 		}
 
 		return MMRHashUtil::Root(pHashFile, pHashFile->GetSize(), nullptr);

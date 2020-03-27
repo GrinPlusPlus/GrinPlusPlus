@@ -72,46 +72,46 @@ public:
 		SetDirty(false);
 	}
 
-	bool IsSet(const uint64_t position) const
+	bool IsSet(const uint64_t leafIndex) const
 	{
-		return GetByte(position / 8) & BitToByte(position % 8);
+		return GetByte(leafIndex / 8) & BitToByte(leafIndex % 8);
 	}
 
-	void Set(const uint64_t position)
+	void Set(const uint64_t leafIndex)
 	{
 		SetDirty(true);
-		uint8_t byte = GetByte(position / 8);
-		byte |= BitToByte(position % 8);
-		m_modifiedBytes[position / 8] = byte;
+		uint8_t byte = GetByte(leafIndex / 8);
+		byte |= BitToByte(leafIndex % 8);
+		m_modifiedBytes[leafIndex / 8] = byte;
 	}
 
 	void Set(const Roaring& positionsToSet)
 	{
 		for (auto iter = positionsToSet.begin(); iter != positionsToSet.end(); iter++)
 		{
-			Set(iter.i.current_value - 1);
+			Set(MMRUtil::GetLeafIndex(iter.i.current_value - 1));
 		}
 	}
 
-	void Unset(const uint64_t position)
+	void Unset(const uint64_t leafIndex)
 	{
 		SetDirty(true);
-		uint8_t byte = GetByte(position / 8);
-		byte &= (0xff ^ BitToByte(position % 8));
-		m_modifiedBytes[position / 8] = byte;
+		uint8_t byte = GetByte(leafIndex / 8);
+		byte &= (0xff ^ BitToByte(leafIndex % 8));
+		m_modifiedBytes[leafIndex / 8] = byte;
 	}
 
 	void Unset(const Roaring& positionsToUnset)
 	{
 		for (auto iter = positionsToUnset.begin(); iter != positionsToUnset.end(); iter++)
 		{
-			Unset(iter.i.current_value - 1);
+			Unset(MMRUtil::GetLeafIndex(iter.i.current_value - 1));
 		}
 	}
 
-	const bool& operator[] (const size_t position) const
+	const bool& operator[] (const size_t leafIndex) const
 	{
-		return IsSet(position) ? s_true : s_false;
+		return IsSet(leafIndex) ? s_true : s_false;
 	}
 
 	void Rewind(const size_t size, const Roaring& positionsToAdd)
@@ -137,7 +137,7 @@ public:
 			{
 				if ((byte & BitToByte(j)) > 0)
 				{
-					bitmap.add((i * 8) + j + 1);
+					bitmap.add((uint32_t)(MMRUtil::GetPMMRIndex((i * 8) + j) + 1));
 				}
 			}
 		}
@@ -145,11 +145,28 @@ public:
 		return bitmap;
 	}
 
+	uint8_t GetByte(const uint64_t byteIndex) const
+	{
+		auto iter = m_modifiedBytes.find(byteIndex);
+		if (iter != m_modifiedBytes.cend())
+		{
+			return iter->second;
+		}
+		else if (byteIndex < m_mmap.size())
+		{
+			return *((uint8_t*)(m_mmap.cbegin() + byteIndex));
+		}
+
+		return 0;
+	}
+
 private:
 	BitmapFile(const fs::path& path) : m_path(path), m_size(0) { }
 
 	void Load()
 	{
+		fs::path version1Path = m_path.parent_path() / "version1";
+
 		std::ifstream inFile(m_path.c_str(), std::ios::in | std::ifstream::ate | std::ifstream::binary);
 		if (inFile.is_open())
 		{
@@ -172,6 +189,8 @@ private:
 
 		if (m_size > 0)
 		{
+			ConvertToLeaves(version1Path);
+
 			std::error_code error;
 			m_mmap = mio::make_mmap_source(MPATH_STR, error);
 			if (error.value() != 0)
@@ -180,21 +199,52 @@ private:
 				throw FILE_EXCEPTION_F("Failed to mmap file: {}", m_path);
 			}
 		}
+		else
+		{
+			std::ofstream outFile(version1Path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+			if (!outFile.is_open())
+			{
+				LOG_ERROR_F("Failed to create file: {}", version1Path);
+				throw FILE_EXCEPTION_F("Failed to create file: {}", version1Path);
+			}
+
+			outFile.close();
+		}
 	}
 
-	uint8_t GetByte(const uint64_t byteIndex) const
+	void ConvertToLeaves(const fs::path& version1Path)
 	{
-		auto iter = m_modifiedBytes.find(byteIndex);
-		if (iter != m_modifiedBytes.cend())
+		if (!FileUtil::Exists(version1Path))
 		{
-			return iter->second;
-		}
-		else if (byteIndex < m_mmap.size())
-		{
-			return *((uint8_t*)(m_mmap.cbegin() + byteIndex));
-		}
+			std::vector<uint8_t> data;
+			if (!FileUtil::ReadFile(m_path, data))
+			{
+				LOG_ERROR_F("Failed to read file: {}", m_path);
+				throw FILE_EXCEPTION_F("Failed to read file: {}", m_path);
+			}
 
-		return 0;
+			const uint64_t numLeaves = MMRUtil::GetNumLeaves(data.size() * 8);
+			std::vector<uint8_t> converted((numLeaves / 8) + 1);
+			for (size_t i = 0; i < numLeaves; i++)
+			{
+				const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(i);
+				if (data[mmrIndex / 8] & BitToByte(mmrIndex % 8))
+				{
+					converted[i / 8] = converted[i / 8] | BitToByte(i % 8);
+				}
+			}
+
+			FileUtil::SafeWriteToFile(m_path, converted);
+
+			std::ofstream outFile(version1Path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+			if (!outFile.is_open())
+			{
+				LOG_ERROR_F("Failed to create file: {}", version1Path);
+				throw FILE_EXCEPTION_F("Failed to create file: {}", version1Path);
+			}
+
+			outFile.close();
+		}
 	}
 
 	uint64_t GetNumBytes() const

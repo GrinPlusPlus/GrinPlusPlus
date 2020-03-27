@@ -16,6 +16,7 @@ public:
 	static uint64_t GetNumLeaves(const uint64_t lastMMRIndex);
 	static bool IsLeaf(const uint64_t mmrIndex);
 	static uint64_t GetPMMRIndex(const uint64_t leafIndex);
+	static uint64_t GetLeafIndex(const uint64_t mmrIndex);
 
 private:
 	static std::vector<uint64_t> GetPeakSizes(const uint64_t size);

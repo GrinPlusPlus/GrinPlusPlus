@@ -126,9 +126,9 @@ std::vector<Hash> MMRHashUtil::GetLastLeafHashes(
 	{
 		--leafIndex;
 
-		const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex);
-		if (pLeafSet == nullptr || pLeafSet->Contains(mmrIndex))
+		if (pLeafSet == nullptr || pLeafSet->Contains(leafIndex))
 		{
+			const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(leafIndex);
 			Hash hash = GetHashAt(pHashFile, mmrIndex, pPruneList);
 			if (hash != ZERO_HASH)
 			{

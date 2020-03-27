@@ -27,7 +27,7 @@ public:
 	void SetTxHashSet(ITxHashSetPtr pTxHashSet) { m_pTxHashSet = pTxHashSet; }
 
 	static ITxHashSetPtr LoadFromZip(const Config& config, const fs::path& zipFilePath, BlockHeaderPtr pHeader);
-	fs::path SaveSnapshot(std::shared_ptr<const IBlockDB> pBlockDB, BlockHeaderPtr pHeader) const;
+	fs::path SaveSnapshot(std::shared_ptr<IBlockDB> pBlockDB, BlockHeaderPtr pHeader) const;
 
 	virtual void Commit() override final
 	{

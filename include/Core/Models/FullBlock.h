@@ -44,6 +44,22 @@ public:
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
 
+	std::vector<Commitment> GetOutputCommitments() const
+	{
+		const auto& outputs = GetOutputs();
+
+		std::vector<Commitment> commitments;
+		commitments.reserve(outputs.size());
+
+		std::transform(
+			outputs.cbegin(), outputs.cend(),
+			std::back_inserter(commitments),
+			[](const TransactionOutput& output) { return output.GetCommitment(); }
+		);
+
+		return commitments;
+	}
+
 	uint64_t GetHeight() const { return m_pBlockHeader->GetHeight(); }
 	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousBlockHash(); }
 	uint64_t GetTotalDifficulty() const { return m_pBlockHeader->GetTotalDifficulty(); }

@@ -105,6 +105,9 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	Roaring blockInputBitmap;
 
 	// Prune inputs
+	std::vector<SpentOutput> spentPositions;
+	spentPositions.reserve(block.GetInputs().size());
+
 	for (const TransactionInput& input : block.GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
@@ -115,6 +118,8 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 			return false;
 		}
 
+		spentPositions.push_back(SpentOutput(commitment, *pOutputPosition));
+
 		const uint64_t mmrIndex = pOutputPosition->GetMMRIndex();
 		m_pOutputPMMR->Remove(mmrIndex);
 		m_pRangeProofPMMR->Remove(mmrIndex);
@@ -123,6 +128,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	}
 
 	pBlockDB->AddBlockInputBitmap(block.GetHash(), blockInputBitmap);
+	pBlockDB->AddSpentPositions(block.GetHash(), spentPositions);
 
 	// Append new outputs
 	for (const TransactionOutput& output : block.GetOutputs())
@@ -281,21 +287,39 @@ std::vector<OutputDTO> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBl
 	return outputs;
 }
 
-void TxHashSet::Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header)
+void TxHashSet::Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& header)
 {
 	Roaring leavesToAdd;
 	while (*m_pBlockHeader != header)
 	{
 		std::unique_ptr<Roaring> pBlockInputBitmap = pBlockDB->GetBlockInputBitmap(m_pBlockHeader->GetHash());
-		if (pBlockInputBitmap != nullptr)
-		{
-			leavesToAdd |= *pBlockInputBitmap;
-		}
-		else
+		if (pBlockInputBitmap == nullptr)
 		{
 			throw TXHASHSET_EXCEPTION(StringUtil::Format("Input bitmap not found for {}", *m_pBlockHeader));
 		}
 
+		auto pBlock = pBlockDB->GetBlock(m_pBlockHeader->GetHash());
+		if (pBlock == nullptr)
+		{
+			throw TXHASHSET_EXCEPTION(StringUtil::Format("Block not found for {}", *m_pBlockHeader));
+		}
+
+		std::unordered_map<Commitment, OutputLocation> spentOutputs = pBlockDB->GetSpentPositions(m_pBlockHeader->GetHash());
+
+		pBlockDB->RemoveOutputPositions(pBlock->GetOutputCommitments());
+
+		for (const auto& input : pBlock->GetInputs())
+		{
+			auto iter = spentOutputs.find(input.GetCommitment());
+			if (iter == spentOutputs.end())
+			{
+				throw TXHASHSET_EXCEPTION(StringUtil::Format("Spent output not found for {}", input.GetCommitment()));
+			}
+
+			pBlockDB->AddOutputPosition(input.GetCommitment(), iter->second);
+		}
+
+		leavesToAdd |= *pBlockInputBitmap;
 		m_pBlockHeader = pBlockDB->GetBlockHeader(m_pBlockHeader->GetPreviousBlockHash());
 	}
 

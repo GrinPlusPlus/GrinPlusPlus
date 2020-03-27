@@ -6,7 +6,9 @@
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/OutputLocation.h>
+#include <Core/Models/SpentOutput.h>
 #include <Core/Traits/Batchable.h>
+#include <unordered_map>
 #include <memory>
 
 class IBlockDB : public Traits::IBatchable
@@ -27,7 +29,11 @@ public:
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) = 0;
 	virtual std::unique_ptr<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
+	virtual void RemoveOutputPositions(const std::vector<Commitment>& outputCommitments) = 0;
 
 	virtual void AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap) = 0;
 	virtual std::unique_ptr<Roaring> GetBlockInputBitmap(const Hash& blockHash) const = 0;
+
+	virtual void AddSpentPositions(const Hash& blockHash, const std::vector<SpentOutput>& outputPositions) = 0;
+	virtual std::unordered_map<Commitment, OutputLocation> GetSpentPositions(const Hash& blockHash) const = 0;
 };

@@ -36,7 +36,7 @@ public:
 	virtual OutputRange GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t maxNumOutputs) const override final;
 	virtual std::vector<OutputDTO> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const override final;
 
-	virtual void Rewind(std::shared_ptr<const IBlockDB> pBlockDB, const BlockHeader& header) override final;
+	virtual void Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& header) override final;
 	virtual void Commit() override final;
 	virtual void Rollback() noexcept override final;
 	virtual void Compact() override final;

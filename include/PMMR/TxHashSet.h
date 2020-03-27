@@ -124,7 +124,7 @@ public:
 	// Rewinds the kernel, output, and rangeproof MMRs to the given block.
 	//
 	virtual void Rewind(
-		std::shared_ptr<const IBlockDB> pBlockDB,
+		std::shared_ptr<IBlockDB> pBlockDB,
 		const BlockHeader& header
 	) = 0;
 

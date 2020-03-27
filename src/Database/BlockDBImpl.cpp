@@ -16,7 +16,8 @@ BlockDB::BlockDB(
 	ColumnFamilyHandle* pHeaderHandle,
 	ColumnFamilyHandle* pBlockSumsHandle,
 	ColumnFamilyHandle* pOutputPosHandle,
-	ColumnFamilyHandle* pInputBitmapHandle)
+	ColumnFamilyHandle* pInputBitmapHandle,
+	ColumnFamilyHandle* pSpentOutputsHandle)
 	: m_config(config),
 	m_pDatabase(pDatabase),
 	m_pTransactionDB(pTransactionDB),
@@ -27,6 +28,7 @@ BlockDB::BlockDB(
 	m_pBlockSumsHandle(pBlockSumsHandle),
 	m_pOutputPosHandle(pOutputPosHandle),
 	m_pInputBitmapHandle(pInputBitmapHandle),
+	m_pSpentOutputsHandle(pSpentOutputsHandle),
 	m_blockHeadersCache(128)
 {
 
@@ -39,6 +41,7 @@ BlockDB::~BlockDB()
 	delete m_pBlockSumsHandle;
 	delete m_pOutputPosHandle;
 	delete m_pInputBitmapHandle;
+	delete m_pSpentOutputsHandle;
 	delete m_pTransactionDB;
 }
 
@@ -60,6 +63,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 	ColumnFamilyDescriptor BLOCK_SUMS_COLUMN = ColumnFamilyDescriptor("BLOCK_SUMS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 	ColumnFamilyDescriptor OUTPUT_POS_COLUMN = ColumnFamilyDescriptor("OUTPUT_POS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 	ColumnFamilyDescriptor INPUT_BITMAP_COLUMN = ColumnFamilyDescriptor("INPUT_BITMAP", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
+	ColumnFamilyDescriptor SPENT_OUTPUTS_COLUMN = ColumnFamilyDescriptor("SPENT_OUTPUTS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 	std::vector<std::string> columnFamilies;
 	Status status = OptimisticTransactionDB::ListColumnFamilies(options, dbPath.u8string(), &columnFamilies);
@@ -72,10 +76,13 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 	ColumnFamilyHandle* pBlockSumsHandle = nullptr;
 	ColumnFamilyHandle* pOutputPosHandle = nullptr;
 	ColumnFamilyHandle* pInputBitmapHandle = nullptr;
+	ColumnFamilyHandle* pSpentOutputsHandle = nullptr;
 
 	if (status.ok())
 	{
-		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN });
+		std::vector<ColumnFamilyDescriptor> columnDescriptors({ ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN, SPENT_OUTPUTS_COLUMN });
+		columnDescriptors.resize(columnFamilies.size());
+
 		std::vector<ColumnFamilyHandle*> columnHandles;
 
 		status = OptimisticTransactionDB::Open(options, dbPath.u8string(), columnDescriptors, &columnHandles, &pTransactionDB);
@@ -92,6 +99,15 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 		pBlockSumsHandle = columnHandles[3];
 		pOutputPosHandle = columnHandles[4];
 		pInputBitmapHandle = columnHandles[5];
+
+		if (columnHandles.size() >= 7)
+		{
+			pSpentOutputsHandle = columnHandles[6];
+		}
+		else
+		{
+			pTransactionDB->CreateColumnFamily(SPENT_OUTPUTS_COLUMN.options, SPENT_OUTPUTS_COLUMN.name, &pSpentOutputsHandle);
+		}
 	}
 	else
 	{
@@ -113,6 +129,7 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 		pDatabase->CreateColumnFamily(BLOCK_SUMS_COLUMN.options, BLOCK_SUMS_COLUMN.name, &pBlockSumsHandle);
 		pDatabase->CreateColumnFamily(OUTPUT_POS_COLUMN.options, OUTPUT_POS_COLUMN.name, &pOutputPosHandle);
 		pDatabase->CreateColumnFamily(INPUT_BITMAP_COLUMN.options, INPUT_BITMAP_COLUMN.name, &pInputBitmapHandle);
+		pTransactionDB->CreateColumnFamily(SPENT_OUTPUTS_COLUMN.options, SPENT_OUTPUTS_COLUMN.name, &pSpentOutputsHandle);
 	}
 
 	return std::shared_ptr<BlockDB>(new BlockDB(
@@ -124,7 +141,8 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 		pHeaderHandle,
 		pBlockSumsHandle,
 		pOutputPosHandle,
-		pInputBitmapHandle
+		pInputBitmapHandle,
+		pSpentOutputsHandle
 	));
 }
 
@@ -187,6 +205,18 @@ Status BlockDB::Write(ColumnFamilyHandle* pFamilyHandle, const Slice& key, const
 	else
 	{
 		return m_pDatabase->Put(WriteOptions(), pFamilyHandle, key, value);
+	}
+}
+
+Status BlockDB::Delete(ColumnFamilyHandle* pFamilyHandle, const Slice& key)
+{
+	if (m_pTransaction != nullptr)
+	{
+		return m_pTransaction->Delete(pFamilyHandle, key);
+	}
+	else
+	{
+		return m_pDatabase->Delete(WriteOptions(), pFamilyHandle, key);
 	}
 }
 
@@ -421,6 +451,31 @@ std::unique_ptr<OutputLocation> BlockDB::GetOutputPosition(const Commitment& out
 	return pOutputPosition;
 }
 
+void BlockDB::RemoveOutputPositions(const std::vector<Commitment>& outputCommitments)
+{
+	try
+	{
+		for (const Commitment& commit : outputCommitments)
+		{
+			const Status s = Delete(m_pOutputPosHandle, Slice((const char*)commit.data(), 32));
+			if (!s.ok())
+			{
+				LOG_ERROR_F("Failed to delete location for output {}", commit);
+				throw DATABASE_EXCEPTION("Failed to delete output location.");
+			}
+		}
+	}
+	catch (DatabaseException&)
+	{
+		throw;
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception caught: {}", e.what());
+		throw DATABASE_EXCEPTION(e.what());
+	}
+}
+
 void BlockDB::AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap)
 {
 	try
@@ -483,6 +538,88 @@ std::unique_ptr<Roaring> BlockDB::GetBlockInputBitmap(const Hash& blockHash) con
 		throw;
 	}
 	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Exception caught: {}", e.what());
+		throw DATABASE_EXCEPTION(e.what());
+	}
+}
+
+void BlockDB::AddSpentPositions(const Hash& blockHash, const std::vector<SpentOutput>& outputPositions)
+{
+	assert(outputPositions.size() < (size_t)UINT16_MAX);
+
+	try
+	{
+		Slice key((const char*)blockHash.data(), blockHash.size());
+		
+		Serializer serializer;
+		serializer.Append<uint8_t>(/* version= */ 0);
+		serializer.Append<uint16_t>((uint16_t)outputPositions.size());
+		
+		for (const SpentOutput& output : outputPositions)
+		{
+			output.Serialize(serializer);
+		}
+
+		Slice value((const char*)serializer.data(), serializer.size());
+
+		// Insert the spent output positions
+		const Status s = Write(m_pSpentOutputsHandle, key, value);
+		if (!s.ok())
+		{
+			LOG_ERROR_F("Failed to write spent outputs for block {}", blockHash);
+			throw DATABASE_EXCEPTION("Failed to write spent outputs.");
+		}
+	}
+	catch (DatabaseException&)
+	{
+		throw;
+	}
+	catch (std::exception & e)
+	{
+		LOG_ERROR_F("Exception caught: {}", e.what());
+		throw DATABASE_EXCEPTION(e.what());
+	}
+}
+
+std::unordered_map<Commitment, OutputLocation> BlockDB::GetSpentPositions(const Hash& blockHash) const
+{
+	try
+	{
+		Slice key((const char*)blockHash.data(), blockHash.size());
+
+		// Read from DB
+		std::string value;
+		const Status s = Read(m_pSpentOutputsHandle, key, &value);
+		if (s.ok())
+		{
+			// Deserialize result
+			ByteBuffer byteBuffer({ value.data(), value.data() + value.size() });
+			const uint8_t version = byteBuffer.ReadU8();
+			const uint16_t numPositions = byteBuffer.ReadU16();
+
+			std::unordered_map<Commitment, OutputLocation> spentOutputs;
+			spentOutputs.reserve(numPositions);
+
+			for (uint16_t i = 0; i < numPositions; i++)
+			{
+				SpentOutput spent = SpentOutput::Deserialize(byteBuffer);
+				spentOutputs.insert({ spent.GetCommitment(), spent.GetLocation() });
+			}
+
+			return spentOutputs;
+		}
+		else
+		{
+			LOG_ERROR_F("Failed to retrieve spent positions for block ({}) with error ({})", blockHash, s.getState());
+			throw DATABASE_EXCEPTION("Failed to retrieve spent positions with error: " + std::string(s.getState()));
+		}
+	}
+	catch (DatabaseException&)
+	{
+		throw;
+	}
+	catch (std::exception & e)
 	{
 		LOG_ERROR_F("Exception caught: {}", e.what());
 		throw DATABASE_EXCEPTION(e.what());

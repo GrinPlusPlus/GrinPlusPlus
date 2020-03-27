@@ -151,14 +151,15 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 
 fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 {
-	auto pReader = m_pChainState->Read();
-	const uint64_t horizon = Consensus::GetHorizonHeight(pReader->GetHeight(EChainType::CONFIRMED));
+	// TODO: Use reader if possible
+	auto pBatch = m_pChainState->BatchWrite(); // DO NOT COMMIT THIS BATCH
+	const uint64_t horizon = Consensus::GetHorizonHeight(pBatch->GetHeight(EChainType::CONFIRMED));
 	if (pBlockHeader->GetHeight() < horizon)
 	{
 		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
 	}
 
-	return pReader->GetTxHashSetManager()->SaveSnapshot(pReader->GetBlockDB().GetShared(), pBlockHeader);
+	return pBatch->GetTxHashSetManager()->SaveSnapshot(pBatch->GetBlockDB(), pBlockHeader);
 }
 
 EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)

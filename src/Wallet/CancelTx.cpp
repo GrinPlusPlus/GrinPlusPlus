@@ -11,7 +11,7 @@ void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> 
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
 	}
-	else if (type == EWalletTxType::SENDING_STARTED)
+	else if (type == EWalletTxType::SENDING_STARTED || type == EWalletTxType::SENDING_FINALIZED)
 	{
 		walletTx.SetType(EWalletTxType::SENT_CANCELED);
 	}

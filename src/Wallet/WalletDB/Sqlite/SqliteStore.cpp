@@ -20,7 +20,7 @@ std::shared_ptr<SqliteStore> SqliteStore::Open(const Config& config)
 
 fs::path SqliteStore::GetDBFile(const std::string& username) const
 {
-	return m_walletDirectory / username / "wallet.db";
+	return m_walletDirectory / StringUtil::ToWide(username) / "wallet.db";
 }
 
 std::vector<std::string> SqliteStore::GetAccounts() const
@@ -169,19 +169,21 @@ sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 
 EncryptedSeed SqliteStore::LoadWalletSeed(const std::string& username) const
 {
-	WALLET_TRACE_F("Loading wallet seed for {}", username);
+	const auto wideUsername = StringUtil::ToWide(username);
 
-	const fs::path seedPath = m_walletDirectory / username / "seed.json";
+	WALLET_TRACE_F("Loading wallet seed for {}", wideUsername);
+
+	const fs::path seedPath = m_walletDirectory / wideUsername / "seed.json";
 	if (!FileUtil::Exists(seedPath))
 	{
-		WALLET_WARNING_F("Wallet not found for user: {}", username);
+		WALLET_WARNING_F("Wallet not found for user: {}", wideUsername);
 		throw WALLET_STORE_EXCEPTION("Wallet not found.");
 	}
 
 	std::vector<unsigned char> seedBytes;
 	if (!FileUtil::ReadFile(seedPath, seedBytes))
 	{
-		WALLET_ERROR_F("Failed to load seed.json for user: {}", username);
+		WALLET_ERROR_F("Failed to load seed.json for user: {}", wideUsername);
 		throw WALLET_STORE_EXCEPTION("Failed to load seed.json");
 	}
 
@@ -190,7 +192,7 @@ EncryptedSeed SqliteStore::LoadWalletSeed(const std::string& username) const
 	Json::Value seedJSON;
 	if (!JsonUtil::Parse(seed, seedJSON))
 	{
-		WALLET_ERROR_F("Failed to deserialize seed.json for user: {}", username);
+		WALLET_ERROR_F("Failed to deserialize seed.json for user: {}", wideUsername);
 		throw WALLET_STORE_EXCEPTION("Failed to deserialize seed.json");
 	}
 

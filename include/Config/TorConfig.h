@@ -9,26 +9,25 @@
 class TorConfig
 {
 public:
-	bool IsEnabled() const { return m_enableTor; }
+	bool IsEnabled() const noexcept { return true; }
 
 	// The "SocksPort" https://2019.www.torproject.org/docs/tor-manual.html.en#SocksPort
-	uint16_t GetSocksPort() const { return m_socksPort; }
+	uint16_t GetSocksPort() const noexcept { return m_socksPort; }
 
 	// The "ControlPort" https://2019.www.torproject.org/docs/tor-manual.html.en#ControlPort
-	uint16_t GetControlPort() const { return m_controlPort; }
+	uint16_t GetControlPort() const noexcept { return m_controlPort; }
 
 	// The pre-hashed "ControlPassword" https://2019.www.torproject.org/docs/tor-manual.html.en#HashedControlPassword
-	const std::string& GetControlPassword() const { return m_password; }
+	const std::string& GetControlPassword() const noexcept { return m_password; }
 
 	// The "HashedControlPassword" https://2019.www.torproject.org/docs/tor-manual.html.en#HashedControlPassword
-	const std::string& GetHashedControlPassword() const { return m_hashedPassword; }
+	const std::string& GetHashedControlPassword() const noexcept { return m_hashedPassword; }
 
 	//
 	// Constructor
 	//
 	TorConfig(const Json::Value& json)
 	{
-		m_enableTor = true;
 		m_socksPort = 3422;
 		m_controlPort = 3423;
 		m_password = "MyPassword";
@@ -38,7 +37,6 @@ public:
 		{
 			const Json::Value& torJSON = json[ConfigProps::Tor::TOR];
 
-			m_enableTor = true;//torJSON.get(ConfigProps::Tor::ENABLE_TOR, m_enableTor).asBool();
 			m_socksPort = (uint16_t)torJSON.get(ConfigProps::Tor::SOCKS_PORT, m_socksPort).asUInt();
 			m_controlPort = (uint16_t)torJSON.get(ConfigProps::Tor::CONTROL_PORT, m_controlPort).asUInt();
 
@@ -51,7 +49,6 @@ public:
 	}
 
 private:
-	bool m_enableTor;
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;
 	std::string m_password;

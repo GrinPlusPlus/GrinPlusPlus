@@ -17,13 +17,14 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
 {
 	try
 	{
-		const std::string command = fs::current_path().string() + "/tor/tor";
+		const fs::path command = fs::current_path() / "tor" / "tor";
 		
 		std::vector<std::string> args({
-			command,
+			command.u8string(),
 			"--ControlPort", std::to_string(torConfig.GetControlPort()),
 			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
-			"--HashedControlPassword", torConfig.GetHashedControlPassword()
+			"--HashedControlPassword", torConfig.GetHashedControlPassword(),
+			"-f", (fs::current_path() / "tor" / ".torrc").u8string()
 		});
 
 		// TODO: Determine if process is already running.

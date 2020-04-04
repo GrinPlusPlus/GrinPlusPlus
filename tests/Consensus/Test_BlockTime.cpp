@@ -12,8 +12,8 @@ TEST_CASE("Consensus::GetMaxBlockTime")
 
 TEST_CASE("Consensus::GetMaxCoinbaseHeight")
 {
-	REQUIRE(GetMaxCoinbaseHeight(1440) == 0);
-	REQUIRE(GetMaxCoinbaseHeight(1441) == 1);
+	REQUIRE(GetMaxCoinbaseHeight(EEnvironmentType::MAINNET, 1440) == 0);
+	REQUIRE(GetMaxCoinbaseHeight(EEnvironmentType::MAINNET, 1441) == 1);
 }
 
 TEST_CASE("Consensus::GetHorizonHeight")

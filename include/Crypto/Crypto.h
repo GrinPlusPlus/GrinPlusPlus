@@ -243,6 +243,12 @@ public:
 		const PublicKey& sumPubNonces
 	);
 
+	static std::unique_ptr<Signature> BuildCoinbaseSignature(
+		const SecretKey& secretKey,
+		const Commitment& commitment,
+		const Hash& message
+	);
+
 	//
 	// Verifies that the signature is a valid signature for the message.
 	//

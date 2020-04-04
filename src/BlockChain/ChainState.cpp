@@ -31,20 +31,27 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-	BlockHeaderPtr pGenesisHeader)
+	const FullBlock& genesisBlock)
 {
 	std::shared_ptr<const Chain> pCandidateChain = pChainStore->Read()->GetCandidateChain();
 	const uint64_t candidateHeight = pCandidateChain->GetTip()->GetHeight();
 	if (candidateHeight == 0)
 	{
 		auto locked = MultiLocker().Lock(*pDatabase, *pHeaderMMR);
-		std::get<0>(locked)->AddBlockHeader(pGenesisHeader);
-		std::get<1>(locked)->AddHeader(*pGenesisHeader);
+		std::get<0>(locked)->AddBlockHeader(genesisBlock.GetBlockHeader());
+		std::get<1>(locked)->AddHeader(*genesisBlock.GetBlockHeader());
+		pTxHashSetManager->Write()->Open(genesisBlock.GetBlockHeader(), genesisBlock);
+
+		const BlockSums blockSums(
+			genesisBlock.GetOutputs().front().GetCommitment(),
+			genesisBlock.GetKernels().front().GetCommitment()
+		);
+		std::get<0>(locked)->AddBlockSums(genesisBlock.GetHash(), blockSums);
 	}
 
 	auto pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
 	auto pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
-	pTxHashSetManager->Write()->Open(pConfirmedHeader);
+	pTxHashSetManager->Write()->Open(pConfirmedHeader, genesisBlock);
 
 	std::shared_ptr<ChainState> pChainState(new ChainState(config, pChainStore, pDatabase, pHeaderMMR, pTransactionPool, pTxHashSetManager));
 	return std::make_shared<Locked<ChainState>>(Locked<ChainState>(pChainState));

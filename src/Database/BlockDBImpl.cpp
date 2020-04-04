@@ -594,7 +594,8 @@ std::unordered_map<Commitment, OutputLocation> BlockDB::GetSpentPositions(const 
 		if (s.ok())
 		{
 			// Deserialize result
-			ByteBuffer byteBuffer({ value.data(), value.data() + value.size() });
+			std::vector<unsigned char> bytes(value.data(), value.data() + value.size());
+			ByteBuffer byteBuffer(bytes);
 			const uint8_t version = byteBuffer.ReadU8();
 			const uint16_t numPositions = byteBuffer.ReadU16();
 

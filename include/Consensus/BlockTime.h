@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <chrono>
 
+#include <Config/EnvironmentType.h>
+
 #pragma warning(disable:4505)
 
 // See: https://github.com/mimblewimble/grin/blob/master/core/src/consensus.rs
@@ -42,8 +44,13 @@ namespace Consensus
 	// set to nominal number of block in one day (1440 with 1-minute blocks)
 	static constexpr uint64_t COINBASE_MATURITY = (24 * 60 * 60) / BLOCK_TIME_SEC;
 
-	static uint64_t GetMaxCoinbaseHeight(const uint64_t blockHeight)
+	static uint64_t GetMaxCoinbaseHeight(const EEnvironmentType environment, const uint64_t blockHeight)
 	{
+		if (environment == EEnvironmentType::AUTOMATED_TESTING)
+		{
+			return (std::max)(blockHeight, (uint64_t)25) - (uint64_t)25;
+		}
+
 		return (std::max)(blockHeight, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
 	}
 

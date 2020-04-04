@@ -31,7 +31,6 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 		return std::vector<OutputDataEntity>();
 	}
 
-
 	std::vector<OutputDataEntity> walletOutputs = pBatch->GetOutputs(masterSeed);
 	std::vector<WalletTx> walletTransactions = pBatch->GetTransactions(masterSeed);
 

@@ -114,6 +114,57 @@ bool AggSig::VerifyMessageSignature(const CompactSignature& signature, const Pub
 	return false;
 }
 
+std::unique_ptr<Signature> AggSig::BuildSignature(const SecretKey& secretKey, const Commitment& commitment, const Hash& message)
+{
+	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
+
+	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
+	if (randomizeResult != 1)
+	{
+		LOG_ERROR("Context randomization failed");
+		return nullptr;
+	}
+
+	secp256k1_pedersen_commitment parsedCommitment;
+	const int commitmentResult = secp256k1_pedersen_commitment_parse(m_pContext, &parsedCommitment, commitment.data());
+	if (commitmentResult != 1)
+	{
+		LOG_ERROR("secp256k1_pedersen_commitment_parse failed");
+		return nullptr;
+	}
+
+	secp256k1_pubkey pubKey;
+	const int pubkeyResult = secp256k1_pedersen_commitment_to_pubkey(m_pContext, &pubKey, &parsedCommitment);
+	if (pubkeyResult != 1)
+	{
+		LOG_ERROR("secp256k1_pedersen_commitment_to_pubkey failed");
+		return nullptr;
+	}
+
+	secp256k1_ecdsa_signature signature;
+	const int signedResult = secp256k1_aggsig_sign_single(
+		m_pContext,
+		&signature.data[0],
+		message.data(),
+		secretKey.data(),
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		&pubKey,
+		randomSeed.data()
+	);
+
+	if (signedResult != 1)
+	{
+		LOG_ERROR("secp256k1_aggsig_sign_single failed");
+		return nullptr;
+	}
+
+	return std::make_unique<Signature>(CBigInteger<64>(signature.data));
+}
+
 std::unique_ptr<CompactSignature> AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);

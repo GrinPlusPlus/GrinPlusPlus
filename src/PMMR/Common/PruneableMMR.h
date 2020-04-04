@@ -74,7 +74,7 @@ public:
 		m_pLeafSet->Remove(leafIndex);
 	}
 
-	void Rewind(const uint64_t size, const Roaring& leavesToAdd)
+	void Rewind(const uint64_t size, const std::vector<uint64_t>& leavesToAdd)
 	{
 		SetDirty(true);
 
@@ -83,7 +83,7 @@ public:
 		m_pLeafSet->Rewind(size, leavesToAdd);
 	}
 
-	virtual Hash Root(const uint64_t size) const override final
+	Hash Root(const uint64_t size) const final
 	{
 		return MMRHashUtil::Root(m_pHashFile, size, m_pPruneList);
 	}
@@ -93,14 +93,14 @@ public:
 		return m_pLeafSet->Root(size);
 	}
 
-	virtual uint64_t GetSize() const override final
+	uint64_t GetSize() const final
 	{
 		const uint64_t totalShift = m_pPruneList->GetTotalShift();
 
 		return totalShift + m_pHashFile->GetSize();
 	}
 
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const  override final
+	std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const final
 	{
 		Hash hash = MMRHashUtil::GetHashAt(m_pHashFile, mmrIndex, m_pPruneList);
 		if (hash == ZERO_HASH)
@@ -111,7 +111,7 @@ public:
 		return std::make_unique<Hash>(std::move(hash));
 	}
 
-	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final
+	std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const final
 	{
 		return MMRHashUtil::GetLastLeafHashes(m_pHashFile, m_pLeafSet, m_pPruneList, numHashes);
 	}
@@ -155,7 +155,7 @@ public:
 		return std::unique_ptr<DATA_TYPE>(nullptr);
 	}
 
-	virtual void Commit() override final
+	void Commit() final
 	{
 		if (IsDirty())
 		{
@@ -167,7 +167,7 @@ public:
 		}
 	}
 
-	virtual void Rollback() noexcept override final
+	void Rollback() noexcept final
 	{
 		if (IsDirty())
 		{

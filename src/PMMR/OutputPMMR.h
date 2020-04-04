@@ -10,8 +10,10 @@
 class OutputPMMR : public PruneableMMR<OUTPUT_SIZE, OutputIdentifier>
 {
 public:
-	static std::shared_ptr<OutputPMMR> Load(const fs::path& txHashSetPath)
+	static std::shared_ptr<OutputPMMR> Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock)
 	{
+		const auto genesisOutput = OutputIdentifier::FromOutput(genesisBlock.GetOutputs().front());
+
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "output" / "pmmr_hash.bin");
 
 		if (!FileUtil::Exists(txHashSetPath / "output" / "pmmr_leafset.bin") && FileUtil::Exists(txHashSetPath / "output" / "pmmr_leaf.bin"))
@@ -29,7 +31,13 @@ public:
 		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetPath / "output" / "pmmr_prun.bin");
 		std::shared_ptr<DataFile<OUTPUT_SIZE>> pDataFile = DataFile<OUTPUT_SIZE>::Load(txHashSetPath / "output" / "pmmr_data.bin");
 
-		return std::make_shared<OutputPMMR>(OutputPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
+		auto pOutputPMMR =  std::shared_ptr<OutputPMMR>(new OutputPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
+		if (pHashFile->GetSize() == 0)
+		{
+			pOutputPMMR->Append(OutputIdentifier::FromOutput(genesisBlock.GetOutputs().front()));
+		}
+
+		return pOutputPMMR;
 	}
 
 	virtual ~OutputPMMR() = default;

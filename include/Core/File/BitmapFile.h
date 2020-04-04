@@ -38,7 +38,7 @@ public:
 		return pBitmapFile;
 	}
 
-	virtual void Commit() override final
+	void Commit() final
 	{
 		if (!m_modifiedBytes.empty())
 		{
@@ -66,7 +66,7 @@ public:
 		}
 	}
 
-	virtual void Rollback() noexcept override final
+	void Rollback() noexcept final
 	{
 		m_modifiedBytes.clear();
 		SetDirty(false);
@@ -114,9 +114,12 @@ public:
 		return IsSet(leafIndex) ? s_true : s_false;
 	}
 
-	void Rewind(const size_t size, const Roaring& positionsToAdd)
+	void Rewind(const size_t size, const std::vector<uint64_t>& leavesToAdd)
 	{
-		Set(positionsToAdd);
+		for (const uint64_t leafIndex : leavesToAdd)
+		{
+			Set(leafIndex);
+		}
 
 		size_t currentSize = GetNumBytes() * 8;
 		for (size_t i = size; i < currentSize; i++)

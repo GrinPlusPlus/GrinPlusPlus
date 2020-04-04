@@ -14,7 +14,11 @@ class KernelSumValidator
 {
 public:
 	// Verify the sum of the kernel excesses equals the sum of the outputs, taking into account both the kernel_offset and overage.
-	static BlockSums ValidateKernelSums(const TransactionBody& transactionBody, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
+	static BlockSums ValidateKernelSums(
+		const TransactionBody& transactionBody,
+		const int64_t overage,
+		const BlindingFactor& kernelOffset,
+		const std::optional<BlockSums>& blockSumsOpt)
 	{
 		// gather the commitments
 		auto getInputCommitments = [](TransactionInput& input) -> Commitment { return input.GetCommitment(); };
@@ -29,7 +33,13 @@ public:
 		return ValidateKernelSums(inputCommitments, outputCommitments, kernelCommitments, overage, kernelOffset, blockSumsOpt);
 	}
 
-	static BlockSums ValidateKernelSums(const std::vector<Commitment>& inputs, const std::vector<Commitment>& outputs, const std::vector<Commitment>& kernels, const int64_t overage, const BlindingFactor& kernelOffset, const std::optional<BlockSums>& blockSumsOpt)
+	static BlockSums ValidateKernelSums(
+		const std::vector<Commitment>& inputs,
+		const std::vector<Commitment>& outputs,
+		const std::vector<Commitment>& kernels,
+		const int64_t overage,
+		const BlindingFactor& kernelOffset,
+		const std::optional<BlockSums>& blockSumsOpt)
 	{
 		std::vector<Commitment> inputCommitments = inputs;
 		std::vector<Commitment> outputCommitments = outputs;

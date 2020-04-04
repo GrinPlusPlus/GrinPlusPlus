@@ -1,7 +1,7 @@
 #include "TransactionPoolImpl.h"
-#include "TransactionAggregator.h"
 #include "ValidTransactionFinder.h"
 
+#include <Core/Util/TransactionUtil.h>
 #include <Database/BlockDb.h>
 #include <Consensus/BlockTime.h>
 #include <Crypto/RandomNumberGenerator.h>
@@ -157,7 +157,7 @@ TransactionPtr TransactionPool::GetTransactionToStem(std::shared_ptr<const IBloc
 		return nullptr;
 	}
 
-	TransactionPtr pTransactionToStem = TransactionAggregator::Aggregate(validTransactionsToStem);
+	TransactionPtr pTransactionToStem = TransactionUtil::Aggregate(validTransactionsToStem);
 
 	m_stemPool.ChangeStatus(validTransactionsToStem, EDandelionStatus::STEMMED);
 
@@ -187,7 +187,7 @@ TransactionPtr TransactionPool::GetTransactionToFluff(std::shared_ptr<const IBlo
 		return nullptr;
 	}
 
-	TransactionPtr pTransactionToFluff = TransactionAggregator::Aggregate(validTransactionsToFluff);
+	TransactionPtr pTransactionToFluff = TransactionUtil::Aggregate(validTransactionsToFluff);
 
 	m_memPool.AddTransaction(pTransactionToFluff, EDandelionStatus::FLUFFED);
 	for (auto& pTransaction : validTransactionsToFluff)

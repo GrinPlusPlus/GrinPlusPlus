@@ -16,6 +16,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/BigInteger.h>
+#include <PMMR/HeaderMMR.h>
 #include <filesystem.h>
 
 #include <vector>
@@ -144,6 +145,7 @@ namespace BlockChainAPI
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-		std::shared_ptr<ITransactionPool> pTransactionPool
+		std::shared_ptr<ITransactionPool> pTransactionPool,
+		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR
 	);
 }

@@ -5,6 +5,7 @@
 
 #include <Core/File/DataFile.h>
 #include <Core/Models/TransactionKernel.h>
+#include <Core/Models/FullBlock.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/Hash.h>
 #include <filesystem.h>
@@ -15,7 +16,7 @@
 class KernelMMR : public MMR
 {
 public:
-	static std::shared_ptr<KernelMMR> Load(const fs::path& txHashSetPath);
+	static std::shared_ptr<KernelMMR> Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock);
 	virtual ~KernelMMR() = default;
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;

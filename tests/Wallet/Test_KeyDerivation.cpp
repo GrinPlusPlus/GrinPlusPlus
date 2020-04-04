@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include "../Keychain/KeyChain.h"
+#include <Wallet/Keychain/KeyChain.h>
 #include <Config/ConfigManager.h>
 
 TEST_CASE("KeyChain::KeyDerivation")

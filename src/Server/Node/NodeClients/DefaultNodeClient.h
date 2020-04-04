@@ -29,14 +29,33 @@ public:
 
 	static std::shared_ptr<DefaultNodeClient> Create(const Context::Ptr& pContext)
 	{
-		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(pContext->GetConfig());
-		TxHashSetManagerPtr pTxHashSetManager = std::shared_ptr<TxHashSetManager>(new TxHashSetManager(pContext->GetConfig()));
-		std::shared_ptr<Locked<TxHashSetManager>> pLockedTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(pTxHashSetManager);
-		ITransactionPoolPtr pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig());
-		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(pContext->GetConfig(), pDatabase->GetBlockDB(), pLockedTxHashSetManager, pTransactionPool);
-		IP2PServerPtr pP2PServer = P2PAPI::StartP2PServer(pContext, pBlockChainServer, pLockedTxHashSetManager, pDatabase, pTransactionPool);
+		auto pDatabase = DatabaseAPI::OpenDatabase(pContext->GetConfig());
+		auto pTxHashSetManager = std::make_shared<TxHashSetManager>(pContext->GetConfig());
+		auto pLockedTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(pTxHashSetManager);
+		auto pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig());
+		auto pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(pContext->GetConfig());
+		auto pBlockChainServer = BlockChainAPI::StartBlockChainServer(
+			pContext->GetConfig(),
+			pDatabase->GetBlockDB(),
+			pLockedTxHashSetManager,
+			pTransactionPool,
+			pHeaderMMR
+		);
+		auto pP2PServer = P2PAPI::StartP2PServer(
+			pContext,
+			pBlockChainServer,
+			pLockedTxHashSetManager,
+			pDatabase,
+			pTransactionPool
+		);
 
-		return std::make_shared<DefaultNodeClient>(DefaultNodeClient(pDatabase, pTxHashSetManager, pTransactionPool, pBlockChainServer, pP2PServer));
+		return std::make_shared<DefaultNodeClient>(
+			pDatabase,
+			pTxHashSetManager,
+			pTransactionPool,
+			pBlockChainServer,
+			pP2PServer
+		);
 	}
     
     virtual ~DefaultNodeClient() = default;

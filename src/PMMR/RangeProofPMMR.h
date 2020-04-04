@@ -10,7 +10,7 @@
 class RangeProofPMMR : public PruneableMMR<RANGE_PROOF_SIZE, RangeProof>
 {
 public:
-	static std::shared_ptr<RangeProofPMMR> Load(const fs::path& txHashSetPath)
+	static std::shared_ptr<RangeProofPMMR> Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock)
 	{
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "rangeproof" / "pmmr_hash.bin");
 
@@ -29,7 +29,13 @@ public:
 		std::shared_ptr<PruneList> pPruneList = PruneList::Load(txHashSetPath / "rangeproof" / "pmmr_prun.bin");
 		std::shared_ptr<DataFile<RANGE_PROOF_SIZE>> pDataFile = DataFile<RANGE_PROOF_SIZE>::Load(txHashSetPath / "rangeproof" / "pmmr_data.bin");
 
-		return std::make_shared<RangeProofPMMR>(RangeProofPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
+		auto pPMMR = std::shared_ptr<RangeProofPMMR>(new RangeProofPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
+		if (pHashFile->GetSize() == 0)
+		{
+			pPMMR->Append(genesisBlock.GetOutputs().front().GetRangeProof());
+		}
+
+		return pPMMR;
 	}
 
 	virtual ~RangeProofPMMR() = default;

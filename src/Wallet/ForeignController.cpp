@@ -1,5 +1,5 @@
 #include "ForeignController.h"
-#include "Keychain/KeyChain.h"
+#include <Wallet/Keychain/KeyChain.h>
 
 #include <Infrastructure/Logger.h>
 #include <Wallet/WalletManager.h>

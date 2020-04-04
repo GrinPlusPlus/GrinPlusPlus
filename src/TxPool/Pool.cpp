@@ -1,7 +1,7 @@
 #include "Pool.h"
-#include "TransactionAggregator.h"
 #include "ValidTransactionFinder.h"
 
+#include <Core/Util/TransactionUtil.h>
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
 #include <algorithm>
@@ -214,5 +214,5 @@ TransactionPtr Pool::Aggregate() const
 		transactions.push_back(entry.GetTransaction());
 	}
 
-	return TransactionAggregator::Aggregate(transactions);
+	return TransactionUtil::Aggregate(transactions);
 }

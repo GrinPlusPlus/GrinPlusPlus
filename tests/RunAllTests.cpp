@@ -28,6 +28,10 @@ int main(int, char*[])
 	system("pause");
 	RunTest("Crypto_Tests");
 
+	std::cout << "Preparing to run database tests\n";
+	system("pause");
+	RunTest("Database_Tests");
+
 	std::cout << "Preparing to run Network tests\n";
 	system("pause");
 	RunTest("Net_Tests");

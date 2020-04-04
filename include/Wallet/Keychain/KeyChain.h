@@ -17,8 +17,9 @@
 class KeyChain
 {
 public:
-	// FUTURE: Add FromMnemonic, FromRandom, ToMnemonic, and GetSeed methods
+	// FUTURE: Add FromMnemonic, ToMnemonic, and GetSeed methods
 	static KeyChain FromSeed(const Config& config, const SecureVector& masterSeed);
+	static KeyChain FromRandom(const Config& config);
 
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath) const;

@@ -11,8 +11,8 @@
 #include <PMMR/TxHashSet.h>
 #include <algorithm>
 
-BlockValidator::BlockValidator(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet)
-	: m_pBlockDB(pBlockDB), m_pTxHashSet(pTxHashSet)
+BlockValidator::BlockValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet)
+	: m_config(config), m_pBlockDB(pBlockDB), m_pTxHashSet(pTxHashSet)
 {
 
 }
@@ -23,7 +23,10 @@ BlockSums BlockValidator::ValidateBlock(const FullBlock& block) const
 	VerifySelfConsistent(block);
 
 	// Verify coinbase maturity
-	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(block.GetHeight());
+	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(
+		m_config.GetEnvironment().GetEnvironmentType(),
+		block.GetHeight()
+	);
 	for (const TransactionInput& input : block.GetTransactionBody().GetInputs())
 	{
 		if (input.IsCoinbase())

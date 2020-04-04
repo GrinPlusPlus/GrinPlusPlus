@@ -5,6 +5,7 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/OutputLocation.h>
 #include <Core/Models/DTOs/OutputRange.h>
+#include <Core/Models/TxHashSetRoots.h>
 #include <Core/Traits/Batchable.h>
 #include <Crypto/Hash.h>
 
@@ -16,6 +17,7 @@ class OutputIdentifier;
 class IBlockChainServer;
 class IBlockDB;
 class Transaction;
+class TransactionBody;
 class SyncStatus;
 
 class ITxHashSet : public Traits::IBatchable
@@ -74,6 +76,14 @@ public:
 	virtual bool ValidateRoots(
 		const BlockHeader& blockHeader
 	) const = 0;
+
+	//
+	// Returns the roots and sizes of each of the MMRs.
+	//
+	virtual TxHashSetRoots GetRoots(
+		const std::shared_ptr<const IBlockDB>& pBlockDB,
+		const TransactionBody& body
+	) = 0;
 
 
 

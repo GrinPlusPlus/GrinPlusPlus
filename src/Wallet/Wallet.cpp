@@ -1,6 +1,6 @@
 #include "Wallet.h"
 #include "WalletRefresher.h"
-#include "Keychain/KeyChain.h"
+#include <Wallet/Keychain/KeyChain.h>
 #include <Infrastructure/Logger.h>
 #include <Crypto/CryptoException.h>
 #include <Core/Exceptions/WalletException.h>

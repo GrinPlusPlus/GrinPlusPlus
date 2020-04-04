@@ -44,6 +44,22 @@ public:
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
 
+	std::vector<Commitment> GetInputCommitments() const
+	{
+		const auto& inputs = GetInputs();
+
+		std::vector<Commitment> commitments;
+		commitments.reserve(inputs.size());
+
+		std::transform(
+			inputs.cbegin(), inputs.cend(),
+			std::back_inserter(commitments),
+			[](const TransactionInput& input) { return input.GetCommitment(); }
+		);
+
+		return commitments;
+	}
+
 	std::vector<Commitment> GetOutputCommitments() const
 	{
 		const auto& outputs = GetOutputs();

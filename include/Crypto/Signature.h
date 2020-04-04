@@ -36,7 +36,9 @@ public:
 	//
 	// Getters
 	//
-	inline const CBigInteger<64>& GetSignatureBytes() const { return m_signatureBytes; }
+	const CBigInteger<64>& GetSignatureBytes() const { return m_signatureBytes; }
+	const unsigned char* data() const { return m_signatureBytes.data(); }
+	unsigned char* data() { return m_signatureBytes.data(); }
 
 	//
 	// Serialization/Deserialization

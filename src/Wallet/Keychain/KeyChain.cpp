@@ -1,4 +1,4 @@
-#include "KeyChain.h"
+#include <Wallet/Keychain/KeyChain.h>
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
@@ -18,6 +18,12 @@ KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed
 	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed);
 	SecretKey bulletProofNonce = Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
 	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
+}
+
+KeyChain KeyChain::FromRandom(const Config& config)
+{
+	SecretKey masterSeed(RandomNumberGenerator::GenerateRandom32().GetData());
+	return KeyChain::FromSeed(config, masterSeed.GetSecure());
 }
 
 SecretKey KeyChain::DerivePrivateKey(const KeyChainPath& keyPath) const

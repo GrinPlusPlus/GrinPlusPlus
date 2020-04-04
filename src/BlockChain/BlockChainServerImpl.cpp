@@ -38,13 +38,13 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-	std::shared_ptr<ITransactionPool> pTransactionPool)
+	std::shared_ptr<ITransactionPool> pTransactionPool,
+	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
 {
 	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
 	std::shared_ptr<BlockIndex> pGenesisIndex = std::make_shared<BlockIndex>(genesisBlock.GetHash(), 0);
 
 	std::shared_ptr<Locked<ChainStore>> pChainStore = ChainStore::Load(config, pGenesisIndex);
-	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(config);
 
 	std::shared_ptr<Locked<ChainState>> pChainState = ChainState::Create(
 		config,
@@ -53,7 +53,7 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 		pHeaderMMR,
 		pTransactionPool,
 		pTxHashSetManager,
-		genesisBlock.GetBlockHeader()
+		genesisBlock
 	);
 
 	// Trigger Compaction
@@ -71,7 +71,7 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 		}
 	}
 
-	return std::make_shared<BlockChainServer>(BlockChainServer(
+	return std::shared_ptr<BlockChainServer>(new BlockChainServer(
 		config,
 		pDatabase,
 		pTxHashSetManager,
@@ -107,8 +107,9 @@ EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 	{
 		return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
 	}
-	catch (std::exception&)
+	catch (std::exception& e)
 	{
+		LOG_ERROR_F("Invalid block: {}", e.what());
 		return EBlockChainStatus::INVALID;
 	}
 }
@@ -394,8 +395,9 @@ namespace BlockChainAPI
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-		std::shared_ptr<ITransactionPool> pTransactionPool)
+		std::shared_ptr<ITransactionPool> pTransactionPool,
+		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
 	{
-		return BlockChainServer::Create(config, pDatabase, pTxHashSetManager, pTransactionPool);
+		return BlockChainServer::Create(config, pDatabase, pTxHashSetManager, pTransactionPool, pHeaderMMR);
 	}
 }

@@ -9,12 +9,15 @@ public:
 	//
 	// Getters
 	//
-	const FullBlock& GetGenesisBlock() const { return m_block; }
-	const Hash& GetGenesisHash() const { return m_block.GetBlockHeader()->GetHash(); }
-	const std::vector<uint8_t>& GetMagicBytes() const { return m_magicBytes; }
-	uint16_t GetP2PPort() const { return m_port; }
-	EEnvironmentType GetEnvironmentType() const { return m_environmentType; }
-	bool IsMainnet() const { return m_environmentType == EEnvironmentType::MAINNET; }
+	const FullBlock& GetGenesisBlock() const noexcept { return m_block; }
+	const BlockHeaderPtr& GetGenesisHeader() const noexcept { return m_block.GetBlockHeader(); }
+	const Hash& GetGenesisHash() const noexcept { return m_block.GetBlockHeader()->GetHash(); }
+
+	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
+	uint16_t GetP2PPort() const noexcept { return m_port; }
+	EEnvironmentType GetEnvironmentType() const noexcept { return m_environmentType; }
+	bool IsMainnet() const noexcept { return m_environmentType == EEnvironmentType::MAINNET; }
+	bool IsAutomatedTesting() const noexcept { return m_environmentType == EEnvironmentType::AUTOMATED_TESTING; }
 
 	//
 	// Constructor

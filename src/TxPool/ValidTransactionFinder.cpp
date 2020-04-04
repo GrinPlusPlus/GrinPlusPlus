@@ -1,6 +1,6 @@
 #include "ValidTransactionFinder.h"
-#include "TransactionAggregator.h"
 
+#include <Core/Util/TransactionUtil.h>
 #include <Core/Validation/TransactionValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Util/FunctionalUtil.h>
@@ -25,7 +25,7 @@ std::vector<TransactionPtr> ValidTransactionFinder::FindValidTransactions(
 		candidateTransactions.push_back(pTransaction);
 
 		// Build a single aggregate tx from candidate txs.
-		TransactionPtr pAggregatedTransaction = TransactionAggregator::Aggregate(candidateTransactions);
+		TransactionPtr pAggregatedTransaction = TransactionUtil::Aggregate(candidateTransactions);
 
 		// We know the tx is valid if the entire aggregate tx is valid.
 		if (IsValidTransaction(pBlockDB, pTxHashSet, pAggregatedTransaction))

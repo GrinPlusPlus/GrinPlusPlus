@@ -23,7 +23,8 @@ public:
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-		std::shared_ptr<ITransactionPool> pTransactionPool
+		std::shared_ptr<ITransactionPool> pTransactionPool,
+		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR
 	);
 
 	virtual bool ResyncChain() override final;

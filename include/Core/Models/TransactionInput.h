@@ -23,6 +23,8 @@ public:
 	// Constructors
 	//
 	TransactionInput(const EOutputFeatures features, Commitment&& commitment);
+	TransactionInput(const EOutputFeatures features, const Commitment& commitment)
+		: m_features(features), m_commitment(commitment) { }
 	TransactionInput(const TransactionInput& transactionInput) = default;
 	TransactionInput(TransactionInput&& transactionInput) noexcept = default;
 	TransactionInput() = default;

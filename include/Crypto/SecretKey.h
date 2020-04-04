@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Crypto/BigInteger.h>
+#include <Common/Secure.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -19,11 +20,12 @@ public:
 		m_seed.erase();
 	}
 
-	inline const CBigInteger<NUM_BYTES>& GetBytes() const { return m_seed; }
-	inline const std::vector<unsigned char>& GetVec() const { return m_seed.GetData(); }
+	const CBigInteger<NUM_BYTES>& GetBytes() const noexcept { return m_seed; }
+	const std::vector<unsigned char>& GetVec() const noexcept { return m_seed.GetData(); }
+	SecureVector GetSecure() const { return SecureVector(m_seed.GetData().cbegin(), m_seed.GetData().cend()); }
 
-	inline const unsigned char* data() const { return m_seed.data(); }
-	inline size_t size() const { return m_seed.size(); }
+	const unsigned char* data() const { return m_seed.data(); }
+	size_t size() const { return m_seed.size(); }
 
 	//
 	// Serialization/Deserialization

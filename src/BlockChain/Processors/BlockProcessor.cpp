@@ -35,7 +35,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		|| headerStatus == EBlockChainStatus::ORPHANED)
 	{
 		// Verify block is self-consistent before locking
-		BlockValidator(m_pChainState->Read()->GetBlockDB().GetShared(), nullptr).VerifySelfConsistent(block);
+		BlockValidator(m_config, m_pChainState->Read()->GetBlockDB().GetShared(), nullptr).VerifySelfConsistent(block);
 
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
@@ -233,8 +233,9 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
 	}
 
-	BlockSums blockSums = BlockValidator(pBlockDB, pTxHashSet).ValidateBlock(block);
+	BlockSums blockSums = BlockValidator(m_config, pBlockDB, pTxHashSet).ValidateBlock(block);
 
+	pBlockDB->RemoveOutputPositions(block.GetInputCommitments());
 	pBlockDB->AddBlockSums(block.GetHash(), blockSums);
 	pBlockDB->AddBlock(block);
 	pOrphanPool->RemoveOrphan(block.GetHeight(), block.GetHash());

@@ -34,7 +34,7 @@ public:
 		return Load(Json::Value(), environment);
 	}
 
-	Json::Value& GetJSON() { return m_json; }
+	Json::Value& GetJSON() noexcept { return m_json; }
 
 	const std::string& GetLogLevel() const noexcept { return m_logLevel; }
 	const Environment& GetEnvironment() const noexcept { return m_environment; }

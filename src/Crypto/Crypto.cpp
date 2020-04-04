@@ -274,6 +274,11 @@ std::unique_ptr<Signature> Crypto::AggregateSignatures(const std::vector<Compact
 	return AggSig::GetInstance().AggregateSignatures(signatures, sumPubNonces);
 }
 
+std::unique_ptr<Signature> Crypto::BuildCoinbaseSignature(const SecretKey& secretKey, const Commitment& commitment, const Hash& message)
+{
+	return AggSig::GetInstance().BuildSignature(secretKey, commitment, message);
+}
+
 bool Crypto::VerifyPartialSignature(const CompactSignature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().VerifyPartialSignature(partialSignature, publicKey, sumPubKeys, sumPubNonces, message);

@@ -6,7 +6,6 @@ ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNo
 	: m_edgeBits(edgeBits),
 	m_proofNonces(std::move(proofNonces))
 {
-
 	Serializer serializer;
 	SerializeCycle(serializer);
 	m_hash = Crypto::Blake2b(serializer.GetBytes());

@@ -29,7 +29,7 @@ public:
 	void Remove(const uint64_t leafIndex) { m_pBitmap->Unset(leafIndex); }
 	bool Contains(const uint64_t leafIndex) const { return m_pBitmap->IsSet(leafIndex); }
 
-	void Rewind(const uint64_t size, const std::vector<uint64_t>& leavesToAdd) { m_pBitmap->Rewind(size, leavesToAdd); }
+	void Rewind(const uint64_t numLeaves, const std::vector<uint64_t>& leavesToAdd) { m_pBitmap->Rewind(numLeaves, leavesToAdd); }
 	void Commit() { m_pBitmap->Commit(); }
 	void Rollback() noexcept { m_pBitmap->Rollback(); }
 	void Snapshot(const Hash& blockHash)

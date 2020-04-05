@@ -80,7 +80,7 @@ public:
 
 		m_pHashFile->Rewind(size - m_pPruneList->GetShift(size - 1));
 		m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pPruneList->GetLeafShift(size - 1));
-		m_pLeafSet->Rewind(size, leavesToAdd);
+		m_pLeafSet->Rewind(MMRUtil::GetNumLeaves(size - 1), leavesToAdd);
 	}
 
 	Hash Root(const uint64_t size) const final

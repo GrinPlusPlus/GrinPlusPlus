@@ -114,7 +114,7 @@ public:
 		return IsSet(leafIndex) ? s_true : s_false;
 	}
 
-	void Rewind(const size_t size, const std::vector<uint64_t>& leavesToAdd)
+	void Rewind(const size_t numLeaves, const std::vector<uint64_t>& leavesToAdd)
 	{
 		for (const uint64_t leafIndex : leavesToAdd)
 		{
@@ -122,7 +122,7 @@ public:
 		}
 
 		size_t currentSize = GetNumBytes() * 8;
-		for (size_t i = size; i < currentSize; i++)
+		for (size_t i = numLeaves; i < currentSize; i++)
 		{
 			Unset(i);
 		}

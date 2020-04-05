@@ -37,12 +37,12 @@ public:
 	//
 	// Getters
 	//
-	const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
-	const TransactionBody& GetTransactionBody() const { return m_transactionBody; }
+	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
+	const TransactionBody& GetTransactionBody() const noexcept { return m_transactionBody; }
 
-	const std::vector<TransactionInput>& GetInputs() const { return m_transactionBody.GetInputs(); }
-	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
-	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
+	const std::vector<TransactionInput>& GetInputs() const noexcept { return m_transactionBody.GetInputs(); }
+	const std::vector<TransactionOutput>& GetOutputs() const noexcept { return m_transactionBody.GetOutputs(); }
+	const std::vector<TransactionKernel>& GetKernels() const noexcept { return m_transactionBody.GetKernels(); }
 
 	std::vector<Commitment> GetInputCommitments() const
 	{
@@ -76,10 +76,10 @@ public:
 		return commitments;
 	}
 
-	uint64_t GetHeight() const { return m_pBlockHeader->GetHeight(); }
-	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousBlockHash(); }
-	uint64_t GetTotalDifficulty() const { return m_pBlockHeader->GetTotalDifficulty(); }
-	const BlindingFactor& GetTotalKernelOffset() const { return m_pBlockHeader->GetTotalKernelOffset(); }
+	uint64_t GetHeight() const noexcept { return m_pBlockHeader->GetHeight(); }
+	const Hash& GetPreviousHash() const noexcept { return m_pBlockHeader->GetPreviousBlockHash(); }
+	uint64_t GetTotalDifficulty() const noexcept { return m_pBlockHeader->GetTotalDifficulty(); }
+	const BlindingFactor& GetTotalKernelOffset() const noexcept { return m_pBlockHeader->GetTotalKernelOffset(); }
 
 
 	//
@@ -92,13 +92,13 @@ public:
 	//
 	// Hashing
 	//
-	const Hash& GetHash() const { return m_pBlockHeader->GetHash(); }
+	const Hash& GetHash() const noexcept { return m_pBlockHeader->GetHash(); }
 
 	//
 	// Validation Status
 	//
-	bool WasValidated() const { return m_validated; }
-	void MarkAsValidated() const { m_validated = true; }
+	bool WasValidated() const noexcept { return m_validated; }
+	void MarkAsValidated() const noexcept { m_validated = true; }
 
 	//
 	// Traits

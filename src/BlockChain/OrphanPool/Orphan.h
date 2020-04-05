@@ -28,9 +28,9 @@ public:
 		return m_pBlock->GetHash() < rhs.m_pBlock->GetHash();
 	}
 
-	std::shared_ptr<const FullBlock> GetBlock() const { return m_pBlock; }
-	const Hash& GetHash() const { return m_pBlock->GetHash(); }
-	uint64_t GetHeight() const { return m_pBlock->GetHeight(); }
+	std::shared_ptr<const FullBlock> GetBlock() const noexcept { return m_pBlock; }
+	const Hash& GetHash() const noexcept { return m_pBlock->GetHash(); }
+	uint64_t GetHeight() const noexcept { return m_pBlock->GetHeight(); }
 
 private:
 	std::shared_ptr<FullBlock> m_pBlock;

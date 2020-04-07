@@ -52,11 +52,4 @@ namespace DatabaseAPI
 	// Throws DatabaseException if errors occur.
 	//
 	DATABASE_API IDatabasePtr OpenDatabase(const Config& config);
-
-	//
-	// Closes all node databases and cleans up the memory of IDatabase.
-	//
-	// Throws DatabaseException if errors occur.
-	//
-	//DATABASE_API void CloseDatabase(IDatabase* pDatabase);
 }

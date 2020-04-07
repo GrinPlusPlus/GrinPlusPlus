@@ -12,7 +12,7 @@
 #include <Core/Traits/Printable.h>
 #include <json/json.h>
 
-class FullBlock : public Traits::IPrintable
+class FullBlock : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
 	//
@@ -85,7 +85,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	void Serialize(Serializer& serializer) const;
+	void Serialize(Serializer& serializer) const final;
 	static FullBlock Deserialize(ByteBuffer& byteBuffer);
 	Json::Value ToJSON() const;
 
@@ -103,7 +103,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return GetHash().ToHex(); }
+	virtual std::string Format() const override final { return m_pBlockHeader->Format(); }
 
 private:
 	BlockHeaderPtr m_pBlockHeader;

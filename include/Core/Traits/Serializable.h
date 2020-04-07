@@ -13,5 +13,12 @@ namespace Traits
 		// Appends serialized bytes to Serializer
 		//
 		virtual void Serialize(Serializer& serializer) const = 0;
+
+		std::vector<unsigned char> Serialized() const
+		{
+			Serializer serializer;
+			Serialize(serializer);
+			return serializer.GetBytes();
+		}
 	};
 }

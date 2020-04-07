@@ -3,8 +3,9 @@
 #include <Crypto/Commitment.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <Core/Traits/Serializable.h>
 
-class BlockSums
+class BlockSums : public Traits::ISerializable
 {
 public:
 	BlockSums(Commitment&& outputSum, Commitment&& kernelSum)
@@ -22,7 +23,7 @@ public:
 	const Commitment& GetOutputSum() const { return m_outputSum; }
 	const Commitment& GetKernelSum() const { return m_kernelSum; }
 
-	void Serialize(Serializer& serializer) const
+	void Serialize(Serializer& serializer) const final
 	{
 		m_outputSum.Serialize(serializer);
 		m_kernelSum.Serialize(serializer);

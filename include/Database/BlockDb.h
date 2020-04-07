@@ -26,14 +26,14 @@ public:
 
 	virtual void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) = 0;
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const = 0;
+	virtual void ClearBlockSums() = 0;
 
 	virtual void AddOutputPosition(const Commitment& outputCommitment, const OutputLocation& location) = 0;
 	virtual std::unique_ptr<OutputLocation> GetOutputPosition(const Commitment& outputCommitment) const = 0;
 	virtual void RemoveOutputPositions(const std::vector<Commitment>& outputCommitments) = 0;
-
-	virtual void AddBlockInputBitmap(const Hash& blockHash, const Roaring& bitmap) = 0;
-	virtual std::unique_ptr<Roaring> GetBlockInputBitmap(const Hash& blockHash) const = 0;
+	virtual void ClearOutputPositions() = 0;
 
 	virtual void AddSpentPositions(const Hash& blockHash, const std::vector<SpentOutput>& outputPositions) = 0;
 	virtual std::unordered_map<Commitment, OutputLocation> GetSpentPositions(const Hash& blockHash) const = 0;
+	virtual void ClearSpentPositions() = 0;
 };

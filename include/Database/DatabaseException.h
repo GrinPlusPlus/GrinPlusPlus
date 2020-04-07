@@ -1,9 +1,10 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
+#include <Common/Util/StringUtil.h>
 
 #define DATABASE_EXCEPTION(msg) DatabaseException(msg, __func__)
+#define DATABASE_EXCEPTION_F(msg, ...) DatabaseException(StringUtil::Format(msg, __VA_ARGS__), __func__)
 
 class DatabaseException : public std::exception
 {

@@ -40,16 +40,17 @@ public:
 	//
 	Commitment& operator=(const Commitment& other) = default;
 	Commitment& operator=(Commitment&& other) noexcept = default;
-	inline bool operator<(const Commitment& rhs) const { return m_commitmentBytes < rhs.GetBytes(); }
-	inline bool operator!=(const Commitment& rhs) const { return m_commitmentBytes != rhs.GetBytes(); }
-	inline bool operator==(const Commitment& rhs) const { return m_commitmentBytes == rhs.GetBytes(); }
+	bool operator<(const Commitment& rhs) const { return m_commitmentBytes < rhs.GetBytes(); }
+	bool operator!=(const Commitment& rhs) const { return m_commitmentBytes != rhs.GetBytes(); }
+	bool operator==(const Commitment& rhs) const { return m_commitmentBytes == rhs.GetBytes(); }
 
 	//
 	// Getters
 	//
-	inline const CBigInteger<33>& GetBytes() const { return m_commitmentBytes; }
-	inline const std::vector<unsigned char>& GetVec() const { return m_commitmentBytes.GetData(); }
-	inline const unsigned char* data() const { return m_commitmentBytes.data(); }
+	const CBigInteger<33>& GetBytes() const noexcept { return m_commitmentBytes; }
+	const std::vector<unsigned char>& GetVec() const noexcept { return m_commitmentBytes.GetData(); }
+	const unsigned char* data() const noexcept { return m_commitmentBytes.data(); }
+	size_t size() const noexcept { return m_commitmentBytes.size(); }
 
 	//
 	// Serialization/Deserialization

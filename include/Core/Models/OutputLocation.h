@@ -7,18 +7,17 @@
 #include <stdint.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
+#include <Core/Traits/Serializable.h>
 
-class OutputLocation
+class OutputLocation : public Traits::ISerializable
 {
 public:
 	//
 	// Constructor
 	//
 	OutputLocation(const uint64_t mmrIndex, const uint64_t blockHeight)
-		: m_mmrIndex(mmrIndex), m_blockHeight(blockHeight)
-	{
-
-	}
+		: m_mmrIndex(mmrIndex), m_blockHeight(blockHeight) { }
+	virtual ~OutputLocation() = default;
 
 	//
 	// Getters
@@ -29,7 +28,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	void Serialize(Serializer& serializer) const
+	void Serialize(Serializer& serializer) const noexcept final
 	{
 		serializer.Append(m_mmrIndex);
 		serializer.Append(m_blockHeight);

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Chain.h"
-
 #include <Config/Config.h>
 #include <Core/Traits/Lockable.h>
+#include <BlockChain/Chain.h>
 
 class ChainStore : public Traits::IBatchable
 {

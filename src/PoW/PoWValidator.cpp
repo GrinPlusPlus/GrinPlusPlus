@@ -21,12 +21,14 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 	// Validate Total Difficulty
 	if (header.GetTotalDifficulty() <= previousHeader.GetTotalDifficulty())
 	{
+		LOG_WARNING_F("Target difficulty too low for block {}", header);
 		return false;
 	}
 
 	const uint64_t targetDifficulty = header.GetTotalDifficulty() - previousHeader.GetTotalDifficulty();
 	if (GetMaximumDifficulty(header) < targetDifficulty)
 	{
+		LOG_WARNING_F("Target difficulty too high for block {}", header);
 		return false;
 	}
 
@@ -34,12 +36,14 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 	const HeaderInfo nextHeaderInfo = DifficultyCalculator(m_pBlockDB).CalculateNextDifficulty(header);
 	if (targetDifficulty != nextHeaderInfo.GetDifficulty())
 	{
+		LOG_WARNING_F("Target difficulty invalid for block {} with previous block {}", header, previousHeader);
 		return false;
 	}
 
 	// Check the secondary PoW scaling factor if applicable.
 	if (header.GetScalingDifficulty() != nextHeaderInfo.GetSecondaryScaling())
 	{
+		LOG_WARNING_F("Scaling difficulty invalid for block {}", header);
 		return false;
 	}
 

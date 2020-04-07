@@ -1,6 +1,6 @@
-#include "Chain.h"
 #include "ChainStore.h"
 
+#include <BlockChain/Chain.h>
 #include <Core/Exceptions/BlockChainException.h>
 
 Chain::Chain(

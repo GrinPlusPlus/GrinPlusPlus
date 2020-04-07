@@ -5,10 +5,12 @@
 class ChainResyncer
 {
 public:
-	explicit ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState);
+	explicit ChainResyncer(const std::shared_ptr<Locked<ChainState>>& pChainState);
 
-	bool ResyncChain();
+	void ResyncChain();
 
 private:
+	void CleanDatabase(const std::shared_ptr<IBlockDB>& pBlockDB);
+
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

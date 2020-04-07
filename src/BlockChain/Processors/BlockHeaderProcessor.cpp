@@ -31,7 +31,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(BlockHeaderPtr pHead
 	auto pCandidateIndex = pCandidateChain->GetByHeight(pHeader->GetHeight());
 	if (pCandidateIndex != nullptr && pCandidateIndex->GetHash() == pHeader->GetHash())
 	{
-		LOG_DEBUG_F("Header {} already processed.", *pHeader);
+		LOG_TRACE_F("Header {} already processed.", *pHeader);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 

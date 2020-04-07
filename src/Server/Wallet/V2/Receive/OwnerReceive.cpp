@@ -43,7 +43,7 @@ RPC::Response OwnerReceive::ReceiveViaFile(const RPC::Request& request, const Re
 	Json::Value slateJSON = slate.ToJSON();
 	try
 	{
-		FileUtil::WriteTextToFile(file, JsonUtil::WriteCondensed(slateJSON));
+		FileUtil::WriteTextToFile(FileUtil::ToPath(file), JsonUtil::WriteCondensed(slateJSON));
 		WALLET_INFO_F("Slate file saved to: {}", file);
 
 		Json::Value result;

@@ -136,7 +136,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	for (const TransactionOutput& output : block.GetOutputs())
 	{
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(output.GetCommitment());
-		if (pOutputPosition != nullptr)
+		if (pOutputPosition != nullptr && m_pOutputPMMR->IsUnpruned(pOutputPosition->GetMMRIndex()))
 		{
 			LOG_ERROR_F("Output {} already exists at position {} and height {}",
 				output,
@@ -244,15 +244,30 @@ TxHashSetRoots TxHashSet::GetRoots(const std::shared_ptr<const IBlockDB>& pBlock
 	);
 }
 
-void TxHashSet::SaveOutputPositions(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& blockHeader, const uint64_t firstOutputIndex)
+void TxHashSet::SaveOutputPositions(const Chain::CPtr& pChain, std::shared_ptr<IBlockDB> pBlockDB) const
 {
-	const uint64_t size = blockHeader.GetOutputMMRSize();
-	for (uint64_t mmrIndex = firstOutputIndex; mmrIndex < size; mmrIndex++)
+	uint64_t firstOutput = 0;
+	for (uint64_t height = 0; height <= m_pBlockHeader->GetHeight(); height++)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(mmrIndex);
-		if (pOutput != nullptr)
+		auto pIndex = pChain->GetByHeight(height);
+		if (pIndex != nullptr)
 		{
-			pBlockDB->AddOutputPosition(pOutput->GetCommitment(), OutputLocation(mmrIndex, blockHeader.GetHeight()));
+			auto pHeader = pBlockDB->GetBlockHeader(pIndex->GetHash());
+			if (pHeader != nullptr)
+			{
+				const uint64_t size = pHeader->GetOutputMMRSize();
+				for (uint64_t mmrIndex = firstOutput; mmrIndex < size; mmrIndex++)
+				{
+					std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(mmrIndex);
+					if (pOutput != nullptr)
+					{
+						OutputLocation location(mmrIndex, pHeader->GetHeight());
+						pBlockDB->AddOutputPosition(pOutput->GetCommitment(), location);
+					}
+				}
+
+				firstOutput = pHeader->GetOutputMMRSize();
+			}
 		}
 	}
 }

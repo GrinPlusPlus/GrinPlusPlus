@@ -19,8 +19,8 @@ public:
 
 	}
 
-	inline const Hash& GetHash() const { return m_hash; }
-	inline uint64_t GetHeight() const { return m_height; }
+	const Hash& GetHash() const noexcept { return m_hash; }
+	uint64_t GetHeight() const noexcept { return m_height; }
 
 private:
 	Hash m_hash;

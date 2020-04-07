@@ -44,7 +44,7 @@ class IBlockChainServer
 public:
 	virtual ~IBlockChainServer() = default;
 
-	virtual bool ResyncChain() = 0;
+	virtual void ResyncChain() = 0;
 
 	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const = 0;
 	virtual uint64_t GetHeight(const EChainType chainType) const = 0;

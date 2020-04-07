@@ -67,7 +67,7 @@ public:
 
 	static void SafeWriteToFile(const fs::path& filePath, const std::vector<unsigned char>& data)
 	{
-		const fs::path tmpFilePath = StringUtil::ToWide(filePath.u8string() + ".tmp");
+		const fs::path tmpFilePath = ToPath(filePath.u8string() + ".tmp");
 		std::ofstream file(tmpFilePath, std::ios::out | std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
@@ -81,13 +81,13 @@ public:
 		RenameFile(tmpFilePath, filePath);
 	}
 
-	static void WriteTextToFile(const std::string& filePath, const std::string& text)
+	static void WriteTextToFile(const fs::path& filePath, const std::string& text)
 	{
-		std::ofstream file(StringUtil::ToWide(filePath).c_str(), std::ios::out | std::ios::trunc);
+		std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 		if (!file.is_open())
 		{
-			LOG_ERROR_F("Failed to open {}", ToPath(filePath));
-			throw FILE_EXCEPTION_F("Failed to open {}", ToPath(filePath));
+			LOG_ERROR_F("Failed to open {}", filePath);
+			throw FILE_EXCEPTION_F("Failed to open {}", filePath);
 		}
 
 		file.write(text.c_str(), text.size());

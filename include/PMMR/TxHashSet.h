@@ -7,6 +7,7 @@
 #include <Core/Models/DTOs/OutputRange.h>
 #include <Core/Models/TxHashSetRoots.h>
 #include <Core/Traits/Batchable.h>
+#include <BlockChain/Chain.h>
 #include <Crypto/Hash.h>
 
 // Forward Declarations
@@ -40,10 +41,9 @@ public:
 	// This is typically only used during initial sync.
 	//
 	virtual void SaveOutputPositions(
-		std::shared_ptr<IBlockDB> pBlockDB,
-		const BlockHeader& blockHeader,
-		const uint64_t firstOutputIndex
-	) = 0;
+		const Chain::CPtr& pChain,
+		std::shared_ptr<IBlockDB> pBlockDB
+	) const = 0;
 
 
 

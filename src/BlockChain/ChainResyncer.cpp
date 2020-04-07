@@ -1,41 +1,50 @@
 #include "ChainResyncer.h"
-#include "ChainState.h"
 
-ChainResyncer::ChainResyncer(std::shared_ptr<Locked<ChainState>> pChainState)
-	: m_pChainState(pChainState)
+#include <Infrastructure/Logger.h>
+
+ChainResyncer::ChainResyncer(const std::shared_ptr<Locked<ChainState>>& pChainState)
+	: m_pChainState(pChainState) { }
+
+void ChainResyncer::ResyncChain()
 {
+	LOG_WARNING("Chain resync requested!");
 
-}
-
-bool ChainResyncer::ResyncChain()
-{
 	auto pLockedState = m_pChainState->BatchWrite();
 
+	auto pBlockDB = pLockedState->GetBlockDB();
+	auto pHeaderMMR = pLockedState->GetHeaderMMR();
+	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	auto pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
+	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
+
+	CleanDatabase(pBlockDB);
+
 	pConfirmedChain->Rewind(0);
 
-	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
-	
-	pLockedState->GetHeaderMMR()->Rewind(1);
-	for (uint64_t i = 1; i <= pCandidateChain->GetTip()->GetHeight(); i++)
+	pHeaderMMR->Rewind(1);
+	for (uint64_t i = 1; i <= pCandidateChain->GetHeight(); i++)
 	{
 		auto pIndex = pCandidateChain->GetByHeight(i);
-		const Hash hash = pIndex->GetHash();
-
-		auto pHeader = pLockedState->GetBlockDB()->GetBlockHeader(hash);
+		auto pHeader = pBlockDB->GetBlockHeader(pIndex->GetHash());
 		if (pHeader == nullptr)
 		{
 			pCandidateChain->Rewind(i - 1);
 			break;
 		}
 
-		pLockedState->GetHeaderMMR()->AddHeader(*pHeader);
+		pHeaderMMR->AddHeader(*pHeader);
 	}
 
-	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	pSyncChain->Rewind(pCandidateChain->GetTip()->GetHeight());
 
 	pLockedState->Commit();
 
-	return true;
+	LOG_WARNING("Chain resync initiated!");
+}
+
+void ChainResyncer::CleanDatabase(const std::shared_ptr<IBlockDB>& pBlockDB)
+{
+	pBlockDB->ClearBlockSums();
+	pBlockDB->ClearOutputPositions();
+	pBlockDB->ClearSpentPositions();
 }

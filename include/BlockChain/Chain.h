@@ -1,7 +1,6 @@
 #pragma once
 
-#include "BlockIndex.h"
-
+#include <BlockChain/BlockIndex.h>
 #include <Core/Traits/Lockable.h>
 #include <Core/File/DataFile.h>
 
@@ -12,6 +11,8 @@ class ChainStore;
 class Chain : Traits::IBatchable
 {
 public:
+	using CPtr = std::shared_ptr<const Chain>;
+
 	static std::shared_ptr<Chain> Load(
 		std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
 		const EChainType chainType,

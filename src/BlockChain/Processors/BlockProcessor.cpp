@@ -40,7 +40,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
 		if (returnStatus == EBlockChainStatus::SUCCESS)
 		{
-			LOG_TRACE_F("Block {} successfully processed.", *pHeader);
+			LOG_DEBUG_F("Block {} successfully processed.", *pHeader);
 		}
 
 		return returnStatus;

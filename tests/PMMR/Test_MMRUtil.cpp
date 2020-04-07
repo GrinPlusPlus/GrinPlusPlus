@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include "../Common/MMRUtil.h"
+#include <PMMR/Common/MMRUtil.h>
 
 TEST_CASE("MMRUtil::GetHeight")
 {

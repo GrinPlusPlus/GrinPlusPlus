@@ -52,20 +52,8 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 	pChainStateBatch->GetBlockDB()->AddBlockSums(pHeader->GetHash(), *pBlockSums);
 
 	// 5. Add Output positions to DB
-	{
-		LOG_DEBUG("Saving output positions.");
-
-		uint64_t firstOutput = 0;
-		for (uint64_t i = 0; i <= pHeader->GetHeight(); i++)
-		{
-			auto pNextHeader = pChainStateBatch->GetBlockHeaderByHeight(i, EChainType::CANDIDATE);
-			if (pNextHeader != nullptr)
-			{
-				pTxHashSet->SaveOutputPositions(pChainStateBatch->GetBlockDB(), *pNextHeader, firstOutput);
-				firstOutput = pNextHeader->GetOutputMMRSize();
-			}
-		}
-	}
+	LOG_DEBUG("Saving output positions.");
+	pTxHashSet->SaveOutputPositions(pChainStateBatch->GetChainStore()->GetCandidateChain(), pChainStateBatch->GetBlockDB());
 
 	// 6. Store TxHashSet
 	LOG_DEBUG("Using TxHashSet.");

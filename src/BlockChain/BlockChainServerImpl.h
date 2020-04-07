@@ -27,39 +27,39 @@ public:
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR
 	);
 
-	virtual bool ResyncChain() override final;
+	void ResyncChain() final;
 
-	virtual void UpdateSyncStatus(SyncStatus& syncStatus) const override final;
-	virtual uint64_t GetHeight(const EChainType chainType) const override final;
-	virtual uint64_t GetTotalDifficulty(const EChainType chainType) const override final;
+	void UpdateSyncStatus(SyncStatus& syncStatus) const final;
+	uint64_t GetHeight(const EChainType chainType) const final;
+	uint64_t GetTotalDifficulty(const EChainType chainType) const final;
 
-	virtual EBlockChainStatus AddBlock(const FullBlock& block) override final;
-	virtual EBlockChainStatus AddCompactBlock(const CompactBlock& block) override final;
+	EBlockChainStatus AddBlock(const FullBlock& block) final;
+	EBlockChainStatus AddCompactBlock(const CompactBlock& block) final;
 
-	virtual EBlockChainStatus AddBlockHeader(BlockHeaderPtr pBlockHeader) override final;
-	virtual EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) override final;
+	EBlockChainStatus AddBlockHeader(BlockHeaderPtr pBlockHeader) final;
+	EBlockChainStatus AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders) final;
 
-	virtual fs::path SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) override final;
-	virtual EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus) override final;
-	virtual EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) override final;
-	virtual TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const override final;
+	fs::path SnapshotTxHashSet(BlockHeaderPtr pBlockHeader) final;
+	EBlockChainStatus ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus) final;
+	EBlockChainStatus AddTransaction(TransactionPtr pTransaction, const EPoolType poolType) final;
+	TransactionPtr GetTransactionByKernelHash(const Hash& kernelHash) const final;
 
-	virtual BlockHeaderPtr GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const override final;
-	virtual BlockHeaderPtr GetBlockHeaderByHash(const CBigInteger<32>& hash) const override final;
-	virtual BlockHeaderPtr GetBlockHeaderByCommitment(const Commitment& outputCommitment) const override final;
-	virtual BlockHeaderPtr GetTipBlockHeader(const EChainType chainType) const override final;
-	virtual std::vector<BlockHeaderPtr> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const override final;
+	BlockHeaderPtr GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const final;
+	BlockHeaderPtr GetBlockHeaderByHash(const CBigInteger<32>& hash) const final;
+	BlockHeaderPtr GetBlockHeaderByCommitment(const Commitment& outputCommitment) const final;
+	BlockHeaderPtr GetTipBlockHeader(const EChainType chainType) const final;
+	std::vector<BlockHeaderPtr> GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const final;
 
-	virtual std::unique_ptr<CompactBlock> GetCompactBlockByHash(const Hash& hash) const override final;
-	virtual std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& blockHash) const override final;
-	virtual std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const override final;
-	virtual std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const override final;
-	virtual bool HasBlock(const uint64_t height, const Hash& blockHash) const override final;
+	std::unique_ptr<CompactBlock> GetCompactBlockByHash(const Hash& hash) const final;
+	std::unique_ptr<FullBlock> GetBlockByCommitment(const Commitment& blockHash) const final;
+	std::unique_ptr<FullBlock> GetBlockByHash(const Hash& blockHash) const final;
+	std::unique_ptr<FullBlock> GetBlockByHeight(const uint64_t height) const final;
+	bool HasBlock(const uint64_t height, const Hash& blockHash) const final;
 
-	virtual std::vector<BlockWithOutputs> GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const override final;
-	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const override final;
+	std::vector<BlockWithOutputs> GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const final;
+	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const final;
 
-	virtual bool ProcessNextOrphanBlock() override final;
+	bool ProcessNextOrphanBlock() final;
 
 private:
 	BlockChainServer(

@@ -44,7 +44,7 @@ RPC::Response OwnerFinalize::FinalizeViaFile(const RPC::Request& request, const 
 
 	try
 	{
-		FileUtil::WriteTextToFile(file, JsonUtil::WriteCondensed(slateJSON));
+		FileUtil::WriteTextToFile(FileUtil::ToPath(file), JsonUtil::WriteCondensed(slateJSON));
 		WALLET_INFO_F("Slate file saved to: {}", file);
 
 		Json::Value result;

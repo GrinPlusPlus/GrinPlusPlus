@@ -21,7 +21,7 @@ public:
 	);
 	virtual ~TxHashSet() = default;
 
-	inline const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
+	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
 	BlockHeaderPtr GetFlushedBlockHeader() const noexcept final { return m_pBlockHeaderBackup; }
 
 	bool IsUnspent(const OutputLocation& location) const final;
@@ -30,7 +30,7 @@ public:
 	bool ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& block) final;
 	bool ValidateRoots(const BlockHeader& blockHeader) const final;
 	TxHashSetRoots GetRoots(const std::shared_ptr<const IBlockDB>& pBlockDB, const TransactionBody& body) final;
-	void SaveOutputPositions(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& blockHeader, const uint64_t firstOutputIndex) final;
+	void SaveOutputPositions(const Chain::CPtr& pChain, std::shared_ptr<IBlockDB> pBlockDB) const final;
 
 	std::vector<Hash> GetLastKernelHashes(const uint64_t numberOfKernels) const final;
 	std::vector<Hash> GetLastOutputHashes(const uint64_t numberOfOutputs) const final;

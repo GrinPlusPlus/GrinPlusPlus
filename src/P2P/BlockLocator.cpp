@@ -85,7 +85,7 @@ std::vector<BlockHeaderPtr> BlockLocator::LocateHeaders(const std::vector<Hash>&
 
 BlockHeaderPtr BlockLocator::FindCommonHeader(const std::vector<Hash>& locatorHashes) const
 {
-	for (Hash locatorHash : locatorHashes)
+	for (const Hash& locatorHash : locatorHashes)
 	{
 		auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(locatorHash);
 		if (pHeader != nullptr)

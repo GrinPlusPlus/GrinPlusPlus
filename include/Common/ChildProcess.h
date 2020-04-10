@@ -31,17 +31,17 @@ public:
 
         options.redirect = { reproc::redirect::inherit, reproc::redirect::inherit, reproc::redirect::inherit };
 
-#ifdef _WIN32
-        std::vector<std::wstring> arguments;
-        for (const auto& arg : args)
-        {
-            arguments.push_back(StringUtil::ToWide(arg));
-        }
-#else
-        std::vector<std::string> arguments = args;
-#endif
+//#ifdef _WIN32
+//        std::vector<std::wstring> arguments;
+//        for (const auto& arg : args)
+//        {
+//            arguments.push_back(StringUtil::ToWide(arg));
+//        }
+//#else
+//        std::vector<std::string> arguments = args;
+//#endif
 
-        std::error_code ec = pChildProcess->m_process.start(arguments, options);
+        std::error_code ec = pChildProcess->m_process.start(args, options);
 
         if (ec.value() == EnumValue(std::errc::no_such_file_or_directory) || ec.value() == EnumValue(std::errc::no_such_device_or_address))
         {

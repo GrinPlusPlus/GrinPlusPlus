@@ -61,9 +61,38 @@ ProofOfWork ProofOfWork::Deserialize(ByteBuffer& byteBuffer)
 
 std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(const std::vector<unsigned char>& bits, const uint8_t edgeBits)
 {
+	if (edgeBits == 0 || edgeBits > 63)
+	{
+		throw DESERIALIZATION_EXCEPTION();
+	}
+
+	//const uint64_t nonce_bits = (uint64_t)edgeBits;
+	//const uint64_t bits_len = nonce_bits * Consensus::PROOFSIZE;
+	//const uint64_t bytes_len = (bits_len + 7) / 8;
+
 	std::vector<uint64_t> proofNonces;
 	for (int n = 0; n < Consensus::PROOFSIZE; n++)
 	{
+		//const uint64_t bit_start = ((uint64_t)n * (uint64_t)edgeBits);
+
+		//uint64_t read_from = bit_start / 8;
+		//if ((read_from + 8) > bits.size())
+		//{
+		//	read_from = bits.size() - 8;
+		//}
+
+		//const uint64_t max_bit_end = (read_from + 8) * 8;
+		//const uint64_t max_pos = bit_start + (uint64_t)edgeBits;
+
+		//if (max_pos <= max_bit_end)
+		//{
+
+		//}
+		//else
+		//{
+
+		//}
+
 		uint64_t proofNonce = 0;
 		for (int bit = 0; bit < edgeBits; bit++)
 		{

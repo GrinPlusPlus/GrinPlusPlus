@@ -3,6 +3,7 @@ set(TARGET_NAME Core)
 file(GLOB SOURCE_CODE
     "File.cpp"
     "Models/*.cpp"
+    "Traits/*.cpp"
 	"Validation/*.cpp"
 )
 

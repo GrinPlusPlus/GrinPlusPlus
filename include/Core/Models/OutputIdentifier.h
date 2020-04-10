@@ -5,12 +5,13 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Core/Models/Features.h>
+#include <Core/Traits/Serializable.h>
 #include <Crypto/Commitment.h>
 
 // Forward Declarations
 class TransactionOutput;
 
-class OutputIdentifier
+class OutputIdentifier : public Traits::ISerializable
 {
 public:
 	//

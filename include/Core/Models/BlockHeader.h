@@ -5,16 +5,18 @@
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Hash.h>
 #include <Crypto/BigInteger.h>
+#include <Crypto/Crypto.h>
 #include <Core/Models/ProofOfWork.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Hashable.h>
 #include <Core/Traits/Serializable.h>
 #include <Common/Util/HexUtil.h>
 #include <json/json.h>
 #include <memory>
 
-class BlockHeader : public Traits::IPrintable, public Traits::ISerializable
+class BlockHeader : public Traits::IPrintable, public Traits::ISerializable, public Traits::IHashable
 {
 public:
 	//
@@ -57,6 +59,7 @@ public:
 	//
 	uint16_t GetVersion() const { return m_version; }
 	uint64_t GetHeight() const { return m_height; }
+	const Hash& GetPreviousHash() const { return m_previousBlockHash; }
 	const Hash& GetPreviousBlockHash() const { return m_previousBlockHash; }
 	const Hash& GetPreviousRoot() const { return m_previousRoot; }
 	int64_t GetTimestamp() const { return m_timestamp; }
@@ -79,7 +82,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	virtual void Serialize(Serializer& serializer) const override final;
+	void Serialize(Serializer& serializer) const final;
 	static BlockHeader Deserialize(ByteBuffer& byteBuffer);
 	Json::Value ToJSON() const;
 	std::vector<unsigned char> GetPreProofOfWork() const;
@@ -93,7 +96,14 @@ public:
 	//
 	// Traits
 	//
- 	virtual std::string Format() const override final { return GetHash().ToHex(); }
+ 	std::string Format() const final { return GetHash().ToHex(); }
+	std::vector<unsigned char> SerializeWithIndex(const uint64_t index) const final
+	{
+		Serializer serializer;
+		serializer.Append<uint64_t>(index);
+		m_proofOfWork.SerializeCycle(serializer);
+		return serializer.GetBytes();
+	}
 
 private:
 	uint16_t m_version;

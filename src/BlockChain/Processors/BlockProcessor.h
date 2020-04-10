@@ -15,6 +15,11 @@ enum class EBlockStatus
 
 class BlockProcessor
 {
+	struct BlockProcessingInfo
+	{
+		EBlockStatus status;
+		std::vector<FullBlock::CPtr> reorgBlocks;
+	};
 public:
 	BlockProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
 
@@ -22,10 +27,10 @@ public:
 
 private:
 	EBlockChainStatus ProcessBlockInternal(const FullBlock& block);
-	void HandleReorg(const FullBlock& block, Writer<ChainState> pLockedState);
+	void HandleReorg(Writer<ChainState> pBatch, const std::vector<FullBlock::CPtr>& reorgBlocks);
 	void ValidateAndAddBlock(const FullBlock& block, Writer<ChainState> pLockedState);
 
-	EBlockStatus DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pLockedState);
+	BlockProcessingInfo DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pLockedState);
 
 	const Config& m_config;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;

@@ -39,7 +39,8 @@ public:
 	//
 	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(
 		const std::string& username,
-		const SecureString& password
+		const SecureString& password,
+		const int numWords
 	) = 0;
 
 	//

@@ -65,6 +65,23 @@ std::shared_ptr<const FullBlock> OrphanPool::GetOrphanBlock(const uint64_t heigh
 	return std::shared_ptr<const FullBlock>(nullptr);
 }
 
+std::shared_ptr<const FullBlock> OrphanPool::GetNextOrphanBlock(const uint64_t height, const Hash& previousHash) const
+{
+	auto heightIter = m_orphansByHeight.find(height);
+	if (heightIter != m_orphansByHeight.cend())
+	{
+		for (auto orphanIter = heightIter->second.cbegin(); orphanIter != heightIter->second.cend(); orphanIter++)
+		{
+			if (orphanIter->GetBlock()->GetPreviousHash() == previousHash)
+			{
+				return orphanIter->GetBlock();
+			}
+		}
+	}
+
+	return std::shared_ptr<const FullBlock>(nullptr);
+}
+
 void OrphanPool::RemoveOrphan(const uint64_t height, const Hash& hash)
 {
 	auto iter = m_orphansByHeight.find(height);

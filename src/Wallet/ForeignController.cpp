@@ -34,7 +34,7 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 	if (iter != m_contextsByUsername.end())
 	{
 		iter->second->m_numReferences++;
-		return std::make_pair(iter->second->m_portNumber, iter->second->m_torAddress);
+		return std::make_pair((uint16_t)iter->second->m_portNumber, iter->second->m_torAddress);
 	}
 
 	const char* pOptions[] = {

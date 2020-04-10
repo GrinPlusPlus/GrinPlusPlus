@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Core/Traits/Committed.h>
+#include <Core/Traits/Serializable.h>
 #include <Core/Traits/Hashable.h>
 #include <Crypto/Hash.h>
 #include <Core/Models/Features.h>
@@ -17,7 +18,7 @@
 ////////////////////////////////////////
 // TRANSACTION KERNEL
 ////////////////////////////////////////
-class TransactionKernel : public Traits::ICommitted, Traits::IHashable
+class TransactionKernel : public Traits::ICommitted, public Traits::IHashable, public Traits::ISerializable
 {
 public:
 	//
@@ -56,7 +57,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	void Serialize(Serializer& serializer) const;
+	void Serialize(Serializer& serializer) const final;
 	static TransactionKernel Deserialize(ByteBuffer& byteBuffer);
 	Json::Value ToJSON() const;
 	static TransactionKernel FromJSON(const Json::Value& transactionKernelJSON);

@@ -9,7 +9,7 @@ class OwnerController
 public:
 	~OwnerController() = default;
 
-	static std::shared_ptr<OwnerController> Create(const Config& config, IWalletManagerPtr pWalletManager);
+	static std::shared_ptr<OwnerController> Create(const Config& config, const IWalletManagerPtr& pWalletManager);
 
 private:
 	OwnerController(RPCServerPtr pServer);

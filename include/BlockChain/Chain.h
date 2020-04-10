@@ -11,9 +11,10 @@ class ChainStore;
 class Chain : Traits::IBatchable
 {
 public:
+	using Ptr = std::shared_ptr<Chain>;
 	using CPtr = std::shared_ptr<const Chain>;
 
-	static std::shared_ptr<Chain> Load(
+	static Chain::Ptr Load(
 		std::shared_ptr<BlockIndexAllocator> pBlockIndexAllocator,
 		const EChainType chainType,
 		const fs::path& path,
@@ -24,9 +25,20 @@ public:
 
 	const Hash& GetHash(const uint64_t height) const { return m_indices[height]->GetHash(); }
 	std::shared_ptr<const BlockIndex> GetTip() const { return m_indices[m_height]; }
+	const Hash& GetTipHash() const { return m_indices[m_height]->GetHash(); }
 	uint64_t GetHeight() const { return m_height; }
 
-	inline EChainType GetType() const { return m_chainType; }
+	bool IsOnChain(const uint64_t height, const Hash& hash) const noexcept
+	{
+		return height <= m_height && m_indices[height]->GetHash() == hash;
+	}
+
+	bool IsOnChain(const BlockHeaderPtr& pHeader) const noexcept
+	{
+		return IsOnChain(pHeader->GetHeight(), pHeader->GetHash());
+	}
+
+	EChainType GetType() const noexcept { return m_chainType; }
 
 	std::shared_ptr<const BlockIndex> AddBlock(const Hash& hash);
 	void Rewind(const uint64_t lastHeight);
@@ -57,7 +69,7 @@ class BlockIndexAllocator
 public:
 	BlockIndexAllocator() = default;
 
-	void AddChain(std::shared_ptr<const Chain> pChain)
+	void AddChain(const std::weak_ptr<const Chain>& pChain)
 	{
 		m_chains.push_back(pChain);
 	}
@@ -69,9 +81,9 @@ public:
 
 	std::shared_ptr<const BlockIndex> GetOrCreateIndex(Hash&& hash, const uint64_t height) const
 	{
-		for (std::shared_ptr<const Chain> pChain : m_chains)
+		for (std::weak_ptr<const Chain> pChain : m_chains)
 		{
-			std::shared_ptr<const BlockIndex> pIndex = pChain->GetByHeight(height);
+			std::shared_ptr<const BlockIndex> pIndex = pChain.lock()->GetByHeight(height);
 			if (pIndex != nullptr && pIndex->GetHash() == hash)
 			{
 				return pIndex;
@@ -82,5 +94,5 @@ public:
 	}
 
 private:
-	std::vector<std::shared_ptr<const Chain>> m_chains;
+	std::vector<std::weak_ptr<const Chain>> m_chains;
 };

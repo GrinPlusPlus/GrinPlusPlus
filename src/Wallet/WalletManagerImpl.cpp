@@ -31,9 +31,11 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(
 	const std::string& username,
-	const SecureString& password)
+	const SecureString& password,
+	const int numWords)
 {
-	WALLET_INFO_F("Creating new wallet with username: {}", username);
+	WALLET_INFO_F("Creating new wallet with username {} and numWords {}", username, numWords);
+
 	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
 	const SecureVector walletSeedBytes(walletSeed.GetVec().begin(), walletSeed.GetVec().end());
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeedBytes, password);

@@ -90,7 +90,11 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "password missing.");
 	}
 
-	std::pair<SecureString, SessionToken> wallet = walletManager.InitializeNewWallet(usernameOpt.value(), SecureString(passwordOpt.value()));
+	std::pair<SecureString, SessionToken> wallet = walletManager.InitializeNewWallet(
+		usernameOpt.value(),
+		SecureString(passwordOpt.value()),
+		24
+	);
 
 	Json::Value responseJSON;
 	responseJSON["wallet_seed"] = std::string(wallet.first);

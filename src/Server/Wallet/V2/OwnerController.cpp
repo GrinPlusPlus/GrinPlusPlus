@@ -3,6 +3,7 @@
 #include "Send/OwnerSend.h"
 #include "Receive/OwnerReceive.h"
 #include "Finalize/OwnerFinalize.h"
+#include "CreateWallet.h"
 #include "RetryTor.h"
 
 OwnerController::OwnerController(RPCServerPtr pServer)
@@ -11,9 +12,10 @@ OwnerController::OwnerController(RPCServerPtr pServer)
 
 }
 
-std::shared_ptr<OwnerController> OwnerController::Create(const Config& config, IWalletManagerPtr pWalletManager)
+std::shared_ptr<OwnerController> OwnerController::Create(const Config& config, const IWalletManagerPtr& pWalletManager)
 {
-	RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>(3421), "/v2"); // TODO: Read port from config
+	RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config
+	pServer->AddMethod("create", std::shared_ptr<RPCMethod>((RPCMethod*)new CreateWallet(pWalletManager)));
 	pServer->AddMethod("send", std::shared_ptr<RPCMethod>((RPCMethod*)new OwnerSend(config, pWalletManager)));
 	pServer->AddMethod("receive", std::shared_ptr<RPCMethod>((RPCMethod*)new OwnerReceive(pWalletManager)));
 	pServer->AddMethod("finalize", std::shared_ptr<RPCMethod>((RPCMethod*)new OwnerFinalize(pWalletManager)));

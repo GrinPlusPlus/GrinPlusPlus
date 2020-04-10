@@ -20,5 +20,13 @@ namespace Traits
 			Serialize(serializer);
 			return serializer.GetBytes();
 		}
+
+		virtual std::vector<unsigned char> SerializeWithIndex(const uint64_t index) const
+		{
+			Serializer serializer;
+			serializer.Append<uint64_t>(index);
+			Serialize(serializer);
+			return serializer.GetBytes();
+		}
 	};
 }

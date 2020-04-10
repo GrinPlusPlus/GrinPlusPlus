@@ -7,12 +7,13 @@
 #include <Crypto/BigInteger.h>
 #include <Common/Util/HexUtil.h>
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Serializable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
 static const int MAX_PROOF_SIZE = 675;
 
-class RangeProof : public Traits::IPrintable
+class RangeProof : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
 	//
@@ -45,7 +46,7 @@ public:
 	//
 	// Serialization/Deserialization
 	//
-	void Serialize(Serializer& serializer) const
+	void Serialize(Serializer& serializer) const final
 	{
 		serializer.Append<uint64_t>(m_proofBytes.size());
 		serializer.AppendByteVector(m_proofBytes);

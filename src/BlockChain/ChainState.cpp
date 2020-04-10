@@ -59,14 +59,14 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 
 void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
-	const Hash& candidateHeadHash = GetChainStore()->GetChain(EChainType::CANDIDATE)->GetTip()->GetHash();
+	const Hash& candidateHeadHash = GetChainStore()->GetChain(EChainType::CANDIDATE)->GetTipHash();
 	auto pCandidateHead = GetBlockDB()->GetBlockHeader(candidateHeadHash);
 	if (pCandidateHead != nullptr)
 	{
 		syncStatus.UpdateHeaderStatus(pCandidateHead->GetHeight(), pCandidateHead->GetTotalDifficulty());
 	}
 
-	const Hash& confirmedHeadHash = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetTip()->GetHash();
+	const Hash& confirmedHeadHash = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetTipHash();
 	auto pConfirmedHead = GetBlockDB()->GetBlockHeader(confirmedHeadHash);
 	if (pConfirmedHead != nullptr)
 	{
@@ -92,7 +92,7 @@ uint64_t ChainState::GetTotalDifficulty(const EChainType chainType) const
 
 BlockHeaderPtr ChainState::GetTipBlockHeader(const EChainType chainType) const
 {
-	const Hash& headHash = GetChainStore()->GetChain(chainType)->GetTip()->GetHash();
+	const Hash& headHash = GetChainStore()->GetChain(chainType)->GetTipHash();
 
 	return GetBlockDB()->GetBlockHeader(headHash);
 }

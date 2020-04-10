@@ -4,17 +4,21 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <vector>
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/TransactionBody.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
 #include <json/json.h>
+#include <numeric>
+#include <memory>
+#include <vector>
 
 class FullBlock : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
+	using CPtr = std::shared_ptr<const FullBlock>;
+
 	//
 	// Constructors
 	//
@@ -37,6 +41,7 @@ public:
 	//
 	// Getters
 	//
+	const BlockHeaderPtr& GetHeader() const noexcept { return m_pBlockHeader; }
 	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
 	const TransactionBody& GetTransactionBody() const noexcept { return m_transactionBody; }
 
@@ -74,6 +79,14 @@ public:
 		);
 
 		return commitments;
+	}
+
+	uint64_t GetTotalFees() const noexcept
+	{
+		return std::accumulate(
+			GetKernels().cbegin(), GetKernels().cend(), (uint64_t)0,
+			[](uint64_t reward, const TransactionKernel& kernel) { return reward + kernel.GetFee(); }
+		);
 	}
 
 	uint64_t GetHeight() const noexcept { return m_pBlockHeader->GetHeight(); }

@@ -140,12 +140,13 @@ public:
 
 	bool Rewind(const uint64_t nextPosition)
 	{
-		if (!Flush())
-		{
-			return false;
-		}
+		// TODO: Shouldn't flush here - need to support multiple rewinds
+		//if (!Flush())
+		//{
+		//	return false;
+		//}
 
-		if (nextPosition > m_fileSize)
+		if (nextPosition > (m_bufferIndex + m_buffer.size()))
 		{
 			return false;
 		}

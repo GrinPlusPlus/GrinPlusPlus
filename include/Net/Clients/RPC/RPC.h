@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Util/JsonUtil.h>
+#include <Core/Traits/Jsonable.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPCException.h>
 #include <atomic>
@@ -133,9 +134,9 @@ public:
 		}
 	}
 
-	inline const Json::Value& GetId() const { return m_id; }
-	inline const std::optional<Json::Value>& GetResult() const { return m_resultOpt; }
-	inline const std::optional<Error>& GetError() const { return m_errorOpt; }
+	const Json::Value& GetId() const noexcept { return m_id; }
+	const std::optional<Json::Value>& GetResult() const noexcept { return m_resultOpt; }
+	const std::optional<Error>& GetError() const noexcept { return m_errorOpt; }
 
 	Json::Value ToJSON() const
 	{
@@ -250,6 +251,11 @@ public:
 	{
 		Json::Value id = ID_COUNTER++;
 		return Request(std::move(id), method, std::make_optional(params));
+	}
+
+	Response BuildResult(const Traits::IJsonable& result) const
+	{
+		return Response::BuildResult(m_id, result.ToJSON());
 	}
 
 	Response BuildResult(const Json::Value& result) const

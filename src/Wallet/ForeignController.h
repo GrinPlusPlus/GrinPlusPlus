@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <Wallet/SessionToken.h>
 #include <Net/Tor/TorAddress.h>
+#include <API/Wallet/Foreign/ForeignServer.h>
 #include <civetweb.h>
 #include <unordered_map>
 #include <optional>
@@ -18,27 +19,22 @@ public:
 	ForeignController(const Config& config, IWalletManager& walletManager);
 	~ForeignController();
 
-	std::pair<uint16_t, std::optional<TorAddress>> StartListener(const std::string& username, const SessionToken& token, const SecureVector& seed);
+	std::pair<uint16_t, std::optional<TorAddress>> StartListener(
+		const std::string& username,
+		const SessionToken& token,
+		const SecureVector& seed
+	);
 	bool StopListener(const std::string& username);
 
 private:
 	struct Context
 	{
-		Context(mg_context* pCivetContext, IWalletManager& walletManager, int portNumber, const SessionToken& token)
-			: m_numReferences(1), m_walletManager(walletManager), m_pCivetContext(pCivetContext), m_portNumber(portNumber), m_token(token)
-		{
-
-		}
+		Context(const ForeignServer::Ptr& pServer)
+			: m_numReferences(1), m_pServer(pServer) { }
 
 		int m_numReferences;
-		IWalletManager& m_walletManager;
-		mg_context* m_pCivetContext;
-		SessionToken m_token;
-		int m_portNumber;
-		std::optional<TorAddress> m_torAddress;
+		ForeignServer::Ptr m_pServer;
 	};
-
-	static int ForeignAPIHandler(mg_connection* pConnection, void* pCbContext);
 
 	const Config& m_config;
 	IWalletManager& m_walletManager;

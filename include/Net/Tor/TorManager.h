@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/TorConfig.h>
+#include <Config/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorConnection.h>
@@ -12,6 +12,7 @@ class TorManager
 {
 public:
 	static TorManager& GetInstance(const TorConfig& config);
+	static TorManager& GetInstance(const Config& config) { return GetInstance(config.GetTorConfig()); }
 
 	std::shared_ptr<TorAddress> AddListener(const SecretKey64& secretKey, const uint16_t portNumber);
 	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);

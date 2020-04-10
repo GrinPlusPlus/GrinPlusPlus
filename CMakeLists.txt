@@ -77,7 +77,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
     ${PROJECT_SOURCE_DIR}/deps/asio/asio/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
-    ${PROJECT_SOURCE_DIR}/deps/rocksdb/include
+    ${PROJECT_SOURCE_DIR}/deps/rocksdb-6.7.3/include
     ${PROJECT_SOURCE_DIR}/deps/fmt/include
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
     ${PROJECT_SOURCE_DIR}/deps/zlib
@@ -149,14 +149,5 @@ add_subdirectory(src/Wallet)
 add_subdirectory(src/Server)
 
 if(GRINPP_TESTS AND NOT LINUX)
-    add_subdirectory(tests/BlockChain)
-    add_subdirectory(tests/Consensus)
-    add_subdirectory(tests/Core)
-    add_subdirectory(tests/Crypto)
-    add_subdirectory(tests/Database)
-    add_subdirectory(tests/Net)
-    add_subdirectory(tests/PMMR)
-    #add_subdirectory(tests/Wallet)
-    add_subdirectory(tests/Server)
-    add_executable(RunAllTests tests/RunAllTests.cpp)
+    add_subdirectory(tests)
 endif(GRINPP_TESTS AND NOT LINUX)

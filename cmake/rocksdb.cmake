@@ -5,7 +5,7 @@ if (UNIX)
     set(USE_RTTI 1)
 endif ()
 
-include_directories(${PROJECT_SOURCE_DIR}/deps/rocksdb)
-add_subdirectory(${PROJECT_SOURCE_DIR}/deps/rocksdb)
+include_directories(${PROJECT_SOURCE_DIR}/deps/rocksdb-6.7.3)
+add_subdirectory(${PROJECT_SOURCE_DIR}/deps/rocksdb-6.7.3)
 
 set(ROCKS_DB_LIB rocksdb${ARTIFACT_SUFFIX})

@@ -29,11 +29,6 @@ TxHashSet::TxHashSet(
 
 }
 
-bool TxHashSet::IsUnspent(const OutputLocation& location) const
-{
-	return m_pOutputPMMR->IsUnpruned(location.GetMMRIndex());
-}
-
 bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const
 {
 	// Validate inputs

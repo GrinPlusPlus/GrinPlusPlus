@@ -45,15 +45,6 @@ public:
 		std::shared_ptr<IBlockDB> pBlockDB
 	) const = 0;
 
-
-
-	//
-	// Returns true if the output at the given location has not been spent.
-	//
-	virtual bool IsUnspent(
-		const OutputLocation& location
-	) const = 0;
-
 	//
 	// Returns true if all inputs in the transaction are valid and unspent. Otherwise, false.
 	//

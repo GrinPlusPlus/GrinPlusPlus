@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../NodeContext.h"
-
 #include <Core/Context.h>
 #include <Wallet/NodeClient.h>
 #include <BlockChain/BlockChainServer.h>
@@ -9,61 +7,22 @@
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
 
-class DefaultNodeClient : public INodeClient
+class TestNodeClient : public INodeClient
 {
 public:
-	DefaultNodeClient(
-		IDatabasePtr pDatabase,
-		TxHashSetManagerPtr pTxHashSetManager,
-		ITransactionPoolPtr pTransactionPool,
-		IBlockChainServerPtr pBlockChainServer,
-		IP2PServerPtr pP2PServer)
+	TestNodeClient(
+		const IDatabasePtr& pDatabase,
+		Locked<TxHashSetManager> pTxHashSetManager,
+		const ITransactionPoolPtr& pTransactionPool,
+		const IBlockChainServerPtr& pBlockChainServer)
 		: m_pDatabase(pDatabase),
 		m_pTxHashSetManager(pTxHashSetManager),
 		m_pTransactionPool(pTransactionPool),
-		m_pBlockChainServer(pBlockChainServer),
-		m_pP2PServer(pP2PServer)
+		m_pBlockChainServer(pBlockChainServer)
 	{
 
 	}
-
-	static std::shared_ptr<DefaultNodeClient> Create(const Context::Ptr& pContext)
-	{
-		auto pDatabase = DatabaseAPI::OpenDatabase(pContext->GetConfig());
-		auto pTxHashSetManager = std::make_shared<TxHashSetManager>(pContext->GetConfig());
-		auto pLockedTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(pTxHashSetManager);
-		auto pTransactionPool = TxPoolAPI::CreateTransactionPool(pContext->GetConfig());
-		auto pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(pContext->GetConfig());
-		auto pBlockChainServer = BlockChainAPI::StartBlockChainServer(
-			pContext->GetConfig(),
-			pDatabase->GetBlockDB(),
-			pLockedTxHashSetManager,
-			pTransactionPool,
-			pHeaderMMR
-		);
-		auto pP2PServer = P2PAPI::StartP2PServer(
-			pContext,
-			pBlockChainServer,
-			pLockedTxHashSetManager,
-			pDatabase,
-			pTransactionPool
-		);
-
-		return std::make_shared<DefaultNodeClient>(
-			pDatabase,
-			pTxHashSetManager,
-			pTransactionPool,
-			pBlockChainServer,
-			pP2PServer
-		);
-	}
-    
-    virtual ~DefaultNodeClient() = default;
-
-	std::shared_ptr<NodeContext> GetNodeContext()
-	{
-		return std::make_shared<NodeContext>(NodeContext(m_pDatabase, m_pBlockChainServer, m_pP2PServer, m_pTxHashSetManager, m_pTransactionPool));
-	}
+	virtual ~TestNodeClient() = default;
 
 	uint64_t GetChainHeight() const final
 	{
@@ -97,7 +56,7 @@ public:
 
 	std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const final
 	{
-		auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+		auto pTxHashSet = m_pTxHashSetManager.Read()->GetTxHashSet();
 		if (pTxHashSet == nullptr)
 		{
 			return std::unique_ptr<OutputRange>(nullptr);
@@ -113,7 +72,7 @@ public:
 		if (pTipHeader != nullptr)
 		{
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
+			auto pTxHashSet = m_pTxHashSetManager.Read()->GetTxHashSet();
 			if (pTxHashSet != nullptr)
 			{
 				try
@@ -125,14 +84,9 @@ public:
 						poolType,
 						*pTipHeader
 					);
-					
+
 					if (result == EAddTransactionStatus::ADDED)
 					{
-						if (poolType == EPoolType::MEMPOOL)
-						{
-							m_pP2PServer->BroadcastTransaction(pTransaction);
-						}
-
 						return true;
 					}
 				}
@@ -146,12 +100,9 @@ public:
 		return false;
 	}
 
-	IP2PServerPtr GetP2PServer() { return m_pP2PServer; }
-
 private:
 	IDatabasePtr m_pDatabase;
-	TxHashSetManagerPtr m_pTxHashSetManager;
+	Locked<TxHashSetManager> m_pTxHashSetManager;
 	ITransactionPoolPtr m_pTransactionPool;
 	IBlockChainServerPtr m_pBlockChainServer;
-	IP2PServerPtr m_pP2PServer;
 };

@@ -32,7 +32,7 @@ public:
 	//
 	// Destructor
 	//
-	~TransactionOutput() = default;
+	virtual ~TransactionOutput() = default;
 
 	//
 	// Operators

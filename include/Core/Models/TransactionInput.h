@@ -32,7 +32,7 @@ public:
 	//
 	// Destructor
 	//
-	~TransactionInput() = default;
+	virtual ~TransactionInput() = default;
 
 	//
 	// Operators

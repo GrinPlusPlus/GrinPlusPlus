@@ -24,7 +24,6 @@ public:
 	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
 	BlockHeaderPtr GetFlushedBlockHeader() const noexcept final { return m_pBlockHeaderBackup; }
 
-	bool IsUnspent(const OutputLocation& location) const final;
 	bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const final;
 	std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus) final;
 	bool ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& block) final;

@@ -153,13 +153,6 @@ std::shared_ptr<const FullBlock> ChainState::GetOrphanBlock(const uint64_t heigh
 
 std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t height) const
 {
-	Reader<TxHashSetManager> pTxHashSetManager = GetTxHashSetManager();
-	auto pTxHashSet = pTxHashSetManager->GetTxHashSet();
-	if (pTxHashSet == nullptr)
-	{
-		return std::unique_ptr<BlockWithOutputs>(nullptr);
-	}
-
 	auto pBlockIndex = GetChainStore()->GetChain(EChainType::CONFIRMED)->GetByHeight(height);
 	if (pBlockIndex != nullptr)
 	{
@@ -175,8 +168,7 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 				std::unique_ptr<OutputLocation> pOutputLocation = GetBlockDB()->GetOutputPosition(output.GetCommitment());
 				if (pOutputLocation != nullptr)
 				{
-					const bool spent = !pTxHashSet->IsUnspent(*pOutputLocation);
-					outputsFound.emplace_back(OutputDTO(spent, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
+					outputsFound.emplace_back(OutputDTO(false, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
 				}
 			}
 
@@ -268,23 +260,11 @@ void ChainState::OnInitWrite()
 	m_headerMMRWriter.Clear();
 	m_txHashSetWriter.Clear();
 
-	//auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-	//if (pTxHashSet != nullptr)
-	//{
-		auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR, *m_pTxHashSetManager);
-		m_chainStoreWriter = std::get<0>(locked);
-		m_blockDBWriter = std::get<1>(locked);
-		m_headerMMRWriter = std::get<2>(locked);
-		m_txHashSetWriter = std::get<3>(locked);
-	//}
-	//else
-	//{
-	//	auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR);
-	//	
-	//	m_chainStoreWriter = std::get<0>(locked);
-	//	m_blockDBWriter = std::get<1>(locked);
-	//	m_headerMMRWriter = std::get<2>(locked);
-	//}
+	auto locked = MultiLocker().BatchLock(*m_pChainStore, *m_pBlockDB, *m_pHeaderMMR, *m_pTxHashSetManager);
+	m_chainStoreWriter = std::get<0>(locked);
+	m_blockDBWriter = std::get<1>(locked);
+	m_headerMMRWriter = std::get<2>(locked);
+	m_txHashSetWriter = std::get<3>(locked);
 }
 
 void ChainState::OnEndWrite()

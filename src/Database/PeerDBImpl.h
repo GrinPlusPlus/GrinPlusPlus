@@ -13,18 +13,18 @@ using namespace rocksdb;
 class PeerDB : public IPeerDB
 {
 public:
-	~PeerDB();
+	virtual ~PeerDB();
 
 	static std::shared_ptr<PeerDB> OpenDB(const Config& config);
 
-	virtual std::vector<PeerPtr> LoadAllPeers() const override final;
-	virtual std::optional<PeerPtr> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const override final;
+	std::vector<PeerPtr> LoadAllPeers() const final;
+	std::optional<PeerPtr> GetPeer(const IPAddress& address, const std::optional<uint16_t>& portOpt) const final;
 
-	virtual void SavePeers(const std::vector<PeerPtr>& peers) override final;
-	virtual void DeletePeers(const std::vector<PeerPtr>& peers) override final;
+	void SavePeers(const std::vector<PeerPtr>& peers) final;
+	void DeletePeers(const std::vector<PeerPtr>& peers) final;
 
-	virtual void Commit() override final {} // FUTURE: Handle this
-	virtual void Rollback() noexcept override final {} // FUTURE: Handle this
+	void Commit() final {} // FUTURE: Handle this
+	void Rollback() noexcept final {} // FUTURE: Handle this
 
 private:
 	PeerDB(const Config& config, DB* pDatabase);

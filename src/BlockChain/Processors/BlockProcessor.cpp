@@ -95,41 +95,6 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 		return EBlockChainStatus::SUCCESS;
 	}
-
-	//switch (info.status)
-	//{
-	//	case EBlockStatus::ORPHAN:
-	//	{
-	//		if (pOrphanPool->IsOrphan(block.GetHeight(), block.GetHash()))
-	//		{
-	//			LOG_TRACE_F("Block {} already processed as an orphan.", block);
-	//			return EBlockChainStatus::ALREADY_EXISTS;
-	//		}
-
-	//		pOrphanPool->AddOrphanBlock(block);
-
-	//		return EBlockChainStatus::ORPHANED;
-	//	}
-	//	case EBlockStatus::REORG:
-	//	{
-	//		HandleReorg(block, pBatch);
-	//		pBatch->Commit();
-
-	//		return EBlockChainStatus::SUCCESS;
-	//	}
-	//	case EBlockStatus::NEXT_BLOCK:
-	//	{
-	//		ValidateAndAddBlock(block, pBatch);
-	//		pConfirmedChain->AddBlock(block.GetHash());
-	//		pBatch->Commit();
-
-	//		return EBlockChainStatus::SUCCESS;
-	//	}
-	//	default:
-	//	{
-	//		throw BLOCK_CHAIN_EXCEPTION("Unexpected block status returned");
-	//	}
-	//}
 }
 
 BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pBatch)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <TestHelper.h>
+#include <TestNodeClient.h>
 
 #include <Core/File/FileRemover.h>
 #include <BlockChain/BlockChainServer.h>
@@ -82,6 +83,7 @@ public:
 	const ITransactionPoolPtr& GetTxPool() const noexcept { return m_pTxPool; }
 	const std::shared_ptr<Locked<IHeaderMMR>>& GetHeaderMMR() const noexcept { return m_pHeaderMMR; }
 	IBlockChainServer* GetBlockChainServer() const noexcept { return m_pBlockChainServer.get(); }
+	std::shared_ptr<INodeClient> GetNodeClient() const noexcept { return std::shared_ptr<INodeClient>(new TestNodeClient(m_pDatabase, *m_pTxHashSetManager, m_pTxPool, m_pBlockChainServer)); }
 
 	fs::path GenerateTempDir() { return m_pConfig->GetDataDirectory() / "TEMP" / std::to_string(m_tempDirs++); }
 

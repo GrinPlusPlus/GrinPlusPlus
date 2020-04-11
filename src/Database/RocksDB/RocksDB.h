@@ -23,7 +23,7 @@ public:
 	RocksDB(const std::shared_ptr<rocksdb::OptimisticTransactionDB>& pTransactionDB, const std::vector<RocksDBTable>& tables)
 		: m_pTransactionDB(pTransactionDB), m_tables(tables) { }
 
-	~RocksDB()
+	virtual ~RocksDB()
 	{
 		for (RocksDBTable& table : m_tables)
 		{

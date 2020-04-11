@@ -27,7 +27,7 @@ public:
 	//
 	// Destructor
 	//
-	~OutputIdentifier() = default;
+	virtual ~OutputIdentifier() = default;
 
 	//
 	// Operators

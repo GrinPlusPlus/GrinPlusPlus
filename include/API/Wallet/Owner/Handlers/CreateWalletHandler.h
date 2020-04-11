@@ -1,18 +1,20 @@
 #pragma once
 
 #include <Config/Config.h>
+#include <Common/Secure.h>
+#include <Common/Util/StringUtil.h>
+#include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <Core/Util/JsonUtil.h>
 #include <optional>
 
-class CreateWallet : RPCMethod
+class CreateWalletHandler : RPCMethod
 {
 public:
-	CreateWallet(const IWalletManagerPtr& pWalletManager)
+	CreateWalletHandler(const IWalletManagerPtr& pWalletManager)
 		: m_pWalletManager(pWalletManager) { }
-	virtual ~CreateWallet() = default;
+	virtual ~CreateWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
@@ -36,7 +38,10 @@ public:
 	}
 
 private:
-	std::optional<RPC::Error> ValidateInput(const std::string& username, const SecureString& password, const uint64_t numWords)
+	std::optional<RPC::Error> ValidateInput(
+		const std::string& username,
+		const SecureString& password,
+		const uint64_t numWords)
 	{
 		// TODO: Should we allow usernames to contain spaces or special characters?
 

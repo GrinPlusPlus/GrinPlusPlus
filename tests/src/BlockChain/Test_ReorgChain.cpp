@@ -217,7 +217,6 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
 }
 
-
 //
 // a - b - c
 //  \

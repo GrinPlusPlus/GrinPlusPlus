@@ -7,7 +7,7 @@
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <optional>
 
-class RetryTor : RPCMethod
+class RetryTorHandler : public RPCMethod
 {
 	class Response
 	{
@@ -35,9 +35,9 @@ class RetryTor : RPCMethod
 		std::optional<std::string> m_torAddress;
 	};
 public:
-	RetryTor(const Config& config, IWalletManagerPtr pWalletManager)
+	RetryTorHandler(const Config& config, IWalletManagerPtr pWalletManager)
 		: m_config(config), m_pWalletManager(pWalletManager) { }
-	virtual ~RetryTor() = default;
+	virtual ~RetryTorHandler() = default;
 
 	virtual RPC::Response Handle(const RPC::Request& request) const override final
 	{

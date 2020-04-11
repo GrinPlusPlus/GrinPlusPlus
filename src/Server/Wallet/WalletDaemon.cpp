@@ -1,7 +1,7 @@
 #include "WalletDaemon.h"
 #include "WalletRestServer.h"
-#include "V2/OwnerController.h"
 
+#include <API/Wallet/Owner/OwnerServer.h>
 #include <Wallet/WalletManager.h>
 #include <Net/Tor/TorManager.h>
 
@@ -10,12 +10,12 @@ WalletDaemon::WalletDaemon(
 	INodeClientPtr pNodeClient,
 	IWalletManagerPtr pWalletManager,
 	std::shared_ptr<WalletRestServer> pWalletRestServer,
-	std::shared_ptr<OwnerController> pOwnerController)
+	std::shared_ptr<OwnerServer> pOwnerServer)
 	: m_config(config),
 	m_pNodeClient(pNodeClient),
 	m_pWalletManager(pWalletManager),
 	m_pWalletRestServer(pWalletRestServer),
-	m_pOwnerController(pOwnerController)
+	m_pOwnerServer(pOwnerServer)
 {
 
 }
@@ -25,9 +25,9 @@ std::shared_ptr<WalletDaemon> WalletDaemon::Create(const Config& config, INodeCl
 	auto pWalletManager = WalletAPI::CreateWalletManager(config, pNodeClient);
 
 	auto pWalletRestServer = WalletRestServer::Create(config, pWalletManager, pNodeClient);
-	auto pOwnerController = OwnerController::Create(config, pWalletManager);
+	auto pOwnerServer = OwnerServer::Create(config, pWalletManager);
 
 	TorManager::GetInstance(config.GetTorConfig());
 
-	return std::make_shared<WalletDaemon>(WalletDaemon(config, pNodeClient, pWalletManager, pWalletRestServer, pOwnerController));
+	return std::make_shared<WalletDaemon>(config, pNodeClient, pWalletManager, pWalletRestServer, pOwnerServer);
 }

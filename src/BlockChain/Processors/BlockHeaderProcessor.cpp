@@ -21,19 +21,6 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr
 	LOG_TRACE_F("Validating {}", *pHeader);
 
 	auto pLockedState = m_pChainState->BatchWrite();
-
-	EBlockChainStatus status = ProcessSingleHeader(pHeader, pLockedState);
-	if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS)
-	{
-		LOG_DEBUG_F("Successfully validated {}", *pHeader);
-		pLockedState->Commit();
-	}
-
-	return status;
-}
-
-EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr& pHeader, Writer<ChainState>& pLockedState)
-{
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
@@ -49,6 +36,11 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr
 	// If this is not the next header needed, process as an orphan.
 	if (pCandidateChain->GetTipHash() != pHeader->GetPreviousHash())
 	{
+		LOG_INFO_F(
+			"Processing orphan header {}. Candidate tip hash was {}",
+			*pHeader,
+			pCandidateChain->GetTipHash()
+		);
 		return ProcessOrphan(pLockedState, pHeader);
 	}
 
@@ -69,6 +61,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr
 
 	LOG_DEBUG_F("Successfully validated {}", *pHeader);
 
+	pLockedState->Commit();
 	return EBlockChainStatus::SUCCESS;
 }
 
@@ -77,6 +70,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pOrphanPool = pLockedState->GetOrphanPool();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
+	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 
 	const uint64_t totalDifficulty = pLockedState->GetTotalDifficulty(EChainType::CANDIDATE);
@@ -123,14 +117,23 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	}
 	else
 	{
+		LOG_INFO_F(
+			"Applying headers {} - {} to chain",
+			reorgHeaders.front()->GetHash(),
+			reorgHeaders.back()->GetHash()
+		);
+
 		pCandidateChain->Rewind(reorgHeaders.front()->GetHeight() - 1);
+		pSyncChain->Rewind(reorgHeaders.front()->GetHeight() - 1);
 
 		for (const BlockHeaderPtr& pHeaders : reorgHeaders)
 		{
 			pCandidateChain->AddBlock(pHeaders->GetHash());
+			pSyncChain->AddBlock(pHeaders->GetHash());
 		}
 	}
 
+	pLockedState->Commit();
 	return EBlockChainStatus::SUCCESS;
 }
 
@@ -167,13 +170,8 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 		chunkedHeaders.push_back(headers[index++]);
 		if (index % SYNC_BATCH_SIZE == 0 || index == size)
 		{
-			auto pChainStateBatch = m_pChainState->BatchWrite();
-			const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(pChainStateBatch, chunkedHeaders);
-			if (processChunkStatus == EBlockChainStatus::SUCCESS)
-			{
-				pChainStateBatch->Commit();
-			}
-			else if (processChunkStatus != EBlockChainStatus::ALREADY_EXISTS)
+			const EBlockChainStatus processChunkStatus = ProcessChunkedSyncHeaders(chunkedHeaders);
+			if (processChunkStatus != EBlockChainStatus::SUCCESS && processChunkStatus != EBlockChainStatus::ALREADY_EXISTS)
 			{
 				return processChunkStatus;
 			}
@@ -185,8 +183,9 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 	return EBlockChainStatus::SUCCESS;
 }
 
-EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
+EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vector<BlockHeaderPtr>& headers)
 {
+	auto pLockedState = m_pChainState->BatchWrite();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 	auto pChainStore = pLockedState->GetChainStore();
 	auto pSyncChain = pChainStore->GetSyncChain();
@@ -210,7 +209,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainSt
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	LOG_TRACE_F("Processing {} headers.", newHeaders.size());
+	LOG_TRACE_F("Processing headers {} to {}.", *newHeaders.front(), *newHeaders.back());
 
 	// Rewind MMR
 	RewindMMR(pLockedState, newHeaders);
@@ -235,6 +234,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(Writer<ChainSt
 		pHeaderMMR->Rollback();
 	}
 
+	pLockedState->Commit();
 	return EBlockChainStatus::SUCCESS;
 }
 

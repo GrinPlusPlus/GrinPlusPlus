@@ -20,14 +20,6 @@ public:
 	EBlockChainStatus ProcessSingleHeader(const BlockHeaderPtr& pHeader);
 
 	//
-	// Validates and adds a single header to the candidate chain.
-	//
-	// Throws BadDataException if the header is invalid.
-	// Throws BlockChainException if any other errors occur.
-	//
-	EBlockChainStatus ProcessSingleHeader(const BlockHeaderPtr& pHeader, Writer<ChainState>& pLockedState);
-
-	//
 	// Validates and adds multiple headers to the sync chain.
 	// The headers are also added to the candidate chain if total difficulty increases.
 	//
@@ -43,7 +35,6 @@ private:
 	);
 
 	EBlockChainStatus ProcessChunkedSyncHeaders(
-		Writer<ChainState> pLockedState,
 		const std::vector<BlockHeaderPtr>& headers
 	);
 

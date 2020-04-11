@@ -24,7 +24,7 @@ void HeaderMMR::Commit()
 	if (IsDirty())
 	{
 		const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
-		LOG_TRACE_F("Flushing - Height: {}, Size: {}", height, m_batchDataOpt.value().hashFile->GetSize());
+		LOG_TRACE_F("Flushing - Height: {}, Size: {}", height - 1, m_batchDataOpt.value().hashFile->GetSize());
 		m_batchDataOpt.value().hashFile->Commit();
 		SetDirty(false);
 	}

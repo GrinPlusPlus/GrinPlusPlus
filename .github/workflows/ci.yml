@@ -31,7 +31,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt install uuid-dev
-          sudo apt install libgflags2 libgflags
+          sudo apt install libgflags2.2 libgflags-dev
       - name: make build directory
         run: mkdir build
       - name: configure and compile

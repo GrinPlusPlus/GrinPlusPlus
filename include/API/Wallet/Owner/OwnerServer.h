@@ -61,6 +61,7 @@ public:
         // update_labels - Add or remove labels - useful for coin control
         // verify_payment_proof - Takes in an existing payment proof and validates it
         // get_seed_phrase - Returns the user's seed - requires a password
+        // delete_wallet - Deletes a wallet directory
 
         return std::shared_ptr<OwnerServer>(new OwnerServer(pServer));
     }

@@ -12,9 +12,10 @@
 #include <Wallet/Models/Slate/Slate.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
-#include <Wallet/Models/Criteria/SendCriteria.h>
-#include <Wallet/Models/Criteria/ReceiveCriteria.h>
-#include <Wallet/Models/Criteria/FinalizeCriteria.h>
+#include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
+#include <API/Wallet/Owner/Models/SendCriteria.h>
+#include <API/Wallet/Owner/Models/ReceiveCriteria.h>
+#include <API/Wallet/Owner/Models/FinalizeCriteria.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
@@ -37,11 +38,7 @@ public:
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.
 	//
-	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(
-		const std::string& username,
-		const SecureString& password,
-		const int numWords
-	) = 0;
+	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(const CreateWalletCriteria& criteria) = 0;
 
 	//
 	// Creates a wallet from existing wallet words (BIP39 mnemonics).

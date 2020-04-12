@@ -7,6 +7,7 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
+#include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
 #include <optional>
 
 class CreateWalletHandler : RPCMethod
@@ -23,12 +24,8 @@ public:
 			throw DESERIALIZATION_EXCEPTION();
 		}
 
-		const Json::Value& params = request.GetParams().value();
-		std::string username = StringUtil::ToLower(JsonUtil::GetRequiredString(params, "username"));
-		SecureString password(JsonUtil::GetRequiredString(params, "password"));
-		const uint64_t numWords = JsonUtil::GetRequiredUInt64(params, "num_seed_words");
-
-		auto wallet = m_pWalletManager->InitializeNewWallet(username, password, (int)numWords);
+		CreateWalletCriteria criteria = CreateWalletCriteria::FromJSON(request.GetParams().value());
+		auto wallet = m_pWalletManager->InitializeNewWallet(criteria);
 
 		Json::Value result;
 		result["status"] = "SUCCESS";

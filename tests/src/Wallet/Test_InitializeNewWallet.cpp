@@ -15,7 +15,9 @@ TEST_CASE("Wallet Creation/Deletion")
 
 	// Create wallet
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	std::optional<std::pair<SecureString, SessionToken>> wallet = pWalletManager->InitializeNewWallet(username, "Password1", 24);
+	std::optional<std::pair<SecureString, SessionToken>> wallet = pWalletManager->InitializeNewWallet(
+		CreateWalletCriteria(username, "Password1", 24)
+	);
 	REQUIRE(wallet.has_value());
 
 	// Validate seed words
@@ -41,7 +43,9 @@ TEST_CASE("Wallet Words Length")
 	for (uint8_t numWords : numWordsVec)
 	{
 		const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-		std::optional<std::pair<SecureString, SessionToken>> wallet = pWalletManager->InitializeNewWallet(username, "Password1", numWords);
+		std::optional<std::pair<SecureString, SessionToken>> wallet = pWalletManager->InitializeNewWallet(
+			CreateWalletCriteria(username, "Password1", numWords)
+		);
 		REQUIRE(wallet.has_value());
 
 		// Validate seed words

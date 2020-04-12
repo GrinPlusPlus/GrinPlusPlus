@@ -13,11 +13,7 @@ public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	virtual ~WalletManager() = default;
 
-	std::pair<SecureString, SessionToken> InitializeNewWallet(
-		const std::string& username,
-		const SecureString& password,
-		const int numWords
-	) final;
+	std::pair<SecureString, SessionToken> InitializeNewWallet(const CreateWalletCriteria& criteria) final;
 
 	std::optional<SessionToken> RestoreFromSeed(
 		const std::string& username,

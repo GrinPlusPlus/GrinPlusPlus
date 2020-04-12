@@ -50,7 +50,17 @@ public:
 		pServer->AddMethod("finalize", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeHandler(pWalletManager)));
 		pServer->AddMethod("retry_tor", std::shared_ptr<RPCMethod>((RPCMethod*)new RetryTorHandler(config, pWalletManager)));
 
-		// TODO: Add the following APIs: authenticate, cancel_tx, repost_tx, tx_info, update_labels, get_payment_proof, verify_payment_proof, get_seed_phrase
+		// TODO: Add the following APIs: 
+        // login - Login as an existing user
+        // restore_wallet - Restores wallet by seed
+        // authenticate - Simply validates the password - useful for confirming password before sending funds
+        // cancel_tx - Cancels a transaction by Id or UUID
+        // repost_tx - Reposts a transaction that was already finalized but never confirmed on chain
+        // list_txs - retrieves basic info about all transactions with optional filter for timerange, type, etc.
+        // tx_info - Detailed info about a specific transaction (status, kernels, inputs, outputs, payment proofs, labels, etc)
+        // update_labels - Add or remove labels - useful for coin control
+        // verify_payment_proof - Takes in an existing payment proof and validates it
+        // get_seed_phrase - Returns the user's seed - requires a password
 
 		return std::shared_ptr<OwnerServer>(new OwnerServer(pServer));
 	}

@@ -29,22 +29,23 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 }
 
-std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(
-	const std::string& username,
-	const SecureString& password,
-	const int numWords)
+std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const CreateWalletCriteria& criteria)
 {
-	WALLET_INFO_F("Creating new wallet with username {} and numWords {}", username, numWords);
+	WALLET_INFO_F(
+		"Creating new wallet with username {} and numWords {}",
+		criteria.GetUsername(),
+		criteria.GetNumWords()
+	);
 
-	const size_t entropyBytes = (4 * numWords) / 3;
+	const size_t entropyBytes = (4 * criteria.GetNumWords()) / 3;
 	const SecureVector walletSeed = RandomNumberGenerator::GenerateRandomBytes(entropyBytes);
-	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
+	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, criteria.GetPassword());
 	SecureString walletWords = Mnemonic::CreateMnemonic((const std::vector<uint8_t>&)walletSeed);
 
-	const std::string usernameLower = StringUtil::ToLower(username);
+	const std::string usernameLower = criteria.GetUsername();
 	m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
 
-	WALLET_INFO_F("Wallet created with username: {}", username);
+	WALLET_INFO_F("Wallet created with username: {}", usernameLower);
 
 	SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeed);
 

@@ -91,9 +91,7 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 	}
 
 	std::pair<SecureString, SessionToken> wallet = walletManager.InitializeNewWallet(
-		usernameOpt.value(),
-		SecureString(passwordOpt.value()),
-		24
+		CreateWalletCriteria(usernameOpt.value(), SecureString(passwordOpt.value()), 24)
 	);
 
 	Json::Value responseJSON;

@@ -38,7 +38,7 @@ TEST_CASE("API: check_version")
 {
     TestServer::Ptr pTestServer = TestServer::Create();
     IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(*pTestServer->GetConfig(), pTestServer->GetNodeClient());
-    auto token = pWalletManager->InitializeNewWallet("TestUser", "password", 24).second;
+    auto token = pWalletManager->InitializeNewWallet(CreateWalletCriteria("TestUser", "password", 24)).second;
 
     auto pForeignServer = ForeignServer::Create(*pTestServer->GetConfig(), *pWalletManager, token);
     const uint16_t portNumber = pForeignServer->GetPortNumber();

@@ -11,14 +11,14 @@
 class OwnerServer
 {
 public:
-	using Ptr = std::shared_ptr<OwnerServer>;
+    using Ptr = std::shared_ptr<OwnerServer>;
 
-	OwnerServer::OwnerServer(const RPCServerPtr& pServer) : m_pServer(pServer) { }
+    OwnerServer::OwnerServer(const RPCServerPtr& pServer) : m_pServer(pServer) { }
 
-	// TODO: Add e2e encryption
-	static OwnerServer::Ptr OwnerServer::Create(const Config& config, const IWalletManagerPtr& pWalletManager)
-	{
-		RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config (Use same port as v1 owner)
+    // TODO: Add e2e encryption
+    static OwnerServer::Ptr OwnerServer::Create(const Config& config, const IWalletManagerPtr& pWalletManager)
+    {
+        RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config (Use same port as v1 owner)
 
         /*
             Request:
@@ -43,14 +43,14 @@ public:
                 }
             }
         */
-		pServer->AddMethod("create_wallet", std::shared_ptr<RPCMethod>((RPCMethod*)new CreateWalletHandler(pWalletManager)));
+        pServer->AddMethod("create_wallet", std::shared_ptr<RPCMethod>((RPCMethod*)new CreateWalletHandler(pWalletManager)));
 
-		pServer->AddMethod("send", std::shared_ptr<RPCMethod>((RPCMethod*)new SendHandler(config, pWalletManager)));
-		pServer->AddMethod("receive", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveHandler(pWalletManager)));
-		pServer->AddMethod("finalize", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeHandler(pWalletManager)));
-		pServer->AddMethod("retry_tor", std::shared_ptr<RPCMethod>((RPCMethod*)new RetryTorHandler(config, pWalletManager)));
+        pServer->AddMethod("send", std::shared_ptr<RPCMethod>((RPCMethod*)new SendHandler(config, pWalletManager)));
+        pServer->AddMethod("receive", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveHandler(pWalletManager)));
+        pServer->AddMethod("finalize", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeHandler(pWalletManager)));
+        pServer->AddMethod("retry_tor", std::shared_ptr<RPCMethod>((RPCMethod*)new RetryTorHandler(config, pWalletManager)));
 
-		// TODO: Add the following APIs: 
+        // TODO: Add the following APIs: 
         // login - Login as an existing user
         // restore_wallet - Restores wallet by seed
         // authenticate - Simply validates the password - useful for confirming password before sending funds
@@ -62,9 +62,9 @@ public:
         // verify_payment_proof - Takes in an existing payment proof and validates it
         // get_seed_phrase - Returns the user's seed - requires a password
 
-		return std::shared_ptr<OwnerServer>(new OwnerServer(pServer));
-	}
+        return std::shared_ptr<OwnerServer>(new OwnerServer(pServer));
+    }
 
 private:
-	RPCServerPtr m_pServer;
+    RPCServerPtr m_pServer;
 };

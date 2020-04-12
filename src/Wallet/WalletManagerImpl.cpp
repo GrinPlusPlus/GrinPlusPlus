@@ -36,17 +36,17 @@ std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(
 {
 	WALLET_INFO_F("Creating new wallet with username {} and numWords {}", username, numWords);
 
-	const SecretKey walletSeed = RandomNumberGenerator::GenerateRandom32();
-	const SecureVector walletSeedBytes(walletSeed.GetVec().begin(), walletSeed.GetVec().end());
-	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeedBytes, password);
-	SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.GetVec());
+	const size_t entropyBytes = (4 * numWords) / 3;
+	const SecureVector walletSeed = RandomNumberGenerator::GenerateRandomBytes(entropyBytes);
+	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, password);
+	SecureString walletWords = Mnemonic::CreateMnemonic((const std::vector<uint8_t>&)walletSeed);
 
 	const std::string usernameLower = StringUtil::ToLower(username);
 	m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
 
 	WALLET_INFO_F("Wallet created with username: {}", username);
 
-	SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeedBytes);
+	SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeed);
 
 	return std::make_pair(std::move(walletWords), std::move(token));
 }

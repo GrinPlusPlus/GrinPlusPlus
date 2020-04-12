@@ -26,7 +26,7 @@ public:
 		const Json::Value& params = request.GetParams().value();
 		std::string username = StringUtil::ToLower(JsonUtil::GetRequiredString(params, "username"));
 		SecureString password(JsonUtil::GetRequiredString(params, "password"));
-		const uint64_t numWords = JsonUtil::GetRequiredUInt64(params, "num_words");
+		const uint64_t numWords = JsonUtil::GetRequiredUInt64(params, "num_seed_words");
 
 		auto wallet = m_pWalletManager->InitializeNewWallet(username, password, (int)numWords);
 
@@ -50,19 +50,29 @@ private:
 		{
 			if (StringUtil::ToLower(account) == username)
 			{
-				// TODO: Username already exists
-
+				throw API_EXCEPTION_F(
+					RPC::ErrorCode::INVALID_PARAMS,
+					"Username {} already exists",
+					username
+				);
 			}
 		}
 
 		if (password.empty())
 		{
-			// TODO: Invalid password
+			throw API_EXCEPTION(
+				RPC::ErrorCode::INVALID_PARAMS,
+				"Password cannot be empty"
+			);
 		}
 
 		if (numWords < 12 || numWords > 24 || numWords % 3 != 0)
 		{
-			// TODO: Invalid num_words
+			throw API_EXCEPTION_F(
+				RPC::ErrorCode::INVALID_PARAMS,
+				"Invalid num_seed_words ({}). Only 12, 15, 18, 21, and 24 are supported.",
+				numWords
+			);
 		}
 	}
 

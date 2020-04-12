@@ -13,10 +13,10 @@ class OwnerServer
 public:
     using Ptr = std::shared_ptr<OwnerServer>;
 
-    OwnerServer::OwnerServer(const RPCServerPtr& pServer) : m_pServer(pServer) { }
+    OwnerServer(const RPCServerPtr& pServer) : m_pServer(pServer) { }
 
     // TODO: Add e2e encryption
-    static OwnerServer::Ptr OwnerServer::Create(const Config& config, const IWalletManagerPtr& pWalletManager)
+    static OwnerServer::Ptr Create(const Config& config, const IWalletManagerPtr& pWalletManager)
     {
         RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config (Use same port as v1 owner)
 

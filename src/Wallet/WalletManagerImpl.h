@@ -13,13 +13,9 @@ public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	virtual ~WalletManager() = default;
 
-	std::pair<SecureString, SessionToken> InitializeNewWallet(const CreateWalletCriteria& criteria) final;
+	CreateWalletResponse InitializeNewWallet(const CreateWalletCriteria& criteria) final;
 
-	std::optional<SessionToken> RestoreFromSeed(
-		const std::string& username,
-		const SecureString& password,
-		const SecureString& walletWords
-	) final;
+	LoginResponse RestoreFromSeed(const RestoreWalletCriteria& criteria) final;
 
 	SecureString GetSeedWords(const SessionToken& token) final;
 	void CheckForOutputs(const SessionToken& token, const bool fromGenesis) final;
@@ -27,7 +23,7 @@ public:
 	std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path);
 	uint16_t GetListenerPort(const SessionToken& token) const final;
 
-	SessionToken Login(const std::string& username, const SecureString& password) final;
+	LoginResponse Login(const LoginCriteria& criteria) final;
 	void Logout(const SessionToken& token) final;
 	void DeleteWallet(const std::string& username, const SecureString& password) final;
 	void ChangePassword(

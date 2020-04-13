@@ -3,6 +3,8 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Servers/RPC/RPCServer.h>
 #include <API/Wallet/Owner/Handlers/CreateWalletHandler.h>
+#include <API/Wallet/Owner/Handlers/RestoreWalletHandler.h>
+#include <API/Wallet/Owner/Handlers/LoginHandler.h>
 #include <API/Wallet/Owner/Handlers/SendHandler.h>
 #include <API/Wallet/Owner/Handlers/ReceiveHandler.h>
 #include <API/Wallet/Owner/Handlers/FinalizeHandler.h>
@@ -39,11 +41,64 @@ public:
                 "jsonrpc": "2.0",
                 "result": {
                     "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
-                    "wallet_seed": "agree muscle erase plunge grit effort provide electric social decide include whisper tunnel dizzy bean tumble play robot fire verify program solid weasel nuclear"
+                    "wallet_seed": "agree muscle erase plunge grit effort provide electric social decide include whisper tunnel dizzy bean tumble play robot fire verify program solid weasel nuclear",
+                    "listener_port": 1100,
+                    "tor_address": ""
                 }
             }
         */
         pServer->AddMethod("create_wallet", std::shared_ptr<RPCMethod>((RPCMethod*)new CreateWalletHandler(pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "restore_wallet",
+                "id": 1,
+                "params": {
+                    "username": "David",
+                    "password": "P@ssw0rd123!",
+                    "wallet_seed": "agree muscle erase plunge grit effort provide electric social decide include whisper tunnel dizzy bean tumble play robot fire verify program solid weasel nuclear"
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "listener_port": 1100,
+                    "tor_address": ""
+                }
+            }
+        */
+        pServer->AddMethod("restore_wallet", std::shared_ptr<RPCMethod>((RPCMethod*)new RestoreWalletHandler(pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "login",
+                "id": 1,
+                "params": {
+                    "username": "David",
+                    "password": "P@ssw0rd123!"
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "listener_port": 1100,
+                    "tor_address": ""
+                }
+            }
+        */
+        pServer->AddMethod("login", std::shared_ptr<RPCMethod>((RPCMethod*)new LoginHandler(pWalletManager)));
 
         pServer->AddMethod("send", std::shared_ptr<RPCMethod>((RPCMethod*)new SendHandler(config, pWalletManager)));
         pServer->AddMethod("receive", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveHandler(pWalletManager)));
@@ -51,8 +106,6 @@ public:
         pServer->AddMethod("retry_tor", std::shared_ptr<RPCMethod>((RPCMethod*)new RetryTorHandler(config, pWalletManager)));
 
         // TODO: Add the following APIs: 
-        // login - Login as an existing user
-        // restore_wallet - Restores wallet by seed
         // authenticate - Simply validates the password - useful for confirming password before sending funds
         // cancel_tx - Cancels a transaction by Id or UUID
         // repost_tx - Reposts a transaction that was already finalized but never confirmed on chain

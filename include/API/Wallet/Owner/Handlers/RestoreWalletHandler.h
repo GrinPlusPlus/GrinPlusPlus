@@ -7,16 +7,16 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
-#include <API/Wallet/Owner/Models/CreateWalletResponse.h>
+#include <API/Wallet/Owner/Models/RestoreWalletCriteria.h>
+#include <API/Wallet/Owner/Models/LoginResponse.h>
 #include <optional>
 
-class CreateWalletHandler : RPCMethod
+class RestoreWalletHandler : RPCMethod
 {
 public:
-	CreateWalletHandler(const IWalletManagerPtr& pWalletManager)
+	RestoreWalletHandler(const IWalletManagerPtr& pWalletManager)
 		: m_pWalletManager(pWalletManager) { }
-	virtual ~CreateWalletHandler() = default;
+	virtual ~RestoreWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
@@ -25,16 +25,16 @@ public:
 			throw DESERIALIZATION_EXCEPTION();
 		}
 
-		CreateWalletCriteria criteria = CreateWalletCriteria::FromJSON(request.GetParams().value());
+		RestoreWalletCriteria criteria = RestoreWalletCriteria::FromJSON(request.GetParams().value());
 		ValidateInput(criteria);
 
-		auto response = m_pWalletManager->InitializeNewWallet(criteria);
+		auto response = m_pWalletManager->RestoreFromSeed(criteria);
 
 		return request.BuildResult(response.ToJSON());
 	}
 
 private:
-	void ValidateInput(const CreateWalletCriteria& criteria) const
+	void ValidateInput(const RestoreWalletCriteria& criteria) const
 	{
 		// TODO: Should we allow usernames to contain spaces or special characters?
 
@@ -59,7 +59,7 @@ private:
 			);
 		}
 
-		const int numWords = criteria.GetNumWords();
+		const size_t numWords = StringUtil::Split((const std::string&)criteria.GetSeedWords(), " ").size();
 		if (numWords < 12 || numWords > 24 || numWords % 3 != 0)
 		{
 			throw API_EXCEPTION_F(

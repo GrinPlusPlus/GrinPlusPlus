@@ -6,40 +6,40 @@
 #include <Common/Secure.h>
 #include <optional>
 
-class CreateWalletCriteria : public Traits::IJsonable
+class RestoreWalletCriteria : public Traits::IJsonable
 {
 public:
-    CreateWalletCriteria(
+    RestoreWalletCriteria(
         const std::string& username,
         SecureString&& password,
-        const int numWords
-    ) : m_username(username), m_password(std::move(password)), m_numWords(numWords) { }
-    virtual ~CreateWalletCriteria() = default;
+        SecureString&& seedWords
+    ) : m_username(username), m_password(std::move(password)), m_seedWords(std::move(seedWords)) { }
+    virtual ~RestoreWalletCriteria() = default;
 
     const std::string& GetUsername() const noexcept { return m_username; }
     const SecureString& GetPassword() const noexcept { return m_password; }
-    int GetNumWords() const noexcept { return m_numWords; }
+    const SecureString& GetSeedWords() const noexcept { return m_seedWords; }
 
-    static CreateWalletCriteria FromJSON(const Json::Value& paramsJson)
+    static RestoreWalletCriteria FromJSON(const Json::Value& paramsJson)
     {
         if (paramsJson.isObject())
         {
             auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "username");
             auto passwordOpt = JsonUtil::GetStringOpt(paramsJson, "password");
-            auto numWordsOpt = JsonUtil::GetUInt64Opt(paramsJson, "num_seed_words");
-            if (usernameOpt.has_value() && passwordOpt.has_value() && numWordsOpt.has_value())
+            auto walletSeedOpt = JsonUtil::GetStringOpt(paramsJson, "wallet_seed");
+            if (usernameOpt.has_value() && passwordOpt.has_value() && walletSeedOpt.has_value())
             {
-                return CreateWalletCriteria(
+                return RestoreWalletCriteria(
                     StringUtil::Trim(StringUtil::ToLower(usernameOpt.value())),
                     SecureString(passwordOpt.value()),
-                    (int)numWordsOpt.value()
+                    SecureString(walletSeedOpt.value())
                 );
             }
         }
 
         throw API_EXCEPTION(
             RPC::ErrorCode::INVALID_PARAMS,
-            "Expected object with 3 parameters (username, password, num_seed_words)"
+            "Expected object with 3 parameters (username, password, wallet_seed)"
         );
     }
 
@@ -48,12 +48,12 @@ public:
         Json::Value result;
         result["username"] = m_username;
         result["password"] = m_password.c_str();
-        result["num_seed_words"] = m_numWords;
+        result["wallet_seed"] = m_seedWords.c_str();
         return result;
     }
 
 private:
     std::string m_username;
     SecureString m_password;
-    int m_numWords;
+    SecureString m_seedWords;
 };

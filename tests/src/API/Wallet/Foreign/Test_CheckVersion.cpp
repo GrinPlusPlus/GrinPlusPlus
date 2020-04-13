@@ -37,16 +37,23 @@ TEST_CASE("CheckVersionResponse")
 TEST_CASE("API: check_version")
 {
     TestServer::Ptr pTestServer = TestServer::Create();
-    IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(*pTestServer->GetConfig(), pTestServer->GetNodeClient());
-    auto token = pWalletManager->InitializeNewWallet(CreateWalletCriteria("TestUser", "password", 24)).second;
-
-    auto pForeignServer = ForeignServer::Create(*pTestServer->GetConfig(), *pWalletManager, token);
-    const uint16_t portNumber = pForeignServer->GetPortNumber();
+    IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(
+        *pTestServer->GetConfig(),
+        pTestServer->GetNodeClient()
+    );
+    auto createWalletResponse = pWalletManager->InitializeNewWallet(
+        CreateWalletCriteria("TestUser", "password", 24)
+    );
 
     RPC::Request request = RPC::Request::BuildRequest("check_version");
 
     auto pClient = std::make_shared<HttpRpcClient>();
-    auto response = pClient->Invoke("127.0.0.1", "/v2/foreign", portNumber, request);
+    auto response = pClient->Invoke(
+        "127.0.0.1",
+        "/v2/foreign",
+        createWalletResponse.GetListenerPort(),
+        request
+    );
 
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());

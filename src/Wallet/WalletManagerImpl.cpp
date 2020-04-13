@@ -29,7 +29,7 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 }
 
-std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const CreateWalletCriteria& criteria)
+CreateWalletResponse WalletManager::InitializeNewWallet(const CreateWalletCriteria& criteria)
 {
 	WALLET_INFO_F(
 		"Creating new wallet with username {} and numWords {}",
@@ -42,37 +42,42 @@ std::pair<SecureString, SessionToken> WalletManager::InitializeNewWallet(const C
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, criteria.GetPassword());
 	SecureString walletWords = Mnemonic::CreateMnemonic((const std::vector<uint8_t>&)walletSeed);
 
-	const std::string usernameLower = criteria.GetUsername();
-	m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
+	m_pWalletStore->CreateWallet(criteria.GetUsername(), encryptedSeed);
 
-	WALLET_INFO_F("Wallet created with username: {}", usernameLower);
+	WALLET_INFO_F("Wallet created with username: {}", criteria.GetUsername());
 
-	SessionToken token = m_sessionManager.Write()->Login(usernameLower, walletSeed);
+	SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), walletSeed);
 
-	return std::make_pair(std::move(walletWords), std::move(token));
+	auto wallet = m_sessionManager.Read()->GetWallet(token);
+	const uint16_t listenerPort = wallet.Read()->GetListenerPort();
+	std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
+
+	return CreateWalletResponse(token, listenerPort, walletWords, torAddressOpt);
 }
 
-std::optional<SessionToken> WalletManager::RestoreFromSeed(
-	const std::string& username,
-	const SecureString& password,
-	const SecureString& walletWords)
+LoginResponse WalletManager::RestoreFromSeed(const RestoreWalletCriteria& criteria)
 {
-	WALLET_INFO_F("Attempting to restore account with username: {}", username);
+	WALLET_INFO_F("Attempting to restore account with username: {}", criteria.GetUsername());
 	try
 	{
-		SecureVector entropy = Mnemonic::ToEntropy(walletWords);
+		SecureVector entropy = Mnemonic::ToEntropy(criteria.GetSeedWords());
 
-		const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(entropy, password);
-		const std::string usernameLower = StringUtil::ToLower(username);
+		const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(entropy, criteria.GetPassword());
 
-		m_pWalletStore->CreateWallet(usernameLower, encryptedSeed);
+		m_pWalletStore->CreateWallet(criteria.GetUsername(), encryptedSeed);
 
-		WALLET_INFO_F("Wallet restored for username: {}", username);
-		return std::make_optional(m_sessionManager.Write()->Login(usernameLower, entropy));
+		WALLET_INFO_F("Wallet restored for username: {}", criteria.GetUsername());
+		SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), entropy);
+
+		auto wallet = m_sessionManager.Read()->GetWallet(token);
+		const uint16_t listenerPort = wallet.Read()->GetListenerPort();
+		std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
+
+		return LoginResponse(token, listenerPort, torAddressOpt);
 	}
 	catch (std::exception& e)
 	{
-		WALLET_WARNING_F("Mnemonic invalid for username ({}). Error: {}", username, e.what());
+		WALLET_WARNING_F("Mnemonic invalid for username ({}). Error: {}", criteria.GetUsername(), e.what());
 		throw InvalidMnemonicException();
 	}
 }
@@ -138,23 +143,25 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 	return m_pWalletStore->GetAccounts();
 }
 
-SessionToken WalletManager::Login(const std::string& username, const SecureString& password)
+LoginResponse WalletManager::Login(const LoginCriteria& criteria)
 {
-	WALLET_INFO_F("Attempting to login with username: {}", username);
+	WALLET_INFO_F("Attempting to login with username: {}", criteria.GetUsername());
 
 	try
 	{
-		const std::string usernameLower = StringUtil::ToLower(username);
-		SessionToken token = m_sessionManager.Write()->Login(usernameLower, password);
+		SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), criteria.GetPassword());
 
-		WALLET_INFO_F("Login successful for username: {}", username);
+		WALLET_INFO_F("Login successful for username: {}", criteria.GetUsername());
 		CheckForOutputs(token, false);
+		auto wallet = m_sessionManager.Read()->GetWallet(token);
+		const uint16_t listenerPort = wallet.Read()->GetListenerPort();
+		std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
 
-		return token;
+		return LoginResponse(token, listenerPort, torAddressOpt);
 	}
 	catch (std::exception& e)
 	{
-		WALLET_ERROR_F("Error ({}) while attempting to login as: {}", e.what(), username);
+		WALLET_ERROR_F("Error ({}) while attempting to login as: {}", e.what(), criteria.GetUsername());
 		throw WALLET_EXCEPTION(e.what());
 	}
 }

@@ -13,6 +13,10 @@
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
 #include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
+#include <API/Wallet/Owner/Models/CreateWalletResponse.h>
+#include <API/Wallet/Owner/Models/RestoreWalletCriteria.h>
+#include <API/Wallet/Owner/Models/LoginCriteria.h>
+#include <API/Wallet/Owner/Models/LoginResponse.h>
 #include <API/Wallet/Owner/Models/SendCriteria.h>
 #include <API/Wallet/Owner/Models/ReceiveCriteria.h>
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>
@@ -38,17 +42,13 @@ public:
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.
 	//
-	virtual std::pair<SecureString, SessionToken> InitializeNewWallet(const CreateWalletCriteria& criteria) = 0;
+	virtual CreateWalletResponse InitializeNewWallet(const CreateWalletCriteria& criteria) = 0;
 
 	//
 	// Creates a wallet from existing wallet words (BIP39 mnemonics).
 	// Restoring outputs must be done separately.
 	//
-	virtual std::optional<SessionToken> RestoreFromSeed(
-		const std::string& username,
-		const SecureString& password,
-		const SecureString& walletWords
-	) = 0;
+	virtual LoginResponse RestoreFromSeed(const RestoreWalletCriteria& criteria) = 0;
 
 	//
 	// Returns the logged in user's wallet words.
@@ -71,10 +71,7 @@ public:
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
-	virtual SessionToken Login(
-		const std::string& username,
-		const SecureString& password
-	) = 0;
+	virtual LoginResponse Login(const LoginCriteria& criteria) = 0;
 
 	//
 	// Deletes the session information.

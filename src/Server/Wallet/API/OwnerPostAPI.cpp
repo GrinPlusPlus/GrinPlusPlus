@@ -90,15 +90,11 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "password missing.");
 	}
 
-	std::pair<SecureString, SessionToken> wallet = walletManager.InitializeNewWallet(
+	auto response = walletManager.InitializeNewWallet(
 		CreateWalletCriteria(usernameOpt.value(), SecureString(passwordOpt.value()), 24)
 	);
 
-	Json::Value responseJSON;
-	responseJSON["wallet_seed"] = std::string(wallet.first);
-	responseJSON["session_token"] = std::string(wallet.second.ToBase64());
-
-	return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
+	return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
 }
 
 int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManager)
@@ -117,19 +113,10 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 
 	try
 	{
-		SessionToken sessionToken = walletManager.Login(usernameOpt.value(), SecureString(passwordOpt.value()));
-		Json::Value responseJSON;
-		responseJSON["session_token"] = sessionToken.ToBase64();
-
-		const std::optional<TorAddress> torAddressOpt = walletManager.GetTorAddress(sessionToken);
-		if (torAddressOpt.has_value())
-		{
-			responseJSON["tor_address"] = torAddressOpt.value().ToString();
-		}
-
-		responseJSON["listener_port"] = walletManager.GetListenerPort(sessionToken);
-
-		return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
+		auto response = walletManager.Login(
+			LoginCriteria(usernameOpt.value(), SecureString(passwordOpt.value()))
+		);
+		return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
 	}
 	catch (const WalletException&)
 	{
@@ -161,23 +148,16 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 	const Json::Value walletWordsJSON = JsonUtil::GetRequiredField(json, "wallet_seed");
 
 	const std::string username = usernameOpt.value();
-	const SecureString password(passwordOpt.value());
-	const SecureString walletWords(walletWordsJSON.asString());
+	SecureString password(passwordOpt.value());
+	SecureString walletWords(walletWordsJSON.asString());
 
 	try
 	{
-		std::optional<SessionToken> tokenOpt = walletManager.RestoreFromSeed(username, password, walletWords);
-		if (tokenOpt.has_value())
-		{
-			Json::Value responseJSON;
-			responseJSON["session_token"] = std::string(tokenOpt.value().ToBase64());
+		auto response = walletManager.RestoreFromSeed(
+			RestoreWalletCriteria(username, std::move(password), std::move(walletWords))
+		);
 
-			return HTTPUtil::BuildSuccessResponse(pConnection, responseJSON.toStyledString());
-		}
-		else
-		{
-			return HTTPUtil::BuildInternalErrorResponse(pConnection, "Username already exists.");
-		}
+		return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
 	}
 	catch (const InvalidMnemonicException&)
 	{

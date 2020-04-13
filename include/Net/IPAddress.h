@@ -4,6 +4,12 @@
 #include <Core/Traits/Serializable.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Core/Serialization/ByteBuffer.h>
+
+#ifdef _WIN32
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#endif
 #include <asio/ip/address.hpp>
 
 class IPAddress : public Traits::IPrintable, public Traits::ISerializable

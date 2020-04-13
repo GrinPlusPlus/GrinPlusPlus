@@ -15,5 +15,5 @@ else(WIN32)
     find_library(OS_SPECIFIC_LIBS pthread)
 endif(WIN32)
 
-add_dependencies(${TARGET_NAME} Crypto jsoncpp roaring fmt)
-target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp roaring fmt)
+add_dependencies(${TARGET_NAME} Crypto jsoncpp_lib roaring::roaring fmt::fmt)
+target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp_lib roaring::roaring fmt::fmt)

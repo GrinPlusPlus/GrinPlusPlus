@@ -14,5 +14,5 @@ else(GRINPP_STATIC)
 	add_library(${TARGET_NAME} SHARED ${SOURCE_CODE})
 endif(GRINPP_STATIC)
 
-target_link_libraries(${TARGET_NAME})
+target_link_libraries(${TARGET_NAME} fmt::fmt)
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_INFRASTRUCTURE)

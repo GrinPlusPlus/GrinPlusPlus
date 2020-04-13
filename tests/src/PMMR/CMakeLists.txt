@@ -12,5 +12,5 @@ add_executable(${TARGET_NAME} ${PMMR_SRC}  ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
 target_include_directories(${TARGET_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
-add_dependencies(${TARGET_NAME} Infrastructure BlockChain TxPool Database Crypto Core Minizip jsoncpp PMMR)
-target_link_libraries(${TARGET_NAME} Infrastructure BlockChain TxPool Database Crypto Core zlib Minizip jsoncpp PMMR)
+add_dependencies(${TARGET_NAME} Infrastructure BlockChain TxPool Database Crypto Core minizip::minizip jsoncpp_lib PMMR)
+target_link_libraries(${TARGET_NAME} Infrastructure BlockChain TxPool Database Crypto Core ZLIB::ZLIB minizip::minizip jsoncpp_lib PMMR)

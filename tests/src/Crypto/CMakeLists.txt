@@ -6,5 +6,5 @@ file(GLOB SOURCE_CODE
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO INCLUDE_TEST_MATH)
-add_dependencies(${TARGET_NAME} Crypto fmt)
-target_link_libraries(${TARGET_NAME} Crypto fmt)
+add_dependencies(${TARGET_NAME} Crypto fmt::fmt)
+target_link_libraries(${TARGET_NAME} Crypto fmt::fmt)

@@ -1,7 +1,7 @@
 #include "DNSSeeder.h"
 
 #include <Infrastructure/Logger.h>
-#include <asio.hpp>
+#include <asio.h>
 
 DNSSeeder::DNSSeeder(const Config& config)
 	: m_config(config)

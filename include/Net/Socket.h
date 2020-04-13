@@ -9,7 +9,7 @@
 #include <memory>
 #include <atomic>
 #include <shared_mutex>
-#include <asio.hpp>
+#include <asio.h>
 
 class Socket : public Traits::IPrintable
 {

@@ -1,6 +1,6 @@
 #include "Node/NodeDaemon.h"
 #include "Wallet/WalletDaemon.h"
-#include "civetweb/include/civetweb.h"
+#include <civetweb.h>
 
 #include <Core/Context.h>
 #include <Wallet/WalletManager.h>

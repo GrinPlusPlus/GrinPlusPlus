@@ -1,7 +1,6 @@
 #pragma once
 
-#include "civetweb/include/civetweb.h"
-
+#include <civetweb.h>
 #include <Net/Clients/HTTP/HTTP.h>
 #include <Net/Clients/HTTP/HTTPException.h>
 #include <Common/Util/StringUtil.h>

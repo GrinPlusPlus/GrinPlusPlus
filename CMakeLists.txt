@@ -50,6 +50,10 @@ if(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /OPT:REF /INCREMENTAL:NO")
+
+    
+    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 else ()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-deprecated-copy -Wno-pessimizing-move")
   SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
@@ -60,7 +64,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(WITH_GFLAGS OFF)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
-add_definitions(-DASIO_STANDALONE)
+#add_definitions(-DASIO_STANDALONE)
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 include(CheckFunctionExists)
@@ -73,19 +77,12 @@ endif ()
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/deps
-    ${PROJECT_SOURCE_DIR}/deps/mio/include
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
-    ${PROJECT_SOURCE_DIR}/deps/asio/asio/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
-    ${PROJECT_SOURCE_DIR}/deps/rocksdb-6.7.3/include
-    ${PROJECT_SOURCE_DIR}/deps/fmt/include
-    ${PROJECT_SOURCE_DIR}/deps/jsoncpp
-    ${PROJECT_SOURCE_DIR}/deps/zlib
     ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/ed25519-donna
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
     ${PROJECT_SOURCE_DIR}/deps/scheduler/include
-    ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -95,13 +92,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 # Dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+add_definitions(-DUNICODE)
+
+include(vcpkg_deps)
 include(sqlite3)
-include(minizip)
-include(jsoncpp)
-include(zlib)
-include(rocksdb)
-include(croaring)
-include(civetweb)
+#include(croaring)
 include(uint128)
 include(ctaes)
 include(scrypt)
@@ -114,8 +109,6 @@ add_subdirectory(deps/ed25519-donna)
 #add_subdirectory(deps/stduuid)
 
 # Grin++ Projects
-add_definitions(-DUNICODE)
-include(fmtlib)
 add_definitions(-DSPDLOG_WCHAR_FILENAMES)
 option(GRINPP_TESTS "Build tests" true)
 option(GRINPP_STATIC "Static build" true)

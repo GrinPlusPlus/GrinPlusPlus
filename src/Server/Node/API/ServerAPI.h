@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../civetweb/include/civetweb.h"
+#include <civetweb.h>
 #include <string>
 
 // Forward Declarations

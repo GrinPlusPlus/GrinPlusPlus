@@ -27,9 +27,10 @@ namespace DatabaseAPI
 		{
 			return Database::Open(config);
 		}
-		catch (DatabaseException&)
+		catch (DatabaseException& e)
 		{
-			throw;
+			LOG_ERROR_F("Database exception thrown: {}", e.what());
+			throw e;
 		}
 		catch (std::exception& e)
 		{

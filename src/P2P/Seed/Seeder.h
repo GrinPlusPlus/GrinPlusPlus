@@ -12,7 +12,7 @@
 #include <atomic>
 #include <thread>
 #include <optional>
-#include <asio.hpp>
+#include <asio.h>
 
 // Forward Declarations
 class Connection;

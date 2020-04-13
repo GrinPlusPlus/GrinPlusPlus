@@ -1,0 +1,33 @@
+#pragma once
+
+#include <Core/Util/JsonUtil.h>
+#include <Wallet/WalletManager.h>
+#include <Net/Servers/RPC/RPCMethod.h>
+#include <Infrastructure/Logger.h>
+#include <optional>
+
+class LogoutHandler : RPCMethod
+{
+public:
+	LogoutHandler(const IWalletManagerPtr& pWalletManager)
+		: m_pWalletManager(pWalletManager) { }
+	virtual ~LogoutHandler() = default;
+
+	RPC::Response Handle(const RPC::Request& request) const final
+	{
+		if (!request.GetParams().has_value())
+		{
+			throw DESERIALIZATION_EXCEPTION();
+		}
+
+		Json::Value tokenJson = JsonUtil::GetRequiredField(request.GetParams().value(), "session_token");
+		SessionToken token = SessionToken::FromBase64(tokenJson.asString());
+
+		m_pWalletManager->Logout(token);
+
+		return request.BuildResult(Json::Value());
+	}
+
+private:
+	IWalletManagerPtr m_pWalletManager;
+};

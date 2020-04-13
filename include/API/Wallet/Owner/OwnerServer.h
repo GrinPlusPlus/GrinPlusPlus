@@ -5,6 +5,7 @@
 #include <API/Wallet/Owner/Handlers/CreateWalletHandler.h>
 #include <API/Wallet/Owner/Handlers/RestoreWalletHandler.h>
 #include <API/Wallet/Owner/Handlers/LoginHandler.h>
+#include <API/Wallet/Owner/Handlers/LogoutHandler.h>
 #include <API/Wallet/Owner/Handlers/SendHandler.h>
 #include <API/Wallet/Owner/Handlers/ReceiveHandler.h>
 #include <API/Wallet/Owner/Handlers/FinalizeHandler.h>
@@ -99,6 +100,26 @@ public:
             }
         */
         pServer->AddMethod("login", std::shared_ptr<RPCMethod>((RPCMethod*)new LoginHandler(pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "logout",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk="
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {}
+            }
+        */
+        pServer->AddMethod("logout", std::shared_ptr<RPCMethod>((RPCMethod*)new LogoutHandler(pWalletManager)));
 
         pServer->AddMethod("send", std::shared_ptr<RPCMethod>((RPCMethod*)new SendHandler(config, pWalletManager)));
         pServer->AddMethod("receive", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveHandler(pWalletManager)));

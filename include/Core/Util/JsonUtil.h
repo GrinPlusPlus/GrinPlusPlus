@@ -260,6 +260,31 @@ public:
 	}
 
 	//
+	// Int64
+	//
+	static int64_t ConvertToInt64(const Json::Value& int64JSON)
+	{
+		if (int64JSON.isInt64())
+		{
+			return int64JSON.asInt64();
+		}
+		else if (int64JSON.isString())
+		{
+			return std::stoll(int64JSON.asString());
+		}
+		else
+		{
+			throw DESERIALIZATION_EXCEPTION();
+		}
+	}
+
+	static int64_t GetRequiredInt64(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return ConvertToInt64(value);
+	}
+
+	//
 	// Optional
 	//
 	template<class T>

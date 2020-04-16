@@ -20,6 +20,8 @@
 #include <API/Wallet/Owner/Models/SendCriteria.h>
 #include <API/Wallet/Owner/Models/ReceiveCriteria.h>
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>
+#include <API/Wallet/Foreign/Models/BuildCoinbaseCriteria.h>
+#include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
@@ -138,6 +140,10 @@ public:
 	virtual void CancelByTxId(
 		const SessionToken& token,
 		const uint32_t walletTxId
+	) = 0;
+
+	virtual BuildCoinbaseResponse BuildCoinbase(
+		const BuildCoinbaseCriteria& criteria
 	) = 0;
 };
 

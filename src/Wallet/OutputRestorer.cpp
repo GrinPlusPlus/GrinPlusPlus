@@ -121,7 +121,7 @@ EOutputStatus OutputRestorer::DetermineStatus(const OutputDTO& output, const uin
 	const uint64_t outputBlockHeight = output.GetLocation().GetBlockHeight();
 	const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
 
-	if (WalletUtil::IsOutputImmature(features, outputBlockHeight, currentBlockHeight, minimumConfirmations))
+	if (WalletUtil::IsOutputImmature(m_config.GetEnvironment().GetEnvironmentType(), features, outputBlockHeight, currentBlockHeight, minimumConfirmations))
 	{
 		return EOutputStatus::IMMATURE;
 	}

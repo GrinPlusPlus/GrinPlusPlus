@@ -59,6 +59,8 @@ public:
 
 	void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 
+	BuildCoinbaseResponse BuildCoinbase(const BuildCoinbaseCriteria& criteria) final;
+
 private:
 	const Config& m_config;
 	INodeClientPtr m_pNodeClient;

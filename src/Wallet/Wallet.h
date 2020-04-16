@@ -16,6 +16,7 @@
 #include <Core/Traits/Lockable.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BulletproofType.h>
+#include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <string>
 
 class Wallet
@@ -52,6 +53,12 @@ public:
 		const uint32_t walletTxId,
 		const EBulletproofType& bulletproofType,
 		const std::optional<std::string>& messageOpt
+	);
+
+	BuildCoinbaseResponse CreateCoinbase(
+		const SecureVector& masterSeed,
+		const uint64_t fees,
+		const std::optional<KeyChainPath>& keyChainPathOpt
 	);
 
 private:

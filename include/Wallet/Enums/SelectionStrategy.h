@@ -29,4 +29,22 @@ namespace SelectionStrategy
 
 		throw DESERIALIZATION_EXCEPTION();
 	}
+
+	static std::string ToString(const ESelectionStrategy& strategy)
+	{
+		if (strategy == ESelectionStrategy::SMALLEST)
+		{
+			return "SMALLEST";
+		}
+		else if (strategy == ESelectionStrategy::CUSTOM)
+		{
+			return "CUSTOM";
+		}
+		else if (strategy == ESelectionStrategy::ALL)
+		{
+			return "ALL";
+		}
+
+		throw DESERIALIZATION_EXCEPTION();
+	}
 }

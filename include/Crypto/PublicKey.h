@@ -8,16 +8,15 @@ class PublicKey
 {
 public:
 	PublicKey(CBigInteger<33>&& compressedKey)
-		: m_compressedKey(std::move(compressedKey))
-	{
+		: m_compressedKey(std::move(compressedKey)) { }
 
-	}
+	bool operator==(const PublicKey& rhs) const noexcept { return m_compressedKey == rhs.m_compressedKey; }
 
-	inline const CBigInteger<33>& GetCompressedBytes() const { return m_compressedKey; }
-	inline const std::vector<unsigned char>& GetCompressedVec() const { return m_compressedKey.GetData(); }
+	const CBigInteger<33>& GetCompressedBytes() const noexcept { return m_compressedKey; }
+	const std::vector<unsigned char>& GetCompressedVec() const noexcept { return m_compressedKey.GetData(); }
 
-	inline const unsigned char* data() const { return m_compressedKey.data(); }
-	inline size_t size() const { return m_compressedKey.size(); }
+	const unsigned char* data() const noexcept { return m_compressedKey.data(); }
+	size_t size() const noexcept { return m_compressedKey.size(); }
 
 	void Serialize(Serializer& serializer) const
 	{

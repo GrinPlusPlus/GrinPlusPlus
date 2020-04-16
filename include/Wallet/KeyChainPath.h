@@ -40,6 +40,37 @@ public:
 		return path;
 	}
 
+	static KeyChainPath FromHex(const std::string& hex)
+	{
+		std::vector<uint32_t> keyIndices;
+
+		ByteBuffer buffer(HexUtil::FromHex(hex));
+		const uint8_t size = buffer.ReadU8();
+		if (size > 4)
+		{
+			throw DESERIALIZATION_EXCEPTION();
+		}
+
+		for (uint8_t i = 0; i < size; i++)
+		{
+			keyIndices.push_back(buffer.ReadU32());
+		}
+
+		return KeyChainPath(std::move(keyIndices));
+	}
+
+	std::string ToHex() const noexcept
+	{
+		Serializer serializer;
+		serializer.Append<uint8_t>((uint8_t)m_keyIndices.size());
+		serializer.Append<uint32_t>(m_keyIndices.size() > 0 ? m_keyIndices[0] : 0);
+		serializer.Append<uint32_t>(m_keyIndices.size() > 1 ? m_keyIndices[1] : 0);
+		serializer.Append<uint32_t>(m_keyIndices.size() > 2 ? m_keyIndices[2] : 0);
+		serializer.Append<uint32_t>(m_keyIndices.size() > 3 ? m_keyIndices[3] : 0);
+
+		return HexUtil::ConvertToHex(serializer.GetBytes(), serializer.size());
+	}
+
 	KeyChainPath GetFirstChild() const
 	{
 		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;

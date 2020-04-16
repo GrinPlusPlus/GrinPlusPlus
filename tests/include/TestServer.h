@@ -85,7 +85,12 @@ public:
 	IBlockChainServer* GetBlockChainServer() const noexcept { return m_pBlockChainServer.get(); }
 	std::shared_ptr<INodeClient> GetNodeClient() const noexcept { return std::shared_ptr<INodeClient>(new TestNodeClient(m_pDatabase, *m_pTxHashSetManager, m_pTxPool, m_pBlockChainServer)); }
 
-	fs::path GenerateTempDir() { return m_pConfig->GetDataDirectory() / "TEMP" / std::to_string(m_tempDirs++); }
+	fs::path GenerateTempDir()
+	{ 
+		fs::path path = m_pConfig->GetDataDirectory() / "TEMP" / std::to_string(m_tempDirs++);
+		fs::create_directories(path);
+		return path;
+	}
 
 private:
 	ConfigPtr m_pConfig;

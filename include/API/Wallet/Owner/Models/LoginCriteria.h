@@ -13,6 +13,12 @@ public:
         const std::string& username,
         SecureString&& password
     ) : m_username(username), m_password(std::move(password)) { }
+
+    LoginCriteria(
+        const std::string& username,
+        const SecureString& password
+    ) : m_username(username), m_password(password) { }
+
     virtual ~LoginCriteria() = default;
 
     const std::string& GetUsername() const noexcept { return m_username; }

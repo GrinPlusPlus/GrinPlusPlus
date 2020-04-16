@@ -4,6 +4,7 @@
 #include <Infrastructure/Logger.h>
 #include <Crypto/CryptoException.h>
 #include <Core/Exceptions/WalletException.h>
+#include <Consensus/Common.h>
 #include <unordered_set>
 
 Wallet::Wallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWalletDB> walletDB, const std::string& username, KeyChainPath&& userPath)
@@ -115,6 +116,70 @@ OutputDataEntity Wallet::CreateBlindedOutput(
 		EOutputStatus::NO_CONFIRMATIONS,
 		std::make_optional(walletTxId),
 		messageOpt
+	);
+}
+
+BuildCoinbaseResponse Wallet::CreateCoinbase(
+	const SecureVector& masterSeed,
+	const uint64_t fees,
+	const std::optional<KeyChainPath>& keyChainPathOpt)
+{
+	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+
+	auto pDatabase = m_walletDB.BatchWrite();
+
+	const uint64_t amount = Consensus::REWARD + fees;
+	const KeyChainPath keyChainPath = keyChainPathOpt.value_or(
+		pDatabase->GetNextChildPath(m_userPath)
+	);
+	SecretKey blindingFactor = keyChain.DerivePrivateKey(keyChainPath, amount);
+	Commitment commitment = Crypto::CommitBlinded(
+		amount,
+		BlindingFactor(blindingFactor.GetBytes())
+	);
+
+	RangeProof rangeProof = keyChain.GenerateRangeProof(
+		keyChainPath,
+		amount,
+		commitment,
+		blindingFactor,
+		EBulletproofType::ENHANCED
+	);
+
+	BlindingFactor txOffset(Hash::ValueOf(0));
+	Commitment kernelCommitment = Crypto::AddCommitments(
+		{ commitment },
+		{ Crypto::CommitTransparent(amount) }
+	);
+
+	TransactionOutput output(
+		EOutputFeatures::COINBASE_OUTPUT,
+		std::move(commitment),
+		std::move(rangeProof)
+	);
+
+	Serializer serializer;
+	serializer.Append<uint8_t>((uint8_t)EKernelFeatures::COINBASE_KERNEL);
+
+	auto pSignature = Crypto::BuildCoinbaseSignature(
+		blindingFactor,
+		kernelCommitment,
+		Crypto::Blake2b(serializer.GetBytes())
+	);
+	TransactionKernel kernel(
+		EKernelFeatures::COINBASE_KERNEL,
+		0,
+		0,
+		std::move(kernelCommitment),
+		Signature(*pSignature)
+	);
+
+	pDatabase->Commit();
+
+	return BuildCoinbaseResponse(
+		std::move(kernel),
+		std::move(output),
+		std::move(keyChainPath)
 	);
 }
 

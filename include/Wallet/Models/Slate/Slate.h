@@ -49,6 +49,19 @@ public:
 
 	}
 
+	bool operator==(const Slate& rhs) const noexcept
+	{
+		return m_slateId == rhs.m_slateId &&
+			m_versionInfo == rhs.m_versionInfo &&
+			m_amount == rhs.m_amount &&
+			m_fee == rhs.m_fee &&
+			m_lockHeight == rhs.m_lockHeight &&
+			m_blockHeight == rhs.m_blockHeight &&
+			m_transaction == rhs.m_transaction &&
+			m_participantData == rhs.m_participantData &&
+			m_proofOpt == rhs.m_proofOpt;
+	}
+
 	const uuids::uuid& GetSlateId() const { return m_slateId; }
 	const SlateVersionInfo& GetVersionInfo() const { return m_versionInfo; }
 	uint64_t GetAmount() const { return m_amount; }

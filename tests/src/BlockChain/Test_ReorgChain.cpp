@@ -35,7 +35,7 @@ TEST_CASE("REORG 1")
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChainServer = pTestServer->GetBlockChainServer();
 
-	TestChain chain1(pTestServer, keyChain);
+	TestChain chain1(pTestServer);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -131,7 +131,7 @@ TEST_CASE("REORG 2")
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChainServer = pTestServer->GetBlockChainServer();
 
-	TestChain chain1(pTestServer, keyChain);
+	TestChain chain1(pTestServer);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -235,7 +235,7 @@ TEST_CASE("REORG 3")
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChainServer = pTestServer->GetBlockChainServer();
 
-	TestChain chain1(pTestServer, keyChain);
+	TestChain chain1(pTestServer);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });

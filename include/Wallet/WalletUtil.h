@@ -19,6 +19,7 @@ public:
 	}
 
 	static bool IsOutputImmature(
+		const EEnvironmentType environment,
 		const EOutputFeatures features,
 		const uint64_t outputBlockHeight,
 		const uint64_t currentBlockHeight,
@@ -26,7 +27,7 @@ public:
 	{
 		if (features == COINBASE_OUTPUT)
 		{
-			return (outputBlockHeight + Consensus::COINBASE_MATURITY) >= currentBlockHeight;
+			return Consensus::GetMaxCoinbaseHeight(environment, currentBlockHeight) <= outputBlockHeight;
 		}
 		else
 		{

@@ -32,6 +32,7 @@ public:
 	//
 	Signature& operator=(const Signature& other) = default;
 	Signature& operator=(Signature&& other) noexcept = default;
+	bool operator==(const Signature& rhs) const noexcept { return m_signatureBytes == rhs.m_signatureBytes; }
 
 	//
 	// Getters

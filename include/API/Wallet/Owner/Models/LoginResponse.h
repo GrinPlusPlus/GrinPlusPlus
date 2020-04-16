@@ -15,6 +15,10 @@ public:
     ) : m_token(token), m_listenerPort(listenerPort), m_torAddress(torAddressOpt) { }
     virtual ~LoginResponse() = default;
 
+    const SessionToken& GetToken() const noexcept { return m_token; }
+    uint16_t GetPort() const noexcept { return m_listenerPort; }
+    const std::optional<TorAddress>& GetTorAddress() const noexcept { return m_torAddress; }
+
     Json::Value ToJSON() const noexcept final
     {
         Json::Value result;

@@ -14,7 +14,10 @@ public:
 
 	}
 
-	uint32_t GetId() const { return m_walletTx.GetId(); }
+	uint32_t GetId() const noexcept { return m_walletTx.GetId(); }
+	const WalletTx& GetTx() const noexcept { return m_walletTx; }
+	const std::vector<Commitment>& GetKernels() const noexcept { return m_kernels; }
+	const std::vector<WalletOutputDTO>& GetOutputs() const noexcept { return m_outputs; }
 
 	Json::Value ToJSON() const
 	{

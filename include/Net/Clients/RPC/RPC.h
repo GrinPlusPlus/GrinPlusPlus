@@ -35,7 +35,7 @@ public:
 
 	static Error Parse(const Json::Value& error)
 	{
-		int code = (int)JsonUtil::GetRequiredUInt64(error, "code");
+		int code = (int)JsonUtil::GetRequiredInt64(error, "code");
 		std::string message = JsonUtil::GetRequiredString(error, "message");
 		std::optional<Json::Value> data = JsonUtil::GetOptionalField(error, "data");
 

@@ -10,14 +10,14 @@
 class APIException : public GrinException
 {
 public:
-	APIException(const RPC::ErrorCode& ec, const std::string& message, const std::string& function)
+	APIException(const int ec, const std::string& message, const std::string& function)
 		: GrinException(message, function), m_errorCode(ec)
 	{
 
 	}
 
-	RPC::ErrorCode GetErrorCode() const noexcept { return m_errorCode; }
+	int GetErrorCode() const noexcept { return m_errorCode; }
 
 private:
-	RPC::ErrorCode m_errorCode;
+	int m_errorCode;
 };

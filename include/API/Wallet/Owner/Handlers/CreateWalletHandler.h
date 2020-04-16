@@ -9,6 +9,7 @@
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
 #include <API/Wallet/Owner/Models/CreateWalletResponse.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class CreateWalletHandler : RPCMethod
@@ -37,15 +38,14 @@ private:
 	void ValidateInput(const CreateWalletCriteria& criteria) const
 	{
 		// TODO: Should we allow usernames to contain spaces or special characters?
-
 		std::vector<std::string> accounts = m_pWalletManager->GetAllAccounts();
 		for (const std::string& account : accounts)
 		{
 			if (StringUtil::ToLower(account) == criteria.GetUsername())
 			{
 				throw API_EXCEPTION_F(
-					RPC::ErrorCode::INVALID_PARAMS,
-					"Username {} already exists",
+					RPC::Errors::USER_ALREADY_EXISTS.GetCode(),
+					"Username '{}' already exists",
 					criteria.GetUsername()
 				);
 			}
@@ -54,7 +54,7 @@ private:
 		if (criteria.GetPassword().empty())
 		{
 			throw API_EXCEPTION(
-				RPC::ErrorCode::INVALID_PARAMS,
+				RPC::Errors::PASSWORD_CRITERIA_NOT_MET.GetCode(),
 				"Password cannot be empty"
 			);
 		}
@@ -63,7 +63,7 @@ private:
 		if (numWords < 12 || numWords > 24 || numWords % 3 != 0)
 		{
 			throw API_EXCEPTION_F(
-				RPC::ErrorCode::INVALID_PARAMS,
+				RPC::Errors::INVALID_NUM_SEED_WORDS.GetCode(),
 				"Invalid num_seed_words ({}). Only 12, 15, 18, 21, and 24 are supported.",
 				numWords
 			);

@@ -19,6 +19,13 @@ public:
 
 	}
 
+	bool operator==(const SlateVersionInfo& rhs) const noexcept
+	{
+		return m_version == rhs.m_version &&
+			m_originalVersion == rhs.m_originalVersion &&
+			m_blockHeaderVersion == rhs.m_blockHeaderVersion;
+	}
+
 	uint16_t GetVersion() const { return m_version; }
 	uint16_t GetOriginalVersion() const { return m_originalVersion; }
 	uint16_t GetBlockHeaderVersion() const { return m_blockHeaderVersion; }

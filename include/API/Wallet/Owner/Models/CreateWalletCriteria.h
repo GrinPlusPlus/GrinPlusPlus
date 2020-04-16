@@ -14,6 +14,13 @@ public:
         SecureString&& password,
         const int numWords
     ) : m_username(username), m_password(std::move(password)), m_numWords(numWords) { }
+
+    CreateWalletCriteria(
+        const std::string& username,
+        const SecureString& password,
+        const int numWords
+    ) : m_username(username), m_password(password), m_numWords(numWords) { }
+
     virtual ~CreateWalletCriteria() = default;
 
     const std::string& GetUsername() const noexcept { return m_username; }

@@ -246,7 +246,7 @@ public:
 		        }
 	        }
         */
-        pServer->AddMethod("build_coinbase", std::shared_ptr<RPCMethod>((RPCMethod*)new BuildCoinbaseHandler()));
+        pServer->AddMethod("build_coinbase", std::shared_ptr<RPCMethod>((RPCMethod*)new BuildCoinbaseHandler(walletManager)));
 
 
         return std::shared_ptr<ForeignServer>(new ForeignServer(config, pServer));

@@ -162,7 +162,7 @@ LoginResponse WalletManager::Login(const LoginCriteria& criteria)
 	catch (std::exception& e)
 	{
 		WALLET_ERROR_F("Error ({}) while attempting to login as: {}", e.what(), criteria.GetUsername());
-		throw WALLET_EXCEPTION(e.what());
+		throw;
 	}
 }
 
@@ -438,6 +438,14 @@ void WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walle
 	{
 		CancelTx::CancelWalletTx(masterSeed, wallet.Write()->GetDatabase(), *pWalletTx);
 	}
+}
+
+BuildCoinbaseResponse WalletManager::BuildCoinbase(const BuildCoinbaseCriteria& criteria)
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
+
+	return wallet.Write()->CreateCoinbase(masterSeed, criteria.GetFees(), criteria.GetPath());
 }
 
 namespace WalletAPI

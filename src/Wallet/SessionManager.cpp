@@ -47,9 +47,8 @@ SessionToken SessionManager::Login(const std::string& username, const SecureStri
 	catch (std::exception&)
 	{
 		WALLET_ERROR("Wallet seed not decrypted. Wrong password?");
+		throw;
 	}
-
-	throw SessionTokenException();
 }
 
 SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)

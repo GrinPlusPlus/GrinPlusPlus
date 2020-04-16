@@ -31,7 +31,14 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	// Generate output
 	KeyChainPath keyChainPath = pBatch->GetNextChildPath(pWallet->GetUserPath());
 	const uint32_t walletTxId = pBatch->GetNextTransactionId();
-	OutputDataEntity outputData = pWallet->CreateBlindedOutput(masterSeed, receiveSlate.GetAmount(), keyChainPath, walletTxId, EBulletproofType::ENHANCED, messageOpt);
+	OutputDataEntity outputData = pWallet->CreateBlindedOutput(
+		masterSeed,
+		receiveSlate.GetAmount(),
+		keyChainPath,
+		walletTxId,
+		EBulletproofType::ENHANCED,
+		messageOpt
+	);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = Crypto::GenerateSecureNonce();
 
@@ -39,18 +46,37 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	AddParticipantData(receiveSlate, secretKey, secretNonce, messageOpt);
 
 	// Add output to Transaction
-	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(receiveSlate.GetTransaction(), outputData.GetOutput()));
+	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(
+		receiveSlate.GetTransaction(),
+		outputData.GetOutput()
+	));
 
-	UpdatePaymentProof(pWallet.GetShared(), pBatch.GetShared(), masterSeed, receiveSlate);
+	UpdatePaymentProof(
+		pWallet.GetShared(),
+		pBatch.GetShared(),
+		masterSeed,
+		receiveSlate
+	);
 
-	UpdateDatabase(pBatch.GetShared(), masterSeed, receiveSlate, outputData, walletTxId, addressOpt, messageOpt);
+	UpdateDatabase(
+		pBatch.GetShared(),
+		masterSeed,
+		receiveSlate,
+		outputData,
+		walletTxId,
+		addressOpt,
+		messageOpt
+	);
 
 	pBatch->Commit();
 
 	return receiveSlate;
 }
 
-bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const
+bool ReceiveSlateBuilder::VerifySlateStatus(
+	std::shared_ptr<Wallet> pWallet,
+	const SecureVector& masterSeed,
+	const Slate& slate) const
 {
 	// Slate was already received.
 	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetSlateId());
@@ -80,7 +106,11 @@ bool ReceiveSlateBuilder::VerifySlateStatus(std::shared_ptr<Wallet> pWallet, con
 	return true;
 }
 
-void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const
+void ReceiveSlateBuilder::AddParticipantData(
+	Slate& slate,
+	const SecretKey& secretKey,
+	const SecretKey& secretNonce,
+	const std::optional<std::string>& messageOpt) const
 {
 	const Hash kernelMessage = slate.GetTransaction().GetKernels().front().GetSignatureMessage();
 
@@ -94,7 +124,12 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	std::vector<ParticipantData> participants = slate.GetParticipantData();
 	participants.emplace_back(receiverData);
 
-	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(secretKey, secretNonce, participants, kernelMessage);
+	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
+		secretKey,
+		secretNonce,
+		participants,
+		kernelMessage
+	);
 	if (pPartialSignature == nullptr)
 	{
 		WALLET_ERROR_F("Failed to generate signature for slate {}", uuids::to_string(slate.GetSlateId()));
@@ -107,7 +142,11 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	if (messageOpt.has_value())
 	{
 		// TODO: Limit message length
-		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, messageOpt.value());
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(
+			secretKey,
+			publicKey,
+			messageOpt.value()
+		);
 		if (pMessageSignature == nullptr)
 		{
 			WALLET_ERROR_F("Failed to sign message for slate {}", uuids::to_string(slate.GetSlateId()));
@@ -127,7 +166,11 @@ void ReceiveSlateBuilder::AddParticipantData(Slate& slate, const SecretKey& secr
 	}
 }
 
-void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IWalletDBPtr pWalletDB, const SecureVector& masterSeed, Slate& slate) const
+void ReceiveSlateBuilder::UpdatePaymentProof(
+	std::shared_ptr<Wallet> pWallet,
+	IWalletDBPtr pWalletDB,
+	const SecureVector& masterSeed,
+	Slate& slate) const
 {
 	if (slate.GetPaymentProof().has_value())
 	{
@@ -151,7 +194,11 @@ void ReceiveSlateBuilder::UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IW
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 		SecretKey64 torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
-		Signature signature = ED25519::Sign(torKey, proof.GetReceiverAddress(), messageSerializer.GetBytes());
+		Signature signature = ED25519::Sign(
+			torKey,
+			proof.GetReceiverAddress(),
+			messageSerializer.GetBytes()
+		);
 		proof.AddSignature(std::move(signature));
 	}
 }

@@ -41,6 +41,16 @@ public:
 
 	}
 
+	bool operator==(const ParticipantData& rhs) const noexcept
+	{
+		return m_participantId == rhs.m_participantId &&
+			m_publicBlindExcess == rhs.m_publicBlindExcess &&
+			m_publicNonce == rhs.m_publicNonce &&
+			m_partialSignatureOpt == rhs.m_partialSignatureOpt &&
+			m_messageOpt == rhs.m_messageOpt &&
+			m_messageSignatureOpt == rhs.m_messageSignatureOpt;
+	}
+
 	uint64_t GetParticipantId() const { return m_participantId; }
 	const PublicKey& GetPublicBlindExcess() const { return m_publicBlindExcess; }
 	const PublicKey& GetPublicNonce() const { return m_publicNonce; }

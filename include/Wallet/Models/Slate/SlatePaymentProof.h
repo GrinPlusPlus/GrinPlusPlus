@@ -13,6 +13,13 @@ public:
 		return SlatePaymentProof(senderAddress, receiverAddress, std::nullopt);
 	}
 
+	bool operator==(const SlatePaymentProof& rhs) const noexcept
+	{
+		return m_senderAddress == rhs.m_senderAddress &&
+			m_receiverAddress == rhs.m_receiverAddress &&
+			m_receiverSignatureOpt == rhs.m_receiverSignatureOpt;
+	}
+
 	const ed25519_public_key_t& GetSenderAddress() const { return m_senderAddress; }
 	const ed25519_public_key_t& GetReceiverAddress() const { return m_receiverAddress; }
 	const std::optional<Signature>& GetReceiverSignature() const { return m_receiverSignatureOpt; }

@@ -4,6 +4,8 @@
 #include <Models/TxModels.h>
 #include <RootCalculator.h>
 #include <TestServer.h>
+#include <TestWallet.h>
+#include <TxBuilder.h>
 
 #include <Common/Util/TimeUtil.h>
 #include <Consensus/Common.h>
@@ -15,10 +17,24 @@
 class TestChain
 {
 public:
-    TestChain(const TestServer::Ptr& pServer, const KeyChain& keyChain)
-        : m_pServer(pServer), m_keyChain(keyChain)
+    TestChain(const TestServer::Ptr& pServer) : m_pServer(pServer)
     {
         m_blocks.push_back({ pServer->GetGenesisBlock(), Consensus::REWARD, std::nullopt });
+    }
+
+    std::vector<MinedBlock> MineChain(const TestWallet::Ptr& pWallet, const uint64_t totalHeight)
+    {
+        for (size_t i = 1; i <= totalHeight; i++)
+        {
+            Test::Tx coinbase = pWallet->CreateCoinbase(KeyChainPath::FromString("m/0/0/" + std::to_string(i)), 0);
+            MinedBlock block = AddNextBlock({ coinbase });
+
+            m_pServer->GetBlockChainServer()->AddBlock(block.block);
+        }
+
+        pWallet->RefreshWallet();
+
+        return m_blocks;
     }
 
     MinedBlock AddNextBlock(const std::vector<Test::Tx>& txs, const uint64_t additionalDifficulty = 0)
@@ -171,6 +187,5 @@ private:
     }
 
     TestServer::Ptr m_pServer;
-    KeyChain m_keyChain;
     std::vector<MinedBlock> m_blocks;
 };

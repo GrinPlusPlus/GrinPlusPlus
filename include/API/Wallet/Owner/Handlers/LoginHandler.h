@@ -6,6 +6,8 @@
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Infrastructure/Logger.h>
 #include <API/Wallet/Owner/Models/LoginCriteria.h>
+#include <API/Wallet/Owner/Models/Errors.h>
+#include <Wallet/Exceptions/KeyChainException.h>
 #include <optional>
 
 class LoginHandler : RPCMethod
@@ -25,9 +27,19 @@ public:
 		LoginCriteria criteria = LoginCriteria::FromJSON(request.GetParams().value());
 		ValidateInput(criteria);
 
-		auto response = m_pWalletManager->Login(criteria);
-
-		return request.BuildResult(response.ToJSON());
+		try
+		{
+			auto response = m_pWalletManager->Login(criteria);
+			return request.BuildResult(response.ToJSON());
+		}
+		catch (const KeyChainException& e)
+		{
+			LOG_ERROR_F("Invalid password? {}", e.what());
+			throw API_EXCEPTION(
+				RPC::Errors::INVALID_PASSWORD.GetCode(),
+				"Password is invalid"
+			);
+		}
 	}
 
 private:
@@ -44,7 +56,7 @@ private:
 
 		WALLET_ERROR_F("Failed to login as user {}. Username not found.", criteria.GetUsername());
 		throw API_EXCEPTION_F(
-			RPC::ErrorCode::INVALID_PARAMS,
+			RPC::Errors::USER_DOESNT_EXIST.GetCode(),
 			"Username {} not found",
 			criteria.GetUsername()
 		);

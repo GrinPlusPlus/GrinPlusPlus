@@ -48,6 +48,15 @@ public:
 		}
 	}
 
+	TorConfig(const uint16_t socksPort, const uint16_t controlPort)
+		: m_socksPort(socksPort),
+		m_controlPort(controlPort),
+		m_password("MyPassword"),
+		m_hashedPassword("16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F")
+	{
+
+	}
+
 private:
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;

@@ -12,6 +12,7 @@
 #include <Wallet/Models/Slate/Slate.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
+#include <API/Wallet/Owner/Models/GetSeedPhraseCriteria.h>
 #include <API/Wallet/Owner/Models/CreateWalletCriteria.h>
 #include <API/Wallet/Owner/Models/CreateWalletResponse.h>
 #include <API/Wallet/Owner/Models/RestoreWalletCriteria.h>
@@ -26,6 +27,7 @@
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
 #include <Net/Tor/TorAddress.h>
+#include <Net/Tor/TorProcess.h>
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 
@@ -44,18 +46,25 @@ public:
 	// Creates a new wallet with the username and password given, and returns the space-delimited wallet words (BIP39 mnemonics).
 	// If a wallet for the user already exists, an empty string will be returned.
 	//
-	virtual CreateWalletResponse InitializeNewWallet(const CreateWalletCriteria& criteria) = 0;
+	virtual CreateWalletResponse InitializeNewWallet(
+		const CreateWalletCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) = 0;
 
 	//
 	// Creates a wallet from existing wallet words (BIP39 mnemonics).
 	// Restoring outputs must be done separately.
 	//
-	virtual LoginResponse RestoreFromSeed(const RestoreWalletCriteria& criteria) = 0;
+	virtual LoginResponse RestoreFromSeed(
+		const RestoreWalletCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) = 0;
 
 	//
 	// Returns the logged in user's wallet words.
 	//
 	virtual SecureString GetSeedWords(const SessionToken& token) = 0;
+	virtual SecureString GetSeedWords(const GetSeedPhraseCriteria& criteria) = 0;
 
 	virtual void CheckForOutputs(
 		const SessionToken& token,
@@ -66,14 +75,21 @@ public:
 
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const = 0;
 
-	virtual std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path) = 0;
+	virtual std::optional<TorAddress> AddTorListener(
+		const SessionToken& token,
+		const KeyChainPath& path,
+		const TorProcess::Ptr& pTorProcess
+	) = 0;
 
 	virtual uint16_t GetListenerPort(const SessionToken& token) const = 0;
 
 	//
 	// Authenticates the user, and if successful, returns a session token that can be used in lieu of credentials for future calls.
 	//
-	virtual LoginResponse Login(const LoginCriteria& criteria) = 0;
+	virtual LoginResponse Login(
+		const LoginCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) = 0;
 
 	//
 	// Deletes the session information.
@@ -125,11 +141,15 @@ public:
 	//
 	virtual Slate Receive(const ReceiveCriteria& receiveCriteria) = 0;
 
-	virtual Slate Finalize(const FinalizeCriteria& finalizeCriteria) = 0;
+	virtual Slate Finalize(
+		const FinalizeCriteria& finalizeCriteria,
+		const TorProcess::Ptr & pTorProcess
+	) = 0;
 
 	virtual bool PostTransaction(
 		const Transaction& transaction,
-		const PostMethodDTO& postMethod
+		const PostMethodDTO& postMethod,
+		const TorProcess::Ptr& pTorProcess
 	) = 0;
 
 	virtual bool RepostByTxId(

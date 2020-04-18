@@ -108,6 +108,24 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 	return walletDB;
 }
 
+void SqliteStore::DeleteWallet(const std::string& username)
+{
+	// TODO: Check if database is in m_userDBs
+
+	const fs::path userDBPath = m_walletDirectory / username;
+	if (!FileUtil::Exists(userDBPath))
+	{
+		WALLET_ERROR_F("No wallet directory found for user: {}", username);
+		throw WALLET_STORE_EXCEPTION("Wallet doesn't exist.");
+	}
+
+	if (!FileUtil::RemoveFile(userDBPath))
+	{
+		WALLET_ERROR_F("Failed to delte wallet for user: {}", username);
+		throw WALLET_STORE_EXCEPTION("Failed to delete wallet.");
+	}
+}
+
 void SqliteStore::ChangePassword(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
 	const fs::path userDBPath = m_walletDirectory / username;

@@ -15,6 +15,7 @@ public:
 	std::vector<std::string> GetAccounts() const final;
 	Locked<IWalletDB> OpenWallet(const std::string& username, const SecureVector& masterSeed) final;
 	Locked<IWalletDB> CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) final;
+	void DeleteWallet(const std::string& username) final;
 	void ChangePassword(const std::string& username, const EncryptedSeed& encryptedSeed) final;
 	EncryptedSeed LoadWalletSeed(const std::string& username) const final;
 

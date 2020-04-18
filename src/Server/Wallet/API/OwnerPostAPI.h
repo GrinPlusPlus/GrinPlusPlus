@@ -2,6 +2,7 @@
 
 #include <civetweb.h>
 #include <Config/Config.h>
+#include <Net/Tor/TorProcess.h>
 #include <Wallet/SessionToken.h>
 #include <json/json.h>
 
@@ -12,7 +13,7 @@ class SessionToken;
 class OwnerPostAPI
 {
 public:
-	OwnerPostAPI(const Config& config);
+	OwnerPostAPI(const Config& config, const TorProcess::Ptr& pTorProcess);
 
 	int HandlePOST(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager);
 
@@ -32,4 +33,5 @@ private:
 	int EstimateFee(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token, const Json::Value& json);
 
 	const Config& m_config;
+	TorProcess::Ptr m_pTorProcess;
 };

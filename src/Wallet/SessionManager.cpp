@@ -7,8 +7,15 @@
 #include <Common/Util/VectorUtil.h>
 #include <Infrastructure/Logger.h>
 
-SessionManager::SessionManager(const Config& config, INodeClientConstPtr pNodeClient, std::shared_ptr<IWalletStore> pWalletDB, std::shared_ptr<ForeignController> pForeignController)
-	: m_config(config), m_pNodeClient(pNodeClient), m_pWalletDB(pWalletDB), m_pForeignController(pForeignController)
+SessionManager::SessionManager(
+	const Config& config,
+	const INodeClientConstPtr& pNodeClient,
+	const std::shared_ptr<IWalletStore>& pWalletDB,
+	const std::shared_ptr<ForeignController>& pForeignController)
+	: m_config(config),
+	m_pNodeClient(pNodeClient),
+	m_pWalletDB(pWalletDB),
+	m_pForeignController(pForeignController)
 {
 	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 }
@@ -23,15 +30,74 @@ SessionManager::~SessionManager()
 
 Locked<SessionManager> SessionManager::Create(
 	const Config& config,
-	INodeClientConstPtr pNodeClient,
-	std::shared_ptr<IWalletStore> pWalletDB,
+	const INodeClientConstPtr& pNodeClient,
+	const std::shared_ptr<IWalletStore>& pWalletDB,
 	IWalletManager& walletManager)
 {
-	std::shared_ptr<ForeignController> pForeignController = std::shared_ptr<ForeignController>(new ForeignController(config, walletManager));
-	return Locked<SessionManager>(std::make_shared<SessionManager>(SessionManager(config, pNodeClient, pWalletDB, pForeignController)));
+	auto pForeignController = std::make_shared<ForeignController>(walletManager);
+	auto pSessionManager = std::make_shared<SessionManager>(
+		config,
+		pNodeClient,
+		pWalletDB,
+		pForeignController
+	);
+	return Locked<SessionManager>(pSessionManager);
 }
 
-SessionToken SessionManager::Login(const std::string& username, const SecureString& password)
+void SessionManager::Authenticate(const std::string& username, const SecureString& password) const
+{
+	std::unique_ptr<EncryptedSeed> pSeed = nullptr;
+
+	try
+	{
+		pSeed = std::make_unique<EncryptedSeed>(m_pWalletDB->LoadWalletSeed(username));
+	}
+	catch (std::exception&)
+	{
+		WALLET_ERROR_F("User '{}' not found.", username);
+		throw;
+	}
+
+	try
+	{
+		SecureVector decryptedSeed = SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+	}
+	catch (std::exception&)
+	{
+		WALLET_ERROR_F("Invalid password provided for user '{}'", username);
+		throw;
+	}
+}
+
+SecureVector SessionManager::GetSeed(const std::string& username, const SecureString& password) const
+{
+	std::unique_ptr<EncryptedSeed> pSeed = nullptr;
+
+	try
+	{
+		pSeed = std::make_unique<EncryptedSeed>(m_pWalletDB->LoadWalletSeed(username));
+	}
+	catch (std::exception&)
+	{
+		WALLET_ERROR_F("User '{}' not found.", username);
+		throw;
+	}
+
+	try
+	{
+		return SeedEncrypter().DecryptWalletSeed(*pSeed, password);
+	}
+	catch (std::exception&)
+	{
+		WALLET_ERROR_F("Invalid password provided for user '{}'", username);
+		throw;
+	}
+}
+
+SessionToken SessionManager::Login(
+	const TorProcess::Ptr& pTorProcess,
+	const std::string& username,
+	const SecureString& password)
 {
 	WALLET_DEBUG_F("Logging in with username: {}", username);
 	try
@@ -42,7 +108,7 @@ SessionToken SessionManager::Login(const std::string& username, const SecureStri
 
 		WALLET_INFO("Valid password provided. Logging in now.");
 		m_pWalletDB->OpenWallet(username, decryptedSeed);
-		return Login(username, decryptedSeed);
+		return Login(pTorProcess, username, decryptedSeed);
 	}
 	catch (std::exception&)
 	{
@@ -51,11 +117,17 @@ SessionToken SessionManager::Login(const std::string& username, const SecureStri
 	}
 }
 
-SessionToken SessionManager::Login(const std::string& username, const SecureVector& seed)
+SessionToken SessionManager::Login(
+	const TorProcess::Ptr& pTorProcess,
+	const std::string& username,
+	const SecureVector& seed)
 {
-	const CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
-	const std::vector<unsigned char> checksum(hash.GetData().cbegin(), hash.GetData().cbegin() + 4);
-	SecureVector seedWithChecksum = SecureVector(seed.begin(), seed.end());
+	Hash hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
+	std::vector<unsigned char> checksum(
+		hash.GetData().cbegin(),
+		hash.GetData().cbegin() + 4
+	);
+	SecureVector seedWithChecksum = seed;
 	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
 
 	SecureVector tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
@@ -67,14 +139,28 @@ SessionToken SessionManager::Login(const std::string& username, const SecureVect
 	}
 
 	const uint64_t sessionId = m_nextSessionId++;
-	SessionToken token(sessionId, std::vector<unsigned char>(tokenKey.begin(), tokenKey.end()));
+	SessionToken token(sessionId, tokenKey);
 
-	Locked<Wallet> wallet = Wallet::LoadWallet(m_config, m_pNodeClient, m_pWalletDB->OpenWallet(username, seed), username);
+	auto pWalletDB = m_pWalletDB->OpenWallet(username, seed);
+	Locked<Wallet> wallet = Wallet::LoadWallet(
+		m_config,
+		m_pNodeClient,
+		pWalletDB,
+		username
+	);
 
-	auto pSession = std::make_shared<LoggedInSession>(wallet, std::move(encryptedSeedWithCS));
-	m_sessionsById[sessionId] = pSession;
+	m_sessionsById[sessionId] = std::make_shared<LoggedInSession>(
+		wallet,
+		std::move(encryptedSeedWithCS)
+	);
 
-	std::pair<uint16_t, std::optional<TorAddress>> listenerInfo = m_pForeignController->StartListener(username, token, seed);
+	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
+	auto listenerInfo = m_pForeignController->StartListener(
+		pTorProcess,
+		username,
+		token,
+		keyChain
+	);
 	wallet.Write()->SetListenerPort(listenerInfo.first);
 	if (listenerInfo.second.has_value())
 	{

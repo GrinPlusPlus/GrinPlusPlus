@@ -3,7 +3,6 @@
 
 #include <API/Wallet/Owner/OwnerServer.h>
 #include <Wallet/WalletManager.h>
-#include <Net/Tor/TorManager.h>
 
 WalletDaemon::WalletDaemon(
 	const Config& config,
@@ -20,14 +19,30 @@ WalletDaemon::WalletDaemon(
 
 }
 
-std::shared_ptr<WalletDaemon> WalletDaemon::Create(const Config& config, INodeClientPtr pNodeClient)
+std::shared_ptr<WalletDaemon> WalletDaemon::Create(
+	const Config& config,
+	const TorProcess::Ptr& pTorProcess,
+	INodeClientPtr pNodeClient)
 {
 	auto pWalletManager = WalletAPI::CreateWalletManager(config, pNodeClient);
 
-	auto pWalletRestServer = WalletRestServer::Create(config, pWalletManager, pNodeClient);
-	auto pOwnerServer = OwnerServer::Create(config, pWalletManager);
+	auto pWalletRestServer = WalletRestServer::Create(
+		config,
+		pWalletManager,
+		pNodeClient,
+		pTorProcess
+	);
 
-	TorManager::GetInstance(config.GetTorConfig());
+	auto pOwnerServer = OwnerServer::Create(
+		pTorProcess,
+		pWalletManager
+	);
 
-	return std::make_shared<WalletDaemon>(config, pNodeClient, pWalletManager, pWalletRestServer, pOwnerServer);
+	return std::make_shared<WalletDaemon>(
+		config,
+		pNodeClient,
+		pWalletManager,
+		pWalletRestServer,
+		pOwnerServer
+	);
 }

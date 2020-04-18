@@ -1,4 +1,4 @@
-#include <Net/Tor/TorManager.h>
+#include <Net/Tor/TorProcess.h>
 #include <Net/Tor/TorException.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Infrastructure/Logger.h>
@@ -6,32 +6,23 @@
 
 #include "TorControl.h"
 
-TorManager& TorManager::GetInstance(const TorConfig& config)
+TorProcess::Ptr TorProcess::Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept
 {
-	static TorManager instance(config);
-	return instance;
+	auto pControl = TorControl::Create(TorConfig(socksPort, controlPort));
+	return std::shared_ptr<TorProcess>(new TorProcess(socksPort, controlPort, pControl));
 }
 
-TorManager::TorManager(const TorConfig& config)
-	: m_torConfig(config)
-{
-	if (m_torConfig.IsEnabled())
-	{
-		m_pControl = TorControl::Create(config);
-	}
-}
-
-bool TorManager::RetryInit()
+bool TorProcess::RetryInit()
 {
 	if (m_pControl == nullptr)
 	{
-		m_pControl = TorControl::Create(m_torConfig);
+		m_pControl = TorControl::Create(TorConfig(m_socksPort, m_controlPort));
 	}
 
 	return m_pControl != nullptr;
 }
 
-std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
+std::shared_ptr<TorAddress> TorProcess::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
 {
 	try
 	{
@@ -60,7 +51,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const SecretKey64& secretKey
 	return nullptr;
 }
 
-std::shared_ptr<TorAddress> TorManager::AddListener(const std::string& serializedKey, const uint16_t portNumber)
+std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serializedKey, const uint16_t portNumber)
 {
 	try
 	{
@@ -89,7 +80,7 @@ std::shared_ptr<TorAddress> TorManager::AddListener(const std::string& serialize
 	return nullptr;
 }
 
-bool TorManager::RemoveListener(const TorAddress& torAddress)
+bool TorProcess::RemoveListener(const TorAddress& torAddress)
 {
 	try
 	{
@@ -106,16 +97,11 @@ bool TorManager::RemoveListener(const TorAddress& torAddress)
 	return false;
 }
 
-std::shared_ptr<TorConnection> TorManager::Connect(const TorAddress& address)
+std::shared_ptr<TorConnection> TorProcess::Connect(const TorAddress& address)
 {
-	if (!m_torConfig.IsEnabled())
-	{
-		return nullptr;
-	}
-
 	try
 	{
-		SocketAddress proxyAddress("127.0.0.1", m_torConfig.GetSocksPort());
+		SocketAddress proxyAddress("127.0.0.1", m_socksPort);
 
 		return std::make_shared<TorConnection>(address, std::move(proxyAddress));
 	}

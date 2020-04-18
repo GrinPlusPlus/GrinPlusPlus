@@ -36,7 +36,7 @@ std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 	if (!pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey().empty())
 	{
 		pGrinJoinController = GrinJoinController::Create(
-			pContext->GetConfig(),
+			pContext->GetTorProcess(),
 			pNodeClient->GetNodeContext(),
 			pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey()
 		);

@@ -11,8 +11,8 @@
 
 WalletRestServer::WalletRestServer(
 	const Config& config,
-	IWalletManagerPtr pWalletManager,
-	std::shared_ptr<WalletContext> pWalletContext,
+	const IWalletManagerPtr& pWalletManager,
+	const std::shared_ptr<WalletContext>& pWalletContext,
 	mg_context* pOwnerCivetContext)
 	: m_config(config),
 	m_pWalletManager(pWalletManager),
@@ -27,7 +27,11 @@ WalletRestServer::~WalletRestServer()
 	mg_stop(m_pOwnerCivetContext);
 }
 
-std::shared_ptr<WalletRestServer> WalletRestServer::Create(const Config& config, IWalletManagerPtr pWalletManager, std::shared_ptr<INodeClient> pNodeClient)
+std::shared_ptr<WalletRestServer> WalletRestServer::Create(
+	const Config& config,
+	const IWalletManagerPtr& pWalletManager,
+	const std::shared_ptr<INodeClient>& pNodeClient,
+	const TorProcess::Ptr& pTorProcess)
 {
 	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
 	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", ownerPort);
@@ -37,7 +41,9 @@ std::shared_ptr<WalletRestServer> WalletRestServer::Create(const Config& config,
 		NULL
 	};
 
-	std::shared_ptr<WalletContext> pWalletContext = std::shared_ptr<WalletContext>(new WalletContext(config, pWalletManager, pNodeClient));
+	std::shared_ptr<WalletContext> pWalletContext = std::shared_ptr<WalletContext>(
+		new WalletContext(config, pWalletManager, pNodeClient, pTorProcess)
+	);
 
 	mg_context* pOwnerCivetContext = mg_start(NULL, 0, pOwnerOptions);
 	mg_set_request_handler(pOwnerCivetContext, "/v1/wallet/owner/", WalletRestServer::OwnerAPIHandler, pWalletContext.get());
@@ -64,7 +70,8 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 		}
 		else if (method == HTTP::EHTTPMethod::POST)
 		{
-			return OwnerPostAPI(pContext->m_config).HandlePOST(pConnection, action, *pContext->m_pWalletManager);
+			OwnerPostAPI postAPI(pContext->m_config, pContext->m_pTorProcess);
+			return postAPI.HandlePOST(pConnection, action, *pContext->m_pWalletManager);
 		}
 	}
 	catch (const SessionTokenException&)

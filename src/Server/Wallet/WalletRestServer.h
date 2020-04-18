@@ -13,13 +13,18 @@ class WalletRestServer
 public:
 	~WalletRestServer();
 
-	static std::shared_ptr<WalletRestServer> Create(const Config& config, IWalletManagerPtr pWalletManager, std::shared_ptr<INodeClient> pNodeClient);
+	static std::shared_ptr<WalletRestServer> Create(
+		const Config& config,
+		const IWalletManagerPtr& pWalletManager,
+		const std::shared_ptr<INodeClient>& pNodeClient,
+		const TorProcess::Ptr& pTorProcess
+	);
 
 private:
 	WalletRestServer(
 		const Config& config,
-		IWalletManagerPtr pWalletManager,
-		std::shared_ptr<WalletContext> pWalletContext,
+		const IWalletManagerPtr& pWalletManager,
+		const std::shared_ptr<WalletContext>& pWalletContext,
 		mg_context* pOwnerCivetContext
 	);
 

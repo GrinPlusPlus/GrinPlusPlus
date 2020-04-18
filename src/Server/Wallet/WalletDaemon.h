@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletManager.h>
+#include <Net/Tor/TorProcess.h>
 
 // Forward Declarations
 class WalletRestServer;
@@ -20,7 +21,11 @@ public:
 	);
 	~WalletDaemon() = default;
 
-	static std::shared_ptr<WalletDaemon> Create(const Config& config, INodeClientPtr pNodeClient);
+	static std::shared_ptr<WalletDaemon> Create(
+		const Config& config,
+		const TorProcess::Ptr& pTorProcess,
+		INodeClientPtr pNodeClient
+	);
 
 private:
 

@@ -19,30 +19,39 @@ class IWalletManager;
 class SessionManager
 {
 public:
+	SessionManager(
+		const Config& config,
+		const INodeClientConstPtr& pNodeClient,
+		const std::shared_ptr<IWalletStore>& pWalletDB,
+		const std::shared_ptr<ForeignController>& pForeignController
+	);
 	~SessionManager();
 
 	static Locked<SessionManager> Create(
 		const Config& config,
-		INodeClientConstPtr pNodeClient,
-		std::shared_ptr<IWalletStore> pWalletDB,
+		const INodeClientConstPtr& pNodeClient,
+		const std::shared_ptr<IWalletStore>& pWalletDB,
 		IWalletManager& walletManager
 	);
 
-	SessionToken Login(const std::string& username, const SecureString& password);
-	SessionToken Login(const std::string& username, const SecureVector& seed);
+	void Authenticate(const std::string& username, const SecureString& password) const;
+	SessionToken Login(
+		const TorProcess::Ptr& pTorProcess,
+		const std::string& username,
+		const SecureString& password
+	);
+	SessionToken Login(
+		const TorProcess::Ptr& pTorProcess,
+		const std::string& username,
+		const SecureVector& seed
+	);
 	void Logout(const SessionToken& token);
 
 	SecureVector GetSeed(const SessionToken& token) const;
+	SecureVector GetSeed(const std::string& username, const SecureString& password) const;
 	Locked<Wallet> GetWallet(const SessionToken& token) const;
 
 private:
-	SessionManager(
-		const Config& config,
-		INodeClientConstPtr pNodeClient,
-		std::shared_ptr<IWalletStore> pWalletDB,
-		std::shared_ptr<ForeignController> pForeignController
-	);
-
 	std::unordered_map<uint64_t, std::shared_ptr<LoggedInSession>> m_sessionsById;
 	// TODO: Keep multimap of sessions per username
 

@@ -6,6 +6,7 @@
 #include <Crypto/SecretKey.h>
 #include <Net/Servers/RPC/RPCServer.h>
 #include <Net/Clients/RPC/RPC.h>
+#include <Net/Tor/TorProcess.h>
 #include <Net/Tor/TorAddress.h>
 #include <atomic>
 #include <thread>
@@ -15,22 +16,22 @@ class GrinJoinController
 {
 public:
 	static std::shared_ptr<GrinJoinController> Create(
-		const Config& config,
+		const TorProcess::Ptr& pTorProcess,
 		std::shared_ptr<NodeContext> pNodeContext,
 		const std::string& privateKey
 	);
 	~GrinJoinController();
 
 private:
-	GrinJoinController(const Config& config, RPCServerPtr pServer, const TorAddress& torAddress)
-		: m_config(config), m_pServer(pServer), m_torAddress(torAddress), m_terminate(false)
+	GrinJoinController(const TorProcess::Ptr& pTorProcess, RPCServerPtr pServer, const TorAddress& torAddress)
+		: m_pTorProcess(pTorProcess), m_pServer(pServer), m_torAddress(torAddress), m_terminate(false)
 	{
 		assert(pServer != nullptr);
 	}
 
 	static void Thread_Process(GrinJoinController* pController, ITransactionPoolPtr pTransactionPool);
 
-	const Config& m_config;
+	TorProcess::Ptr m_pTorProcess;
 	RPCServerPtr m_pServer;
 	TorAddress m_torAddress;
 

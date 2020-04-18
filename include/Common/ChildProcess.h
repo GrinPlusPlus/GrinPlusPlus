@@ -61,6 +61,8 @@ public:
                 std::string out((const char*)buffer, (const char*)buffer + bytesRead);
                 LOG_ERROR_F("STDOUT: {}", out);
             }
+
+            return nullptr;
         }
 
         return pChildProcess;

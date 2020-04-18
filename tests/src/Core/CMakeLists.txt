@@ -7,5 +7,5 @@ file(GLOB SOURCE_CODE
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 
-add_dependencies(${TARGET_NAME} Core)
-target_link_libraries(${TARGET_NAME} Core)
+add_dependencies(${TARGET_NAME} Core TestUtil)
+target_link_libraries(${TARGET_NAME} Core TestUtil)

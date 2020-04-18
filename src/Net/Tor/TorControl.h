@@ -12,7 +12,7 @@ class TorControl
 public:
 	~TorControl() = default;
 
-	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig);
+	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig) noexcept;
 
 	std::string AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort);
 	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);

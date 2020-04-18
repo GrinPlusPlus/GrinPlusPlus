@@ -198,10 +198,9 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(pBlockHeader);
 				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
 				{
-					LOG_DEBUG_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, formattedIPAddress);
-
 					if (!m_pBlockChainServer->HasBlock(pBlockHeader->GetHeight(), pBlockHeader->GetHash()))
 					{
+						LOG_TRACE_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, formattedIPAddress);
 						const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
 						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 					}

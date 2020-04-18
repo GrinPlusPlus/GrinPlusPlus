@@ -113,7 +113,11 @@ void StartServer(const ConfigPtr& pConfig, const bool headless)
 	}
 
 	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(pContext);
-	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(pContext->GetConfig(), pNode->GetNodeClient());
+	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(
+		pContext->GetConfig(),
+		pContext->GetTorProcess(),
+		pNode->GetNodeClient()
+	);
 
 	system_clock::time_point startTime = system_clock::now();
 	while (true)
@@ -136,7 +140,8 @@ void StartServer(const ConfigPtr& pConfig, const bool headless)
 
 		if (!headless)
 		{
-			const int secondsRunning = (int)(duration_cast<seconds>(system_clock::now().time_since_epoch() - startTime.time_since_epoch()).count());
+			auto duration = system_clock::now().time_since_epoch() - startTime.time_since_epoch();
+			const int secondsRunning = (int)(duration_cast<seconds>(duration).count());
 			pNode->UpdateDisplay(secondsRunning);
 		}
 

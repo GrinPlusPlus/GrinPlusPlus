@@ -1,7 +1,7 @@
 set(TARGET_NAME Tor)
 
 file(GLOB SOURCE_CODE
-	"TorManager.cpp"
+	"TorProcess.cpp"
     "TorControl.cpp"
 	"TorConnection.cpp"
 )

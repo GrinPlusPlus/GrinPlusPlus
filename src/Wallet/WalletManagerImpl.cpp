@@ -16,7 +16,7 @@
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
 #include <Net/Tor/TorAddressParser.h>
-#include <Net/Tor/TorManager.h>
+#include <Net/Tor/TorProcess.h>
 #include <cassert>
 #include <thread>
 
@@ -29,7 +29,9 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 }
 
-CreateWalletResponse WalletManager::InitializeNewWallet(const CreateWalletCriteria& criteria)
+CreateWalletResponse WalletManager::InitializeNewWallet(
+	const CreateWalletCriteria& criteria,
+	const TorProcess::Ptr& pTorProcess)
 {
 	WALLET_INFO_F(
 		"Creating new wallet with username {} and numWords {}",
@@ -46,7 +48,11 @@ CreateWalletResponse WalletManager::InitializeNewWallet(const CreateWalletCriter
 
 	WALLET_INFO_F("Wallet created with username: {}", criteria.GetUsername());
 
-	SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), walletSeed);
+	SessionToken token = m_sessionManager.Write()->Login(
+		pTorProcess,
+		criteria.GetUsername(),
+		walletSeed
+	);
 
 	auto wallet = m_sessionManager.Read()->GetWallet(token);
 	const uint16_t listenerPort = wallet.Read()->GetListenerPort();
@@ -55,7 +61,9 @@ CreateWalletResponse WalletManager::InitializeNewWallet(const CreateWalletCriter
 	return CreateWalletResponse(token, listenerPort, walletWords, torAddressOpt);
 }
 
-LoginResponse WalletManager::RestoreFromSeed(const RestoreWalletCriteria& criteria)
+LoginResponse WalletManager::RestoreFromSeed(
+	const RestoreWalletCriteria& criteria,
+	const TorProcess::Ptr& pTorProcess)
 {
 	WALLET_INFO_F("Attempting to restore account with username: {}", criteria.GetUsername());
 	try
@@ -67,7 +75,7 @@ LoginResponse WalletManager::RestoreFromSeed(const RestoreWalletCriteria& criter
 		m_pWalletStore->CreateWallet(criteria.GetUsername(), encryptedSeed);
 
 		WALLET_INFO_F("Wallet restored for username: {}", criteria.GetUsername());
-		SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), entropy);
+		SessionToken token = m_sessionManager.Write()->Login(pTorProcess, criteria.GetUsername(), entropy);
 
 		auto wallet = m_sessionManager.Read()->GetWallet(token);
 		const uint16_t listenerPort = wallet.Read()->GetListenerPort();
@@ -85,6 +93,15 @@ LoginResponse WalletManager::RestoreFromSeed(const RestoreWalletCriteria& criter
 SecureString WalletManager::GetSeedWords(const SessionToken& token)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	return Mnemonic::CreateMnemonic((const std::vector<unsigned char>&)masterSeed);
+}
+
+SecureString WalletManager::GetSeedWords(const GetSeedPhraseCriteria& criteria)
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(
+		criteria.GetUsername(),
+		criteria.GetPassword()
+	);
 	return Mnemonic::CreateMnemonic((const std::vector<unsigned char>&)masterSeed);
 }
 
@@ -112,7 +129,7 @@ std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token
 	return wallet.Read()->GetTorAddress();
 }
 
-std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& token, const KeyChainPath& path)
+std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& token, const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
@@ -120,8 +137,7 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
 	SecretKey64 torKey = keyChain.DeriveED25519Key(path);
 
-	std::shared_ptr<TorAddress> pTorAddress = 
-		TorManager::GetInstance(m_config.GetTorConfig()).AddListener(torKey, wallet.Read()->GetListenerPort());
+	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey, wallet.Read()->GetListenerPort());
 	if (pTorAddress != nullptr)
 	{
 		wallet.Write()->SetTorAddress(*pTorAddress);
@@ -143,13 +159,19 @@ std::vector<std::string> WalletManager::GetAllAccounts() const
 	return m_pWalletStore->GetAccounts();
 }
 
-LoginResponse WalletManager::Login(const LoginCriteria& criteria)
+LoginResponse WalletManager::Login(
+	const LoginCriteria& criteria,
+	const TorProcess::Ptr& pTorProcess)
 {
 	WALLET_INFO_F("Attempting to login with username: {}", criteria.GetUsername());
 
 	try
 	{
-		SessionToken token = m_sessionManager.Write()->Login(criteria.GetUsername(), criteria.GetPassword());
+		SessionToken token = m_sessionManager.Write()->Login(
+			pTorProcess,
+			criteria.GetUsername(),
+			criteria.GetPassword()
+		);
 
 		WALLET_INFO_F("Login successful for username: {}", criteria.GetUsername());
 		CheckForOutputs(token, false);
@@ -173,16 +195,14 @@ void WalletManager::Logout(const SessionToken& token)
 
 void WalletManager::DeleteWallet(const std::string& username, const SecureString& password)
 {
-	WALLET_INFO_F("Attempting to delete wallet with username: {}", username);
+	WALLET_WARNING_F("Attempting to delete wallet with username: {}", username);
 
 	try
 	{
 		const std::string usernameLower = StringUtil::ToLower(username);
-		SessionToken token = m_sessionManager.Write()->Login(usernameLower, password);
+		m_sessionManager.Read()->Authenticate(usernameLower, password);
 
-		m_sessionManager.Write()->Logout(token);
-
-		// TODO: Delete wallet folder.
+		m_pWalletStore->DeleteWallet(usernameLower);
 	}
 	catch (std::exception& e)
 	{
@@ -356,24 +376,32 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 	);
 }
 
-Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria)
+Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const TorProcess::Ptr& pTorProcess)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
 
-	Slate finalizedSlate = FinalizeSlateBuilder().Finalize(wallet, masterSeed, finalizeCriteria.GetSlate());
+	Slate finalizedSlate = FinalizeSlateBuilder().Finalize(
+		wallet,
+		masterSeed,
+		finalizeCriteria.GetSlate()
+	);
 	if (finalizeCriteria.GetPostMethod().has_value())
 	{
 		PostTransaction(
 			finalizedSlate.GetTransaction(),
-			finalizeCriteria.GetPostMethod().value()
+			finalizeCriteria.GetPostMethod().value(),
+			pTorProcess
 		);
 	}
 
 	return finalizedSlate;
 }
 
-bool WalletManager::PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod)
+bool WalletManager::PostTransaction(
+	const Transaction& transaction,
+	const PostMethodDTO& postMethod,
+	const TorProcess::Ptr& pTorProcess)
 {
 	const EPostMethod method = postMethod.GetMethod();
 	if (method == EPostMethod::JOIN)
@@ -382,7 +410,7 @@ bool WalletManager::PostTransaction(const Transaction& transaction, const PostMe
 
 		try
 		{
-			auto pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(postMethod.GetGrinJoinAddress().value());
+			auto pTorConnection = pTorProcess->Connect(postMethod.GetGrinJoinAddress().value());
 			if (pTorConnection != nullptr)
 			{
 				Json::Value params;

@@ -8,8 +8,8 @@
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 
-OwnerPostAPI::OwnerPostAPI(const Config& config)
-	: m_config(config)
+OwnerPostAPI::OwnerPostAPI(const Config& config, const TorProcess::Ptr& pTorProcess)
+	: m_config(config), m_pTorProcess(pTorProcess)
 {
 
 }
@@ -91,7 +91,8 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 	}
 
 	auto response = walletManager.InitializeNewWallet(
-		CreateWalletCriteria(usernameOpt.value(), SecureString(passwordOpt.value()), 24)
+		CreateWalletCriteria(usernameOpt.value(), SecureString(passwordOpt.value()), 24),
+		m_pTorProcess
 	);
 
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
@@ -114,7 +115,8 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 	try
 	{
 		auto response = walletManager.Login(
-			LoginCriteria(usernameOpt.value(), SecureString(passwordOpt.value()))
+			LoginCriteria(usernameOpt.value(), SecureString(passwordOpt.value())),
+			m_pTorProcess
 		);
 		return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
 	}
@@ -154,7 +156,8 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 	try
 	{
 		auto response = walletManager.RestoreFromSeed(
-			RestoreWalletCriteria(username, std::move(password), std::move(walletWords))
+			RestoreWalletCriteria(username, std::move(password), std::move(walletWords)),
+			m_pTorProcess
 		);
 
 		return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
@@ -190,7 +193,7 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 {
 	FinalizeCriteria finalizeCriteria = FinalizeCriteria::FromJSON(json);
 
-	Slate finalizedSlate = walletManager.Finalize(finalizeCriteria);
+	Slate finalizedSlate = walletManager.Finalize(finalizeCriteria, m_pTorProcess);
 
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, finalizedSlate.ToJSON());
 }

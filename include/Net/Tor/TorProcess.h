@@ -8,11 +8,12 @@
 // Forward Declarations
 class TorControl;
 
-class TorManager
+class TorProcess
 {
 public:
-	static TorManager& GetInstance(const TorConfig& config);
-	static TorManager& GetInstance(const Config& config) { return GetInstance(config.GetTorConfig()); }
+	using Ptr = std::shared_ptr<TorProcess>;
+
+	static TorProcess::Ptr Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept;
 
 	std::shared_ptr<TorAddress> AddListener(const SecretKey64& secretKey, const uint16_t portNumber);
 	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);
@@ -24,9 +25,10 @@ public:
 	bool RetryInit();
 
 private:
-	TorManager(const TorConfig& config);
+	TorProcess(const uint16_t socksPort, const uint16_t controlPort, const std::shared_ptr<TorControl>& pControl)
+		: m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(pControl) { }
 
-	const TorConfig& m_torConfig;
+	uint16_t m_socksPort;
+	uint16_t m_controlPort;
 	std::shared_ptr<TorControl> m_pControl;
-	asio::io_context m_context;
 };

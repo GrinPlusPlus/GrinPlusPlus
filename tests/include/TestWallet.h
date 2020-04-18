@@ -46,8 +46,13 @@ public:
             BuildCoinbaseCriteria(m_token, fees, std::make_optional<KeyChainPath>(path))
         );
 
+        auto pTx = std::make_shared<Transaction>(
+            BlindingFactor(Hash::ValueOf(0)),
+            TransactionBody({ {}, { response.GetOutput() }, { response.GetKernel() } })
+        );
+
         return Test::Tx{
-            std::make_shared<Transaction>(BlindingFactor(Hash::ValueOf(0)), TransactionBody({ {}, { response.GetOutput() }, { response.GetKernel() } })),
+            pTx,
             { },
             { { path, Consensus::REWARD + fees } }
         };

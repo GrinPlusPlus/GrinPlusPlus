@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <TestServer.h>
+#include <TorProcessManager.h>
 
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
@@ -16,7 +17,8 @@ TEST_CASE("Wallet Creation/Deletion")
 	// Create wallet
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
 	auto response = pWalletManager->InitializeNewWallet(
-		CreateWalletCriteria(username, "Password1", 24)
+		CreateWalletCriteria(username, "Password1", 24),
+		TorProcessManager::GetProcess(0)
 	);
 
 	// Validate seed words
@@ -43,7 +45,8 @@ TEST_CASE("Wallet Words Length")
 	{
 		const std::string username = uuids::to_string(uuids::uuid_system_generator()());
 		auto response = pWalletManager->InitializeNewWallet(
-			CreateWalletCriteria(username, "Password1", numWords)
+			CreateWalletCriteria(username, "Password1", numWords),
+			TorProcessManager::GetProcess(0)
 		);
 
 		// Validate seed words

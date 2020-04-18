@@ -3,7 +3,6 @@
 
 #include <Infrastructure/Logger.h>
 #include <Wallet/WalletManager.h>
-#include <Net/Tor/TorManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPC.h>
 
@@ -11,8 +10,8 @@
 #include <API/Wallet/Foreign/Models/ReceiveTxRequest.h>
 #include <API/Wallet/Foreign/Models/ReceiveTxResponse.h>
 
-ForeignController::ForeignController(const Config& config, IWalletManager& walletManager)
-	: m_config(config), m_walletManager(walletManager)
+ForeignController::ForeignController(IWalletManager& walletManager)
+	: m_walletManager(walletManager)
 {
 
 }
@@ -26,9 +25,10 @@ ForeignController::~ForeignController()
 }
 
 std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
+	const TorProcess::Ptr& pTorProcess,
 	const std::string& username,
 	const SessionToken& token,
-	const SecureVector& seed)
+	const KeyChain& keyChain)
 {
 	std::unique_lock<std::mutex> lock(m_contextsMutex);
 
@@ -42,12 +42,16 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		);
 	}
 
-	auto pServer = ForeignServer::Create(m_config, m_walletManager, token);
-	auto torAddress = pServer->AddTorListener(seed);
+	auto pServer = ForeignServer::Create(
+		keyChain,
+		pTorProcess,
+		m_walletManager,
+		token
+	);
 
 	m_contextsByUsername[username] = std::make_shared<Context>(pServer);
 
-	return std::make_pair(pServer->GetPortNumber(), torAddress);
+	return std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());
 }
 
 bool ForeignController::StopListener(const std::string& username)

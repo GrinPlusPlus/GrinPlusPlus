@@ -13,18 +13,21 @@ TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient
 
 }
 
-std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig)
+std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexcept
 {
 	try
 	{
 		const fs::path command = fs::current_path() / "tor" / "tor";
-		
+		auto dataDirectory = fs::current_path() / "tor" / ("data" + std::to_string(torConfig.GetControlPort()));
+
 		std::vector<std::string> args({
 			command.u8string(),
 			"--ControlPort", std::to_string(torConfig.GetControlPort()),
 			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
+			"--DataDirectory", dataDirectory.u8string(),
 			"--HashedControlPassword", torConfig.GetHashedControlPassword(),
-			"-f", (fs::current_path() / "tor" / ".torrc").u8string()
+			"-f", (fs::current_path() / "tor" / ".torrc").u8string(),
+			"--ignore-missing-torrc"
 		});
 
 		// TODO: Determine if process is already running.

@@ -13,17 +13,31 @@ public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	virtual ~WalletManager() = default;
 
-	CreateWalletResponse InitializeNewWallet(const CreateWalletCriteria& criteria) final;
+	CreateWalletResponse InitializeNewWallet(
+		const CreateWalletCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) final;
 
-	LoginResponse RestoreFromSeed(const RestoreWalletCriteria& criteria) final;
+	LoginResponse RestoreFromSeed(
+		const RestoreWalletCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) final;
 
 	SecureString GetSeedWords(const SessionToken& token) final;
+	SecureString GetSeedWords(const GetSeedPhraseCriteria& criteria) final;
 	void CheckForOutputs(const SessionToken& token, const bool fromGenesis) final;
 	std::optional<TorAddress> GetTorAddress(const SessionToken& token) const final;
-	std::optional<TorAddress> AddTorListener(const SessionToken& token, const KeyChainPath& path);
+	std::optional<TorAddress> AddTorListener(
+		const SessionToken& token,
+		const KeyChainPath& path,
+		const TorProcess::Ptr& pTorProcess
+	);
 	uint16_t GetListenerPort(const SessionToken& token) const final;
 
-	LoginResponse Login(const LoginCriteria& criteria) final;
+	LoginResponse Login(
+		const LoginCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) final;
 	void Logout(const SessionToken& token) final;
 	void DeleteWallet(const std::string& username, const SecureString& password) final;
 	void ChangePassword(
@@ -52,9 +66,13 @@ public:
 
 	Slate Send(const SendCriteria& sendCriteria) final;
 	Slate Receive(const ReceiveCriteria& receiveCriteria) final;
-	Slate Finalize(const FinalizeCriteria& finalizeCriteria) final;
+	Slate Finalize(const FinalizeCriteria& finalizeCriteria, const TorProcess::Ptr& pTorProcess) final;
 
-	bool PostTransaction(const Transaction& transaction, const PostMethodDTO& postMethod) final;
+	bool PostTransaction(
+		const Transaction& transaction,
+		const PostMethodDTO& postMethod,
+		const TorProcess::Ptr& pTorProcess
+	) final;
 	bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 
 	void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) final;

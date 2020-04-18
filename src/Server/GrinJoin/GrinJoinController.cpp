@@ -1,20 +1,19 @@
 #include "GrinJoinController.h"
 #include "Methods/SubmitTxMethod.h"
 
-#include <Net/Tor/TorManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 
 std::shared_ptr<GrinJoinController> GrinJoinController::Create(
-	const Config& config,
+	const TorProcess::Ptr& pTorProcess,
 	std::shared_ptr<NodeContext> pNodeContext,
 	const std::string& privateKey)
 {
 	RPCServerPtr pServer = RPCServer::Create(EServerType::PUBLIC, std::nullopt, "/v1");
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
-	auto pTorAddress = TorManager::GetInstance(config.GetTorConfig()).AddListener(privateKey, pServer->GetPortNumber());
+	auto pTorAddress = pTorProcess->AddListener(privateKey, pServer->GetPortNumber());
 	if (pTorAddress == nullptr)
 	{
 		throw TOR_EXCEPTION("Failed to start TOR listener");
@@ -22,7 +21,7 @@ std::shared_ptr<GrinJoinController> GrinJoinController::Create(
 
 	pServer->AddMethod("submit_tx", std::make_shared<SubmitTxMethod>(pNodeContext));
 
-	auto pController = std::shared_ptr<GrinJoinController>(new GrinJoinController(config, pServer, *pTorAddress));
+	auto pController = std::shared_ptr<GrinJoinController>(new GrinJoinController(pTorProcess, pServer, *pTorAddress));
 
 	pController->m_thread = std::thread(Thread_Process, pController.get(), pNodeContext->m_pTransactionPool);
 
@@ -34,7 +33,7 @@ GrinJoinController::~GrinJoinController()
 	m_terminate = true;
 	ThreadUtil::Join(m_thread);
 
-	TorManager::GetInstance(m_config.GetTorConfig()).RemoveListener(m_torAddress);
+	m_pTorProcess->RemoveListener(m_torAddress);
 }
 
 void GrinJoinController::Thread_Process(GrinJoinController* pController, ITransactionPoolPtr pTransactionPool)

@@ -25,8 +25,14 @@ namespace RPC
 		static inline RPC::Error PASSWORD_CRITERIA_NOT_MET = RPC::Error(-201, "Password doesn't mean requirements", GetJSON("PASSWORD_CRITERIA_NOT_MET"));
 		static inline RPC::Error INVALID_NUM_SEED_WORDS = RPC::Error(-202, "Invalid number of seed words", GetJSON("INVALID_NUM_SEED_WORDS"));
 
-		// Login (-210 -> -219)
+		// login (-210 -> -219)
 		static inline RPC::Error USER_DOESNT_EXIST = RPC::Error(-210, "User doesn't exist", GetJSON("USER_DOESNT_EXIST"));
 		static inline RPC::Error INVALID_PASSWORD = RPC::Error(-211, "Invalid Password", GetJSON("INVALID_PASSWORD"));
+
+		// list_txs (-240 -> -249)
+		static inline RPC::Error INVALID_STATUSES = RPC::Error(-240, "Invalid statuses", GetJSON("INVALID_STATUSES"));
+
+		// cancel_tx (-250 -> -259)
+		static inline RPC::Error TX_ID_MISSING = RPC::Error(-250, "'tx_id' missing", GetJSON("TX_ID_MISSING"));
 	};
 }

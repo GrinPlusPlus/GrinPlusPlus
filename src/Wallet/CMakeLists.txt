@@ -11,6 +11,7 @@ file(GLOB SOURCE_CODE
 	"WalletRefresher.cpp"
 	"SessionManager.cpp"
 	"WalletManagerImpl.cpp"
+	"WalletTxLoader.cpp"
 	"OutputRestorer.cpp"
 	"ForeignController.cpp"
 )

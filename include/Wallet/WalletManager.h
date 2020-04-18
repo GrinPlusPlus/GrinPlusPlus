@@ -21,6 +21,7 @@
 #include <API/Wallet/Owner/Models/SendCriteria.h>
 #include <API/Wallet/Owner/Models/ReceiveCriteria.h>
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>
+#include <API/Wallet/Owner/Models/ListTxsCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
@@ -112,7 +113,7 @@ public:
 
 	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) = 0;
 
-	virtual std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) = 0;
+	virtual std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) = 0;
 
 	virtual std::vector<WalletOutputDTO> GetOutputs(
 		const SessionToken& token, 

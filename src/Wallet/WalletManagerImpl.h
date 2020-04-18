@@ -49,7 +49,7 @@ public:
 	std::vector<std::string> GetAllAccounts() const final;
 
 	WalletSummaryDTO GetWalletSummary(const SessionToken& token) final;
-	std::vector<WalletTxDTO> GetTransactions(const SessionToken& token) final;
+	std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) final;
 	std::vector<WalletOutputDTO> GetOutputs(
 		const SessionToken& token,
 		const bool includeSpent,

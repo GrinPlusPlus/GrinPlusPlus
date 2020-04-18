@@ -13,6 +13,8 @@
 #include <API/Wallet/Owner/Handlers/RetryTorHandler.h>
 #include <API/Wallet/Owner/Handlers/DeleteWalletHandler.h>
 #include <API/Wallet/Owner/Handlers/GetWalletSeedHandler.h>
+#include <API/Wallet/Owner/Handlers/CancelTxHandler.h>
+#include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
 
 class OwnerServer
 {
@@ -175,11 +177,57 @@ public:
         */
         pServer->AddMethod("get_wallet_seed", std::shared_ptr<RPCMethod>((RPCMethod*)new GetWalletSeedHandler(pWalletManager)));
 
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "cancel_tx",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "tx_id": 123
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "status": "SUCCESS"
+                }
+            }
+        */
+        pServer->AddMethod("cancel_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new CancelTxHandler(pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "list_txs",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "start_range_ms": 1567361400000,
+                    "end_range_ms": 1575227400000,
+                    "statuses": ["COINBASE","SENT","RECEIVED","SENT_CANCELED","RECEIVED_CANCELED","SENDING_NOT_FINALIZED","RECEIVING_IN_PROGRESS", "SENDING_FINALIZED"]
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "txs": []
+                }
+            }
+        */
+        pServer->AddMethod("list_txs", std::shared_ptr<RPCMethod>((RPCMethod*)new ListTxsHandler(pWalletManager)));
+
         // TODO: Add the following APIs: 
         // authenticate - Simply validates the password - useful for confirming password before sending funds
-        // cancel_tx - Cancels a transaction by Id or UUID
         // repost_tx - Reposts a transaction that was already finalized but never confirmed on chain
-        // list_txs - retrieves basic info about all transactions with optional filter for timerange, type, etc.
         // tx_info - Detailed info about a specific transaction (status, kernels, inputs, outputs, payment proofs, labels, etc)
         // update_labels - Add or remove labels - useful for coin control
         // verify_payment_proof - Takes in an existing payment proof and validates it

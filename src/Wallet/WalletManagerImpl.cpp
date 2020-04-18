@@ -6,6 +6,7 @@
 #include "SlateBuilder/SendSlateBuilder.h"
 #include "SlateBuilder/FinalizeSlateBuilder.h"
 #include "SlateBuilder/CoinSelection.h"
+#include "WalletTxLoader.h"
 
 #include <Wallet/WalletUtil.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
@@ -241,44 +242,13 @@ WalletSummaryDTO WalletManager::GetWalletSummary(const SessionToken& token)
 	}
 }
 
-std::vector<WalletTxDTO> WalletManager::GetTransactions(const SessionToken& token)
+std::vector<WalletTxDTO> WalletManager::GetTransactions(const ListTxsCriteria& criteria)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
 
 	auto pReader = wallet.Read()->GetDatabase().Read();
-	std::vector<OutputDataEntity> outputs = pReader->GetOutputs(masterSeed);
-	std::vector<WalletTx> walletTransactions = pReader->GetTransactions(masterSeed);
-
-	std::vector<WalletTxDTO> walletTxDTOs;
-	for (const WalletTx& walletTx : walletTransactions)
-	{
-		std::vector<Commitment> kernels;
-		auto txOpt = walletTx.GetTransaction();
-		if (txOpt.has_value())
-		{
-			for (const auto& kernel : txOpt.value().GetKernels())
-			{
-				if (kernel.GetExcessCommitment() != CBigInteger<33>::ValueOf(0))
-				{
-					kernels.push_back(kernel.GetExcessCommitment());
-				}
-			}
-		}
-
-		std::vector<WalletOutputDTO> outputDTOs;
-		for (const OutputDataEntity& output : outputs)
-		{
-			if (output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId())
-			{
-				outputDTOs.emplace_back(WalletOutputDTO(output));
-			}
-		}
-
-		walletTxDTOs.emplace_back(WalletTxDTO(walletTx, kernels, outputDTOs));
-	}
-
-	return walletTxDTOs;
+	return WalletTxLoader().LoadTransactions(pReader.GetShared(), masterSeed, criteria);
 }
 
 std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token, const bool includeSpent, const bool includeCanceled)

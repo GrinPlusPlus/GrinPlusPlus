@@ -124,8 +124,15 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 				const EOutputFeatures features = outputData.GetOutput().GetFeatures();
 				const uint64_t outputBlockHeight = iter->second.GetBlockHeight();
 				const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
+				const bool immature = WalletUtil::IsOutputImmature(
+					m_config.GetEnvironment().GetEnvironmentType(),
+					features,
+					outputBlockHeight,
+					lastConfirmedHeight,
+					minimumConfirmations
+				);
 
-				if (WalletUtil::IsOutputImmature(m_config.GetEnvironment().GetEnvironmentType(), features, outputBlockHeight, lastConfirmedHeight, minimumConfirmations))
+				if (immature)
 				{
 					if (outputData.GetStatus() != EOutputStatus::IMMATURE)
 					{
@@ -163,7 +170,11 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 	pBatch->UpdateRefreshBlockHeight(lastConfirmedHeight);
 }
 
-void WalletRefresher::RefreshTransactions(const SecureVector& masterSeed, Writer<IWalletDB> pBatch, const std::vector<OutputDataEntity>& refreshedOutputs, std::vector<WalletTx>& walletTransactions)
+void WalletRefresher::RefreshTransactions(
+	const SecureVector& masterSeed,
+	Writer<IWalletDB> pBatch,
+	const std::vector<OutputDataEntity>& refreshedOutputs,
+	std::vector<WalletTx>& walletTransactions)
 {
 	std::unordered_map<uint32_t, WalletTx> walletTransactionsById;
 	for (WalletTx& walletTx : walletTransactions)
@@ -242,7 +253,9 @@ std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTi
 	return std::nullopt;
 }
 
-std::unique_ptr<OutputDataEntity> WalletRefresher::FindOutput(const std::vector<OutputDataEntity>& walletOutputs, const Commitment& commitment) const
+std::unique_ptr<OutputDataEntity> WalletRefresher::FindOutput(
+	const std::vector<OutputDataEntity>& walletOutputs,
+	const Commitment& commitment) const
 {
 	for (const OutputDataEntity& outputData : walletOutputs)
 	{

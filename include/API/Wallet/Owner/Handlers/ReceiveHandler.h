@@ -4,9 +4,8 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <Net/Tor/TorManager.h>
-#include <Net/Tor/TorAddressParser.h>
 #include <Common/Util/FileUtil.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class ReceiveHandler : public RPCMethod
@@ -20,7 +19,7 @@ public:
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		ReceiveCriteria criteria = ReceiveCriteria::FromJSON(request.GetParams().value());

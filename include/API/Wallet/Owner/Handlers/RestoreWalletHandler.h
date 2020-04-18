@@ -7,28 +7,30 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
+#include <Net/Tor/TorProcess.h>
 #include <API/Wallet/Owner/Models/RestoreWalletCriteria.h>
 #include <API/Wallet/Owner/Models/LoginResponse.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class RestoreWalletHandler : RPCMethod
 {
 public:
-	RestoreWalletHandler(const IWalletManagerPtr& pWalletManager)
-		: m_pWalletManager(pWalletManager) { }
+	RestoreWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
+		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
 	virtual ~RestoreWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		RestoreWalletCriteria criteria = RestoreWalletCriteria::FromJSON(request.GetParams().value());
 		ValidateInput(criteria);
 
-		auto response = m_pWalletManager->RestoreFromSeed(criteria);
+		auto response = m_pWalletManager->RestoreFromSeed(criteria, m_pTorProcess);
 
 		return request.BuildResult(response.ToJSON());
 	}
@@ -71,4 +73,5 @@ private:
 	}
 
 	IWalletManagerPtr m_pWalletManager;
+	TorProcess::Ptr m_pTorProcess;
 };

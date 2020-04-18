@@ -4,7 +4,7 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Tor/TorConnection.h>
-#include <Net/Tor/TorManager.h>
+#include <Net/Tor/TorProcess.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Common/Util/FileUtil.h>
@@ -14,15 +14,15 @@
 class SendHandler : public RPCMethod
 {
 public:
-	SendHandler(const Config& config, const IWalletManagerPtr& pWalletManager)
-		: m_config(config), m_pWalletManager(pWalletManager) { }
+	SendHandler(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
 	virtual ~SendHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		SendCriteria criteria = SendCriteria::FromJSON(request.GetParams().value());
@@ -56,7 +56,7 @@ private:
 
 		try
 		{
-			TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
+			TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
 			if (pTorConnection == nullptr)
 			{
 				return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
@@ -73,7 +73,7 @@ private:
 			return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
 		}
 
-		TorConnectionPtr pTorConnection = TorManager::GetInstance(m_config.GetTorConfig()).Connect(torAddress);
+		TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
 		if (pTorConnection == nullptr)
 		{
 			return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
@@ -103,7 +103,10 @@ private:
 			Json::Value okJson = JsonUtil::GetRequiredField(receiveTxResponse.GetResult().value(), "Ok");
 			try
 			{
-				Slate finalizedSlate = m_pWalletManager->Finalize(FinalizeCriteria(SessionToken(criteria.GetToken()), Slate::FromJSON(okJson), std::nullopt, criteria.GetPostMethod()));
+				Slate finalizedSlate = m_pWalletManager->Finalize(
+					FinalizeCriteria(SessionToken(criteria.GetToken()), Slate::FromJSON(okJson), std::nullopt, criteria.GetPostMethod()),
+					m_pTorProcess
+				);
 
 				Json::Value resultJSON;
 				resultJSON["status"] = "FINALIZED"; // TODO: Enum
@@ -197,6 +200,6 @@ private:
 		}
 	}
 
-	const Config& m_config;
+	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;
 };

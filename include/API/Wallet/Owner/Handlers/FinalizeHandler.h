@@ -4,23 +4,23 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <Net/Tor/TorManager.h>
-#include <Net/Tor/TorAddressParser.h>
+#include <Net/Tor/TorProcess.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <Common/Util/FileUtil.h>
 #include <optional>
 
 class FinalizeHandler : public RPCMethod
 {
 public:
-	FinalizeHandler(const IWalletManagerPtr& pWalletManager)
-		: m_pWalletManager(pWalletManager) { }
+	FinalizeHandler(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
 	virtual ~FinalizeHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		FinalizeCriteria criteria = FinalizeCriteria::FromJSON(request.GetParams().value());
@@ -31,7 +31,7 @@ public:
 		}
 		else
 		{
-			Slate slate = m_pWalletManager->Finalize(criteria);
+			Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
 
 			Json::Value result;
 			result["status"] = "FINALIZED";
@@ -48,7 +48,7 @@ private:
 	{
 		// FUTURE: Check write permissions before creating slate
 
-		Slate slate = m_pWalletManager->Finalize(criteria);
+		Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
 
 		Json::Value slateJSON = slate.ToJSON();
 
@@ -73,5 +73,6 @@ private:
 		}
 	}
 
+	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;
 };

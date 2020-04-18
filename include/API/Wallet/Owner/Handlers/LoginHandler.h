@@ -13,15 +13,15 @@
 class LoginHandler : RPCMethod
 {
 public:
-	LoginHandler(const IWalletManagerPtr& pWalletManager)
-		: m_pWalletManager(pWalletManager) { }
+	LoginHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
+		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
 	virtual ~LoginHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		LoginCriteria criteria = LoginCriteria::FromJSON(request.GetParams().value());
@@ -29,7 +29,7 @@ public:
 
 		try
 		{
-			auto response = m_pWalletManager->Login(criteria);
+			auto response = m_pWalletManager->Login(criteria, m_pTorProcess);
 			return request.BuildResult(response.ToJSON());
 		}
 		catch (const KeyChainException& e)
@@ -63,4 +63,5 @@ private:
 	}
 
 	IWalletManagerPtr m_pWalletManager;
+	TorProcess::Ptr m_pTorProcess;
 };

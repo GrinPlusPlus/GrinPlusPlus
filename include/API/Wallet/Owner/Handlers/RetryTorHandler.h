@@ -2,9 +2,10 @@
 
 #include <Config/Config.h>
 #include <Wallet/WalletManager.h>
-#include <Net/Tor/TorManager.h>
+#include <Net/Tor/TorProcess.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class RetryTorHandler : public RPCMethod
@@ -35,15 +36,15 @@ class RetryTorHandler : public RPCMethod
 		std::optional<std::string> m_torAddress;
 	};
 public:
-	RetryTorHandler(const Config& config, IWalletManagerPtr pWalletManager)
-		: m_config(config), m_pWalletManager(pWalletManager) { }
+	RetryTorHandler(const TorProcess::Ptr& pTorProcess, IWalletManagerPtr pWalletManager)
+		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
 	virtual ~RetryTorHandler() = default;
 
-	virtual RPC::Response Handle(const RPC::Request& request) const override final
+	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		Response response;
@@ -51,9 +52,13 @@ public:
 		std::string tokenStr = JsonUtil::GetRequiredString(request.GetParams().value(), "session_token");
 		SessionToken token = SessionToken::FromBase64(tokenStr);
 
-		if (TorManager::GetInstance(m_config.GetTorConfig()).RetryInit())
+		if (m_pTorProcess->RetryInit())
 		{
-			auto listenerOpt = m_pWalletManager->AddTorListener(token, KeyChainPath::FromString("m/0/1/0"));
+			auto listenerOpt = m_pWalletManager->AddTorListener(
+				token,
+				KeyChainPath::FromString("m/0/1/0"),
+				m_pTorProcess
+			);
 			if (listenerOpt.has_value())
 			{
 				response.SetStatus("SUCCESS");
@@ -66,6 +71,6 @@ public:
 	}
 
 private:
-	const Config& m_config;
+	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;
 };

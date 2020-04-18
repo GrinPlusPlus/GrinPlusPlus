@@ -15,21 +15,21 @@
 class CreateWalletHandler : RPCMethod
 {
 public:
-	CreateWalletHandler(const IWalletManagerPtr& pWalletManager)
-		: m_pWalletManager(pWalletManager) { }
+	CreateWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
+		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
 	virtual ~CreateWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		CreateWalletCriteria criteria = CreateWalletCriteria::FromJSON(request.GetParams().value());
 		ValidateInput(criteria);
 
-		auto response = m_pWalletManager->InitializeNewWallet(criteria);
+		auto response = m_pWalletManager->InitializeNewWallet(criteria, m_pTorProcess);
 
 		return request.BuildResult(response.ToJSON());
 	}
@@ -71,4 +71,5 @@ private:
 	}
 
 	IWalletManagerPtr m_pWalletManager;
+	TorProcess::Ptr m_pTorProcess;
 };

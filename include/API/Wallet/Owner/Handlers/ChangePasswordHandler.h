@@ -4,6 +4,7 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class ChangePasswordHandler : public RPCMethod
@@ -17,7 +18,7 @@ public:
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		// TODO: Implement

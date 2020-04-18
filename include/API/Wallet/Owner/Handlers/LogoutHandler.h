@@ -4,6 +4,7 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Infrastructure/Logger.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
 class LogoutHandler : RPCMethod
@@ -17,7 +18,7 @@ public:
 	{
 		if (!request.GetParams().has_value())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
 		Json::Value tokenJson = JsonUtil::GetRequiredField(request.GetParams().value(), "session_token");

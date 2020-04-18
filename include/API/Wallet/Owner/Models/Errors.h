@@ -18,6 +18,8 @@ namespace RPC
 		static inline RPC::Error RECEIVER_UNREACHABLE = RPC::Error(-101, "Failed to establish TOR connection", GetJSON("RECEIVER_UNREACHABLE"));
 		static inline RPC::Error SLATE_VERSION_MISMATCH = RPC::Error(-102, "Unsupported slate version", GetJSON("SLATE_VERSION_MISMATCH"));
 
+		static inline RPC::Error PARAMS_MISSING = RPC::Error(-150, "'params' missing", GetJSON("PARAMS_MISSING"));
+
 		// create_wallet (-200 -> -209)
 		static inline RPC::Error USER_ALREADY_EXISTS = RPC::Error(-200, "User already exists", GetJSON("USER_ALREADY_EXISTS"));
 		static inline RPC::Error PASSWORD_CRITERIA_NOT_MET = RPC::Error(-201, "Password doesn't mean requirements", GetJSON("PASSWORD_CRITERIA_NOT_MET"));

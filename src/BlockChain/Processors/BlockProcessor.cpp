@@ -64,9 +64,14 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
-	// TODO: Check if in BlockDB
+	// 2. Check if block has already been processed.
+	if (pBatch->GetBlockDB()->GetBlock(block.GetHash()) != nullptr)
+	{
+		LOG_TRACE_F("Block {} already processed.", block);
+		return EBlockChainStatus::ALREADY_EXISTS;
+	}
 
-	// 2. Orphan if block should be processed as an orphan
+	// 3. Orphan if block should be processed as an orphan
 	const BlockProcessingInfo info = DetermineBlockStatus(block, pBatch);
 	if (info.status == EBlockStatus::ORPHAN)
 	{
@@ -90,7 +95,7 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 		assert(info.status == EBlockStatus::NEXT_BLOCK);
 
 		ValidateAndAddBlock(block, pBatch);
-		pConfirmedChain->AddBlock(block.GetHash());
+		pConfirmedChain->AddBlock(block.GetHash(), block.GetHeight());
 		pBatch->Commit();
 
 		return EBlockChainStatus::SUCCESS;
@@ -102,7 +107,6 @@ BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const F
 	auto pOrphanPool = pBatch->GetOrphanPool();
 	auto pBlockDB = pBatch->GetBlockDB();
 	auto pChainStore = pBatch->GetChainStore();
-	auto pCandidateChain = pChainStore->GetCandidateChain();
 	auto pConfirmedChain = pChainStore->GetConfirmedChain();
 
 	auto pStoreHeader = pBlockDB->GetBlockHeader(block.GetHash());
@@ -177,13 +181,13 @@ void BlockProcessor::HandleReorg(Writer<ChainState> pBatch, const std::vector<Fu
 		ValidateAndAddBlock(*pBlock, pBatch);
 	}
 
-	auto pConfirmedChain = pBatch->GetChainStore()->GetConfirmedChain();
 	if (reorgBlocks.back()->GetTotalDifficulty() > totalDifficulty)
 	{
+		auto pConfirmedChain = pBatch->GetChainStore()->GetConfirmedChain();
 		pConfirmedChain->Rewind(reorgBlocks.front()->GetHeight() - 1);
 		for (const FullBlock::CPtr& pBlock : reorgBlocks)
 		{
-			pConfirmedChain->AddBlock(pBlock->GetHash());
+			pConfirmedChain->AddBlock(pBlock->GetHash(), pBlock->GetHeight());
 		}
 
 		pBatch->Commit();

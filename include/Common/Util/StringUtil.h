@@ -81,6 +81,19 @@ public:
 		return output;
 	}
 
+	static std::string ToUpper(const std::string& str)
+	{
+		std::locale loc;
+		std::string output = "";
+
+		for (char elem : str)
+		{
+			output += std::toupper(elem, loc);
+		}
+
+		return output;
+	}
+
 	static std::string ToUTF8(const std::wstring& wstr)
 	{
 		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;

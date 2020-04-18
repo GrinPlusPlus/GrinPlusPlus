@@ -256,8 +256,9 @@ EBlockChainStatus BlockChainServer::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 	{
 		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(pBlockHeader);
 	}
-	catch (std::exception&)
+	catch (std::exception& e)
 	{
+		LOG_ERROR_F("Invalid header {} - Exception: ", *pBlockHeader, e.what());
 		return EBlockChainStatus::INVALID;
 	}
 }

@@ -13,7 +13,7 @@ void ChainResyncer::ResyncChain()
 
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
-	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
+	//auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	auto pConfirmedChain = pLockedState->GetChainStore()->GetConfirmedChain();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
@@ -35,7 +35,7 @@ void ChainResyncer::ResyncChain()
 		pHeaderMMR->AddHeader(*pHeader);
 	}
 
-	pSyncChain->Rewind(pCandidateChain->GetTip()->GetHeight());
+	//pSyncChain->Rewind(pCandidateChain->GetTip()->GetHeight());
 
 	pLockedState->Commit();
 

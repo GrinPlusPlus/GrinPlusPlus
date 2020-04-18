@@ -56,9 +56,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlock(block_a.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_a.block.GetHash());
 
 	////////////////////////////////////////
 	// 2. header_b
@@ -66,9 +66,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlockHeader(block_b.block.GetHeader()) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHash());
 
 	////////////////////////////////////////
 	// 3. header_b_fork
@@ -76,9 +76,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlockHeader(block_b_fork.block.GetHeader()) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHash());
 
 	////////////////////////////////////////
 	// 4. block_b_fork
@@ -86,9 +86,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlock(block_b_fork.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHash());
 
 	////////////////////////////////////////
 	// 5. block_b
@@ -96,9 +96,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlock(block_b.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHash());
 
 	////////////////////////////////////////
 	// 6. block_c
@@ -106,9 +106,9 @@ TEST_CASE("REORG 1")
 	REQUIRE(pBlockChainServer->AddBlock(block_c.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 }
 
 //
@@ -152,9 +152,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlock(block_a.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_a.block.GetHash());
 
 	////////////////////////////////////////
 	// 2. header_b
@@ -162,9 +162,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlockHeader(block_b.block.GetHeader()) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b.block.GetHash());
 
 	////////////////////////////////////////
 	// 3. header_c
@@ -172,9 +172,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlockHeader(block_c.block.GetHeader()) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 
 	////////////////////////////////////////
 	// 4. block_b_fork
@@ -182,9 +182,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlock(block_b_fork.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 
 	////////////////////////////////////////
 	// 5. block_c
@@ -192,9 +192,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlock(block_c.block) == EBlockChainStatus::ORPHANED);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 
 	////////////////////////////////////////
 	// 6. block_b
@@ -202,9 +202,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->AddBlock(block_b.block) == EBlockChainStatus::SUCCESS);
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 
 	////////////////////////////////////////
 	// 7. Process orphans
@@ -212,9 +212,9 @@ TEST_CASE("REORG 2")
 	REQUIRE(pBlockChainServer->ProcessNextOrphanBlock());
 
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHash());
 	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 }
 
 //
@@ -257,16 +257,90 @@ TEST_CASE("REORG 3")
 	REQUIRE(pBlockChainServer->AddBlock(block_b.block) == EBlockChainStatus::SUCCESS);
 	REQUIRE(pBlockChainServer->AddBlock(block_c.block) == EBlockChainStatus::SUCCESS);
 
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHeader()->GetHash());
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 
 	////////////////////////////////////////
 	// Process forked block_b with higher difficulty
 	////////////////////////////////////////
 	REQUIRE(pBlockChainServer->AddBlock(block_b_fork.block) == EBlockChainStatus::SUCCESS);
 
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
-	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b_fork.block.GetHeader()->GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b_fork.block.GetHash());
+}
+
+//
+// a - b - c
+//  \
+//   - b'
+//
+// Process in the following order -
+// 1. block_a
+// 2. block_b_fork
+// 3. block_b
+// 4. block_c
+//
+TEST_CASE("REORG 4")
+{
+	TestServer::Ptr pTestServer = TestServer::Create();
+	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	TxBuilder txBuilder(keyChain);
+	auto pBlockChainServer = pTestServer->GetBlockChainServer();
+
+	TestChain chain1(pTestServer);
+
+	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
+	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
+
+	Test::Tx coinbase_b = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 2 }));
+	MinedBlock block_b = chain1.AddNextBlock({ coinbase_b });
+
+	Test::Tx coinbase_c = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 3 }));
+	MinedBlock block_c = chain1.AddNextBlock({ coinbase_c });
+
+	chain1.Rewind(2);
+	Test::Tx coinbase_b_fork = txBuilder.BuildCoinbaseTx(KeyChainPath({ 1, 2 }));
+	MinedBlock block_b_fork = chain1.AddNextBlock({ coinbase_b_fork });
+
+	////////////////////////////////////////
+	// 1. block_a
+	////////////////////////////////////////
+	REQUIRE(pBlockChainServer->AddBlock(block_a.block) == EBlockChainStatus::SUCCESS);
+
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 1);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_a.block.GetHash());
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 1);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_a.block.GetHash());
+
+	////////////////////////////////////////
+	// 2. block_b_fork
+	////////////////////////////////////////
+	REQUIRE(pBlockChainServer->AddBlock(block_b_fork.block) == EBlockChainStatus::SUCCESS);
+
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b_fork.block.GetHash());
+
+	////////////////////////////////////////
+	// 3. block_b
+	////////////////////////////////////////
+	REQUIRE(pBlockChainServer->AddBlock(block_b.block) == EBlockChainStatus::SUCCESS);
+
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 2);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_b_fork.block.GetHash());
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 2);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_b_fork.block.GetHash());
+
+	////////////////////////////////////////
+	// 4. block_c
+	////////////////////////////////////////
+	REQUIRE(pBlockChainServer->AddBlock(block_c.block) == EBlockChainStatus::SUCCESS);
+
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CONFIRMED) == 3);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED)->GetHash() == block_c.block.GetHash());
+	REQUIRE(pBlockChainServer->GetHeight(EChainType::CANDIDATE) == 3);
+	REQUIRE(pBlockChainServer->GetTipBlockHeader(EChainType::CANDIDATE)->GetHash() == block_c.block.GetHash());
 }
 
 TEST_CASE("Reorg Chain")

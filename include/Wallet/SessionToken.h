@@ -12,10 +12,17 @@ class SessionToken
 {
 public:
 	SessionToken(const uint64_t sessionId, std::vector<unsigned char>&& tokenKey)
-		: m_sessionId(sessionId), m_tokenKey(std::move(tokenKey))
-	{
+		: m_sessionId(sessionId), m_tokenKey(std::move(tokenKey)) { }
+	SessionToken(const uint64_t sessionId, const std::vector<unsigned char>& tokenKey)
+		: m_sessionId(sessionId), m_tokenKey(tokenKey) { }
+	SessionToken(const uint64_t sessionId, const SecureVector& tokenKey)
+		: m_sessionId(sessionId), m_tokenKey(tokenKey.begin(), tokenKey.end()) { }
 
-	}
+	SessionToken(SessionToken&& rhs) = default;
+	SessionToken(const SessionToken& rhs) = default;
+
+	SessionToken& operator=(const SessionToken& rhs) = default;
+	SessionToken& operator=(SessionToken&& rhs) noexcept = default;
 
 	uint64_t GetSessionId() const { return m_sessionId; }
 	const std::vector<unsigned char>& GetTokenKey() const { return m_tokenKey; }

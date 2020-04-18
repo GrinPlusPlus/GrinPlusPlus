@@ -4,6 +4,7 @@
 #include <Net/Clients/RPC/RPCClient.h>
 
 #include <TestServer.h>
+#include <TestWalletServer.h>
 #include <Comparators/JsonComparator.h>
 
 TEST_CASE("CheckVersionResponse")
@@ -37,13 +38,13 @@ TEST_CASE("CheckVersionResponse")
 TEST_CASE("API: check_version")
 {
     TestServer::Ptr pTestServer = TestServer::Create();
+    TestWalletServer::Ptr pWalletServer = TestWalletServer::Create(pTestServer);
     IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(
         *pTestServer->GetConfig(),
         pTestServer->GetNodeClient()
     );
-    auto createWalletResponse = pWalletManager->InitializeNewWallet(
-        CreateWalletCriteria("TestUser", "password", 24)
-    );
+
+    TestWallet::Ptr pWallet = pWalletServer->CreateUser("username", "password");
 
     RPC::Request request = RPC::Request::BuildRequest("check_version");
 
@@ -51,7 +52,7 @@ TEST_CASE("API: check_version")
     auto response = pClient->Invoke(
         "127.0.0.1",
         "/v2/foreign",
-        createWalletResponse.GetListenerPort(),
+        pWallet->GetListenerPort(),
         request
     );
 

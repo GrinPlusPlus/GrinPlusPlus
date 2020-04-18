@@ -8,7 +8,7 @@
 class BlockIndexAllocator;
 class ChainStore;
 
-class Chain : Traits::IBatchable
+class Chain : public Traits::IBatchable
 {
 public:
 	using Ptr = std::shared_ptr<Chain>;
@@ -40,7 +40,7 @@ public:
 
 	EChainType GetType() const noexcept { return m_chainType; }
 
-	std::shared_ptr<const BlockIndex> AddBlock(const Hash& hash);
+	std::shared_ptr<const BlockIndex> AddBlock(const Hash& hash, const uint64_t height);
 	void Rewind(const uint64_t lastHeight);
 
 	virtual void Commit() override final;

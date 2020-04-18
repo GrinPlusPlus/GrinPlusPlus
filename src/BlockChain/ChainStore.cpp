@@ -5,8 +5,8 @@
 #include <vector>
 #include <map>
 
-ChainStore::ChainStore(std::shared_ptr<Chain> pConfirmedChain, std::shared_ptr<Chain> pCandidateChain, std::shared_ptr<Chain> pSyncChain)
-	: m_pConfirmedChain(pConfirmedChain), m_pCandidateChain(pCandidateChain), m_pSyncChain(pSyncChain)
+ChainStore::ChainStore(const Chain::Ptr& pConfirmedChain, const Chain::Ptr& pCandidateChain)
+	: m_pConfirmedChain(pConfirmedChain), m_pCandidateChain(pCandidateChain)
 {
 
 }
@@ -33,43 +33,43 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	}
 
 	pAllocator->AddChain(pCandidateChain);
-	std::shared_ptr<Chain> pSyncChain = Chain::Load(pAllocator, EChainType::SYNC, chainPath / "sync.chain", pGenesisIndex);
-	if (pSyncChain == nullptr)
-	{
-		LOG_INFO("Failed to load sync chain");
-		throw std::exception();
-	}
+	//std::shared_ptr<Chain> pSyncChain = Chain::Load(pAllocator, EChainType::SYNC, chainPath / "sync.chain", pGenesisIndex);
+	//if (pSyncChain == nullptr)
+	//{
+	//	LOG_INFO("Failed to load sync chain");
+	//	throw std::exception();
+	//}
 
-	pAllocator->AddChain(pSyncChain);
+	//pAllocator->AddChain(pSyncChain);
 
-	auto pChainStore = std::shared_ptr<ChainStore>(new ChainStore(pConfirmedChain, pCandidateChain, pSyncChain));
+	auto pChainStore = std::shared_ptr<ChainStore>(new ChainStore(pConfirmedChain, pCandidateChain));
 	return std::make_shared<Locked<ChainStore>>(Locked<ChainStore>(pChainStore));
 }
 
 void ChainStore::Commit()
 {
-	m_pSyncChain->Commit();
+	//m_pSyncChain->Commit();
 	m_pCandidateChain->Commit();
 	m_pConfirmedChain->Commit();
 }
 
 void ChainStore::Rollback() noexcept
 {
-	m_pSyncChain->Rollback();
+	//m_pSyncChain->Rollback();
 	m_pCandidateChain->Rollback();
 	m_pConfirmedChain->Rollback();
 }
 
 void ChainStore::OnInitWrite()
 {
-	m_pSyncChain->OnInitWrite();
+	//m_pSyncChain->OnInitWrite();
 	m_pCandidateChain->OnInitWrite();
 	m_pConfirmedChain->OnInitWrite();
 }
 
 void ChainStore::OnEndWrite()
 {
-	m_pSyncChain->OnEndWrite();
+	//m_pSyncChain->OnEndWrite();
 	m_pCandidateChain->OnEndWrite();
 	m_pConfirmedChain->OnEndWrite();
 }
@@ -118,7 +118,7 @@ void ChainStore::ReorgChain(const EChainType source, const EChainType destinatio
 	pDestinationChain->Rewind(commonHeight);
 	for (uint64_t i = commonHeight + 1; i <= height; i++)
 	{
-		pDestinationChain->AddBlock(pSourceChain->GetHash(i));
+		pDestinationChain->AddBlock(pSourceChain->GetHash(i), i);
 	}
 }
 
@@ -131,7 +131,7 @@ void ChainStore::AddBlock(const EChainType source, const EChainType destination,
 	{
 		if (pSourceChain->GetTip()->GetHeight() >= height)
 		{
-			pDestinationChain->AddBlock(pSourceChain->GetHash(height));
+			pDestinationChain->AddBlock(pSourceChain->GetHash(height), height);
 			return;
 		}
 	}
@@ -149,10 +149,10 @@ std::shared_ptr<Chain> ChainStore::GetChain(const EChainType chainType)
 	{
 		return m_pCandidateChain;
 	}
-	else if (chainType == EChainType::SYNC)
-	{
-		return m_pSyncChain;
-	}
+	//else if (chainType == EChainType::SYNC)
+	//{
+	//	return m_pSyncChain;
+	//}
 
 	throw std::exception();
 }
@@ -167,10 +167,10 @@ std::shared_ptr<const Chain> ChainStore::GetChain(const EChainType chainType) co
 	{
 		return m_pCandidateChain;
 	}
-	else if (chainType == EChainType::SYNC)
-	{
-		return m_pSyncChain;
-	}
+	//else if (chainType == EChainType::SYNC)
+	//{
+	//	return m_pSyncChain;
+	//}
 
 	throw std::exception();
 }

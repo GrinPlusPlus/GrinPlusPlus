@@ -29,16 +29,16 @@ public:
 
 	std::shared_ptr<Chain> GetConfirmedChain() { return m_pConfirmedChain; }
 	std::shared_ptr<Chain> GetCandidateChain() { return m_pCandidateChain; }
-	std::shared_ptr<Chain> GetSyncChain() { return m_pSyncChain; }
+	//std::shared_ptr<Chain> GetSyncChain() { return m_pSyncChain; }
 
 	std::shared_ptr<const Chain> GetConfirmedChain() const { return m_pConfirmedChain; }
 	std::shared_ptr<const Chain> GetCandidateChain() const { return m_pCandidateChain; }
-	std::shared_ptr<const Chain> GetSyncChain() const { return m_pSyncChain; }
+	//std::shared_ptr<const Chain> GetSyncChain() const { return m_pSyncChain; }
 
 private:
-	ChainStore(std::shared_ptr<Chain> pConfirmedChain, std::shared_ptr<Chain> pCandidateChain, std::shared_ptr<Chain> pSyncChain);
+	ChainStore(const Chain::Ptr& pConfirmedChain, const Chain::Ptr& pCandidateChain);
 
 	std::shared_ptr<Chain> m_pConfirmedChain;
 	std::shared_ptr<Chain> m_pCandidateChain;
-	std::shared_ptr<Chain> m_pSyncChain;
+	//std::shared_ptr<Chain> m_pSyncChain;
 };

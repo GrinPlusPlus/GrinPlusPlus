@@ -90,7 +90,7 @@ bool TxHashSetProcessor::UpdateConfirmedChain(Writer<ChainState> pLockedState, c
 	uint64_t height = pCommonIndex->GetHeight() + 1;
 	while (height <= pBlockIndex->GetHeight())
 	{
-		pConfirmedChain->AddBlock(pCandidateChain->GetHash(height));
+		pConfirmedChain->AddBlock(pCandidateChain->GetHash(height), height);
 		height++;
 	}
 

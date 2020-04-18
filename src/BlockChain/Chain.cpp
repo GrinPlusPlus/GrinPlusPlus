@@ -55,11 +55,16 @@ std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) cons
 	return nullptr;
 }
 
-std::shared_ptr<const BlockIndex> Chain::AddBlock(const Hash& hash)
+std::shared_ptr<const BlockIndex> Chain::AddBlock(const Hash& hash, const uint64_t height)
 {
+	if (height != m_height + 1)
+	{
+		LOG_ERROR_F("Tried to add block {} to height {}", hash, m_height + 1);
+		throw BLOCK_CHAIN_EXCEPTION("Tried to add block to wrong height.");
+	}
+
 	SetDirty(true);
 
-	const uint64_t height = m_height + 1;
 	std::shared_ptr<const BlockIndex> pBlockIndex = m_pBlockIndexAllocator->GetOrCreateIndex(hash, height);
 	m_indices.push_back(pBlockIndex);
 

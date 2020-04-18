@@ -8,5 +8,5 @@ file(GLOB SOURCE_CODE
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain Wallet civetweb)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain Wallet civetweb)
+add_dependencies(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain Wallet civetweb TestUtil)
+target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain Wallet civetweb TestUtil)

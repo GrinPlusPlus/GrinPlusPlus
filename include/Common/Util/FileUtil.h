@@ -178,12 +178,15 @@ public:
 
 	static bool TruncateFile(const fs::path& filePath, const uint64_t size)
 	{
-#if defined(WIN32)
-		HANDLE hFile = CreateFile(StringUtil::ToWide(filePath.u8string()).c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#ifdef _WIN32
+		HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		LARGE_INTEGER li;
 		li.QuadPart = size;
 		const bool success = SetFilePointerEx(hFile, li, NULL, FILE_BEGIN) && SetEndOfFile(hFile);
+
+		const DWORD err = GetLastError();
+		LOG_INFO_F("hFile: {} - success: {} - error: {}", (uint64_t)hFile, std::to_string(success), err);
 
 		CloseHandle(hFile);
 

@@ -26,9 +26,10 @@ private:
 
 	void EstablishConnectionInternal(const std::string& destination, const uint16_t port, const int numAttempts)
 	{
+		WALLET_INFO_F("Connection attempt {}", numAttempts);
 		try
 		{
-			Client::Connect(m_proxyAddress, std::chrono::seconds(10));
+			Client::Connect(m_proxyAddress, std::chrono::seconds(15));
 
 			if (destination.size() > 255)
 			{
@@ -39,8 +40,10 @@ private:
 			Authenticate(nullptr);
 			Connect(destination + ".onion", port);
 		}
-		catch (SOCKSException&)
+		catch (SOCKSException& e)
 		{
+			WALLET_INFO_F("SOCKSException: {}", e.what());
+
 			if (numAttempts < 3)
 			{
 				EstablishConnectionInternal(destination, port, numAttempts + 1);
@@ -52,6 +55,8 @@ private:
 		}
 		catch (std::exception& e)
 		{
+			WALLET_INFO_F("Exception: {}", e.what());
+
 			if (numAttempts < 3)
 			{
 				EstablishConnectionInternal(destination, port, numAttempts + 1);

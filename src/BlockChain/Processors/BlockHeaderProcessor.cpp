@@ -103,6 +103,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	}
 
 	// Rewind to fork point
+	pCandidateChain->Rewind(reorgHeaders.front()->GetHeight() - 1);
 	pHeaderMMR->Rewind(reorgHeaders.front()->GetHeight());
 
 	// Validate each header and add it to the MMR & BlockDB
@@ -114,23 +115,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 		// Since the total difficulty was not enough to reorg the candidate chain, we must rollback our MMR changes.
 		LOG_INFO("Total difficulty did not increase. Rolling back header MMR changes.");
 		pHeaderMMR->Rollback();
-	}
-	else
-	{
-		LOG_INFO_F(
-			"Applying headers {} - {} to chain",
-			reorgHeaders.front()->GetHash(),
-			reorgHeaders.back()->GetHash()
-		);
-
-		pCandidateChain->Rewind(reorgHeaders.front()->GetHeight() - 1);
-
-		for (const BlockHeaderPtr& pReorgHeader : reorgHeaders)
-		{
-			pCandidateChain->AddBlock(pReorgHeader->GetHash(), pReorgHeader->GetHeight());
-		}
-
-		//pLockedState->GetChainStore()->ReorgChain(EChainType::CANDIDATE, EChainType::SYNC);
+		pCandidateChain->Rollback();
 	}
 
 	pLockedState->Commit();
@@ -199,7 +184,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 	for (size_t i = 0; i < headers.size(); i++)
 	{
 		auto pHeader = headers[i];
-		if (!pCandidateChain->IsOnChain(pHeader))
+		if (!newHeaders.empty() || !pCandidateChain->IsOnChain(pHeader))
 		{
 			newHeaders.push_back(pHeader);
 		}
@@ -214,31 +199,20 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
 	LOG_TRACE_F("Processing headers {} to {}.", *newHeaders.front(), *newHeaders.back());
 
 	// Rewind MMR
-	pHeaderMMR->Rewind(headers.front()->GetHeight());
-	//RewindMMR(pLockedState, newHeaders);
+	pCandidateChain->Rewind(newHeaders.front()->GetHeight() - 1);
+	pHeaderMMR->Rewind(newHeaders.front()->GetHeight());
 
 	// Validate the headers.
 	ValidateHeaders(pLockedState, newHeaders);
 
-	// Add the headers to the sync chain.
-	//AddSyncHeaders(pLockedState, newHeaders);
-
 	// If total difficulty increases, accept sync chain as new candidate chain.
-	if (newHeaders.back()->GetTotalDifficulty() > totalDifficulty)
-	{
-		pCandidateChain->Rewind(newHeaders.front()->GetHeight() - 1);
-
-		for (auto pHeader : newHeaders)
-		{
-			pCandidateChain->AddBlock(pHeader->GetHash(), pHeader->GetHeight());
-		}
-	}
-	else
+	if (newHeaders.back()->GetTotalDifficulty() <= totalDifficulty)
 	{
 		// The header MMR should always match the candidate chain.
 		// Since the total difficulty was not enough to reorg the candidate chain, we must rollback our MMR changes.
 		LOG_INFO("Total difficulty did not increase. Rolling back header MMR changes.");
 		pHeaderMMR->Rollback();
+		pCandidateChain->Rollback();
 	}
 
 	pLockedState->Commit();
@@ -323,6 +297,7 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 
 		pHeaderMMR->AddHeader(*pHeader);
 		pBlockDB->AddBlockHeader(pHeader);
+		pCandidateChain->AddBlock(pHeader->GetHash(), pHeader->GetHeight());
 		pPreviousHeader = pHeader;
 	}
 }

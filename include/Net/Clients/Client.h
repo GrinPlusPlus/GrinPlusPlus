@@ -25,6 +25,11 @@ public:
 protected:
 	void Connect(const SocketAddress& address, const asio::chrono::steady_clock::duration& timeout)
 	{
+		if (m_socket.is_open())
+		{
+			m_socket.close();
+		}
+
 		asio::ip::address ipAddress(asio::ip::address_v4::from_string(address.GetIPAddress().Format()));
 		asio::ip::tcp::endpoint endpoint(ipAddress, address.GetPortNumber());
 

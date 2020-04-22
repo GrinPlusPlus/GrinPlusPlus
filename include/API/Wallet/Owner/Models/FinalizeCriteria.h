@@ -38,10 +38,10 @@ public:
 		return FinalizeCriteria(std::move(token), std::move(slate), filePathOpt, postMethodOpt);
 	}
 
-	const SessionToken& GetToken() const { return m_token; }
-	const Slate& GetSlate() const { return m_slate; }
-	const std::optional<std::string>& GetFile() const { return m_filePathOpt; }
-	const std::optional<PostMethodDTO>& GetPostMethod() const { return m_postMethodOpt; }
+	const SessionToken& GetToken() const noexcept { return m_token; }
+	const Slate& GetSlate() const noexcept { return m_slate; }
+	const std::optional<std::string>& GetFile() const noexcept { return m_filePathOpt; }
+	const std::optional<PostMethodDTO>& GetPostMethod() const noexcept { return m_postMethodOpt; }
 
 private:
 	SessionToken m_token;

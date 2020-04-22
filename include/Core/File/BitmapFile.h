@@ -1,8 +1,17 @@
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable:4244)
+#pragma warning(disable:4267)
+#pragma warning(disable:4334)
+#pragma warning(disable:4018)
+#include <mio/mio.hpp>
+#pragma warning(pop)
+
 #include <Core/Traits/Batchable.h>
 #include <Roaring.h>
 #include <Common/Util/BitUtil.h>
+#include <Common/Util/FileUtil.h>
 #include <fstream>
 #include <functional>
 #include <algorithm>

@@ -19,6 +19,7 @@ namespace LoggerAPI
 	};
 
 	LOGGER_API void Initialize(const fs::path& logDirectory, const std::string& logLevel);
+	LOGGER_API void Shutdown();
 
 	LOGGER_API void LogTrace(const std::string& message);
 	LOGGER_API void LogDebug(const std::string& message);

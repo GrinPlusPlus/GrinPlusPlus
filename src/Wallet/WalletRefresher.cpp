@@ -27,7 +27,7 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 
 	if (m_pNodeClient->GetChainHeight() < pBatch->GetRefreshBlockHeight())
 	{
-		WALLET_INFO("Skipping refresh since node is resyncing.");
+		WALLET_TRACE("Skipping refresh since node is resyncing.");
 		return std::vector<OutputDataEntity>();
 	}
 

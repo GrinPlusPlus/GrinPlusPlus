@@ -22,6 +22,9 @@
 class Wallet
 {
 public:
+	using Ptr = std::shared_ptr<Wallet>;
+	using CPtr = std::shared_ptr<const Wallet>;
+
 	static Locked<Wallet> LoadWallet(
 		const Config& config,
 		INodeClientConstPtr pNodeClient,

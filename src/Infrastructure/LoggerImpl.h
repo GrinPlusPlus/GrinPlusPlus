@@ -15,6 +15,7 @@ public:
 		const fs::path& logDirectory,
 		const spdlog::level::level_enum& logLevel
 	);
+	void StopLogger();
 	void Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
 

@@ -32,7 +32,15 @@ public:
 
 		if (torAddress.has_value())
 		{
-			return SendViaTOR(request, criteria, torAddress.value());
+			try
+			{
+				return SendViaTOR(request, criteria, torAddress.value());
+			}
+			catch (const HTTPException& e)
+			{
+				WALLET_ERROR_F("HTTPException thrown: {}", e.what());
+				return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
+			}
 		}
 		else if (criteria.GetFile().has_value())
 		{
@@ -52,31 +60,16 @@ public:
 private:
 	RPC::Response SendViaTOR(const RPC::Request& request, SendCriteria& criteria, const TorAddress& torAddress) const
 	{
-		uint16_t version = 0;
-
-		try
-		{
-			TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
-			if (pTorConnection == nullptr)
-			{
-				return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
-			}
-
-			version = CheckVersion(*pTorConnection);
-			if (version < MIN_SLATE_VERSION)
-			{
-				return request.BuildError(RPC::Errors::SLATE_VERSION_MISMATCH);
-			}
-		}
-		catch (const HTTPException&)
-		{
-			return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
-		}
-
 		TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
 		if (pTorConnection == nullptr)
 		{
 			return request.BuildError(RPC::Errors::RECEIVER_UNREACHABLE);
+		}
+
+		const uint16_t version = CheckVersion(*pTorConnection);
+		if (version < MIN_SLATE_VERSION)
+		{
+			return request.BuildError(RPC::Errors::SLATE_VERSION_MISMATCH);
 		}
 
 		criteria.SetSlateVersion(version);
@@ -90,6 +83,7 @@ private:
 		std::string result = receiveTxRequest.ToJSON().toStyledString();
 		LOG_ERROR_F("{}", result);
 
+		pTorConnection = m_pTorProcess->Connect(torAddress);
 		RPC::Response receiveTxResponse = pTorConnection->Invoke(receiveTxRequest, "/v2/foreign");
 
 		if (receiveTxResponse.GetError().has_value())

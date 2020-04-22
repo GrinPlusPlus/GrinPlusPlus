@@ -7,7 +7,10 @@
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
 
-Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& masterSeed, const Slate& slate) const
+Slate FinalizeSlateBuilder::Finalize(
+	Locked<Wallet> wallet,
+	const SecureVector& masterSeed,
+	const Slate& slate) const
 {
 	Slate finalSlate = slate;
 	auto walletWriter = wallet.Write();
@@ -17,14 +20,21 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	const std::vector<TransactionKernel>& kernels = transaction.GetKernels();
 	if (kernels.size() != 1)
 	{
-		WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
+		WALLET_ERROR_F(
+			"Slate {} had {} kernels.",
+			uuids::to_string(slate.GetSlateId()),
+			kernels.size()
+		);
 		throw WALLET_EXCEPTION("Invalid number of kernels.");
 	}
 
 	// Verify slate message signatures
 	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
 	{
-		WALLET_ERROR_F("Failed to verify message signatures for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F(
+			"Failed to verify message signatures for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		throw WALLET_EXCEPTION("Failed to verify message signatures.");
 	}
 
@@ -32,16 +42,26 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	const Hash message = kernels.front().GetSignatureMessage();
 	if (!SignatureUtil::VerifyPartialSignatures(finalSlate.GetParticipantData(), message))
 	{
-		WALLET_ERROR_F("Failed to verify partial signatures for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F(
+			"Failed to verify partial signatures for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		throw WALLET_EXCEPTION("Failed to verify partial signatures.");
 	}
 
 	// Load WalletTx
-	std::unique_ptr<WalletTx> pWalletTx = walletWriter->GetTxBySlateId(masterSeed, finalSlate.GetSlateId());
+	std::unique_ptr<WalletTx> pWalletTx = walletWriter->GetTxBySlateId(
+		masterSeed,
+		finalSlate.GetSlateId()
+	);
 	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_STARTED)
 	{
-		WALLET_ERROR_F("Transaction not found for slate ({})", uuids::to_string(finalSlate.GetSlateId()));
-		throw WALLET_EXCEPTION_F("Transaction not found for slate ({})", uuids::to_string(finalSlate.GetSlateId()));
+		const std::string errorMsg = StringUtil::Format(
+			"Transaction not found for slate ({})",
+			uuids::to_string(finalSlate.GetSlateId())
+		);
+		WALLET_ERROR(errorMsg);
+		throw WALLET_EXCEPTION(errorMsg);
 	}
 
 	Commitment finalExcess = SlateUtil::CalculateFinalExcess(slate);
@@ -49,21 +69,30 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	// Verify payment proof addresses & signatures
 	if (!VerifyPaymentProofs(pWalletTx, finalSlate, finalExcess))
 	{
-		WALLET_ERROR_F("Failed to verify payment proof for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F(
+			"Failed to verify payment proof for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		throw WALLET_EXCEPTION("Failed to verify payment proof.");
 	}
 
 	// Add partial signature to slate's participant data
 	if (!AddPartialSignature(walletWriter.GetShared(), masterSeed, finalSlate, message))
 	{
-		WALLET_ERROR_F("Failed to generate signatures for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F(
+			"Failed to generate signatures for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
 	}
 
 	// Finalize transaction
 	if (!AddFinalTransaction(finalSlate, message, finalExcess))
 	{
-		WALLET_ERROR_F("Failed to verify finalized transaction for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F(
+			"Failed to verify finalized transaction for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
 	}
 
@@ -73,12 +102,22 @@ Slate FinalizeSlateBuilder::Finalize(Locked<Wallet> wallet, const SecureVector& 
 	return finalSlate;
 }
 
-bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWallet, const SecureVector& masterSeed, Slate& slate, const Hash& kernelMessage) const
+bool FinalizeSlateBuilder::AddPartialSignature(
+	const Wallet::CPtr& pWallet,
+	const SecureVector& masterSeed, Slate& slate,
+	const Hash& kernelMessage) const
 {
 	// Load secretKey and secretNonce
-	std::unique_ptr<SlateContextEntity> pSlateContext = pWallet->GetDatabase().Read()->LoadSlateContext(masterSeed, slate.GetSlateId());
+	auto pSlateContext = pWallet->GetDatabase().Read()->LoadSlateContext(
+		masterSeed,
+		slate.GetSlateId()
+	);
 	if (pSlateContext == nullptr)
 	{
+		WALLET_ERROR_F(
+			"Failed to load slate context for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		return false;
 	}
 
@@ -91,6 +130,10 @@ bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWa
 	);
 	if (pPartialSignature == nullptr)
 	{
+		WALLET_ERROR_F(
+			"Failed to calculate partial signature for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		return false;
 	}
 
@@ -107,17 +150,28 @@ bool FinalizeSlateBuilder::AddPartialSignature(std::shared_ptr<const Wallet> pWa
 	return false;
 }
 
-bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelMessage, const Commitment& finalExcess) const
+bool FinalizeSlateBuilder::AddFinalTransaction(
+	Slate& slate,
+	const Hash& kernelMessage,
+	const Commitment& finalExcess) const
 {
 	// Aggregate partial signatures
-	std::unique_ptr<Signature> pAggSignature = SignatureUtil::AggregateSignatures(slate.GetParticipantData());
+	auto pAggSignature = SignatureUtil::AggregateSignatures(slate.GetParticipantData());
 	if (pAggSignature == nullptr)
 	{
+		WALLET_ERROR_F(
+			"Failed to aggregate signatures for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		return false;
 	}
 
 	if (!SignatureUtil::VerifyAggregateSignature(*pAggSignature, slate.GetParticipantData(), kernelMessage))
 	{
+		WALLET_ERROR_F(
+			"Failed to verify aggregate signature for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		return false;
 	}
 
@@ -133,16 +187,28 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	);
 	if (!KernelSignatureValidator().VerifyKernelSignatures(std::vector<TransactionKernel>({ finalKernel })))
 	{
+		WALLET_ERROR_F(
+			"Failed to verify kernel signatures for slate {}",
+			uuids::to_string(slate.GetSlateId())
+		);
 		return false;
 	}
 
-	const Transaction finalTransaction = TransactionBuilder::ReplaceKernel(slate.GetTransaction(), finalKernel);
+	const Transaction finalTransaction = TransactionBuilder::ReplaceKernel(
+		slate.GetTransaction(),
+		finalKernel
+	);
 	try
 	{
 		TransactionValidator().Validate(finalTransaction); // TODO: Check if inputs unspent(txHashSet->Validate())?
 	}
-	catch (std::exception&)
+	catch (std::exception& e)
 	{
+		WALLET_ERROR_F(
+			"Failed to validate transaction for slate {}. Error: {}",
+			uuids::to_string(slate.GetSlateId()),
+			e.what()
+		);
 		return false;
 	}
 
@@ -151,7 +217,10 @@ bool FinalizeSlateBuilder::AddFinalTransaction(Slate& slate, const Hash& kernelM
 	return true;
 }
 
-bool FinalizeSlateBuilder::VerifyPaymentProofs(const std::unique_ptr<WalletTx>& pWalletTx, const Slate& slate, const Commitment& finalExcess) const
+bool FinalizeSlateBuilder::VerifyPaymentProofs(
+	const std::unique_ptr<WalletTx>& pWalletTx,
+	const Slate& slate,
+	const Commitment& finalExcess) const
 {
 	auto& paymentProofOpt = pWalletTx->GetPaymentProof();
 	if (paymentProofOpt.has_value())
@@ -187,14 +256,21 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(const std::unique_ptr<WalletTx>& 
 	return true;
 }
 
-void FinalizeSlateBuilder::UpdateDatabase(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, Slate& finalSlate) const
+void FinalizeSlateBuilder::UpdateDatabase(
+	const Wallet::Ptr& pWallet,
+	const SecureVector& masterSeed,
+	Slate& finalSlate) const
 {
 	// Load WalletTx
 	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, finalSlate.GetSlateId());
 	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_STARTED)
 	{
-		WALLET_ERROR_F("Transaction not found for slate ({})", uuids::to_string(finalSlate.GetSlateId()));
-		throw WALLET_EXCEPTION_F("Transaction not found for slate ({})", uuids::to_string(finalSlate.GetSlateId()));
+		const std::string message = StringUtil::Format(
+			"Transaction not found for slate ({})",
+			uuids::to_string(finalSlate.GetSlateId())
+		);
+		WALLET_ERROR(message);
+		throw WALLET_EXCEPTION(message);
 	}
 
 	// Update WalletTx

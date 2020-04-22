@@ -22,16 +22,19 @@ void ChainResyncer::ResyncChain()
 	pConfirmedChain->Rewind(0);
 
 	pHeaderMMR->Rewind(1);
+	auto pPrevHeader = pLockedState->GetBlockHeaderByHeight(0, EChainType::CANDIDATE);
+
 	for (uint64_t i = 1; i <= pCandidateChain->GetHeight(); i++)
 	{
 		auto pIndex = pCandidateChain->GetByHeight(i);
 		auto pHeader = pBlockDB->GetBlockHeader(pIndex->GetHash());
-		if (pHeader == nullptr)
+		if (pHeader == nullptr || pHeader->GetPreviousBlockHash() != pPrevHeader->GetHash())
 		{
 			pCandidateChain->Rewind(i - 1);
 			break;
 		}
 
+		pPrevHeader = pHeader;
 		pHeaderMMR->AddHeader(*pHeader);
 	}
 

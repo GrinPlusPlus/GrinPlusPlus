@@ -15,6 +15,7 @@ void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::leve
 {
 	FileUtil::CreateDirectories(logDirectory);
 
+	if (m_pNodeLogger == nullptr)
 	{
 		const fs::path logPath = logDirectory / "Node.log";
 		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath.u8string()), 5 * 1024 * 1024, 10);
@@ -25,6 +26,7 @@ void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::leve
 			m_pNodeLogger->set_level(logLevel);
 		}
 	}
+	if (m_pWalletLogger == nullptr)
 	{
 		const fs::path logPath = logDirectory / "Wallet.log";
 		auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(StringUtil::ToWide(logPath.u8string()), 5 * 1024 * 1024, 10);
@@ -37,6 +39,13 @@ void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::leve
 	}
 }
 
+void Logger::StopLogger()
+{
+	Flush();
+	m_pNodeLogger.reset();
+	m_pWalletLogger.reset();
+}
+
 void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText)
 {
 	auto pLogger = GetLogger(file);
@@ -46,11 +55,11 @@ void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum 
 		size_t newlinePos = eventTextClean.find("\n");
 		while (newlinePos != std::string::npos)
 		{
-			if (eventTextClean.size() > newlinePos + 2)
-			{
-				eventTextClean.erase(newlinePos, 2);
-			}
-			else
+			//if (eventTextClean.size() > newlinePos + 2)
+			//{
+			//	eventTextClean.erase(newlinePos, 2);
+			//}
+			//else
 			{
 				eventTextClean.erase(newlinePos, 1);
 			}
@@ -120,6 +129,11 @@ namespace LoggerAPI
 		}
 
 		Logger::GetInstance().StartLogger(logDirectory, logLevelEnum);
+	}
+
+	LOGGER_API void Shutdown()
+	{
+		Logger::GetInstance().StopLogger();
 	}
 
 	LOGGER_API void LogTrace(const std::string& message)

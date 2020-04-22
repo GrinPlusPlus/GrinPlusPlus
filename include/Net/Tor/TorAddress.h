@@ -13,8 +13,8 @@ public:
 	
 	}
 
-	inline const std::string& ToString() const { return m_address; }
-	inline const ed25519_public_key_t& GetPublicKey() const { return m_publicKey; }
+	const std::string& ToString() const noexcept { return m_address; }
+	const ed25519_public_key_t& GetPublicKey() const noexcept { return m_publicKey; }
 
 private:
 	std::string m_address;

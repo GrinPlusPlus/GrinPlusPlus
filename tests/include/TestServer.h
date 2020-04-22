@@ -9,6 +9,7 @@
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
 #include <Crypto/RandomNumberGenerator.h>
+#include <thread>
 
 class TestServer
 {
@@ -18,6 +19,7 @@ public:
 	static TestServer::Ptr Create()
 	{
 		ConfigPtr pConfig = TestHelper::GetTestConfig();
+		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
 		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(*pConfig);
 		auto pTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(std::make_shared<TxHashSetManager>(*pConfig));
 		ITransactionPoolPtr pTxPool = TxPoolAPI::CreateTransactionPool(*pConfig);

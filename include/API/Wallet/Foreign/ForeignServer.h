@@ -259,6 +259,8 @@ public:
 
         std::optional<TorAddress> addressOpt = AddTorListener(keyChain, pTorProcess, pServer->GetPortNumber());
 
+        pServer->GetServer()->AddListener("/status", StatusListener, nullptr);
+
         return std::shared_ptr<ForeignServer>(new ForeignServer(pTorProcess, pServer, addressOpt));
     }
 
@@ -289,7 +291,12 @@ private:
         return std::nullopt;
     }
 
-    TorProcess::Ptr m_pTorProcess; // Can be NULL
+    static int StatusListener(mg_connection* pConnection, void*)
+    {
+        return HTTPUtil::BuildSuccessResponse(pConnection, "SUCCESS! Your wallet listener is working!");
+    }
+
+    TorProcess::Ptr m_pTorProcess;
     RPCServerPtr m_pRPCServer;
     std::optional<TorAddress> m_torAddress;
 };

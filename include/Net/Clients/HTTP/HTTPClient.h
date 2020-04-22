@@ -11,13 +11,15 @@ public:
 	IHTTPClient() : m_connected(false) { }
 	virtual ~IHTTPClient() = default;
 
-	virtual HTTP::Response Invoke(const HTTP::Request& request) override final
+	HTTP::Response Invoke(const HTTP::Request& request) final
 	{
+		WALLET_INFO_F("Request: {}", request.ToString());
 		try
 		{
-			if (!m_connected)
+			//if (!m_connected)
 			{
 				EstablishConnection(request.GetHost(), request.GetPort());
+				WALLET_INFO("Connection established");
 				m_connected = true;
 			}
 
@@ -54,7 +56,10 @@ public:
 					contentLengthStream >> contentLength;
 				}
 
-				headers.push_back(HTTP::Header(StringUtil::Trim(headerParts[0]), StringUtil::Trim(headerParts[1])));
+				headers.push_back(HTTP::Header(
+					StringUtil::Trim(headerParts[0]),
+					StringUtil::Trim(headerParts[1])
+				));
 
 				header = ReadLine(asio::chrono::seconds(1));
 			}
@@ -66,14 +71,20 @@ public:
 
 			std::vector<uint8_t> body = Read(contentLength, asio::chrono::seconds(2));
 
-			return HTTP::Response(statusCode, std::move(headers), std::string(body.begin(), body.end()));
+			return HTTP::Response(
+				statusCode,
+				std::move(headers),
+				std::string(body.begin(), body.end())
+			);
 		}
-		catch (HTTPException&)
+		catch (HTTPException& e)
 		{
-			throw;
+			WALLET_INFO_F("HTTPException: {}", e.what());
+			throw e;
 		}
 		catch (std::exception& e)
 		{
+			WALLET_INFO_F("Exception: {}", e.what());
 			throw HTTP_EXCEPTION(e.what());
 		}
 	}
@@ -91,7 +102,7 @@ public:
 	virtual ~HTTPClient() = default;
 
 private:
-	virtual void EstablishConnection(const std::string& ipAddress, const uint16_t port) override final
+	void EstablishConnection(const std::string& ipAddress, const uint16_t port) final
 	{
 		Connect(SocketAddress(IPAddress::Parse(ipAddress), port), std::chrono::seconds(2));
 	}

@@ -73,7 +73,7 @@ endif ()
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/deps
-    ${PROJECT_SOURCE_DIR}/deps/mio/include
+    ${PROJECT_SOURCE_DIR}/deps/mio/single_include
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
     ${PROJECT_SOURCE_DIR}/deps/asio/asio/include
     ${PROJECT_SOURCE_DIR}/deps/ghc

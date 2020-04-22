@@ -406,20 +406,18 @@ bool WalletManager::PostTransaction(
 	return false;
 }
 
-bool WalletManager::RepostByTxId(const SessionToken& token, const uint32_t walletTxId)
+bool WalletManager::RepostTx(const RepostTxCriteria& criteria, const TorProcess::Ptr& pTorProcess)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
 
-	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, walletTxId);
+	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, criteria.GetTxId());
 	if (pWalletTx != nullptr)
 	{
 		if (pWalletTx->GetTransaction().has_value())
 		{
-			return m_pNodeClient->PostTransaction(
-				std::make_shared<Transaction>(pWalletTx->GetTransaction().value()),
-				EPoolType::MEMPOOL
-			);
+			PostMethodDTO postMethod(criteria.GetMethod(), criteria.GetGrinJoinAddress());
+			return PostTransaction(pWalletTx->GetTransaction().value(), postMethod, pTorProcess);
 		}
 	}
 

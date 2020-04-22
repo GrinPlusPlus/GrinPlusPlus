@@ -73,7 +73,10 @@ public:
 		const PostMethodDTO& postMethod,
 		const TorProcess::Ptr& pTorProcess
 	) final;
-	bool RepostByTxId(const SessionToken& token, const uint32_t walletTxId) final;
+	bool RepostTx(
+		const RepostTxCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
+	) final;
 
 	void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 

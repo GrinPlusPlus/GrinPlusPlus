@@ -15,6 +15,7 @@
 #include <API/Wallet/Owner/Handlers/GetWalletSeedHandler.h>
 #include <API/Wallet/Owner/Handlers/CancelTxHandler.h>
 #include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
+#include <API/Wallet/Owner/Handlers/RepostTxHandler.h>
 
 class OwnerServer
 {
@@ -225,9 +226,32 @@ public:
         */
         pServer->AddMethod("list_txs", std::shared_ptr<RPCMethod>((RPCMethod*)new ListTxsHandler(pWalletManager)));
 
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "repost_tx",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "tx_id": 123,
+                    "method": "STEM"
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "status": "SUCCESS"
+                }
+            }
+        */
+        pServer->AddMethod("repost_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new RepostTxHandler(pTorProcess, pWalletManager)));
+
         // TODO: Add the following APIs: 
         // authenticate - Simply validates the password - useful for confirming password before sending funds
-        // repost_tx - Reposts a transaction that was already finalized but never confirmed on chain
         // tx_info - Detailed info about a specific transaction (status, kernels, inputs, outputs, payment proofs, labels, etc)
         // update_labels - Add or remove labels - useful for coin control
         // verify_payment_proof - Takes in an existing payment proof and validates it

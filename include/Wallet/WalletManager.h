@@ -22,6 +22,7 @@
 #include <API/Wallet/Owner/Models/ReceiveCriteria.h>
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>
 #include <API/Wallet/Owner/Models/ListTxsCriteria.h>
+#include <API/Wallet/Owner/Models/RepostTxCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
@@ -153,9 +154,9 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	) = 0;
 
-	virtual bool RepostByTxId(
-		const SessionToken& token,
-		const uint32_t walletTxId
+	virtual bool RepostTx(
+		const RepostTxCriteria& criteria,
+		const TorProcess::Ptr& pTorProcess
 	) = 0;
 
 	virtual void CancelByTxId(

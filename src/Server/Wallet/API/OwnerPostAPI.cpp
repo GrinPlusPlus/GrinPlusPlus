@@ -42,7 +42,7 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 	else if (action == "repost_tx")
 	{
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return Repost(pConnection, walletManager, token);
+		return Repost(pConnection, walletManager, m_pTorProcess, token);
 	}
 
 	std::optional<Json::Value> requestBodyOpt = HTTPUtil::GetRequestBody(pConnection);
@@ -198,13 +198,13 @@ int OwnerPostAPI::Finalize(mg_connection* pConnection, IWalletManager& walletMan
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, finalizedSlate.ToJSON());
 }
 
-int OwnerPostAPI::Repost(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
+int OwnerPostAPI::Repost(mg_connection* pConnection, IWalletManager& walletManager, const TorProcess::Ptr& pTorProcess, const SessionToken& token)
 {
 	std::optional<std::string> idOpt = HTTPUtil::GetQueryParam(pConnection, "id");
 	if (idOpt.has_value())
 	{
 		const uint32_t id = std::stoul(idOpt.value());
-		if (walletManager.RepostByTxId(token, id))
+		if (walletManager.RepostTx(RepostTxCriteria(id, token, EPostMethod::FLUFF, std::nullopt), pTorProcess))
 		{
 			return HTTPUtil::BuildSuccessResponse(pConnection, "");
 		}

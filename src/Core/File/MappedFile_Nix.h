@@ -13,7 +13,7 @@ class MappedFile : public IMappedFile
 public:
 	using UPtr = std::unique_ptr<MappedFile>;
 
-	MappedFile(const fs::path& path, const mio::file_handle_type handle) noexcept
+	MappedFile(const fs::path& path) noexcept
 		: m_path(path) { }
 	virtual ~MappedFile();
 

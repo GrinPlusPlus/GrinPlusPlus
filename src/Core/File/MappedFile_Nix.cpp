@@ -1,7 +1,6 @@
 #include "MappedFile_Nix.h"
 
 #include <fstream>
-#include <vector>
 #include <filesystem.h>
 #include <stdlib.h>
 #include <Core/Exceptions/FileException.h>
@@ -13,14 +12,6 @@ MappedFile::~MappedFile()
 	LOG_INFO_F("Closing File: {}", m_path);
 
 	Unmap();
-
-	if (m_handle != INVALID_HANDLE_VALUE)
-	{
-#ifdef _WIN32
-		//SetEndOfFile(m_handle);
-		CloseHandle(m_handle);
-#endif
-	}
 }
 
 IMappedFile::UPtr IMappedFile::Load(const fs::path& path)
@@ -81,8 +72,8 @@ void MappedFile::Read(const uint64_t position, const uint64_t numBytes, std::vec
 	}
 
 	data = std::vector<uint8_t>(
-		m_mmap.mapped_view + position,
-		m_mmap.mapped_view + position + numBytes
+		m_mmap.cbegin() + position,
+		m_mmap.cbegin() + position + numBytes
 	);
 }
 

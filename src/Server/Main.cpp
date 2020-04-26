@@ -79,11 +79,15 @@ int main(int argc, char* argv[])
 
 	try
 	{
+		LOG_INFO("Starting Grin++");
+
 		mg_init_library(0);
 
 		StartServer(pConfig, headless);
 
 		mg_exit_library();
+
+		LOG_INFO("Closing Grin++");
 	}
 	catch (std::exception& e)
 	{

@@ -8,12 +8,25 @@
 
 TorProcess::Ptr TorProcess::Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept
 {
-	auto pControl = TorControl::Create(TorConfig(socksPort, controlPort));
-	return std::shared_ptr<TorProcess>(new TorProcess(socksPort, controlPort, pControl));
+	auto pProcess =  std::shared_ptr<TorProcess>(new TorProcess(socksPort, controlPort));
+
+	pProcess->m_initThread = std::thread(TorProcess::Thread_Initialize, pProcess.get());
+	return pProcess;
+}
+
+void TorProcess::Thread_Initialize(TorProcess* pProcess)
+{
+	std::unique_lock<std::mutex> lock(pProcess->m_mutex);
+
+	LOG_INFO("Initializing Tor");
+	pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort));
+	LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
 }
 
 bool TorProcess::RetryInit()
 {
+	std::unique_lock<std::mutex> lock(m_mutex);
+
 	if (m_pControl == nullptr)
 	{
 		m_pControl = TorControl::Create(TorConfig(m_socksPort, m_controlPort));
@@ -24,6 +37,8 @@ bool TorProcess::RetryInit()
 
 std::shared_ptr<TorAddress> TorProcess::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
 {
+	std::unique_lock<std::mutex> lock(m_mutex);
+
 	try
 	{
 		if (m_pControl != nullptr)
@@ -53,6 +68,8 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const SecretKey64& secretKey
 
 std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serializedKey, const uint16_t portNumber)
 {
+	std::unique_lock<std::mutex> lock(m_mutex);
+
 	try
 	{
 		if (m_pControl != nullptr)
@@ -82,6 +99,8 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serialize
 
 bool TorProcess::RemoveListener(const TorAddress& torAddress)
 {
+	std::unique_lock<std::mutex> lock(m_mutex);
+
 	try
 	{
 		if (m_pControl != nullptr)
@@ -99,6 +118,8 @@ bool TorProcess::RemoveListener(const TorAddress& torAddress)
 
 std::shared_ptr<TorConnection> TorProcess::Connect(const TorAddress& address)
 {
+	std::unique_lock<std::mutex> lock(m_mutex);
+
 	try
 	{
 		SocketAddress proxyAddress("127.0.0.1", m_socksPort);

@@ -45,12 +45,12 @@ public:
 
         if (ec.value() == EnumValue(std::errc::no_such_file_or_directory) || ec.value() == EnumValue(std::errc::no_such_device_or_address))
         {
-            LOG_ERROR_F("Failed to open process: {}:{}", ec.value(), ec.message());
+            LOG_ERROR_F("Failed to open process: {} - Error: {}:{}", args[0], ec.value(), ec.message());
             return nullptr;
         }
         else if (ec)
         {
-            LOG_ERROR_F("Error while opening process: {}:{}", ec.value(), ec.message());
+            LOG_ERROR_F("Error while opening process: {}, Error: {}:{}", args[0], ec.value(), ec.message());
 
             uint8_t buffer[4096];
             unsigned int bytesRead = 0;

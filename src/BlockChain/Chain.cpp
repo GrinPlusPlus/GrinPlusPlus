@@ -47,7 +47,7 @@ std::shared_ptr<Chain> Chain::Load(
 
 std::shared_ptr<const BlockIndex> Chain::GetByHeight(const uint64_t height) const
 {
-	if (m_height >= height)
+	if (m_height >= height && m_indices.size() > height)
 	{
 		return m_indices[height];
 	}

@@ -1,6 +1,7 @@
 #include "ShutdownManagerImpl.h"
 
 #include <Infrastructure/ShutdownManager.h>
+#include <Infrastructure/Logger.h>
 
 ShutdownManager& ShutdownManager::GetInstance()
 {
@@ -17,6 +18,7 @@ namespace ShutdownManagerAPI
 
 	SHUTDOWN_MANAGER_API void Shutdown()
 	{
+		LOG_INFO("Shutdown requested");
 		ShutdownManager::GetInstance().Shutdown();
 	}
 };

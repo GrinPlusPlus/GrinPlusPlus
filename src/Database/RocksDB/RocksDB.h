@@ -171,7 +171,7 @@ public:
 
 	void Delete(const RocksDBTable& table, const rocksdb::Slice& key)
 	{
-		LOG_DEBUG_F("Deleting {} from table {}", key.ToString(true), table);
+		LOG_TRACE_F("Deleting {} from table {}", key.ToString(true), table);
 
 		rocksdb::Status status;
 		if (m_pTransaction != nullptr)

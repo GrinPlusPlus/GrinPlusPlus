@@ -4,6 +4,10 @@
 #include <Crypto/SecretKey.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorConnection.h>
+#include <Common/Util/ThreadUtil.h>
+
+#include <thread>
+#include <mutex>
 
 // Forward Declarations
 class TorControl;
@@ -12,6 +16,11 @@ class TorProcess
 {
 public:
 	using Ptr = std::shared_ptr<TorProcess>;
+
+	~TorProcess()
+	{
+		ThreadUtil::Join(m_initThread);
+	}
 
 	static TorProcess::Ptr Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept;
 
@@ -25,10 +34,15 @@ public:
 	bool RetryInit();
 
 private:
-	TorProcess(const uint16_t socksPort, const uint16_t controlPort, const std::shared_ptr<TorControl>& pControl)
-		: m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(pControl) { }
+	TorProcess(const uint16_t socksPort, const uint16_t controlPort)
+		: m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr) { }
+
+	static void Thread_Initialize(TorProcess* pProcess);
 
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;
 	std::shared_ptr<TorControl> m_pControl;
+
+	std::mutex m_mutex;
+	std::thread m_initThread;
 };

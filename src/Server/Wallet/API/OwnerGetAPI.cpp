@@ -17,7 +17,7 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 {
 	if (action == "accounts")
 	{
-		Json::Value accountsNode;
+		Json::Value accountsNode(Json::arrayValue);
 		std::vector<std::string> accounts = walletManager.GetAllAccounts();
 		for (std::string& account : accounts)
 		{

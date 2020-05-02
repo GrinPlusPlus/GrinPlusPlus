@@ -24,7 +24,7 @@ public:
 		std::string listeningPort = StringUtil::Format("{}:{}", listenerAddr, port.value_or(0));
 
 		const char* pOptions[] = {
-			"num_threads", "5",
+			"num_threads", "15",
 			"listening_ports", listeningPort.c_str(),
 			NULL
 		};

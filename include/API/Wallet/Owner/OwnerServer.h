@@ -20,12 +20,13 @@
 class OwnerServer
 {
 public:
-    using Ptr = std::shared_ptr<OwnerServer>;
+    using UPtr = std::unique_ptr<OwnerServer>;
 
     OwnerServer(const RPCServerPtr& pServer) : m_pServer(pServer) { }
+    ~OwnerServer() { LOG_INFO("Shutting down owner API"); }
 
     // TODO: Add e2e encryption
-    static OwnerServer::Ptr Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+    static OwnerServer::UPtr Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
     {
         RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config (Use same port as v1 owner)
 
@@ -256,7 +257,7 @@ public:
         // update_labels - Add or remove labels - useful for coin control
         // verify_payment_proof - Takes in an existing payment proof and validates it
 
-        return std::shared_ptr<OwnerServer>(new OwnerServer(pServer));
+        return std::make_unique<OwnerServer>(pServer);
     }
 
 private:

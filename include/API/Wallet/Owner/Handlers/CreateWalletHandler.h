@@ -17,7 +17,7 @@ class CreateWalletHandler : RPCMethod
 public:
 	CreateWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
 		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
-	virtual ~CreateWalletHandler() = default;
+	~CreateWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

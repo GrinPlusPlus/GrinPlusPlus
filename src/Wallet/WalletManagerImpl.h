@@ -11,7 +11,7 @@ class WalletManager : public IWalletManager
 {
 public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
-	virtual ~WalletManager() = default;
+	~WalletManager();
 
 	CreateWalletResponse InitializeNewWallet(
 		const CreateWalletCriteria& criteria,

@@ -11,7 +11,7 @@ public:
 		: m_pNodeContext(pNodeContext), m_pRPCServer(pRPCServer) { }
 	~NodeRestServer() = default;
 
-	static std::shared_ptr<NodeRestServer> Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
+	static std::unique_ptr<NodeRestServer> Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
 
 private:
 	std::shared_ptr<NodeContext> m_pNodeContext;

@@ -30,6 +30,11 @@ WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, s
 
 }
 
+WalletManager::~WalletManager()
+{
+	LOG_INFO("Shutting down wallet manager");
+}
+
 CreateWalletResponse WalletManager::InitializeNewWallet(
 	const CreateWalletCriteria& criteria,
 	const TorProcess::Ptr& pTorProcess)

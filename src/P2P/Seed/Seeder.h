@@ -22,7 +22,7 @@ class Pipeline;
 class Seeder
 {
 public:
-	static std::shared_ptr<Seeder> Create(
+	static std::unique_ptr<Seeder> Create(
 		Context::Ptr pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,

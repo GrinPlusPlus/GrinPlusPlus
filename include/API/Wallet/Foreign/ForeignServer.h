@@ -14,7 +14,7 @@
 class ForeignServer
 {
 public:
-    using Ptr = std::shared_ptr<ForeignServer>;
+    using UPtr = std::unique_ptr<ForeignServer>;
 
     ForeignServer(
         const TorProcess::Ptr& pTorProcess,
@@ -22,16 +22,21 @@ public:
         const std::optional<TorAddress>& torAddressOpt)
         : m_pTorProcess(pTorProcess),
         m_pRPCServer(pRPCServer),
-        m_torAddress(torAddressOpt) { }
+        m_torAddress(torAddressOpt)
+    {
+        LOG_INFO("Starting foreign server");
+    }
+
     ~ForeignServer()
     {
+        LOG_INFO("Shutting down foreign server");
         if (m_torAddress.has_value())
         {
             m_pTorProcess->RemoveListener(m_torAddress.value());
         }
     }
 
-    static ForeignServer::Ptr Create(
+    static ForeignServer::UPtr Create(
         const KeyChain& keyChain,
         const TorProcess::Ptr& pTorProcess,
         IWalletManager& walletManager,
@@ -261,7 +266,7 @@ public:
 
         pServer->GetServer()->AddListener("/status", StatusListener, nullptr);
 
-        return std::shared_ptr<ForeignServer>(new ForeignServer(pTorProcess, pServer, addressOpt));
+        return std::make_unique<ForeignServer>(pTorProcess, pServer, addressOpt);
     }
 
     uint16_t GetPortNumber() const noexcept { return m_pRPCServer->GetPortNumber(); }

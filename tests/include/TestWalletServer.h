@@ -11,8 +11,8 @@ class TestWalletServer
 public:
     using Ptr = std::shared_ptr<TestWalletServer>;
 
-    TestWalletServer(const IWalletManagerPtr& pWalletManager, const OwnerServer::Ptr& pOwnerServer)
-        : m_pWalletManager(pWalletManager), m_pOwnerServer(pOwnerServer), m_numUsers(0) { }
+    TestWalletServer(const IWalletManagerPtr& pWalletManager, OwnerServer::UPtr&& pOwnerServer)
+        : m_pWalletManager(pWalletManager), m_pOwnerServer(std::move(pOwnerServer)), m_numUsers(0) { }
 
     static TestWalletServer::Ptr Create(const TestServer::Ptr& pTestServer)
     {
@@ -21,11 +21,11 @@ public:
             pTestServer->GetNodeClient()
         );
         auto pOwnerServer = OwnerServer::Create(TorProcessManager::GetProcess(0), pWalletManager);
-        return std::make_shared<TestWalletServer>(pWalletManager, pOwnerServer);
+        return std::make_shared<TestWalletServer>(pWalletManager, std::move(pOwnerServer));
     }
 
     const IWalletManagerPtr& GetWalletManager() const noexcept { return m_pWalletManager; }
-    const OwnerServer::Ptr& GetOwnerServer() const noexcept { return m_pOwnerServer; }
+    const OwnerServer::UPtr& GetOwnerServer() const noexcept { return m_pOwnerServer; }
     uint16_t GetOwnerPort() const noexcept { return 3421; }
 
     TestWallet::Ptr CreateUser(
@@ -63,6 +63,6 @@ public:
 
 private:
     IWalletManagerPtr m_pWalletManager;
-    OwnerServer::Ptr m_pOwnerServer;
+    OwnerServer::UPtr m_pOwnerServer;
     size_t m_numUsers;
 };

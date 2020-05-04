@@ -50,19 +50,19 @@ public:
 private:
 	P2PServer(
 		SyncStatusConstPtr pSyncStatus,
-		Locked<PeerManager> peerManager,
+		const std::shared_ptr<Locked<PeerManager>>& pPeerManager,
 		ConnectionManagerPtr pConnectionManager,
 		std::shared_ptr<Pipeline> pPipeline,
-		std::shared_ptr<Seeder> pSeeder,
+		std::unique_ptr<Seeder>&& pSeeder,
 		std::shared_ptr<Syncer> pSyncer,
 		std::shared_ptr<Dandelion> pDandelion
 	);
 
 	SyncStatusConstPtr m_pSyncStatus;
-	Locked<PeerManager> m_peerManager;
+	std::shared_ptr<Locked<PeerManager>> m_pPeerManager;
 	ConnectionManagerPtr m_pConnectionManager;
 	std::shared_ptr<Pipeline> m_pPipeline;
-	std::shared_ptr<Seeder> m_pSeeder;
+	std::unique_ptr<Seeder> m_pSeeder;
 	std::shared_ptr<Syncer> m_pSyncer;
 	std::shared_ptr<Dandelion> m_pDandelion;
 };

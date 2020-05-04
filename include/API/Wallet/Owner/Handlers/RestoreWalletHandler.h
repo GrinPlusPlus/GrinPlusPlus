@@ -18,7 +18,7 @@ class RestoreWalletHandler : RPCMethod
 public:
 	RestoreWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
 		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
-	virtual ~RestoreWalletHandler() = default;
+	~RestoreWalletHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

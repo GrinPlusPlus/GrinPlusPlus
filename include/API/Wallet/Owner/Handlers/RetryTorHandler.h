@@ -38,7 +38,7 @@ class RetryTorHandler : public RPCMethod
 public:
 	RetryTorHandler(const TorProcess::Ptr& pTorProcess, IWalletManagerPtr pWalletManager)
 		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
-	virtual ~RetryTorHandler() = default;
+	~RetryTorHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

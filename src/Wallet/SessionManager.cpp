@@ -11,17 +11,18 @@ SessionManager::SessionManager(
 	const Config& config,
 	const INodeClientConstPtr& pNodeClient,
 	const std::shared_ptr<IWalletStore>& pWalletDB,
-	const std::shared_ptr<ForeignController>& pForeignController)
+	std::unique_ptr<ForeignController>&& pForeignController)
 	: m_config(config),
 	m_pNodeClient(pNodeClient),
 	m_pWalletDB(pWalletDB),
-	m_pForeignController(pForeignController)
+	m_pForeignController(std::move(pForeignController))
 {
 	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
 }
 
 SessionManager::~SessionManager()
 {
+	LOG_INFO("Shutting down session manager");
 	for (auto iter = m_sessionsById.begin(); iter != m_sessionsById.end(); iter++)
 	{
 		m_pForeignController->StopListener(iter->second->m_wallet.Read()->GetUsername());
@@ -34,12 +35,12 @@ Locked<SessionManager> SessionManager::Create(
 	const std::shared_ptr<IWalletStore>& pWalletDB,
 	IWalletManager& walletManager)
 {
-	auto pForeignController = std::make_shared<ForeignController>(walletManager);
+	auto pForeignController = std::make_unique<ForeignController>(walletManager);
 	auto pSessionManager = std::make_shared<SessionManager>(
 		config,
 		pNodeClient,
 		pWalletDB,
-		pForeignController
+		std::move(pForeignController)
 	);
 	return Locked<SessionManager>(pSessionManager);
 }

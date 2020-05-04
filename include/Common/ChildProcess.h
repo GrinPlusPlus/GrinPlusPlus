@@ -12,13 +12,13 @@
 class ChildProcess
 {
 public:
-    using CPtr = std::shared_ptr<const ChildProcess>;
+    using UCPtr = std::unique_ptr<const ChildProcess>;
 
-    static ChildProcess::CPtr Create(const std::vector<std::string>& args)
+    static ChildProcess::UCPtr Create(const std::vector<std::string>& args)
     {
         assert(!args.empty());
 
-        std::shared_ptr<ChildProcess> pChildProcess = std::shared_ptr<ChildProcess>(new ChildProcess());
+        std::unique_ptr<ChildProcess> pChildProcess = std::unique_ptr<ChildProcess>(new ChildProcess());
 
         reproc::stop_actions stop_actions = {
             { reproc::stop::terminate, reproc::milliseconds(5000) },

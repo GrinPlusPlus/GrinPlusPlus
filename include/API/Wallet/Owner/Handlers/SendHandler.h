@@ -16,7 +16,7 @@ class SendHandler : public RPCMethod
 public:
 	SendHandler(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
-	virtual ~SendHandler() = default;
+	~SendHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

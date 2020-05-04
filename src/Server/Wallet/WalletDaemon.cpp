@@ -8,18 +8,23 @@ WalletDaemon::WalletDaemon(
 	const Config& config,
 	INodeClientPtr pNodeClient,
 	IWalletManagerPtr pWalletManager,
-	std::shared_ptr<WalletRestServer> pWalletRestServer,
-	std::shared_ptr<OwnerServer> pOwnerServer)
+	std::unique_ptr<WalletRestServer>&& pWalletRestServer,
+	std::unique_ptr<OwnerServer>&& pOwnerServer)
 	: m_config(config),
 	m_pNodeClient(pNodeClient),
 	m_pWalletManager(pWalletManager),
-	m_pWalletRestServer(pWalletRestServer),
-	m_pOwnerServer(pOwnerServer)
+	m_pWalletRestServer(std::move(pWalletRestServer)),
+	m_pOwnerServer(std::move(pOwnerServer))
 {
 
 }
 
-std::shared_ptr<WalletDaemon> WalletDaemon::Create(
+WalletDaemon::~WalletDaemon()
+{
+	LOG_INFO("Shutting down wallet daemon");
+}
+
+std::unique_ptr<WalletDaemon> WalletDaemon::Create(
 	const Config& config,
 	const TorProcess::Ptr& pTorProcess,
 	INodeClientPtr pNodeClient)
@@ -38,11 +43,11 @@ std::shared_ptr<WalletDaemon> WalletDaemon::Create(
 		pWalletManager
 	);
 
-	return std::make_shared<WalletDaemon>(
+	return std::make_unique<WalletDaemon>(
 		config,
 		pNodeClient,
 		pWalletManager,
-		pWalletRestServer,
-		pOwnerServer
+		std::move(pWalletRestServer),
+		std::move(pOwnerServer)
 	);
 }

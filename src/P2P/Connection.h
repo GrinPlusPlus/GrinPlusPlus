@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Seed/PeerManager.h"
 #include "Messages/Message.h"
 
 #include <Common/ConcurrentQueue.h>
@@ -14,7 +13,6 @@
 // Forward Declarations
 class IMessage;
 class ConnectionManager;
-class PeerManager;
 class Pipeline;
 class HandShake;
 class MessageProcessor;
@@ -29,6 +27,17 @@ class MessageSender;
 class Connection
 {
 public:
+	Connection(
+		SocketPtr pSocket,
+		const uint64_t connectionId,
+		ConnectionManager& connectionManager,
+		const ConnectedPeer& connectedPeer,
+		SyncStatusConstPtr pSyncStatus,
+		std::shared_ptr<HandShake> pHandShake,
+		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
+		std::shared_ptr<MessageRetriever> pMessageRetriever,
+		std::shared_ptr<MessageSender> pMessageSender
+	);
 	Connection(const Connection&) = delete;
 	Connection& operator=(const Connection&) = delete;
 	Connection(Connection&&) = delete;
@@ -41,7 +50,7 @@ public:
 		ConnectionManager& connectionManager,
 		IBlockChainServerPtr pBlockChainServer,
 		const ConnectedPeer& connectedPeer,
-		std::shared_ptr<MessageProcessor> pMessageProcessor,
+		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
 		SyncStatusConstPtr pSyncStatus
 	);
 
@@ -64,25 +73,13 @@ public:
 	bool ExceedsRateLimit() const;
 
 private:
-	Connection(
-		SocketPtr pSocket,
-		const uint64_t connectionId,
-		ConnectionManager& connectionManager,
-		const ConnectedPeer& connectedPeer,
-		SyncStatusConstPtr pSyncStatus,
-		std::shared_ptr<HandShake> pHandShake,
-		std::shared_ptr<MessageProcessor> pMessageProcessor,
-		std::shared_ptr<MessageRetriever> pMessageRetriever,
-		std::shared_ptr<MessageSender> pMessageSender
-	);
-
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
 
 	std::shared_ptr<HandShake> m_pHandShake;
-	std::shared_ptr<MessageProcessor> m_pMessageProcessor;
+	std::weak_ptr<MessageProcessor> m_pMessageProcessor;
 	std::shared_ptr<MessageRetriever> m_pMessageRetriever;
 	std::shared_ptr<MessageSender> m_pMessageSender;
 

@@ -116,8 +116,8 @@ void StartServer(const ConfigPtr& pConfig, const bool headless)
 		throw;
 	}
 
-	std::shared_ptr<NodeDaemon> pNode = NodeDaemon::Create(pContext);
-	std::shared_ptr<WalletDaemon> pWallet = WalletDaemon::Create(
+	std::unique_ptr<NodeDaemon> pNode = NodeDaemon::Create(pContext);
+	std::unique_ptr<WalletDaemon> pWallet = WalletDaemon::Create(
 		pContext->GetConfig(),
 		pContext->GetTorProcess(),
 		pNode->GetNodeClient()

@@ -16,11 +16,13 @@ PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IP
 
 PeerManager::~PeerManager()
 {
+	LOG_INFO("Shutting down peer manager");
+
 	m_pContext->GetScheduler()->RemoveTask(m_taskId);
 	Thread_ManagePeers(*this);
 }
 
-Locked<PeerManager> PeerManager::Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
+std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
 {
 	std::shared_ptr<PeerManager> pPeerManager(new PeerManager(pContext, pPeerDB));
 
@@ -31,16 +33,21 @@ Locked<PeerManager> PeerManager::Create(const Context::Ptr& pContext, std::share
 		pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
 	}
 
-	Locked<PeerManager> peerManager(pPeerManager);
+	std::shared_ptr<Locked<PeerManager>> pLocked = std::make_shared<Locked<PeerManager>>(Locked<PeerManager>(pPeerManager));
 
-	const uint64_t taskId = pContext->GetScheduler()->interval(std::chrono::seconds(15), [peerManager]() {
-		auto pWriter = Locked<PeerManager>(peerManager).Write();
-		PeerManager::Thread_ManagePeers(*pWriter.GetShared());
+	std::weak_ptr<Locked<PeerManager>> pLockedWeak(pLocked);
+	const uint64_t taskId = pContext->GetScheduler()->interval(std::chrono::seconds(15), [pLockedWeak]() {
+		auto pLocked = pLockedWeak.lock();
+		if (pLocked != nullptr)
+		{
+			auto pWriter = pLocked->Write();
+			PeerManager::Thread_ManagePeers(*pWriter.GetShared());
+		}
 	});
 
 	pPeerManager->SetTaskId(taskId);
 
-	return peerManager;
+	return pLocked;
 }
 
 void PeerManager::Thread_ManagePeers(PeerManager& peerManager)

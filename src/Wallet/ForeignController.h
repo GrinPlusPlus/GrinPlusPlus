@@ -29,15 +29,15 @@ public:
 private:
 	struct Context
 	{
-		Context(const ForeignServer::Ptr& pServer)
-			: m_numReferences(1), m_pServer(pServer) { }
+		Context(ForeignServer::UPtr&& pServer)
+			: m_numReferences(1), m_pServer(std::move(pServer)) { }
 
 		int m_numReferences;
-		ForeignServer::Ptr m_pServer;
+		ForeignServer::UPtr m_pServer;
 	};
 
 	IWalletManager& m_walletManager;
 
 	mutable std::mutex m_contextsMutex;
-	std::unordered_map<std::string, std::shared_ptr<Context>> m_contextsByUsername;
+	std::unordered_map<std::string, std::unique_ptr<Context>> m_contextsByUsername;
 };

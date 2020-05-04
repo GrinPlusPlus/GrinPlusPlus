@@ -5,7 +5,7 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/ThreadManager.h>
 
-std::shared_ptr<GrinJoinController> GrinJoinController::Create(
+std::unique_ptr<GrinJoinController> GrinJoinController::Create(
 	const TorProcess::Ptr& pTorProcess,
 	std::shared_ptr<NodeContext> pNodeContext,
 	const std::string& privateKey)
@@ -21,7 +21,7 @@ std::shared_ptr<GrinJoinController> GrinJoinController::Create(
 
 	pServer->AddMethod("submit_tx", std::make_shared<SubmitTxMethod>(pNodeContext));
 
-	auto pController = std::shared_ptr<GrinJoinController>(new GrinJoinController(pTorProcess, pServer, *pTorAddress));
+	auto pController = std::unique_ptr<GrinJoinController>(new GrinJoinController(pTorProcess, pServer, *pTorAddress));
 
 	pController->m_thread = std::thread(Thread_Process, pController.get(), pNodeContext->m_pTransactionPool);
 

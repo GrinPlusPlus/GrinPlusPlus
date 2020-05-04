@@ -19,6 +19,11 @@ struct WalletContext
 
 	}
 
+	~WalletContext()
+	{
+		LOG_INFO("Closing WalletContext");
+	}
+
 	const Config& m_config;
 	IWalletManagerPtr m_pWalletManager;
 	INodeClientPtr m_pNodeClient;

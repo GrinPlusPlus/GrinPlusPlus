@@ -15,7 +15,7 @@
 class GrinJoinController
 {
 public:
-	static std::shared_ptr<GrinJoinController> Create(
+	static std::unique_ptr<GrinJoinController> Create(
 		const TorProcess::Ptr& pTorProcess,
 		std::shared_ptr<NodeContext> pNodeContext,
 		const std::string& privateKey

@@ -18,7 +18,7 @@ ForeignController::ForeignController(IWalletManager& walletManager)
 
 ForeignController::~ForeignController()
 {
-	for (auto iter : m_contextsByUsername)
+	for (auto& iter : m_contextsByUsername)
 	{
 		iter.second->m_pServer.reset();
 	}
@@ -49,7 +49,7 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		token
 	);
 
-	m_contextsByUsername[username] = std::make_shared<Context>(pServer);
+	m_contextsByUsername[username] = std::make_unique<Context>(std::move(pServer));
 
 	return std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());
 }

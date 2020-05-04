@@ -16,23 +16,28 @@
 
 NodeDaemon::NodeDaemon(
 	const Context::Ptr& pContext,
-	std::shared_ptr<NodeRestServer> pNodeRestServer,
+	std::unique_ptr<NodeRestServer>&& pNodeRestServer,
 	std::shared_ptr<DefaultNodeClient> pNodeClient,
-	std::shared_ptr<GrinJoinController> pGrinJoinController)
+	std::unique_ptr<GrinJoinController>&& pGrinJoinController)
 	: m_pContext(pContext),
-	m_pNodeRestServer(pNodeRestServer),
+	m_pNodeRestServer(std::move(pNodeRestServer)),
 	m_pNodeClient(pNodeClient),
-	m_pGrinJoinController(pGrinJoinController)
+	m_pGrinJoinController(std::move(pGrinJoinController))
 {
 
 }
 
-std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
+NodeDaemon::~NodeDaemon()
+{
+	LOG_INFO("Shutting down node daemon");
+}
+
+std::unique_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 {
 	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(pContext);
-	std::shared_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(pContext->GetConfig(), pNodeClient->GetNodeContext());
+	std::unique_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(pContext->GetConfig(), pNodeClient->GetNodeContext());
 
-	std::shared_ptr<GrinJoinController> pGrinJoinController = nullptr;
+	std::unique_ptr<GrinJoinController> pGrinJoinController = nullptr;
 	if (!pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey().empty())
 	{
 		pGrinJoinController = GrinJoinController::Create(
@@ -42,7 +47,12 @@ std::shared_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 		);
 	}
 
-	return std::make_shared<NodeDaemon>(pContext, pNodeRestServer, pNodeClient, pGrinJoinController);
+	return std::make_unique<NodeDaemon>(
+		pContext,
+		std::move(pNodeRestServer),
+		pNodeClient,
+		std::move(pGrinJoinController)
+	);
 }
 
 void NodeDaemon::UpdateDisplay(const int secondsRunning)

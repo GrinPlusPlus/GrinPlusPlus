@@ -15,7 +15,7 @@ class LoginHandler : RPCMethod
 public:
 	LoginHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)
 		: m_pWalletManager(pWalletManager), m_pTorProcess(pTorProcess) { }
-	virtual ~LoginHandler() = default;
+	~LoginHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

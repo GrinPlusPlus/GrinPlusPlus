@@ -13,7 +13,7 @@ class RepostTxHandler : public RPCMethod
 public:
 	RepostTxHandler(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
-	virtual ~RepostTxHandler() = default;
+	~RepostTxHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

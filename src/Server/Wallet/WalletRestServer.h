@@ -11,9 +11,15 @@ struct mg_connection;
 class WalletRestServer
 {
 public:
+	WalletRestServer(
+		const Config& config,
+		const IWalletManagerPtr& pWalletManager,
+		std::unique_ptr<WalletContext>&& pWalletContext,
+		mg_context* pOwnerCivetContext
+	);
 	~WalletRestServer();
 
-	static std::shared_ptr<WalletRestServer> Create(
+	static std::unique_ptr<WalletRestServer> Create(
 		const Config& config,
 		const IWalletManagerPtr& pWalletManager,
 		const std::shared_ptr<INodeClient>& pNodeClient,
@@ -21,12 +27,6 @@ public:
 	);
 
 private:
-	WalletRestServer(
-		const Config& config,
-		const IWalletManagerPtr& pWalletManager,
-		const std::shared_ptr<WalletContext>& pWalletContext,
-		mg_context* pOwnerCivetContext
-	);
 
 	static int OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext);
 

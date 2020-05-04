@@ -35,12 +35,13 @@ Seeder::Seeder(
 
 Seeder::~Seeder()
 {
+	LOG_INFO("Shutting down seeder");
 	m_terminate = true;
 	ThreadUtil::Join(m_listenerThread);
 	ThreadUtil::Join(m_seedThread);
 }
 
-std::shared_ptr<Seeder> Seeder::Create(
+std::unique_ptr<Seeder> Seeder::Create(
 	Context::Ptr pContext,
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
@@ -56,7 +57,7 @@ std::shared_ptr<Seeder> Seeder::Create(
 		pPipeline,
 		pSyncStatus
 	);
-	std::shared_ptr<Seeder> pSeeder(new Seeder(
+	std::unique_ptr<Seeder> pSeeder(new Seeder(
 		pContext,
 		connectionManager,
 		peerManager,

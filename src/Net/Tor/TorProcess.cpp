@@ -6,6 +6,12 @@
 
 #include "TorControl.h"
 
+TorProcess::~TorProcess()
+{
+	LOG_TRACE("Terminating tor process");
+	ThreadUtil::Join(m_initThread);
+}
+
 TorProcess::Ptr TorProcess::Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept
 {
 	auto pProcess =  std::shared_ptr<TorProcess>(new TorProcess(socksPort, controlPort));

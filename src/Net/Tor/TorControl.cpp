@@ -7,8 +7,8 @@
 #include <Common/Util/StringUtil.h>
 #include <cppcodec/base64_rfc4648.hpp>
 
-TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::CPtr pProcess)
-	: m_torConfig(config), m_pClient(pClient), m_pProcess(pProcess)
+TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::UCPtr&& pProcess)
+	: m_torConfig(config), m_pClient(pClient), m_pProcess(std::move(pProcess))
 {
 
 }
@@ -32,7 +32,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 		});
 
 		// TODO: Determine if process is already running.
-		ChildProcess::CPtr pProcess = ChildProcess::Create(args);
+		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);
 		if (pProcess == nullptr)
 		{
 			// Fallback to tor on path
@@ -54,7 +54,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 
 		if (connected && Authenticate(pClient, torConfig.GetControlPassword()))
 		{
-			return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, pProcess));
+			return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, std::move(pProcess)));
 		}
 	}
 	catch (std::exception& e)

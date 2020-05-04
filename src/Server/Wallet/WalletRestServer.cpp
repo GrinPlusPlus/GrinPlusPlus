@@ -12,11 +12,11 @@
 WalletRestServer::WalletRestServer(
 	const Config& config,
 	const IWalletManagerPtr& pWalletManager,
-	const std::shared_ptr<WalletContext>& pWalletContext,
+	std::unique_ptr<WalletContext>&& pWalletContext,
 	mg_context* pOwnerCivetContext)
 	: m_config(config),
 	m_pWalletManager(pWalletManager),
-	m_pWalletContext(pWalletContext),
+	m_pWalletContext(std::move(pWalletContext)),
 	m_pOwnerCivetContext(pOwnerCivetContext)
 {
 
@@ -24,10 +24,11 @@ WalletRestServer::WalletRestServer(
 
 WalletRestServer::~WalletRestServer()
 {
+	LOG_INFO("Shutting down wallet rest server");
 	mg_stop(m_pOwnerCivetContext);
 }
 
-std::shared_ptr<WalletRestServer> WalletRestServer::Create(
+std::unique_ptr<WalletRestServer> WalletRestServer::Create(
 	const Config& config,
 	const IWalletManagerPtr& pWalletManager,
 	const std::shared_ptr<INodeClient>& pNodeClient,
@@ -36,24 +37,24 @@ std::shared_ptr<WalletRestServer> WalletRestServer::Create(
 	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
 	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", ownerPort);
 	const char* pOwnerOptions[] = {
-		"num_threads", "1",
+		"num_threads", "3",
 		"listening_ports", listeningPorts.c_str(),
 		NULL
 	};
 
-	std::shared_ptr<WalletContext> pWalletContext = std::shared_ptr<WalletContext>(
-		new WalletContext(config, pWalletManager, pNodeClient, pTorProcess)
+	std::unique_ptr<WalletContext> pWalletContext = std::make_unique<WalletContext>(
+		config, pWalletManager, pNodeClient, pTorProcess
 	);
 
 	mg_context* pOwnerCivetContext = mg_start(NULL, 0, pOwnerOptions);
 	mg_set_request_handler(pOwnerCivetContext, "/v1/wallet/owner/", WalletRestServer::OwnerAPIHandler, pWalletContext.get());
 
-	return std::shared_ptr<WalletRestServer>(new WalletRestServer(
+	return std::make_unique<WalletRestServer>(
 		config,
 		pWalletManager,
-		pWalletContext,
+		std::move(pWalletContext),
 		pOwnerCivetContext
-	));
+	);
 }
 
 int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext)

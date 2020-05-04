@@ -21,7 +21,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
+std::unique_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
 	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
 	RPCServerPtr pRPCServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port), "/v2");
@@ -46,5 +46,5 @@ std::shared_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std
 	pServer->AddListener("/v1/shutdown", Shutdown_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
 
-	return std::make_shared<NodeRestServer>(pNodeContext, pRPCServer);
+	return std::make_unique<NodeRestServer>(pNodeContext, pRPCServer);
 }

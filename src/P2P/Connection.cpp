@@ -22,7 +22,7 @@ Connection::Connection(
 	const ConnectedPeer& connectedPeer,
 	SyncStatusConstPtr pSyncStatus,
 	std::shared_ptr<HandShake> pHandShake,
-	std::shared_ptr<MessageProcessor> pMessageProcessor,
+	const std::weak_ptr<MessageProcessor>& pMessageProcessor,
 	std::shared_ptr<MessageRetriever> pMessageRetriever,
 	std::shared_ptr<MessageSender> pMessageSender)
 	: m_pSocket(pSocket),
@@ -59,7 +59,7 @@ std::shared_ptr<Connection> Connection::Create(
 	ConnectionManager& connectionManager,
 	IBlockChainServerPtr pBlockChainServer,
 	const ConnectedPeer& connectedPeer,
-	std::shared_ptr<MessageProcessor> pMessageProcessor,
+	const std::weak_ptr<MessageProcessor>& pMessageProcessor,
 	SyncStatusConstPtr pSyncStatus)
 {
 	auto pHandShake = std::make_shared<HandShake>(config, connectionManager, pBlockChainServer);
@@ -190,20 +190,24 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 
 			if (pRawMessage != nullptr)
 			{
-				const MessageProcessor::EStatus status = pConnection->m_pMessageProcessor->ProcessMessage(
-					pConnection->m_connectionId,
-					*pConnection->m_pSocket,
-					pConnection->m_connectedPeer,
-					*pRawMessage
-				);
+				auto pMessageProcessor = pConnection->m_pMessageProcessor.lock();
+				if (pMessageProcessor != nullptr)
+				{
+					const MessageProcessor::EStatus status = pMessageProcessor->ProcessMessage(
+						pConnection->m_connectionId,
+						*pConnection->m_pSocket,
+						pConnection->m_connectedPeer,
+						*pRawMessage
+					);
 
-                if (status == MessageProcessor::EStatus::BAN_PEER)
-                {
-					EBanReason banReason = EBanReason::Abusive; // TODO: Determine real reason.
-					LOG_WARNING_F("Banning peer ({}) for ({}).", pConnection->GetIPAddress(), BanReason::Format(banReason));
-					pConnection->GetPeer()->Ban(banReason);
-					break;
-                }
+					if (status == MessageProcessor::EStatus::BAN_PEER)
+					{
+						EBanReason banReason = EBanReason::Abusive; // TODO: Determine real reason.
+						LOG_WARNING_F("Banning peer ({}) for ({}).", pConnection->GetIPAddress(), BanReason::Format(banReason));
+						pConnection->GetPeer()->Ban(banReason);
+						break;
+					}
+				}
                 
                 lastReceivedMessageTime = std::chrono::system_clock::now();
 				messageSentOrReceived = true;

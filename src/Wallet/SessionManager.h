@@ -23,7 +23,7 @@ public:
 		const Config& config,
 		const INodeClientConstPtr& pNodeClient,
 		const std::shared_ptr<IWalletStore>& pWalletDB,
-		const std::shared_ptr<ForeignController>& pForeignController
+		std::unique_ptr<ForeignController>&& pForeignController
 	);
 	~SessionManager();
 
@@ -60,5 +60,5 @@ private:
 	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
 	std::shared_ptr<IWalletStore> m_pWalletDB;
-	std::shared_ptr<ForeignController> m_pForeignController;
+	std::unique_ptr<ForeignController> m_pForeignController;
 };

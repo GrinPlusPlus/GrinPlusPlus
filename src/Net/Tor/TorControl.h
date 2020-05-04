@@ -22,12 +22,12 @@ private:
 	TorControl(
 		const TorConfig& torConfig,
 		std::shared_ptr<TorControlClient> pClient,
-		ChildProcess::CPtr pProcess
+		ChildProcess::UCPtr&& pProcess
 	);
 
 	static bool Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password);
 
 	const TorConfig& m_torConfig;
 	std::shared_ptr<TorControlClient> m_pClient;
-	ChildProcess::CPtr m_pProcess;
+	ChildProcess::UCPtr m_pProcess;
 };

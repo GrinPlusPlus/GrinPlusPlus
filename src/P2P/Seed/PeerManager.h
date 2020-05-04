@@ -20,7 +20,7 @@
 class PeerManager
 {
 public:
-	static Locked<PeerManager> Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	static std::shared_ptr<Locked<PeerManager>> Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 	~PeerManager();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;

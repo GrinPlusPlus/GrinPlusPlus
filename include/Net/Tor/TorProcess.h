@@ -17,10 +17,7 @@ class TorProcess
 public:
 	using Ptr = std::shared_ptr<TorProcess>;
 
-	~TorProcess()
-	{
-		ThreadUtil::Join(m_initThread);
-	}
+	~TorProcess();
 
 	static TorProcess::Ptr Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept;
 

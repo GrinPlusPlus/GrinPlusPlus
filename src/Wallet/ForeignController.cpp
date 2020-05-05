@@ -49,9 +49,11 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		token
 	);
 
+	auto response = std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());
+
 	m_contextsByUsername[username] = std::make_unique<Context>(std::move(pServer));
 
-	return std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());
+	return response;
 }
 
 bool ForeignController::StopListener(const std::string& username)

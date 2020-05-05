@@ -18,7 +18,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 	try
 	{
 		const fs::path command = fs::current_path() / "tor" / "tor";
-		auto dataDirectory = fs::current_path() / "tor" / ("data" + std::to_string(torConfig.GetControlPort()));
+		auto dataDirectory = torConfig.GetTorDataPath() / ("data" + std::to_string(torConfig.GetControlPort()));
 		fs::create_directories(dataDirectory);
 
 		std::vector<std::string> args({

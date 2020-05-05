@@ -17,7 +17,7 @@ public:
             const size_t socksPort = manager.m_processes.empty() ? 3422 : 20000 + (size * 2);
             const size_t controlPort = manager.m_processes.empty() ? 3423 : 20000 + (size * 2) + 1;
             manager.m_processes.push_back(
-                TorProcess::Initialize((uint16_t)socksPort, (uint16_t)controlPort)
+                TorProcess::Initialize(fs::temp_directory_path() / "grinpp_tor", (uint16_t)socksPort, (uint16_t)controlPort)
             );
         }
 

@@ -12,9 +12,9 @@ TorProcess::~TorProcess()
 	ThreadUtil::Join(m_initThread);
 }
 
-TorProcess::Ptr TorProcess::Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept
+TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort) noexcept
 {
-	auto pProcess =  std::shared_ptr<TorProcess>(new TorProcess(socksPort, controlPort));
+	auto pProcess =  std::shared_ptr<TorProcess>(new TorProcess(torDataPath, socksPort, controlPort));
 
 	pProcess->m_initThread = std::thread(TorProcess::Thread_Initialize, pProcess.get());
 	return pProcess;
@@ -25,7 +25,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 	std::unique_lock<std::mutex> lock(pProcess->m_mutex);
 
 	LOG_INFO("Initializing Tor");
-	pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort));
+	pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath));
 	LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
 }
 
@@ -35,7 +35,7 @@ bool TorProcess::RetryInit()
 
 	if (m_pControl == nullptr)
 	{
-		m_pControl = TorControl::Create(TorConfig(m_socksPort, m_controlPort));
+		m_pControl = TorControl::Create(TorConfig(m_socksPort, m_controlPort, m_torDataPath));
 	}
 
 	return m_pControl != nullptr;

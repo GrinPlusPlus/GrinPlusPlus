@@ -24,6 +24,7 @@ public:
         assert(pConfig != nullptr);
 
         auto pTorProcess = TorProcess::Initialize(
+            pConfig->GetTorConfig().GetTorDataPath(),
             pConfig->GetTorConfig().GetSocksPort(),
             pConfig->GetTorConfig().GetControlPort()
         );

@@ -55,7 +55,7 @@ private:
 		m_nodeConfig(m_json, dataPath),
 		m_walletConfig(m_json, environment, m_dataPath),
 		m_serverConfig(m_json, environment),
-		m_torConfig(json)
+		m_torConfig(json, dataPath / "TOR")
 	{
 		fs::create_directories(m_dataPath);
 

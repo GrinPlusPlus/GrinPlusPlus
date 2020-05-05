@@ -19,7 +19,11 @@ public:
 
 	~TorProcess();
 
-	static TorProcess::Ptr Initialize(const uint16_t socksPort, const uint16_t controlPort) noexcept;
+	static TorProcess::Ptr Initialize(
+		const fs::path& torDataPath,
+		const uint16_t socksPort,
+		const uint16_t controlPort
+	) noexcept;
 
 	std::shared_ptr<TorAddress> AddListener(const SecretKey64& secretKey, const uint16_t portNumber);
 	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);
@@ -31,11 +35,12 @@ public:
 	bool RetryInit();
 
 private:
-	TorProcess(const uint16_t socksPort, const uint16_t controlPort)
-		: m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr) { }
+	TorProcess(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort)
+		: m_torDataPath(torDataPath), m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr) { }
 
 	static void Thread_Initialize(TorProcess* pProcess);
 
+	fs::path m_torDataPath;
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;
 	std::shared_ptr<TorControl> m_pControl;

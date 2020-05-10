@@ -56,13 +56,7 @@ public:
 		const bool includeCanceled
 	) final;
 
-	FeeEstimateDTO EstimateFee(
-		const SessionToken& token,
-		const uint64_t amountToSend,
-		const uint64_t feeBase,
-		const SelectionStrategyDTO& strategy,
-		const uint8_t numChangeOutputs
-	) final;
+	FeeEstimateDTO EstimateFee(const EstimateFeeCriteria& criteria) final;
 
 	Slate Send(const SendCriteria& sendCriteria) final;
 	Slate Receive(const ReceiveCriteria& receiveCriteria) final;

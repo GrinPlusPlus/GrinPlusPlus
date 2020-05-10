@@ -23,6 +23,7 @@
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>
 #include <API/Wallet/Owner/Models/ListTxsCriteria.h>
 #include <API/Wallet/Owner/Models/RepostTxCriteria.h>
+#include <API/Wallet/Owner/Models/EstimateFeeCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
@@ -122,13 +123,7 @@ public:
 		const bool includeCanceled
 	) = 0;
 
-	virtual FeeEstimateDTO EstimateFee(
-		const SessionToken& token,
-		const uint64_t amountToSend,
-		const uint64_t feeBase,
-		const SelectionStrategyDTO& strategy,
-		const uint8_t numChangeOutputs
-	) = 0;
+	virtual FeeEstimateDTO EstimateFee(const EstimateFeeCriteria& criteria) = 0;
 
 	//
 	// Sends coins to the given destination using the specified method. Returns a valid slate if successful.

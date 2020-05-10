@@ -248,8 +248,6 @@ int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& wallet
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "fee_base missing");
 	}
 
-	const std::optional<std::string> messageOpt = JsonUtil::GetStringOpt(json, "message");
-
 	const std::optional<Json::Value> selectionStrategyJSON = JsonUtil::GetOptionalField(json, "selection_strategy");
 	if (!selectionStrategyJSON.has_value())
 	{
@@ -258,7 +256,14 @@ int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& wallet
 
 	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
 	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
-	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(token, amountOpt.value(), feeBaseJSON.asUInt64(), selectionStrategy, numOutputs);
+	const EstimateFeeCriteria criteria(
+		token,
+		amountOpt.value(),
+		feeBaseJSON.asUInt64(),
+		numOutputs,
+		selectionStrategy
+	);
+	const FeeEstimateDTO estimatedFee = walletManager.EstimateFee(criteria);
 
 	return HTTPUtil::BuildSuccessResponseJSON(pConnection, estimatedFee.ToJSON());
 }

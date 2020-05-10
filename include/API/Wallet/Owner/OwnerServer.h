@@ -16,6 +16,7 @@
 #include <API/Wallet/Owner/Handlers/CancelTxHandler.h>
 #include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
 #include <API/Wallet/Owner/Handlers/RepostTxHandler.h>
+#include <API/Wallet/Owner/Handlers/EstimateFeeHandler.h>
 
 class OwnerServer
 {
@@ -255,6 +256,42 @@ public:
             }
         */
         pServer->AddMethod("repost_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new RepostTxHandler(pTorProcess, pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "estimate_fee",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk=",
+                    "amount": 12345678,
+                    "fee_base": "1000000",
+                    "change_outputs": 1,
+                    "selection_strategy": {
+                        "strategy": "SMALLEST"
+                    }
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "fee": "7000000",
+                    "inputs": [
+                        {
+                            "keychain_path": "m/1/0/1000",
+                            "commitment": "0808657d5346f4061e5484b6f57ed036ce2cb4430599cec5dcb999d07755772010",
+                            "amount": 30000000,
+                            "status": "Spendable"
+                        }
+                    ]
+                }
+            }
+        */
+        pServer->AddMethod("estimate_fee", std::shared_ptr<RPCMethod>((RPCMethod*)new EstimateFeeHandler(pWalletManager)));
 
         // TODO: Add the following APIs: 
         // authenticate - Simply validates the password - useful for confirming password before sending funds

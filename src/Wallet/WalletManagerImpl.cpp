@@ -282,32 +282,32 @@ std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token
 	return outputDTOs;
 }
 
-FeeEstimateDTO WalletManager::EstimateFee(
-	const SessionToken& token, 
-	const uint64_t amountToSend, 
-	const uint64_t feeBase, 
-	const SelectionStrategyDTO& strategy, 
-	const uint8_t numChangeOutputs)
+FeeEstimateDTO WalletManager::EstimateFee(const EstimateFeeCriteria& criteria)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
 
 	// Select inputs using desired selection strategy.
-	const uint8_t totalNumOutputs = numChangeOutputs + 1;
+	const uint8_t totalNumOutputs = criteria.GetNumChangeOutputs() + 1;
 	const uint64_t numKernels = 1;
 	const std::vector<OutputDataEntity> availableCoins = wallet.Write()->GetAllAvailableCoins(masterSeed);
 	std::vector<OutputDataEntity> inputs = CoinSelection().SelectCoinsToSpend(
 		availableCoins,
-		amountToSend,
-		feeBase,
-		strategy.GetStrategy(),
-		strategy.GetInputs(),
+		criteria.GetAmount(),
+		criteria.GetFeeBase(),
+		criteria.GetSelectionStrategy().GetStrategy(),
+		criteria.GetSelectionStrategy().GetInputs(),
 		totalNumOutputs,
 		numKernels
 	);
 
 	// Calculate the fee
-	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)inputs.size(), totalNumOutputs, numKernels);
+	const uint64_t fee = WalletUtil::CalculateFee(
+		criteria.GetFeeBase(),
+		(int64_t)inputs.size(),
+		totalNumOutputs,
+		numKernels
+	);
 
 	std::vector<WalletOutputDTO> inputDTOs;
 	for (const OutputDataEntity& input : inputs)

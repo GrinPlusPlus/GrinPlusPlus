@@ -28,7 +28,12 @@ public:
     // TODO: Add e2e encryption
     static OwnerServer::UPtr Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
     {
-        RPCServerPtr pServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>((uint16_t)3421), "/v2"); // TODO: Read port from config (Use same port as v1 owner)
+        RPCServerPtr pServer = RPCServer::Create(
+            EServerType::LOCAL,
+            std::make_optional<uint16_t>((uint16_t)3421), // TODO: Read port from config (Use same port as v1 owner)
+            "/v2",
+            LoggerAPI::LogFile::WALLET
+        );
 
         /*
             Request:

@@ -53,7 +53,7 @@ public:
 			const uint32_t first4Bytes = byteBuffer.ReadU32();
 			if (first4Bytes != 0)
 			{
-				throw DESERIALIZATION_EXCEPTION();
+				throw DESERIALIZATION_EXCEPTION("Expected first 4 bytes to be 0");
 			}
 		}
 

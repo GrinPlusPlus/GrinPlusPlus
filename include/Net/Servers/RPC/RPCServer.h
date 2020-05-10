@@ -7,13 +7,20 @@
 #include <unordered_map>
 #include <cassert>
 
+#define RPC_LOG_INFO_F(logFile, message, ...) LoggerAPI::LogInfo(logFile, __func__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+#define RPC_LOG_ERROR_F(logFile, message, ...) LoggerAPI::LogError(logFile, __func__, __LINE__, StringUtil::Format(message, __VA_ARGS__))
+
 class RPCServer
 {
 public:
-	static std::shared_ptr<RPCServer> Create(const EServerType type, const std::optional<uint16_t>& port, const std::string& uri)
+	static std::shared_ptr<RPCServer> Create(
+		const EServerType type,
+		const std::optional<uint16_t>& port,
+		const std::string& uri,
+		const LoggerAPI::LogFile& logFile)
 	{
 		ServerPtr pServer = Server::Create(type, port);
-		auto pRPCServer = std::shared_ptr<RPCServer>(new RPCServer(pServer));
+		auto pRPCServer = std::shared_ptr<RPCServer>(new RPCServer(pServer, logFile));
 
 		pServer->AddListener(uri, APIHandler, pRPCServer.get());
 
@@ -30,7 +37,8 @@ public:
 	const ServerPtr& GetServer() const { return m_pServer; }
 
 private:
-	RPCServer(ServerPtr pServer) : m_pServer(pServer) { }
+	RPCServer(const ServerPtr& pServer, const LoggerAPI::LogFile& logFile)
+		: m_pServer(pServer), m_logFile(logFile) { }
 
 	static int APIHandler(mg_connection* pConnection, void* pCbContext)
 	{
@@ -55,34 +63,87 @@ private:
 				auto iter = instance.m_methods.find(method);
 				if (iter != instance.m_methods.end())
 				{
-					return iter->second->Handle(request);
+					if (!iter->second->ContainsSecrets())
+					{
+						RPC_LOG_INFO_F(instance.m_logFile, "REQUEST: {}", request.ToString());
+					}
+					else
+					{
+						RPC_LOG_INFO_F(
+							instance.m_logFile,
+							"Request made with method: {}",
+							method
+						);
+					}
+					
+					auto response = iter->second->Handle(request);
+
+					if (!iter->second->ContainsSecrets())
+					{
+						RPC_LOG_INFO_F(instance.m_logFile, "REPLY: {}", request.ToString());
+					}
+					else if (response.GetError().has_value())
+					{
+						RPC_LOG_INFO_F(
+							instance.m_logFile,
+							"Method: {}, Error: {}",
+							method,
+							response.GetError().value().ToString()
+						);
+					}
+
+					return response;
 				}
 				else
 				{
-					return request.BuildError(RPC::ErrorCode::METHOD_NOT_FOUND, "Method not supported");
+					RPC_LOG_ERROR_F(instance.m_logFile, "Method not supported: {}", method);
+					return request.BuildError(
+						RPC::ErrorCode::METHOD_NOT_FOUND,
+						"Method not supported"
+					);
 				}
 			}
-			catch (DeserializationException&)
+			catch (const DeserializationException& e)
 			{
-				return request.BuildError(RPC::ErrorCode::INVALID_PARAMS, "Failed to deserialize request");
+				RPC_LOG_ERROR_F(instance.m_logFile, "Failed to deserialize request: {}", e.what());
+				return request.BuildError(
+					RPC::ErrorCode::INVALID_PARAMS,
+					StringUtil::Format("Failed to deserialize request: {}", e.what())
+				);
 			}
 		}
 		catch (const RPCException& e)
 		{
-			return RPC::Response::BuildError(e.GetId().value_or(Json::nullValue), RPC::ErrorCode::INVALID_REQUEST, e.what());
+			RPC_LOG_ERROR_F(instance.m_logFile, "RPCException occurred: {}", e.what());
+			return RPC::Response::BuildError(
+				e.GetId().value_or(Json::nullValue),
+				RPC::ErrorCode::INVALID_REQUEST,
+				e.what()
+			);
 		}
 		catch (const APIException& e)
 		{
-			return RPC::Response::BuildError(id, e.GetErrorCode(), e.GetMsg());
+			RPC_LOG_ERROR_F(instance.m_logFile, "APIException occurred: {}", e.what());
+			return RPC::Response::BuildError(
+				id,
+				e.GetErrorCode(),
+				e.GetMsg()
+			);
 		}
 		catch (const std::exception& e)
 		{
-			return RPC::Response::BuildError(id, RPC::ErrorCode::INVALID_REQUEST, e.what());
+			RPC_LOG_ERROR_F(instance.m_logFile, "Exception occurred: {}", e.what());
+			return RPC::Response::BuildError(
+				id,
+				RPC::ErrorCode::INVALID_REQUEST,
+				e.what()
+			);
 		}
 	}
 
 	ServerPtr m_pServer;
 	std::unordered_map<std::string, std::shared_ptr<RPCMethod>> m_methods;
+	LoggerAPI::LogFile m_logFile;
 };
 
 typedef std::shared_ptr<RPCServer> RPCServerPtr;

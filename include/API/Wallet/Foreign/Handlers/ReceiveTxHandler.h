@@ -35,9 +35,12 @@ public:
 
 			return request.BuildResult(ReceiveTxResponse(std::move(receivedSlate)));
 		}
-		catch (DeserializationException&)
+		catch (const DeserializationException& e)
 		{
-			return request.BuildError(RPC::ErrorCode::INVALID_PARAMS, "Failed to deserialize slate");
+			return request.BuildError(
+				RPC::ErrorCode::INVALID_PARAMS,
+				StringUtil::Format("Failed to deserialize slate: {}", e.what())
+			);
 		}
 		catch (const APIException& e)
 		{
@@ -48,6 +51,8 @@ public:
 			return request.BuildError(RPC::ErrorCode::INTERNAL_ERROR, e.what());
 		}
 	}
+
+	bool ContainsSecrets() const noexcept final { return false; }
 
 private:
 	IWalletManager& m_walletManager;

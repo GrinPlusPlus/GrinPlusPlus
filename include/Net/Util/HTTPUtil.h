@@ -129,7 +129,7 @@ public:
 		Json::Value json;
 		if (!JsonUtil::Parse(requestBody, json))
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F("Failed to parse json: {}", requestBody);
 		}
 
 		return std::make_optional(json);

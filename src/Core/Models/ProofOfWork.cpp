@@ -63,7 +63,7 @@ std::vector<uint64_t> ProofOfWork::DeserializeProofNonces(const std::vector<unsi
 {
 	if (edgeBits == 0 || edgeBits > 63)
 	{
-		throw DESERIALIZATION_EXCEPTION();
+		throw DESERIALIZATION_EXCEPTION_F("Invalid number of edge bits: {}", edgeBits);
 	}
 
 	//const uint64_t nonce_bits = (uint64_t)edgeBits;

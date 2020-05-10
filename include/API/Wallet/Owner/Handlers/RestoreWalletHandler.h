@@ -35,6 +35,8 @@ public:
 		return request.BuildResult(response.ToJSON());
 	}
 
+	bool ContainsSecrets() const noexcept final { return true; }
+
 private:
 	void ValidateInput(const RestoreWalletCriteria& criteria) const
 	{

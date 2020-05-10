@@ -22,6 +22,8 @@ public:
 		return request.BuildResult(response.ToJSON());
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	IWalletManager& m_walletManager;
 };

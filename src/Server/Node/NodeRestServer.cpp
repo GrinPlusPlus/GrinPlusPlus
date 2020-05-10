@@ -24,7 +24,12 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 std::unique_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
 	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
-	RPCServerPtr pRPCServer = RPCServer::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port), "/v2");
+	RPCServerPtr pRPCServer = RPCServer::Create(
+		EServerType::LOCAL,
+		std::make_optional<uint16_t>(port),
+		"/v2",
+		LoggerAPI::LogFile::NODE
+	);
 
 	/* Add v1 handlers */
 	auto pServer = pRPCServer->GetServer();

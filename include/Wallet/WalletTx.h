@@ -112,7 +112,11 @@ public:
 		const uint8_t walletTxFormat = byteBuffer.ReadU8();
 		if (walletTxFormat > WALLET_TX_DATA_FORMAT)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F(
+				"Expected format <= {}, but was {}",
+				WALLET_TX_DATA_FORMAT,
+				walletTxFormat
+			);
 		}
 
 		const uint32_t walletTxId = byteBuffer.ReadU32();

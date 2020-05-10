@@ -29,7 +29,10 @@ private:
 		assert(pServer != nullptr);
 	}
 
-	static void Thread_Process(GrinJoinController* pController, ITransactionPoolPtr pTransactionPool);
+	static void Thread_Process(
+		GrinJoinController* pController,
+		const ITransactionPoolPtr& pTransactionPool
+	);
 
 	TorProcess::Ptr m_pTorProcess;
 	RPCServerPtr m_pServer;

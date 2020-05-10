@@ -62,7 +62,13 @@ public:
 
 	std::shared_ptr<NodeContext> GetNodeContext()
 	{
-		return std::make_shared<NodeContext>(NodeContext(m_pDatabase, m_pBlockChainServer, m_pP2PServer, m_pTxHashSetManager, m_pTransactionPool));
+		return std::make_shared<NodeContext>(
+			m_pDatabase,
+			m_pBlockChainServer,
+			m_pP2PServer,
+			m_pTxHashSetManager,
+			m_pTransactionPool
+		);
 	}
 
 	uint64_t GetChainHeight() const final
@@ -104,7 +110,9 @@ public:
 		}
 
 		auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
-		return std::make_unique<OutputRange>(pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs));
+		return std::make_unique<OutputRange>(
+			pTxHashSet->GetOutputsByLeafIndex(pBlockDB.GetShared(), startIndex, maxNumOutputs)
+		);
 	}
 
 	bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) final

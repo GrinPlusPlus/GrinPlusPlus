@@ -55,6 +55,11 @@ public:
 		return json;
 	}
 
+	std::string ToString() const
+	{
+		return JsonUtil::WriteCondensed(ToJSON());
+	}
+
 private:
 	int m_code;
 	std::string m_message;
@@ -154,6 +159,11 @@ public:
 		}
 
 		return json;
+	}
+
+	std::string ToString() const
+	{
+		return JsonUtil::WriteCondensed(ToJSON());
 	}
 
 private:
@@ -294,6 +304,11 @@ public:
 		}
 
 		return json;
+	}
+
+	std::string ToString() const
+	{
+		return JsonUtil::WriteCondensed(ToJSON());
 	}
 
 	const Json::Value& GetId() const { return m_id; }

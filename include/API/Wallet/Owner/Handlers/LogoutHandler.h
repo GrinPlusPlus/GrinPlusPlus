@@ -29,6 +29,8 @@ public:
 		return request.BuildResult(Json::Value());
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	IWalletManagerPtr m_pWalletManager;
 };

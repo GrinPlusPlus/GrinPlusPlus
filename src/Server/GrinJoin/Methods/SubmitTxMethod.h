@@ -40,6 +40,8 @@ public:
 		}
 	}
 
+	bool ContainsSecrets() const noexcept final { return true; }
+
 private:
 	std::shared_ptr<NodeContext> m_pNodeContext;
 };

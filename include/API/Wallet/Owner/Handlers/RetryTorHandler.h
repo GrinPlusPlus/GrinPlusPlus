@@ -70,6 +70,8 @@ public:
 		return response.BuildResponse(request);
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;

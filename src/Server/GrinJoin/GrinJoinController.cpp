@@ -10,7 +10,12 @@ std::unique_ptr<GrinJoinController> GrinJoinController::Create(
 	std::shared_ptr<NodeContext> pNodeContext,
 	const std::string& privateKey)
 {
-	RPCServerPtr pServer = RPCServer::Create(EServerType::PUBLIC, std::nullopt, "/v1");
+	RPCServerPtr pServer = RPCServer::Create(
+		EServerType::PUBLIC,
+		std::nullopt,
+		"/v1",
+		LoggerAPI::LogFile::NODE
+	);
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 	auto pTorAddress = pTorProcess->AddListener(privateKey, pServer->GetPortNumber());
@@ -21,9 +26,15 @@ std::unique_ptr<GrinJoinController> GrinJoinController::Create(
 
 	pServer->AddMethod("submit_tx", std::make_shared<SubmitTxMethod>(pNodeContext));
 
-	auto pController = std::unique_ptr<GrinJoinController>(new GrinJoinController(pTorProcess, pServer, *pTorAddress));
+	auto pController = std::unique_ptr<GrinJoinController>(
+		new GrinJoinController(pTorProcess, pServer, *pTorAddress)
+	);
 
-	pController->m_thread = std::thread(Thread_Process, pController.get(), pNodeContext->m_pTransactionPool);
+	pController->m_thread = std::thread(
+		Thread_Process,
+		pController.get(),
+		pNodeContext->m_pTransactionPool
+	);
 
 	return pController;
 }
@@ -36,7 +47,9 @@ GrinJoinController::~GrinJoinController()
 	m_pTorProcess->RemoveListener(m_torAddress);
 }
 
-void GrinJoinController::Thread_Process(GrinJoinController* pController, ITransactionPoolPtr pTransactionPool)
+void GrinJoinController::Thread_Process(
+	GrinJoinController* pController,
+	const ITransactionPoolPtr& pTransactionPool)
 {
 	ThreadManagerAPI::SetCurrentThreadName("GrinJoin");
 

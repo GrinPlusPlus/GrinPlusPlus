@@ -31,6 +31,8 @@ public:
 		return request.BuildResult(result);
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;

@@ -8,4 +8,5 @@ public:
 	virtual ~RPCMethod() = default;
 
 	virtual RPC::Response Handle(const RPC::Request& request) const = 0;
+	virtual bool ContainsSecrets() const noexcept = 0;
 };

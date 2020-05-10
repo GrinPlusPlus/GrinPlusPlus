@@ -34,7 +34,7 @@ public:
         asio::ip::address address = asio::ip::make_address(addressStr, ec);
         if (ec)
         {
-            throw DESERIALIZATION_EXCEPTION();
+            throw DESERIALIZATION_EXCEPTION_F("IP address failed to parse with error: {}", ec.value());
         }
 
         return IPAddress(std::move(address));
@@ -92,7 +92,7 @@ public:
         }
         else
         {
-            throw DESERIALIZATION_EXCEPTION();
+            throw DESERIALIZATION_EXCEPTION_F("Invalid IP address family: {}", ipAddressFamily);
         }
     }
 

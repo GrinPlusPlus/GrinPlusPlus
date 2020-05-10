@@ -124,7 +124,11 @@ public:
 		const uint8_t formatVersion = byteBuffer.ReadU8();
 		if (formatVersion > OUTPUT_DATA_FORMAT)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F(
+				"Expected format <= {}, but was {}",
+				OUTPUT_DATA_FORMAT,
+				formatVersion
+			);
 		}
 
 		KeyChainPath keyChainPath = KeyChainPath::FromString(byteBuffer.ReadVarStr());

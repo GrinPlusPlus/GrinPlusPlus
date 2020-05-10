@@ -41,7 +41,7 @@ public:
 	//
 	// Getters
 	//
-	inline const std::vector<unsigned char>& GetProofBytes() const { return m_proofBytes; }
+	const std::vector<unsigned char>& GetProofBytes() const noexcept { return m_proofBytes; }
 
 	//
 	// Serialization/Deserialization
@@ -57,7 +57,7 @@ public:
 		const uint64_t proofSize = byteBuffer.ReadU64();
 		if (proofSize > MAX_PROOF_SIZE)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F("Proof of size {} exceeds the maximum", proofSize);
 		}
 
 		return RangeProof(byteBuffer.ReadVector(proofSize));

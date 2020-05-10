@@ -42,6 +42,8 @@ public:
 		}
 	}
 
+	bool ContainsSecrets() const noexcept final { return true; }
+
 private:
 	void ValidateInput(const LoginCriteria& criteria) const
 	{

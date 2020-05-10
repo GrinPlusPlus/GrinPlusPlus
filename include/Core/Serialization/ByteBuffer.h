@@ -36,7 +36,7 @@ public:
 	{
 		if (m_index + sizeof(T) > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		if (EndianHelper::IsBigEndian())
@@ -59,7 +59,7 @@ public:
 	{
 		if (m_index + sizeof(T) > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		if (EndianHelper::IsBigEndian())
@@ -159,7 +159,7 @@ public:
 
 		if (m_index + stringLength > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		std::vector<unsigned char> temp(m_bytes.cbegin() + m_index, m_bytes.cbegin() + m_index + stringLength);
@@ -173,7 +173,7 @@ public:
 	{
 		if (m_index + NUM_BYTES > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		std::vector<unsigned char> data(m_bytes.cbegin() + m_index, m_bytes.cbegin() + m_index + NUM_BYTES);
@@ -187,7 +187,7 @@ public:
 	{
 		if (m_index + numBytes > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		const size_t index = m_index;
@@ -201,7 +201,7 @@ public:
 	{
 		if (m_index + T > m_bytes.size())
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
 		}
 
 		const size_t index = m_index;

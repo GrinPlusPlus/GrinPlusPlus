@@ -57,6 +57,8 @@ public:
 		}
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	RPC::Response SendViaTOR(const RPC::Request& request, SendCriteria& criteria, const TorAddress& torAddress) const
 	{

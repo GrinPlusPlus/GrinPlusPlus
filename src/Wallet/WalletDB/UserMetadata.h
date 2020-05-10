@@ -29,9 +29,10 @@ public:
 
 	static UserMetadata Deserialize(ByteBuffer& byteBuffer)
 	{
-		if (byteBuffer.ReadU8() != USER_METADATA_FORMAT)
+		const uint8_t format = byteBuffer.ReadU8();
+		if (format != USER_METADATA_FORMAT)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F("Expected format {}, but was {}", USER_METADATA_FORMAT, format);
 		}
 
 		const uint32_t nextTxId = byteBuffer.ReadU32();

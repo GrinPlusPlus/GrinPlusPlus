@@ -40,6 +40,8 @@ public:
 		}
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	RPC::Response FinalizeViaFile(
 		const RPC::Request& request,

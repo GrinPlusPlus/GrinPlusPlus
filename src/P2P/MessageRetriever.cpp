@@ -19,7 +19,10 @@ MessageRetriever::MessageRetriever(const Config& config, const ConnectionManager
 
 }
 
-std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const
+std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
+	Socket& socket,
+	const ConnectedPeer& connectedPeer,
+	const ERetrievalMode retrievalMode) const
 {
 	bool hasReceivedData = socket.HasReceivedData();
 	if (retrievalMode == BLOCKING)
@@ -50,13 +53,18 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 
 			if (!messageHeader.IsValid(m_config))
 			{
-				throw DESERIALIZATION_EXCEPTION();
+				throw DESERIALIZATION_EXCEPTION("Message header is invalid");
 			}
 			else
 			{
-				if (messageHeader.GetMessageType() != MessageTypes::Ping && messageHeader.GetMessageType() != MessageTypes::Pong)
+				if (messageHeader.GetMessageType() != MessageTypes::Ping &&
+					messageHeader.GetMessageType() != MessageTypes::Pong)
 				{
-					LOG_TRACE_F("Retrieved message ({}) from ({})", MessageTypes::ToString(messageHeader.GetMessageType()), connectedPeer);
+					LOG_TRACE_F(
+						"Retrieved message ({}) from ({})",
+						MessageTypes::ToString(messageHeader.GetMessageType()),
+						connectedPeer
+					);
 				}
 
 				std::vector<unsigned char> payload(messageHeader.GetMessageLength());
@@ -68,7 +76,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(Socket& socket, co
 				}
 				else
 				{
-					throw DESERIALIZATION_EXCEPTION();
+					throw DESERIALIZATION_EXCEPTION("Expected payload not received");
 				}
 			}
 		}

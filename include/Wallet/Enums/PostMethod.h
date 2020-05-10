@@ -27,6 +27,6 @@ namespace PostMethod
 			return EPostMethod::JOIN;
 		}
 
-		throw DESERIALIZATION_EXCEPTION();
+		throw DESERIALIZATION_EXCEPTION_F("Invalid Post Method: {}", input);
 	}
 }

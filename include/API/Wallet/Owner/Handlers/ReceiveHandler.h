@@ -39,6 +39,8 @@ public:
 		}
 	}
 
+	bool ContainsSecrets() const noexcept final { return false; }
+
 private:
 	RPC::Response ReceiveViaFile(
 		const RPC::Request& request,

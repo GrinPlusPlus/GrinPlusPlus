@@ -27,7 +27,7 @@ public:
 		if (!jsonParsed)
 		{
 			LOG_ERROR("Failed to parse json");
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Failed to parse json");
 		}
 
 		return json;
@@ -42,13 +42,13 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("json value was null");
 		}
 
 		std::vector<unsigned char> bytes = HexUtil::FromHex(std::string(node.asString()));
 		if (bytes.size() != expectedSize)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F("Expected {} bytes, but was {}", expectedSize, bytes.size());
 		}
 
 		return bytes;
@@ -58,13 +58,13 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("json value was null");
 		}
 
 		const Json::Value value = node.get(key, Json::nullValue);
 		if (value == Json::nullValue)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION_F("Json value {} was null", key);
 		}
 
 		return value;
@@ -74,7 +74,7 @@ public:
 	{
 		if (node == Json::nullValue)
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("json value was null");
 		}
 
 		Json::Value value = node.get(key, Json::nullValue);
@@ -236,7 +236,7 @@ public:
 		}
 		else
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Value is not a uint64");
 		}
 	}
 
@@ -274,7 +274,7 @@ public:
 		}
 		else
 		{
-			throw DESERIALIZATION_EXCEPTION();
+			throw DESERIALIZATION_EXCEPTION("Value is not an int64");
 		}
 	}
 

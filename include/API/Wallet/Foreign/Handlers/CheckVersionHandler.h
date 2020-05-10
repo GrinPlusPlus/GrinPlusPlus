@@ -14,4 +14,6 @@ public:
 	{
 		return request.BuildResult(CheckVersionResponse(2, { 2, 3 }));
 	}
+
+	bool ContainsSecrets() const noexcept final { return false; }
 };

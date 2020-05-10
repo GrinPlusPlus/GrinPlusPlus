@@ -42,7 +42,12 @@ public:
         IWalletManager& walletManager,
         const SessionToken& token)
     {
-        RPCServerPtr pServer = RPCServer::Create(EServerType::PUBLIC, std::nullopt, "/v2/foreign");
+        RPCServerPtr pServer = RPCServer::Create(
+            EServerType::PUBLIC,
+            std::nullopt,
+            "/v2/foreign",
+            LoggerAPI::LogFile::WALLET
+        );
 
         /*
             Request:

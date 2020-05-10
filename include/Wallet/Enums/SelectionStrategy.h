@@ -27,7 +27,7 @@ namespace SelectionStrategy
 			return ESelectionStrategy::ALL;
 		}
 
-		throw DESERIALIZATION_EXCEPTION();
+		throw DESERIALIZATION_EXCEPTION_F("Invalid selection strategy: {}", input);
 	}
 
 	static std::string ToString(const ESelectionStrategy& strategy)
@@ -45,6 +45,6 @@ namespace SelectionStrategy
 			return "ALL";
 		}
 
-		throw DESERIALIZATION_EXCEPTION();
+		throw DESERIALIZATION_EXCEPTION("Invalid selection strategy");
 	}
 }

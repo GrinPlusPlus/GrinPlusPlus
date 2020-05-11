@@ -32,7 +32,7 @@ std::vector<WalletTxDTO> WalletTxLoader::LoadTransactions(
 		{
 			if (output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId())
 			{
-				outputDTOs.emplace_back(WalletOutputDTO(output));
+				outputDTOs.emplace_back(WalletOutputDTO::FromOutputData(output));
 			}
 		}
 

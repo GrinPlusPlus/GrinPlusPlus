@@ -7,9 +7,27 @@ class FeeEstimateDTO
 {
 public:
 	FeeEstimateDTO(const uint64_t fee, std::vector<WalletOutputDTO>&& inputs)
-		: m_fee(fee), m_inputs(std::move(inputs))
-	{
+		: m_fee(fee), m_inputs(std::move(inputs)) { }
 
+	uint64_t GetFee() const noexcept { return m_fee; }
+	const std::vector<WalletOutputDTO>& GetInputs() const noexcept { return m_inputs; }
+
+	static FeeEstimateDTO FromJSON(const Json::Value& json)
+	{
+		const uint64_t fee = JsonUtil::GetRequiredUInt64(json, "fee");
+
+		std::vector<WalletOutputDTO> inputs;
+		const auto inputsOpt = JsonUtil::GetOptionalField(json, "inputs");
+		if (inputsOpt.has_value())
+		{
+			inputs.reserve(inputsOpt.value().size());
+			for (auto iter = inputsOpt.value().begin(); iter != inputsOpt.value().end(); iter++)
+			{
+				inputs.push_back(WalletOutputDTO::FromJSON(*iter));
+			}
+		}
+
+		return FeeEstimateDTO(fee, std::move(inputs));
 	}
 
 	Json::Value ToJSON() const

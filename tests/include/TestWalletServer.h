@@ -28,6 +28,12 @@ public:
     const OwnerServer::UPtr& GetOwnerServer() const noexcept { return m_pOwnerServer; }
     uint16_t GetOwnerPort() const noexcept { return 3421; }
 
+    RPC::Response InvokeOwnerRPC(const std::string& method, const Json::Value& paramsJson)
+    {
+        RPC::Request request = RPC::Request::BuildRequest(method, paramsJson);
+        return HttpRpcClient().Invoke("127.0.0.1", "/v2", GetOwnerPort(), request);
+    }
+
     TestWallet::Ptr CreateUser(
         const std::string& username,
         const SecureString& password)

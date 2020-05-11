@@ -276,7 +276,7 @@ std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token
 			continue;
 		}
 
-		outputDTOs.emplace_back(WalletOutputDTO(output));
+		outputDTOs.emplace_back(WalletOutputDTO::FromOutputData(output));
 	}
 
 	return outputDTOs;
@@ -312,7 +312,7 @@ FeeEstimateDTO WalletManager::EstimateFee(const EstimateFeeCriteria& criteria)
 	std::vector<WalletOutputDTO> inputDTOs;
 	for (const OutputDataEntity& input : inputs)
 	{
-		inputDTOs.emplace_back(WalletOutputDTO(input));
+		inputDTOs.emplace_back(WalletOutputDTO::FromOutputData(input));
 	}
 
 	return FeeEstimateDTO(fee, std::move(inputDTOs));

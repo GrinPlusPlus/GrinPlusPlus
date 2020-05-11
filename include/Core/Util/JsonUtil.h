@@ -259,6 +259,19 @@ public:
 		}
 	}
 
+	static std::optional<uint32_t> GetUInt32Opt(const Json::Value& parentJSON, const std::string& key)
+	{
+		const std::optional<Json::Value> json = JsonUtil::GetOptionalField(parentJSON, key);
+		if (!json.has_value())
+		{
+			return std::nullopt;
+		}
+		else
+		{
+			return std::make_optional((uint32_t)ConvertToUInt64(json.value()));
+		}
+	}
+
 	//
 	// Int64
 	//

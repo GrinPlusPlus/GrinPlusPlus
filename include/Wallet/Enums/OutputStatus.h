@@ -14,6 +14,36 @@ enum EOutputStatus
 
 namespace OutputStatus
 {
+	static EOutputStatus FromString(const std::string& value)
+	{
+		if (value == "Spendable")
+		{
+			return EOutputStatus::SPENDABLE;
+		}
+		else if (value == "Immature")
+		{
+			return EOutputStatus::IMMATURE;
+		}
+		else if (value == "No Confirmations")
+		{
+			return EOutputStatus::NO_CONFIRMATIONS;
+		}
+		else if (value == "Spent")
+		{
+			return EOutputStatus::SPENT;
+		}
+		else if (value == "Locked")
+		{
+			return EOutputStatus::LOCKED;
+		}
+		else if (value == "Canceled")
+		{
+			return EOutputStatus::CANCELED;
+		}
+
+		throw DESERIALIZATION_EXCEPTION_F("Invalid output status: {}", value);
+	}
+
 	static std::string ToString(const EOutputStatus status)
 	{
 		switch (status)

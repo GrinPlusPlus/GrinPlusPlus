@@ -1,6 +1,7 @@
-#include "NodeDaemon.h"
+#include "Node.h"
 #include "NodeRestServer.h"
 #include "NodeClients/DefaultNodeClient.h"
+#include "../io.h"
 
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>
@@ -14,7 +15,7 @@
 #include <iostream>
 #include <thread>
 
-NodeDaemon::NodeDaemon(
+Node::Node(
 	const Context::Ptr& pContext,
 	std::unique_ptr<NodeRestServer>&& pNodeRestServer,
 	std::shared_ptr<DefaultNodeClient> pNodeClient,
@@ -27,15 +28,18 @@ NodeDaemon::NodeDaemon(
 
 }
 
-NodeDaemon::~NodeDaemon()
+Node::~Node()
 {
 	LOG_INFO("Shutting down node daemon");
 }
 
-std::unique_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
+std::unique_ptr<Node> Node::Create(const Context::Ptr& pContext)
 {
-	std::shared_ptr<DefaultNodeClient> pNodeClient = DefaultNodeClient::Create(pContext);
-	std::unique_ptr<NodeRestServer> pNodeRestServer = NodeRestServer::Create(pContext->GetConfig(), pNodeClient->GetNodeContext());
+	auto pNodeClient = DefaultNodeClient::Create(pContext);
+	auto pNodeRestServer = NodeRestServer::Create(
+		pContext->GetConfig(),
+		pNodeClient->GetNodeContext()
+	);
 
 	std::unique_ptr<GrinJoinController> pGrinJoinController = nullptr;
 	if (!pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey().empty())
@@ -47,7 +51,7 @@ std::unique_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 		);
 	}
 
-	return std::make_unique<NodeDaemon>(
+	return std::make_unique<Node>(
 		pContext,
 		std::move(pNodeRestServer),
 		pNodeClient,
@@ -55,15 +59,11 @@ std::unique_ptr<NodeDaemon> NodeDaemon::Create(const Context::Ptr& pContext)
 	);
 }
 
-void NodeDaemon::UpdateDisplay(const int secondsRunning)
+void Node::UpdateDisplay(const int secondsRunning)
 {
 	SyncStatusConstPtr pSyncStatus = m_pNodeClient->GetP2PServer()->GetSyncStatus();
 
-#ifdef _WIN32
-		std::system("cls");
-#else
-		std::system("clear");
-#endif
+	IO::Clear();
 
 	std::cout << "Time Running: " << secondsRunning << "s";
 
@@ -111,5 +111,6 @@ void NodeDaemon::UpdateDisplay(const int secondsRunning)
 	std::cout << "\nNetwork Height: " << pSyncStatus->GetNetworkHeight();
 	std::cout << "\nNetwork Difficulty: " << pSyncStatus->GetNetworkDifficulty();
 	std::cout << "\n\nPress Ctrl-C to exit...";
-	std::cout << std::flush;
+
+	IO::Flush();
 }

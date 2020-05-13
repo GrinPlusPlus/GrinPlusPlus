@@ -33,6 +33,20 @@ public:
 	SocketAddress(const SocketAddress& other) = default;
 	SocketAddress(SocketAddress&& other) noexcept = default;
 
+	static SocketAddress Parse(const std::string& addressStr)
+	{
+		auto parts = StringUtil::Split(addressStr, ":");
+		if (parts.size() != 2)
+		{
+			throw DESERIALIZATION_EXCEPTION_F("Failed to parse SocketAddress: {}", addressStr);
+		}
+
+		IPAddress ipAddress = IPAddress::Parse(parts[0]);
+		uint16_t port = (uint16_t)std::stoi(parts[1]);
+
+		return SocketAddress(std::move(ipAddress), port);
+	}
+
 	//
 	// Destructor
 	//

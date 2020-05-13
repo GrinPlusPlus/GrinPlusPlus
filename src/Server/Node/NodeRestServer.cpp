@@ -21,7 +21,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-std::unique_ptr<NodeRestServer> NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
+NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
 	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
 	RPCServerPtr pRPCServer = RPCServer::Create(

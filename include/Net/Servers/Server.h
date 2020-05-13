@@ -29,6 +29,7 @@ public:
 			NULL
 		};
 
+		mg_init_library(0);
 		auto pCivetContext = mg_start(NULL, 0, pOptions);
 		if (pCivetContext == nullptr)
 		{
@@ -52,6 +53,7 @@ public:
 		try
 		{
 			mg_stop(m_pContext);
+			mg_exit_library();
 		}
 		catch (const std::system_error& e)
 		{

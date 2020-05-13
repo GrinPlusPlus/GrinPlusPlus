@@ -1,6 +1,8 @@
-#include "Node/NodeDaemon.h"
+#include "Node/Node.h"
+#include "Node/NodeClients/RPCNodeClient.h"
 #include "Wallet/WalletDaemon.h"
-#include "civetweb/include/civetweb.h"
+#include "opt.h"
+#include "io.h"
 
 #include <Core/Context.h>
 #include <Wallet/WalletManager.h>
@@ -10,8 +12,7 @@
 #include <Infrastructure/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
-#include <signal.h>
-#include <stdio.h> 
+#include <cstdio> 
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -19,82 +20,31 @@
 
 using namespace std::chrono;
 
-void StartServer(const ConfigPtr& pConfig, const bool headless);
-
-static void SigIntHandler(int signum)
-{
-	printf("\n\n%d signal received\n\n", signum);
-	ShutdownManagerAPI::Shutdown();
-}
+ConfigPtr Initialize(const EEnvironmentType environment, const bool headless);
+void Run(const ConfigPtr& pConfig, const Options& options);
 
 int main(int argc, char* argv[])
 {
 	ThreadManagerAPI::SetCurrentThreadName("MAIN");
 
-	EEnvironmentType environment = EEnvironmentType::MAINNET;
-	bool headless = false;
-	for (int i = 0; i < argc; ++i)
+	Options opt = ParseOptions(argc, argv);
+	if (opt.help)
 	{
-		if (std::string(argv[i]) == "--floonet")
-		{
-			environment = EEnvironmentType::FLOONET;
-		}
-		if (std::string(argv[i]) == "--headless")
-		{
-			headless = true;
-		}
+		PrintHelp();
+		return 0;
 	}
 
-	if (!headless)
-	{
-		std::cout << "INITIALIZING...\n";
-		std::cout << std::flush;
-	}
-
-	signal(SIGINT, SigIntHandler);
-	signal(SIGTERM, SigIntHandler);
-	signal(SIGABRT, SigIntHandler);
-	signal(9, SigIntHandler);
-
-	ConfigPtr pConfig = nullptr;
-	try
-	{
-		pConfig = ConfigLoader::Load(environment);
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << "Failed to open config: \n" << e.what() << std::endl;
-		throw;
-	}
+	ConfigPtr pConfig = Initialize(opt.environment, opt.headless);
 
 	try
 	{
-		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
-	}
-	catch (std::exception & e)
-	{
-		std::cerr << "Failed to initialize logger: \n" << e.what() << std::endl;
-		throw;
-	}
-
-	try
-	{
-		LOG_INFO("Starting Grin++");
-
-		mg_init_library(0);
-
-		StartServer(pConfig, headless);
-
-		mg_exit_library();
-
-		LOG_INFO("Closing Grin++");
+		Run(pConfig, opt);
 	}
 	catch (std::exception& e)
 	{
 		LOG_ERROR_F("Exception thrown: {}", e.what());
 		LoggerAPI::Flush();
-
-		std::cerr << e.what() << std::endl;
+		IO::Err("Exception thrown", e);
 		throw;
 	}
 
@@ -103,46 +53,93 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void StartServer(const ConfigPtr& pConfig, const bool headless)
+ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
 {
+	if (!headless)
+	{
+		IO::Out("INITIALIZING...");
+		IO::Flush();
+	}
+
+	ConfigPtr pConfig = nullptr;
+	try
+	{
+		pConfig = ConfigLoader::Load(environment);
+	}
+	catch (std::exception& e)
+	{
+		IO::Err("Failed to open config", e);
+		throw;
+	}
+
+	try
+	{
+		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
+	}
+	catch (std::exception& e)
+	{
+		IO::Err("Failed to open initialize logger", e);
+		throw;
+	}
+
+	ShutdownManagerAPI::RegisterHandlers();
+
+	return pConfig;
+}
+
+void Run(const ConfigPtr& pConfig, const Options& options)
+{
+	LOG_INFO("Starting Grin++");
+
 	Context::Ptr pContext = nullptr;
 	try
 	{
 		pContext = Context::Create(pConfig);
 	}
-	catch (std::exception & e)
+	catch (std::exception& e)
 	{
-		std::cerr << "Failed to create context: \n" << e.what() << std::endl;
+		IO::Err("Failed to create context", e);
 		throw;
 	}
 
-	std::unique_ptr<NodeDaemon> pNode = NodeDaemon::Create(pContext);
-	std::unique_ptr<WalletDaemon> pWallet = WalletDaemon::Create(
-		pContext->GetConfig(),
-		pContext->GetTorProcess(),
-		pNode->GetNodeClient()
-	);
+	std::unique_ptr<Node> pNode = nullptr;
+	INodeClientPtr pNodeClient = nullptr;
+
+	if (options.shared_node.has_value())
+	{
+		pNodeClient = RPCNodeClient::Create(options.shared_node.value());
+	}
+	else
+	{
+		pNode = Node::Create(pContext);
+		pNodeClient = pNode->GetNodeClient();
+	}
+
+	std::unique_ptr<WalletDaemon> pWallet = nullptr;
+	if (options.include_wallet)
+	{
+		pWallet = WalletDaemon::Create(
+			pContext->GetConfig(),
+			pContext->GetTorProcess(),
+			pNodeClient
+		);
+	}
 
 	system_clock::time_point startTime = system_clock::now();
 	while (true)
 	{
 		if (ShutdownManagerAPI::WasShutdownRequested())
 		{
-			if (!headless)
+			if (!options.headless)
 			{
-#ifdef _WIN32
-				std::system("cls");
-#else
-				std::system("clear");
-#endif
-
-				std::cout << "SHUTTING DOWN...";
+				IO::Clear();
+				IO::Out("SHUTTING DOWN...");
 			}
 
 			break;
 		}
 
-		if (!headless)
+		if (pNode != nullptr && !options.headless)
 		{
 			auto duration = system_clock::now().time_since_epoch() - startTime.time_since_epoch();
 			const int secondsRunning = (int)(duration_cast<seconds>(duration).count());
@@ -151,4 +148,6 @@ void StartServer(const ConfigPtr& pConfig, const bool headless)
 
 		ThreadUtil::SleepFor(seconds(1), ShutdownManagerAPI::WasShutdownRequested());
 	}
+
+	LOG_INFO("Closing Grin++");
 }

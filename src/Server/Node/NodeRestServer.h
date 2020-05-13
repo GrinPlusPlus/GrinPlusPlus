@@ -7,11 +7,13 @@
 class NodeRestServer
 {
 public:
+	using UPtr = std::unique_ptr<NodeRestServer>;
+
 	NodeRestServer(const std::shared_ptr<NodeContext>& pNodeContext, const RPCServerPtr& pRPCServer)
 		: m_pNodeContext(pNodeContext), m_pRPCServer(pRPCServer) { }
 	~NodeRestServer() = default;
 
-	static std::unique_ptr<NodeRestServer> Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
+	static NodeRestServer::UPtr Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
 
 private:
 	std::shared_ptr<NodeContext> m_pNodeContext;

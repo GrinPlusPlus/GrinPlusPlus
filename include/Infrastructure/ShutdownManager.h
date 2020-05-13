@@ -11,6 +11,7 @@
 
 namespace ShutdownManagerAPI
 {
+	SHUTDOWN_MANAGER_API void RegisterHandlers();
 	SHUTDOWN_MANAGER_API const std::atomic_bool& WasShutdownRequested();
 	SHUTDOWN_MANAGER_API void Shutdown();
 };

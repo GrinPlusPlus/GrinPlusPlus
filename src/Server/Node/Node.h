@@ -12,18 +12,18 @@
 // Forward Declarations
 class NodeRestServer;
 
-class NodeDaemon
+class Node
 {
 public:
-	static std::unique_ptr<NodeDaemon> Create(const Context::Ptr& pContext);
+	static std::unique_ptr<Node> Create(const Context::Ptr& pContext);
 
-	NodeDaemon(
+	Node(
 		const Context::Ptr& pContext,
 		std::unique_ptr<NodeRestServer>&& pNodeRestServer,
 		std::shared_ptr<DefaultNodeClient> pNodeClient,
 		std::unique_ptr<GrinJoinController>&& pGrinJoinController
 	);
-	~NodeDaemon();
+	~Node();
 
 	INodeClientPtr GetNodeClient() { return m_pNodeClient; }
 

@@ -14,6 +14,7 @@
 #include <API/Wallet/Owner/Handlers/DeleteWalletHandler.h>
 #include <API/Wallet/Owner/Handlers/GetWalletSeedHandler.h>
 #include <API/Wallet/Owner/Handlers/CancelTxHandler.h>
+#include <API/Wallet/Owner/Handlers/GetBalanceHandler.h>
 #include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
 #include <API/Wallet/Owner/Handlers/RepostTxHandler.h>
 #include <API/Wallet/Owner/Handlers/EstimateFeeHandler.h>
@@ -207,6 +208,32 @@ public:
             }
         */
         pServer->AddMethod("cancel_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new CancelTxHandler(pWalletManager)));
+
+        /*
+            Request:
+            {
+                "jsonrpc": "2.0",
+                "method": "get_balance",
+                "id": 1,
+                "params": {
+                    "session_token": "mFHve+/CFsPuQf1+Anp24+R1rLZCVBIyKF+fJEuxAappgT2WKMfpOiNwvRk="
+                }
+            }
+
+            Reply:
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": {
+                    "total": 20.482100000,
+                    "unconfirmed": 6.282100000,
+                    "immature": 10.200000000,
+                    "locked": 5.700000000,
+                    "spendable": 4.000000000
+                }
+            }
+        */
+        pServer->AddMethod("get_balance", std::shared_ptr<RPCMethod>((RPCMethod*)new GetBalanceHandler(pWalletManager)));
 
         /*
             Request:

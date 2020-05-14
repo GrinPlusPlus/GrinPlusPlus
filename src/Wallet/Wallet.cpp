@@ -63,6 +63,44 @@ WalletSummaryDTO Wallet::GetWalletSummary(const SecureVector& masterSeed)
 	);
 }
 
+WalletBalanceDTO Wallet::GetBalance(const SecureVector& masterSeed)
+{
+	uint64_t awaitingConfirmation = 0;
+	uint64_t immature = 0;
+	uint64_t locked = 0;
+	uint64_t spendable = 0;
+
+	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
+	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
+	for (const OutputDataEntity& outputData : outputs)
+	{
+		const EOutputStatus status = outputData.GetStatus();
+		if (status == EOutputStatus::LOCKED)
+		{
+			locked += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::SPENDABLE)
+		{
+			spendable += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::IMMATURE)
+		{
+			immature += outputData.GetAmount();
+		}
+		else if (status == EOutputStatus::NO_CONFIRMATIONS)
+		{
+			awaitingConfirmation += outputData.GetAmount();
+		}
+	}
+
+	return WalletBalanceDTO(
+		awaitingConfirmation,
+		immature,
+		locked,
+		spendable
+	);
+}
+
 std::vector<OutputDataEntity> Wallet::RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis)
 {
 	return WalletRefresher(m_config, m_pNodeClient).Refresh(masterSeed, m_walletDB, fromGenesis);

@@ -247,6 +247,22 @@ WalletSummaryDTO WalletManager::GetWalletSummary(const SessionToken& token)
 	}
 }
 
+WalletBalanceDTO WalletManager::GetBalance(const SessionToken& token)
+{
+	try
+	{
+		const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+		Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+
+		return wallet.Write()->GetBalance(masterSeed);
+	}
+	catch (std::exception& e)
+	{
+		WALLET_ERROR_F("Exception occurred while building wallet summary: {}", e.what());
+		throw WALLET_EXCEPTION(e.what());
+	}
+}
+
 std::vector<WalletTxDTO> WalletManager::GetTransactions(const ListTxsCriteria& criteria)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());

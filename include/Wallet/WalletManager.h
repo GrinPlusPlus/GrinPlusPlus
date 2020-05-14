@@ -10,6 +10,7 @@
 #include <Wallet/SessionToken.h>
 #include <Wallet/Enums/SelectionStrategy.h>
 #include <Wallet/Models/Slate/Slate.h>
+#include <Wallet/Models/DTOs/WalletBalanceDTO.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/WalletTx.h>
 #include <API/Wallet/Owner/Models/GetSeedPhraseCriteria.h>
@@ -114,6 +115,8 @@ public:
 	) = 0;
 
 	virtual WalletSummaryDTO GetWalletSummary(const SessionToken& token) = 0;
+
+	virtual WalletBalanceDTO GetBalance(const SessionToken& token) = 0;
 
 	virtual std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) = 0;
 

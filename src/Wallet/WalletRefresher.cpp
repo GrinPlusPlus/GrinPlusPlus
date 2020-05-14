@@ -13,7 +13,7 @@ WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNode
 
 }
 
-// TODO: Rewrite this
+// TODO: Rewrite this && use cache - Shouldn't refresh when block height = same
 // 0. Initial login after upgrade - for every output, find matching WalletTx and update OutputDataEntity TxId. If none found, create new WalletTx.
 //
 // 1. Check for own outputs in new blocks.

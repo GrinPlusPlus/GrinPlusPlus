@@ -225,11 +225,11 @@ public:
                 "id": 1,
                 "jsonrpc": "2.0",
                 "result": {
-                    "total": 20.482100000,
-                    "unconfirmed": 6.282100000,
-                    "immature": 10.200000000,
-                    "locked": 5.700000000,
-                    "spendable": 4.000000000
+                    "total": 20482100000,
+                    "unconfirmed": 6282100000,
+                    "immature": 10200000000,
+                    "locked": 5700000000,
+                    "spendable": 4000000000
                 }
             }
         */

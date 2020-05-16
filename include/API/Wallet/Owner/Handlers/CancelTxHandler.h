@@ -21,7 +21,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		CancelTxCriteria criteria = CancelTxCriteria::FromJSON(request.GetParams().value());
+		CancelTxCriteria criteria = CancelTxCriteria::FromJSON(*request.GetParams());
 
 		m_pWalletManager->CancelByTxId(criteria.GetToken(), criteria.GetTxId());
 

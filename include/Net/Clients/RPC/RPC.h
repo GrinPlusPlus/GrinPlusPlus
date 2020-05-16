@@ -49,7 +49,7 @@ public:
 		json["message"] = m_message;
 		if (m_data.has_value())
 		{
-			json["data"] = m_data.value();
+			json["data"] = *m_data;
 		}
 
 		return json;
@@ -99,7 +99,7 @@ public:
 				throw RPC_EXCEPTION("id is missing", std::nullopt);
 			}
 
-			Json::Value id = idOpt.value();
+			Json::Value id = *idOpt;
 
 			// Parse jsonrpc
 			std::optional<Json::Value> jsonrpcOpt = JsonUtil::GetOptionalField(json, "jsonrpc");
@@ -107,12 +107,12 @@ public:
 			{
 				throw RPC_EXCEPTION("jsonrpc is missing", id);
 			}
-			else if (!jsonrpcOpt.value().isString())
+			else if (!jsonrpcOpt->isString())
 			{
 				throw RPC_EXCEPTION("jsonrpc must be a string", id);
 			}
 
-			std::string jsonrpc(jsonrpcOpt.value().asString());
+			std::string jsonrpc(jsonrpcOpt->asString());
 			if (jsonrpc != "2.0")
 			{
 				throw RPC_EXCEPTION("invalid jsonrpc value: " + jsonrpc, id);
@@ -124,7 +124,7 @@ public:
 			std::optional<Error> errorOpt = std::nullopt;
 			if (errorJsonOpt.has_value())
 			{
-				errorOpt = std::make_optional(Error::Parse(errorJsonOpt.value()));
+				errorOpt = std::make_optional(Error::Parse(*errorJsonOpt));
 			}
 
 			return Response(std::move(id), std::move(resultOpt), std::move(errorOpt));
@@ -151,11 +151,11 @@ public:
 
 		if (m_resultOpt.has_value())
 		{
-			json["result"] = m_resultOpt.value();
+			json["result"] = *m_resultOpt;
 		}
 		else
 		{
-			json["error"] = m_errorOpt.value().ToJSON();
+			json["error"] = m_errorOpt->ToJSON();
 		}
 
 		return json;
@@ -191,7 +191,7 @@ public:
 				throw RPC_EXCEPTION("json missing or invalid", std::nullopt);
 			}
 
-			const Json::Value& json = jsonOpt.value();
+			const Json::Value& json = *jsonOpt;
 
 			// Parse id
 			std::optional<Json::Value> idOpt = JsonUtil::GetOptionalField(json, "id");
@@ -200,7 +200,7 @@ public:
 				throw RPC_EXCEPTION("id is missing", std::nullopt);
 			}
 
-			Json::Value id = idOpt.value();
+			Json::Value id = *idOpt;
 
 			// Parse jsonrpc
 			std::optional<Json::Value> jsonrpcOpt = JsonUtil::GetOptionalField(json, "jsonrpc");
@@ -208,12 +208,12 @@ public:
 			{
 				throw RPC_EXCEPTION("jsonrpc is missing", id);
 			}
-			else if (!jsonrpcOpt.value().isString())
+			else if (!jsonrpcOpt->isString())
 			{
 				throw RPC_EXCEPTION("jsonrpc must be a string", id);
 			}
 
-			std::string jsonrpc(jsonrpcOpt.value().asString());
+			std::string jsonrpc(jsonrpcOpt->asString());
 			if (jsonrpc != "2.0")
 			{
 				throw RPC_EXCEPTION("invalid jsonrpc value: " + jsonrpc, id);
@@ -225,12 +225,12 @@ public:
 			{
 				throw RPC_EXCEPTION("method is missing", id);
 			}
-			else if (!methodOpt.value().isString())
+			else if (!methodOpt->isString())
 			{
 				throw RPC_EXCEPTION("method must be a string", id);
 			}
 
-			const std::string method(methodOpt.value().asString());
+			const std::string method(methodOpt->asString());
 			if (method.empty())
 			{
 				throw RPC_EXCEPTION("method must not be empty", id);
@@ -300,7 +300,7 @@ public:
 
 		if (m_paramsOpt.has_value())
 		{
-			json["params"] = m_paramsOpt.value();
+			json["params"] = *m_paramsOpt;
 		}
 
 		return json;

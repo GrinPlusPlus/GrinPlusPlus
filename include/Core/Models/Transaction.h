@@ -27,7 +27,6 @@ public:
 	Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody);
 	Transaction(const Transaction& transaction) = default;
 	Transaction(Transaction&& transaction) noexcept = default;
-	Transaction() = default;
 
 	//
 	// Destructor
@@ -39,9 +38,9 @@ public:
 	//
 	Transaction& operator=(const Transaction& transaction) = default;
 	Transaction& operator=(Transaction&& transaction) noexcept = default;
-	inline bool operator<(const Transaction& transaction) const { return GetHash() < transaction.GetHash(); }
-	inline bool operator==(const Transaction& transaction) const { return GetHash() == transaction.GetHash(); }
-	inline bool operator!=(const Transaction& transaction) const { return GetHash() != transaction.GetHash(); }
+	bool operator<(const Transaction& transaction) const { return GetHash() < transaction.GetHash(); }
+	bool operator==(const Transaction& transaction) const { return GetHash() == transaction.GetHash(); }
+	bool operator!=(const Transaction& transaction) const { return GetHash() != transaction.GetHash(); }
 
 	//
 	// Getters

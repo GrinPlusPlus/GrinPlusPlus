@@ -59,7 +59,7 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const SecretKey64& secretKey
 				}
 				else
 				{
-					return std::make_shared<TorAddress>(torAddress.value());
+					return std::make_shared<TorAddress>(*torAddress);
 				}
 			}
 		}
@@ -90,7 +90,7 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serialize
 				}
 				else
 				{
-					return std::make_shared<TorAddress>(torAddress.value());
+					return std::make_shared<TorAddress>(*torAddress);
 				}
 			}
 		}

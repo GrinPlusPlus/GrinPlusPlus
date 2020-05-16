@@ -32,7 +32,7 @@ public:
         LOG_INFO("Shutting down foreign server");
         if (m_torAddress.has_value())
         {
-            m_pTorProcess->RemoveListener(m_torAddress.value());
+            m_pTorProcess->RemoveListener(*m_torAddress);
         }
     }
 

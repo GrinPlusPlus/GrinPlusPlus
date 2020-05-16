@@ -106,13 +106,13 @@ public:
 		m_output.Serialize(serializer);
 		serializer.Append(m_amount);
 		serializer.Append((uint8_t)m_status);
-		serializer.Append<uint64_t>(m_mmrIndexOpt.value_or(0));
-		serializer.Append<uint64_t>(m_blockHeightOpt.value_or(0));
-		serializer.AppendVarStr(m_labelOpt.has_value() ? m_labelOpt.value() : "");
+		serializer.Append<uint64_t>(m_mmrIndexOpt.has_value() ? *m_mmrIndexOpt : 0);
+		serializer.Append<uint64_t>(m_blockHeightOpt.has_value() ? *m_blockHeightOpt : 0);
+		serializer.AppendVarStr(m_labelOpt.has_value() ? *m_labelOpt : "");
 
 		if (m_walletTxIdOpt.has_value())
 		{
-			serializer.Append<uint32_t>(m_walletTxIdOpt.value());
+			serializer.Append<uint32_t>(*m_walletTxIdOpt);
 		}
 	}
 

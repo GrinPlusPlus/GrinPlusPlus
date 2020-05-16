@@ -241,7 +241,7 @@ std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed,
 	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
 	for (WalletTx& walletTx : transactions)
 	{
-		if (walletTx.GetSlateId().has_value() && walletTx.GetSlateId().value() == slateId)
+		if (walletTx.GetSlateId().has_value() && *walletTx.GetSlateId() == slateId)
 		{
 			return std::make_unique<WalletTx>(WalletTx(walletTx));
 		}

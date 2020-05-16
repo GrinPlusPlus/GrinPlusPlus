@@ -30,9 +30,9 @@ public:
             if (usernameOpt.has_value() && passwordOpt.has_value() && walletSeedOpt.has_value())
             {
                 return RestoreWalletCriteria(
-                    StringUtil::Trim(StringUtil::ToLower(usernameOpt.value())),
-                    SecureString(passwordOpt.value()),
-                    SecureString(walletSeedOpt.value())
+                    StringUtil::Trim(StringUtil::ToLower(*usernameOpt)),
+                    SecureString(*passwordOpt),
+                    SecureString(*walletSeedOpt)
                 );
             }
         }

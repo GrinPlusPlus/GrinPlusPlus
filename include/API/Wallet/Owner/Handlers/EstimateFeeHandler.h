@@ -21,7 +21,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		EstimateFeeCriteria criteria = EstimateFeeCriteria::FromJSON(request.GetParams().value());
+		EstimateFeeCriteria criteria = EstimateFeeCriteria::FromJSON(*request.GetParams());
 		FeeEstimateDTO response = m_pWalletManager->EstimateFee(criteria);
 
 		return request.BuildResult(response.ToJSON());

@@ -35,7 +35,7 @@ TEST_CASE("API: send - By File")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    const Json::Value& slateJson = resultOpt.value();
+    const Json::Value& slateJson = *resultOpt;
 
     const Slate slate = Slate::FromJSON(slateJson["slate"]);
 
@@ -58,7 +58,7 @@ TEST_CASE("API: send - TOR")
 
     auto pReceiver = pTestWalletServer->CreateUser("Receiver", "password");
     REQUIRE(pReceiver->GetTorAddress().has_value());
-    std::cout << pReceiver->GetTorAddress().value().ToString() << std::endl;
+    std::cout << pReceiver->GetTorAddress()->ToString() << std::endl;
 
     chain.MineChain(pSender, 30);
 
@@ -69,7 +69,7 @@ TEST_CASE("API: send - TOR")
     Json::Value selectionStrategyJson;
     selectionStrategyJson["strategy"] = SelectionStrategy::ToString(ESelectionStrategy::SMALLEST);
     paramsJson["selection_strategy"] = selectionStrategyJson;
-    paramsJson["address"] = pReceiver->GetTorAddress().value().ToString();
+    paramsJson["address"] = pReceiver->GetTorAddress()->ToString();
 
     std::this_thread::sleep_for(std::chrono::seconds(15));
 
@@ -100,7 +100,7 @@ TEST_CASE("API: send - TOR")
     auto resultOpt = pResponse->GetResult();
     REQUIRE(resultOpt.has_value());
 
-    const Json::Value& json = resultOpt.value();
+    const Json::Value& json = *resultOpt;
     REQUIRE(json["status"] == "FINALIZED");
     const Slate slate = Slate::FromJSON(json["slate"]);
 

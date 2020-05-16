@@ -381,7 +381,7 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const To
 	{
 		PostTransaction(
 			finalizedSlate.GetTransaction(),
-			finalizeCriteria.GetPostMethod().value(),
+			*finalizeCriteria.GetPostMethod(),
 			pTorProcess
 		);
 	}
@@ -401,7 +401,7 @@ bool WalletManager::PostTransaction(
 
 		try
 		{
-			auto pTorConnection = pTorProcess->Connect(postMethod.GetGrinJoinAddress().value());
+			auto pTorConnection = pTorProcess->Connect(*postMethod.GetGrinJoinAddress());
 			if (pTorConnection != nullptr)
 			{
 				Json::Value params;
@@ -438,7 +438,7 @@ bool WalletManager::RepostTx(const RepostTxCriteria& criteria, const TorProcess:
 		if (pWalletTx->GetTransaction().has_value())
 		{
 			PostMethodDTO postMethod(criteria.GetMethod(), criteria.GetGrinJoinAddress());
-			return PostTransaction(pWalletTx->GetTransaction().value(), postMethod, pTorProcess);
+			return PostTransaction(*pWalletTx->GetTransaction(), postMethod, pTorProcess);
 		}
 	}
 

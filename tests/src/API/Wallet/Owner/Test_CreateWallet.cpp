@@ -26,12 +26,12 @@ TEST_CASE("API: create_wallet - 24 words")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    std::string sessionToken64 = resultOpt.value().get("session_token", Json::Value()).asString();
+    std::string sessionToken64 = resultOpt->get("session_token", Json::Value()).asString();
     REQUIRE_FALSE(sessionToken64.empty());
 
     SessionToken token = SessionToken::FromBase64(sessionToken64);
 
-    std::string walletSeed = resultOpt.value().get("wallet_seed", Json::Value()).asString();
+    std::string walletSeed = resultOpt->get("wallet_seed", Json::Value()).asString();
     REQUIRE(StringUtil::Split(walletSeed, " ").size() == numWords);
 }
 
@@ -54,12 +54,12 @@ TEST_CASE("API: create_wallet - 12 words")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    std::string sessionToken64 = resultOpt.value().get("session_token", Json::Value()).asString();
+    std::string sessionToken64 = resultOpt->get("session_token", Json::Value()).asString();
     REQUIRE_FALSE(sessionToken64.empty());
 
     SessionToken token = SessionToken::FromBase64(sessionToken64);
 
-    std::string walletSeed = resultOpt.value().get("wallet_seed", Json::Value()).asString();
+    std::string walletSeed = resultOpt->get("wallet_seed", Json::Value()).asString();
     REQUIRE(StringUtil::Split(walletSeed, " ").size() == numWords);
 }
 
@@ -84,7 +84,7 @@ TEST_CASE("API: create_wallet - User already exists")
     auto errorOpt = response.GetError();
     REQUIRE(errorOpt.has_value());
 
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::USER_ALREADY_EXISTS.GetCode());
+    REQUIRE(errorOpt->GetCode() == RPC::Errors::USER_ALREADY_EXISTS.GetCode());
 }
 
 TEST_CASE("API: create_wallet - Password empty")
@@ -106,7 +106,7 @@ TEST_CASE("API: create_wallet - Password empty")
     auto errorOpt = response.GetError();
     REQUIRE(errorOpt.has_value());
 
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::PASSWORD_CRITERIA_NOT_MET.GetCode());
+    REQUIRE(errorOpt->GetCode() == RPC::Errors::PASSWORD_CRITERIA_NOT_MET.GetCode());
 }
 
 TEST_CASE("API: create_wallet - Invalid num_seed_words")
@@ -128,5 +128,5 @@ TEST_CASE("API: create_wallet - Invalid num_seed_words")
     auto errorOpt = response.GetError();
     REQUIRE(errorOpt.has_value());
 
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::INVALID_NUM_SEED_WORDS.GetCode());
+    REQUIRE(errorOpt->GetCode() == RPC::Errors::INVALID_NUM_SEED_WORDS.GetCode());
 }

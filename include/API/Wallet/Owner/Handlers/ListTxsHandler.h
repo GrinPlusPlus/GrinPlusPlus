@@ -22,7 +22,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		ListTxsCriteria criteria = ListTxsCriteria::FromJSON(request.GetParams().value());
+		ListTxsCriteria criteria = ListTxsCriteria::FromJSON(*request.GetParams());
 
 		const std::vector<WalletTxDTO> txs = m_pWalletManager->GetTransactions(criteria);
 

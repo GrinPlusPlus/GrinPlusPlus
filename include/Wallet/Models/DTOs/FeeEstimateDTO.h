@@ -20,8 +20,8 @@ public:
 		const auto inputsOpt = JsonUtil::GetOptionalField(json, "inputs");
 		if (inputsOpt.has_value())
 		{
-			inputs.reserve(inputsOpt.value().size());
-			for (auto iter = inputsOpt.value().begin(); iter != inputsOpt.value().end(); iter++)
+			inputs.reserve(inputsOpt->size());
+			for (auto iter = inputsOpt->begin(); iter != inputsOpt->end(); iter++)
 			{
 				inputs.push_back(WalletOutputDTO::FromJSON(*iter));
 			}

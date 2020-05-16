@@ -22,11 +22,11 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		ReceiveCriteria criteria = ReceiveCriteria::FromJSON(request.GetParams().value());
+		ReceiveCriteria criteria = ReceiveCriteria::FromJSON(*request.GetParams());
 
 		if (criteria.GetFile().has_value())
 		{
-			return ReceiveViaFile(request, criteria, criteria.GetFile().value());
+			return ReceiveViaFile(request, criteria, *criteria.GetFile());
 		}
 		else
 		{

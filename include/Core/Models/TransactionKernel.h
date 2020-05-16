@@ -27,7 +27,6 @@ public:
 	TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature);
 	TransactionKernel(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel(TransactionKernel&& transactionKernel) noexcept = default;
-	TransactionKernel() = default;
 
 	//
 	// Destructor

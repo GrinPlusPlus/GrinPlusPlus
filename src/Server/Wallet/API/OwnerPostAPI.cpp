@@ -53,24 +53,24 @@ int OwnerPostAPI::HandlePOST(mg_connection* pConnection, const std::string& acti
 
 	if (action == "restore_wallet")
 	{
-		return RestoreWallet(pConnection, walletManager, requestBodyOpt.value());
+		return RestoreWallet(pConnection, walletManager, *requestBodyOpt);
 	}
 	else if (action == "issue_send_tx")
 	{
-		return Send(pConnection, walletManager, requestBodyOpt.value());
+		return Send(pConnection, walletManager, *requestBodyOpt);
 	}
 	else if (action == "receive_tx")
 	{
-		return Receive(pConnection, walletManager, requestBodyOpt.value());
+		return Receive(pConnection, walletManager, *requestBodyOpt);
 	}
 	else if (action == "finalize_tx")
 	{
-		return Finalize(pConnection, walletManager, requestBodyOpt.value());
+		return Finalize(pConnection, walletManager, *requestBodyOpt);
 	}
 	else if (action == "estimate_fee")
 	{
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
-		return EstimateFee(pConnection, walletManager, token, requestBodyOpt.value());
+		return EstimateFee(pConnection, walletManager, token, *requestBodyOpt);
 	}
 
 	return HTTPUtil::BuildBadRequestResponse(pConnection, "POST /v1/wallet/owner/" + action + " not Supported");
@@ -91,7 +91,7 @@ int OwnerPostAPI::CreateWallet(mg_connection* pConnection, IWalletManager& walle
 	}
 
 	auto response = walletManager.InitializeNewWallet(
-		CreateWalletCriteria(usernameOpt.value(), SecureString(passwordOpt.value()), 24),
+		CreateWalletCriteria(*usernameOpt, SecureString(*passwordOpt), 24),
 		m_pTorProcess
 	);
 
@@ -115,7 +115,7 @@ int OwnerPostAPI::Login(mg_connection* pConnection, IWalletManager& walletManage
 	try
 	{
 		auto response = walletManager.Login(
-			LoginCriteria(usernameOpt.value(), SecureString(passwordOpt.value())),
+			LoginCriteria(*usernameOpt, SecureString(*passwordOpt)),
 			m_pTorProcess
 		);
 		return HTTPUtil::BuildSuccessResponseJSON(pConnection, response.ToJSON());
@@ -149,8 +149,8 @@ int OwnerPostAPI::RestoreWallet(mg_connection* pConnection, IWalletManager& wall
 
 	const Json::Value walletWordsJSON = JsonUtil::GetRequiredField(json, "wallet_seed");
 
-	const std::string username = usernameOpt.value();
-	SecureString password(passwordOpt.value());
+	const std::string username = *usernameOpt;
+	SecureString password(*passwordOpt);
 	SecureString walletWords(walletWordsJSON.asString());
 
 	try
@@ -203,7 +203,7 @@ int OwnerPostAPI::Repost(mg_connection* pConnection, IWalletManager& walletManag
 	std::optional<std::string> idOpt = HTTPUtil::GetQueryParam(pConnection, "id");
 	if (idOpt.has_value())
 	{
-		const uint32_t id = std::stoul(idOpt.value());
+		const uint32_t id = std::stoul(*idOpt);
 		if (walletManager.RepostTx(RepostTxCriteria(id, token, EPostMethod::FLUFF, std::nullopt), pTorProcess))
 		{
 			return HTTPUtil::BuildSuccessResponse(pConnection, "");
@@ -224,7 +224,7 @@ int OwnerPostAPI::Cancel(mg_connection* pConnection, IWalletManager& walletManag
 	std::optional<std::string> idOpt = HTTPUtil::GetQueryParam(pConnection, "id");
 	if (idOpt.has_value())
 	{
-		const uint32_t id = std::stoul(idOpt.value());
+		const uint32_t id = std::stoul(*idOpt);
 		walletManager.CancelByTxId(token, id);
 		return HTTPUtil::BuildSuccessResponse(pConnection, "");
 	}
@@ -254,11 +254,11 @@ int OwnerPostAPI::EstimateFee(mg_connection* pConnection, IWalletManager& wallet
 		return HTTPUtil::BuildBadRequestResponse(pConnection, "selection_strategy missing");
 	}
 
-	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON.value());
+	const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(*selectionStrategyJSON);
 	const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
 	const EstimateFeeCriteria criteria(
 		token,
-		amountOpt.value(),
+		*amountOpt,
 		feeBaseJSON.asUInt64(),
 		numOutputs,
 		selectionStrategy

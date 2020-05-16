@@ -19,7 +19,7 @@ public:
 
 		try
 		{
-			return SessionToken::FromBase64(sessionTokenOpt.value());
+			return SessionToken::FromBase64(*sessionTokenOpt);
 		}
 		catch (const DeserializationException&)
 		{

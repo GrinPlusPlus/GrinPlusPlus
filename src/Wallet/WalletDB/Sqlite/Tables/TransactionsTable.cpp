@@ -44,7 +44,7 @@ void TransactionsTable::AddTransactions(sqlite3& database, const SecureVector& m
 
 		if (walletTx.GetSlateId().has_value())
 		{
-			const std::string slateId = uuids::to_string(walletTx.GetSlateId().value());
+			const std::string slateId = uuids::to_string(*walletTx.GetSlateId());
 			sqlite3_bind_text(stmt, 2, slateId.c_str(), (int)slateId.size(), NULL);
 		}
 		else

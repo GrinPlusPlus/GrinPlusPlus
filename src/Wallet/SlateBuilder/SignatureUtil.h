@@ -34,7 +34,7 @@ public:
 
 			if (participantData.GetPartialSignature().has_value())
 			{
-				signatures.push_back(participantData.GetPartialSignature().value());
+				signatures.push_back(*participantData.GetPartialSignature());
 			}
 		}
 
@@ -61,7 +61,7 @@ public:
 		{
 			if (participant.GetPartialSignature().has_value())
 			{
-				if (!Crypto::VerifyPartialSignature(participant.GetPartialSignature().value(), participant.GetPublicBlindExcess(), sumPubKeys, sumPubNonces, message))
+				if (!Crypto::VerifyPartialSignature(*participant.GetPartialSignature(), participant.GetPublicBlindExcess(), sumPubKeys, sumPubNonces, message))
 				{
 					return false;
 				}
@@ -78,7 +78,7 @@ public:
 			if (participant.GetMessageText().has_value())
 			{
 				// TODO: Limit message length
-				if (!Crypto::VerifyMessageSignature(participant.GetMessageSignature().value(), participant.GetPublicBlindExcess(), participant.GetMessageText().value()))
+				if (!Crypto::VerifyMessageSignature(*participant.GetMessageSignature(), participant.GetPublicBlindExcess(), *participant.GetMessageText()))
 				{
 					return false;
 				}

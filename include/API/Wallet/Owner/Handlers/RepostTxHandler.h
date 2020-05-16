@@ -22,7 +22,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		RepostTxCriteria criteria = RepostTxCriteria::FromJSON(request.GetParams().value());
+		RepostTxCriteria criteria = RepostTxCriteria::FromJSON(*request.GetParams());
 
 		const bool reposted = m_pWalletManager->RepostTx(criteria, m_pTorProcess);
 

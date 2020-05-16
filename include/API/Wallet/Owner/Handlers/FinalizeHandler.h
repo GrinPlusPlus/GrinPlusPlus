@@ -23,11 +23,11 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		FinalizeCriteria criteria = FinalizeCriteria::FromJSON(request.GetParams().value());
+		FinalizeCriteria criteria = FinalizeCriteria::FromJSON(*request.GetParams());
 
 		if (criteria.GetFile().has_value())
 		{
-			return FinalizeViaFile(request, criteria, criteria.GetFile().value());
+			return FinalizeViaFile(request, criteria, *criteria.GetFile());
 		}
 		else
 		{

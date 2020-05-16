@@ -24,7 +24,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		LoginCriteria criteria = LoginCriteria::FromJSON(request.GetParams().value());
+		LoginCriteria criteria = LoginCriteria::FromJSON(*request.GetParams());
 		ValidateInput(criteria);
 
 		try

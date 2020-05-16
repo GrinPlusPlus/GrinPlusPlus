@@ -88,13 +88,13 @@ Slate SendSlateBuilder::BuildSendSlate(
 	KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
 
 	std::optional<SlatePaymentProof> proofOpt = std::nullopt;
-	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;
+	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(*addressOpt) : std::nullopt;
 	if (torAddressOpt.has_value())
 	{
 		SecretKey64 torKey = KeyChain::FromSeed(m_config, masterSeed).DeriveED25519Key(torPath);
 		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(torKey);
 
-		proofOpt = std::make_optional(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
+		proofOpt = std::make_optional(SlatePaymentProof::Create(senderAddress, torAddressOpt->GetPublicKey()));
 	}
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS
@@ -161,14 +161,14 @@ void SendSlateBuilder::AddSenderInfo(
 	if (messageOpt.has_value())
 	{
 		// TODO: Limit message length
-		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, messageOpt.value());
+		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(secretKey, publicKey, *messageOpt);
 		if (pMessageSignature == nullptr)
 		{
 			WALLET_ERROR_F("Failed to sign message for slate {}", uuids::to_string(slate.GetSlateId()));
 			throw CryptoException();
 		}
 
-		participantData.AddMessage(messageOpt.value(), *pMessageSignature);
+		participantData.AddMessage(*messageOpt, *pMessageSignature);
 	}
 
 	slate.AddParticpantData(participantData);
@@ -208,7 +208,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 		amountDebited,
 		std::make_optional(slate.GetFee()),
 		std::make_optional(slate.GetTransaction()),
-		proofOpt.has_value() ? std::make_optional(proofOpt.value()) : std::nullopt
+		proofOpt.has_value() ? proofOpt : std::nullopt
 	);
 }
 

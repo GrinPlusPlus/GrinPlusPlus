@@ -25,7 +25,7 @@ void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> 
 	std::optional<Transaction> transactionOpt = walletTx.GetTransaction();
 	if (walletTx.GetType() == EWalletTxType::SENT_CANCELED && transactionOpt.has_value())
 	{
-		for (const TransactionInput& input : transactionOpt.value().GetInputs())
+		for (const TransactionInput& input : transactionOpt->GetInputs())
 		{
 			inputCommitments.insert(input.GetCommitment());
 		}

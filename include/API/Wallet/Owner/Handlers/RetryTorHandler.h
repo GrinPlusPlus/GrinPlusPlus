@@ -25,7 +25,7 @@ class RetryTorHandler : public RPCMethod
 
 			if (m_torAddress.has_value())
 			{
-				result["tor_address"] = m_torAddress.value();
+				result["tor_address"] = *m_torAddress;
 			}
 
 			return request.BuildResult(result);
@@ -49,7 +49,7 @@ public:
 
 		Response response;
 
-		std::string tokenStr = JsonUtil::GetRequiredString(request.GetParams().value(), "session_token");
+		std::string tokenStr = JsonUtil::GetRequiredString(*request.GetParams(), "session_token");
 		SessionToken token = SessionToken::FromBase64(tokenStr);
 
 		if (m_pTorProcess->RetryInit())
@@ -62,7 +62,7 @@ public:
 			if (listenerOpt.has_value())
 			{
 				response.SetStatus("SUCCESS");
-				response.SetTorAddress(listenerOpt.value().ToString());
+				response.SetTorAddress(listenerOpt->ToString());
 				return response.BuildResponse(request);
 			}
 		}

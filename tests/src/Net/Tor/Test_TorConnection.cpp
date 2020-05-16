@@ -15,7 +15,7 @@ TEST_CASE("TorConnection - Multiple calls")
 	REQUIRE(pSender->GetTorAddress().has_value());
 
 	TorProcess::Ptr pTorProcess1 = TorProcessManager::GetProcess(1);
-	auto pConnection1 = pTorProcess1->Connect(pSender->GetTorAddress().value());
+	auto pConnection1 = pTorProcess1->Connect(*pSender->GetTorAddress());
 
 	auto request = RPC::Request::BuildRequest("check_version");
 	auto response = pConnection1->Invoke(request, "/v2/foreign");

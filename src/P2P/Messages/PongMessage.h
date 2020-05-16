@@ -22,12 +22,6 @@ public:
 	virtual ~PongMessage() = default;
 
 	//
-	// Operators
-	//
-	PongMessage& operator=(const PongMessage& other) = default;
-	PongMessage& operator=(PongMessage&& other) noexcept = default;
-
-	//
 	// Clone
 	//
 	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PongMessage(*this)); }

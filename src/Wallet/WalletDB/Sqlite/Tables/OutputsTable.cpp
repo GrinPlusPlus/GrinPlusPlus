@@ -93,7 +93,7 @@ void OutputsTable::AddOutputs(sqlite3& database, const SecureVector& masterSeed,
 
 		if (output.GetWalletTxId().has_value())
 		{
-			sqlite3_bind_int(stmt, 3, (int)output.GetWalletTxId().value());
+			sqlite3_bind_int(stmt, 3, (int)*output.GetWalletTxId());
 		}
 		else
 		{

@@ -22,7 +22,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		DeleteWalletCriteria criteria = DeleteWalletCriteria::FromJSON(request.GetParams().value());
+		DeleteWalletCriteria criteria = DeleteWalletCriteria::FromJSON(*request.GetParams());
 
 		m_pWalletManager->DeleteWallet(criteria.GetUsername(), criteria.GetPassword());
 

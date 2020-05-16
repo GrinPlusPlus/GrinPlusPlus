@@ -27,7 +27,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		RestoreWalletCriteria criteria = RestoreWalletCriteria::FromJSON(request.GetParams().value());
+		RestoreWalletCriteria criteria = RestoreWalletCriteria::FromJSON(*request.GetParams());
 		ValidateInput(criteria);
 
 		auto response = m_pWalletManager->RestoreFromSeed(criteria, m_pTorProcess);

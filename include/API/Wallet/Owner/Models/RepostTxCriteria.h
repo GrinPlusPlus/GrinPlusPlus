@@ -41,7 +41,7 @@ public:
 			const std::string method = JsonUtil::GetRequiredString(paramsJson, "method");
 
 			const std::optional<std::string> grinjoinAddressOpt = JsonUtil::GetStringOpt(paramsJson, "grinjoin_address");
-			std::optional<TorAddress> torAddress = grinjoinAddressOpt.has_value() ? TorAddressParser::Parse(grinjoinAddressOpt.value()) : std::nullopt;
+			std::optional<TorAddress> torAddress = grinjoinAddressOpt.has_value() ? TorAddressParser::Parse(*grinjoinAddressOpt) : std::nullopt;
 
 			return RepostTxCriteria(tx_id, token, PostMethod::FromString(method), torAddress);
 		}

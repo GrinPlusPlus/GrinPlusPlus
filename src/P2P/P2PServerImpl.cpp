@@ -127,7 +127,7 @@ std::optional<PeerConstPtr> P2PServer::GetPeer(const IPAddress& address) const
 	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address);
 	if (connectedPeerOpt.has_value())
 	{
-		return std::make_optional(connectedPeerOpt.value().second.GetPeer());
+		return std::make_optional(connectedPeerOpt->second.GetPeer());
 	}
 
 	return m_pPeerManager->Read()->GetPeer(address);
@@ -138,7 +138,7 @@ bool P2PServer::BanPeer(const IPAddress& address, const EBanReason banReason)
 	std::optional<PeerPtr> peerOpt = m_pPeerManager->Write()->GetPeer(address);
 	if (peerOpt.has_value())
 	{
-		peerOpt.value()->Ban(banReason);
+		(*peerOpt)->Ban(banReason);
 		return true;
 	}
 

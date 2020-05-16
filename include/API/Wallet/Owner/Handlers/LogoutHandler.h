@@ -21,7 +21,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		Json::Value tokenJson = JsonUtil::GetRequiredField(request.GetParams().value(), "session_token");
+		Json::Value tokenJson = JsonUtil::GetRequiredField(*request.GetParams(), "session_token");
 		SessionToken token = SessionToken::FromBase64(tokenJson.asString());
 
 		m_pWalletManager->Logout(token);

@@ -25,16 +25,16 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		SendCriteria criteria = SendCriteria::FromJSON(request.GetParams().value());
+		SendCriteria criteria = SendCriteria::FromJSON(*request.GetParams());
 
 		const std::optional<TorAddress> torAddress = criteria.GetAddress().has_value() ?
-			TorAddressParser::Parse(criteria.GetAddress().value()) : std::nullopt;
+			TorAddressParser::Parse(*criteria.GetAddress()) : std::nullopt;
 
 		if (torAddress.has_value())
 		{
 			try
 			{
-				return SendViaTOR(request, criteria, torAddress.value());
+				return SendViaTOR(request, criteria, *torAddress);
 			}
 			catch (const HTTPException& e)
 			{
@@ -44,7 +44,7 @@ public:
 		}
 		else if (criteria.GetFile().has_value())
 		{
-			return SendViaFile(request, criteria, criteria.GetFile().value());
+			return SendViaFile(request, criteria, *criteria.GetFile());
 		}
 		else
 		{
@@ -80,7 +80,7 @@ private:
 		Json::Value params;
 		params.append(slate.ToJSON());
 		params.append(Json::nullValue); // Account path not currently supported
-		params.append(criteria.GetMsg().has_value() ? criteria.GetMsg().value() : Json::Value(Json::nullValue));
+		params.append(criteria.GetMsg().has_value() ? *criteria.GetMsg() : Json::Value(Json::nullValue));
 		RPC::Request receiveTxRequest = RPC::Request::BuildRequest("receive_tx", params);
 		std::string result = receiveTxRequest.ToJSON().toStyledString();
 		LOG_ERROR_F("{}", result);
@@ -90,13 +90,13 @@ private:
 
 		if (receiveTxResponse.GetError().has_value())
 		{
-			return request.BuildError(receiveTxResponse.GetError().value());
+			return request.BuildError(*receiveTxResponse.GetError());
 		}
 		else
 		{
-			result = receiveTxResponse.GetResult().value().toStyledString();
+			result = receiveTxResponse.GetResult()->toStyledString();
 			LOG_ERROR_F("{}", result);
-			Json::Value okJson = JsonUtil::GetRequiredField(receiveTxResponse.GetResult().value(), "Ok");
+			Json::Value okJson = JsonUtil::GetRequiredField(*receiveTxResponse.GetResult(), "Ok");
 			try
 			{
 				Slate finalizedSlate = m_pWalletManager->Finalize(
@@ -155,11 +155,11 @@ private:
 			const RPC::Response response = connection.Invoke(checkVersionRequest, "/v2/foreign");
 			if (response.GetError().has_value())
 			{
-				LOG_ERROR_F("check_version failed with error: {}", response.GetError().value().GetMsg());
+				LOG_ERROR_F("check_version failed with error: {}", response.GetError()->GetMsg());
 				throw HTTP_EXCEPTION("check_version call failed");
 			}
 
-			const Json::Value responseJSON = response.GetResult().value();
+			const Json::Value responseJSON = *response.GetResult();
 			const Json::Value okJSON = JsonUtil::GetRequiredField(responseJSON, "Ok");
 			const uint64_t apiVersion = JsonUtil::GetRequiredUInt64(okJSON, "foreign_api_version");
 			if (apiVersion != 2)

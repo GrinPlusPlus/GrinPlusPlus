@@ -165,7 +165,7 @@ SessionToken SessionManager::Login(
 	wallet.Write()->SetListenerPort(listenerInfo.first);
 	if (listenerInfo.second.has_value())
 	{
-		wallet.Write()->SetTorAddress(listenerInfo.second.value());
+		wallet.Write()->SetTorAddress(*listenerInfo.second);
 	}
 
 	return token;

@@ -9,7 +9,7 @@ TEST_CASE("TorAddressParser - Valid Addresses")
 		std::optional<TorAddress> parsed = TorAddressParser::Parse(address);
 		REQUIRE(parsed.has_value());
 
-		std::string hex = CBigInteger<32>(parsed.value().GetPublicKey().pubkey).ToHex();
+		std::string hex = CBigInteger<32>(parsed->GetPublicKey().pubkey).ToHex();
 		REQUIRE(hex == "3450d4b90debf39449ad26da0bdf96d29b6bcb00641992b738b372357e20ffbd");
 	}
 	{
@@ -17,7 +17,7 @@ TEST_CASE("TorAddressParser - Valid Addresses")
 		std::optional<TorAddress> parsed = TorAddressParser::Parse(address);
 		REQUIRE(parsed.has_value());
 
-		std::string hex = CBigInteger<32>(parsed.value().GetPublicKey().pubkey).ToHex();
+		std::string hex = CBigInteger<32>(parsed->GetPublicKey().pubkey).ToHex();
 		REQUIRE(hex == "a01efbba50a384b9ddc9f6f3434da5438523aaeb84ad43e0ee7a4aca3c506a9a");
 	}
 	{

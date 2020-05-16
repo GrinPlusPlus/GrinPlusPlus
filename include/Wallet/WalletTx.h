@@ -71,19 +71,19 @@ public:
 		serializer.Append<uint8_t>(WALLET_TX_DATA_FORMAT);
 		serializer.Append<uint32_t>(m_walletTxId);
 		serializer.Append<uint8_t>((uint8_t)m_type);
-		serializer.AppendVarStr(m_slateIdOpt.has_value() ? uuids::to_string(m_slateIdOpt.value()) : "");
-		serializer.AppendVarStr(m_addressOpt.has_value() ? m_addressOpt.value() : "");
-		serializer.AppendVarStr(m_slateMessageOpt.has_value() ? m_slateMessageOpt.value() : "");
+		serializer.AppendVarStr(m_slateIdOpt.has_value() ? uuids::to_string(*m_slateIdOpt) : "");
+		serializer.AppendVarStr(m_addressOpt.has_value() ? *m_addressOpt : "");
+		serializer.AppendVarStr(m_slateMessageOpt.has_value() ? *m_slateMessageOpt : "");
 		serializer.Append<int64_t>(TimeUtil::ToInt64(m_creationTime));
-		serializer.Append<int64_t>((int64_t)(m_confirmationTimeOpt.has_value() ? TimeUtil::ToInt64(m_confirmationTimeOpt.value()) : 0));
-		serializer.Append<uint64_t>(m_confirmedHeightOpt.value_or(0));
+		serializer.Append<int64_t>((int64_t)(m_confirmationTimeOpt.has_value() ? TimeUtil::ToInt64(*m_confirmationTimeOpt) : 0));
+		serializer.Append<uint64_t>(m_confirmedHeightOpt.has_value() ? *m_confirmedHeightOpt : 0);
 		serializer.Append<uint64_t>(m_amountCredited);
 		serializer.Append<uint64_t>(m_amountDebited);
 
 		if (m_feeOpt.has_value())
 		{
 			serializer.Append<uint8_t>(1);
-			serializer.Append<uint64_t>(m_feeOpt.value());
+			serializer.Append<uint64_t>(*m_feeOpt);
 		}
 		else
 		{
@@ -94,7 +94,7 @@ public:
 		if (m_paymentProofOpt.has_value())
 		{
 			serializer.Append<uint8_t>(1);
-			m_paymentProofOpt.value().Serialize(serializer);
+			m_paymentProofOpt->Serialize(serializer);
 		}
 		else
 		{
@@ -103,7 +103,7 @@ public:
 
 		if (m_transactionOpt.has_value())
 		{
-			m_transactionOpt.value().Serialize(serializer);
+			m_transactionOpt->Serialize(serializer);
 		}
 	}
 

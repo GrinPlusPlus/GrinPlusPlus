@@ -107,7 +107,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 
 	if (options.shared_node.has_value())
 	{
-		pNodeClient = RPCNodeClient::Create(options.shared_node.value());
+		pNodeClient = RPCNodeClient::Create(*options.shared_node);
 	}
 	else
 	{

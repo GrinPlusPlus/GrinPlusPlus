@@ -25,11 +25,11 @@ TEST_CASE("API: login")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    std::string sessionToken64 = resultOpt.value().get("session_token", Json::Value()).asString();
+    std::string sessionToken64 = resultOpt->get("session_token", Json::Value()).asString();
     REQUIRE_FALSE(sessionToken64.empty());
     SessionToken token = SessionToken::FromBase64(sessionToken64);
 
-    std::string torAddress = resultOpt.value().get("tor_address", Json::Value()).asString();
+    std::string torAddress = resultOpt->get("tor_address", Json::Value()).asString();
     REQUIRE(TorAddressParser().Parse(torAddress).has_value());
 }
 
@@ -49,7 +49,7 @@ TEST_CASE("API: login - User doesn't exist")
     auto errorOpt = response.GetError();
     REQUIRE(errorOpt.has_value());
 
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::USER_DOESNT_EXIST.GetCode());
+    REQUIRE(errorOpt->GetCode() == RPC::Errors::USER_DOESNT_EXIST.GetCode());
 }
 
 TEST_CASE("API: login - Invalid Password")
@@ -70,5 +70,5 @@ TEST_CASE("API: login - Invalid Password")
     auto errorOpt = response.GetError();
     REQUIRE(errorOpt.has_value());
 
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::INVALID_PASSWORD.GetCode());
+    REQUIRE(errorOpt->GetCode() == RPC::Errors::INVALID_PASSWORD.GetCode());
 }

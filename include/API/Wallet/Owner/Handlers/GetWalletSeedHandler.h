@@ -22,7 +22,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		GetSeedPhraseCriteria criteria = GetSeedPhraseCriteria::FromJSON(request.GetParams().value());
+		GetSeedPhraseCriteria criteria = GetSeedPhraseCriteria::FromJSON(*request.GetParams());
 
 		SecureString seedWords = m_pWalletManager->GetSeedWords(criteria);
 

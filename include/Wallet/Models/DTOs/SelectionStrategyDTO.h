@@ -22,7 +22,7 @@ public:
 		const std::optional<Json::Value> inputsJSON = JsonUtil::GetOptionalField(selectionStrategyJSON, "inputs");
 		if (inputsJSON.has_value())
 		{
-			for (auto iter = inputsJSON.value().begin(); iter != inputsJSON.value().end(); iter++)
+			for (auto iter = inputsJSON->begin(); iter != inputsJSON->end(); iter++)
 			{
 				inputs.insert(JsonUtil::ConvertToCommitment(*iter));
 			}

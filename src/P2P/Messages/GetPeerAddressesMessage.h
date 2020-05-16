@@ -23,12 +23,6 @@ public:
 	virtual ~GetPeerAddressesMessage() = default;
 
 	//
-	// Operators
-	//
-	GetPeerAddressesMessage& operator=(const GetPeerAddressesMessage& other) = default;
-	GetPeerAddressesMessage& operator=(GetPeerAddressesMessage&& other) noexcept = default;
-
-	//
 	// Clone
 	//
 	virtual IMessagePtr Clone() const override final { return IMessagePtr(new GetPeerAddressesMessage(*this)); }

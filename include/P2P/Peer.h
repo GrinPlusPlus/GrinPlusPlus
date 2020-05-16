@@ -87,7 +87,6 @@ public:
 		m_lastTxHashSetRequest = other.m_lastTxHashSetRequest.load();
 		return *this;
 	}
-	Peer& operator=(Peer&& other) = default;
 
 	//
 	// Setters

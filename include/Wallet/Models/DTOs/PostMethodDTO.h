@@ -20,7 +20,7 @@ public:
 		const std::string method = JsonUtil::GetRequiredString(postMethodJSON, "method");
 
 		const std::optional<std::string> grinjoinAddressOpt = JsonUtil::GetStringOpt(postMethodJSON, "grinjoin_address");
-		std::optional<TorAddress> torAddress = grinjoinAddressOpt.has_value() ? TorAddressParser::Parse(grinjoinAddressOpt.value()) : std::nullopt;
+		std::optional<TorAddress> torAddress = grinjoinAddressOpt.has_value() ? TorAddressParser::Parse(*grinjoinAddressOpt) : std::nullopt;
 
 		return PostMethodDTO(PostMethod::FromString(method), torAddress);
 	}

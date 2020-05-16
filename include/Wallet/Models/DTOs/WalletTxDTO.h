@@ -35,12 +35,12 @@ public:
 
 		if (m_walletTx.GetSlateId().has_value())
 		{
-			transactionJSON["slate_id"] = uuids::to_string(m_walletTx.GetSlateId().value());
+			transactionJSON["slate_id"] = uuids::to_string(*m_walletTx.GetSlateId());
 		}
 
 		if (m_walletTx.GetConfirmationTime().has_value())
 		{
-			transactionJSON["confirmation_date_time"] = TimeUtil::ToSeconds(m_walletTx.GetConfirmationTime().value());
+			transactionJSON["confirmation_date_time"] = TimeUtil::ToSeconds(*m_walletTx.GetConfirmationTime());
 		}
 
 		Json::Value kernelsJSON;

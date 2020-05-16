@@ -22,12 +22,6 @@ public:
 	virtual ~PingMessage() = default;
 
 	//
-	// Operators
-	//
-	PingMessage& operator=(const PingMessage& other) = default;
-	PingMessage& operator=(PingMessage&& other) noexcept = default;
-
-	//
 	// Clone
 	//
 	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PingMessage(*this)); }

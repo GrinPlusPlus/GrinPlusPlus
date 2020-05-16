@@ -109,7 +109,7 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 			{
 				return HTTPUtil::BuildSuccessResponse(
 					conn,
-					Json::Value().append(peerOpt.value()->ToJSON()).toStyledString()
+					Json::Value().append((*peerOpt)->ToJSON()).toStyledString()
 				);
 			}
 		}

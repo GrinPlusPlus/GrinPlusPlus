@@ -25,7 +25,7 @@ public:
 		std::optional<Json::Value> postJSON = JsonUtil::GetOptionalField(json, "post_tx");
 		if (postJSON.has_value())
 		{
-			postMethodOpt = std::make_optional<PostMethodDTO>(PostMethodDTO::FromJSON(postJSON.value()));
+			postMethodOpt = std::make_optional<PostMethodDTO>(PostMethodDTO::FromJSON(*postJSON));
 		}
 
 		return SendCriteria(

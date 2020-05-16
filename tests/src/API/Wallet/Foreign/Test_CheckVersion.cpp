@@ -59,7 +59,7 @@ TEST_CASE("API: check_version")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    auto result = CheckVersionResponse::FromJSON(resultOpt.value());
+    auto result = CheckVersionResponse::FromJSON(*resultOpt);
 
     REQUIRE(result.GetForeignApiVersion() == 2);
     REQUIRE(result.GetSupportedSlateVersions() == std::vector<uint64_t>{ 2, 3 });

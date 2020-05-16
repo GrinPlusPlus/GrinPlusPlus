@@ -30,7 +30,7 @@ public:
 		Json::Value proofJSON;
 		proofJSON["sender_address"] = m_senderAddress.Format();
 		proofJSON["receiver_address"] = m_receiverAddress.Format();
-		proofJSON["receiver_signature"] = m_receiverSignatureOpt.has_value() ? m_receiverSignatureOpt.value().ToHex() : Json::Value(Json::nullValue);
+		proofJSON["receiver_signature"] = m_receiverSignatureOpt.has_value() ? m_receiverSignatureOpt->ToHex() : Json::Value(Json::nullValue);
 		return proofJSON;
 	}
 
@@ -55,7 +55,7 @@ public:
 		if (m_receiverSignatureOpt.has_value())
 		{
 			serializer.Append<uint8_t>(1);
-			serializer.AppendBigInteger<64>(m_receiverSignatureOpt.value().GetSignatureBytes());
+			serializer.AppendBigInteger<64>(m_receiverSignatureOpt->GetSignatureBytes());
 		}
 		else
 		{

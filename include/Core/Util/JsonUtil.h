@@ -162,7 +162,7 @@ public:
 
 	static Json::Value ConvertToJSON(const std::optional<Signature>& signatureOpt)
 	{
-		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value()) : Json::nullValue;
+		return signatureOpt.has_value() ? ConvertToJSON(*signatureOpt) : Json::nullValue;
 	}
 
 	static std::optional<CompactSignature> ConvertToSignatureOpt(const Json::Value& signatureJSON)
@@ -203,7 +203,7 @@ public:
 	//
 	static Json::Value ConvertToJSON(const std::optional<std::string>& stringOpt)
 	{
-		return stringOpt.has_value() ? Json::Value(stringOpt.value()) : Json::nullValue;
+		return stringOpt.has_value() ? Json::Value(*stringOpt) : Json::nullValue;
 	}
 
 	static std::optional<std::string> ConvertToStringOpt(const Json::Value& stringJSON)
@@ -255,7 +255,7 @@ public:
 		}
 		else
 		{
-			return ConvertToUInt64(json.value());
+			return ConvertToUInt64(*json);
 		}
 	}
 
@@ -268,7 +268,7 @@ public:
 		}
 		else
 		{
-			return std::make_optional((uint32_t)ConvertToUInt64(json.value()));
+			return std::make_optional((uint32_t)ConvertToUInt64(*json));
 		}
 	}
 
@@ -305,7 +305,7 @@ public:
 	{
 		if (opt.has_value())
 		{
-			json[fieldName] = opt.value();
+			json[fieldName] = *opt;
 		}
 	}
 

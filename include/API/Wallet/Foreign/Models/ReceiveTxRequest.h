@@ -50,8 +50,8 @@ public:
     {
         Json::Value result;
         result.append(m_slate.ToJSON());
-        result.append(m_accountName.has_value() ? Json::Value(m_accountName.value()) : Json::nullValue);
-        result.append(m_message.has_value() ? Json::Value(m_message.value()) : Json::nullValue);
+        result.append(m_accountName.has_value() ? Json::Value(*m_accountName) : Json::nullValue);
+        result.append(m_message.has_value() ? Json::Value(*m_message) : Json::nullValue);
         return result;
     }
 

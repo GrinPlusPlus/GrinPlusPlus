@@ -22,7 +22,7 @@ public:
 			return request.BuildError(RPC::ErrorCode::INVALID_PARAMS, "Params missing");
 		}
 
-		Json::Value txJSON = JsonUtil::GetRequiredField(request.GetParams().value(), "tx");
+		Json::Value txJSON = JsonUtil::GetRequiredField(*request.GetParams(), "tx");
 		TransactionPtr pTransaction = std::make_shared<Transaction>(Transaction::FromJSON(txJSON));
 
 		EBlockChainStatus status = m_pNodeContext->m_pBlockChainServer->AddTransaction(pTransaction, EPoolType::JOINPOOL);

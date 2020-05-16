@@ -883,7 +883,7 @@ namespace uuids
             data[6] &= 0x5F;
             data[6] |= 0x10;
 
-            memcpy(&data[10], &device_address.value()[0], 6);
+            memcpy(&data[10], &(*device_address)[0], 6);
 
             return uuids::uuid{std::cbegin(data), std::cend(data)};
          }

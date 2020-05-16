@@ -88,7 +88,7 @@ private:
 							instance.m_logFile,
 							"Method: {}, Error: {}",
 							method,
-							response.GetError().value().ToString()
+							response.GetError()->ToString()
 						);
 					}
 

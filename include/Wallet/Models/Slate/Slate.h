@@ -84,7 +84,7 @@ public:
 		if (m_versionInfo.GetVersion() >= 3)
 		{
 			slateNode["ttl_cutoff_height"] = Json::Value(Json::nullValue); // TODO: Implement
-			slateNode["payment_proof"] = m_proofOpt.has_value() ? m_proofOpt.value().ToJSON() : Json::Value(Json::nullValue);
+			slateNode["payment_proof"] = m_proofOpt.has_value() ? m_proofOpt->ToJSON() : Json::Value(Json::nullValue);
 		}
 
 		slateNode["num_participants"] = m_numParticipants;
@@ -128,15 +128,15 @@ public:
 
 		std::optional<SlatePaymentProof> proofOpt = std::nullopt;
 		std::optional<Json::Value> proofJsonOpt = JsonUtil::GetOptionalField(slateNode, "payment_proof");
-		if (proofJsonOpt.has_value() && !proofJsonOpt.value().isNull())
+		if (proofJsonOpt.has_value() && !proofJsonOpt->isNull())
 		{
-			proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::FromJSON(proofJsonOpt.value()));
+			proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::FromJSON(*proofJsonOpt));
 		}
 
 		Slate slate(
 			std::move(versionInfo),
 			numParticipants,
-			std::move(slateIdOpt.value()),
+			std::move(*slateIdOpt),
 			std::move(transaction),
 			amount,
 			fee,

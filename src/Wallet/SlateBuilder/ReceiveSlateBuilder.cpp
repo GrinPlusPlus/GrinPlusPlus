@@ -145,7 +145,7 @@ void ReceiveSlateBuilder::AddParticipantData(
 		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(
 			secretKey,
 			publicKey,
-			messageOpt.value()
+			*messageOpt
 		);
 		if (pMessageSignature == nullptr)
 		{
@@ -153,7 +153,7 @@ void ReceiveSlateBuilder::AddParticipantData(
 			throw WALLET_EXCEPTION("Failed to sign slate message.");
 		}
 
-		receiverData.AddMessage(messageOpt.value(), *pMessageSignature);
+		receiverData.AddMessage(*messageOpt, *pMessageSignature);
 	}
 
 	// Add receiver's ParticipantData to Slate
@@ -179,8 +179,8 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 			throw WALLET_EXCEPTION("");
 		}
 
-		auto& proof = slate.GetPaymentProof().value();
-		if (proof.GetReceiverAddress() != pWallet->GetTorAddress().value().GetPublicKey())
+		auto& proof = *slate.GetPaymentProof();
+		if (proof.GetReceiverAddress() != pWallet->GetTorAddress()->GetPublicKey())
 		{
 			throw WALLET_EXCEPTION("");
 		}

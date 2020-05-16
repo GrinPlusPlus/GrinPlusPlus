@@ -22,12 +22,6 @@ public:
 	virtual ~ErrorMessage() = default;
 
 	//
-	// Operators
-	//
-	ErrorMessage& operator=(const ErrorMessage& other) = default;
-	ErrorMessage& operator=(ErrorMessage&& other) noexcept = default;
-
-	//
 	// Clone
 	//
 	virtual IMessagePtr Clone() const override final { return IMessagePtr(new ErrorMessage(*this)); }

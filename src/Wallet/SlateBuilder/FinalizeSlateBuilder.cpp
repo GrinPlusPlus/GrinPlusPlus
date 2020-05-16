@@ -230,8 +230,8 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(
 			return false;
 		}
 
-		auto& origProof = paymentProofOpt.value();
-		auto& newProof = slate.GetPaymentProof().value();
+		auto& origProof = *paymentProofOpt;
+		auto& newProof = *slate.GetPaymentProof();
 
 		if (origProof.GetReceiverAddress().pubkey != newProof.GetReceiverAddress().pubkey
 			|| origProof.GetSenderAddress().pubkey != newProof.GetSenderAddress().pubkey
@@ -248,7 +248,7 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(
 
 		return ED25519::VerifySignature(
 			newProof.GetReceiverAddress(),
-			newProof.GetReceiverSignature().value(),
+			*newProof.GetReceiverSignature(),
 			messageSerializer.GetBytes()
 		);
 	}

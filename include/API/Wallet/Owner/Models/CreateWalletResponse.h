@@ -33,7 +33,7 @@ public:
 
         if (m_torAddress.has_value())
         {
-            result["tor_address"] = m_torAddress.value().ToString();
+            result["tor_address"] = m_torAddress->ToString();
         }
 
         return result;

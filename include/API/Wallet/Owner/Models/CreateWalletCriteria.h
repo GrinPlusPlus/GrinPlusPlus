@@ -37,9 +37,9 @@ public:
             if (usernameOpt.has_value() && passwordOpt.has_value() && numWordsOpt.has_value())
             {
                 return CreateWalletCriteria(
-                    StringUtil::Trim(StringUtil::ToLower(usernameOpt.value())),
-                    SecureString(passwordOpt.value()),
-                    (int)numWordsOpt.value()
+                    StringUtil::Trim(StringUtil::ToLower(*usernameOpt)),
+                    SecureString(*passwordOpt),
+                    (int)*numWordsOpt
                 );
             }
         }

@@ -54,7 +54,7 @@ public:
 
 		if (blockSumsOpt.has_value())
 		{
-			outputCommitments.push_back(blockSumsOpt.value().GetOutputSum());
+			outputCommitments.push_back(blockSumsOpt->GetOutputSum());
 		}
 
 		// Sum all input|output|overage commitments.
@@ -64,7 +64,7 @@ public:
 		std::vector<Commitment> kernelCommitments = kernels;
 		if (blockSumsOpt.has_value())
 		{
-			kernelCommitments.push_back(blockSumsOpt.value().GetKernelSum());
+			kernelCommitments.push_back(blockSumsOpt->GetKernelSum());
 		}
 
 		Commitment kernelSum = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());

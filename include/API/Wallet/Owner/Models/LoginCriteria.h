@@ -33,8 +33,8 @@ public:
             if (usernameOpt.has_value() && passwordOpt.has_value())
             {
                 return LoginCriteria(
-                    StringUtil::ToLower(usernameOpt.value()),
-                    SecureString(passwordOpt.value())
+                    StringUtil::ToLower(*usernameOpt),
+                    SecureString(*passwordOpt)
                 );
             }
         }

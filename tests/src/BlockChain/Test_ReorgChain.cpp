@@ -361,7 +361,7 @@ TEST_CASE("Reorg Chain")
 	TransactionOutput outputToSpend = minedChain[1].block.GetOutputs().front();
 	Test::Input input({
 		{ outputToSpend.GetFeatures(), outputToSpend.GetCommitment() },
-		minedChain[1].coinbasePath.value(),
+		*minedChain[1].coinbasePath,
 		minedChain[1].coinbaseAmount
 	});
 	Test::Output newOutput({

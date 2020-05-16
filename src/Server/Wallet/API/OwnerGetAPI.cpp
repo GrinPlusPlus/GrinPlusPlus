@@ -96,7 +96,7 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 
 	if (txIdOpt.has_value())
 	{
-		const uint64_t txId = std::stoull(txIdOpt.value());
+		const uint64_t txId = std::stoull(*txIdOpt);
 
 		// TODO: Filter in walletManager for better performance
 		const std::vector<WalletTxDTO> transactions = walletManager.GetTransactions(criteria);

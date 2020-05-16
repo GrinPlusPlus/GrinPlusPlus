@@ -186,14 +186,14 @@ void WalletRefresher::RefreshTransactions(
 	{
 		if (output.GetWalletTxId().has_value())
 		{
-			auto iter = walletTransactionsById.find(output.GetWalletTxId().value());
+			auto iter = walletTransactionsById.find(*output.GetWalletTxId());
 			if (iter != walletTransactionsById.cend())
 			{
 				WalletTx walletTx = iter->second;
 
 				if (output.GetBlockHeight().has_value())
 				{
-					walletTx.SetConfirmedHeight(output.GetBlockHeight().value());
+					walletTx.SetConfirmedHeight(*output.GetBlockHeight());
 
 					if (walletTx.GetType() == EWalletTxType::RECEIVING_IN_PROGRESS)
 					{
@@ -218,7 +218,7 @@ void WalletRefresher::RefreshTransactions(
 	{
 		if (walletTx.GetTransaction().has_value() && walletTx.GetType() == EWalletTxType::SENDING_FINALIZED)
 		{
-			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction().value().GetOutputs();
+			const std::vector<TransactionOutput>& outputs = walletTx.GetTransaction()->GetOutputs();
 			for (const TransactionOutput& output : outputs)
 			{
 				std::unique_ptr<OutputDataEntity> pOutputData = FindOutput(refreshedOutputs, output.GetCommitment());
@@ -243,7 +243,7 @@ std::optional<std::chrono::system_clock::time_point> WalletRefresher::GetBlockTi
 {
 	if (output.GetBlockHeight().has_value())
 	{
-		auto pHeader = m_pNodeClient->GetBlockHeader(output.GetBlockHeight().value());
+		auto pHeader = m_pNodeClient->GetBlockHeader(*output.GetBlockHeight());
 		if (pHeader != nullptr)
 		{
 			return std::make_optional(TimeUtil::ToTimePoint(pHeader->GetTimestamp() * 1000));

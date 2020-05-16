@@ -23,7 +23,7 @@ public:
 		std::optional<KeyChainPath> keyPath = std::nullopt;
 		if (keyIdOpt.has_value())
 		{
-			keyPath = std::make_optional<KeyChainPath>(KeyChainPath::FromHex(keyIdOpt.value()));
+			keyPath = std::make_optional<KeyChainPath>(KeyChainPath::FromHex(*keyIdOpt));
 		}
 
 		return BuildCoinbaseCriteria(token, fees, keyPath);

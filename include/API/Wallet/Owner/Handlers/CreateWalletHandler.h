@@ -26,7 +26,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		CreateWalletCriteria criteria = CreateWalletCriteria::FromJSON(request.GetParams().value());
+		CreateWalletCriteria criteria = CreateWalletCriteria::FromJSON(*request.GetParams());
 		ValidateInput(criteria);
 
 		auto response = m_pWalletManager->InitializeNewWallet(criteria, m_pTorProcess);

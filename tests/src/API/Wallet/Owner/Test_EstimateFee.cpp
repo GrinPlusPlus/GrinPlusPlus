@@ -20,7 +20,7 @@ TEST_CASE("API: estimate_fee - SMALLEST")
 
     Json::Value paramsJson;
     paramsJson["session_token"] = pWallet->GetToken().ToBase64();
-    paramsJson["amount"] = 150'000'000'000;
+    paramsJson["amount"] = Json::UInt64(150'000'000'000);
     paramsJson["fee_base"] = 1'000'000;
     Json::Value selectionStrategyJson;
     selectionStrategyJson["strategy"] = SelectionStrategy::ToString(ESelectionStrategy::SMALLEST);
@@ -32,7 +32,7 @@ TEST_CASE("API: estimate_fee - SMALLEST")
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
-    const auto value = FeeEstimateDTO::FromJSON(resultOpt.value());
+    const auto value = FeeEstimateDTO::FromJSON(*resultOpt);
     REQUIRE(value.GetFee() == 6'000'000);
 
     // TODO: Finish assertions

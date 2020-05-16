@@ -23,9 +23,9 @@ void HeaderMMR::Commit()
 {
 	if (IsDirty())
 	{
-		const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt.value().hashFile->GetSize());
-		LOG_TRACE_F("Flushing - Height: {}, Size: {}", height - 1, m_batchDataOpt.value().hashFile->GetSize());
-		m_batchDataOpt.value().hashFile->Commit();
+		const uint64_t height = MMRUtil::GetNumLeaves(m_batchDataOpt->hashFile->GetSize());
+		LOG_TRACE_F("Flushing - Height: {}, Size: {}", height - 1, m_batchDataOpt->hashFile->GetSize());
+		m_batchDataOpt->hashFile->Commit();
 		SetDirty(false);
 	}
 }
@@ -35,7 +35,7 @@ void HeaderMMR::Rollback() noexcept
 	if (IsDirty())
 	{
 		LOG_DEBUG("Discarding changes.");
-		m_batchDataOpt.value().hashFile->Rollback();
+		m_batchDataOpt->hashFile->Rollback();
 		SetDirty(false);
 	}
 }
@@ -43,17 +43,17 @@ void HeaderMMR::Rollback() noexcept
 void HeaderMMR::Rewind(const uint64_t size)
 {
 	const uint64_t mmrSize = MMRUtil::GetNumNodes(MMRUtil::GetPMMRIndex(size - 1));
-	if (mmrSize != m_batchDataOpt.value().hashFile->GetSize())
+	if (mmrSize != m_batchDataOpt->hashFile->GetSize())
 	{
 		LOG_DEBUG_F("Rewinding to height {} - {} hashes", size, mmrSize);
-		m_batchDataOpt.value().hashFile->Rewind(mmrSize);
+		m_batchDataOpt->hashFile->Rewind(mmrSize);
 		SetDirty(true);
 	}
 }
 
 void HeaderMMR::AddHeader(const BlockHeader& header)
 {
-	LOG_TRACE_F("Adding header at height {} - MMR size {}", header.GetHeight(), m_batchDataOpt.value().hashFile->GetSize());
+	LOG_TRACE_F("Adding header at height {} - MMR size {}", header.GetHeight(), m_batchDataOpt->hashFile->GetSize());
 
 	// Serialize header
 	Serializer serializer;
@@ -61,7 +61,7 @@ void HeaderMMR::AddHeader(const BlockHeader& header)
 	const std::vector<unsigned char> serializedHeader = serializer.GetBytes();
 
 	// Add hashes
-	MMRHashUtil::AddHashes(m_batchDataOpt.value().hashFile.GetShared(), serializedHeader, nullptr);
+	MMRHashUtil::AddHashes(m_batchDataOpt->hashFile.GetShared(), serializedHeader, nullptr);
 	SetDirty(true);
 }
 
@@ -71,7 +71,7 @@ Hash HeaderMMR::Root(const uint64_t lastHeight) const
 
 	if (m_batchDataOpt.has_value())
 	{
-		return MMRHashUtil::Root(m_batchDataOpt.value().hashFile.GetShared(), position, nullptr);
+		return MMRHashUtil::Root(m_batchDataOpt->hashFile.GetShared(), position, nullptr);
 	}
 	else
 	{

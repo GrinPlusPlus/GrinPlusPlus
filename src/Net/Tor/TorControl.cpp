@@ -18,16 +18,22 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 	try
 	{
 		const fs::path command = fs::current_path() / "tor" / "tor";
-		auto dataDirectory = torConfig.GetTorDataPath() / ("data" + std::to_string(torConfig.GetControlPort()));
-		fs::create_directories(dataDirectory);
+
+		const fs::path relativeDataPath = "./tor/data" + std::to_string(torConfig.GetControlPort());
+
+		std::error_code ec;
+		fs::remove_all(relativeDataPath, ec);
+		fs::create_directories(relativeDataPath, ec);
+		fs::remove("./tor/.torrc", ec);
+		fs::copy_file(torConfig.GetTorDataPath() / ".torrc", "./tor/.torrc", ec);
 
 		std::vector<std::string> args({
 			command.u8string(),
 			"--ControlPort", std::to_string(torConfig.GetControlPort()),
 			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
-			"--DataDirectory", dataDirectory.u8string(),
+			"--DataDirectory", relativeDataPath.u8string(),
 			"--HashedControlPassword", torConfig.GetHashedControlPassword(),
-			"-f", (fs::current_path() / "tor" / ".torrc").u8string(),
+			"-f", "./tor/.torrc",
 			"--ignore-missing-torrc"
 		});
 

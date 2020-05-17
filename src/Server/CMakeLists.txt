@@ -31,4 +31,4 @@ add_executable(${TARGET_NAME} ${SOURCE_CODE})
 
 add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW civetweb ed25519-donna)
 target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
-target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW civetweb ed25519-donna Boost::program_options)
+target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW civetweb ed25519-donna)

@@ -113,8 +113,6 @@ add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/ed25519-donna)
 #add_subdirectory(deps/stduuid)
 
-find_package(Boost COMPONENTS program_options REQUIRED)
-
 # Grin++ Projects
 add_definitions(-DUNICODE)
 include(fmtlib)

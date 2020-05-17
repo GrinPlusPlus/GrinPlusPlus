@@ -85,6 +85,7 @@ public:
 	void Serialize(Serializer& serializer) const final;
 	static BlockHeader Deserialize(ByteBuffer& byteBuffer);
 	Json::Value ToJSON() const;
+	static std::shared_ptr<BlockHeader> FromJSON(const Json::Value& json);
 	std::vector<unsigned char> GetPreProofOfWork() const;
 
 	//

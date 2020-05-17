@@ -2,8 +2,7 @@
 #include <Crypto/Crypto.h>
 #include <Common/Util/TimeUtil.h>
 
-BlockHeader::BlockHeader
-(
+BlockHeader::BlockHeader(
 	const uint16_t version,
 	const uint64_t height,
 	const int64_t timestamp,
@@ -134,6 +133,52 @@ Json::Value BlockHeader::ToJSON() const
 	}
 	headerJSON["cuckoo_solution"] = cuckooSolution;
 	return headerJSON;
+}
+
+std::shared_ptr<BlockHeader> BlockHeader::FromJSON(const Json::Value& json)
+{
+	Hash hash = JsonUtil::GetHash(json, "hash");
+	uint64_t height = JsonUtil::GetRequiredUInt64(json, "height");
+	uint16_t version = JsonUtil::GetRequiredUInt16(json, "version");
+	BlindingFactor totalKernelOffset = JsonUtil::GetBlindingFactor(json, "total_kernel_offset");
+	uint32_t secondaryScaling = JsonUtil::GetRequiredUInt32(json, "secondary_scaling");
+	uint64_t totalDifficulty = JsonUtil::GetRequiredUInt64(json, "total_difficulty");
+	uint64_t nonce = JsonUtil::GetRequiredUInt64(json, "nonce");
+	time_t timestamp = TimeUtil::FromString(JsonUtil::GetRequiredString(json, "timestamp"));
+
+	Hash kernelRoot = JsonUtil::GetHash(json, "kernel_root");
+	uint64_t kernelSize = JsonUtil::GetRequiredUInt64(json, "kernel_mmr_size");
+	Hash outputRoot = JsonUtil::GetHash(json, "output_root");
+	uint64_t outputSize = JsonUtil::GetRequiredUInt64(json, "output_mmr_size");
+	Hash rangeProofRoot = JsonUtil::GetHash(json, "range_proof_root");
+	Hash prevRoot = JsonUtil::GetHash(json, "prev_root");
+	Hash prevHash = JsonUtil::GetHash(json, "previous");
+
+	// ProofOfWork
+	uint8_t edgeBits = JsonUtil::GetRequiredUInt8(json, "edge_bits");
+	std::vector<uint64_t> proofNonces;
+	for (auto cuckoo_nonce : JsonUtil::GetRequiredField(json, "cuckoo_solution"))
+	{
+		proofNonces.push_back(cuckoo_nonce.asUInt64());
+	}
+
+	return std::make_shared<BlockHeader>(
+		version,
+		height,
+		timestamp,
+		std::move(prevHash),
+		std::move(prevRoot),
+		std::move(outputRoot),
+		std::move(rangeProofRoot),
+		std::move(kernelRoot),
+		std::move(totalKernelOffset),
+		outputSize,
+		kernelSize,
+		totalDifficulty,
+		secondaryScaling,
+		nonce,
+		ProofOfWork{edgeBits, std::move(proofNonces)}
+	);
 }
 
 std::vector<unsigned char> BlockHeader::GetPreProofOfWork() const

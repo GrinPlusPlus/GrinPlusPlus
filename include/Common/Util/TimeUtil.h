@@ -19,6 +19,14 @@ public:
 	{
 		return Format(timestamp, "%Y-%m-%d %H:%M:%S UTC");
 	}
+	
+	static std::time_t FromString(const std::string& str, const std::string& format = "%Y-%m-%d %H:%M:%S%z")
+	{
+		std::tm t = { 0 };
+		std::istringstream ss(str);
+		ss >> std::get_time(&t, format.c_str());
+		return mktime(&t);
+	}
 
 	static std::string Format(const int64_t timestamp, const std::string& format)
 	{

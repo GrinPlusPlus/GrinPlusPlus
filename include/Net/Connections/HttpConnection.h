@@ -5,32 +5,44 @@
 class HttpConnection
 {
 public:
-	static std::shared_ptr<HttpConnection> Connect(const std::string& address)
+	using UPtr = std::unique_ptr<HttpConnection>;
+
+	HttpConnection(const std::string& host, const uint16_t port)
+		: m_host(host), m_port(port) { }
+
+	static HttpConnection::UPtr Connect(const SocketAddress& address)
 	{
-		// TODO: Finish this
+		return std::make_unique<HttpConnection>(address.GetIPAddress().Format(), address.GetPortNumber());
 	}
 	
 	RPC::Response Invoke(const RPC::Request& request)
 	{
 		try
 		{
-			return m_rpcClient.Invoke(m_host, m_location + "/v2/foreign", m_port, request);
+			return m_rpcClient.Invoke(m_host, "/v2/foreign", m_port, request);
+		}
+		catch (RPCException&)
+		{
+			throw;
 		}
 		catch (std::exception& e)
 		{
-			throw RPC_EXCEPTION(e.what());
+			throw RPC_EXCEPTION(e.what(), request.GetId());
 		}
 	}
 
-private:
-	HttpConnection(const std::string& host, const uint16_t port, const std::string& location)
-		: m_host(host), m_port(port), m_location(location)
+	RPC::Response Invoke(const std::string& method, const Json::Value& params)
 	{
-
+		return Invoke(RPC::Request::BuildRequest(method, params));
 	}
 
+	RPC::Response Invoke(const std::string& method)
+	{
+		return Invoke(RPC::Request::BuildRequest(method));
+	}
+
+private:
 	std::string m_host;
 	uint16_t m_port;
-	std::string m_location;
 	HttpRpcClient m_rpcClient;
 };

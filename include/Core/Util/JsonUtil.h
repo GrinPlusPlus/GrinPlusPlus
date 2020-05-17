@@ -107,6 +107,24 @@ public:
 	}
 
 	//
+	// Hashes
+	//
+	static Json::Value ConvertToJSON(const Hash& hash)
+	{
+		return Json::Value(hash.ToHex());
+	}
+
+	static Hash ConvertToHash(const Json::Value& json)
+	{
+		return Hash(ConvertToVector(json, 32));
+	}
+
+	static Hash GetHash(const Json::Value& parentJSON, const std::string& key)
+	{
+		return ConvertToHash(GetRequiredField(parentJSON, key));
+	}
+
+	//
 	// Commitments
 	//
 	static Json::Value ConvertToJSON(const Commitment& commitment)
@@ -259,6 +277,9 @@ public:
 		}
 	}
 
+	//
+	// UInt32
+	//
 	static std::optional<uint32_t> GetUInt32Opt(const Json::Value& parentJSON, const std::string& key)
 	{
 		const std::optional<Json::Value> json = JsonUtil::GetOptionalField(parentJSON, key);
@@ -270,6 +291,30 @@ public:
 		{
 			return std::make_optional((uint32_t)ConvertToUInt64(json.value()));
 		}
+	}
+
+	static uint32_t GetRequiredUInt32(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return (uint32_t)ConvertToUInt64(value);
+	}
+
+	//
+	// UInt16
+	//
+	static uint16_t GetRequiredUInt16(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return (uint16_t)ConvertToUInt64(value);
+	}
+
+	//
+	// UInt8
+	//
+	static uint8_t GetRequiredUInt8(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return (uint8_t)ConvertToUInt64(value);
 	}
 
 	//

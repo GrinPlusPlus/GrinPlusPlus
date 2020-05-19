@@ -4,6 +4,7 @@
 #include "opt.h"
 #include "io.h"
 
+#include <GrinVersion.h>
 #include <Core/Context.h>
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
@@ -89,7 +90,7 @@ ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
 
 void Run(const ConfigPtr& pConfig, const Options& options)
 {
-	LOG_INFO("Starting Grin++");
+	LOG_INFO_F("Starting Grin++ v{}", GRINPP_VERSION);
 
 	Context::Ptr pContext = nullptr;
 	try
@@ -107,7 +108,10 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 
 	if (options.shared_node.has_value())
 	{
-		pNodeClient = RPCNodeClient::Create(options.shared_node.value().first, options.shared_node.value().second);
+		pNodeClient = RPCNodeClient::Create(
+			options.shared_node.value().first,
+			options.shared_node.value().second
+		);
 	}
 	else
 	{
@@ -149,5 +153,5 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 		ThreadUtil::SleepFor(seconds(1), ShutdownManagerAPI::WasShutdownRequested());
 	}
 
-	LOG_INFO("Closing Grin++");
+	LOG_INFO_F("Closing Grin++ v{}", GRINPP_VERSION);
 }

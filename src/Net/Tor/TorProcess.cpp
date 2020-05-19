@@ -24,9 +24,16 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
 	std::unique_lock<std::mutex> lock(pProcess->m_mutex);
 
-	LOG_INFO("Initializing Tor");
-	pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath));
-	LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
+	try
+	{
+		LOG_INFO("Initializing Tor");
+		pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath));
+		LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
+	}
+	catch (const std::exception& e)
+	{
+		LOG_ERROR_F("Exception thrown: {}", e);
+	}
 }
 
 bool TorProcess::RetryInit()

@@ -37,7 +37,7 @@ std::unique_ptr<WalletRestServer> WalletRestServer::Create(
 	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
 	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", ownerPort);
 	const char* pOwnerOptions[] = {
-		"num_threads", "1",
+		"num_threads", "5",
 		"listening_ports", listeningPorts.c_str(),
 		NULL
 	};

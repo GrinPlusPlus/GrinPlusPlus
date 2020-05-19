@@ -17,7 +17,7 @@ public:
 	//
 	OutputLocation(const uint64_t mmrIndex, const uint64_t blockHeight)
 		: m_mmrIndex(mmrIndex), m_blockHeight(blockHeight) { }
-	virtual ~OutputLocation() = default;
+	~OutputLocation() = default;
 
 	//
 	// Getters
@@ -39,6 +39,14 @@ public:
 		const uint64_t mmrIndex = byteBuffer.ReadU64();
 		const uint64_t blockHeight = byteBuffer.ReadU64();
 		return OutputLocation(mmrIndex, blockHeight);
+	}
+
+	static OutputLocation FromJSON(const Json::Value& json)
+	{
+		uint64_t mmrIndex = (std::max)((uint64_t)1, JsonUtil::GetRequiredUInt64(json, "mmr_index")) - 1;
+		uint64_t height = JsonUtil::GetRequiredUInt64(json, "block_height");
+
+		return OutputLocation(mmrIndex, height);
 	}
 
 private:

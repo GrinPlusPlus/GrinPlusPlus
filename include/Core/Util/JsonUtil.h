@@ -343,6 +343,37 @@ public:
 	}
 
 	//
+	// Bool
+	//
+	static int64_t ConvertToBool(const Json::Value& boolJson)
+	{
+		if (boolJson.isBool())
+		{
+			return boolJson.asBool();
+		}
+		else if (boolJson.isString())
+		{
+			auto str = StringUtil::ToLower(boolJson.asString());
+			if (str == "true")
+			{
+				return true;
+			}
+			else if (str == "false")
+			{
+				return false;
+			}
+		}
+
+		throw DESERIALIZATION_EXCEPTION("Value is not a bool");
+	}
+
+	static bool GetRequiredBool(const Json::Value& parentJSON, const std::string& key)
+	{
+		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
+		return ConvertToBool(value);
+	}
+
+	//
 	// Optional
 	//
 	template<class T>

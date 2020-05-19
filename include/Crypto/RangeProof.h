@@ -30,7 +30,7 @@ public:
 	//
 	// Destructor
 	//
-	virtual ~RangeProof() = default;
+	~RangeProof() = default;
 
 	//
 	// Operators

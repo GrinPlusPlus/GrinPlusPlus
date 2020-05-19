@@ -60,7 +60,6 @@ public:
 	uint16_t GetVersion() const { return m_version; }
 	uint64_t GetHeight() const { return m_height; }
 	const Hash& GetPreviousHash() const { return m_previousBlockHash; }
-	const Hash& GetPreviousBlockHash() const { return m_previousBlockHash; }
 	const Hash& GetPreviousRoot() const { return m_previousRoot; }
 	int64_t GetTimestamp() const { return m_timestamp; }
 	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }

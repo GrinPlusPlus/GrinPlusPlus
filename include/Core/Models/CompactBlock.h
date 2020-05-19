@@ -51,7 +51,7 @@ public:
 	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
 	const std::vector<ShortId>& GetShortIds() const { return m_shortIds; }
 
-	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousBlockHash(); }
+	const Hash& GetPreviousHash() const { return m_pBlockHeader->GetPreviousHash(); }
 	uint64_t GetHeight() const { return m_pBlockHeader->GetHeight(); }
 	uint64_t GetTotalDifficulty() const { return m_pBlockHeader->GetTotalDifficulty(); }
 

@@ -33,7 +33,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 {
 	// Validate inputs
 	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(
-		m_config.GetEnvironment().GetEnvironmentType(),
+		m_config.GetEnvironment().GetType(),
 		m_pBlockHeader->GetHeight() + 1 // Add one since this is used by TransactionPool
 	);
 	for (const TransactionInput& input : transaction.GetInputs())
@@ -365,7 +365,7 @@ void TxHashSet::Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& he
 			leavesToAdd.push_back(MMRUtil::GetLeafIndex(iter->second.GetMMRIndex()));
 		}
 
-		m_pBlockHeader = pBlockDB->GetBlockHeader(m_pBlockHeader->GetPreviousBlockHash());
+		m_pBlockHeader = pBlockDB->GetBlockHeader(m_pBlockHeader->GetPreviousHash());
 	}
 
 	m_pKernelMMR->Rewind(header.GetKernelMMRSize());

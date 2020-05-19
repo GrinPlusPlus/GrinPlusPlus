@@ -16,7 +16,7 @@ public:
 	static BlockIdentifier FromHeader(const BlockHeader& header)
 	{
 		const Hash& headerHash = header.GetHash();
-		const Hash& previousHash = header.GetPreviousBlockHash();
+		const Hash& previousHash = header.GetPreviousHash();
 		const uint64_t height = header.GetHeight();
 		return BlockIdentifier(headerHash, previousHash, height);
 	}

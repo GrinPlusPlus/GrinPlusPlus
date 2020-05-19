@@ -15,7 +15,7 @@ public:
 
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
 	uint16_t GetP2PPort() const noexcept { return m_port; }
-	EEnvironmentType GetEnvironmentType() const noexcept { return m_environmentType; }
+	EEnvironmentType GetType() const noexcept { return m_environmentType; }
 	bool IsMainnet() const noexcept { return m_environmentType == EEnvironmentType::MAINNET; }
 	bool IsAutomatedTesting() const noexcept { return m_environmentType == EEnvironmentType::AUTOMATED_TESTING; }
 

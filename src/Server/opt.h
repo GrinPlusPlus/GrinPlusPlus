@@ -12,7 +12,7 @@ struct Options
 	bool headless;
 	EEnvironmentType environment;
 	bool include_wallet;
-	std::optional<SocketAddress> shared_node;
+	std::optional<std::pair<std::string, uint16_t>> shared_node;
 };
 
 static ko_longopt_t longopts[] = {
@@ -43,7 +43,8 @@ static Options ParseOptions(int argc, char* argv[])
 		else if (c == 304) options.include_wallet = false;
 		else if (c == 305)
 		{
-			options.shared_node = std::make_optional<SocketAddress>(SocketAddress::Parse(opt.arg));
+			std::vector<std::string> parts = StringUtil::Split(opt.arg, ":");
+			options.shared_node = std::make_optional<std::pair<std::string, uint16_t>>({ parts[0], (uint16_t)std::stoul(parts[1]) });
 			options.headless = true;
 		}
 	}
@@ -58,5 +59,5 @@ static void PrintHelp()
 	std::cout << "--floonet" << "\t" << "Use floonet chain" << std::endl;
 	std::cout << "--headless" << "\t" << "Run headless app with no console output" << std::endl;
 	std::cout << "--no-wallet" << "\t" << "Run only a node, not a wallet" << std::endl;
-	std::cout << "--shared-node [IP:port]" << "\t" << "Uses the node at a given IP address and port (###.###.###.###:####)" << std::endl;
+	std::cout << "--shared-node [host:port]" << "\t" << "Uses the node at the given address and port (grinnode.live:80)" << std::endl;
 }

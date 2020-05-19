@@ -109,7 +109,7 @@ Json::Value BlockHeader::ToJSON() const
 	headerJSON["timestamp_local"] = TimeUtil::FormatLocal(GetTimestamp());
 	headerJSON["timestamp"] = TimeUtil::FormatUTC(GetTimestamp());
 
-	headerJSON["previous"] = GetPreviousBlockHash().ToHex();
+	headerJSON["previous"] = GetPreviousHash().ToHex();
 	headerJSON["prev_root"] = GetPreviousRoot().ToHex();
 
 	headerJSON["kernel_root"] = GetKernelRoot().ToHex();

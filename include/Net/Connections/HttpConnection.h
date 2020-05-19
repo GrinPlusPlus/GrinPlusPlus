@@ -10,9 +10,9 @@ public:
 	HttpConnection(const std::string& host, const uint16_t port)
 		: m_host(host), m_port(port) { }
 
-	static HttpConnection::UPtr Connect(const SocketAddress& address)
+	static HttpConnection::UPtr Connect(const std::string& host, const uint16_t port)
 	{
-		return std::make_unique<HttpConnection>(address.GetIPAddress().Format(), address.GetPortNumber());
+		return std::make_unique<HttpConnection>(host, port);
 	}
 	
 	RPC::Response Invoke(const RPC::Request& request)

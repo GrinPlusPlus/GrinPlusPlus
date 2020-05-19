@@ -32,7 +32,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 {
 	// Set lock_height for transaction kernel (current chain height).
 	const uint64_t blockHeight = m_pNodeClient->GetChainHeight() + 1;
-	const uint16_t headerVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetEnvironmentType(), blockHeight);
+	const uint16_t headerVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetType(), blockHeight);
 
 	// Select inputs using desired selection strategy.
 	const uint8_t totalNumOutputs = numOutputs + (noChange ? 0 : 1);

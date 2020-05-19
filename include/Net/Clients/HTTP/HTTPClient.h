@@ -102,8 +102,17 @@ public:
 	virtual ~HTTPClient() = default;
 
 private:
-	void EstablishConnection(const std::string& ipAddress, const uint16_t port) final
+	void EstablishConnection(const std::string& address, const uint16_t port) final
 	{
-		Connect(SocketAddress(IPAddress::Parse(ipAddress), port), std::chrono::seconds(2));
+		std::error_code ec;
+		auto ipAddress = asio::ip::make_address_v4(address, ec);
+		if (ec)
+		{
+			Connect(address, port, std::chrono::seconds(2));
+		}
+		else
+		{
+			Connect(SocketAddress(IPAddress(ipAddress), port), std::chrono::seconds(2));
+		}
 	}
 };

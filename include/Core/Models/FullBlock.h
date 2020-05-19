@@ -90,7 +90,7 @@ public:
 	}
 
 	uint64_t GetHeight() const noexcept { return m_pBlockHeader->GetHeight(); }
-	const Hash& GetPreviousHash() const noexcept { return m_pBlockHeader->GetPreviousBlockHash(); }
+	const Hash& GetPreviousHash() const noexcept { return m_pBlockHeader->GetPreviousHash(); }
 	uint64_t GetTotalDifficulty() const noexcept { return m_pBlockHeader->GetTotalDifficulty(); }
 	const BlindingFactor& GetTotalKernelOffset() const noexcept { return m_pBlockHeader->GetTotalKernelOffset(); }
 

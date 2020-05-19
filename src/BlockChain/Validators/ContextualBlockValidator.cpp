@@ -14,7 +14,7 @@ BlockSums ContextualBlockValidator::ValidateBlock(const FullBlock& block) const
 
 	// Verify coinbase maturity
 	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(
-		m_config.GetEnvironment().GetEnvironmentType(),
+		m_config.GetEnvironment().GetType(),
 		block.GetHeight()
 	);
 	for (const TransactionInput& input : block.GetInputs())

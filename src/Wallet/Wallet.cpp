@@ -141,7 +141,7 @@ OutputDataEntity Wallet::CreateBlindedOutput(
 	RangeProof rangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, commitment, blindingFactor, bulletproofType);
 
 	TransactionOutput transactionOutput(
-		EOutputFeatures::DEFAULT_OUTPUT,
+		EOutputFeatures::DEFAULT,
 		std::move(commitment),
 		std::move(rangeProof)
 	);

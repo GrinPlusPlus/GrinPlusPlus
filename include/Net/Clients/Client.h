@@ -50,6 +50,52 @@ protected:
 		}
 	}
 
+	void Connect(const std::string& host, const uint16_t port, const asio::chrono::steady_clock::duration& timeout)
+	{
+		if (m_socket.is_open())
+		{
+			m_socket.close();
+		}
+
+		asio::io_service ios;
+
+		// Step 3. Creating a query.
+		asio::ip::tcp::resolver::query resolver_query(host, std::to_string(port), asio::ip::tcp::resolver::query::numeric_service);
+
+		// Step 4. Creating a resolver.
+		asio::ip::tcp::resolver resolver(ios);
+
+		// Used to store information about error that happens
+		// during the resolution process.
+		std::error_code ec;
+
+		// Step 5.
+		asio::ip::tcp::resolver::iterator it = resolver.resolve(resolver_query, ec);
+
+		// Handling errors if any.
+		if (ec) {
+			// Failed to resolve the DNS name. Breaking execution.
+			LOG_ERROR_F("Failed to resolve DNS name. Error: {}", ec.message());
+			throw asio::system_error(ec);
+		}
+
+		// Start the asynchronous operation itself. The boost::lambda function
+		// object is used as a callback and will update the ec variable when the
+		// operation completes. The blocking_udp_client.cpp example shows how you
+		// can use boost::bind rather than boost::lambda.
+		ec.clear();
+		m_socket.async_connect(it->endpoint(), std::bind(&Client::handle_connect, std::placeholders::_1, &ec));
+
+		// Run the operation until it completes, or until the timeout.
+		run(timeout);
+
+		// Determine whether a connection was successfully established.
+		if (ec)
+		{
+			throw asio::system_error(ec);
+		}
+	}
+
 	std::string ReadLine(const asio::chrono::steady_clock::duration& timeout)
 	{
 		// Start the asynchronous operation. The boost::lambda function object is

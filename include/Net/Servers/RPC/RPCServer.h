@@ -13,6 +13,8 @@
 class RPCServer
 {
 public:
+	using Ptr = std::shared_ptr<RPCServer>;
+
 	static std::shared_ptr<RPCServer> Create(
 		const EServerType type,
 		const std::optional<uint16_t>& port,
@@ -20,6 +22,14 @@ public:
 		const LoggerAPI::LogFile& logFile)
 	{
 		ServerPtr pServer = Server::Create(type, port);
+		return RPCServer::Create(pServer, uri, logFile);
+	}
+
+	static RPCServer::Ptr Create(
+		const ServerPtr& pServer,
+		const std::string& uri,
+		const LoggerAPI::LogFile& logFile)
+	{
 		auto pRPCServer = std::shared_ptr<RPCServer>(new RPCServer(pServer, logFile));
 
 		pServer->AddListener(uri, APIHandler, pRPCServer.get());

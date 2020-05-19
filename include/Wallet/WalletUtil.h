@@ -25,7 +25,7 @@ public:
 		const uint64_t currentBlockHeight,
 		const uint64_t minimumConfirmations)
 	{
-		if (features == COINBASE_OUTPUT)
+		if (features == EOutputFeatures::COINBASE_OUTPUT)
 		{
 			return Consensus::GetMaxCoinbaseHeight(environment, currentBlockHeight) <= outputBlockHeight;
 		}

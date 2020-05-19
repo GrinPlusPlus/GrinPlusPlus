@@ -63,7 +63,7 @@ public:
         std::vector<TransactionOutput> builtOutputs;
         for (const auto& output : outputs)
         {
-            const auto builtOutput = BuildOutput(output, EOutputFeatures::DEFAULT_OUTPUT);
+            const auto builtOutput = BuildOutput(output, EOutputFeatures::DEFAULT);
             outputBlindingFactors.push_back(builtOutput.first);
             builtOutputs.push_back(builtOutput.second);
         }

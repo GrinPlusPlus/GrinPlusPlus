@@ -28,7 +28,7 @@ void ChainResyncer::ResyncChain()
 	{
 		auto pIndex = pCandidateChain->GetByHeight(i);
 		auto pHeader = pBlockDB->GetBlockHeader(pIndex->GetHash());
-		if (pHeader == nullptr || pHeader->GetPreviousBlockHash() != pPrevHeader->GetHash())
+		if (pHeader == nullptr || pHeader->GetPreviousHash() != pPrevHeader->GetHash())
 		{
 			pCandidateChain->Rewind(i - 1);
 			break;

@@ -19,7 +19,7 @@ int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 			Json::Value chainNode;
 			chainNode["height"] = pTip->GetHeight();
 			chainNode["last_block_pushed"] = pTip->GetHash().ToHex();
-			chainNode["prev_block_to_last"] = pTip->GetPreviousBlockHash().ToHex();
+			chainNode["prev_block_to_last"] = pTip->GetPreviousHash().ToHex();
 			chainNode["total_difficulty"] = pTip->GetTotalDifficulty();
 
 			return HTTPUtil::BuildSuccessResponse(conn, chainNode.toStyledString());

@@ -248,7 +248,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 			{
 				Json::Value outputNode;
 				const EOutputFeatures features = info.GetIdentifier().GetFeatures();
-				outputNode["output_type"] = features == DEFAULT_OUTPUT ? "Transaction" : "Coinbase";
+				outputNode["output_type"] = OutputFeatures::ToString(info.GetIdentifier().GetFeatures());
 				outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
 				outputNode["spent"] = info.IsSpent();
 				outputNode["proof"] = info.GetRangeProof().Format();

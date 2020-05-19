@@ -125,7 +125,7 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 				const uint64_t outputBlockHeight = iter->second.GetBlockHeight();
 				const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
 				const bool immature = WalletUtil::IsOutputImmature(
-					m_config.GetEnvironment().GetEnvironmentType(),
+					m_config.GetEnvironment().GetType(),
 					features,
 					outputBlockHeight,
 					lastConfirmedHeight,

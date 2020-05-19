@@ -10,11 +10,11 @@
 
 enum EOutputFeatures
 {
-	// No Flags
-	DEFAULT_OUTPUT = 0,
+	// 0 = No Flags
+	DEFAULT,
 
-	// Output is a coinbase output, must not be spent until maturity
-	COINBASE_OUTPUT = 1
+	// 1 = Output is a coinbase output, must not be spent until maturity
+	COINBASE_OUTPUT
 };
 
 namespace OutputFeatures
@@ -23,9 +23,9 @@ namespace OutputFeatures
 	{
 		switch (features)
 		{
-			case DEFAULT_OUTPUT:
-				return "Plain";
-			case COINBASE_OUTPUT:
+			case EOutputFeatures::DEFAULT:
+				return "Transaction";
+			case EOutputFeatures::COINBASE_OUTPUT:
 				return "Coinbase";
 		}
 
@@ -34,11 +34,12 @@ namespace OutputFeatures
 
 	static EOutputFeatures FromString(const std::string& string)
 	{
-		if (string == "Plain")
+		std::string upper = StringUtil::ToUpper(string);
+		if (upper == "TRANSACTION")
 		{
-			return EOutputFeatures::DEFAULT_OUTPUT;
+			return EOutputFeatures::DEFAULT;
 		}
-		else if (string == "Coinbase")
+		else if (upper == "COINBASE")
 		{
 			return EOutputFeatures::COINBASE_OUTPUT;
 		}

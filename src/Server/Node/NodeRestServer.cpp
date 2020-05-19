@@ -24,15 +24,10 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
 	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
-	RPCServerPtr pRPCServer = RPCServer::Create(
-		EServerType::LOCAL,
-		std::make_optional<uint16_t>(port),
-		"/v2",
-		LoggerAPI::LogFile::NODE
-	);
+	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
+	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChainServer);
 
 	/* Add v1 handlers */
-	auto pServer = pRPCServer->GetServer();
 	pServer->AddListener("/v1/status", ServerAPI::GetStatus_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/resync", ServerAPI::ResyncChain_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/headers/", HeaderAPI::GetHeader_Handler, pNodeContext.get());
@@ -51,5 +46,5 @@ NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_pt
 	pServer->AddListener("/v1/shutdown", Shutdown_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
 
-	return std::make_unique<NodeRestServer>(pNodeContext, pRPCServer);
+	return std::make_unique<NodeRestServer>(pNodeContext, std::move(pV2Server));
 }

@@ -24,7 +24,7 @@ namespace OutputFeatures
 		switch (features)
 		{
 			case EOutputFeatures::DEFAULT:
-				return "Transaction";
+				return "Plain";
 			case EOutputFeatures::COINBASE_OUTPUT:
 				return "Coinbase";
 		}
@@ -35,7 +35,7 @@ namespace OutputFeatures
 	static EOutputFeatures FromString(const std::string& string)
 	{
 		std::string upper = StringUtil::ToUpper(string);
-		if (upper == "TRANSACTION")
+		if (upper == "TRANSACTION" || upper == "PLAIN")
 		{
 			return EOutputFeatures::DEFAULT;
 		}

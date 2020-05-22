@@ -52,7 +52,7 @@ Json::Value TransactionOutput::ToJSON() const
 
 TransactionOutput TransactionOutput::FromJSON(const Json::Value& transactionOutputJSON)
 {
-	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredField(transactionOutputJSON, "features").asString());
+	const EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredString(transactionOutputJSON, "features"));
 	Commitment commitment = JsonUtil::GetCommitment(transactionOutputJSON, "commit");
 	RangeProof rangeProof = JsonUtil::GetRangeProof(transactionOutputJSON, "proof");
 	return TransactionOutput(features, std::move(commitment), std::move(rangeProof));

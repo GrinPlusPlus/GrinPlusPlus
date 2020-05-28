@@ -8,7 +8,7 @@
 
 TorProcess::~TorProcess()
 {
-	LOG_TRACE("Terminating tor process");
+	LOG_INFO("Terminating tor process");
 	ThreadUtil::Join(m_initThread);
 }
 

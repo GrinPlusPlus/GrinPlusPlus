@@ -75,7 +75,8 @@ public:
             { reproc::stop::kill, reproc::milliseconds(2000) },
             {}
         };
-        m_process.stop(stop_actions);
+        std::error_code ec = m_process.stop(stop_actions);
+        LOG_INFO_F("reproc.stop returned: {}", ec.message());
     }
 
     bool IsRunning() const { return m_process.running(); }

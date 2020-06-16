@@ -11,6 +11,9 @@ enum class EPoWType
 	// Cuckaroom29 (ASIC-Resistant/GPU-Friendly)
 	CUCKAROOM,
 
+	// Cuckarooz29 (ASIC-Resistant/GPU-Friendly)
+	CUCKAROOZ,
+
 	// Cuckatoo30+ (ASIC-Friendly)
 	CUCKATOO
 };

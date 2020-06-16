@@ -10,34 +10,15 @@
 
 #include "../common.h"
 
-// save some keystrokes since i'm a lazy typer
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-#ifndef MAX_SOLS
-#define MAX_SOLS 4
-#endif
-
 #ifndef EDGE_BLOCK_BITS
 #define EDGE_BLOCK_BITS 6
 #endif
 #define EDGE_BLOCK_SIZE (1 << EDGE_BLOCK_BITS)
 #define EDGE_BLOCK_MASK (EDGE_BLOCK_SIZE - 1)
 
-// proof-of-work parameters
-#ifndef EDGEBITS
 // the main parameter is the number of bits in an edge index,
 // i.e. the 2-log of the number of edges
 #define EDGEBITS 29
-#endif
-#ifndef PROOFSIZE
-// the next most important parameter is the (even) length
-// of the cycle to be found. a minimum of 12 is recommended
-#define PROOFSIZE 42
-#endif
-
-// This should theoretically be uint32_t for EDGEBITS of <= 30, but we're just verifying, so efficiency isn't critical.
-typedef uint64_t word_t;
 
 // number of edges
 #define NEDGES ((word_t)1 << EDGEBITS)
@@ -45,62 +26,6 @@ typedef uint64_t word_t;
 #define NNODES NEDGES
 // used to mask siphash output
 #define NODEMASK ((word_t)NNODES - 1)
-
-// Common Solver parameters, to return to caller
-struct SolverParams {
-	u32 nthreads = 0;
-	u32 ntrims = 0;
-	bool showcycle;
-	bool allrounds;
-	bool mutate_nonce = 1;
-	bool cpuload = 1;
-
-	// Common cuda params
-	u32 device = 0;
-
-	// Cuda-lean specific params
-	u32 blocks = 0;
-	u32 tpb = 0;
-
-	// Cuda-mean specific params
-	u32 expand = 0;
-	u32 genablocks = 0;
-	u32 genatpb = 0;
-	u32 genbtpb = 0;
-	u32 trimtpb = 0;
-	u32 tailtpb = 0;
-	u32 recoverblocks = 0;
-	u32 recovertpb = 0;
-};
-
-// Solutions result structs to be instantiated by caller,
-// and filled by solver if desired
-struct Solution {
-	u64 id = 0;
-	u64 nonce = 0;
-	u64 proof[PROOFSIZE];
-};
-
-struct SolverSolutions {
-	u32 edge_bits = 0;
-	u32 num_sols = 0;
-	Solution sols[MAX_SOLS];
-};
-
-// Solver statistics, to be instantiated by caller
-// and filled by solver if desired
-struct SolverStats {
-	u32 device_id = 0;
-	u32 edge_bits = 0;
-	char plugin_name[MAX_NAME_LEN]; // will be filled in caller-side
-	char device_name[MAX_NAME_LEN];
-	bool has_errored = false;
-	char error_reason[MAX_NAME_LEN];
-	u32 iterations = 0;
-	u64 last_start_time = 0;
-	u64 last_end_time = 0;
-	u64 last_solution_time = 0;
-};
 
 // fills buffer with EDGE_BLOCK_SIZE siphash outputs for block containing edge in cuckaroo graph
 // return siphash output for given edge
@@ -148,26 +73,3 @@ int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys) {
 	} while (i != 0);           // must cycle back to start or we would have found branch
 	return n == PROOFSIZE ? POW_OK : POW_SHORT_CYCLE;
 }
-
-/////////////////////////////////////////////////////////////////
-// Declarations to make it easier for callers to link as required
-/////////////////////////////////////////////////////////////////
-
-#ifndef C_CALL_CONVENTION
-#define C_CALL_CONVENTION 0
-#endif
-
-// convention to prepend to called functions
-#if C_CALL_CONVENTION
-#define CALL_CONVENTION extern "C"
-#else
-#define CALL_CONVENTION
-#endif
-
-// Ability to squash printf output at compile time, if desired
-#ifndef SQUASH_OUTPUT
-#define SQUASH_OUTPUT 0
-#endif
-//////////////////////////////////////////////////////////////////
-// END caller QOL
-//////////////////////////////////////////////////////////////////

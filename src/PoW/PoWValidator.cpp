@@ -5,6 +5,7 @@
 #include "Cuckaroo.h"
 #include "Cuckarood.h"
 #include "Cuckaroom.h"
+#include "Cuckarooz.h"
 #include "Cuckatoo.h"
 
 #include <Consensus/BlockTime.h>
@@ -61,6 +62,10 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 	{
 		return Cuckaroom::Validate(header);
 	}
+	else if (powType == EPoWType::CUCKAROOZ)
+	{
+		return Cuckarooz::Validate(header);
+	}
 	else if (powType == EPoWType::CUCKATOO)
 	{
 		return Cuckatoo::Validate(header);
@@ -85,12 +90,16 @@ uint64_t PoWValidator::GetMaximumDifficulty(const BlockHeader& header) const
 	}
 	else
 	{
-		scalingDifficulty = (((uint64_t)2) << ((uint64_t)proofOfWork.GetEdgeBits() - Consensus::BASE_EDGE_BITS)) * ((uint64_t)proofOfWork.GetEdgeBits());
+		scalingDifficulty = Consensus::ScalingDifficulty(proofOfWork.GetEdgeBits());
 	}
 
 	std::vector<unsigned char> temp;
 	temp.resize(sizeof(uint64_t));
-	std::reverse_copy(proofOfWork.GetHash().GetData().cbegin(), proofOfWork.GetHash().GetData().cbegin() + sizeof(uint64_t), temp.begin());
+	std::reverse_copy(
+		proofOfWork.GetHash().GetData().cbegin(),
+		proofOfWork.GetHash().GetData().cbegin() + sizeof(uint64_t),
+		temp.begin()
+	);
 
 	uint64_t hash64;
 	memcpy(&hash64, &temp[0], sizeof(uint64_t));

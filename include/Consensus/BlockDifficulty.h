@@ -96,4 +96,9 @@ namespace Consensus
 	{
 		return 90 - (std::min)((uint64_t)90, (uint64_t)(height / (2 * YEAR_HEIGHT / 90)));
 	}
+
+	static uint64_t ScalingDifficulty(const uint64_t edgeBits)
+	{
+		return (((uint64_t)2) << (edgeBits - BASE_EDGE_BITS)) * edgeBits;
+	}
 }

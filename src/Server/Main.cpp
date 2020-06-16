@@ -79,7 +79,7 @@ ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
 	}
 	catch (std::exception& e)
 	{
-		IO::Err("Failed to open initialize logger", e);
+		IO::Err("Failed to initialize logger", e);
 		throw;
 	}
 

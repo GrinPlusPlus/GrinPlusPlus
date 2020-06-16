@@ -7,21 +7,6 @@
 
 #include "../common.h"
 
-#ifndef MAX_SOLS
-#define MAX_SOLS 4
-#endif
-
-// proof-of-work parameters
-#ifndef PROOFSIZE
-// The (even) length of the cycle to be found. a minimum of 12 is recommended
-#define PROOFSIZE 42
-#endif
-
-// This should theoretically be uint32_t for EDGEBITS of <= 31, but we're just verifying, so efficiency isn't critical.
-typedef uint64_t word_t;
-
-#define MAX_NAME_LEN 256
-
 // generate edge endpoint in cuck(at)oo graph without partition bit
 word_t sipnode(siphash_keys *keys, word_t edge, u32 uorv, const word_t edgeMask) {
   return keys->siphash24(2*edge + uorv) & edgeMask;

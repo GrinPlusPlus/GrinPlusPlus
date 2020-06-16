@@ -12,7 +12,6 @@ EPoWType PoWUtil::DeterminePoWType(const uint64_t headerVersion, const uint8_t e
 {
 	assert(headerVersion <= 3);
 
-	// MAINNET: Check environment
 	if (edgeBits == 29)
 	{
 		if (headerVersion == 1)
@@ -23,9 +22,13 @@ EPoWType PoWUtil::DeterminePoWType(const uint64_t headerVersion, const uint8_t e
 		{
 			return EPoWType::CUCKAROOD;
 		}
-		else
+		else if (headerVersion == 3)
 		{
 			return EPoWType::CUCKAROOM;
+		}
+		else
+		{
+			return EPoWType::CUCKAROOZ;
 		}
 	}
 	else

@@ -15,6 +15,12 @@
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+// This should theoretically be uint32_t for EDGEBITS of <= 31, but we're just verifying, so efficiency isn't critical.
+typedef uint64_t word_t;
+
+// The (even) length of the cycle to be found. a minimum of 12 is recommended
+#define PROOFSIZE 42
+
 enum verify_code { POW_OK, POW_HEADER_LENGTH, POW_TOO_BIG, POW_TOO_SMALL, POW_NON_MATCHING, POW_BRANCH, POW_DEAD_END, POW_SHORT_CYCLE, POW_UNBALANCED};
 static const char* errstr[] = { "OK", "wrong header length", "edge too big", "edges not ascending", "endpoints don't match up", "branch in cycle", "cycle dead ends", "cycle too short", "edges not balanced" };
 
@@ -37,34 +43,3 @@ static u64 timestamp() {
 	auto dn = now.time_since_epoch();
 	return dn.count();
 }
-
-/////////////////////////////////////////////////////////////////
-// Declarations to make it easier for callers to link as required
-/////////////////////////////////////////////////////////////////
-
-#ifndef C_CALL_CONVENTION
-#define C_CALL_CONVENTION 0
-#endif
-
-// convention to prepend to called functions
-#if C_CALL_CONVENTION
-#define CALL_CONVENTION extern "C"
-#else
-#define CALL_CONVENTION
-#endif
-
-// Ability to squash printf output at compile time, if desired
-#ifndef SQUASH_OUTPUT
-#define SQUASH_OUTPUT 0
-#endif
-
-static void print_log(const char *fmt, ...) {
-	if (SQUASH_OUTPUT) return;
-	va_list args;
-	va_start(args, fmt);
-	vprintf(fmt, args);
-	va_end(args);
-}
-//////////////////////////////////////////////////////////////////
-// END caller QOL
-//////////////////////////////////////////////////////////////////

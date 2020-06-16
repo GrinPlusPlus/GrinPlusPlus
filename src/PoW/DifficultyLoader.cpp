@@ -14,7 +14,7 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 	std::vector<HeaderInfo> difficultyData;
 	difficultyData.reserve(numBlocksNeeded);
 
-	BlockHeaderPtr pHeader = LoadHeader(header.GetPreviousHash());
+	BlockHeaderPtr pHeader = m_pBlockDB->GetBlockHeader(header.GetPreviousHash());
 	while (difficultyData.size() < numBlocksNeeded && pHeader != nullptr)
 	{
 		const int64_t timestamp = pHeader->GetTimestamp();
@@ -22,7 +22,7 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 		const uint32_t scalingFactor = pHeader->GetScalingDifficulty();
 		const bool secondary = pHeader->GetProofOfWork().IsSecondary();
 
-		pHeader = LoadHeader(pHeader->GetPreviousHash());
+		pHeader = m_pBlockDB->GetBlockHeader(pHeader->GetPreviousHash());
 		if (pHeader != nullptr)
 		{
 			const uint64_t difficulty = totalDifficulty - pHeader->GetTotalDifficulty();
@@ -36,11 +36,6 @@ std::vector<HeaderInfo> DifficultyLoader::LoadDifficultyData(const BlockHeader& 
 	}
 
 	return PadDifficultyData(difficultyData);
-}
-
-BlockHeaderPtr DifficultyLoader::LoadHeader(const Hash& headerHash) const
-{
-	return m_pBlockDB->GetBlockHeader(headerHash);
 }
 
 // Converts an iterator of block difficulty data to more a more manageable

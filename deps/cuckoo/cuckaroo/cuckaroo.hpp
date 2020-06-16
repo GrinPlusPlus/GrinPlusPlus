@@ -7,26 +7,11 @@
 
 #include "../common.h"
 
-#ifndef MAX_SOLS
-#define MAX_SOLS 4
-#endif
-
 #ifndef EDGE_BLOCK_BITS
 #define EDGE_BLOCK_BITS 6
 #endif
 #define EDGE_BLOCK_SIZE (1 << EDGE_BLOCK_BITS)
 #define EDGE_BLOCK_MASK (EDGE_BLOCK_SIZE - 1)
-
-// proof-of-work parameters
-#ifndef PROOFSIZE
-// The (even) length of the cycle to be found. a minimum of 12 is recommended
-#define PROOFSIZE 42
-#endif
-
-// This should theoretically be uint32_t for EDGEBITS of <= 30, but we're just verifying, so efficiency isn't critical.
-typedef uint64_t word_t;
-
-#define MAX_NAME_LEN 256
 
 // fills buffer with EDGE_BLOCK_SIZE siphash outputs for block containing edge in cuckaroo graph
 // return siphash output for given edge

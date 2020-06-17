@@ -236,7 +236,7 @@ public:
 
 	static std::string GetRequiredString(const Json::Value& parentJSON, const std::string& key)
 	{
-		return std::string(GetRequiredField(parentJSON, key).asCString());
+		return GetRequiredField(parentJSON, key).asString();
 	}
 
 	//

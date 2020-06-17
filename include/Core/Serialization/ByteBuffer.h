@@ -6,6 +6,7 @@
 
 #include <Core/Serialization/EndianHelper.h>
 #include <Core/Exceptions/DeserializationException.h>
+#include <Core/Enums/ProtocolVersion.h>
 
 #include <vector>
 #include <string>
@@ -19,17 +20,8 @@
 class ByteBuffer
 {
 public:
-	ByteBuffer(const std::vector<unsigned char>& bytes)
-		: m_index(0), m_bytes(bytes)
-	{
-
-	}
-
-	ByteBuffer(std::vector<unsigned char>&& bytes)
-		: m_index(0), m_bytes(std::move(bytes))
-	{
-
-	}
+	ByteBuffer(const std::vector<unsigned char>& bytes, const EProtocolVersion version = EProtocolVersion::V1)
+		: m_index(0), m_bytes(bytes), m_protocolVersion(version) { }
 
 	template<class T>
 	void ReadBigEndian(T& t)
@@ -212,12 +204,15 @@ public:
 		return arr;
 	}
 
-	size_t GetRemainingSize() const
+	size_t GetRemainingSize() const noexcept
 	{
 		return m_bytes.size() - m_index;
 	}
 
+	EProtocolVersion GetProtocolVersion() const noexcept { return m_protocolVersion; }
+
 private:
 	size_t m_index;
 	const std::vector<unsigned char>& m_bytes;
+	EProtocolVersion m_protocolVersion;
 };

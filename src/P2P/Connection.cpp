@@ -220,7 +220,11 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 				IMessagePtr pMessage = *pMessageToSend;
 				pConnection->m_sendQueue.pop_front(1);
 
-				pConnection->m_pMessageSender->Send(*pConnection->m_pSocket, *pMessage);
+				pConnection->m_pMessageSender->Send(
+					*pConnection->m_pSocket,
+					*pMessage,
+					pConnection->GetPeer()->GetVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1
+				);
 
 				messageSentOrReceived = true;
 			}

@@ -32,6 +32,7 @@ public:
 	uint16_t GetPort() const noexcept { return m_portNumber; }
 	uint64_t GetTotalDifficulty() const noexcept { return m_totalDifficulty.load(); }
 	uint64_t GetHeight() const noexcept { return m_height.load(); }
+	uint32_t GetProtocolVersion() const noexcept { return m_pPeer->GetVersion(); }
 
 	void UpdateVersion(const uint32_t version) { m_pPeer->UpdateVersion(version); }
 	void UpdateCapabilities(const Capabilities& capabilities) { m_pPeer->UpdateCapabilities(capabilities); }

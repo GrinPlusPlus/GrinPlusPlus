@@ -57,7 +57,10 @@ enum EKernelFeatures
 	COINBASE_KERNEL = 1,
 
 	// Absolute height locked kernel; has fee and lock_height
-	HEIGHT_LOCKED = 2
+	HEIGHT_LOCKED = 2,
+
+	// No recent duplicate (NRD)
+	NO_RECENT_DUPLICATE = 3
 };
 
 namespace KernelFeatures
@@ -72,6 +75,8 @@ namespace KernelFeatures
 				return "Coinbase";
 			case HEIGHT_LOCKED:
 				return "HeightLocked";
+			case NO_RECENT_DUPLICATE:
+				return "NoRecentDuplicate";
 		}
 
 		return "";
@@ -90,6 +95,10 @@ namespace KernelFeatures
 		else if (string == "HeightLocked")
 		{
 			return EKernelFeatures::HEIGHT_LOCKED;
+		}
+		else if (string == "NoRecentDuplicate")
+		{
+			return EKernelFeatures::NO_RECENT_DUPLICATE;
 		}
 
 		throw DESERIALIZATION_EXCEPTION_F("Failed to deserialize kernel feature: {}", string);

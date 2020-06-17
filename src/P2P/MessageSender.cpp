@@ -8,9 +8,9 @@ MessageSender::MessageSender(const Config& config)
 
 }
 
-bool MessageSender::Send(Socket& socket, const IMessage& message) const
+bool MessageSender::Send(Socket& socket, const IMessage& message, const EProtocolVersion protocolVersion) const
 {
-	Serializer serializer;
+	Serializer serializer(protocolVersion);
 	serializer.AppendByteVector(m_config.GetEnvironment().GetMagicBytes());
 	serializer.Append<uint8_t>((uint8_t)message.GetMessageType());
 

@@ -24,13 +24,6 @@ namespace Consensus
 	// Original reference edge_bits to compute difficulty factors for higher Cuckoo graph sizes, changing this would hard fork
 	static const uint8_t BASE_EDGE_BITS = 24;
 
-	// Original reference sizeshift to compute difficulty factors for higher
-	// Cuckoo graph sizes, changing this would hard fork
-	static const uint8_t REFERENCE_SIZESHIFT = 30;
-
-	// Default Cuckoo Cycle easiness, high enough to have good likeliness to find a solution.
-	static const uint32_t EASINESS = 50;
-
 	// Clamp factor to use for difficulty adjustment
 	// Limit value to within this factor of goal
 	static const uint64_t CLAMP_FACTOR = 2;
@@ -48,16 +41,6 @@ namespace Consensus
 	// Minimum difficulty, enforced in diff retargetting
 	// avoids getting stuck when trying to increase difficulty subject to dampening
 	static const uint64_t MIN_DIFFICULTY = DAMP_FACTOR;
-
-	// Unit difficulty, equal to graph_weight(SECOND_POW_EDGE_BITS)
-	static constexpr uint64_t UNIT_DIFFICULTY = (2ull << (SECOND_POW_EDGE_BITS - BASE_EDGE_BITS)) * ((uint64_t)SECOND_POW_EDGE_BITS);
-
-	// The initial difficulty at launch. This should be over-estimated
-	// and difficulty should come down at launch rather than up
-	// Currently grossly over-estimated at 10% of current
-	// ethereum GPUs (assuming 1GPU can solve a block at diff 1
-	// in one block interval)
-	static constexpr uint64_t INITIAL_DIFFICULTY = 1000000 * UNIT_DIFFICULTY;
 
 	// Compute weight of a graph as number of siphash bits defining the graph
 	// Must be made dependent on height to phase out smaller size over the years

@@ -103,7 +103,8 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 {
 	const std::string formattedIPAddress = connectedPeer.GetPeer()->GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
-	ByteBuffer byteBuffer(rawMessage.GetPayload());
+	EProtocolVersion protocolVersion = connectedPeer.GetProtocolVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1;
+	ByteBuffer byteBuffer(rawMessage.GetPayload(), protocolVersion);
 
 	if (header.IsValid(m_config))
 	{
@@ -131,7 +132,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
 				const PongMessage pongMessage(pTipHeader->GetTotalDifficulty(), pTipHeader->GetHeight());
 
-				return MessageSender(m_config).Send(socket, pongMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, pongMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Pong:
 			{
@@ -157,7 +158,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), formattedIPAddress);
 				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
 
-				return MessageSender(m_config).Send(socket, peerAddressesMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, peerAddressesMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case PeerAddrs:
 			{
@@ -178,7 +179,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				LOG_DEBUG_F("Sending {} headers to {}.", blockHeaders.size(), formattedIPAddress);
                 
 				const HeadersMessage headersMessage(std::move(blockHeaders));
-				return MessageSender(m_config).Send(socket, headersMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+				return MessageSender(m_config).Send(socket, headersMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 			}
 			case Header:
 			{
@@ -202,7 +203,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 					{
 						LOG_TRACE_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, formattedIPAddress);
 						const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
-						return MessageSender(m_config).Send(socket, getCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+						return MessageSender(m_config).Send(socket, getCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 					}
 				}
 				else if (status == EBlockChainStatus::INVALID)
@@ -237,7 +238,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				if (pBlock != nullptr)
 				{
 					BlockMessage blockMessage(std::move(*pBlock));
-					return MessageSender(m_config).Send(socket, blockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, blockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -267,7 +268,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 						if (block.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetPreviousHash());
-							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
 					else if (added == EBlockChainStatus::INVALID)
@@ -285,7 +286,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				if (pCompactBlock != nullptr)
 				{
 					const CompactBlockMessage compactBlockMessage(*pCompactBlock);
-					return MessageSender(m_config).Send(socket, compactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, compactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -305,7 +306,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
 				{
 					const GetBlockMessage getBlockMessage(compactBlock.GetHash());
-					return MessageSender(m_config).Send(socket, getBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, getBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 				else if (added == EBlockChainStatus::ORPHANED)
 				{
@@ -314,7 +315,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 						if (compactBlock.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 						{
 							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetPreviousHash());
-							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 						}
 					}
 				}
@@ -368,7 +369,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				if (pTransaction != nullptr)
 				{
 					const TransactionMessage transactionMessage(pTransaction);
-					return MessageSender(m_config).Send(socket, transactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, transactionMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -387,7 +388,7 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 				if (pTransaction == nullptr)
 				{
 					const GetTransactionMessage getTransactionMessage(kernelHash);
-					return MessageSender(m_config).Send(socket, getTransactionMessage) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+					return MessageSender(m_config).Send(socket, getTransactionMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}
 
 				return EStatus::RESOURCE_NOT_FOUND;
@@ -449,7 +450,8 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 		file.seekg(0);
 		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-		MessageSender(m_config).Send(socket, archiveMessage);
+		EProtocolVersion protocolVersion = peer.GetProtocolVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1;
+		MessageSender(m_config).Send(socket, archiveMessage, protocolVersion);
 
 		socket.SetBlocking(false);
 

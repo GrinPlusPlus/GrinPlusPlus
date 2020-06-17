@@ -117,8 +117,10 @@ bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connected
 				connectedPeer.UpdateUserAgent(handMessage.GetUserAgent());
 				connectedPeer.UpdateTotals(handMessage.GetTotalDifficulty(), 0);
 
+				const uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, handMessage.GetVersion());
+
 				// Send Shake Message
-				if (TransmitShakeMessage(socket))
+				if (TransmitShakeMessage(socket, version))
 				{
 					return true;
 				}
@@ -148,7 +150,7 @@ bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connected
 	return false;
 }
 
-bool HandShake::TransmitHandMessage(Socket & socket) const
+bool HandShake::TransmitHandMessage(Socket& socket) const
 {
 	const IPAddress localHostIP = IPAddress::CreateV4({ 0x7F, 0x00, 0x00, 0x01 });
 
@@ -164,17 +166,16 @@ bool HandShake::TransmitHandMessage(Socket & socket) const
 	const std::string& userAgent = P2P::USER_AGENT;
 	const HandMessage handMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);
 
-	return MessageSender(m_config).Send(socket, handMessage);
+	return MessageSender(m_config).Send(socket, handMessage, EProtocolVersion::V2);
 }
 
-bool HandShake::TransmitShakeMessage(Socket & socket) const
+bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVersion) const
 {
-	const uint32_t version = P2P::PROTOCOL_VERSION;
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
 	const uint64_t totalDifficulty = m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED);
 	const std::string& userAgent = P2P::USER_AGENT;
-	const ShakeMessage shakeMessage(version, capabilities, std::move(hash), totalDifficulty, userAgent);
+	const ShakeMessage shakeMessage(protocolVersion, capabilities, std::move(hash), totalDifficulty, userAgent);
 
-	return MessageSender(m_config).Send(socket, shakeMessage);
+	return MessageSender(m_config).Send(socket, shakeMessage, protocolVersion > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1);
 }

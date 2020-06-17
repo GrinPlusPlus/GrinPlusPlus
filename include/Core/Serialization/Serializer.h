@@ -2,6 +2,7 @@
 
 #include <Common/Secure.h>
 #include <Core/Serialization/EndianHelper.h>
+#include <Core/Enums/ProtocolVersion.h>
 #include <Crypto/BigInteger.h>
 
 #include <stdint.h>
@@ -12,8 +13,10 @@
 class Serializer
 {
 public:
-	Serializer() = default;
-	Serializer(const size_t expectedSize)
+	Serializer(const EProtocolVersion protocolVersion = EProtocolVersion::V1)
+		: m_protocolVersion(protocolVersion) { }
+	Serializer(const size_t expectedSize, const EProtocolVersion protocolVersion = EProtocolVersion::V1)
+		: m_protocolVersion(protocolVersion)
 	{
 		m_serialized.reserve(expectedSize);
 	}
@@ -75,6 +78,7 @@ public:
 	}
 
 	const std::vector<unsigned char>& GetBytes() const { return m_serialized; }
+	EProtocolVersion GetProtocolVersion() const noexcept { return m_protocolVersion; }
 
 	const unsigned char* data() const { return m_serialized.data(); }
 	size_t size() const { return m_serialized.size(); }
@@ -90,5 +94,6 @@ public:
 	}
 
 private:
+	EProtocolVersion m_protocolVersion;
 	std::vector<unsigned char> m_serialized;
 };

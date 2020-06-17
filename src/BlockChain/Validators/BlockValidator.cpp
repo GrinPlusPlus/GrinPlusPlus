@@ -20,6 +20,7 @@ void BlockValidator::VerifySelfConsistent(const FullBlock& block)
 		return;
 	}
 
+	// TODO - NRD: Verify kernel variants
 	VerifyBody(block);
 	VerifyKernelLockHeights(block);
 	VerifyCoinbase(block);

@@ -179,6 +179,7 @@ public:
 		json["last_banned"] = Json::UInt64(GetLastBanTime());
 		json["ban_reason"] = BanReason::Format(GetBanReason());
 		json["last_connected"] = Json::UInt64(GetLastContactTime());
+		json["protocol_version"] = Json::UInt(GetVersion());
 		return json;
 	}
 

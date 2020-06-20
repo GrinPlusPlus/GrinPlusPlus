@@ -18,20 +18,20 @@ void TransactionKernel::Serialize(Serializer& serializer) const
 	if (serializer.GetProtocolVersion() == EProtocolVersion::V2)
 	{
 		serializer.Append<uint8_t>((uint8_t)GetFeatures());
-
-		if (GetFeatures() != EKernelFeatures::COINBASE_KERNEL)
+		switch (GetFeatures())
 		{
-			serializer.Append<uint64_t>(GetFee());
-		}
-
-		if (GetFeatures() == EKernelFeatures::HEIGHT_LOCKED)
-		{
-			serializer.Append<uint64_t>(GetLockHeight());
-		}
-
-		if (GetFeatures() == EKernelFeatures::NO_RECENT_DUPLICATE)
-		{
-			serializer.Append<uint16_t>((uint16_t)GetLockHeight());
+			case EKernelFeatures::DEFAULT_KERNEL:
+				serializer.Append<uint64_t>(GetFee());
+			case EKernelFeatures::COINBASE_KERNEL:
+				break;
+			case EKernelFeatures::HEIGHT_LOCKED:
+				serializer.Append<uint64_t>(GetFee());
+				serializer.Append<uint64_t>(GetLockHeight());
+				break;
+			case EKernelFeatures::NO_RECENT_DUPLICATE:
+				serializer.Append<uint64_t>(GetFee());
+				serializer.Append<uint16_t>((uint16_t)GetLockHeight());
+				break;
 		}
 
 		m_excessCommitment.Serialize(serializer);

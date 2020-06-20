@@ -112,12 +112,12 @@ bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connected
 
 			if (handMessage.GetNonce() != NONCE && !m_connectionManager.IsConnected(connectedPeer.GetPeer()->GetIPAddress()))
 			{
-				connectedPeer.UpdateVersion(handMessage.GetVersion());
 				connectedPeer.UpdateCapabilities(handMessage.GetCapabilities());
 				connectedPeer.UpdateUserAgent(handMessage.GetUserAgent());
 				connectedPeer.UpdateTotals(handMessage.GetTotalDifficulty(), 0);
 
 				const uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, handMessage.GetVersion());
+				connectedPeer.UpdateVersion(version);
 
 				// Send Shake Message
 				if (TransmitShakeMessage(socket, version))

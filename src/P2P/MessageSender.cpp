@@ -14,7 +14,7 @@ bool MessageSender::Send(Socket& socket, const IMessage& message, const EProtoco
 	serializer.AppendByteVector(m_config.GetEnvironment().GetMagicBytes());
 	serializer.Append<uint8_t>((uint8_t)message.GetMessageType());
 
-	Serializer bodySerializer;
+	Serializer bodySerializer(protocolVersion);
 	message.SerializeBody(bodySerializer);
 	serializer.Append<uint64_t>(bodySerializer.size());
 	serializer.AppendByteVector(bodySerializer.GetBytes());

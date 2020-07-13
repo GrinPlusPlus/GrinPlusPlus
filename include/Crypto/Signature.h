@@ -14,11 +14,9 @@ public:
 	//
 	// Constructors
 	//
+	Signature() = default;
 	Signature(CBigInteger<64>&& signatureBytes)
-		: m_signatureBytes(std::move(signatureBytes))
-	{
-
-	}
+		: m_signatureBytes(std::move(signatureBytes)) { }
 	Signature(const Signature& other) = default;
 	Signature(Signature&& other) noexcept = default;
 
@@ -65,12 +63,15 @@ class CompactSignature : public Signature
 {
 public:
 	CompactSignature(CBigInteger<64> && signatureBytes)
-		: Signature(std::move(signatureBytes))
-	{
-
-	}
-
+		: Signature(std::move(signatureBytes)) { }
 	virtual ~CompactSignature() = default;
+
+	bool operator==(const CompactSignature& rhs) const noexcept { return GetSignatureBytes() == rhs.GetSignatureBytes(); }
+
+	static CompactSignature Deserialize(ByteBuffer& byteBuffer)
+	{
+		return CompactSignature(byteBuffer.ReadBigInteger<64>());
+	}
 };
 
 // TODO: Create RawSignature

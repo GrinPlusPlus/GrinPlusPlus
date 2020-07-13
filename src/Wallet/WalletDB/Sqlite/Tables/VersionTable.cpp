@@ -1,4 +1,5 @@
 #include "VersionTable.h"
+#include "../Schema.h"
 
 #include <Common/Util/StringUtil.h>
 #include <Infrastructure/Logger.h>
@@ -7,7 +8,7 @@
 void VersionTable::CreateTable(sqlite3& database)
 {
 	std::string tableCreation = "create table version(schema_version INTEGER PRIMARY KEY);";
-	tableCreation += "insert into version(schema_version) values (1)";
+	tableCreation += "insert into version(schema_version) values (2)";
 
 	char* error = nullptr;
 	if (sqlite3_exec(&database, tableCreation.c_str(), NULL, NULL, &error) != SQLITE_OK)
@@ -15,6 +16,29 @@ void VersionTable::CreateTable(sqlite3& database)
 		WALLET_ERROR_F("Create version table failed with error: {}", error);
 		sqlite3_free(error);
 		throw WALLET_STORE_EXCEPTION("Failed to create version table.");
+	}
+}
+
+void VersionTable::UpdateSchema(sqlite3& database, const int previousVersion)
+{
+	if (previousVersion == 0)
+	{
+		CreateTable(database);
+	}
+	else
+	{
+		std::string update = StringUtil::Format(
+			"update version set schema_version={};",
+			LATEST_SCHEMA_VERSION
+		);
+
+		char* error = nullptr;
+		if (sqlite3_exec(&database, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
+		{
+			WALLET_ERROR_F("Failed to update schema. Error: {}", error);
+			sqlite3_free(error);
+			throw WALLET_STORE_EXCEPTION("Failed to update schema.");
+		}
 	}
 }
 

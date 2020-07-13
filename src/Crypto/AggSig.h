@@ -21,9 +21,6 @@ public:
 
 	SecretKey GenerateSecureNonce() const;
 
-	std::unique_ptr<CompactSignature> SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const Hash& message);
-	bool VerifyMessageSignature(const CompactSignature& signature, const PublicKey& publicKey, const Hash& message) const;
-
 	std::unique_ptr<Signature> BuildSignature(const SecretKey& secretKey, const Commitment& commitment, const Hash& message);
 
 	std::unique_ptr<CompactSignature> CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);

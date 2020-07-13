@@ -191,26 +191,6 @@ public:
 	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys);
 
 	//
-	// Hashes the message and signs it using the secret key.
-	// If successful, returns a compact Signature.
-	//
-	static std::unique_ptr<CompactSignature> SignMessage(
-		const SecretKey& secretKey,
-		const PublicKey& publicKey,
-		const std::string& message
-	);
-
-	//
-	// Verifies the signature is a valid signature for the hash of the message.
-	// Returns true if valid.
-	//
-	static bool VerifyMessageSignature(
-		const CompactSignature& signature,
-		const PublicKey& publicKey,
-		const std::string& message
-	);
-
-	//
 	// Builds one party's share of a Schnorr signature.
 	// Returns a CompactSignature if successful.
 	//

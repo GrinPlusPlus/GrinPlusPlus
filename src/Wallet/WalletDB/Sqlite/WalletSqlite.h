@@ -19,28 +19,46 @@ public:
 
 	virtual ~WalletSqlite() { sqlite3_close(m_pDatabase); }
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
-	virtual void OnInitWrite() override final;
-	virtual void OnEndWrite() override final;
+	void Commit() final;
+	void Rollback() noexcept final;
+	void OnInitWrite() final;
+	void OnEndWrite() final;
 
-	virtual KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) override final;
+	KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) final;
 
-	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const override final;
-	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext) override final;
+	std::unique_ptr<Slate> LoadSlate(
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId,
+		const SlateStage& stage
+	) const final;
 
-	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs) override final;
-	virtual std::vector<OutputDataEntity> GetOutputs(const SecureVector& masterSeed) const override final;
+	void SaveSlate(
+		const SecureVector& masterSeed,
+		const Slate& slate
+	) final;
 
-	virtual void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) override final;
-	virtual std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const override final;
-	virtual std::unique_ptr<WalletTx> GetTransactionById(const SecureVector& masterSeed, const uint32_t walletTxId) const override final;
+	std::unique_ptr<SlateContextEntity> LoadSlateContext(
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId
+	) const final;
+	void SaveSlateContext(
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId,
+		const SlateContextEntity& slateContext
+	) final;
 
-	virtual uint32_t GetNextTransactionId() override final;
-	virtual uint64_t GetRefreshBlockHeight() const override final;
-	virtual void UpdateRefreshBlockHeight(const uint64_t refreshBlockHeight) override final;
-	virtual uint64_t GetRestoreLeafIndex() const override final;
-	virtual void UpdateRestoreLeafIndex(const uint64_t lastLeafIndex) override final;
+	void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs) final;
+	std::vector<OutputDataEntity> GetOutputs(const SecureVector& masterSeed) const final;
+
+	void AddTransaction(const SecureVector& masterSeed, const WalletTx& walletTx) final;
+	std::vector<WalletTx> GetTransactions(const SecureVector& masterSeed) const final;
+	std::unique_ptr<WalletTx> GetTransactionById(const SecureVector& masterSeed, const uint32_t walletTxId) const final;
+
+	uint32_t GetNextTransactionId() final;
+	uint64_t GetRefreshBlockHeight() const final;
+	void UpdateRefreshBlockHeight(const uint64_t refreshBlockHeight) final;
+	uint64_t GetRestoreLeafIndex() const final;
+	void UpdateRestoreLeafIndex(const uint64_t lastLeafIndex) final;
 
 private:
 	UserMetadata GetMetadata() const;

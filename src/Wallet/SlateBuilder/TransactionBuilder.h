@@ -8,27 +8,26 @@ class TransactionBuilder
 {
 public:
 	static Transaction BuildTransaction(
-		const std::vector<OutputDataEntity>& inputs,
-		const std::vector<OutputDataEntity>& changeOutputs,
-		const BlindingFactor& transactionOffset,
-		const uint64_t fee,
-		const uint64_t lockHeight)
+		const std::vector<TransactionInput>& inputs,
+		const std::vector<TransactionOutput>& outputs,
+		const TransactionKernel& kernel,
+		const BlindingFactor& transactionOffset)
 	{
-		auto getInput = [](OutputDataEntity& input) -> TransactionInput { return TransactionInput(input.GetOutput().GetFeatures(), Commitment(input.GetOutput().GetCommitment())); };
-		std::vector<TransactionInput> transactionInputs = FunctionalUtil::map<std::vector<TransactionInput>>(inputs, getInput);
-
-		auto getOutput = [](OutputDataEntity& output) -> TransactionOutput { return output.GetOutput(); };
-		std::vector<TransactionOutput> transactionOutputs = FunctionalUtil::map<std::vector<TransactionOutput>>(changeOutputs, getOutput);
-
-		const EKernelFeatures kernelFeatures = (lockHeight == 0) ? EKernelFeatures::DEFAULT_KERNEL : EKernelFeatures::HEIGHT_LOCKED;
-		TransactionKernel kernel(kernelFeatures, fee, lockHeight, Commitment(CBigInteger<33>::ValueOf(0)), Signature(CBigInteger<64>::ValueOf(0)));
-		std::vector<TransactionKernel> kernels({ std::move(kernel) });
+		std::vector<TransactionInput> transactionInputs = inputs;
+		std::vector<TransactionOutput> transactionOutputs = outputs;
+		std::vector<TransactionKernel> kernels({ kernel });
 
 		std::sort(transactionInputs.begin(), transactionInputs.end(), SortInputsByHash);
 		std::sort(transactionOutputs.begin(), transactionOutputs.end(), SortOutputsByHash);
 		std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
 
-		return Transaction(BlindingFactor(transactionOffset), TransactionBody(std::move(transactionInputs), std::move(transactionOutputs), std::move(kernels)));
+		TransactionBody body(
+			std::move(transactionInputs),
+			std::move(transactionOutputs),
+			std::move(kernels)
+		);
+
+		return Transaction(BlindingFactor(transactionOffset), std::move(body));
 	}
 
 	static Transaction AddOutput(const Transaction& transaction, const TransactionOutput& output)
@@ -39,15 +38,6 @@ public:
 		outputs.push_back(output);
 		std::sort(outputs.begin(), outputs.end(), SortOutputsByHash);
 
-		TransactionBody transactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
-		return Transaction(BlindingFactor(transaction.GetOffset()), std::move(transactionBody));
-	}
-
-	static Transaction ReplaceKernel(const Transaction& transaction, const TransactionKernel& kernel)
-	{
-		std::vector<TransactionInput> inputs = transaction.GetInputs();
-		std::vector<TransactionOutput> outputs = transaction.GetOutputs();
-		std::vector<TransactionKernel> kernels = std::vector<TransactionKernel>({ kernel });
 		TransactionBody transactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
 		return Transaction(BlindingFactor(transaction.GetOffset()), std::move(transactionBody));
 	}

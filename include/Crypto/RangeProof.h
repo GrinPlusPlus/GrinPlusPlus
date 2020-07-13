@@ -37,6 +37,7 @@ public:
 	//
 	RangeProof& operator=(const RangeProof& other) = default;
 	RangeProof& operator=(RangeProof&& other) noexcept = default;
+	bool operator==(const RangeProof& rhs) const noexcept { return m_proofBytes == rhs.m_proofBytes; }
 
 	//
 	// Getters
@@ -61,6 +62,16 @@ public:
 		}
 
 		return RangeProof(byteBuffer.ReadVector(proofSize));
+	}
+
+	static RangeProof FromHex(const std::string& hex)
+	{
+		return RangeProof(HexUtil::FromHex(hex));
+	}
+
+	std::string ToHex() const noexcept
+	{
+		return HexUtil::ConvertToHex(m_proofBytes);
 	}
 
 	//

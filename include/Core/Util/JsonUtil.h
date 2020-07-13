@@ -88,6 +88,39 @@ public:
 		}
 	}
 
+	static std::vector<Json::Value> GetRequiredArray(const Json::Value& node, const std::string& key)
+	{
+		Json::Value value = GetRequiredField(node, key);
+		if (!value.isArray())
+		{
+			throw DESERIALIZATION_EXCEPTION("json value was not an array");
+		}
+
+		std::vector<Json::Value> values;
+		for (auto iter = value.begin(); iter != value.end(); iter++)
+		{
+			values.push_back(*iter);
+		}
+
+		return values;
+	}
+
+	static std::vector<Json::Value> GetArray(const Json::Value& node, const std::string& key)
+	{
+		std::vector<Json::Value> values;
+
+		std::optional<Json::Value> valueOpt = GetOptionalField(node, key);
+		if (valueOpt.has_value() && valueOpt.value().isArray())
+		{
+			for (auto iter = valueOpt.value().begin(); iter != valueOpt.value().end(); iter++)
+			{
+				values.push_back(*iter);
+			}
+		}
+
+		return values;
+	}
+
 	//
 	// BlindingFactors
 	//
@@ -216,6 +249,17 @@ public:
 		return ConvertToRangeProof(GetRequiredField(parentJSON, key));
 	}
 
+	static std::optional<RangeProof> GetRangeProofOpt(const Json::Value& parentJSON, const std::string& key)
+	{
+		std::optional<Json::Value> jsonOpt = GetOptionalField(parentJSON, key);
+		if (!jsonOpt.has_value())
+		{
+			return std::nullopt;
+		}
+
+		return ConvertToRangeProof(jsonOpt.value());
+	}
+
 	//
 	// Strings
 	//
@@ -315,6 +359,19 @@ public:
 	{
 		const Json::Value value = JsonUtil::GetRequiredField(parentJSON, key);
 		return (uint8_t)ConvertToUInt64(value);
+	}
+
+	static std::optional<uint8_t> GetUInt8Opt(const Json::Value& parentJSON, const std::string& key)
+	{
+		const std::optional<Json::Value> json = JsonUtil::GetOptionalField(parentJSON, key);
+		if (!json.has_value())
+		{
+			return std::nullopt;
+		}
+		else
+		{
+			return (uint8_t)ConvertToUInt64(json.value());
+		}
 	}
 
 	//

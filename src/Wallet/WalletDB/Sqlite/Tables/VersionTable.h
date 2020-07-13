@@ -6,6 +6,7 @@ class VersionTable
 {
 public:
 	static void CreateTable(sqlite3& database);
+	static void UpdateSchema(sqlite3& database, const int previousVersion);
 	static int GetCurrentVersion(sqlite3& database);
 
 private:

@@ -347,7 +347,6 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 		sendCriteria.GetNumOutputs(),
 		false, // TODO: Implement
 		sendCriteria.GetAddress(),
-		sendCriteria.GetMsg(),
 		sendCriteria.GetSelectionStrategy(),
 		sendCriteria.GetSlateVersion()
 	);
@@ -362,8 +361,7 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 		wallet,
 		masterSeed,
 		receiveCriteria.GetSlate(),
-		receiveCriteria.GetAddress(),
-		receiveCriteria.GetMsg()
+		receiveCriteria.GetAddress()
 	);
 }
 
@@ -372,7 +370,7 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const To
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
 
-	Slate finalizedSlate = FinalizeSlateBuilder().Finalize(
+	auto finalized = FinalizeSlateBuilder().Finalize(
 		wallet,
 		masterSeed,
 		finalizeCriteria.GetSlate()
@@ -380,13 +378,13 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const To
 	if (finalizeCriteria.GetPostMethod().has_value())
 	{
 		PostTransaction(
-			finalizedSlate.GetTransaction(),
+			finalized.second,
 			finalizeCriteria.GetPostMethod().value(),
 			pTorProcess
 		);
 	}
 
-	return finalizedSlate;
+	return finalized.first;
 }
 
 bool WalletManager::PostTransaction(

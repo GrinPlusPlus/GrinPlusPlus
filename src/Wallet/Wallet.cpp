@@ -130,8 +130,7 @@ OutputDataEntity Wallet::CreateBlindedOutput(
 	const uint64_t amount,
 	const KeyChainPath& keyChainPath,
 	const uint32_t walletTxId,
-	const EBulletproofType& bulletproofType,
-	const std::optional<std::string>& messageOpt)
+	const EBulletproofType& bulletproofType)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 
@@ -153,7 +152,7 @@ OutputDataEntity Wallet::CreateBlindedOutput(
 		amount,
 		EOutputStatus::NO_CONFIRMATIONS,
 		std::make_optional(walletTxId),
-		messageOpt
+		std::nullopt
 	);
 }
 

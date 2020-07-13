@@ -56,8 +56,7 @@ public:
 		const uint64_t amount,
 		const KeyChainPath& keyChainPath,
 		const uint32_t walletTxId,
-		const EBulletproofType& bulletproofType,
-		const std::optional<std::string>& messageOpt
+		const EBulletproofType& bulletproofType
 	);
 
 	BuildCoinbaseResponse CreateCoinbase(

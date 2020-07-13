@@ -7,6 +7,7 @@
 class PublicKey
 {
 public:
+	PublicKey() = default;
 	PublicKey(CBigInteger<33>&& compressedKey)
 		: m_compressedKey(std::move(compressedKey)) { }
 
@@ -14,6 +15,7 @@ public:
 
 	const CBigInteger<33>& GetCompressedBytes() const noexcept { return m_compressedKey; }
 	const std::vector<unsigned char>& GetCompressedVec() const noexcept { return m_compressedKey.GetData(); }
+	std::string ToHex() const noexcept { return m_compressedKey.ToHex(); }
 
 	const unsigned char* data() const noexcept { return m_compressedKey.data(); }
 	size_t size() const noexcept { return m_compressedKey.size(); }

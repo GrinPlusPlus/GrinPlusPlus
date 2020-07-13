@@ -15,6 +15,19 @@ TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&
 	m_hash = Crypto::Blake2b(serializer.GetBytes());
 }
 
+TransactionOutput::TransactionOutput(const EOutputFeatures features, const Commitment& commitment, const RangeProof& rangeProof)
+	: m_features(features), m_commitment(commitment), m_rangeProof(rangeProof)
+{
+	Serializer serializer;
+
+	// Serialize OutputFeatures
+	serializer.Append<uint8_t>((uint8_t)m_features);
+	// Serialize Commitment
+	m_commitment.Serialize(serializer);
+
+	m_hash = Crypto::Blake2b(serializer.GetBytes());
+}
+
 void TransactionOutput::Serialize(Serializer& serializer) const
 {
 	// Serialize OutputFeatures

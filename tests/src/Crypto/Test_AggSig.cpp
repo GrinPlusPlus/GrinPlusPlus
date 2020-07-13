@@ -43,23 +43,3 @@ TEST_CASE("AggSig Interaction")
 	const bool aggSigValid = Crypto::VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 	REQUIRE(aggSigValid == true);
 }
-
-TEST_CASE("Message Signature")
-{
-	const SecretKey secretKey = RandomNumberGenerator::GenerateRandom32();
-	const PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
-	const std::string message = "MESSAGE";
-
-	std::unique_ptr<CompactSignature> pSignature = Crypto::SignMessage(secretKey, publicKey, message);
-	REQUIRE(pSignature != nullptr);
-
-	const bool valid = Crypto::VerifyMessageSignature(*pSignature, publicKey, message);
-	REQUIRE(valid == true);
-
-	const bool wrongMessage = Crypto::VerifyMessageSignature(*pSignature, publicKey, "WRONG_MESSAGE");
-	REQUIRE(wrongMessage == false);
-
-	const PublicKey publicKey2 = Crypto::CalculatePublicKey(RandomNumberGenerator::GenerateRandom32());
-	const bool differentPublicKey = Crypto::VerifyMessageSignature(*pSignature, publicKey2, message);
-	REQUIRE(differentPublicKey == false);
-}

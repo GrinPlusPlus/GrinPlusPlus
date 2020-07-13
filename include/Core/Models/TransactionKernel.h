@@ -25,6 +25,7 @@ public:
 	// Constructors
 	//
 	TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature);
+	TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig);
 	TransactionKernel(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel(TransactionKernel&& transactionKernel) noexcept = default;
 	TransactionKernel() = default;
@@ -53,6 +54,7 @@ public:
 	const Signature& GetExcessSignature() const { return m_excessSignature; }
 	bool IsCoinbase() const { return (m_features & EKernelFeatures::COINBASE_KERNEL) == EKernelFeatures::COINBASE_KERNEL; }
 	Hash GetSignatureMessage() const;
+	static Hash GetSignatureMessage(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight);
 
 	//
 	// Serialization/Deserialization

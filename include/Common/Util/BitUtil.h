@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <cassert>
 
 namespace BitUtil
 {
@@ -27,6 +28,14 @@ namespace BitUtil
 		}
 
 		return count;
+	}
+
+	// Check if bit (0-7) is set on the given byte.
+	// Bit order is 7 (most-significant) to 0 (least-significant)
+	static bool IsSet(const uint8_t byte, const uint8_t bit)
+	{
+		assert(bit <= 7);
+		return (byte & (1 << bit)) > 0;
 	}
 
 	static uint16_t ConvertToU16(const uint8_t byte1, const uint8_t byte2)

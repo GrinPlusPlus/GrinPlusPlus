@@ -6,19 +6,18 @@
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
 #include <Infrastructure/Logger.h>
-#include <Wallet/WalletDB/Models/SlateContextEntity.h>
 
 Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,
 	const Slate& slate,
-	const std::optional<std::string>& addressOpt,
-	const std::optional<std::string>& messageOpt) const
+	const std::optional<std::string>& addressOpt) const
 {
 	WALLET_INFO_F("Receiving {} from {}", slate.GetAmount(), addressOpt.value_or("UNKNOWN"));
 
 	auto pWallet = wallet.Write();
 	Slate receiveSlate = slate;
+	receiveSlate.stage = ESlateStage::STANDARD_RECEIVED;
 
 	// Verify slate was never received, exactly one kernel exists, and fee is valid.
 	if (!VerifySlateStatus(pWallet.GetShared(), masterSeed, receiveSlate))
@@ -36,20 +35,21 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		receiveSlate.GetAmount(),
 		keyChainPath,
 		walletTxId,
-		EBulletproofType::ENHANCED,
-		messageOpt
+		EBulletproofType::ENHANCED
 	);
 	SecretKey secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = Crypto::GenerateSecureNonce();
 
 	// Add receiver ParticipantData
-	AddParticipantData(receiveSlate, secretKey, secretNonce, messageOpt);
+	SlateSignature signature = BuildSignature(receiveSlate, secretKey, secretNonce);
 
 	// Add output to Transaction
-	receiveSlate.UpdateTransaction(TransactionBuilder::AddOutput(
-		receiveSlate.GetTransaction(),
-		outputData.GetOutput()
-	));
+	SlateCommitment outputCommit{
+		outputData.GetFeatures(),
+		outputData.GetCommitment(),
+		std::make_optional<RangeProof>(outputData.GetRangeProof())
+	};
+	receiveSlate.commitments.push_back(outputCommit);
 
 	UpdatePaymentProof(
 		pWallet.GetShared(),
@@ -62,10 +62,10 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		pBatch.GetShared(),
 		masterSeed,
 		receiveSlate,
+		signature,
 		outputData,
 		walletTxId,
-		addressOpt,
-		messageOpt
+		addressOpt
 	);
 
 	pBatch->Commit();
@@ -79,107 +79,82 @@ bool ReceiveSlateBuilder::VerifySlateStatus(
 	const Slate& slate) const
 {
 	// Slate was already received.
-	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetSlateId());
+	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetId());
 	if (pWalletTx != nullptr && pWalletTx->GetType() != EWalletTxType::RECEIVED_CANCELED)
 	{
-		WALLET_ERROR_F("Already received slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Already received slate {}", uuids::to_string(slate.GetId()));
 		return false;
-	}
-
-	// Verify slate message signatures
-	if (!SignatureUtil::VerifyMessageSignatures(slate.GetParticipantData()))
-	{
-		WALLET_ERROR_F("Failed to verify message signatures for slate {}", uuids::to_string(slate.GetSlateId()));
-		throw WALLET_EXCEPTION("Failed to verify message signatures.");
 	}
 
 	// TODO: Verify fees
 
-	// Generate message
-	const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetKernels();
-	if (kernels.size() != 1)
-	{
-		WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetSlateId()), kernels.size());
-		throw WALLET_EXCEPTION("Expected 1 kernel.");
-	}
+	//// Generate message
+	//const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetKernels();
+	//if (kernels.size() != 1)
+	//{
+	//	WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetId()), kernels.size());
+	//	throw WALLET_EXCEPTION("Expected 1 kernel.");
+	//}
 
 	return true;
 }
 
-void ReceiveSlateBuilder::AddParticipantData(
+SlateSignature ReceiveSlateBuilder::BuildSignature(
 	Slate& slate,
 	const SecretKey& secretKey,
-	const SecretKey& secretNonce,
-	const std::optional<std::string>& messageOpt) const
+	const SecretKey& secretNonce) const
 {
-	const Hash kernelMessage = slate.GetTransaction().GetKernels().front().GetSignatureMessage();
+	const Hash kernelMessage = TransactionKernel::GetSignatureMessage(
+		slate.kernelFeatures,
+		slate.fee,
+		slate.GetLockHeight()
+	);
 
-	PublicKey publicKey = Crypto::CalculatePublicKey(secretKey);
-	PublicKey publicNonce = Crypto::CalculatePublicKey(secretNonce);
-
-	// Build receiver's ParticipantData
-	ParticipantData receiverData(1, publicKey, publicNonce);
+	PublicKey excess = Crypto::CalculatePublicKey(secretKey);
+	PublicKey nonce = Crypto::CalculatePublicKey(secretNonce);
 
 	// Generate signature
-	std::vector<ParticipantData> participants = slate.GetParticipantData();
-	participants.emplace_back(receiverData);
+	std::vector<SlateSignature> signatures = slate.sigs;
+	signatures.push_back(SlateSignature{ excess, nonce, std::nullopt });
 
 	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
 		secretKey,
 		secretNonce,
-		participants,
+		signatures,
 		kernelMessage
 	);
 	if (pPartialSignature == nullptr)
 	{
-		WALLET_ERROR_F("Failed to generate signature for slate {}", uuids::to_string(slate.GetSlateId()));
+		WALLET_ERROR_F("Failed to generate signature for slate {}", uuids::to_string(slate.GetId()));
 		throw WALLET_EXCEPTION("Failed to generate signature.");
 	}
 
-	receiverData.AddPartialSignature(*pPartialSignature);
+	signatures.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
 
-	// Add message signature
-	if (messageOpt.has_value())
+	if (!SignatureUtil::VerifyPartialSignatures(signatures, kernelMessage))
 	{
-		// TODO: Limit message length
-		std::unique_ptr<CompactSignature> pMessageSignature = Crypto::SignMessage(
-			secretKey,
-			publicKey,
-			messageOpt.value()
-		);
-		if (pMessageSignature == nullptr)
-		{
-			WALLET_ERROR_F("Failed to sign message for slate {}", uuids::to_string(slate.GetSlateId()));
-			throw WALLET_EXCEPTION("Failed to sign slate message.");
-		}
-
-		receiverData.AddMessage(messageOpt.value(), *pMessageSignature);
+		WALLET_ERROR_F("Failed to verify signature for slate {}", uuids::to_string(slate.GetId()));
+		throw WALLET_EXCEPTION("Failed to verify signatures.");
 	}
 
 	// Add receiver's ParticipantData to Slate
-	slate.AddParticpantData(receiverData);
-
-	if (!SignatureUtil::VerifyPartialSignatures(slate.GetParticipantData(), kernelMessage))
-	{
-		WALLET_ERROR_F("Failed to verify signature for slate {}", uuids::to_string(slate.GetSlateId()));
-		throw WALLET_EXCEPTION("Failed to verify signatures.");
-	}
+	return signatures.back();
 }
 
 void ReceiveSlateBuilder::UpdatePaymentProof(
 	std::shared_ptr<Wallet> pWallet,
 	IWalletDBPtr pWalletDB,
 	const SecureVector& masterSeed,
-	Slate& slate) const
+	Slate& receiveSlate) const
 {
-	if (slate.GetPaymentProof().has_value())
+	if (receiveSlate.GetPaymentProof().has_value())
 	{
 		if (!pWallet->GetTorAddress().has_value())
 		{
 			throw WALLET_EXCEPTION("");
 		}
 
-		auto& proof = slate.GetPaymentProof().value();
+		auto& proof = receiveSlate.GetPaymentProof().value();
 		if (proof.GetReceiverAddress() != pWallet->GetTorAddress().value().GetPublicKey())
 		{
 			throw WALLET_EXCEPTION("");
@@ -187,8 +162,8 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 
 		// Message: (amount | kernel commitment | sender address)
 		Serializer messageSerializer;
-		messageSerializer.Append<uint64_t>(slate.GetAmount());
-		SlateUtil::CalculateFinalExcess(slate).Serialize(messageSerializer);
+		messageSerializer.Append<uint64_t>(receiveSlate.GetAmount());
+		SlateUtil::CalculateFinalExcess(receiveSlate).Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(CBigInteger<32>(proof.GetSenderAddress().pubkey));
 
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
@@ -206,34 +181,36 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 void ReceiveSlateBuilder::UpdateDatabase(
 	std::shared_ptr<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
-	const Slate& slate,
+	Slate& receiveSlate,
+	const SlateSignature& signature,
 	const OutputDataEntity& outputData,
 	const uint32_t walletTxId,
-	const std::optional<std::string>& addressOpt,
-	const std::optional<std::string>& messageOpt) const
+	const std::optional<std::string>& addressOpt) const
 {
-	// Save secretKey and secretNonce
-	//pBatch->SaveSlateContext(masterSeed, slate.GetSlateId(), context);
-
 	// Save OutputDataEntity
-	pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>({ outputData }));
+	pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>{ outputData });
 
 	// Save WalletTx
 	WalletTx walletTx(
 		walletTxId,
 		EWalletTxType::RECEIVING_IN_PROGRESS,
-		std::make_optional(slate.GetSlateId()),
+		std::make_optional(receiveSlate.GetId()),
 		std::optional<std::string>(addressOpt),
-		std::optional<std::string>(messageOpt),
+		std::nullopt,
 		std::chrono::system_clock::now(),
 		std::nullopt,
 		std::nullopt,
-		slate.GetAmount(),
+		receiveSlate.amount,
 		0,
-		std::optional<uint64_t>(slate.GetFee()),
+		std::make_optional<uint64_t>(receiveSlate.fee),
 		std::nullopt,
-		slate.GetPaymentProof()
+		receiveSlate.GetPaymentProof()
 	);
 
 	pBatch->AddTransaction(masterSeed, walletTx);
+
+	receiveSlate.amount = 0;
+	receiveSlate.fee = 0;
+	receiveSlate.sigs = std::vector<SlateSignature>{ signature };
+	pBatch->SaveSlate(masterSeed, receiveSlate);
 }

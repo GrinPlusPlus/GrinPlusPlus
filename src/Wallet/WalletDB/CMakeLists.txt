@@ -7,10 +7,12 @@ file(GLOB SOURCE_CODE
     "WalletSqlite.cpp"
 	"WalletEncryptionUtil.cpp"
 	"Sqlite/*.cpp"
-	"Sqlite/Tables/VersionTable.cpp"
-	"Sqlite/Tables/OutputsTable.cpp"
-	"Sqlite/Tables/TransactionsTable.cpp"
 	"Sqlite/Tables/MetadataTable.cpp"
+	"Sqlite/Tables/OutputsTable.cpp"
+	"Sqlite/Tables/SlateTable.cpp"
+	"Sqlite/Tables/SlateContextTable.cpp"
+	"Sqlite/Tables/TransactionsTable.cpp"
+	"Sqlite/Tables/VersionTable.cpp"
 )
 
 if(GRINPP_STATIC)

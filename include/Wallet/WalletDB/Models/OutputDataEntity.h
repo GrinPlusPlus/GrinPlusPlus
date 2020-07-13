@@ -82,6 +82,9 @@ public:
 	const std::optional<uint64_t>& GetBlockHeight() const { return m_blockHeightOpt; }
 	const std::optional<uint32_t>& GetWalletTxId() const { return m_walletTxIdOpt; }
 	const std::optional<std::string>& GetLabel() const { return m_labelOpt; }
+	const Commitment& GetCommitment() const { return m_output.GetCommitment(); }
+	const RangeProof& GetRangeProof() const { return m_output.GetRangeProof(); }
+	EOutputFeatures GetFeatures() const { return m_output.GetFeatures(); }
 
 	//
 	// Setters

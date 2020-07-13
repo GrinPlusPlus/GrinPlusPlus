@@ -13,6 +13,14 @@ TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint6
 	m_hash = Crypto::Blake2b(serializer.GetBytes());
 }
 
+TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig)
+	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(excessCom), m_excessSignature(excessSig)
+{
+	Serializer serializer;
+	Serialize(serializer);
+	m_hash = Crypto::Blake2b(serializer.GetBytes());
+}
+
 void TransactionKernel::Serialize(Serializer& serializer) const
 {
 	if (serializer.GetProtocolVersion() == EProtocolVersion::V2)
@@ -125,27 +133,32 @@ TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKern
 	return TransactionKernel(features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }
 
-Hash TransactionKernel::GetSignatureMessage() const
+Hash TransactionKernel::GetSignatureMessage(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight)
 {
 	Serializer serializer;
-	serializer.Append<uint8_t>((uint8_t)GetFeatures());
+	serializer.Append<uint8_t>((uint8_t)features);
 
-	if (GetFeatures() != EKernelFeatures::COINBASE_KERNEL)
+	if (features != EKernelFeatures::COINBASE_KERNEL)
 	{
-		serializer.Append<uint64_t>(GetFee());
+		serializer.Append<uint64_t>(fee);
 	}
 
-	if (GetFeatures() == EKernelFeatures::HEIGHT_LOCKED)
+	if (features == EKernelFeatures::HEIGHT_LOCKED)
 	{
-		serializer.Append<uint64_t>(GetLockHeight());
+		serializer.Append<uint64_t>(lockHeight);
 	}
 
-	if (GetFeatures() == EKernelFeatures::NO_RECENT_DUPLICATE)
+	if (features == EKernelFeatures::NO_RECENT_DUPLICATE)
 	{
-		serializer.Append<uint16_t>((uint16_t)GetLockHeight());
+		serializer.Append<uint16_t>((uint16_t)lockHeight);
 	}
 
 	return Crypto::Blake2b(serializer.GetBytes());
+}
+
+Hash TransactionKernel::GetSignatureMessage() const
+{
+	return GetSignatureMessage(m_features, m_fee, m_lockHeight);
 }
 
 const Hash& TransactionKernel::GetHash() const

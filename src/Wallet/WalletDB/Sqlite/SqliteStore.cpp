@@ -1,9 +1,12 @@
 #include "SqliteStore.h"
 #include "WalletSqlite.h"
+#include "Schema.h"
 #include "Tables/VersionTable.h"
 #include "Tables/OutputsTable.h"
 #include "Tables/TransactionsTable.h"
 #include "Tables/MetadataTable.h"
+#include "Tables/SlateContextTable.h"
+#include "Tables/SlateTable.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Common/Util/FileUtil.h>
@@ -11,7 +14,6 @@
 #include <Infrastructure/Logger.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
-static const int LATEST_SCHEMA_VERSION = 1;
 
 std::shared_ptr<SqliteStore> SqliteStore::Open(const Config& config)
 {
@@ -54,14 +56,16 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 		}
 
 		const int version = VersionTable::GetCurrentVersion(*pDatabase);
-		if (version == 0)
+		if (version < LATEST_SCHEMA_VERSION)
 		{
 			SqliteTransaction transaction(*pDatabase);
 			transaction.Begin();
 
-			VersionTable::CreateTable(*pDatabase);
+			VersionTable::UpdateSchema(*pDatabase, version);
 			OutputsTable::UpdateSchema(*pDatabase, masterSeed, version);
 			MetadataTable::UpdateSchema(*pDatabase, version);
+			SlateContextTable::UpdateSchema(*pDatabase, version);
+			SlateTable::UpdateSchema(*pDatabase, version);
 
 			transaction.Commit();
 		}
@@ -158,9 +162,10 @@ sqlite3* SqliteStore::CreateWalletDB(const std::string& username)
 		OutputsTable::CreateTable(*pDatabase);
 		TransactionsTable::CreateTable(*pDatabase);
 		MetadataTable::CreateTable(*pDatabase);
+		SlateContextTable::CreateTable(*pDatabase);
+		SlateTable::CreateTable(*pDatabase);
 
 		std::string tableCreation = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
-		tableCreation += "create table slate_contexts(slate_id TEXT PRIMARY KEY, enc_blind BLOB NOT NULL, enc_nonce BLOB NOT NULL);";
 		// TODO: Add indices
 
 		KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();

@@ -11,11 +11,11 @@ class WalletUtil
 public:
 	static uint64_t CalculateFee(
 		const uint64_t feeBase,
-		const int64_t numInputs,
-		const int64_t numOutputs,
-		const int64_t numKernels)
+		const uint64_t numInputs,
+		const uint64_t numOutputs,
+		const uint64_t numKernels)
 	{
-		return FeeUtil::CalculateFee(feeBase, numInputs, numOutputs, numKernels);
+		return FeeUtil::CalculateFee(feeBase, (int64_t)numInputs, (int64_t)numOutputs, (int64_t)numKernels);
 	}
 
 	static bool IsOutputImmature(

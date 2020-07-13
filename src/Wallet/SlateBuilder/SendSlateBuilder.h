@@ -24,30 +24,44 @@ public:
 		const SecureVector& masterSeed, 
 		const uint64_t amount, 
 		const uint64_t feeBase, 
-		const uint8_t numOutputs,
-		const bool noChange,
+		const uint8_t changeOutputs,
+		const bool sendEntireBalance,
 		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt, 
 		const SelectionStrategyDTO& strategy,
 		const uint16_t slateVersion) const;
 
 private:
-	SecretKey CalculatePrivateKey(const BlindingFactor& transactionOffset, const std::vector<OutputDataEntity>& inputs, const std::vector<OutputDataEntity>& changeOutputs) const;
-	void AddSenderInfo(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
+	Slate Build(
+		const std::shared_ptr<Wallet>& pWallet,
+		const SecureVector& masterSeed,
+		const uint64_t amountToSend,
+		const uint64_t fee,
+		const uint8_t numChangeOutputs,
+		std::vector<OutputDataEntity>& inputs,
+		const std::optional<std::string>& addressOpt,
+		const uint16_t slateVersion
+	) const;
+
+	SecretKey CalculatePrivateKey(
+		const BlindingFactor& transactionOffset,
+		const std::vector<OutputDataEntity>& inputs,
+		const std::vector<OutputDataEntity>& changeOutputs
+	) const;
+
 	WalletTx BuildWalletTx(
 		const uint32_t walletTxId,
+		const BlindingFactor& txOffset,
 		const std::vector<OutputDataEntity>& inputs,
 		const std::vector<OutputDataEntity>& changeOutputs,
 		const Slate& slate,
 		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt,
 		const std::optional<SlatePaymentProof>& proofOpt
 	) const;
 
 	void UpdateDatabase(
 		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
-		const uuids::uuid& slateId,
+		const Slate& slate,
 		const SlateContextEntity& context,
 		const std::vector<OutputDataEntity>& changeOutputs,
 		std::vector<OutputDataEntity>& coinsToLock,

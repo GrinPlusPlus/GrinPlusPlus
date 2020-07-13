@@ -19,22 +19,26 @@ public:
 		Locked<Wallet> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt
+		const std::optional<std::string>& addressOpt
 	) const;
 
 private:
 	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
-	void AddParticipantData(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce, const std::optional<std::string>& messageOpt) const;
-	void UpdatePaymentProof(std::shared_ptr<Wallet> pWallet, IWalletDBPtr pWalletDB, const SecureVector& masterSeed, Slate& slate) const;
+	SlateSignature BuildSignature(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce) const;
+	void UpdatePaymentProof(
+		std::shared_ptr<Wallet> pWallet,
+		IWalletDBPtr pWalletDB,
+		const SecureVector& masterSeed,
+		Slate& receiveSlate
+	) const;
 	void UpdateDatabase(
 		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
-		const Slate& slate,
+		Slate& receiveSlate,
+		const SlateSignature& signature,
 		const OutputDataEntity& outputData,
 		const uint32_t walletTxId,
-		const std::optional<std::string>& addressOpt,
-		const std::optional<std::string>& messageOpt
+		const std::optional<std::string>& addressOpt
 	) const;
 
 	const Config& m_config;

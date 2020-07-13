@@ -15,8 +15,7 @@ public:
 		const uint64_t totalAmount, 
 		const uint32_t walletTxId, 
 		const uint8_t numOutputs,
-		const EBulletproofType& bulletproofType,
-		const std::optional<std::string>& messageOpt)
+		const EBulletproofType& bulletproofType)
 	{
 		if (totalAmount < numOutputs)
 		{
@@ -34,7 +33,7 @@ public:
 			}
 
 			KeyChainPath keyChainPath = pBatch->GetNextChildPath(pWallet->GetUserPath());
-			outputs.emplace_back(pWallet->CreateBlindedOutput(masterSeed, coinAmount, keyChainPath, walletTxId, bulletproofType, messageOpt));
+			outputs.emplace_back(pWallet->CreateBlindedOutput(masterSeed, coinAmount, keyChainPath, walletTxId, bulletproofType));
 		}
 
 		return outputs;

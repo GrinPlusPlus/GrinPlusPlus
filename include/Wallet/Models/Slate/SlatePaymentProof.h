@@ -28,21 +28,25 @@ public:
 	Json::Value ToJSON() const
 	{
 		Json::Value proofJSON;
-		proofJSON["sender_address"] = m_senderAddress.Format();
-		proofJSON["receiver_address"] = m_receiverAddress.Format();
-		proofJSON["receiver_signature"] = m_receiverSignatureOpt.has_value() ? m_receiverSignatureOpt.value().ToHex() : Json::Value(Json::nullValue);
+		proofJSON["saddr"] = m_senderAddress.Format();
+		proofJSON["raddr"] = m_receiverAddress.Format();
+		if (m_receiverSignatureOpt.has_value())
+		{
+			proofJSON["rsig"] = m_receiverSignatureOpt.value().ToHex();
+		}
+
 		return proofJSON;
 	}
 
 	static SlatePaymentProof FromJSON(const Json::Value& paymentProofJSON)
 	{
 		ed25519_public_key_t senderAddress;
-		senderAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "sender_address"), ED25519_PUBKEY_LEN);
+		senderAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "saddr"), ED25519_PUBKEY_LEN);
 
 		ed25519_public_key_t receiverAddress;
-		receiverAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "receiver_address"), ED25519_PUBKEY_LEN);
+		receiverAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "raddr"), ED25519_PUBKEY_LEN);
 
-		std::optional<Signature> receiverSignatureOpt = JsonUtil::GetSignatureOpt(paymentProofJSON, "receiver_signature");
+		std::optional<Signature> receiverSignatureOpt = JsonUtil::GetSignatureOpt(paymentProofJSON, "rsig");
 
 		return SlatePaymentProof(senderAddress, receiverAddress, receiverSignatureOpt);
 	}

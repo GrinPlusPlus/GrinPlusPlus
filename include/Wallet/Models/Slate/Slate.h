@@ -1,10 +1,13 @@
 #pragma once
 
-#include <Wallet/Models/Slate/SlateVersionInfo.h>
+#include <Wallet/Models/Slate/SlateCommitment.h>
 #include <Wallet/Models/Slate/SlatePaymentProof.h>
-#include <Wallet/Models/Slate/ParticipantData.h>
+#include <Wallet/Models/Slate/SlateFeatureArgs.h>
+#include <Wallet/Models/Slate/SlateSignature.h>
+#include <Wallet/Models/Slate/SlateStage.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
+#include <Common/Util/BitUtil.h>
 #include <json/json.h>
 #include <stdint.h>
 
@@ -18,164 +21,402 @@
 #define NOMINMAX
 #endif
 
-static uint64_t MIN_SLATE_VERSION = 2;
-static uint64_t MAX_SLATE_VERSION = 3;
+static uint64_t MIN_SLATE_VERSION = 4;
+static uint64_t MAX_SLATE_VERSION = 4;
 
 // A 'Slate' is passed around to all parties to build up all of the public transaction data needed to create a finalized transaction. 
 // Callers can pass the slate around by whatever means they choose, (but we can provide some binary or JSON serialization helpers here).
 class Slate
 {
+	// Bit     4      3      2      1      0
+	// field  ttl   feat    fee    Amt  num_parts
+	struct OptionalFieldStatus
+	{
+		bool include_num_parts;
+		bool include_amt;
+		bool include_fee;
+		bool include_feat;
+		bool include_ttl;
+
+		uint8_t ToByte() const noexcept
+		{
+			uint8_t status = 0;
+			status |= include_num_parts ? 1 : 0;
+			status |= include_amt ? 1 << 1 : 0;
+			status |= include_fee ? 1 << 2 : 0;
+			status |= include_feat ? 1 << 3 : 0;
+			status |= include_ttl ? 1 << 4 : 0;
+			return status;
+		}
+
+		static OptionalFieldStatus FromByte(const uint8_t byte) noexcept
+		{
+			OptionalFieldStatus status;
+			status.include_num_parts = BitUtil::IsSet(byte, 0);
+			status.include_amt = BitUtil::IsSet(byte, 1);
+			status.include_fee = BitUtil::IsSet(byte, 2);
+			status.include_feat = BitUtil::IsSet(byte, 3);
+			status.include_ttl = BitUtil::IsSet(byte, 4);
+			return status;
+		}
+	};
+
+	// Bit      1     0
+	// field  proof  coms
+	struct OptionalStructStatus
+	{
+		bool include_coms;
+		bool include_proof;
+
+		uint8_t ToByte() const noexcept
+		{
+			uint8_t status = 0;
+			status |= include_coms ? 1 : 0;
+			status |= include_proof ? 1 << 1 : 0;
+			return status;
+		}
+
+		static OptionalStructStatus FromByte(const uint8_t byte) noexcept
+		{
+			OptionalStructStatus status;
+			status.include_coms = BitUtil::IsSet(byte, 0);
+			status.include_proof = BitUtil::IsSet(byte, 1);
+			return status;
+		}
+	};
+
 public:
-	Slate(
-		SlateVersionInfo&& versionInfo,
-		const uint64_t numParticipants,
-		uuids::uuid&& slateId,
-		Transaction&& transaction,
-		const uint64_t amount,
-		const uint64_t fee,
-		const uint64_t blockHeight,
-		const uint64_t lockHeight,
-		const std::optional<SlatePaymentProof>& proofOpt)
-		: m_versionInfo(versionInfo),
-		m_numParticipants(numParticipants),
-		m_slateId(std::move(slateId)),
-		m_transaction(std::move(transaction)),
-		m_amount(amount),
-		m_fee(fee),
-		m_blockHeight(blockHeight),
-		m_lockHeight(lockHeight),
-		m_proofOpt(proofOpt)
+	uuids::uuid slateId;
+	SlateStage stage;
+	uint16_t version;
+	uint16_t blockVersion;
+	uint8_t numParticipants;
+
+	// Time to Live, or block height beyond which wallets should refuse to further process the transaction.
+	// Assumed 0 (no ttl) if omitted from the slate. To be used when delayed transaction posting is desired.
+	uint64_t ttl;
+
+	EKernelFeatures kernelFeatures;
+	std::optional<SlateFeatureArgs> featureArgsOpt;
+	BlindingFactor offset;
+	uint64_t amount;
+	uint64_t fee;
+	std::vector<SlateSignature> sigs;
+	std::vector<SlateCommitment> commitments;
+	std::optional<SlatePaymentProof> proofOpt;
+
+	Slate(const uuids::uuid& uuid = uuids::uuid_system_generator()())
+		: slateId{ uuid },
+		stage{ ESlateStage::STANDARD_SENT },
+		version{ 4 },
+		blockVersion{ 4 },
+		numParticipants{ 2 },
+		ttl{ 0 },
+		kernelFeatures{ EKernelFeatures::DEFAULT_KERNEL },
+		featureArgsOpt{ std::nullopt },
+		offset{},
+		amount{ 0 },
+		fee{ 0 },
+		sigs{},
+		commitments{},
+		proofOpt{ std::nullopt }
 	{
 
 	}
 
 	bool operator==(const Slate& rhs) const noexcept
 	{
-		return m_slateId == rhs.m_slateId &&
-			m_versionInfo == rhs.m_versionInfo &&
-			m_amount == rhs.m_amount &&
-			m_fee == rhs.m_fee &&
-			m_lockHeight == rhs.m_lockHeight &&
-			m_blockHeight == rhs.m_blockHeight &&
-			m_transaction == rhs.m_transaction &&
-			m_participantData == rhs.m_participantData &&
-			m_proofOpt == rhs.m_proofOpt;
+		return slateId == rhs.slateId &&
+			stage == rhs.stage &&
+			version == rhs.version &&
+			blockVersion && rhs.blockVersion &&
+			amount == rhs.amount &&
+			fee == rhs.fee &&
+			offset == rhs.offset &&
+			numParticipants == rhs.numParticipants &&
+			kernelFeatures == rhs.kernelFeatures &&
+			ttl == rhs.ttl &&
+			sigs == rhs.sigs &&
+			commitments == rhs.commitments &&
+			proofOpt == rhs.proofOpt;
 	}
 
-	const uuids::uuid& GetSlateId() const { return m_slateId; }
-	const SlateVersionInfo& GetVersionInfo() const { return m_versionInfo; }
-	uint64_t GetAmount() const { return m_amount; }
-	uint64_t GetFee() const { return m_fee; }
-	uint64_t GetLockHeight() const { return m_lockHeight; }
-	uint64_t GetBlockHeight() const { return m_blockHeight; }
-	const Transaction& GetTransaction() const { return m_transaction; }
-	const std::vector<ParticipantData>& GetParticipantData() const { return m_participantData; }
-	std::vector<ParticipantData>& GetParticipantData() { return m_participantData; }
-	std::optional<SlatePaymentProof>& GetPaymentProof() { return m_proofOpt; }
-	const std::optional<SlatePaymentProof>& GetPaymentProof() const { return m_proofOpt; }
+	const uuids::uuid& GetId() const noexcept { return slateId; }
+	uint64_t GetAmount() const noexcept { return amount; }
+	uint64_t GetFee() const { return fee; }
+	uint64_t GetLockHeight() const noexcept { return featureArgsOpt.has_value() ? featureArgsOpt.value().lockHeightOpt.value_or(0) : 0; }
+	std::optional<SlatePaymentProof>& GetPaymentProof() noexcept { return proofOpt; }
+	const std::optional<SlatePaymentProof>& GetPaymentProof() const noexcept { return proofOpt; }
 
-	void AddParticpantData(const ParticipantData& participantData) { m_participantData.push_back(participantData); }
-	void UpdateTransaction(const Transaction& transaction) { m_transaction = transaction; }
-
-	Json::Value ToJSON() const
+	std::vector<TransactionInput> GetInputs() const noexcept
 	{
-		Json::Value slateNode;
-		slateNode["version_info"] = m_versionInfo.ToJSON();
-		if (m_versionInfo.GetVersion() >= 3)
+		std::vector<TransactionInput> inputs;
+		for (const SlateCommitment& com : commitments)
 		{
-			slateNode["ttl_cutoff_height"] = Json::Value(Json::nullValue); // TODO: Implement
-			slateNode["payment_proof"] = m_proofOpt.has_value() ? m_proofOpt.value().ToJSON() : Json::Value(Json::nullValue);
+			if (!com.proofOpt.has_value()) {
+				inputs.push_back(TransactionInput{ com.features, com.commitment });
+			}
 		}
 
-		slateNode["num_participants"] = m_numParticipants;
-		slateNode["id"] = uuids::to_string(m_slateId);
-		slateNode["amount"] = std::to_string(m_amount);
-		slateNode["fee"] = std::to_string(m_fee);
-		slateNode["height"] = std::to_string(m_blockHeight);
-		slateNode["lock_height"] = std::to_string(m_lockHeight);
-		slateNode["tx"] = m_transaction.ToJSON();
-
-		Json::Value participantDataNode;
-		for (const ParticipantData& participant : m_participantData)
-		{
-			participantDataNode.append(participant.ToJSON());
-		}
-		slateNode["participant_data"] = participantDataNode;
-
-		return slateNode;
+		return inputs;
 	}
 
-	static Slate FromJSON(const Json::Value& slateNode)
+	std::vector<TransactionOutput> GetOutputs() const noexcept
 	{
-		// Version info
-		const uint16_t version = (uint16_t)slateNode.get("version", Json::Value(0)).asUInt();
-		const Json::Value versionInfoJSON = slateNode.get("version_info", Json::nullValue);
-		SlateVersionInfo versionInfo = (versionInfoJSON != Json::nullValue) ? SlateVersionInfo::FromJSON(versionInfoJSON) : SlateVersionInfo(version);
-
-		const uint64_t numParticipants = JsonUtil::GetRequiredUInt64(slateNode, "num_participants");
-		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredField(slateNode,"id").asString());
-		if (!slateIdOpt.has_value())
+		std::vector<TransactionOutput> outputs;
+		for (const SlateCommitment& com : commitments)
 		{
-			throw DESERIALIZE_FIELD_EXCEPTION("id");
+			if (com.proofOpt.has_value()) {
+				outputs.push_back(TransactionOutput{ com.features, com.commitment, com.proofOpt.value() });
+			}
 		}
 
-		const uint64_t amount = JsonUtil::GetRequiredUInt64(slateNode, "amount");
-		const uint64_t fee = JsonUtil::GetRequiredUInt64(slateNode, "fee");
-		const uint64_t height = JsonUtil::GetRequiredUInt64(slateNode, "height");
-		const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(slateNode, "lock_height");
+		return outputs;
+	}
 
-		Transaction transaction = Transaction::FromJSON(JsonUtil::GetRequiredField(slateNode, "tx"));
+	/*
+		ver.slate_version	u16	2	
+		ver.block_header_version	u16	2	
+		id	Uuid	16	binary Uuid representation
+		sta	u8	1	See Status Byte
+		offset	BlindingFactor	32
+		Optional field status	u8	1	See Optional Field Status
+		num_parts	u8	(1)	If present
+		amt	u64	(4)	If present
+		fee	u64	(4)	If present
+		feat	u8	(1)	If present
+		ttl	u64	(4)	If present
+		sigs length	u8	1	Number of entries in the sigs struct
+		sigs entries	struct	varies	See Sigs Entries
+		Optional struct status	u8	1	See Optional Struct Status
+		coms length	u16	(2)	If present
+		coms entries	struct	(varies)	If present. See Coms Entries
+		proof	struct	(varies)	If present. See Proof
+		feat_args entries	struct	(varies)	If present. See Feature Args
+	*/
+	void Serialize(Serializer& serializer) const
+	{
+		serializer.Append<uint16_t>(version);
+		serializer.Append<uint16_t>(blockVersion);
+		serializer.AppendBigInteger<16>(CBigInteger<16>{ (uint8_t*)slateId.as_bytes().data() });
+		serializer.Append<uint8_t>(stage.ToByte());
+		serializer.AppendBigInteger<32>(offset.GetBytes());
 
-		std::optional<SlatePaymentProof> proofOpt = std::nullopt;
-		std::optional<Json::Value> proofJsonOpt = JsonUtil::GetOptionalField(slateNode, "payment_proof");
-		if (proofJsonOpt.has_value() && !proofJsonOpt.value().isNull())
-		{
-			proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::FromJSON(proofJsonOpt.value()));
+		OptionalFieldStatus fieldStatus;
+		fieldStatus.include_num_parts = (numParticipants != 2);
+		fieldStatus.include_amt = (amount != 0);
+		fieldStatus.include_fee = (fee != 0);
+		fieldStatus.include_feat = (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL);
+		fieldStatus.include_ttl = (ttl != 0);
+		serializer.Append<uint8_t>(fieldStatus.ToByte());
+
+		if (fieldStatus.include_num_parts) {
+			serializer.Append<uint8_t>(numParticipants);
 		}
 
-		Slate slate(
-			std::move(versionInfo),
-			numParticipants,
-			std::move(slateIdOpt.value()),
-			std::move(transaction),
-			amount,
-			fee,
-			height,
-			lockHeight,
-			proofOpt
-		);
+		if (fieldStatus.include_amt) {
+			serializer.Append<uint64_t>(amount);
+		}
 
-		const Json::Value participantDataNode = JsonUtil::GetRequiredField(slateNode, "participant_data");
-		for (size_t i = 0; i < participantDataNode.size(); i++)
+		if (fieldStatus.include_fee) {
+			serializer.Append<uint64_t>(fee);
+		}
+
+		if (fieldStatus.include_feat) {
+			serializer.Append<uint8_t>((uint8_t)kernelFeatures);
+		}
+
+		if (fieldStatus.include_ttl) {
+			serializer.Append<uint64_t>(ttl);
+		}
+
+		serializer.Append<uint8_t>((uint8_t)sigs.size());
+		for (const auto& sig : sigs)
 		{
-			const Json::Value participantJSON = participantDataNode.get(Json::ArrayIndex(i), Json::nullValue);
-			slate.AddParticpantData(ParticipantData::FromJSON(participantJSON));
+			sig.Serialize(serializer);
+		}
+
+		OptionalStructStatus structStatus;
+		structStatus.include_coms = !commitments.empty();
+		structStatus.include_proof = proofOpt.has_value();
+		serializer.Append<uint8_t>(structStatus.ToByte());
+
+		if (structStatus.include_coms) {
+			serializer.Append<uint16_t>((uint16_t)commitments.size());
+
+			for (const auto& commitment : commitments)
+			{
+				commitment.Serialize(serializer);
+			}
+		}
+
+		if (structStatus.include_proof) {
+			proofOpt.value().Serialize(serializer);
+		}
+
+		if (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
+			// TODO: Figure this out.
+		}
+	}
+
+	static Slate Deserialize(ByteBuffer& byteBuffer)
+	{
+		Slate slate;
+		slate.version = byteBuffer.ReadU16();
+		slate.blockVersion = byteBuffer.ReadU16();
+
+		std::vector<unsigned char> slateIdVec = byteBuffer.ReadBigInteger<16>().GetData();
+		std::array<unsigned char, 16> slateIdArr;
+		std::copy_n(slateIdVec.begin(), 16, slateIdArr.begin());
+		slate.slateId = uuids::uuid(slateIdArr);
+
+		slate.stage = SlateStage::FromByte(byteBuffer.ReadU8());
+		slate.offset = byteBuffer.ReadBigInteger<32>();
+
+		OptionalFieldStatus fieldStatus = OptionalFieldStatus::FromByte(byteBuffer.ReadU8());
+
+		if (fieldStatus.include_num_parts) {
+			slate.numParticipants = byteBuffer.ReadU8();
+		}
+
+		if (fieldStatus.include_amt) {
+			slate.amount = byteBuffer.ReadU64();
+		}
+
+		if (fieldStatus.include_fee) {
+			slate.fee = byteBuffer.ReadU64();
+		}
+
+		if (fieldStatus.include_feat) {
+			slate.kernelFeatures = (EKernelFeatures)byteBuffer.ReadU8();
+		}
+
+		if (fieldStatus.include_ttl) {
+			slate.ttl = byteBuffer.ReadU64();
+		}
+
+		const uint8_t numSigs = byteBuffer.ReadU8();
+		for (uint8_t s = 0; s < numSigs; s++)
+		{
+			slate.sigs.push_back(SlateSignature::Deserialize(byteBuffer));
+		}
+
+		OptionalStructStatus structStatus = OptionalStructStatus::FromByte(byteBuffer.ReadU8());
+
+		if (structStatus.include_coms) {
+			const uint16_t numComs = byteBuffer.ReadU16();
+
+			for (uint16_t c = 0; c < numComs; c++)
+			{
+				slate.commitments.push_back(SlateCommitment::Deserialize(byteBuffer));
+			}
+		}
+
+		if (structStatus.include_proof) {
+			slate.proofOpt = std::make_optional<SlatePaymentProof>(SlatePaymentProof::Deserialize(byteBuffer));
+		}
+
+		if (slate.kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
+			// TODO: Figure this out.
 		}
 
 		return slate;
 	}
 
-private:
-	// Slate format version
-	SlateVersionInfo m_versionInfo;
-	// The number of participants intended to take part in this transaction
-	uint64_t m_numParticipants;
-	// Unique transaction/slate ID, selected by sender
-	uuids::uuid m_slateId;
-	// The core transaction data:
-	// inputs, outputs, kernels, kernel offset
-	Transaction m_transaction;
-	// base amount (excluding fee)
-	uint64_t m_amount;
-	// fee amount
-	uint64_t m_fee;
-	// Block height for the transaction
-	uint64_t m_blockHeight;
-	// Lock height
-	uint64_t m_lockHeight;
-	// Participant data, each participant in the transaction will insert their public data here.
-	// For now, 0 is sender and 1 is receiver, though this will change for multi-party.
-	std::vector<ParticipantData> m_participantData;
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["ver"] = version + ":" + blockVersion;
+		json["id"] = uuids::to_string(slateId);
+		json["sta"] = stage.ToString();
+		json["off"] = offset.ToHex();
 
-	std::optional<SlatePaymentProof> m_proofOpt;
+		if (numParticipants != 2) {
+			json["num_parts"] = std::to_string(numParticipants);
+		}
+
+		if (fee != 0) {
+			json["fee"] = std::to_string(fee);
+		}
+
+		if (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
+			json["feat"] = std::to_string((uint64_t)kernelFeatures);
+			assert(featureArgsOpt.has_value());
+			json["feat_args"] = featureArgsOpt.value().ToJSON();
+		}
+
+		if (ttl != 0) {
+			json["ttl"] = std::to_string(ttl);
+		}
+
+		Json::Value sigsJson(Json::arrayValue);
+		for (const auto& sig : sigs)
+		{
+			sigsJson.append(sig.ToJSON());
+		}
+		json["sigs"] = sigsJson;
+
+		Json::Value comsJson(Json::arrayValue);
+		for (const auto& commitment : commitments)
+		{
+			comsJson.append(commitment.ToJSON());
+		}
+		json["coms"] = comsJson;
+
+		if (proofOpt.has_value()) {
+			json["proof"] = proofOpt.value().ToJSON();
+		}
+
+		return json;
+	}
+
+	static Slate FromJSON(const Json::Value& json)
+	{
+		std::vector<std::string> versionParts = StringUtil::Split(JsonUtil::GetRequiredString(json, "ver"), ":");
+		if (versionParts.size() != 2)
+		{
+			throw std::exception();
+		}
+
+		std::optional<uuids::uuid> slateIdOpt = uuids::uuid::from_string(JsonUtil::GetRequiredString(json, "id"));
+		if (!slateIdOpt.has_value())
+		{
+			throw DESERIALIZE_FIELD_EXCEPTION("id");
+		}
+
+		auto featuresOpt = JsonUtil::GetOptionalField(json, "feat");
+
+		Slate slate;
+		slate.version = (uint16_t)std::stoul(versionParts[0]);
+		slate.blockVersion = (uint16_t)std::stoul(versionParts[1]);
+		slate.slateId = slateIdOpt.value();
+		slate.stage = SlateStage::FromString(JsonUtil::GetRequiredString(json, "sta"));
+		slate.offset = BlindingFactor::FromHex(JsonUtil::GetRequiredString(json, "off"));
+
+		slate.numParticipants = JsonUtil::GetUInt8Opt(json, "num_parts").value_or(2);
+		slate.fee = JsonUtil::GetRequiredUInt64(json, "fee");
+		slate.amount = JsonUtil::GetRequiredUInt64(json, "amt");
+		slate.kernelFeatures = (EKernelFeatures)JsonUtil::GetUInt8Opt(json, "feat").value_or(0);
+		// TODO: Feat args
+		slate.ttl = JsonUtil::GetUInt64Opt(json, "ttl").value_or(0);
+
+		std::vector<Json::Value> sigs = JsonUtil::GetRequiredArray(json, "sigs");
+		for (const Json::Value& sig : sigs)
+		{
+			slate.sigs.push_back(SlateSignature::FromJSON(sig));
+		}
+
+		std::vector<Json::Value> commitmentsJson = JsonUtil::GetArray(json, "coms");
+		for (const Json::Value& commitmentJson : commitmentsJson)
+		{
+			slate.commitments.push_back(SlateCommitment::FromJSON(commitmentJson));
+		}
+
+		std::optional<Json::Value> proofJsonOpt = JsonUtil::GetOptionalField(json, "proof");
+		if (proofJsonOpt.has_value() && !proofJsonOpt.value().isNull()) {
+			slate.proofOpt = std::make_optional(SlatePaymentProof::FromJSON(proofJsonOpt.value()));
+		}
+
+		return slate;
+	}
 };

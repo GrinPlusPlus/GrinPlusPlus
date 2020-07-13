@@ -252,18 +252,6 @@ PublicKey Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
 	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }
 
-std::unique_ptr<CompactSignature> Crypto::SignMessage(const SecretKey& secretKey, const PublicKey& publicKey, const std::string& message)
-{
-	const Hash messageHash = Crypto::Blake2b(std::vector<unsigned char>(message.cbegin(), message.cend()));
-	return AggSig::GetInstance().SignMessage(secretKey, publicKey, messageHash);
-}
-
-bool Crypto::VerifyMessageSignature(const CompactSignature& signature, const PublicKey& publicKey, const std::string& message)
-{
-	const Hash messageHash = Crypto::Blake2b(std::vector<unsigned char>(message.cbegin(), message.cend()));
-	return AggSig::GetInstance().VerifyMessageSignature(signature, publicKey, messageHash);
-}
-
 std::unique_ptr<CompactSignature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);

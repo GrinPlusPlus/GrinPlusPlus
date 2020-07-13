@@ -15,6 +15,8 @@ public:
 	//
 	// Constructors
 	//
+	BlindingFactor() = default;
+
 	BlindingFactor(Hash&& blindingFactorBytes)
 		: m_blindingFactorBytes(std::move(blindingFactorBytes))
 	{
@@ -38,16 +40,17 @@ public:
 	//
 	BlindingFactor& operator=(const BlindingFactor& other) = default;
 	BlindingFactor& operator=(BlindingFactor&& other) noexcept = default;
-	inline bool operator<(const BlindingFactor& rhs) const { return m_blindingFactorBytes < rhs.GetBytes(); }
-	inline bool operator!=(const BlindingFactor& rhs) const { return m_blindingFactorBytes != rhs.GetBytes(); }
-	inline bool operator==(const BlindingFactor& rhs) const { return m_blindingFactorBytes == rhs.GetBytes(); }
+	bool operator<(const BlindingFactor& rhs) const { return m_blindingFactorBytes < rhs.GetBytes(); }
+	bool operator!=(const BlindingFactor& rhs) const { return m_blindingFactorBytes != rhs.GetBytes(); }
+	bool operator==(const BlindingFactor& rhs) const { return m_blindingFactorBytes == rhs.GetBytes(); }
 
 	//
 	// Getters
 	//
-	inline const CBigInteger<32>& GetBytes() const { return m_blindingFactorBytes; }
-	inline const std::vector<unsigned char>& GetVec() const { return m_blindingFactorBytes.GetData(); }
-	inline const unsigned char* data() const { return m_blindingFactorBytes.data(); }
+	const CBigInteger<32>& GetBytes() const { return m_blindingFactorBytes; }
+	const std::vector<unsigned char>& GetVec() const { return m_blindingFactorBytes.GetData(); }
+	const unsigned char* data() const { return m_blindingFactorBytes.data(); }
+	std::string ToHex() const { return m_blindingFactorBytes.ToHex(); }
 
 	//
 	// Serialization/Deserialization
@@ -60,6 +63,11 @@ public:
 	static BlindingFactor Deserialize(ByteBuffer& byteBuffer)
 	{
 		return BlindingFactor(byteBuffer.ReadBigInteger<32>());
+	}
+
+	static BlindingFactor FromHex(const std::string& hex)
+	{
+		return BlindingFactor(CBigInteger<32>::FromHex(hex));
 	}
 
 	//

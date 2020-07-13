@@ -9,35 +9,35 @@
 class FinalizeSlateBuilder
 {
 public:
-	Slate Finalize(
+	std::pair<Slate, Transaction> Finalize(
 		Locked<Wallet> wallet,
 		const SecureVector& masterSeed,
-		const Slate& slate
+		const Slate& rcvSlate
 	) const;
 
 private:
 	bool AddPartialSignature(
-		const Wallet::CPtr& pWallet,
-		const SecureVector& masterSeed,
-		Slate& slate,
+		const SlateContextEntity& context,
+		Slate& finalizeSlate,
 		const Hash& kernelMessage
 	) const;
 
-	bool AddFinalTransaction(
-		Slate& slate,
+	std::unique_ptr<Transaction> BuildTransaction(
+		Slate& finalizeSlate,
 		const Hash& kernelMessage,
 		const Commitment& finalExcess
 	) const;
 
 	bool VerifyPaymentProofs(
 		const std::unique_ptr<WalletTx>& pWalletTx,
-		const Slate& slate,
+		const Slate& finalizeSlate,
 		const Commitment& finalExcess
 	) const;
 
 	void UpdateDatabase(
 		const Wallet::Ptr& pWallet,
 		const SecureVector& masterSeed,
-		Slate& finalSlate
+		const WalletTx& walletTx,
+		const Slate& finalizeSlate
 	) const;
 };

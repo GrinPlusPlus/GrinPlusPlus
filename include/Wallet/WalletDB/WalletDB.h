@@ -9,6 +9,7 @@
 #include <Wallet/WalletDB/Models/EncryptedSeed.h>
 #include <Wallet/KeyChainPath.h>
 #include <Wallet/WalletDB/Models/SlateContextEntity.h>
+#include <Wallet/Models/Slate/Slate.h>
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Wallet/WalletTx.h>
 
@@ -18,6 +19,17 @@ public:
 	virtual ~IWalletDB() = default;
 
 	virtual KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) = 0;
+
+	virtual std::unique_ptr<Slate> LoadSlate(
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId,
+		const SlateStage& stage
+	) const = 0;
+
+	virtual void SaveSlate(
+		const SecureVector& masterSeed,
+		const Slate& slate
+	) = 0;
 
 	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;
 	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext) = 0;

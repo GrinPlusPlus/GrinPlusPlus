@@ -10,27 +10,24 @@ class SlateUtil
 public:
 	static Commitment CalculateFinalExcess(const Slate& slate)
 	{
-		const Transaction& transaction = slate.GetTransaction();
-		const TransactionKernel& kernel = slate.GetTransaction().GetKernels().front();
+		std::vector<TransactionInput> inputs = slate.GetInputs();
+		std::vector<TransactionOutput> outputs = slate.GetOutputs();
 
-		// Build the final excess based on final tx and offset
 		std::vector<Commitment> inputCommitments;
 		std::transform(
-			transaction.GetInputs().cbegin(),
-			transaction.GetInputs().cend(),
+			inputs.cbegin(), inputs.cend(),
 			std::back_inserter(inputCommitments),
 			[](const TransactionInput& input) -> Commitment { return input.GetCommitment(); }
 		);
-		inputCommitments.emplace_back(Crypto::CommitBlinded(0, transaction.GetOffset()));
+		inputCommitments.emplace_back(Crypto::CommitBlinded(0, slate.offset));
 
 		std::vector<Commitment> outputCommitments;
 		std::transform(
-			transaction.GetOutputs().cbegin(),
-			transaction.GetOutputs().cend(),
+			outputs.cbegin(), outputs.cend(),
 			std::back_inserter(outputCommitments),
 			[](const TransactionOutput& output) -> Commitment { return output.GetCommitment(); }
 		);
-		outputCommitments.emplace_back(Crypto::CommitTransparent(kernel.GetFee()));
+		outputCommitments.emplace_back(Crypto::CommitTransparent(slate.fee));
 
 		return Crypto::AddCommitments(outputCommitments, inputCommitments);
 	}

@@ -218,8 +218,7 @@ public:
                     "Ok": {
                         "foreign_api_version": 2,
                         "supported_slate_versions": [
-                            "V4",
-                            "V3"
+                            "V4"
                         ]
                     }
                 }

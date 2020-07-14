@@ -37,8 +37,10 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		walletTxId,
 		EBulletproofType::ENHANCED
 	);
-	SecretKey secretKey = outputData.GetBlindingFactor();
+	const SecretKey& secretKey = outputData.GetBlindingFactor();
 	SecretKey secretNonce = Crypto::GenerateSecureNonce();
+
+	// TODO: Adjust offset?
 
 	// Add receiver ParticipantData
 	SlateSignature signature = BuildSignature(receiveSlate, secretKey, secretNonce);
@@ -87,14 +89,6 @@ bool ReceiveSlateBuilder::VerifySlateStatus(
 	}
 
 	// TODO: Verify fees
-
-	//// Generate message
-	//const std::vector<TransactionKernel>& kernels = slate.GetTransaction().GetKernels();
-	//if (kernels.size() != 1)
-	//{
-	//	WALLET_ERROR_F("Slate {} had {} kernels.", uuids::to_string(slate.GetId()), kernels.size());
-	//	throw WALLET_EXCEPTION("Expected 1 kernel.");
-	//}
 
 	return true;
 }

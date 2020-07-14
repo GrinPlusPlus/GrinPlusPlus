@@ -254,8 +254,8 @@ public:
 			proofOpt.value().Serialize(serializer);
 		}
 
-		if (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
-			// TODO: Figure this out.
+		if (kernelFeatures == EKernelFeatures::HEIGHT_LOCKED) {
+			serializer.Append<uint64_t>(GetLockHeight());
 		}
 	}
 
@@ -317,7 +317,11 @@ public:
 		}
 
 		if (slate.kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
-			// TODO: Figure this out.
+			SlateFeatureArgs featureArgs;
+			if (slate.kernelFeatures == EKernelFeatures::HEIGHT_LOCKED) {
+				featureArgs.lockHeightOpt = std::make_optional<uint64_t>(byteBuffer.ReadU64());
+			}
+			slate.featureArgsOpt = std::make_optional<SlateFeatureArgs>(std::move(featureArgs));
 		}
 
 		return slate;
@@ -326,7 +330,7 @@ public:
 	Json::Value ToJSON() const
 	{
 		Json::Value json;
-		json["ver"] = version + ":" + blockVersion;
+		json["ver"] = StringUtil::Format("{}:{}", version, blockVersion);
 		json["id"] = uuids::to_string(slateId);
 		json["sta"] = stage.ToString();
 		json["off"] = offset.ToHex();
@@ -339,8 +343,12 @@ public:
 			json["fee"] = std::to_string(fee);
 		}
 
+		if (amount != 0) {
+			json["amt"] = std::to_string(amount);
+		}
+
 		if (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL) {
-			json["feat"] = std::to_string((uint64_t)kernelFeatures);
+			json["feat"] = (uint8_t)kernelFeatures;
 			assert(featureArgsOpt.has_value());
 			json["feat_args"] = featureArgsOpt.value().ToJSON();
 		}

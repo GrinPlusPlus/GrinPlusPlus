@@ -20,6 +20,8 @@
 class ByteBuffer
 {
 public:
+	ByteBuffer(std::vector<unsigned char>&& bytes, const EProtocolVersion version = EProtocolVersion::V1)
+		: m_index(0), m_bytes(std::move(bytes)), m_protocolVersion(version) { }
 	ByteBuffer(const std::vector<unsigned char>& bytes, const EProtocolVersion version = EProtocolVersion::V1)
 		: m_index(0), m_bytes(bytes), m_protocolVersion(version) { }
 
@@ -213,6 +215,6 @@ public:
 
 private:
 	size_t m_index;
-	const std::vector<unsigned char>& m_bytes;
+	std::vector<unsigned char> m_bytes;
 	EProtocolVersion m_protocolVersion;
 };

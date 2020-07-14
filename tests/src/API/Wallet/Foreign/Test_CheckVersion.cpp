@@ -13,8 +13,7 @@ TEST_CASE("CheckVersionResponse")
     okJson["foreign_api_version"] = (uint64_t)2;
 
     Json::Value slateVersionsJson;
-    slateVersionsJson.append("V2");
-    slateVersionsJson.append("V3");
+    slateVersionsJson.append("V4");
     okJson["supported_slate_versions"] = slateVersionsJson;
 
     Json::Value json;
@@ -25,12 +24,12 @@ TEST_CASE("CheckVersionResponse")
         CheckVersionResponse response = CheckVersionResponse::FromJSON(json);
 
         REQUIRE(response.GetForeignApiVersion() == 2);
-        REQUIRE(response.GetSupportedSlateVersions() == std::vector<uint64_t>{ 2, 3 });
+        REQUIRE(response.GetSupportedSlateVersions() == std::vector<uint64_t>{ 4 });
     }
 
     // ToJSON
     {
-        CheckVersionResponse response(2, { 2, 3 });
+        CheckVersionResponse response(2, { 4 });
         REQUIRE(JsonComparator().Compare(json, response.ToJSON()));
     }
 }
@@ -62,5 +61,5 @@ TEST_CASE("API: check_version")
     auto result = CheckVersionResponse::FromJSON(resultOpt.value());
 
     REQUIRE(result.GetForeignApiVersion() == 2);
-    REQUIRE(result.GetSupportedSlateVersions() == std::vector<uint64_t>{ 2, 3 });
+    REQUIRE(result.GetSupportedSlateVersions() == std::vector<uint64_t>{ 4 });
 }

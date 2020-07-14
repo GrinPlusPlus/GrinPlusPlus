@@ -12,7 +12,7 @@ public:
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
-		return request.BuildResult(CheckVersionResponse(2, { 2, 3 }));
+		return request.BuildResult(CheckVersionResponse(2, { 4 }));
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

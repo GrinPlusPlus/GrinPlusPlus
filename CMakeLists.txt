@@ -95,6 +95,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 # Dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+find_package(unofficial-sodium CONFIG REQUIRED)
 include(sqlite3)
 include(minizip)
 include(jsoncpp)
@@ -108,9 +109,12 @@ include(scrypt)
 include(secp256k1-zkp)
 include(sha3)
 include(reproc)
+include(bitcoin)
 add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/ed25519-donna)
+add_subdirectory(deps/chachapoly)
+#add_subdirectory(deps/libsodium-chacha20)
 #add_subdirectory(deps/stduuid)
 
 # Grin++ Projects

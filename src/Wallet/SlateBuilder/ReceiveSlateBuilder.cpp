@@ -158,7 +158,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		Serializer messageSerializer;
 		messageSerializer.Append<uint64_t>(receiveSlate.GetAmount());
 		SlateUtil::CalculateFinalExcess(receiveSlate).Serialize(messageSerializer);
-		messageSerializer.AppendBigInteger(CBigInteger<32>(proof.GetSenderAddress().pubkey));
+		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 		SecretKey64 torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));

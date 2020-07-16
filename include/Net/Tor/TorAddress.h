@@ -1,17 +1,13 @@
 #pragma once
 
 #include <string>
-#include <optional>
 #include <Crypto/ED25519.h>
 
 class TorAddress
 {
 public:
 	TorAddress(const std::string& address, const ed25519_public_key_t& publicKey, const uint8_t version)
-		: m_address(address), m_publicKey(publicKey), m_version(version)
-	{
-	
-	}
+		: m_address(address), m_publicKey(publicKey), m_version(version) { }
 
 	const std::string& ToString() const noexcept { return m_address; }
 	const ed25519_public_key_t& GetPublicKey() const noexcept { return m_publicKey; }

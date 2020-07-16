@@ -131,6 +131,39 @@ public:
 		return result;
 	}
 
+	CBigInteger& operator++()
+	{
+		for (size_t i = NUM_BYTES - 1; i >= 0; i--)
+		{
+			if (m_data[i] == UINT8_MAX) {
+				m_data[i] = 0;
+			}
+			else {
+				++m_data[i];
+				break;
+			}
+		}
+
+		return *this;
+	}
+
+	CBigInteger operator++(int)
+	{
+		CBigInteger<NUM_BYTES, ALLOC> current = *this;
+		for (size_t i = NUM_BYTES - 1; i >= 0; i--)
+		{
+			if (m_data[i] == UINT8_MAX) {
+				m_data[i] = 0;
+			}
+			else {
+				++m_data[i];
+				break;
+			}
+		}
+
+		return current;
+	}
+
 	unsigned char& operator[] (const size_t x) { return m_data[x]; }
 	const unsigned char& operator[] (const size_t x) const { return m_data[x]; }
 

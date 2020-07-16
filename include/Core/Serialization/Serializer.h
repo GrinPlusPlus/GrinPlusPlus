@@ -69,6 +69,11 @@ public:
 		m_serialized.insert(m_serialized.end(), varString.cbegin(), varString.cend());
 	}
 
+	void AppendFixedStr(const std::string& str)
+	{
+		m_serialized.insert(m_serialized.end(), str.cbegin(), str.cend());
+	}
+
 	template<size_t NUM_BYTES>
 	void AppendBigInteger(const CBigInteger<NUM_BYTES>& bigInteger)
 	{

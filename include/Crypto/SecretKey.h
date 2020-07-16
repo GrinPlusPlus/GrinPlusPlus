@@ -9,22 +9,24 @@ template<size_t NUM_BYTES>
 class secret_key_t
 {
 public:
+	secret_key_t() = default;
 	secret_key_t(CBigInteger<NUM_BYTES>&& seed)
-		: m_seed(std::move(seed))
-	{
-
-	}
+		: m_seed(std::move(seed)) { }
 
 	~secret_key_t()
 	{
 		m_seed.erase();
 	}
 
+	bool operator==(const secret_key_t& rhs) const noexcept { return m_seed == rhs.m_seed; }
+	bool operator!=(const secret_key_t& rhs) const noexcept { return m_seed != rhs.m_seed; }
+
 	const CBigInteger<NUM_BYTES>& GetBytes() const noexcept { return m_seed; }
 	const std::vector<unsigned char>& GetVec() const noexcept { return m_seed.GetData(); }
 	SecureVector GetSecure() const { return SecureVector(m_seed.GetData().cbegin(), m_seed.GetData().cend()); }
 
-	const unsigned char* data() const { return m_seed.data(); }
+	unsigned char* data() noexcept { return m_seed.data(); }
+	const unsigned char* data() const noexcept { return m_seed.data(); }
 	size_t size() const { return m_seed.size(); }
 
 	//

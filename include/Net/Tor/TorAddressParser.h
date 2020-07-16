@@ -100,8 +100,7 @@ public:
 				return std::nullopt;
 			}
 
-			ed25519_public_key_t publicKey;
-			publicKey.pubkey = pubkey;
+			ed25519_public_key_t publicKey = CBigInteger<32>(std::move(pubkey));
 			if (IsValid(version, publicKey, checksum))
 			{
 				return std::make_optional<TorAddress>(address, publicKey, version);
@@ -114,6 +113,20 @@ public:
 		}
 
 		return std::nullopt;
+	}
+
+	static TorAddress FromPubKey(const ed25519_public_key_t& pubkey)
+	{
+		uint8_t version = 3;
+
+		std::vector<uint8_t> checksum;
+		assert(BuildChecksum(pubkey, version, checksum));
+
+		std::vector<uint8_t> bytes = pubkey.vec();
+		bytes.insert(bytes.end(), checksum.cbegin(), checksum.cend());
+		bytes.push_back(version);
+
+		return TorAddress(base32::encode(bytes), pubkey, version);
 	}
 
 private:
@@ -164,7 +177,7 @@ private:
 		
 		std::string prefix = ".onion checksum";
 		vec.insert(vec.end(), prefix.cbegin(), prefix.cend());
-		vec.insert(vec.end(), key.pubkey.cbegin(), key.pubkey.cend());
+		vec.insert(vec.end(), key.cbegin(), key.cend());
 		vec.push_back(version);
 		
 		/* Hash the data payload to create the checksum. */

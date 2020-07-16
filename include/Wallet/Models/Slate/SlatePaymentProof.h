@@ -41,10 +41,10 @@ public:
 	static SlatePaymentProof FromJSON(const Json::Value& paymentProofJSON)
 	{
 		ed25519_public_key_t senderAddress;
-		senderAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "saddr"), ED25519_PUBKEY_LEN);
+		senderAddress.bytes = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "saddr"), ED25519_PUBKEY_LEN);
 
 		ed25519_public_key_t receiverAddress;
-		receiverAddress.pubkey = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "raddr"), ED25519_PUBKEY_LEN);
+		receiverAddress.bytes = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "raddr"), ED25519_PUBKEY_LEN);
 
 		std::optional<Signature> receiverSignatureOpt = JsonUtil::GetSignatureOpt(paymentProofJSON, "rsig");
 
@@ -53,8 +53,8 @@ public:
 
 	void Serialize(Serializer& serializer) const
 	{
-		serializer.AppendBigInteger<32>(CBigInteger<32>(m_senderAddress.pubkey));
-		serializer.AppendBigInteger<32>(CBigInteger<32>(m_receiverAddress.pubkey));
+		serializer.AppendBigInteger<32>(m_senderAddress.bytes);
+		serializer.AppendBigInteger<32>(m_receiverAddress.bytes);
 
 		if (m_receiverSignatureOpt.has_value())
 		{
@@ -69,11 +69,9 @@ public:
 
 	static SlatePaymentProof Deserialize(ByteBuffer& byteBuffer)
 	{
-		ed25519_public_key_t senderAddress;
-		senderAddress.pubkey = byteBuffer.ReadBigInteger<32>().GetData();
+		ed25519_public_key_t senderAddress = byteBuffer.ReadBigInteger<32>();
 
-		ed25519_public_key_t receiverAddress;
-		receiverAddress.pubkey = byteBuffer.ReadBigInteger<32>().GetData();
+		ed25519_public_key_t receiverAddress = byteBuffer.ReadBigInteger<32>();
 
 		std::optional<Signature> receiverSignatureOpt = std::nullopt;
 

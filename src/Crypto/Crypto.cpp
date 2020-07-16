@@ -286,3 +286,10 @@ SecretKey Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
 }
+
+SecretKey Crypto::HKDF(const std::optional<std::vector<uint8_t>>&,
+	const std::string&,
+	const std::vector<uint8_t>&)
+{
+	return SecretKey{ }; // TODO: Implement
+}

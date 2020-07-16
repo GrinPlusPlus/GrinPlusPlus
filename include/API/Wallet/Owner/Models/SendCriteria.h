@@ -4,6 +4,7 @@
 #include <Wallet/SessionToken.h>
 #include <Wallet/Models/DTOs/PostMethodDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
+#include <Wallet/Models/Slatepack/SlatepackAddress.h>
 
 class SendCriteria
 {
@@ -18,7 +19,12 @@ public:
 		const Json::Value selectionStrategyJSON = JsonUtil::GetRequiredField(json, "selection_strategy");
 		const SelectionStrategyDTO selectionStrategy = SelectionStrategyDTO::FromJSON(selectionStrategyJSON);
 
-		const std::optional<std::string> addressOpt = JsonUtil::GetStringOpt(json, "address");
+		const std::optional<std::string> addressStrOpt = JsonUtil::GetStringOpt(json, "address");
+		//std::optional<SlatepackAddress> addressOpt = std::nullopt;
+		//if (addressStrOpt.has_value()) {
+		//	addressOpt = SlatepackAddress::Parse(addressStrOpt.value());
+		//}
+
 		const std::optional<std::string> filePathOpt = JsonUtil::GetStringOpt(json, "file");
 
 		std::optional<PostMethodDTO> postMethodOpt = std::nullopt;
@@ -35,7 +41,7 @@ public:
 			messageOpt,
 			numOutputs,
 			selectionStrategy,
-			addressOpt,
+			addressStrOpt,
 			filePathOpt,
 			postMethodOpt
 		);

@@ -201,15 +201,23 @@ SecretKey SendSlateBuilder::CalculatePrivateKey(
 	const std::vector<OutputDataEntity>& inputs,
 	const std::vector<OutputDataEntity>& changeOutputs) const
 {
-	auto getBlindingFactors = [](OutputDataEntity& output) -> BlindingFactor { return BlindingFactor(output.GetBlindingFactor().GetBytes()); };
-
 	// Calculate sum inputs blinding factors xI.
-	std::vector<BlindingFactor> inputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(inputs, getBlindingFactors);
-	BlindingFactor inputBFSum = Crypto::AddBlindingFactors(inputBlindingFactors, std::vector<BlindingFactor>());
+	std::vector<BlindingFactor> inputBlindingFactors;
+	std::transform(
+		inputs.begin(), inputs.end(),
+		std::back_inserter(inputBlindingFactors), 
+		[](const OutputDataEntity& output) { return BlindingFactor(output.GetBlindingFactor().GetBytes()); }
+	);
+	BlindingFactor inputBFSum = Crypto::AddBlindingFactors(inputBlindingFactors, {});
 
 	// Calculate sum change outputs blinding factors xC.
-	std::vector<BlindingFactor> outputBlindingFactors = FunctionalUtil::map<std::vector<BlindingFactor>>(changeOutputs, getBlindingFactors);
-	BlindingFactor outputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, std::vector<BlindingFactor>());
+	std::vector<BlindingFactor> outputBlindingFactors;
+	std::transform(
+		changeOutputs.begin(), changeOutputs.end(),
+		std::back_inserter(outputBlindingFactors),
+		[](const OutputDataEntity& output) { return BlindingFactor(output.GetBlindingFactor().GetBytes()); }
+	);
+	BlindingFactor outputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, {});
 
 	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
 	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&outputBFSum, &inputBFSum);

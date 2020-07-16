@@ -1,6 +1,7 @@
 set(TARGET_NAME Crypto)
 
 file(GLOB SOURCE_CODE
+	"Age.cpp"
 	"AggSig.cpp"
 	"Bulletproofs.cpp"
 	"Crypto.cpp"
@@ -24,5 +25,5 @@ endif(GRINPP_STATIC)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
 
-add_dependencies(${TARGET_NAME} Infrastructure ctaes scrypt secp256k1-zkp ed25519-donna)
-target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure ctaes scrypt secp256k1-zkp ed25519-donna)
+add_dependencies(${TARGET_NAME} Infrastructure ctaes scrypt secp256k1-zkp ed25519-donna unofficial-sodium::sodium chachapoly)
+target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure ctaes scrypt secp256k1-zkp ed25519-donna unofficial-sodium::sodium chachapoly)

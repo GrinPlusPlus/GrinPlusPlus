@@ -205,7 +205,7 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		return nullptr;
 	}
 
-	const Transaction transaction = TransactionBuilder::BuildTransaction(
+	Transaction transaction = TransactionBuilder::BuildTransaction(
 		finalizeSlate.GetInputs(),
 		finalizeSlate.GetOutputs(),
 		kernel,
@@ -244,8 +244,8 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(
 		auto& origProof = paymentProofOpt.value();
 		auto& newProof = finalizeSlate.GetPaymentProof().value();
 
-		if (origProof.GetReceiverAddress().pubkey != newProof.GetReceiverAddress().pubkey
-			|| origProof.GetSenderAddress().pubkey != newProof.GetSenderAddress().pubkey
+		if (origProof.GetReceiverAddress() != newProof.GetReceiverAddress()
+			|| origProof.GetSenderAddress() != newProof.GetSenderAddress()
 			|| !newProof.GetReceiverSignature().has_value())
 		{
 			return false;
@@ -255,7 +255,7 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(
 		Serializer messageSerializer;
 		messageSerializer.Append<uint64_t>(finalizeSlate.GetAmount());
 		finalExcess.Serialize(messageSerializer);
-		messageSerializer.AppendBigInteger(CBigInteger<32>(newProof.GetSenderAddress().pubkey));
+		messageSerializer.AppendBigInteger(newProof.GetSenderAddress().bytes);
 
 		return ED25519::VerifySignature(
 			newProof.GetReceiverAddress(),

@@ -255,4 +255,10 @@ public:
 	);
 
 	static SecretKey GenerateSecureNonce();
+
+	static SecretKey HKDF(
+		const std::optional<std::vector<uint8_t>>& saltOpt,
+		const std::string& label,
+		const std::vector<uint8_t>& inputKeyingMaterial
+	);
 };

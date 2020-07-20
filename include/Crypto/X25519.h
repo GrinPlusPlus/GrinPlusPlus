@@ -83,4 +83,15 @@ public:
 
 		return shared_secret;
 	}
+
+	static x25519_public_key_t ToPubKey(const x25519_secret_key_t& secret)
+	{
+		x25519_public_key_t pubkey;
+		const int result = crypto_scalarmult_curve25519_base(pubkey.data(), secret.data());
+		if (result != 0) {
+			throw std::exception();
+		}
+
+		return pubkey;
+	}
 };

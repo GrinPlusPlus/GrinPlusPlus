@@ -1,7 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
-#include <ed25519-donna/ed25519_donna_tor.h>
+#include <sodium.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
@@ -37,8 +37,8 @@ struct ed25519_public_key_t
 struct ed25519_secret_key_t
 {
 	ed25519_secret_key_t() = default;
-	ed25519_secret_key_t(SecretKey&& bytes_) : bytes(std::move(bytes_)) { }
-	ed25519_secret_key_t(const SecretKey& bytes_) : bytes(bytes_) { }
+	ed25519_secret_key_t(SecretKey64&& bytes_) : bytes(std::move(bytes_)) { }
+	ed25519_secret_key_t(const SecretKey64& bytes_) : bytes(bytes_) { }
 
 	bool operator==(const ed25519_secret_key_t& rhs) const { return bytes == rhs.bytes; }
 	bool operator!=(const ed25519_secret_key_t& rhs) const { return bytes != rhs.bytes; }
@@ -50,7 +50,17 @@ struct ed25519_secret_key_t
 	std::vector<uint8_t>::const_iterator cbegin() const noexcept { return vec().cbegin(); }
 	std::vector<uint8_t>::const_iterator cend() const noexcept { return vec().cend(); }
 
-	SecretKey bytes;
+	SecretKey64 bytes;
+};
+
+struct ed25519_keypair_t
+{
+	ed25519_keypair_t() = default;
+	ed25519_keypair_t(ed25519_public_key_t&& public_key_, ed25519_secret_key_t&& secret_key_)
+		: public_key(std::move(public_key_)), secret_key(std::move(secret_key_)) { }
+
+	ed25519_public_key_t public_key;
+	ed25519_secret_key_t secret_key;
 };
 
 class ED25519
@@ -73,24 +83,7 @@ public:
 
 	static bool IsValid(const ed25519_public_key_t& pubkey)
 	{
-		/* First check that we were not given the identity element */
-		if (ED25519::IsIdentityElement(pubkey))
-		{
-			LOG_WARNING("TOR address is identity element.");
-			return false;
-		}
-
-		/* For any point on the curve, doing l*point should give the identity element
-		 * (where l is the group order). Do the computation and check that the
-		 * identity element is returned. */
-		ed25519_public_key_t result = ED25519::MultiplyWithGroupOrder(pubkey);
-		if (!ED25519::IsIdentityElement(result))
-		{
-			LOG_WARNING("TOR address is invalid ed25519 point.");
-			return false;
-		}
-
-		return true;
+		return crypto_core_ed25519_is_valid_point(pubkey.data()) != 0;
 	}
 
 	/* Return true if <b>point</b> is the identity element of the ed25519 group. */
@@ -107,32 +100,34 @@ public:
 		return tor_memeq(point.data(), ed25519_identity, sizeof(ed25519_identity)) != 0;
 	}
 
-	static ed25519_public_key_t MultiplyWithGroupOrder(const ed25519_public_key_t& pubKey)
+	//static ed25519_public_key_t MultiplyWithGroupOrder(const ed25519_public_key_t& pubKey)
+	//{
+	//	ed25519_public_key_t result;
+	//	const int status = crypto_scalarmult_ed25519(result.data(), pubKey.data());
+	//	if (status != 0)
+	//	{
+	//		throw CryptoException("ED25519::MultiplyWithGroupOrder");
+	//	}
+
+	//	return result;
+	//}
+
+	static ed25519_keypair_t CalculateKeypair(const SecretKey& seed)
 	{
-		ed25519_public_key_t result;
-		const int status = ed25519_donna_scalarmult_with_group_order(result.data(), pubKey.data());
-		if (status != 0)
-		{
-			throw CryptoException("ED25519::MultiplyWithGroupOrder");
+		ed25519_public_key_t public_key;
+		ed25519_secret_key_t secret_key;
+		const int status = crypto_sign_ed25519_seed_keypair(public_key.data(), secret_key.data(), seed.data());
+		if (status != 0) {
+			throw CryptoException("ED25519::CalculateKeypair");
 		}
 
-		return result;
+		return ed25519_keypair_t(std::move(public_key), std::move(secret_key));
 	}
 
-	static SecretKey64 CalculateSecretKey(const SecretKey& seed)
-	{
-		CBigInteger<64> hash = Crypto::SHA512(seed.GetVec());
-		hash[0] &= 248;
-		hash[31] &= 127;
-		hash[31] |= 64;
-
-		return SecretKey64(std::move(hash));
-	}
-
-	static ed25519_public_key_t CalculatePubKey(const SecretKey64& secretKey)
+	static ed25519_public_key_t CalculatePubKey(const ed25519_secret_key_t& secretKey)
 	{
 		ed25519_public_key_t result;
-		const int status = ed25519_donna_pubkey(result.data(), secretKey.data());
+		const int status = crypto_sign_ed25519_sk_to_pk(result.data(), secretKey.data());
 		if (status != 0)
 		{
 			throw CryptoException("ED25519::CalculatePubKey");
@@ -143,20 +138,28 @@ public:
 
 	static bool VerifySignature(const ed25519_public_key_t& publicKey, const Signature& signature, const std::vector<unsigned char>& message)
 	{
-		return ed25519_donna_open(signature.GetSignatureBytes().data(), message.data(), message.size(), publicKey.data()) == 0;
+		std::vector<uint8_t> signature_and_message;
+		signature_and_message.insert(signature_and_message.end(), signature.cbegin(), signature.cend());
+		signature_and_message.insert(signature_and_message.end(), message.cbegin(), message.cend());
+		std::vector<uint8_t> message_out(message.size());
+		unsigned long long message_len = message_out.size();
+
+		const int status = crypto_sign_open(message_out.data(), &message_len, signature_and_message.data(), signature_and_message.size(), publicKey.data());
+
+		return status == 0;
 	}
 
-	static Signature Sign(const SecretKey64& secretKey, const ed25519_public_key_t& pubKey, const std::vector<unsigned char>& message)
+	static Signature Sign(const ed25519_secret_key_t& secretKey, const std::vector<unsigned char>& message)
 	{
-		std::vector<unsigned char> signature(64);
-
-		const int status = ed25519_donna_sign(signature.data(), message.data(), message.size(), secretKey.data(), pubKey.data());
-		if (status != 0)
+		std::vector<uint8_t> signature_bytes(64 + message.size());
+		unsigned long long signature_size = signature_bytes.size();
+		const int status = crypto_sign_ed25519(signature_bytes.data(), &signature_size, message.data(), message.size(), secretKey.data());
+		if (status != 0 || signature_size < 64)
 		{
 			throw CryptoException("ED25519::Sign");
 		}
 
-		return Signature(CBigInteger<64>(std::move(signature)));
+		return Signature(CBigInteger<64>(signature_bytes.data()));
 	}
 
 private:

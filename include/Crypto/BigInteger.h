@@ -29,7 +29,7 @@ public:
 	}
 
 	CBigInteger(const std::vector<unsigned char, ALLOC>& data)
-		: m_data(data)
+		: m_data(data.cbegin(), data.cbegin() + NUM_BYTES)
 	{
 
 	}

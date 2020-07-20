@@ -12,6 +12,8 @@ public:
 	secret_key_t() = default;
 	secret_key_t(CBigInteger<NUM_BYTES>&& seed)
 		: m_seed(std::move(seed)) { }
+	secret_key_t(SecureVector&& seed)
+		: m_seed(seed.data()) { }
 
 	~secret_key_t()
 	{

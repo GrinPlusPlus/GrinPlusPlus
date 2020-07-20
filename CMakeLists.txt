@@ -82,7 +82,6 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
     ${PROJECT_SOURCE_DIR}/deps/zlib
     ${PROJECT_SOURCE_DIR}/deps/Catch2
-    ${PROJECT_SOURCE_DIR}/deps/ed25519-donna
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
     ${PROJECT_SOURCE_DIR}/deps/scheduler/include
     ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
@@ -112,9 +111,8 @@ include(reproc)
 include(bitcoin)
 add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
-add_subdirectory(deps/ed25519-donna)
 add_subdirectory(deps/chachapoly)
-#add_subdirectory(deps/libsodium-chacha20)
+add_subdirectory(deps/rfc6234)
 #add_subdirectory(deps/stduuid)
 
 # Grin++ Projects

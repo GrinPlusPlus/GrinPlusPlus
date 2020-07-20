@@ -36,6 +36,8 @@ public:
 	// Getters
 	//
 	const CBigInteger<64>& GetSignatureBytes() const { return m_signatureBytes; }
+	std::vector<uint8_t>::const_iterator cbegin() const noexcept { return m_signatureBytes.GetData().cbegin(); }
+	std::vector<uint8_t>::const_iterator cend() const noexcept { return m_signatureBytes.GetData().cend(); }
 	const unsigned char* data() const { return m_signatureBytes.data(); }
 	unsigned char* data() { return m_signatureBytes.data(); }
 

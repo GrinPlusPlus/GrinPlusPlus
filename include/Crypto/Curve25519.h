@@ -35,4 +35,12 @@ public:
 
         return montgomery_seckey;
     }
+
+    static x25519_keypair_t ToX25519(const ed25519_keypair_t& edwards_keypair)
+    {
+        x25519_keypair_t x25519_keypair;
+        x25519_keypair.pubkey = ToX25519(edwards_keypair.public_key);
+        x25519_keypair.seckey = ToX25519(edwards_keypair.secret_key);
+        return x25519_keypair;
+    }
 };

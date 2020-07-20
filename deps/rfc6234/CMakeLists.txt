@@ -1,0 +1,13 @@
+set(TARGET_NAME rfc6234)
+
+file(GLOB SOURCE_CODE
+    "${CMAKE_CURRENT_LIST_DIR}/hkdf.c"
+    "${CMAKE_CURRENT_LIST_DIR}/hmac.c"
+    "${CMAKE_CURRENT_LIST_DIR}/sha1.c"
+    "${CMAKE_CURRENT_LIST_DIR}/sha224-256.c"
+    "${CMAKE_CURRENT_LIST_DIR}/sha384-512.c"
+    "${CMAKE_CURRENT_LIST_DIR}/usha.c"
+)
+
+add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
+target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR})

@@ -10,6 +10,7 @@
 #include "ThirdParty/aes.h"
 #include "ThirdParty/siphash.h"
 #include <scrypt/crypto_scrypt.h>
+#include <sha.h>
 
 // Secp256k1
 #include "AggSig.h"
@@ -287,9 +288,27 @@ SecretKey Crypto::GenerateSecureNonce()
 	return AggSig::GetInstance().GenerateSecureNonce();
 }
 
-SecretKey Crypto::HKDF(const std::optional<std::vector<uint8_t>>&,
-	const std::string&,
-	const std::vector<uint8_t>&)
+SecretKey Crypto::HKDF(const std::optional<std::vector<uint8_t>>& saltOpt,
+	const std::string& label,
+	const std::vector<uint8_t>& inputKeyingMaterial)
 {
-	return SecretKey{ }; // TODO: Implement
+	SecretKey output;
+
+	//std::vector<uint8_t> info(label.cbegin(), label.cend());
+	const int result = hkdf(
+		SHAversion::SHA256,
+		saltOpt.has_value() ? saltOpt.value().data() : nullptr,
+		saltOpt.has_value() ? (int)saltOpt.value().size() : 0,
+		inputKeyingMaterial.data(),
+		(int)inputKeyingMaterial.size(),
+		(const unsigned char*)label.data(),
+		(int)label.size(),
+		output.data(),
+		(int)output.size()
+	);
+	if (result != shaSuccess) {
+		throw CryptoException();
+	}
+
+	return output;
 }

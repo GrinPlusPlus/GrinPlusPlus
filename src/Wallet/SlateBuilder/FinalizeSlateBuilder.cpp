@@ -7,6 +7,8 @@
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
 
+// TODO: To help prevent "play" attacks, make sure any outputs provided by the receiver are not already on-chain.
+
 std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,

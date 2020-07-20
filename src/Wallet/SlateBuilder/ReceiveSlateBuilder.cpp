@@ -161,11 +161,10 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-		SecretKey64 torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
 		Signature signature = ED25519::Sign(
-			torKey,
-			proof.GetReceiverAddress(),
+			torKey.secret_key,
 			messageSerializer.GetBytes()
 		);
 		proof.AddSignature(std::move(signature));

@@ -48,7 +48,7 @@ bool TorProcess::RetryInit()
 	return m_pControl != nullptr;
 }
 
-std::shared_ptr<TorAddress> TorProcess::AddListener(const SecretKey64& secretKey, const uint16_t portNumber)
+std::shared_ptr<TorAddress> TorProcess::AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber)
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
 

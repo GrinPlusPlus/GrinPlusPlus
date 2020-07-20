@@ -3,6 +3,7 @@ set(TARGET_NAME Core)
 file(GLOB SOURCE_CODE
     "File/AppendOnlyFile.cpp"
     "Models/*.cpp"
+    "Serialization/Base58.cpp"
     "Traits/*.cpp"
 	"Validation/*.cpp"
 )

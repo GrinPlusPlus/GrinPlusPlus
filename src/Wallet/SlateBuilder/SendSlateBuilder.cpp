@@ -136,10 +136,8 @@ Slate SendSlateBuilder::Build(
 	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;
 	if (torAddressOpt.has_value())
 	{
-		SecretKey64 torKey = KeyChain::FromSeed(m_config, masterSeed).DeriveED25519Key(torPath);
-		ed25519_public_key_t senderAddress = ED25519::CalculatePubKey(torKey);
-
-		proofOpt = std::make_optional(SlatePaymentProof::Create(senderAddress, torAddressOpt.value().GetPublicKey()));
+		ed25519_keypair_t torKey = KeyChain::FromSeed(m_config, masterSeed).DeriveED25519Key(torPath);
+		proofOpt = std::make_optional(SlatePaymentProof::Create(torKey.public_key, torAddressOpt.value().GetPublicKey()));
 	}
 
 	// Add values to Slate for passing to other participants: UUID, inputs, change_outputs, fee, amount, lock_height, kSG, xSG, oS

@@ -24,9 +24,11 @@ public:
 
     static SlatepackAddress Random()
     {
-        SecureVector sec_key = RandomNumberGenerator().GenerateRandomBytes(64);
-        return SlatepackAddress(ED25519::CalculatePubKey(CBigInteger<64>{ sec_key.data() }));
+        SecretKey sec_key = RandomNumberGenerator().GenerateRandomBytes(32);
+        return SlatepackAddress(ED25519::CalculateKeypair(sec_key).public_key);
     }
+
+    bool operator==(const SlatepackAddress& rhs) const noexcept { return ToString() == rhs.ToString(); }
 
     const ed25519_public_key_t& GetEdwardsPubKey() const noexcept { return m_pubkey; }
     x25519_public_key_t ToX25519PubKey() const { return Curve25519::ToX25519(m_pubkey); }
@@ -38,7 +40,13 @@ public:
     {
         std::string str = ToString();
         serializer.Append<uint8_t>((uint8_t)str.size());
-        serializer.AppendFixedStr(str);
+        serializer.AppendStr(str);
+    }
+
+    static SlatepackAddress Deserialize(ByteBuffer& deserializer)
+    {
+        uint8_t size = deserializer.ReadU8();
+        return Parse(deserializer.ReadString(size));
     }
 
 private:

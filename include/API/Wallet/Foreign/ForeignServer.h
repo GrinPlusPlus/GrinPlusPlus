@@ -284,9 +284,9 @@ private:
     {
         try
         {
-            SecretKey64 torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+            ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
-            auto pTorAddress = pTorProcess->AddListener(torKey, portNumber);
+            auto pTorAddress = pTorProcess->AddListener(torKey.secret_key, portNumber);
             if (pTorAddress != nullptr)
             {
                 return std::make_optional(*pTorAddress);

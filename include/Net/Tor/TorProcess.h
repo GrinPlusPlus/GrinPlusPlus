@@ -2,6 +2,7 @@
 
 #include <Config/Config.h>
 #include <Crypto/SecretKey.h>
+#include <Crypto/ED25519.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorConnection.h>
 #include <Common/Util/ThreadUtil.h>
@@ -25,7 +26,7 @@ public:
 		const uint16_t controlPort
 	) noexcept;
 
-	std::shared_ptr<TorAddress> AddListener(const SecretKey64& secretKey, const uint16_t portNumber);
+	std::shared_ptr<TorAddress> AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber);
 	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);
 	bool RemoveListener(const TorAddress& torAddress);
 

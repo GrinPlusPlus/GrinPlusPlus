@@ -3,6 +3,7 @@
 #include "TorControlClient.h"
 
 #include <Crypto/SecretKey.h>
+#include <Crypto/ED25519.h>
 #include <Config/TorConfig.h>
 #include <Net/Tor/TorAddress.h>
 #include <Common/ChildProcess.h>
@@ -14,7 +15,7 @@ public:
 
 	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig) noexcept;
 
-	std::string AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort);
+	std::string AddOnion(const ed25519_secret_key_t& secretKey, const uint16_t externalPort, const uint16_t internalPort);
 	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);
 	bool DelOnion(const TorAddress& torAddress);
 

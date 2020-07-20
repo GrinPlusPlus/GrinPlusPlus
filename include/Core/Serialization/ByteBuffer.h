@@ -162,6 +162,19 @@ public:
 		return std::string((char*)&temp[0], stringLength);
 	}
 
+	std::string ReadString(const size_t size)
+	{
+		if (m_index + size > m_bytes.size())
+		{
+			throw DESERIALIZATION_EXCEPTION("Attempted to read past end of ByteBuffer.");
+		}
+
+		std::vector<unsigned char> temp(m_bytes.cbegin() + m_index, m_bytes.cbegin() + m_index + size);
+		m_index += size;
+
+		return std::string((char*)&temp[0], size);
+	}
+
 	template<size_t NUM_BYTES>
 	CBigInteger<NUM_BYTES> ReadBigInteger()
 	{
@@ -209,6 +222,11 @@ public:
 	size_t GetRemainingSize() const noexcept
 	{
 		return m_bytes.size() - m_index;
+	}
+	
+	std::vector<uint8_t> ReadRemainingBytes() noexcept
+	{
+		return ReadVector(GetRemainingSize());
 	}
 
 	EProtocolVersion GetProtocolVersion() const noexcept { return m_protocolVersion; }

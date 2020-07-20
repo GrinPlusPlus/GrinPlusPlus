@@ -86,9 +86,9 @@ bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const s
 	}
 }
 
-std::string TorControl::AddOnion(const SecretKey64& secretKey, const uint16_t externalPort, const uint16_t internalPort)
+std::string TorControl::AddOnion(const ed25519_secret_key_t& secretKey, const uint16_t externalPort, const uint16_t internalPort)
 {
-	std::string serializedKey = cppcodec::base64_rfc4648::encode(secretKey.GetVec());
+	std::string serializedKey = cppcodec::base64_rfc4648::encode(secretKey.vec());
 
 	return AddOnion(serializedKey, externalPort, internalPort);
 }

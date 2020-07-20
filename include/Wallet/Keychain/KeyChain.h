@@ -11,6 +11,7 @@
 #include <Crypto/RangeProof.h>
 #include <Crypto/RewoundProof.h>
 #include <Crypto/BulletproofType.h>
+#include <Crypto/ED25519.h>
 #include <Common/Secure.h>
 #include <vector>
 
@@ -23,7 +24,7 @@ public:
 
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath) const;
-	SecretKey64 DeriveED25519Key(const KeyChainPath& keyPath) const;
+	ed25519_keypair_t DeriveED25519Key(const KeyChainPath& keyPath) const;
 
 	std::unique_ptr<RewoundProof> RewindRangeProof(
 		const Commitment& commitment,

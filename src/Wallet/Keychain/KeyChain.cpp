@@ -44,12 +44,12 @@ SecretKey KeyChain::DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t
 	return Crypto::BlindSwitch(DerivePrivateKey(keyPath), amount);
 }
 
-SecretKey64 KeyChain::DeriveED25519Key(const KeyChainPath& keyPath) const
+ed25519_keypair_t KeyChain::DeriveED25519Key(const KeyChainPath& keyPath) const
 {
 	SecretKey preSeed = DerivePrivateKey(keyPath);
 	SecretKey seed = Crypto::Blake2b(preSeed.GetVec());
 
-	return ED25519::CalculateSecretKey(seed);
+	return ED25519::CalculateKeypair(seed);
 }
 
 std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commitment, const RangeProof& rangeProof, const EBulletproofType& bulletproofType) const

@@ -10,6 +10,7 @@
 #include <Wallet/Enums/SelectionStrategy.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/Models/DTOs/WalletBalanceDTO.h>
+#include <Wallet/Models/Slatepack/SlatepackAddress.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Net/Tor/TorAddress.h>
@@ -28,6 +29,7 @@ public:
 
 	static Locked<Wallet> LoadWallet(
 		const Config& config,
+		const SecureVector& masterSeed,
 		INodeClientConstPtr pNodeClient,
 		Locked<IWalletDB> walletDB,
 		const std::string& username
@@ -36,6 +38,7 @@ public:
 	const std::string& GetUsername() const { return m_username; }
 	const KeyChainPath& GetUserPath() const { return m_userPath; }
 	Locked<IWalletDB> GetDatabase() const { return m_walletDB; }
+	const SlatepackAddress& GetSlatepackAddress() const noexcept { return m_address; }
 
 	void SetTorAddress(const TorAddress& address) { m_torAddressOpt = std::make_optional(address); }
 	std::optional<TorAddress> GetTorAddress() const { return m_torAddressOpt; }
@@ -71,7 +74,8 @@ private:
 		INodeClientConstPtr pNodeClient,
 		Locked<IWalletDB> walletDB,
 		const std::string& username,
-		KeyChainPath&& userPath
+		KeyChainPath&& userPath,
+		const SlatepackAddress& address
 	);
 
 	const Config& m_config;
@@ -79,6 +83,7 @@ private:
 	Locked<IWalletDB> m_walletDB;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
+	SlatepackAddress m_address;
 	std::optional<TorAddress> m_torAddressOpt;
 	uint16_t m_listenerPort;
 };

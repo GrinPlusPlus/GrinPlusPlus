@@ -7,16 +7,26 @@
 #include <Consensus/Common.h>
 #include <unordered_set>
 
-Wallet::Wallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWalletDB> walletDB, const std::string& username, KeyChainPath&& userPath)
-	: m_config(config), m_pNodeClient(pNodeClient), m_walletDB(walletDB), m_username(username), m_userPath(std::move(userPath))
+Wallet::Wallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWalletDB> walletDB, const std::string& username, KeyChainPath&& userPath, const SlatepackAddress& address)
+	: m_config(config), m_pNodeClient(pNodeClient), m_walletDB(walletDB), m_username(username), m_userPath(std::move(userPath)), m_address(address)
 {
 
 }
 
-Locked<Wallet> Wallet::LoadWallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWalletDB> walletDB, const std::string& username)
+Locked<Wallet> Wallet::LoadWallet(
+	const Config& config,
+	const SecureVector& masterSeed,
+	INodeClientConstPtr pNodeClient,
+	Locked<IWalletDB> walletDB,
+	const std::string& username)
 {
 	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
-	return Locked<Wallet>(std::make_shared<Wallet>(Wallet(config, pNodeClient, walletDB, username, std::move(userPath))));
+
+	ed25519_keypair_t torKey = KeyChain::FromSeed(config, masterSeed).DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+
+	return Locked<Wallet>(std::make_shared<Wallet>(Wallet{
+		config, pNodeClient, walletDB, username, std::move(userPath), SlatepackAddress(torKey.public_key)
+	}));
 }
 
 WalletSummaryDTO Wallet::GetWalletSummary(const SecureVector& masterSeed)

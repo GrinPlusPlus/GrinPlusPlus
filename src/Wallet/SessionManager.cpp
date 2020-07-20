@@ -145,6 +145,7 @@ SessionToken SessionManager::Login(
 	auto pWalletDB = m_pWalletDB->OpenWallet(username, seed);
 	Locked<Wallet> wallet = Wallet::LoadWallet(
 		m_config,
+		seed,
 		m_pNodeClient,
 		pWalletDB,
 		username

@@ -83,11 +83,12 @@ LoginResponse WalletManager::RestoreFromSeed(
 		WALLET_INFO_F("Wallet restored for username: {}", criteria.GetUsername());
 		SessionToken token = m_sessionManager.Write()->Login(pTorProcess, criteria.GetUsername(), entropy);
 
-		auto wallet = m_sessionManager.Read()->GetWallet(token);
-		const uint16_t listenerPort = wallet.Read()->GetListenerPort();
-		std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
+		auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
+		const uint16_t listenerPort = pWallet->GetListenerPort();
+		const SlatepackAddress slatepackAddress = pWallet->GetSlatepackAddress();
+		std::optional<TorAddress> torAddressOpt = pWallet->GetTorAddress();
 
-		return LoginResponse(token, listenerPort, torAddressOpt);
+		return LoginResponse(token, listenerPort, slatepackAddress, torAddressOpt);
 	}
 	catch (std::exception& e)
 	{
@@ -141,9 +142,9 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
 	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
-	SecretKey64 torKey = keyChain.DeriveED25519Key(path);
+	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
-	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey, wallet.Read()->GetListenerPort());
+	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
 	if (pTorAddress != nullptr)
 	{
 		wallet.Write()->SetTorAddress(*pTorAddress);
@@ -181,11 +182,12 @@ LoginResponse WalletManager::Login(
 
 		WALLET_INFO_F("Login successful for username: {}", criteria.GetUsername());
 		CheckForOutputs(token, false);
-		auto wallet = m_sessionManager.Read()->GetWallet(token);
-		const uint16_t listenerPort = wallet.Read()->GetListenerPort();
-		std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
+		auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
+		const uint16_t listenerPort = pWallet->GetListenerPort();
+		const SlatepackAddress slatepackAddress = pWallet->GetSlatepackAddress();
+		std::optional<TorAddress> torAddressOpt = pWallet->GetTorAddress();
 
-		return LoginResponse(token, listenerPort, torAddressOpt);
+		return LoginResponse(token, listenerPort, slatepackAddress, torAddressOpt);
 	}
 	catch (std::exception& e)
 	{

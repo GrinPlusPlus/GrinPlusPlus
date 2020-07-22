@@ -7,6 +7,7 @@
 #include <Wallet/WalletManager.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <API/Wallet/Foreign/Handlers/ReceiveTxHandler.h>
+#include <API/Wallet/Foreign/Handlers/FinalizeTxHandler.h>
 #include <API/Wallet/Foreign/Handlers/CheckVersionHandler.h>
 #include <API/Wallet/Foreign/Handlers/BuildCoinbaseHandler.h>
 #include <optional>
@@ -200,6 +201,8 @@ public:
             }
         */
         pServer->AddMethod("receive_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveTxHandler(walletManager, token)));
+
+        pServer->AddMethod("finalize_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeTxHandler(walletManager, token, pTorProcess)));
 
         /*
             Request:

@@ -63,6 +63,15 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 		throw WALLET_EXCEPTION("Failed to load slate context.");
 	}
 
+	if (finalizeSlate.offset.IsNull()) {
+		finalizeSlate.offset = pWalletTx->GetTransaction().value().GetOffset();
+	} else {
+		finalizeSlate.offset = Crypto::AddBlindingFactors(
+			std::vector<BlindingFactor>{ finalizeSlate.offset, pWalletTx->GetTransaction().value().GetOffset() },
+			std::vector<BlindingFactor>{}
+		);
+	}
+
 	// Add inputs, outputs, and omitted fields
 	finalizeSlate.amount = pSendSlate->amount;
 	finalizeSlate.fee = pSendSlate->fee;

@@ -399,7 +399,7 @@ public:
 		slate.blockVersion = (uint16_t)std::stoul(versionParts[1]);
 		slate.slateId = slateIdOpt.value();
 		slate.stage = SlateStage::FromString(JsonUtil::GetRequiredString(json, "sta"));
-		slate.offset = BlindingFactor::FromHex(JsonUtil::GetRequiredString(json, "off"));
+		slate.offset = JsonUtil::GetBlindingFactorOpt(json, "off").value_or(BlindingFactor{});
 
 		slate.numParticipants = JsonUtil::GetUInt8Opt(json, "num_parts").value_or(2);
 		slate.fee = JsonUtil::GetRequiredUInt64(json, "fee");

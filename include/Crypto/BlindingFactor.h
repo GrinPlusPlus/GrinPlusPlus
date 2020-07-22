@@ -51,6 +51,7 @@ public:
 	const std::vector<unsigned char>& GetVec() const { return m_blindingFactorBytes.GetData(); }
 	const unsigned char* data() const { return m_blindingFactorBytes.data(); }
 	std::string ToHex() const { return m_blindingFactorBytes.ToHex(); }
+	bool IsNull() const noexcept { return m_blindingFactorBytes == CBigInteger<32>{}; }
 
 	//
 	// Serialization/Deserialization

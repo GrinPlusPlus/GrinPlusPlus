@@ -159,6 +159,19 @@ public:
 		return ConvertToBlindingFactor(GetRequiredField(parentJSON, key));
 	}
 
+	static std::optional<BlindingFactor> GetBlindingFactorOpt(const Json::Value& parentJSON, const std::string& key)
+	{
+		const std::optional<Json::Value> json = JsonUtil::GetOptionalField(parentJSON, key);
+		if (!json.has_value())
+		{
+			return std::nullopt;
+		}
+		else
+		{
+			return std::make_optional(ConvertToBlindingFactor(json.value()));
+		}
+	}
+
 	//
 	// Hashes
 	//

@@ -72,7 +72,7 @@ std::unique_ptr<Slate> SlateTable::LoadSlate(
 	std::unique_ptr<Slate> pSlate = nullptr;
 
 	sqlite3_stmt* stmt = nullptr;
-	const std::string query = "SELECT slate FROM slate WHERE slate_id='" + uuids::to_string(slateId) + "' and stage='" + stage.ToString() + "'";
+	const std::string query = "SELECT iv, slate FROM slate WHERE slate_id='" + uuids::to_string(slateId) + "' and stage='" + stage.ToString() + "'";
 	if (sqlite3_prepare_v2(&database, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
 	{
 		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(&database));

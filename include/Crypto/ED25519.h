@@ -33,7 +33,10 @@ struct ed25519_public_key_t
 	CBigInteger<32> bytes;
 };
 
-/** An Ed25519 secret key */
+/*
+ * An Ed25519 secret key
+ * Encoding format: [32 bytes seed | 32 bytes public key]
+ */
 struct ed25519_secret_key_t
 {
 	ed25519_secret_key_t() = default;
@@ -160,6 +163,18 @@ public:
 		}
 
 		return Signature(CBigInteger<64>(signature_bytes.data()));
+	}
+
+	// Given an ed25519_secret_key_t, calculates the 32-byte secret scalar (a) and the PRF secret (RH).
+	// See: http://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/warner/files/2011/11/key-formats.png
+	static SecretKey64 CalculateTorKey(const ed25519_secret_key_t& secretKey)
+	{
+		SecretKey64 torKey;
+		crypto_hash_sha512(torKey.data(), secretKey.data(), 32);
+		torKey[0] &= 248;
+		torKey[31] &= 127;
+		torKey[31] |= 64;
+		return torKey;
 	}
 
 private:

@@ -25,6 +25,7 @@ public:
 
 			ReceiveCriteria criteria(
 				SessionToken(m_token),
+				std::nullopt,
 				Slate(receiveTxRequest.GetSlate()),
 				receiveTxRequest.GetMsg(),
 				std::nullopt,

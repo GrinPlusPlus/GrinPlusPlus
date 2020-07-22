@@ -90,7 +90,7 @@ private:
 
 					if (!iter->second->ContainsSecrets())
 					{
-						RPC_LOG_INFO_F(instance.m_logFile, "REPLY: {}", request.ToString());
+						RPC_LOG_INFO_F(instance.m_logFile, "REPLY: {}", response.ToString());
 					}
 					else if (response.GetError().has_value())
 					{

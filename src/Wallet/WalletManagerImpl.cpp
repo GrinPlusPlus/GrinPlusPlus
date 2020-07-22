@@ -60,11 +60,14 @@ CreateWalletResponse WalletManager::InitializeNewWallet(
 		walletSeed
 	);
 
-	auto wallet = m_sessionManager.Read()->GetWallet(token);
-	const uint16_t listenerPort = wallet.Read()->GetListenerPort();
-	std::optional<TorAddress> torAddressOpt = wallet.Read()->GetTorAddress();
-
-	return CreateWalletResponse(token, listenerPort, walletWords, torAddressOpt);
+	auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
+	return CreateWalletResponse(
+		token,
+		pWallet->GetListenerPort(),
+		walletWords,
+		pWallet->GetSlatepackAddress(),
+		pWallet->GetTorAddress()
+	);
 }
 
 LoginResponse WalletManager::RestoreFromSeed(
@@ -84,11 +87,12 @@ LoginResponse WalletManager::RestoreFromSeed(
 		SessionToken token = m_sessionManager.Write()->Login(pTorProcess, criteria.GetUsername(), entropy);
 
 		auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
-		const uint16_t listenerPort = pWallet->GetListenerPort();
-		const SlatepackAddress slatepackAddress = pWallet->GetSlatepackAddress();
-		std::optional<TorAddress> torAddressOpt = pWallet->GetTorAddress();
-
-		return LoginResponse(token, listenerPort, slatepackAddress, torAddressOpt);
+		return LoginResponse(
+			token,
+			pWallet->GetListenerPort(),
+			pWallet->GetSlatepackAddress(),
+			pWallet->GetTorAddress()
+		);
 	}
 	catch (std::exception& e)
 	{
@@ -134,6 +138,14 @@ std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 
 	return wallet.Read()->GetTorAddress();
+}
+
+SlatepackAddress WalletManager::GetSlatepackAddress(const SessionToken& token) const
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+
+	return wallet.Read()->GetSlatepackAddress();
 }
 
 std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& token, const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
@@ -182,12 +194,14 @@ LoginResponse WalletManager::Login(
 
 		WALLET_INFO_F("Login successful for username: {}", criteria.GetUsername());
 		CheckForOutputs(token, false);
-		auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
-		const uint16_t listenerPort = pWallet->GetListenerPort();
-		const SlatepackAddress slatepackAddress = pWallet->GetSlatepackAddress();
-		std::optional<TorAddress> torAddressOpt = pWallet->GetTorAddress();
 
-		return LoginResponse(token, listenerPort, slatepackAddress, torAddressOpt);
+		auto pWallet = m_sessionManager.Read()->GetWallet(token).Read();
+		return LoginResponse(
+			token,
+			pWallet->GetListenerPort(),
+			pWallet->GetSlatepackAddress(),
+			pWallet->GetTorAddress()
+		);
 	}
 	catch (std::exception& e)
 	{
@@ -463,6 +477,19 @@ BuildCoinbaseResponse WalletManager::BuildCoinbase(const BuildCoinbaseCriteria& 
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
 
 	return wallet.Write()->CreateCoinbase(masterSeed, criteria.GetFees(), criteria.GetPath());
+}
+
+SlatepackMessage WalletManager::DecryptSlatepack(
+	const SessionToken& token,
+	const std::string& armoredSlatepack) const
+{
+	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+
+	KeyChain keychain = KeyChain::FromSeed(m_config, masterSeed);
+	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+	
+	return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
 }
 
 namespace WalletAPI

@@ -23,7 +23,7 @@ enum ErrorCode
 class Error
 {
 public:
-	Error(const int code, const std::string& message, const std::optional<Json::Value>& data)
+	Error(const int code, const std::string& message, const std::optional<Json::Value>& data = std::nullopt)
 		: m_code(code), m_message(message), m_data(data)
 	{
 

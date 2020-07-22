@@ -30,6 +30,7 @@
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>
+#include <Wallet/Models/Slatepack/Armor.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorProcess.h>
 #include <Crypto/SecretKey.h>
@@ -76,6 +77,8 @@ public:
 	) = 0;
 
 	virtual std::vector<std::string> GetAllAccounts() const = 0;
+
+	virtual SlatepackAddress GetSlatepackAddress(const SessionToken& token) const = 0;
 
 	virtual std::optional<TorAddress> GetTorAddress(const SessionToken& token) const = 0;
 
@@ -165,6 +168,11 @@ public:
 	virtual BuildCoinbaseResponse BuildCoinbase(
 		const BuildCoinbaseCriteria& criteria
 	) = 0;
+
+	virtual SlatepackMessage DecryptSlatepack(
+		const SessionToken& token,
+		const std::string& armoredSlatepack
+	) const = 0;
 };
 
 typedef std::shared_ptr<IWalletManager> IWalletManagerPtr;

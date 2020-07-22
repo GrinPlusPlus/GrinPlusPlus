@@ -15,13 +15,6 @@ file(GLOB SOURCE_CODE
 	"Wallet/WalletDaemon.cpp"
 	"Wallet/WalletRestServer.cpp"
 	"Wallet/API/OwnerGetAPI.cpp"
-	"Wallet/API/OwnerPostAPI.cpp"
-	"Wallet/V2/OwnerController.cpp"
-	"Wallet/V2/ChangePassword.cpp"
-	"Wallet/V2/Send/OwnerSend.cpp"
-	"Wallet/V2/Receive/OwnerReceive.cpp"
-	"Wallet/V2/Receive/OwnerReceive.cpp"
-	"Wallet/V2/Finalize/OwnerFinalize.cpp"
 	"GrinJoin/GrinJoinController.cpp"
 )
 

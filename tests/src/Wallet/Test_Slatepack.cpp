@@ -21,7 +21,7 @@ TEST_CASE("SlatepackAddress")
     SlatepackAddress sender = SlatepackAddress::Random();
     Slate slate;
 
-    std::string armored = Armor::ArmorSlatepack(sender, slate, { recipient });
+    std::string armored = Armor::Pack(sender, slate, { recipient });
 
     SlatepackMessage message = Armor::Unpack(armored, x_keypair);
     

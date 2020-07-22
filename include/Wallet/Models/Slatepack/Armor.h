@@ -12,16 +12,23 @@ constexpr inline bool IsWhitespace(char c) noexcept {
 class Armor
 {
 public:
-    static std::string ArmorSlatepack(
+    //
+    // If no recipients are provided, slatepack will be plaintext.
+    // Otherwise, it will encrypt for each recipient.
+    //
+    static std::string Pack(
         const SlatepackAddress& sender,
         const Slate& slate,
-        const std::vector<SlatepackAddress>& recipients)
+        const std::vector<SlatepackAddress>& recipients = {})
     {
         Serializer serializer;
         slate.Serialize(serializer);
         SlatepackMessage slatepack(sender, serializer.GetBytes());
-        std::vector<uint8_t> encrypted = slatepack.Encrypt(recipients);
-        std::string base58_encoded = Base58::SimpleEncodeCheck(encrypted);
+
+        slatepack.m_mode = recipients.empty() ? SlatepackMessage::PLAINTEXT : SlatepackMessage::ENCRYPTED;
+
+        std::vector<uint8_t> serialized = slatepack.Encrypt(recipients);
+        std::string base58_encoded = Base58::SimpleEncodeCheck(serialized);
 
         return StringUtil::Format(
             "{}. {}. {}.",

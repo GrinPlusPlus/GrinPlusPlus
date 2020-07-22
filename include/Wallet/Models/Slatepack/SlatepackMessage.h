@@ -135,7 +135,11 @@ struct SlatepackMessage
             serializer.AppendByteVector(optSerializer.GetBytes(), ESerializeLength::U32);
         }
 
-        serializer.AppendBytes(EncryptPayload(recipients), ESerializeLength::U64);
+        if (m_mode == EMode::PLAINTEXT) {
+            serializer.AppendBytes(m_payload, ESerializeLength::U64);
+        } else {
+            serializer.AppendBytes(EncryptPayload(recipients), ESerializeLength::U64);
+        }
 
         return serializer.GetBytes();
     }

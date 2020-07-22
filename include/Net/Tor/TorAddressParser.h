@@ -147,25 +147,6 @@ private:
 		 * forms of an onion address to users. */
 
 		return ED25519::IsValid(pubkey);
-
-		///* First check that we were not given the identity element */
-		//if (ED25519::IsIdentityElement(pubkey))
-		//{
-		//	LOG_WARNING("TOR address is identity element.");
-		//	return false;
-		//}
-
-		///* For any point on the curve, doing l*point should give the identity element
-		// * (where l is the group order). Do the computation and check that the
-		// * identity element is returned. */
-		//ed25519_public_key_t result = ED25519::MultiplyWithGroupOrder(pubkey);
-		//if (!ED25519::IsIdentityElement(result))
-		//{
-		//	LOG_WARNING("TOR address is invalid ed25519 point.");
-		//	return false;
-		//}
-
-		//return true;
 	}
 
 	/* Using an ed25519 public key and version to build the checksum of an

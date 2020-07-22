@@ -31,6 +31,9 @@ public:
 	const unsigned char* data() const noexcept { return m_seed.data(); }
 	size_t size() const { return m_seed.size(); }
 
+	unsigned char& operator[] (const size_t x) { return m_seed[x]; }
+	const unsigned char& operator[] (const size_t x) const { return m_seed[x]; }
+
 	//
 	// Serialization/Deserialization
 	//

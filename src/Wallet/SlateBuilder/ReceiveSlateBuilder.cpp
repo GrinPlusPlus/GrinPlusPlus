@@ -151,7 +151,14 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		auto& proof = receiveSlate.GetPaymentProof().value();
 		if (proof.GetReceiverAddress() != pWallet->GetTorAddress().value().GetPublicKey())
 		{
-			throw WALLET_EXCEPTION("");
+			throw WALLET_EXCEPTION_F("Payment proof receiver address ({} - {}) does not match wallet's (TOR: [{} - {}], Slatepack: [{} - {}])",
+				proof.GetReceiverAddress().Format(),
+				SlatepackAddress(proof.GetReceiverAddress()).ToString(),
+				pWallet->GetTorAddress().value().GetPublicKey().Format(),
+				SlatepackAddress(pWallet->GetTorAddress().value().GetPublicKey()).ToString(),
+				pWallet->GetSlatepackAddress().GetEdwardsPubKey().Format(),
+				pWallet->GetSlatepackAddress().ToString()
+			);
 		}
 
 		// Message: (amount | kernel commitment | sender address)

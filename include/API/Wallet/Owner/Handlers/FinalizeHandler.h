@@ -23,58 +23,40 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		FinalizeCriteria criteria = FinalizeCriteria::FromJSON(request.GetParams().value());
-
-		if (criteria.GetFile().has_value())
+		struct SlatepackDecryptor : public ISlatepackDecryptor
 		{
-			return FinalizeViaFile(request, criteria, criteria.GetFile().value());
-		}
-		else
-		{
-			Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
+			SlatepackDecryptor(const IWalletManagerPtr& pWalletManager_)
+				: pWalletManager(pWalletManager_){ }
 
-			Json::Value result;
-			result["status"] = "FINALIZED";
-			result["slate"] = slate.ToJSON();
-			return request.BuildResult(result);
+			IWalletManagerPtr pWalletManager;
+
+			SlatepackMessage Decrypt(const SessionToken& token, const std::string& armored) const final
+			{
+				return pWalletManager->DecryptSlatepack(token, armored);
+			}
+		};
+
+		FinalizeCriteria criteria = FinalizeCriteria::FromJSON(request.GetParams().value(), SlatepackDecryptor{ m_pWalletManager });
+
+		Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
+
+		std::vector<SlatepackAddress> recipients;
+		if (!criteria.GetSlatepack().value().m_sender.IsNull()) {
+			recipients.push_back(criteria.GetSlatepack().value().m_sender);
 		}
+
+		SlatepackAddress address = m_pWalletManager->GetSlatepackAddress(criteria.GetToken());
+
+		Json::Value result;
+		result["status"] = "FINALIZED";
+		result["slate"] = slate.ToJSON();
+		result["slatepack"] = Armor::Pack(address, slate, recipients);
+		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }
 
 private:
-	RPC::Response FinalizeViaFile(
-		const RPC::Request& request,
-		const FinalizeCriteria& criteria,
-		const std::string& file) const
-	{
-		// FUTURE: Check write permissions before creating slate
-
-		Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
-
-		Json::Value slateJSON = slate.ToJSON();
-
-		try
-		{
-			FileUtil::WriteTextToFile(FileUtil::ToPath(file), JsonUtil::WriteCondensed(slateJSON));
-			WALLET_INFO_F("Slate file saved to: {}", file);
-
-			Json::Value result;
-			result["status"] = "FINALIZED";
-			result["slate"] = slateJSON;
-			return RPC::Response::BuildResult(request.GetId(), result);
-		}
-		catch (std::exception&)
-		{
-			WALLET_ERROR_F("Slate failed to save to: {}", file);
-
-			Json::Value errorJson;
-			errorJson["status"] = "WRITE_FAILED";
-			errorJson["slate"] = slateJSON;
-			return request.BuildError(RPC::ErrorCode::INTERNAL_ERROR, "Failed to write file.", errorJson);
-		}
-	}
-
 	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;
 };

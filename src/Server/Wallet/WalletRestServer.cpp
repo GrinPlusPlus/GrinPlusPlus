@@ -1,7 +1,6 @@
 #include "WalletRestServer.h"
 #include "WalletContext.h"
 #include "API/OwnerGetAPI.h"
-#include "API/OwnerPostAPI.h"
 
 #include <civetweb.h>
 #include <Net/Util/HTTPUtil.h>
@@ -68,11 +67,6 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 		if (method == HTTP::EHTTPMethod::GET)
 		{
 			return OwnerGetAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
-		}
-		else if (method == HTTP::EHTTPMethod::POST)
-		{
-			OwnerPostAPI postAPI(pContext->m_config, pContext->m_pTorProcess);
-			return postAPI.HandlePOST(pConnection, action, *pContext->m_pWalletManager);
 		}
 	}
 	catch (const SessionTokenException&)

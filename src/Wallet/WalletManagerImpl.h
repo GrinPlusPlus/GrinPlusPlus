@@ -26,6 +26,8 @@ public:
 	SecureString GetSeedWords(const SessionToken& token) final;
 	SecureString GetSeedWords(const GetSeedPhraseCriteria& criteria) final;
 	void CheckForOutputs(const SessionToken& token, const bool fromGenesis) final;
+
+	SlatepackAddress GetSlatepackAddress(const SessionToken& token) const final;
 	std::optional<TorAddress> GetTorAddress(const SessionToken& token) const final;
 	std::optional<TorAddress> AddTorListener(
 		const SessionToken& token,
@@ -76,6 +78,11 @@ public:
 	void CancelByTxId(const SessionToken& token, const uint32_t walletTxId) final;
 
 	BuildCoinbaseResponse BuildCoinbase(const BuildCoinbaseCriteria& criteria) final;
+
+	SlatepackMessage DecryptSlatepack(
+		const SessionToken& token,
+		const std::string& armoredSlatepack
+	) const final;
 
 private:
 	const Config& m_config;

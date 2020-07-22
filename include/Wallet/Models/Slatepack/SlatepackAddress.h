@@ -30,6 +30,8 @@ public:
 
     bool operator==(const SlatepackAddress& rhs) const noexcept { return ToString() == rhs.ToString(); }
 
+    bool IsNull() const noexcept { return m_pubkey.bytes == CBigInteger<32>(); }
+
     const ed25519_public_key_t& GetEdwardsPubKey() const noexcept { return m_pubkey; }
     x25519_public_key_t ToX25519PubKey() const { return Curve25519::ToX25519(m_pubkey); }
 

@@ -88,7 +88,10 @@ bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const s
 
 std::string TorControl::AddOnion(const ed25519_secret_key_t& secretKey, const uint16_t externalPort, const uint16_t internalPort)
 {
-	std::string serializedKey = cppcodec::base64_rfc4648::encode(secretKey.vec());
+	// "ED25519-V3" key is the Base64 encoding of the concatenation of
+	// the 32-byte ed25519 secret scalar in little-endian
+	// and the 32-byte ed25519 PRF secret.
+	std::string serializedKey = cppcodec::base64_rfc4648::encode(ED25519::CalculateTorKey(secretKey).GetVec());
 
 	return AddOnion(serializedKey, externalPort, internalPort);
 }

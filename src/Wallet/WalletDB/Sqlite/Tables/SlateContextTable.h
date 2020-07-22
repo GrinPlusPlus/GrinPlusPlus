@@ -29,14 +29,14 @@ private:
 	static std::vector<unsigned char> Encrypt(
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
-		const CBigInteger<16> iv,
+		const CBigInteger<16>& iv,
 		const SlateContextEntity& slateContext
 	);
 
 	static SlateContextEntity Decrypt(
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
-		const CBigInteger<16> iv,
+		const CBigInteger<16>& iv,
 		const std::vector<unsigned char>& encrypted
 	);
 

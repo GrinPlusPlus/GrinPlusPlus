@@ -56,7 +56,7 @@ void SlateContextTable::SaveSlateContext(
 	CBigInteger<16> iv(RandomNumberGenerator::GenerateRandomBytes(16).data());
 	sqlite3_bind_blob(stmt, 2, (const void*)iv.data(), 16, NULL);
 
-	CBigInteger<32> encrypted = Encrypt(masterSeed, slateId, iv, slateContext);
+	std::vector<uint8_t> encrypted = Encrypt(masterSeed, slateId, iv, slateContext);
 	sqlite3_bind_blob(stmt, 3, (const void*)encrypted.data(), (int)encrypted.size(), NULL);
 
 	sqlite3_step(stmt);
@@ -121,7 +121,7 @@ std::unique_ptr<SlateContextEntity> SlateContextTable::LoadSlateContext(
 std::vector<unsigned char> SlateContextTable::Encrypt(
 	const SecureVector& masterSeed,
 	const uuids::uuid& slateId,
-	const CBigInteger<16> iv,
+	const CBigInteger<16>& iv,
 	const SlateContextEntity& slateContext)
 {
 	Serializer serializer;
@@ -135,7 +135,7 @@ std::vector<unsigned char> SlateContextTable::Encrypt(
 SlateContextEntity SlateContextTable::Decrypt(
 	const SecureVector& masterSeed,
 	const uuids::uuid& slateId,
-	const CBigInteger<16> iv,
+	const CBigInteger<16>& iv,
 	const std::vector<unsigned char>& encrypted)
 {
 	const SecretKey aesKey = DeriveAESKey(masterSeed, slateId);

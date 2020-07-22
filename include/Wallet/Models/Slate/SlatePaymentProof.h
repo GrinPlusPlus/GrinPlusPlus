@@ -22,8 +22,8 @@ public:
 
 	const ed25519_public_key_t& GetSenderAddress() const { return m_senderAddress; }
 	const ed25519_public_key_t& GetReceiverAddress() const { return m_receiverAddress; }
-	const std::optional<Signature>& GetReceiverSignature() const { return m_receiverSignatureOpt; }
-	void AddSignature(Signature&& signature) { m_receiverSignatureOpt = std::make_optional(std::move(signature)); }
+	const std::optional<ed25519_signature_t>& GetReceiverSignature() const { return m_receiverSignatureOpt; }
+	void AddSignature(ed25519_signature_t&& signature) { m_receiverSignatureOpt = std::make_optional(std::move(signature)); }
 
 	Json::Value ToJSON() const
 	{
@@ -46,9 +46,13 @@ public:
 		ed25519_public_key_t receiverAddress;
 		receiverAddress.bytes = JsonUtil::ConvertToVector(JsonUtil::GetRequiredField(paymentProofJSON, "raddr"), ED25519_PUBKEY_LEN);
 
-		std::optional<Signature> receiverSignatureOpt = JsonUtil::GetSignatureOpt(paymentProofJSON, "rsig");
+		std::optional<CBigInteger<64>> receiverSignatureOpt = JsonUtil::GetBigIntegerOpt<64>(paymentProofJSON, "rsig");
 
-		return SlatePaymentProof(senderAddress, receiverAddress, receiverSignatureOpt);
+		return SlatePaymentProof(
+			senderAddress,
+			receiverAddress,
+			receiverSignatureOpt.has_value() ? std::make_optional(ed25519_signature_t{ receiverSignatureOpt.value() }) : std::nullopt
+		);
 	}
 
 	void Serialize(Serializer& serializer) const
@@ -59,7 +63,7 @@ public:
 		if (m_receiverSignatureOpt.has_value())
 		{
 			serializer.Append<uint8_t>(1);
-			serializer.AppendBigInteger<64>(m_receiverSignatureOpt.value().GetSignatureBytes());
+			serializer.AppendBigInteger<64>(m_receiverSignatureOpt.value().bytes);
 		}
 		else
 		{
@@ -70,15 +74,14 @@ public:
 	static SlatePaymentProof Deserialize(ByteBuffer& byteBuffer)
 	{
 		ed25519_public_key_t senderAddress = byteBuffer.ReadBigInteger<32>();
-
 		ed25519_public_key_t receiverAddress = byteBuffer.ReadBigInteger<32>();
 
-		std::optional<Signature> receiverSignatureOpt = std::nullopt;
+		std::optional<ed25519_signature_t> receiverSignatureOpt = std::nullopt;
 
 		const uint8_t hasSignature = byteBuffer.ReadU8();
 		if (hasSignature == 1)
 		{
-			receiverSignatureOpt = std::make_optional(Signature::Deserialize(byteBuffer));
+			receiverSignatureOpt = std::make_optional(ed25519_signature_t{ byteBuffer.ReadBigInteger<64>() });
 		}
 
 		return SlatePaymentProof(senderAddress, receiverAddress, receiverSignatureOpt);
@@ -88,13 +91,15 @@ private:
 	SlatePaymentProof(
 		const ed25519_public_key_t& senderAddress,
 		const ed25519_public_key_t& receiverAddress,
-		const std::optional<Signature>& receiverSignatureOpt)
-		: m_senderAddress(senderAddress), m_receiverAddress(receiverAddress), m_receiverSignatureOpt(receiverSignatureOpt)
+		const std::optional<ed25519_signature_t>& receiverSignatureOpt)
+		: m_senderAddress(senderAddress),
+		m_receiverAddress(receiverAddress),
+		m_receiverSignatureOpt(receiverSignatureOpt)
 	{
 
 	}
 
 	ed25519_public_key_t m_senderAddress;
 	ed25519_public_key_t m_receiverAddress;
-	std::optional<Signature> m_receiverSignatureOpt;
+	std::optional<ed25519_signature_t> m_receiverSignatureOpt;
 };

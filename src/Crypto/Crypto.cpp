@@ -253,6 +253,11 @@ PublicKey Crypto::AddPublicKeys(const std::vector<PublicKey>& publicKeys)
 	return PublicKeys::GetInstance().PublicKeySum(publicKeys);
 }
 
+Commitment Crypto::ToCommitment(const PublicKey& publicKey)
+{
+	return Pedersen::GetInstance().ToCommitment(publicKey);
+}
+
 std::unique_ptr<CompactSignature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);

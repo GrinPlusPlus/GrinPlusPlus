@@ -11,7 +11,7 @@ TEST_CASE("ED25519 Signature")
 	const std::string messageStr = "MESSAGE";
 	std::vector<unsigned char> message(messageStr.begin(), messageStr.end());
 
-	Signature signature = ED25519::Sign(keypair.secret_key, message);
+	ed25519_signature_t signature = ED25519::Sign(keypair.secret_key, message);
 
 	const bool valid = ED25519::VerifySignature(keypair.public_key, signature, message);
 	REQUIRE(valid == true);

@@ -244,6 +244,23 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_pedersen_commitment_to_
   const secp256k1_pedersen_commitment* commit
 );
 
+/** Converts pubkey to a pedersen commit
+ *
+ * Returns 1: Commit succesfully computed.
+ *         0: Error.
+*
+ * In:                 ctx: pointer to a context object
+ *                   pubkey: pointer to a single pubkey
+ * Out:              commit: resulting commit
+ *
+ */
+
+SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_pubkey_to_pedersen_commitment(
+    const secp256k1_context* ctx,
+    secp256k1_pedersen_commitment* commit,
+    const secp256k1_pubkey* pubkey
+);
+
 # ifdef __cplusplus
 }
 # endif

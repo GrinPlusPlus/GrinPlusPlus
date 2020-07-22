@@ -50,6 +50,7 @@ public:
 	const CBigInteger<33>& GetBytes() const noexcept { return m_commitmentBytes; }
 	const std::vector<unsigned char>& GetVec() const noexcept { return m_commitmentBytes.GetData(); }
 	const unsigned char* data() const noexcept { return m_commitmentBytes.data(); }
+	unsigned char* data() noexcept { return m_commitmentBytes.data(); }
 	size_t size() const noexcept { return m_commitmentBytes.size(); }
 
 	//

@@ -30,10 +30,10 @@ Commitment Pedersen::PedersenCommit(const uint64_t value, const BlindingFactor& 
 	const int result = secp256k1_pedersen_commit(m_pContext, &commitment, &blindingFactor.GetBytes()[0], value, &secp256k1_generator_const_h, &secp256k1_generator_const_g);
 	if (result == 1)
 	{
-		std::vector<unsigned char> serializedCommitment(33);
-		secp256k1_pedersen_commitment_serialize(m_pContext, &serializedCommitment[0], &commitment);
+		Commitment commitment_out;
+		secp256k1_pedersen_commitment_serialize(m_pContext, commitment_out.data(), &commitment);
 
-		return Commitment(CBigInteger<33>(std::move(serializedCommitment)));
+		return commitment_out;
 	}
 
 	LOG_ERROR_F("Failed to create commitment. Result: {}, Value: {}", result, value);
@@ -131,6 +131,32 @@ SecretKey Pedersen::BlindSwitch(const SecretKey& blindingFactor, const uint64_t 
 	}
 
 	throw CryptoException("secp256k1_blind_switch failed with error: " + std::to_string(result));
+}
+
+Commitment Pedersen::ToCommitment(const PublicKey& publicKey) const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_mutex);
+
+	secp256k1_pubkey secp_pubkey;
+	const int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &secp_pubkey, publicKey.data(), publicKey.size());
+	if (pubKeyParsed != 1) {
+		throw CryptoException("secp256k1_ec_pubkey_parse failed");
+	}
+
+	secp256k1_pedersen_commitment secp_commitment;
+	const int converted = secp256k1_pubkey_to_pedersen_commitment(m_pContext, &secp_commitment, &secp_pubkey);
+	if (converted != 1) {
+		throw CryptoException("secp256k1_pubkey_to_pedersen_commitment failed");
+	}
+
+	Commitment commitment;
+	const int serialized = secp256k1_pedersen_commitment_serialize(m_pContext, commitment.data(), &secp_commitment);
+	if (serialized != 1) {
+		throw CryptoException("secp256k1_pedersen_commitment_serialize failed");
+	}
+
+	return commitment;
+
 }
 
 std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const secp256k1_context& context, const std::vector<Commitment>& commitments)

@@ -5,6 +5,7 @@
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/Commitment.h>
+#include <Crypto/PublicKey.h>
 #include <shared_mutex>
 
 // Forward Declarations
@@ -20,6 +21,8 @@ public:
 	BlindingFactor PedersenBlindSum(const std::vector<BlindingFactor>& positive, const std::vector<BlindingFactor>& negative) const;
 
 	SecretKey BlindSwitch(const SecretKey& secretKey, const uint64_t amount) const;
+
+	Commitment ToCommitment(const PublicKey& publicKey) const;
 
 	static std::vector<secp256k1_pedersen_commitment*> ConvertCommitments(const secp256k1_context& context, const std::vector<Commitment>& commitments);
 	static void CleanupCommitments(std::vector<secp256k1_pedersen_commitment*>& commitments);

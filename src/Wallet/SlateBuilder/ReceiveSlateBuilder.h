@@ -19,15 +19,14 @@ public:
 		Locked<Wallet> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
-		const std::optional<std::string>& addressOpt
+		const std::optional<SlatepackAddress>& addressOpt
 	) const;
 
 private:
 	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
 	SlateSignature BuildSignature(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce) const;
 	void UpdatePaymentProof(
-		std::shared_ptr<Wallet> pWallet,
-		IWalletDBPtr pWalletDB,
+		const std::shared_ptr<Wallet>& pWallet,
 		const SecureVector& masterSeed,
 		Slate& receiveSlate
 	) const;
@@ -38,7 +37,7 @@ private:
 		const SlateSignature& signature,
 		const OutputDataEntity& outputData,
 		const uint32_t walletTxId,
-		const std::optional<std::string>& addressOpt
+		const std::optional<SlatepackAddress>& addressOpt
 	) const;
 
 	const Config& m_config;

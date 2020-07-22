@@ -11,9 +11,13 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,
 	const Slate& slate,
-	const std::optional<std::string>& addressOpt) const
+	const std::optional<SlatepackAddress>& addressOpt) const
 {
-	WALLET_INFO_F("Receiving {} from {}", slate.GetAmount(), addressOpt.value_or("UNKNOWN"));
+	WALLET_INFO_F(
+		"Receiving {} from {}",
+		slate.GetAmount(),
+		addressOpt.has_value() ? addressOpt.value().ToString() : "UNKNOWN"
+	);
 
 	auto pWallet = wallet.Write();
 	Slate receiveSlate = slate;
@@ -55,7 +59,6 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 
 	UpdatePaymentProof(
 		pWallet.GetShared(),
-		pBatch.GetShared(),
 		masterSeed,
 		receiveSlate
 	);
@@ -108,13 +111,12 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(
 	PublicKey nonce = Crypto::CalculatePublicKey(secretNonce);
 
 	// Generate signature
-	std::vector<SlateSignature> signatures = slate.sigs;
-	signatures.push_back(SlateSignature{ excess, nonce, std::nullopt });
+	slate.sigs.push_back(SlateSignature{ excess, nonce, std::nullopt });
 
 	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
 		secretKey,
 		secretNonce,
-		signatures,
+		slate.sigs,
 		kernelMessage
 	);
 	if (pPartialSignature == nullptr)
@@ -123,21 +125,20 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(
 		throw WALLET_EXCEPTION("Failed to generate signature.");
 	}
 
-	signatures.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
+	slate.sigs.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
 
-	if (!SignatureUtil::VerifyPartialSignatures(signatures, kernelMessage))
+	if (!SignatureUtil::VerifyPartialSignatures(slate.sigs, kernelMessage))
 	{
 		WALLET_ERROR_F("Failed to verify signature for slate {}", uuids::to_string(slate.GetId()));
 		throw WALLET_EXCEPTION("Failed to verify signatures.");
 	}
 
 	// Add receiver's ParticipantData to Slate
-	return signatures.back();
+	return slate.sigs.back();
 }
 
 void ReceiveSlateBuilder::UpdatePaymentProof(
-	std::shared_ptr<Wallet> pWallet,
-	IWalletDBPtr pWalletDB,
+	const std::shared_ptr<Wallet>& pWallet,
 	const SecureVector& masterSeed,
 	Slate& receiveSlate) const
 {
@@ -161,16 +162,19 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 			);
 		}
 
+		Commitment kernel_commitment = SlateUtil::CalculateFinalExcess(receiveSlate);
+		WALLET_INFO_F("Calculated commitment: {}", kernel_commitment.ToHex());
+
 		// Message: (amount | kernel commitment | sender address)
 		Serializer messageSerializer;
 		messageSerializer.Append<uint64_t>(receiveSlate.GetAmount());
-		SlateUtil::CalculateFinalExcess(receiveSlate).Serialize(messageSerializer);
+		kernel_commitment.Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
 		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
 		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
-		Signature signature = ED25519::Sign(
+		ed25519_signature_t signature = ED25519::Sign(
 			torKey.secret_key,
 			messageSerializer.GetBytes()
 		);
@@ -185,7 +189,7 @@ void ReceiveSlateBuilder::UpdateDatabase(
 	const SlateSignature& signature,
 	const OutputDataEntity& outputData,
 	const uint32_t walletTxId,
-	const std::optional<std::string>& addressOpt) const
+	const std::optional<SlatepackAddress>& addressOpt) const
 {
 	// Save OutputDataEntity
 	pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>{ outputData });
@@ -195,7 +199,7 @@ void ReceiveSlateBuilder::UpdateDatabase(
 		walletTxId,
 		EWalletTxType::RECEIVING_IN_PROGRESS,
 		std::make_optional(receiveSlate.GetId()),
-		std::optional<std::string>(addressOpt),
+		addressOpt.has_value() ? std::make_optional(addressOpt.value().ToString()) : std::nullopt,
 		std::nullopt,
 		std::chrono::system_clock::now(),
 		std::nullopt,

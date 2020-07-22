@@ -19,30 +19,30 @@ public:
 	WalletTx(
 		const uint32_t walletTxId,
 		const EWalletTxType type,
-		std::optional<uuids::uuid>&& slateIdOpt,
-		std::optional<std::string>&& addressOpt,
-		std::optional<std::string>&& slateMessageOpt,
+		const std::optional<uuids::uuid>& slateIdOpt,
+		const std::optional<std::string>& addressOpt,
+		const std::optional<std::string>& slateMessageOpt,
 		const std::chrono::system_clock::time_point& creationTime,
 		const std::optional<std::chrono::system_clock::time_point>& confirmationTimeOpt,
 		const std::optional<uint64_t>& confirmationHeightOpt,
 		const uint64_t amountCredited,
 		const uint64_t amountDebited,
 		const std::optional<uint64_t>& feeOpt,
-		std::optional<Transaction>&& transactionOpt,
+		const std::optional<Transaction>& transactionOpt,
 		const std::optional<SlatePaymentProof>& paymentProofOpt
 	)	
 		: m_walletTxId(walletTxId),
 		m_type(type),
-		m_slateIdOpt(std::move(slateIdOpt)),
-		m_addressOpt(std::move(addressOpt)),
-		m_slateMessageOpt(std::move(slateMessageOpt)),
+		m_slateIdOpt(slateIdOpt),
+		m_addressOpt(addressOpt),
+		m_slateMessageOpt(slateMessageOpt),
 		m_creationTime(creationTime),
 		m_confirmationTimeOpt(confirmationTimeOpt),
 		m_confirmedHeightOpt(confirmationHeightOpt),
 		m_amountCredited(amountCredited),
 		m_amountDebited(amountDebited),
 		m_feeOpt(feeOpt),
-		m_transactionOpt(std::move(transactionOpt)),
+		m_transactionOpt(transactionOpt),
 		m_paymentProofOpt(paymentProofOpt)
 	{
 

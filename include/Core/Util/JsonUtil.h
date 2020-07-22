@@ -122,6 +122,26 @@ public:
 	}
 
 	//
+	// BigInteger
+	//
+	template<size_t T> 
+	static CBigInteger<T> GetBigInteger(const Json::Value& parentJSON, const std::string& key)
+	{
+		return CBigInteger<T>(ConvertToVector(GetRequiredField(parentJSON, key), T));
+	}
+
+	template<size_t T>
+	static std::optional<CBigInteger<T>> GetBigIntegerOpt(const Json::Value& parentJSON, const std::string& key)
+	{
+		std::optional<Json::Value> fieldOpt = GetOptionalField(parentJSON, key);
+		if (fieldOpt.has_value()) {
+			return std::make_optional(CBigInteger<T>{ ConvertToVector(fieldOpt.value(), T) });
+		} else {
+			return std::nullopt;
+		}
+	}
+
+	//
 	// BlindingFactors
 	//
 	static Json::Value ConvertToJSON(const BlindingFactor& blindingFactor)

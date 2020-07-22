@@ -191,6 +191,11 @@ public:
 	static PublicKey AddPublicKeys(const std::vector<PublicKey>& publicKeys);
 
 	//
+	// Converts a PublicKey to a Commitment.
+	//
+	static Commitment ToCommitment(const PublicKey& publicKey);
+
+	//
 	// Builds one party's share of a Schnorr signature.
 	// Returns a CompactSignature if successful.
 	//

@@ -98,36 +98,6 @@ private:
         return ret;
     }
 
-    /*
-    pub fn convert_bits<T>(data: &[T], from: u32, to: u32, pad: bool) -> Result<Vec<u8>, Error>
-where
-    T: Into<u8> + Copy,
-{
-    let mut acc: u32 = 0;
-    let mut bits: u32 = 0;
-    let mut ret: Vec<u8> = Vec::new();
-    let maxv: u32 = (1 << 8) - 1;
-    for value in data {
-        let v: u32 = u32::from(Into::<u8>::into(*value));
-        if (v >> 5) != 0 {
-            // Input value exceeds `from` bit size
-            return Err(Error::InvalidData(v as u8));
-        }
-        acc = (acc << 5) | v;
-        bits += 5;
-        while bits >= 8 {
-            bits -= 8;
-            ret.push(((acc >> bits) & maxv) as u8);
-        }
-    }
-    
-    if bits >= 5 || ((acc << (8 - bits)) & maxv) != 0 {
-        return Err(Error::InvalidPadding);
-    }
-    Ok(ret)
-}
-    */
-
     std::string m_hrc;
     std::vector<uint8_t> m_data;
 };

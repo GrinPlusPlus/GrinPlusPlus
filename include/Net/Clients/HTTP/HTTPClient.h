@@ -13,18 +13,19 @@ public:
 
 	HTTP::Response Invoke(const HTTP::Request& request) final
 	{
-		WALLET_INFO_F("Request: {}", request.ToString());
+		//WALLET_INFO_F("Request: {}", request.ToString());
 		try
 		{
 			//if (!m_connected)
 			{
+				std::this_thread::sleep_for(std::chrono::seconds(1));
 				EstablishConnection(request.GetHost(), request.GetPort());
 				WALLET_INFO("Connection established");
 				m_connected = true;
 			}
 
 			std::string lineToWrite = request.ToString();
-			Write(lineToWrite, asio::chrono::seconds(1));
+			Write(lineToWrite, asio::chrono::seconds(2));
 
 			std::string responseLine = ReadLine(asio::chrono::seconds(10));
 			std::istringstream responseStream(responseLine);
@@ -108,11 +109,11 @@ private:
 		auto ipAddress = asio::ip::make_address_v4(address, ec);
 		if (ec)
 		{
-			Connect(address, port, std::chrono::seconds(2));
+			Connect(address, port, std::chrono::seconds(5));
 		}
 		else
 		{
-			Connect(SocketAddress(IPAddress(ipAddress), port), std::chrono::seconds(2));
+			Connect(SocketAddress(IPAddress(ipAddress), port), std::chrono::seconds(5));
 		}
 	}
 };

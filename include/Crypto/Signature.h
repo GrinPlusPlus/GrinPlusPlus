@@ -17,6 +17,8 @@ public:
 	Signature() = default;
 	Signature(CBigInteger<64>&& signatureBytes)
 		: m_signatureBytes(std::move(signatureBytes)) { }
+	Signature(const CBigInteger<64>& signatureBytes)
+		: m_signatureBytes(signatureBytes) { }
 	Signature(const Signature& other) = default;
 	Signature(Signature&& other) noexcept = default;
 
@@ -67,6 +69,8 @@ public:
 	CompactSignature() = default;
 	CompactSignature(CBigInteger<64> && signatureBytes)
 		: Signature(std::move(signatureBytes)) { }
+	CompactSignature(const CBigInteger<64>& signatureBytes)
+		: Signature(signatureBytes) { }
 	virtual ~CompactSignature() = default;
 
 	bool operator==(const CompactSignature& rhs) const noexcept { return GetSignatureBytes() == rhs.GetSignatureBytes(); }

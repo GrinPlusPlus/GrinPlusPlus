@@ -21,8 +21,8 @@
 #define NOMINMAX
 #endif
 
-static uint64_t MIN_SLATE_VERSION = 4;
-static uint64_t MAX_SLATE_VERSION = 4;
+static uint16_t MIN_SLATE_VERSION = 4;
+static uint16_t MAX_SLATE_VERSION = 4;
 
 // A 'Slate' is passed around to all parties to build up all of the public transaction data needed to create a finalized transaction. 
 // Callers can pass the slate around by whatever means they choose, (but we can provide some binary or JSON serialization helpers here).
@@ -402,8 +402,8 @@ public:
 		slate.offset = JsonUtil::GetBlindingFactorOpt(json, "off").value_or(BlindingFactor{});
 
 		slate.numParticipants = JsonUtil::GetUInt8Opt(json, "num_parts").value_or(2);
-		slate.fee = JsonUtil::GetRequiredUInt64(json, "fee");
-		slate.amount = JsonUtil::GetRequiredUInt64(json, "amt");
+		slate.fee = JsonUtil::GetUInt64Opt(json, "fee").value_or(0);
+		slate.amount = JsonUtil::GetUInt64Opt(json, "amt").value_or(0);
 		slate.kernelFeatures = (EKernelFeatures)JsonUtil::GetUInt8Opt(json, "feat").value_or(0);
 		// TODO: Feat args
 		slate.ttl = JsonUtil::GetUInt64Opt(json, "ttl").value_or(0);

@@ -18,10 +18,12 @@ public:
 		params.append(Json::nullValue); // Account path not currently supported
 		params.append(Json::nullValue);
 		RPC::Request receiveTxRequest = RPC::Request::BuildRequest("receive_tx", params);
-		LOG_INFO_F("{}", receiveTxRequest.ToJSON().toStyledString());
+		LOG_INFO_F("REQUEST: {}", receiveTxRequest.ToJSON().toStyledString());
 
 		TorConnectionPtr pTorConnection = pTorProcess->Connect(torAddress);
 		RPC::Response receiveTxResponse = pTorConnection->Invoke(receiveTxRequest, "/v2/foreign");
+
+		LOG_INFO_F("RESPONSE: {}", receiveTxResponse.ToString());
 
 		if (receiveTxResponse.GetError().has_value()) {
 			RPC::Error rpc_error = receiveTxResponse.GetError().value();

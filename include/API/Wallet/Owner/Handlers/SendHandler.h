@@ -34,16 +34,19 @@ public:
 		SlatepackAddress sender_address = m_pWalletManager->GetSlatepackAddress(criteria.GetToken());
 		std::vector<SlatepackAddress> recipients = GetRecipients(criteria);
 
+		if (!recipients.empty()) {
+			criteria.SetSlateVersion(GetSlateVersion(recipients.front().ToTorAddress()));
+		}
+
 		Slate slate = m_pWalletManager->Send(criteria);
 
 		SendResponse::EStatus status = SendResponse::EStatus::SENT;
-
 		std::string slatepack = Armor::Pack(sender_address, slate, recipients);
 
 		if (!recipients.empty()) {
 			try
 			{
-				Slate finalized_slate = SendViaTOR(criteria, recipients.front().ToTorAddress());
+				Slate finalized_slate = SendViaTOR(criteria, slate, recipients.front().ToTorAddress());
 				status = SendResponse::EStatus::FINALIZED;
 
 				slatepack = Armor::Pack(sender_address, finalized_slate);
@@ -76,20 +79,31 @@ private:
 		return recipients;
 	}
 
-	Slate SendViaTOR(SendCriteria& criteria, const TorAddress& torAddress) const
+	uint16_t GetSlateVersion(const TorAddress& torAddress) const
+	{
+		TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
+		if (pTorConnection == nullptr) {
+			return MAX_SLATE_VERSION;
+		}
+
+		CheckVersionClient::Response version_response = CheckVersionClient::Call(*pTorConnection);
+		if (!version_response.error.empty()) {
+			return MAX_SLATE_VERSION;
+		}
+
+		if (version_response.slate_version < MIN_SLATE_VERSION) {
+			throw RPC_EXCEPTION(RPC::Errors::SLATE_VERSION_MISMATCH.GetMsg(), std::nullopt);
+		}
+
+		return version_response.slate_version;
+	}
+
+	Slate SendViaTOR(SendCriteria& criteria, const Slate& sent_slate, const TorAddress& torAddress) const
 	{
 		TorConnectionPtr pTorConnection = m_pTorProcess->Connect(torAddress);
 		if (pTorConnection == nullptr) {
 			throw RPC_EXCEPTION(RPC::Errors::RECEIVER_UNREACHABLE.GetMsg(), std::nullopt);
 		}
-
-		CheckVersionClient::Response version_response = CheckVersionClient::Call(*pTorConnection);
-		if (version_response.slate_version < MIN_SLATE_VERSION) {
-			throw RPC_EXCEPTION(RPC::Errors::SLATE_VERSION_MISMATCH.GetMsg(), std::nullopt);
-		}
-
-		criteria.SetSlateVersion(version_response.slate_version);
-		Slate sent_slate = m_pWalletManager->Send(criteria);
 
 		Slate received_slate = ReceiveTxClient::Call(m_pTorProcess, torAddress, sent_slate);
 

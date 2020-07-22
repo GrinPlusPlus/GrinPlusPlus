@@ -36,9 +36,11 @@ public:
 		{
 			pubNonces.push_back(sig.nonce);
 
-			if (sig.partialOpt.has_value())
-			{
+			if (sig.partialOpt.has_value()) {
+				WALLET_INFO_F("Aggregating signature: {}", sig.partialOpt.value().ToHex());
 				signatures.push_back(sig.partialOpt.value());
+			} else {
+				WALLET_WARNING_F("No signature found for: {}", sig.excess.ToHex());
 			}
 		}
 
@@ -67,6 +69,14 @@ public:
 			{
 				if (!Crypto::VerifyPartialSignature(sig.partialOpt.value(), sig.excess, sumPubKeys, sumPubNonces, message))
 				{
+					WALLET_ERROR_F(
+						"Partial signature {} invalid for excess {}, pubkey_sum {}, nonce_sum {}, and message {}",
+						sig.partialOpt.value().ToHex(),
+						sig.excess.ToHex(),
+						sumPubKeys.ToHex(),
+						sumPubNonces.ToHex(),
+						message.ToHex()
+					);
 					return false;
 				}
 			}

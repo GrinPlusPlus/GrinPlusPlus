@@ -65,6 +65,7 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 
 	if (finalizeSlate.offset.IsNull()) {
 		finalizeSlate.offset = pWalletTx->GetTransaction().value().GetOffset();
+		WALLET_INFO_F("Offset not supplied. Using original: {}", finalizeSlate.offset.ToHex());
 	} else {
 		finalizeSlate.offset = Crypto::AddBlindingFactors(
 			std::vector<BlindingFactor>{ finalizeSlate.offset, pWalletTx->GetTransaction().value().GetOffset() },
@@ -91,17 +92,6 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 			finalizeSlate.commitments.push_back(SlateCommitment{ output.GetFeatures(), output.GetCommitment(), output.GetRangeProof() });
 		}
 	);
-	Commitment finalExcess = SlateUtil::CalculateFinalExcess(finalizeSlate);
-
-	// Verify payment proof addresses & signatures
-	if (!VerifyPaymentProofs(pWalletTx, finalizeSlate, finalExcess))
-	{
-		WALLET_ERROR_F(
-			"Failed to verify payment proof for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
-		);
-		throw WALLET_EXCEPTION("Failed to verify payment proof.");
-	}
 
 	const Hash kernelMessage = TransactionKernel::GetSignatureMessage(
 		finalizeSlate.kernelFeatures,
@@ -117,6 +107,18 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 			uuids::to_string(finalizeSlate.GetId())
 		);
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
+	}
+
+	Commitment finalExcess = SlateUtil::CalculateFinalExcess(finalizeSlate);
+
+	// Verify payment proof addresses & signatures
+	if (!VerifyPaymentProofs(pWalletTx, finalizeSlate, finalExcess))
+	{
+		WALLET_ERROR_F(
+			"Failed to verify payment proof for slate {}",
+			uuids::to_string(finalizeSlate.GetId())
+		);
+		throw WALLET_EXCEPTION("Failed to verify payment proof.");
 	}
 
 	// Finalize transaction
@@ -170,6 +172,15 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 	}
 
 	finalizeSlate.sigs.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
+	WALLET_INFO_F("Num sigs: {}", finalizeSlate.sigs.size());
+
+	if (!SignatureUtil::VerifyPartialSignatures(finalizeSlate.sigs, kernelMessage)) {
+		WALLET_ERROR_F(
+			"Failed to verify partial signature for slate {}",
+			uuids::to_string(finalizeSlate.GetId())
+		);
+		return false;
+	}
 
 	return true;
 }

@@ -60,7 +60,7 @@ struct SlateSignature
         json["nonce"] = nonce.ToHex();
 
         if (partialOpt.has_value()) {
-            json["part"] = Crypto::ParseCompactSignature(partialOpt.value()).ToHex();
+            json["part"] = partialOpt.value().ToHex();
         }
 
         return json;
@@ -71,9 +71,9 @@ struct SlateSignature
         SlateSignature sig;
         sig.excess = JsonUtil::GetPublicKey(json, "xs");
         sig.nonce = JsonUtil::GetPublicKey(json, "nonce");
-        auto sigOpt = JsonUtil::GetSignatureOpt(json, "part");
+        auto sigOpt = JsonUtil::GetBigIntegerOpt<64>(json, "part");
         if (sigOpt.has_value()) {
-            sig.partialOpt = std::make_optional<CompactSignature>(Crypto::ToCompact(sigOpt.value()));
+            sig.partialOpt = std::make_optional<CompactSignature>(sigOpt.value());
         }
         return sig;
     }

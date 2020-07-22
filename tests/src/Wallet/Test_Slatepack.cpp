@@ -27,6 +27,8 @@ TEST_CASE("SlatepackAddress")
     
     ByteBuffer deserializer(message.m_payload);
     REQUIRE(Slate::Deserialize(deserializer).ToJSON() == slate.ToJSON());
+
+    REQUIRE(SlatepackAddress::Parse("grin1uh6fju32utj3lmht4tpnvkvfje29mcex2edqxu5lutxyx0qpt8nqk05lsy").ToTorAddress().ToString() == "4x2js4rk4lsr73xlvlbtmwmjszkf3yzgkznag4u74lgegpablhtguqyd");
 }
 
 TEST_CASE("Slatepack - Recieve")

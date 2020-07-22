@@ -60,3 +60,9 @@ TEST_CASE("Crypto::AddCommitment")
 		REQUIRE(commit_c == difference);
 	}
 }
+
+TEST_CASE("Crypto - PublicKey to Commitment")
+{
+	auto commit = Crypto::ToCommitment(PublicKey(CBigInteger<33>::FromHex("02f434a6b929d0aa6ac757bbe387075066d51ee5308d5be91d2fb478a494d38bdf")));
+	REQUIRE(commit.ToHex() == "08f434a6b929d0aa6ac757bbe387075066d51ee5308d5be91d2fb478a494d38bdf");
+}

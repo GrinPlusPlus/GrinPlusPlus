@@ -57,8 +57,9 @@ private:
 		{
 			WALLET_INFO_F("Exception: {}", e.what());
 
-			if (numAttempts < 3)
+			if (numAttempts < 5)
 			{
+				std::this_thread::sleep_for(std::chrono::seconds(1));
 				EstablishConnectionInternal(destination, port, numAttempts + 1);
 			}
 			else

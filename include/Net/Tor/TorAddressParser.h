@@ -5,7 +5,7 @@
 #include <Crypto/ED25519.h>
 #include <Crypto/BigInteger.h>
 #include <sha3/sha3.h>
-#include <cppcodec/base32_default_rfc4648.hpp>
+#include <cppcodec/base32_rfc4648.hpp>
 
 /* Compute the CEIL of <b>a</b> divided by <b>b</b>, for nonnegative <b>a</b>
  * and positive <b>b</b>.  Works on integer types only. Not defined if a+(b-1)
@@ -72,7 +72,7 @@ public:
 			}
 
 			/* Decode address so we can extract needed fields. */
-			std::vector<uint8_t> b32Decoded = base32::decode(address);
+			std::vector<uint8_t> b32Decoded = cppcodec::base32_rfc4648::decode(address);
 			if (b32Decoded.size() != HS_SERVICE_ADDR_LEN)
 			{
 				return std::nullopt;
@@ -120,13 +120,14 @@ public:
 		uint8_t version = 3;
 
 		std::vector<uint8_t> checksum;
-		assert(BuildChecksum(pubkey, version, checksum));
+		BuildChecksum(pubkey, version, checksum);
+		LOG_INFO_F("Checksum: {} - {}", HexUtil::ConvertToHex(checksum), checksum.size());
 
 		std::vector<uint8_t> bytes = pubkey.vec();
 		bytes.insert(bytes.end(), checksum.cbegin(), checksum.cend());
 		bytes.push_back(version);
 
-		return TorAddress(base32::encode(bytes), pubkey, version);
+		return TorAddress(cppcodec::base32_rfc4648::encode(bytes), pubkey, version);
 	}
 
 private:

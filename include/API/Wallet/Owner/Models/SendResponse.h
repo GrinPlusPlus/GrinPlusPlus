@@ -14,9 +14,10 @@ public:
 
     SendResponse(
         const EStatus status,
+        const Slate& slate,
         const std::string& armoredSlate,
         const std::string& error = ""
-    ) : m_status(status), m_armoredSlate(armoredSlate), m_error(error) { }
+    ) : m_status(status), m_slate(slate), m_armoredSlate(armoredSlate), m_error(error) { }
 
     EStatus GetStatus() const noexcept { return m_status; }
     const std::string& GetArmoredSlate() const noexcept { return m_armoredSlate; }
@@ -26,6 +27,7 @@ public:
     {
         Json::Value result;
         result["status"] = m_status == EStatus::SENT ? "SENT" : "FINALIZED";
+        result["slate"] = m_slate.ToJSON();
         result["slatepack"] = m_armoredSlate;
 
         if (!m_error.empty())
@@ -38,6 +40,7 @@ public:
 
 private:
     EStatus m_status;
+    Slate m_slate;
     std::string m_armoredSlate;
     std::string m_error;
 };

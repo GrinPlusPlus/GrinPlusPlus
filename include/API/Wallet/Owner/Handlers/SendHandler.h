@@ -46,18 +46,18 @@ public:
 		if (!recipients.empty()) {
 			try
 			{
-				Slate finalized_slate = SendViaTOR(criteria, slate, recipients.front().ToTorAddress());
+				slate = SendViaTOR(criteria, slate, recipients.front().ToTorAddress());
 				status = SendResponse::EStatus::FINALIZED;
 
-				slatepack = Armor::Pack(sender_address, finalized_slate);
+				slatepack = Armor::Pack(sender_address, slate);
 			}
 			catch (const std::exception& e)
 			{
-				return request.BuildResult(SendResponse(status, slatepack, e.what()).ToJSON());
+				return request.BuildResult(SendResponse(status, slate, slatepack, e.what()).ToJSON());
 			}
 		}
 
-		return request.BuildResult(SendResponse(status, slatepack).ToJSON());
+		return request.BuildResult(SendResponse(status, slate, slatepack).ToJSON());
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

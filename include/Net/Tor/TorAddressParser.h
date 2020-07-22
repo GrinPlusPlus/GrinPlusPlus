@@ -127,7 +127,7 @@ public:
 		bytes.insert(bytes.end(), checksum.cbegin(), checksum.cend());
 		bytes.push_back(version);
 
-		return TorAddress(cppcodec::base32_rfc4648::encode(bytes), pubkey, version);
+		return TorAddress(StringUtil::ToLower(cppcodec::base32_rfc4648::encode(bytes)), pubkey, version);
 	}
 
 private:

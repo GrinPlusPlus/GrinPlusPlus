@@ -70,9 +70,10 @@ public:
 				if (!Crypto::VerifyPartialSignature(sig.partialOpt.value(), sig.excess, sumPubKeys, sumPubNonces, message))
 				{
 					WALLET_ERROR_F(
-						"Partial signature {} invalid for excess {}, pubkey_sum {}, nonce_sum {}, and message {}",
+						"Partial signature {} invalid for excess {}, commitment {}, pubkey_sum {}, nonce_sum {}, and message {}",
 						sig.partialOpt.value().ToHex(),
 						sig.excess.ToHex(),
+						Crypto::ToCommitment(sumPubKeys).ToHex(),
 						sumPubKeys.ToHex(),
 						sumPubNonces.ToHex(),
 						message.ToHex()

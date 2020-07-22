@@ -333,7 +333,10 @@ public:
 		json["ver"] = StringUtil::Format("{}:{}", version, blockVersion);
 		json["id"] = uuids::to_string(slateId);
 		json["sta"] = stage.ToString();
-		json["off"] = offset.ToHex();
+
+		if (!offset.IsNull()) {
+			json["off"] = offset.ToHex();
+		}
 
 		if (numParticipants != 2) {
 			json["num_parts"] = std::to_string(numParticipants);

@@ -66,11 +66,6 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (finalizeSlate.offset.IsNull()) {
 		finalizeSlate.offset = pWalletTx->GetTransaction().value().GetOffset();
 		WALLET_INFO_F("Offset not supplied. Using original: {}", finalizeSlate.offset.ToHex());
-	} else {
-		finalizeSlate.offset = Crypto::AddBlindingFactors(
-			std::vector<BlindingFactor>{ finalizeSlate.offset, pWalletTx->GetTransaction().value().GetOffset() },
-			std::vector<BlindingFactor>{}
-		);
 	}
 
 	// Add inputs, outputs, and omitted fields
@@ -147,13 +142,24 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 	Slate& finalizeSlate,
 	const Hash& kernelMessage) const
 {
+	bool add_participant_info = true;
+	for (const auto& sig : finalizeSlate.sigs) {
+		if (sig.excess == context.CalcExcess()) {
+			add_participant_info = false;
+			break;
+		}
+	}
+
 	// Copy sig data from original send slate to finalize slate
-	SlateSignature senderSig(
-		context.CalcExcess(),
-		context.CalcNonce(),
-		std::nullopt
-	);
-	finalizeSlate.sigs.push_back(senderSig);
+	if (add_participant_info) {
+		SlateSignature senderSig(
+			context.CalcExcess(),
+			context.CalcNonce(),
+			std::nullopt
+		);
+
+		finalizeSlate.sigs.push_back(senderSig);
+	}
 
 	// Generate partial signature
 	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
@@ -171,7 +177,13 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 		return false;
 	}
 
-	finalizeSlate.sigs.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
+	for (auto& sig : finalizeSlate.sigs) {
+		if (sig.excess == context.CalcExcess()) {
+			sig.partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
+			break;
+		}
+	}
+
 	WALLET_INFO_F("Num sigs: {}", finalizeSlate.sigs.size());
 
 	if (!SignatureUtil::VerifyPartialSignatures(finalizeSlate.sigs, kernelMessage)) {

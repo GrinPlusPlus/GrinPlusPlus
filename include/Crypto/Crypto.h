@@ -238,6 +238,10 @@ public:
 		const Hash& message
 	);
 
+	static Signature ParseCompactSignature(const CompactSignature& signature);
+
+	static CompactSignature ToCompact(const Signature& signature);
+
 	//
 	// Calculates the blinding factor x' = x + SHA256(xG+vH | xJ), used in the switch commitment x'G+vH.
 	//

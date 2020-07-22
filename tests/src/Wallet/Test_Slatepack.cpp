@@ -75,3 +75,26 @@ TEST_CASE("Slatepack - Recieve")
 
     REQUIRE(slate.amount == 1000000000);*/
 }
+
+TEST_CASE("Slatepack - E2E")
+{
+    ed25519_keypair_t sender_edwards_keypair = ED25519::CalculateKeypair(RandomNumberGenerator::GenerateRandom32());
+    x25519_keypair_t sender_x_keypair = Curve25519::ToX25519(sender_edwards_keypair);
+    SlatepackAddress sender_address(sender_edwards_keypair.public_key);
+
+    ed25519_keypair_t receiver_edwards_keypair = ED25519::CalculateKeypair(RandomNumberGenerator::GenerateRandom32());
+    x25519_keypair_t receiver_x_keypair = Curve25519::ToX25519(receiver_edwards_keypair);
+    SlatepackAddress receiver_address(receiver_edwards_keypair.public_key);
+
+    // Send slate
+    Slate sent_slate;
+    std::string sent_armored_slatepack = Armor::Pack(sender_address, sent_slate, { receiver_address });
+    std::cout << sent_armored_slatepack << std::endl;
+
+    // Receive slate
+    SlatepackMessage received_slatepack = Armor::Unpack(sent_armored_slatepack, receiver_x_keypair);
+    ByteBuffer received_slatepack_buffer(received_slatepack.m_payload);
+    
+    REQUIRE(Slate::Deserialize(received_slatepack_buffer) == sent_slate);
+    REQUIRE(received_slatepack.m_sender == sender_address);
+}

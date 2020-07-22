@@ -66,10 +66,26 @@ public:
 private:
     static std::string FormatSpacing(const std::string& data)
     {
-        // TODO: Implement
-        return data;
+        std::string formatted = "";
+        for (size_t i = 0; i < data.size(); i++)
+        {
+            if (i != 0 && i % WORD_LENGTH == 0) {
+                if (i % (WORD_LENGTH * WORDS_PER_LINE) == 0) {
+                    formatted += "\n";
+                } else {
+                    formatted += " ";
+                }
+            }
+
+            formatted += data[i];
+        }
+
+        return formatted;
     }
 
     inline static const std::string HEADER = "BEGINSLATEPACK";
     inline static const std::string FOOTER = "ENDSLATEPACK";
+
+    inline static const int WORD_LENGTH = 15;
+    inline static const int WORDS_PER_LINE = 200;
 };

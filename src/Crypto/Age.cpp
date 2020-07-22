@@ -17,7 +17,7 @@ std::vector<uint8_t> Age::Encrypt(
     );
     std::vector<age::RecipientLine> recipient_lines = BuildRecipientLines(file_key, recipients);
 
-    age::Header header{ mac_key.GetBytes(), recipient_lines };
+    age::Header header = age::Header::Create(mac_key, recipient_lines);
 
     CBigInteger<16> nonce(RandomNumberGenerator().GenerateRandomBytes(16).data());
     SecretKey payload_key = Crypto::HKDF(
@@ -67,7 +67,6 @@ std::vector<uint8_t> Age::Decrypt(
     const x25519_keypair_t& decrypt_keypair,
     const std::vector<uint8_t>& payload)
 {
-
     std::vector<std::string> encoded_header_lines;
     ByteBuffer deserializer(payload);
     std::string encoded_header_line;
@@ -97,6 +96,7 @@ std::vector<uint8_t> Age::Decrypt(
             decrypt_keypair,
             recipient_line,
             file_key_nonce,
+            header,
             encrypted_payload
         );
         if (!decrypted.empty()) {
@@ -111,6 +111,7 @@ std::vector<uint8_t> Age::TryDecrypt(
     const x25519_keypair_t& decrypt_keypair,
     const age::RecipientLine& recipient_line,
     const CBigInteger<16>& file_key_nonce,
+    const age::Header& /*header*/,
     const std::vector<uint8_t>& encrypted_payload)
 {
     try
@@ -128,15 +129,22 @@ std::vector<uint8_t> Age::TryDecrypt(
             recipient_line.encrypted_file_key.GetData()
         );
 
+        SecretKey mac_key = Crypto::HKDF(
+            std::nullopt,
+            "header",
+            decrypted_file_key
+        );
+        //header.VerifyMac(mac_key);
+
         SecretKey payload_key = Crypto::HKDF(
             std::make_optional(file_key_nonce.GetData()),
             "payload",
             decrypted_file_key
         );
 
-        return ChaChaPoly::Init(payload_key).StreamDecrypt(encrypted_payload); // TODO: Check mac
+        return ChaChaPoly::Init(payload_key).StreamDecrypt(encrypted_payload);
     }
-    catch (const CryptoException&)
+    catch (const std::exception&)
     {
 
     }

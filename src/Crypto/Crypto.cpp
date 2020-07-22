@@ -278,6 +278,18 @@ bool Crypto::VerifyAggregateSignature(const Signature& aggregateSignature, const
 	return AggSig::GetInstance().VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 }
 
+Signature Crypto::ParseCompactSignature(const CompactSignature& signature)
+{
+	auto sigs = AggSig::GetInstance().ParseCompactSignatures({ signature });
+
+	return Signature(sigs.front().data);
+}
+
+CompactSignature Crypto::ToCompact(const Signature& signature)
+{
+	return AggSig::GetInstance().ToCompact(signature);
+}
+
 bool Crypto::VerifyKernelSignatures(const std::vector<const Signature*>& signatures, const std::vector<const Commitment*>& publicKeys, const std::vector<const Hash*>& messages)
 {
 	return AggSig::GetInstance().VerifyAggregateSignatures(signatures, publicKeys, messages);

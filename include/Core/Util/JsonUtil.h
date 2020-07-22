@@ -216,7 +216,7 @@ public:
 		return signatureOpt.has_value() ? ConvertToJSON(signatureOpt.value()) : Json::nullValue;
 	}
 
-	static std::optional<CompactSignature> ConvertToSignatureOpt(const Json::Value& signatureJSON)
+	static std::optional<Signature> ConvertToSignatureOpt(const Json::Value& signatureJSON)
 	{
 		if (signatureJSON == Json::nullValue)
 		{
@@ -226,7 +226,7 @@ public:
 		return std::make_optional(CBigInteger<64>(ConvertToVector(signatureJSON, 64)));
 	}
 
-	static std::optional<CompactSignature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key)
+	static std::optional<Signature> GetSignatureOpt(const Json::Value& parentJSON, const std::string& key)
 	{
 		return ConvertToSignatureOpt(GetOptionalField(parentJSON, key).value_or(Json::Value(Json::nullValue)));
 	}

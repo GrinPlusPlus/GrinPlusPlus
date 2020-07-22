@@ -34,7 +34,7 @@ struct SlateSignature
         excess.Serialize(serializer);
         nonce.Serialize(serializer);
         if (partialOpt.has_value()) {
-            partialOpt.value().Serialize(serializer);
+            Crypto::ParseCompactSignature(partialOpt.value()).Serialize(serializer);
         }
     }
 
@@ -46,7 +46,8 @@ struct SlateSignature
         ret.excess = PublicKey::Deserialize(byteBuffer);
         ret.nonce = PublicKey::Deserialize(byteBuffer);
         if (hasSig > 0) {
-            ret.partialOpt = std::make_optional<CompactSignature>(CompactSignature::Deserialize(byteBuffer));
+            Signature signature = Signature::Deserialize(byteBuffer);
+            ret.partialOpt = std::make_optional<CompactSignature>(Crypto::ToCompact(signature));
         }
 
         return ret;
@@ -59,7 +60,7 @@ struct SlateSignature
         json["nonce"] = nonce.ToHex();
 
         if (partialOpt.has_value()) {
-            json["part"] = partialOpt.value().ToHex();
+            json["part"] = Crypto::ParseCompactSignature(partialOpt.value()).ToHex();
         }
 
         return json;
@@ -70,7 +71,10 @@ struct SlateSignature
         SlateSignature sig;
         sig.excess = JsonUtil::GetPublicKey(json, "xs");
         sig.nonce = JsonUtil::GetPublicKey(json, "nonce");
-        sig.partialOpt = JsonUtil::GetSignatureOpt(json, "part");
+        auto sigOpt = JsonUtil::GetSignatureOpt(json, "part");
+        if (sigOpt.has_value()) {
+            sig.partialOpt = std::make_optional<CompactSignature>(Crypto::ToCompact(sigOpt.value()));
+        }
         return sig;
     }
 };

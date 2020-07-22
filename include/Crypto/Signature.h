@@ -64,6 +64,7 @@ private:
 class CompactSignature : public Signature
 {
 public:
+	CompactSignature() = default;
 	CompactSignature(CBigInteger<64> && signatureBytes)
 		: Signature(std::move(signatureBytes)) { }
 	virtual ~CompactSignature() = default;

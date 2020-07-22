@@ -41,6 +41,13 @@ public:
 			SlatepackDecryptor{ m_pWalletManager }
 		);
 
+		SlatepackAddress sender;
+		if (criteria.GetSlatepack().has_value()) {
+			sender = criteria.GetSlatepack().value().m_sender;
+		}
+
+		WALLET_INFO_F("Receiving slatepack from {}", sender.IsNull() ? "unknown sender" : sender.ToString());
+
 		Slate slate = m_pWalletManager->Receive(criteria);
 
 		Json::Value result;
@@ -49,8 +56,8 @@ public:
 		SlatepackAddress address = m_pWalletManager->GetSlatepackAddress(criteria.GetToken());
 
 		std::vector<SlatepackAddress> recipients;
-		if (criteria.GetSlatepack().has_value() && !criteria.GetSlatepack().value().m_sender.IsNull()) {
-			recipients.push_back(criteria.GetSlatepack().value().m_sender);
+		if (!sender.IsNull()) {
+			recipients.push_back(sender);
 		}
 
 		result["slatepack"] = Armor::Pack(address, slate, recipients);

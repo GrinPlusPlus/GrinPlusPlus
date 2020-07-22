@@ -30,11 +30,12 @@ public:
 	bool VerifyAggregateSignatures(const std::vector<const Signature*>& signatures, const std::vector<const Commitment*>& publicKeys, const std::vector<const Hash*>& messages) const;
 	bool VerifyAggregateSignature(const Signature& signature, const PublicKey& sumPubKeys, const Hash& message) const;
 
+	std::vector<secp256k1_ecdsa_signature> ParseCompactSignatures(const std::vector<CompactSignature>& signatures) const;
+	CompactSignature ToCompact(const Signature& signature) const;
+
 private:
 	AggSig();
 	~AggSig();
-
-	std::vector<secp256k1_ecdsa_signature> ParseCompactSignatures(const std::vector<CompactSignature>& signatures) const;
 
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;

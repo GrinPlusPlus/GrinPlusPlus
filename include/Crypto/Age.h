@@ -31,6 +31,7 @@ private:
         const x25519_keypair_t& decrypt_keypair,
         const age::RecipientLine& recipient_line,
         const CBigInteger<16>& file_key_nonce,
+        const age::Header& header,
         const std::vector<uint8_t>& encrypted_payload
     );
 };

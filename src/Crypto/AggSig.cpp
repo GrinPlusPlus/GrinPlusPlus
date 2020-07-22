@@ -330,3 +330,16 @@ std::vector<secp256k1_ecdsa_signature> AggSig::ParseCompactSignatures(const std:
 
 	return parsed;
 }
+
+CompactSignature AggSig::ToCompact(const Signature& signature) const
+{
+	CompactSignature compactSignature;
+	secp256k1_ecdsa_signature ecdsa_sig;
+	memcpy(ecdsa_sig.data, signature.data(), 64);
+	const int result = secp256k1_ecdsa_signature_serialize_compact(m_pContext, compactSignature.data(), &ecdsa_sig);
+	if (result != 1) {
+		throw CryptoException("Failed to serialize to compact");
+	}
+
+	return compactSignature;
+}

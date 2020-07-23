@@ -121,43 +121,50 @@ void Seeder::Thread_Listener(Seeder& seeder)
 	ThreadManagerAPI::SetCurrentThreadName("LISTENER");
 	LOG_TRACE("BEGIN");
 
-	const uint16_t portNumber = seeder.m_pContext->GetConfig().GetEnvironment().GetP2PPort();
-	asio::ip::tcp::acceptor acceptor(*seeder.m_pAsioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
-	asio::error_code errorCode;
-	acceptor.listen(asio::socket_base::max_listen_connections, errorCode);
-
-	if (!errorCode)
+	try
 	{
-		const int maximumConnections = seeder.m_pContext->GetConfig().GetP2PConfig().GetMaxConnections();
-		while (!seeder.m_terminate)
+		const uint16_t portNumber = seeder.m_pContext->GetConfig().GetEnvironment().GetP2PPort();
+		asio::ip::tcp::acceptor acceptor(*seeder.m_pAsioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber));
+		asio::error_code errorCode;
+		acceptor.listen(asio::socket_base::max_listen_connections, errorCode);
+
+		if (!errorCode)
 		{
-			SocketPtr pSocket = SocketPtr(new Socket(SocketAddress(IPAddress(), portNumber)));
-			// FUTURE: Always accept, but then send peers and immediately drop
-			if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
+			const int maximumConnections = seeder.m_pContext->GetConfig().GetP2PConfig().GetMaxConnections();
+			while (!seeder.m_terminate)
 			{
-				const bool connectionAdded = pSocket->Accept(seeder.m_pAsioContext, acceptor, seeder.m_terminate);
-				if (connectionAdded)
+				SocketPtr pSocket = SocketPtr(new Socket(SocketAddress(IPAddress(), portNumber)));
+				// FUTURE: Always accept, but then send peers and immediately drop
+				if (seeder.m_connectionManager.GetNumberOfActiveConnections() < maximumConnections)
 				{
-					auto pPeer = seeder.m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
-					ConnectionPtr pConnection = Connection::Create(
-						pSocket,
-						seeder.m_nextId++,
-						seeder.m_pContext->GetConfig(),
-						seeder.m_connectionManager,
-						seeder.m_pBlockChainServer,
-						ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
-						seeder.m_pMessageProcessor,
-						seeder.m_pSyncStatus
-					);
+					const bool connectionAdded = pSocket->Accept(seeder.m_pAsioContext, acceptor, seeder.m_terminate);
+					if (connectionAdded)
+					{
+						auto pPeer = seeder.m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
+						ConnectionPtr pConnection = Connection::Create(
+							pSocket,
+							seeder.m_nextId++,
+							seeder.m_pContext->GetConfig(),
+							seeder.m_connectionManager,
+							seeder.m_pBlockChainServer,
+							ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
+							seeder.m_pMessageProcessor,
+							seeder.m_pSyncStatus
+						);
+					}
+				}
+				else
+				{
+					ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
 				}
 			}
-			else
-			{
-				ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
-			}
-		}
 
-		acceptor.cancel();
+			acceptor.cancel();
+		}
+	}
+	catch (std::exception& e)
+	{
+		LOG_ERROR_F("Listener failed with error: {}", e.what());
 	}
 
 	LOG_TRACE("END");

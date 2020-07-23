@@ -30,6 +30,7 @@ void TransactionKernel::Serialize(Serializer& serializer) const
 		{
 			case EKernelFeatures::DEFAULT_KERNEL:
 				serializer.Append<uint64_t>(GetFee());
+				break;
 			case EKernelFeatures::COINBASE_KERNEL:
 				break;
 			case EKernelFeatures::HEIGHT_LOCKED:
@@ -110,7 +111,7 @@ Json::Value TransactionKernel::ToJSON() const
 	kernelNode["fee"] = std::to_string(GetFee());
 	kernelNode["lock_height"] = std::to_string(GetLockHeight());
 	kernelNode["excess"] = JsonUtil::ConvertToJSON(GetExcessCommitment());
-	kernelNode["excess_sig"] = JsonUtil::ConvertToJSON(GetExcessSignature());
+	kernelNode["excess_sig"] = Crypto::ToCompact(GetExcessSignature()).ToHex();
 	return kernelNode;
 }
 
@@ -120,7 +121,7 @@ TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKern
 	const uint64_t fee = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "fee");
 	const uint64_t lockHeight = JsonUtil::GetRequiredUInt64(transactionKernelJSON, "lock_height");
 	Commitment excessCommitment = JsonUtil::GetCommitment(transactionKernelJSON, "excess");
-	Signature excessSignature = JsonUtil::GetSignature(transactionKernelJSON, "excess_sig");
+	Signature excessSignature = Crypto::ParseCompactSignature(JsonUtil::GetCompactSignature(transactionKernelJSON, "excess_sig"));
 
 	if (features == EKernelFeatures::NO_RECENT_DUPLICATE)
 	{

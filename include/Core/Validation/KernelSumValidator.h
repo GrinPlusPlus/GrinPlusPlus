@@ -69,6 +69,16 @@ public:
 
 		Commitment kernelSum = Crypto::AddCommitments(kernelCommitments, std::vector<Commitment>());
 		Commitment kernelSumPlusOffset = AddKernelOffset(kernelSum, kernelOffset);
+		if (utxoSum != kernelSumPlusOffset) {
+			LOG_ERROR_F(
+				"UTXO sum {} does not match kernel sum plus offset {}. Kernel sum is {} and offset is {}.",
+				utxoSum,
+				kernelSumPlusOffset,
+				kernelSum,
+				kernelOffset.ToHex()
+			);
+			throw BAD_DATA_EXCEPTION("UTXO sum does not match kernel sum plus offset");
+		}
 
 		return BlockSums(utxoSum, kernelSum);
 	}

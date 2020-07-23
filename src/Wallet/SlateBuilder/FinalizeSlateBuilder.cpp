@@ -66,6 +66,11 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (finalizeSlate.offset.IsNull()) {
 		finalizeSlate.offset = pWalletTx->GetTransaction().value().GetOffset();
 		WALLET_INFO_F("Offset not supplied. Using original: {}", finalizeSlate.offset.ToHex());
+	} else {
+		finalizeSlate.offset = Crypto::AddBlindingFactors(
+			{ finalizeSlate.offset, pWalletTx->GetTransaction().value().GetOffset() },
+			std::vector<BlindingFactor>{}
+		);
 	}
 
 	// Add inputs, outputs, and omitted fields
@@ -77,14 +82,14 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	std::for_each(
 		pSlateContext->GetInputs().cbegin(), pSlateContext->GetInputs().cend(),
 		[&finalizeSlate](const OutputDataEntity& input) {
-			finalizeSlate.commitments.push_back(SlateCommitment{ input.GetFeatures(), input.GetCommitment(), std::nullopt });
+			finalizeSlate.AddInput(input.GetFeatures(), input.GetCommitment());
 		}
 	);
 
 	std::for_each(
 		pSlateContext->GetOutputs().cbegin(), pSlateContext->GetOutputs().cend(),
 		[&finalizeSlate](const OutputDataEntity& output) {
-			finalizeSlate.commitments.push_back(SlateCommitment{ output.GetFeatures(), output.GetCommitment(), output.GetRangeProof() });
+			finalizeSlate.AddOutput(output.GetFeatures(), output.GetCommitment(), output.GetRangeProof());
 		}
 	);
 
@@ -126,6 +131,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 		);
 		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
 	}
+
+	WALLET_INFO_F("Final transaction: {}", pTransaction->ToJSON().toStyledString());
 
 	// Update WalletTx
 	pWalletTx->SetType(EWalletTxType::SENDING_FINALIZED);

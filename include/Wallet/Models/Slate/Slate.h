@@ -174,6 +174,34 @@ public:
 		return outputs;
 	}
 
+	void AddInput(const EOutputFeatures features, const Commitment& commitment)
+	{
+		for (const auto& com : commitments)
+		{
+			if (com.commitment == commitment) {
+				return;
+			}
+		}
+
+		commitments.push_back(SlateCommitment{ features, commitment, std::nullopt });
+	}
+
+	void AddOutput(const EOutputFeatures features, const Commitment& commitment, const RangeProof& proof)
+	{
+		for (auto& com : commitments)
+		{
+			if (com.commitment == commitment) {
+				if (!com.proofOpt.has_value()) {
+					com.proofOpt = std::make_optional(RangeProof(proof));
+				}
+
+				return;
+			}
+		}
+
+		commitments.push_back(SlateCommitment{ features, commitment, std::make_optional(RangeProof(proof)) });
+	}
+
 	/*
 		ver.slate_version	u16	2	
 		ver.block_header_version	u16	2	

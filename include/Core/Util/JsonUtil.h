@@ -265,6 +265,19 @@ public:
 	}
 
 	//
+	// CompactSignature
+	//
+	static CompactSignature ConvertToCompactSignature(const Json::Value& signatureJSON)
+	{
+		return CompactSignature(CBigInteger<64>(ConvertToVector(signatureJSON, 64)));
+	}
+
+	static CompactSignature GetCompactSignature(const Json::Value& parentJSON, const std::string& key)
+	{
+		return ConvertToCompactSignature(GetRequiredField(parentJSON, key));
+	}
+
+	//
 	// RangeProofs
 	//
 	static Json::Value ConvertToJSON(const RangeProof& rangeProof)

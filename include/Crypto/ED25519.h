@@ -1,7 +1,9 @@
 #pragma once
 
 #include <inttypes.h>
-#include <sodium.h>
+#include <sodium/crypto_sign.h>
+#include <sodium/crypto_core_ed25519.h>
+#include <sodium/crypto_sign_ed25519.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>

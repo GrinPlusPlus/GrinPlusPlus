@@ -9,9 +9,24 @@ class SelectionStrategyDTO
 {
 public:
 	SelectionStrategyDTO(const ESelectionStrategy& strategy, std::set<Commitment>&& inputs)
-		: m_strategy(strategy), m_inputs(std::move(inputs))
-	{
+		: m_strategy(strategy), m_inputs(std::move(inputs)) { }
 
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["strategy"] = SelectionStrategy::ToString(m_strategy);
+
+		if (!m_inputs.empty()) {
+			Json::Value inputs_json;
+			for (const Commitment& input : m_inputs)
+			{
+				inputs_json.append(input.ToHex());
+			}
+
+			json["inputs"] = inputs_json;
+		}
+
+		return json;
 	}
 
 	static SelectionStrategyDTO FromJSON(const Json::Value& selectionStrategyJSON)

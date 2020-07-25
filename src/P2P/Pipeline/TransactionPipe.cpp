@@ -47,6 +47,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 					for (auto& kernel : kernels)
 					{
 						const TransactionKernelMessage message(kernel.GetHash());
+						LOG_DEBUG_F("Broadcasting kernel {}", kernel.GetHash());
 						pipeline.m_pConnectionManager->BroadcastMessage(message, pTxEntry->m_connectionId);
 					}
 				}

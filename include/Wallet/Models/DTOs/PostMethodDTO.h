@@ -10,9 +10,18 @@ class PostMethodDTO
 {
 public:
 	PostMethodDTO(const EPostMethod& method, const std::optional<TorAddress>& grinjoinAddressOpt)
-		: m_method(method), m_grinjoinAddressOpt(grinjoinAddressOpt)
-	{
+		: m_method(method), m_grinjoinAddressOpt(grinjoinAddressOpt) { }
 
+	Json::Value ToJSON() const
+	{
+		Json::Value json;
+		json["method"] = PostMethod::ToString(m_method);
+
+		if (m_grinjoinAddressOpt.has_value()) {
+			json["grinjoin_address"] = m_grinjoinAddressOpt.value().ToString();
+		}
+
+		return json;
 	}
 
 	static PostMethodDTO FromJSON(const Json::Value& postMethodJSON)

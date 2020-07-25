@@ -6,7 +6,7 @@
 class SendResponse : public Traits::IJsonable
 {
 public:
-    enum EStatus
+    enum class EStatus
     {
         SENT,
         FINALIZED
@@ -20,6 +20,7 @@ public:
     ) : m_status(status), m_slate(slate), m_armoredSlate(armoredSlate), m_error(error) { }
 
     EStatus GetStatus() const noexcept { return m_status; }
+    const Slate& GetSlate() const noexcept { return m_slate; }
     const std::string& GetArmoredSlate() const noexcept { return m_armoredSlate; }
     const std::string& GetError() const noexcept { return m_error; }
 
@@ -36,6 +37,25 @@ public:
         }
 
         return result;
+    }
+
+    static SendResponse FromJSON(const Json::Value& json)
+    {
+        std::string statusStr = JsonUtil::GetRequiredString(json, "status");
+        EStatus status = EStatus::SENT;
+        if (statusStr == "SENT") {
+            status = EStatus::SENT;
+        } else if (statusStr == "FINALIZED") {
+            status = EStatus::FINALIZED;
+        } else {
+            throw std::exception();
+        }
+
+        Slate slate = Slate::FromJSON(JsonUtil::GetRequiredField(json, "slate"));
+        std::string armoredSlate = JsonUtil::GetRequiredString(json, "slatepack");
+        std::string error = JsonUtil::GetStringOpt(json, "error").value_or("");
+
+        return SendResponse(status, slate, armoredSlate, error);
     }
 
 private:

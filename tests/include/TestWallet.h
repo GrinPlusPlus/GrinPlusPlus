@@ -30,6 +30,7 @@ public:
     const SessionToken& GetToken() const noexcept { return m_token; }
     uint16_t GetListenerPort() const noexcept { return m_listenerPort; }
     const std::optional<TorAddress>& GetTorAddress() const noexcept { return m_torAddress; }
+    SlatepackAddress GetSlatepackAddress() const { return m_pWalletManager->GetSlatepackAddress(m_token); }
 
     static TestWallet::Ptr Create(
         const IWalletManagerPtr& pWalletManager,

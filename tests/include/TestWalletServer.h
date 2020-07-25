@@ -36,11 +36,12 @@ public:
 
     TestWallet::Ptr CreateUser(
         const std::string& username,
-        const SecureString& password)
+        const SecureString& password,
+        const bool use_tor = true)
     {
         auto response = m_pWalletManager->InitializeNewWallet(
             CreateWalletCriteria(username, password, 24),
-            TorProcessManager::GetProcess(m_numUsers++)
+            use_tor ? TorProcessManager::GetProcess(m_numUsers++) : nullptr
         );
         return TestWallet::Create(
             m_pWalletManager,

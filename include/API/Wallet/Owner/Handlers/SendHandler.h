@@ -39,6 +39,7 @@ public:
 		}
 
 		Slate slate = m_pWalletManager->Send(criteria);
+		LOG_INFO_F("Sending slate: {}", slate.ToJSON().toStyledString());
 
 		SendResponse::EStatus status = SendResponse::EStatus::SENT;
 		std::string slatepack = Armor::Pack(sender_address, slate, recipients);
@@ -47,6 +48,8 @@ public:
 			try
 			{
 				slate = SendViaTOR(criteria, slate, recipients.front().ToTorAddress());
+				LOG_INFO_F("Finalized slate: {}", slate.ToJSON().toStyledString());
+
 				status = SendResponse::EStatus::FINALIZED;
 
 				slatepack = Armor::Pack(sender_address, slate);
@@ -106,14 +109,14 @@ private:
 		}
 
 		Slate received_slate = ReceiveTxClient::Call(m_pTorProcess, torAddress, sent_slate);
+		LOG_INFO_F("Received slate: {}", received_slate.ToJSON().toStyledString());
 
 		try
 		{
 			FinalizeCriteria finalize_criteria(
-				SessionToken(criteria.GetToken()),
+				criteria.GetToken(),
 				std::nullopt,
 				std::move(received_slate),
-				std::nullopt,
 				criteria.GetPostMethod()
 			);
 

@@ -28,6 +28,14 @@ public:
 			signatures.push_back(&kernel.GetExcessSignature());
 			msgs.emplace_back(kernel.GetSignatureMessage());
 			messages.push_back(&msgs[i]);
+
+			//LOG_TRACE_F(
+			//	"Attempting to verify kernel with commitment {}, signature {} - compact {}, and message {}.",
+			//	kernel.GetExcessCommitment().ToHex(),
+			//	kernel.GetExcessSignature().ToHex(),
+			//	Crypto::ToCompact(kernel.GetExcessSignature()).ToHex(),
+			//	kernel.GetSignatureMessage().ToHex()
+			//);
 		}
 
 		LOG_TRACE("Start verify");

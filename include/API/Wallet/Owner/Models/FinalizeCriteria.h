@@ -10,20 +10,15 @@ class FinalizeCriteria
 {
 public:
 	FinalizeCriteria(
-		SessionToken&& token,
+		const SessionToken& token,
 		std::optional<SlatepackMessage>&& slatepackOpt,
 		Slate&& slate,
-		const std::optional<std::string>& filePathOpt,
 		const std::optional<PostMethodDTO>& postMethodOpt
 	)
-		: m_token(std::move(token)),
+		: m_token(token),
 		m_slatepackOpt(std::move(slatepackOpt)),
 		m_slate(std::move(slate)),
-		m_filePathOpt(filePathOpt),
-		m_postMethodOpt(postMethodOpt)
-	{
-
-	}
+		m_postMethodOpt(postMethodOpt) { }
 
 	static FinalizeCriteria FromJSON(const Json::Value& json, const ISlatepackDecryptor& decryptor)
 	{
@@ -32,7 +27,6 @@ public:
 
 		ByteBuffer buffer{ slatepack.m_payload };
 		Slate slate = Slate::Deserialize(buffer);
-		const std::optional<std::string> filePathOpt = JsonUtil::GetStringOpt(json, "file");
 
 		std::optional<PostMethodDTO> postMethodOpt = std::nullopt;
 		std::optional<Json::Value> postJSON = JsonUtil::GetOptionalField(json, "post_tx");
@@ -42,10 +36,9 @@ public:
 		}
 
 		return FinalizeCriteria(
-			std::move(token),
+			token,
 			std::make_optional<SlatepackMessage>(std::move(slatepack)),
 			std::move(slate),
-			filePathOpt,
 			postMethodOpt
 		);
 	}
@@ -53,13 +46,11 @@ public:
 	const SessionToken& GetToken() const noexcept { return m_token; }
 	const std::optional<SlatepackMessage>& GetSlatepack() const noexcept { return m_slatepackOpt; }
 	const Slate& GetSlate() const noexcept { return m_slate; }
-	const std::optional<std::string>& GetFile() const noexcept { return m_filePathOpt; }
 	const std::optional<PostMethodDTO>& GetPostMethod() const noexcept { return m_postMethodOpt; }
 
 private:
 	SessionToken m_token;
 	std::optional<SlatepackMessage> m_slatepackOpt;
 	Slate m_slate;
-	std::optional<std::string> m_filePathOpt;
 	std::optional<PostMethodDTO> m_postMethodOpt;
 };

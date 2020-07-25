@@ -27,7 +27,6 @@ public:
 				SessionToken(m_token),
 				std::nullopt,
 				Slate(finalizeTxRequest.GetSlate()),
-				std::nullopt,
 				std::make_optional(PostMethodDTO(EPostMethod::STEM, std::nullopt))
 			);
 

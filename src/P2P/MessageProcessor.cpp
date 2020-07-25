@@ -364,10 +364,12 @@ MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
 			{
 				const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
 				const Hash& kernelHash = getTransactionMessage.GetKernelHash();
+				LOG_DEBUG_F("Transaction with kernel {} requested.", kernelHash);
 
 				TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
 				if (pTransaction != nullptr)
 				{
+					LOG_DEBUG_F("Transaction {} found.", pTransaction);
 					const TransactionMessage transactionMessage(pTransaction);
 					return MessageSender(m_config).Send(socket, transactionMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
 				}

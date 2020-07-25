@@ -12,6 +12,21 @@ enum class EPostMethod
 
 namespace PostMethod
 {
+	static std::string ToString(const EPostMethod method)
+	{
+		switch (method)
+		{
+		case EPostMethod::FLUFF:
+			return "FLUFF";
+		case EPostMethod::STEM:
+			return "STEM";
+		case EPostMethod::JOIN:
+			return "JOIN";
+		}
+
+		throw std::exception();
+	}
+
 	static EPostMethod FromString(const std::string& input)
 	{
 		if (input == "FLUFF")

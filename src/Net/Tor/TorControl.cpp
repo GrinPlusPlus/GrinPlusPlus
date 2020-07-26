@@ -19,21 +19,29 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 	{
 		const fs::path command = fs::current_path() / "tor" / "tor";
 
-		const fs::path relativeDataPath = "./tor/data" + std::to_string(torConfig.GetControlPort());
-
+#ifdef __linux__
 		std::error_code ec;
-		fs::remove_all(relativeDataPath, ec);
-		fs::create_directories(relativeDataPath, ec);
+		fs::path torDataPath = torConfig.GetTorDataPath() / ("data" + std::to_string(torConfig.GetControlPort()));
+		fs::remove_all(torDataPath, ec);
+		fs::create_directories(torDataPath, ec);
+		std::string torrcPath = (torConfig.GetTorDataPath() / ".torrc").u8string();
+#else
+		std::error_code ec;
+		fs::path torDataPath = "./tor/data" + std::to_string(torConfig.GetControlPort());
+		fs::remove_all(torDataPath, ec);
+		fs::create_directories(torDataPath, ec);
 		fs::remove("./tor/.torrc", ec);
 		fs::copy_file(torConfig.GetTorDataPath() / ".torrc", "./tor/.torrc", ec);
+		std::string torrcPath = "./tor/.torrc";
+#endif
 
 		std::vector<std::string> args({
 			command.u8string(),
 			"--ControlPort", std::to_string(torConfig.GetControlPort()),
 			"--SocksPort", std::to_string(torConfig.GetSocksPort()),
-			"--DataDirectory", relativeDataPath.u8string(),
+			"--DataDirectory", torDataPath.u8string(),
 			"--HashedControlPassword", torConfig.GetHashedControlPassword(),
-			"-f", "./tor/.torrc",
+			"-f", torrcPath,
 			"--ignore-missing-torrc"
 		});
 

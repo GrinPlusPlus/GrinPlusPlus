@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <optional>
 
+#undef major
+#undef minor
+
 struct SlatepackMessage
 {
     struct Version

@@ -6,6 +6,7 @@
 #include <API/Node/Handlers/GetBlockHandler.h>
 #include <API/Node/Handlers/GetVersionHandler.h>
 #include <API/Node/Handlers/GetTipHandler.h>
+#include <API/Node/Handlers/PushTransactionHandler.h>
 
 class NodeServer
 {
@@ -30,6 +31,7 @@ public:
         pForeignServer->AddMethod("get_block", std::make_shared<GetBlockHandler>(pBlockChain));
         pForeignServer->AddMethod("get_version", std::make_shared<GetVersionHandler>(pBlockChain));
         pForeignServer->AddMethod("get_tip", std::make_shared<GetTipHandler>(pBlockChain));
+        pForeignServer->AddMethod("push_transaction", std::make_shared<PushTransactionHandler>(pBlockChain));
 
         RPCServer::Ptr pOwnerServer = RPCServer::Create(pServer, "/v2/owner", LoggerAPI::LogFile::NODE);
 

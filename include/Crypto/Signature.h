@@ -8,7 +8,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class Signature
+class Signature : public Traits::IPrintable
 {
 public:
 	//
@@ -57,6 +57,7 @@ public:
 	}
 
 	std::string ToHex() const { return m_signatureBytes.ToHex(); }
+	std::string Format() const override { return "RawSig{" + ToHex() + "}"; }
 
 private:
 	// The 64 byte Signature.
@@ -79,6 +80,8 @@ public:
 	{
 		return CompactSignature(byteBuffer.ReadBigInteger<64>());
 	}
+
+	std::string Format() const final { return "CompactSig{" + ToHex() + "}"; }
 };
 
 // TODO: Create RawSignature

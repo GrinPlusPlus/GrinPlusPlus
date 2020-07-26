@@ -154,6 +154,7 @@ Slate SendSlateBuilder::Build(
 		Crypto::CalculatePublicKey(secretNonce),
 		std::nullopt
 	});
+	slate.offset = transactionOffset;
 
 	std::for_each(
 		inputs.cbegin(), inputs.cend(),

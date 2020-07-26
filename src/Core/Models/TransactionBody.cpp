@@ -61,6 +61,10 @@ TransactionBody TransactionBody::Deserialize(ByteBuffer& byteBuffer)
 		kernels.emplace_back(TransactionKernel::Deserialize(byteBuffer));
 	}
 
+	std::sort(inputs.begin(), inputs.end(), SortInputsByHash);
+	std::sort(outputs.begin(), outputs.end(), SortOutputsByHash);
+	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
+
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
 }
 
@@ -117,6 +121,10 @@ TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON
 	{
 		kernels.emplace_back(TransactionKernel::FromJSON(kernelsJSON.get(Json::ArrayIndex(i), Json::nullValue)));
 	}
+
+	std::sort(inputs.begin(), inputs.end(), SortInputsByHash);
+	std::sort(outputs.begin(), outputs.end(), SortOutputsByHash);
+	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
 
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
 }

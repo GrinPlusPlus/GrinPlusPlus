@@ -67,10 +67,12 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 		finalizeSlate.offset = pWalletTx->GetTransaction().value().GetOffset();
 		WALLET_INFO_F("Offset not supplied. Using original: {}", finalizeSlate.offset.ToHex());
 	} else {
-		finalizeSlate.offset = Crypto::AddBlindingFactors(
-			{ finalizeSlate.offset, pWalletTx->GetTransaction().value().GetOffset() },
-			std::vector<BlindingFactor>{}
-		);
+		//BlindingFactor receiversOffset = finalizeSlate.offset;
+		//finalizeSlate.offset = Crypto::AddBlindingFactors(
+		//	{ receiversOffset, pWalletTx->GetTransaction().value().GetOffset() },
+		//	std::vector<BlindingFactor>{}
+		//);
+		WALLET_INFO_F("Offset {} supplied by receiver.", finalizeSlate.offset.ToHex());
 	}
 
 	// Add inputs, outputs, and omitted fields
@@ -122,7 +124,7 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	}
 
 	// Finalize transaction
-	const std::unique_ptr<Transaction> pTransaction = BuildTransaction(finalizeSlate, kernelMessage, finalExcess);
+	std::unique_ptr<Transaction> pTransaction = BuildTransaction(finalizeSlate, kernelMessage, finalExcess);
 	if (pTransaction == nullptr)
 	{
 		WALLET_ERROR_F(
@@ -141,7 +143,7 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	// Update database with latest WalletTx
 	UpdateDatabase(walletWriter.GetShared(), masterSeed, *pWalletTx, finalizeSlate);
 
-	return std::make_pair<Slate, Transaction>(Slate(finalizeSlate), Transaction(*pTransaction));
+	return std::pair{ finalizeSlate, *pTransaction };
 }
 
 bool FinalizeSlateBuilder::AddPartialSignature(

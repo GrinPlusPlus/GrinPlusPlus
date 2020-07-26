@@ -163,7 +163,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		}
 
 		Commitment kernel_commitment = SlateUtil::CalculateFinalExcess(receiveSlate);
-		WALLET_INFO_F("Calculated commitment: {}", kernel_commitment.ToHex());
+		WALLET_INFO_F("Calculated commitment: {}", kernel_commitment);
 
 		// Message: (amount | kernel commitment | sender address)
 		Serializer messageSerializer;

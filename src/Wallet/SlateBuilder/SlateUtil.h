@@ -40,12 +40,12 @@ public:
 			signatures.cbegin(), signatures.cend(),
 			std::back_inserter(pubkeys),
 			[](const SlateSignature& signature) {
-				WALLET_INFO_F("Adding Pubkey: {}", signature.excess.ToHex());
+				WALLET_INFO_F("Adding Pubkey: {}", signature.excess);
 				return signature.excess;
 			}
 		);
 
-		WALLET_INFO_F("Sum Pubkeys: {}", Crypto::AddPublicKeys(pubkeys).ToHex());
+		WALLET_INFO_F("Sum Pubkeys: {}", Crypto::AddPublicKeys(pubkeys));
 		return Crypto::ToCommitment(Crypto::AddPublicKeys(pubkeys));
 	}
 };

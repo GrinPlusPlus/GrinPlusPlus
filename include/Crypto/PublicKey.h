@@ -4,12 +4,14 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class PublicKey
+class PublicKey : public Traits::IPrintable
 {
 public:
 	PublicKey() = default;
 	PublicKey(CBigInteger<33>&& compressedKey)
 		: m_compressedKey(std::move(compressedKey)) { }
+
+	static PublicKey FromHex(const std::string& hex) { return PublicKey(CBigInteger<33>::FromHex(hex)); }
 
 	bool operator==(const PublicKey& rhs) const noexcept { return m_compressedKey == rhs.m_compressedKey; }
 
@@ -30,6 +32,8 @@ public:
 		CBigInteger<33> compressedKey = byteBuffer.ReadBigInteger<33>();
 		return PublicKey(std::move(compressedKey));
 	}
+
+	std::string Format() const final { return "PublicKey{" + ToHex() + "}"; }
 
 private:
 	CBigInteger<33> m_compressedKey;

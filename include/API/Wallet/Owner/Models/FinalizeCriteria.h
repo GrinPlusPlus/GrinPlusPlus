@@ -23,10 +23,20 @@ public:
 	static FinalizeCriteria FromJSON(const Json::Value& json, const ISlatepackDecryptor& decryptor)
 	{
 		SessionToken token = SessionToken::FromBase64(JsonUtil::GetRequiredString(json, "session_token"));
-		SlatepackMessage slatepack = decryptor.Decrypt(token, JsonUtil::GetRequiredString(json, "slatepack"));
 
-		ByteBuffer buffer{ slatepack.m_payload };
-		Slate slate = Slate::Deserialize(buffer);
+		Slate slate;
+		std::optional<SlatepackMessage> slatepack_opt;
+
+		auto slatepack_str_opt = JsonUtil::GetStringOpt(json, "slatepack");
+		if (slatepack_str_opt.has_value()) {
+			SlatepackMessage slatepack = decryptor.Decrypt(token, slatepack_str_opt.value());
+
+			ByteBuffer buffer{ slatepack.m_payload };
+			slate = Slate::Deserialize(buffer);
+			slatepack_opt = std::make_optional(std::move(slatepack));
+		} else {
+			slate = Slate::FromJSON(JsonUtil::GetRequiredField(json, "slate"));
+		}
 
 		std::optional<PostMethodDTO> postMethodOpt = std::nullopt;
 		std::optional<Json::Value> postJSON = JsonUtil::GetOptionalField(json, "post_tx");
@@ -37,7 +47,7 @@ public:
 
 		return FinalizeCriteria(
 			token,
-			std::make_optional<SlatepackMessage>(std::move(slatepack)),
+			std::move(slatepack_opt),
 			std::move(slate),
 			postMethodOpt
 		);

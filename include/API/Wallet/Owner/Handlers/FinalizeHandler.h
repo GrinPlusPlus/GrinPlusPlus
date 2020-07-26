@@ -41,7 +41,7 @@ public:
 		Slate slate = m_pWalletManager->Finalize(criteria, m_pTorProcess);
 
 		std::vector<SlatepackAddress> recipients;
-		if (!criteria.GetSlatepack().value().m_sender.IsNull()) {
+		if (criteria.GetSlatepack().has_value() && !criteria.GetSlatepack().value().m_sender.IsNull()) {
 			recipients.push_back(criteria.GetSlatepack().value().m_sender);
 		}
 

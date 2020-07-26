@@ -645,41 +645,6 @@ target_include_directories(${LIBRARY_NAME}
 
 target_include_directories(${LIBRARY_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/libsodium/include>)
 
-if (BUILD_TESTING)
-    file(GLOB sodium_test_sources ${PROJECT_SOURCE_DIR}/test/default/*.c)
-
-    foreach (test_src ${sodium_test_sources})
-        get_filename_component(test_name ${test_src} NAME_WE)
-        
-        add_executable(${test_name} ${test_src})
-        
-        if (MSVC)
-            target_compile_definitions(${test_name} PRIVATE _CRT_SECURE_NO_WARNINGS)
-        endif ()
-        
-        target_include_directories(${test_name}
-            PRIVATE
-                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/libsodium/include>
-                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/libsodium/include/sodium>
-                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/test/quirks>
-        )
-
-        target_link_libraries(${test_name} PRIVATE ${LIBRARY_NAME})
-
-        add_custom_command(TARGET ${test_name} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_LIST_DIR}/test/default/${test_name}.exp"
-            $<TARGET_FILE_DIR:${test_name}>)
-
-        add_test(
-            NAME ${test_name}
-            COMMAND ${test_name}
-            WORKING_DIRECTORY $<TARGET_FILE_DIR:${test_name}>
-        )
-    endforeach ()
-endif ()
-
 install(DIRECTORY src/libsodium/include/
     DESTINATION include/
     USE_SOURCE_PERMISSIONS

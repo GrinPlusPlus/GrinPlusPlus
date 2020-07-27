@@ -30,7 +30,7 @@ public:
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 
-	PeerPtr SendMessageToMostWorkPeer(const IMessage& message, const bool preferGrinPP = false);
+	PeerPtr SendMessageToMostWorkPeer(const IMessage& message);
 	bool SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer);
 	void BroadcastMessage(const IMessage& message, const uint64_t sourceId);
 
@@ -40,7 +40,7 @@ public:
 private:
 	ConnectionManager();
 
-	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections, const bool preferGrinPP) const;
+	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const;
 	static void Thread_Broadcast(ConnectionManager& connectionManager);
 	
 	Locked<std::vector<ConnectionPtr>> m_connections;

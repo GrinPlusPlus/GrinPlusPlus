@@ -128,14 +128,6 @@ Slate SendSlateBuilder::Build(
 		transactionOffset
 	);
 
-	// TODO: DEBUG CODE
-	WALLET_INFO_F(
-		"Signing keys generated: secret_key: {}, secret_nonce: {}, tx_offset: {}",
-		signing_keys.secret_key.GetBytes().ToHex(),
-		signing_keys.secret_nonce.GetBytes().ToHex(),
-		transactionOffset
-	);
-
 	// Payment proof
 	KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
 
@@ -166,7 +158,6 @@ Slate SendSlateBuilder::Build(
 	std::for_each(
 		inputs.cbegin(), inputs.cend(),
 		[&slate](const OutputDataEntity& input) {
-			WALLET_INFO_F("Adding input {} with {}", input.GetCommitment(), input.GetBlindingFactor()); // TODO: DEBUG CODE
 			slate.AddInput(input.GetFeatures(), input.GetCommitment());
 		}
 	);
@@ -174,7 +165,6 @@ Slate SendSlateBuilder::Build(
 	std::for_each(
 		changeOutputs.cbegin(), changeOutputs.cend(),
 		[&slate](const OutputDataEntity& output) {
-			WALLET_INFO_F("Adding change output {} with {}", output.GetCommitment(), output.GetBlindingFactor()); // TODO: DEBUG CODE
 			slate.AddOutput(output.GetFeatures(), output.GetCommitment(), output.GetRangeProof());
 		}
 	);

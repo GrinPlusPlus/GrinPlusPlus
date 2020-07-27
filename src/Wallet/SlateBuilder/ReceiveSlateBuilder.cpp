@@ -45,14 +45,6 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	const BlindingFactor receiver_offset = RandomNumberGenerator::GenerateRandom32();
 	SigningKeys signing_keys = SlateUtil::CalculateSigningKeys({}, { outputData }, receiver_offset);
 
-	// TODO: DEBUG CODE
-	WALLET_INFO_F(
-		"Signing keys generated: secret_key: {}, secret_nonce: {}, receiver_offset: {}",
-		signing_keys.secret_key.GetBytes().ToHex(),
-		signing_keys.secret_nonce.GetBytes().ToHex(),
-		receiver_offset
-	);
-
 	// Adjust transaction offset
 	receiveSlate.offset = Crypto::AddBlindingFactors({ receiveSlate.offset, receiver_offset }, {});
 	WALLET_INFO_F(
@@ -66,7 +58,6 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	SlateSignature signature = BuildSignature(receiveSlate, signing_keys);
 
 	// Add output to Transaction
-	WALLET_INFO_F("Adding output {} with {}", outputData.GetCommitment(), outputData.GetBlindingFactor()); // TODO: DEBUG CODE
 	receiveSlate.AddOutput(outputData.GetFeatures(), outputData.GetCommitment(), outputData.GetRangeProof());
 
 	UpdatePaymentProof(

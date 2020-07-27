@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    std::cout << "Trasnaction is valid" << std::endl;
+    std::cout << "Transaction is valid" << std::endl;
 
     return 0;
 }

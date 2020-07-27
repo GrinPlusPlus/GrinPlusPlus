@@ -208,6 +208,10 @@ bool Dandelion::ProcessExpiredEntries()
 			{
 				m_connectionManager.BroadcastMessage(TransactionMessage(pTransaction), 0);
 			}
+			else
+			{
+				LOG_INFO_F("Failed to add {} to mempool", *pTransaction);
+			}
 		}
 	}
 

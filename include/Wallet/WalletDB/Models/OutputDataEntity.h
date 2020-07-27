@@ -8,6 +8,7 @@
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
+#include <Crypto/BlindingFactor.h>
 #include <Crypto/SecretKey.h>
 #include <optional>
 
@@ -74,7 +75,7 @@ public:
 	// Getters
 	//
 	const KeyChainPath& GetKeyChainPath() const { return m_keyChainPath; }
-	const SecretKey& GetBlindingFactor() const { return m_blindingFactor; }
+	BlindingFactor GetBlindingFactor() const { return BlindingFactor(m_blindingFactor.GetBytes()); }
 	const TransactionOutput& GetOutput() const { return m_output; }
 	uint64_t GetAmount() const { return m_amount; }
 	EOutputStatus GetStatus() const { return m_status; }

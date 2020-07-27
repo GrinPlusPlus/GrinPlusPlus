@@ -239,7 +239,7 @@ public:
 	//
 	static bool VerifyAggregateSignature(
 		const Signature& aggregateSignature,
-		const PublicKey sumPubKeys,
+		const PublicKey& sumPubKeys,
 		const Hash& message
 	);
 

@@ -2,6 +2,7 @@
 #include "TransactionBuilder.h"
 #include "OutputBuilder.h"
 #include "CoinSelection.h"
+#include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
@@ -121,13 +122,19 @@ Slate SendSlateBuilder::Build(
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
 	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
-	SecretKey secretKey = CalculatePrivateKey(transactionOffset, inputs, changeOutputs);
+	SigningKeys signing_keys = SlateUtil::CalculateSigningKeys(
+		inputs,
+		changeOutputs,
+		transactionOffset
+	);
 
-	// Select a random nonce kS
-	SecretKey secretNonce = Crypto::GenerateSecureNonce();
-
-	// Build Transaction
-	//Transaction transaction = TransactionBuilder::BuildTransaction(inputs, changeOutputs, transactionOffset, fee, 0);
+	// TODO: DEBUG CODE
+	WALLET_INFO_F(
+		"Signing keys generated: secret_key: {}, secret_nonce: {}, tx_offset: {}",
+		signing_keys.secret_key.GetBytes().ToHex(),
+		signing_keys.secret_nonce.GetBytes().ToHex(),
+		transactionOffset
+	);
 
 	// Payment proof
 	KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
@@ -150,8 +157,8 @@ Slate SendSlateBuilder::Build(
 	slate.proofOpt = proofOpt;
 	slate.kernelFeatures = EKernelFeatures::DEFAULT_KERNEL;
 	slate.sigs.push_back(SlateSignature{
-		Crypto::CalculatePublicKey(secretKey),
-		Crypto::CalculatePublicKey(secretNonce),
+		signing_keys.public_key,
+		signing_keys.public_nonce,
 		std::nullopt
 	});
 	slate.offset = transactionOffset;
@@ -159,14 +166,16 @@ Slate SendSlateBuilder::Build(
 	std::for_each(
 		inputs.cbegin(), inputs.cend(),
 		[&slate](const OutputDataEntity& input) {
-			slate.commitments.push_back(SlateCommitment{ input.GetFeatures(), input.GetCommitment(), std::nullopt });
+			WALLET_INFO_F("Adding input {} with {}", input.GetCommitment(), input.GetBlindingFactor()); // TODO: DEBUG CODE
+			slate.AddInput(input.GetFeatures(), input.GetCommitment());
 		}
 	);
 
 	std::for_each(
 		changeOutputs.cbegin(), changeOutputs.cend(),
 		[&slate](const OutputDataEntity& output) {
-			slate.commitments.push_back(SlateCommitment{ output.GetFeatures(), output.GetCommitment(), output.GetRangeProof() });
+			WALLET_INFO_F("Adding change output {} with {}", output.GetCommitment(), output.GetBlindingFactor()); // TODO: DEBUG CODE
+			slate.AddOutput(output.GetFeatures(), output.GetCommitment(), output.GetRangeProof());
 		}
 	);
 
@@ -184,7 +193,7 @@ Slate SendSlateBuilder::Build(
 		pBatch.GetShared(),
 		masterSeed,
 		slate,
-		SlateContextEntity{ secretKey, secretNonce, inputs, changeOutputs },
+		SlateContextEntity{ signing_keys.secret_key, signing_keys.secret_nonce, inputs, changeOutputs },
 		changeOutputs,
 		inputs,
 		walletTx
@@ -193,38 +202,6 @@ Slate SendSlateBuilder::Build(
 	pBatch->Commit();
 
 	return slate;
-}
-
-SecretKey SendSlateBuilder::CalculatePrivateKey(
-	const BlindingFactor& transactionOffset,
-	const std::vector<OutputDataEntity>& inputs,
-	const std::vector<OutputDataEntity>& changeOutputs) const
-{
-	// Calculate sum inputs blinding factors xI.
-	std::vector<BlindingFactor> inputBlindingFactors;
-	std::transform(
-		inputs.begin(), inputs.end(),
-		std::back_inserter(inputBlindingFactors), 
-		[](const OutputDataEntity& output) { return BlindingFactor(output.GetBlindingFactor().GetBytes()); }
-	);
-	BlindingFactor inputBFSum = Crypto::AddBlindingFactors(inputBlindingFactors, {});
-
-	// Calculate sum change outputs blinding factors xC.
-	std::vector<BlindingFactor> outputBlindingFactors;
-	std::transform(
-		changeOutputs.begin(), changeOutputs.end(),
-		std::back_inserter(outputBlindingFactors),
-		[](const OutputDataEntity& output) { return BlindingFactor(output.GetBlindingFactor().GetBytes()); }
-	);
-	BlindingFactor outputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, {});
-
-	// Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
-	BlindingFactor totalBlindingExcessSum = CryptoUtil::AddBlindingFactors(&outputBFSum, &inputBFSum);
-
-	// Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
-	BlindingFactor privateKeyBF = CryptoUtil::AddBlindingFactors(&totalBlindingExcessSum, &transactionOffset);
-
-	return privateKeyBF.ToSecretKey();
 }
 
 WalletTx SendSlateBuilder::BuildWalletTx(
@@ -291,13 +268,8 @@ void SendSlateBuilder::UpdateDatabase(
 	std::vector<OutputDataEntity>& coinsToLock,
 	const WalletTx& walletTx) const
 {
-	// Save private context
 	pBatch->SaveSlateContext(masterSeed, slate.GetId(), context);
-
-	// Save slate
 	pBatch->SaveSlate(masterSeed, slate);
-
-	// Save new blinded outputs
 	pBatch->AddOutputs(masterSeed, changeOutputs);
 
 	// Lock coins
@@ -307,7 +279,5 @@ void SendSlateBuilder::UpdateDatabase(
 	}
 
 	pBatch->AddOutputs(masterSeed, coinsToLock);
-
-	// Save the log/WalletTx
 	pBatch->AddTransaction(masterSeed, walletTx);
 }

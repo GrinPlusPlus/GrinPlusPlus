@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Wallet.h"
+#include "SigningKeys.h"
 
 #include <Common/Secure.h>
 #include <Wallet/Models/Slate/Slate.h>
@@ -10,10 +11,7 @@ class ReceiveSlateBuilder
 {
 public:
 	ReceiveSlateBuilder(const Config& config)
-		: m_config(config)
-	{
-
-	}
+		: m_config(config) { }
 
 	Slate AddReceiverData(
 		Locked<Wallet> wallet,
@@ -24,7 +22,7 @@ public:
 
 private:
 	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
-	SlateSignature BuildSignature(Slate& slate, const SecretKey& secretKey, const SecretKey& secretNonce) const;
+	SlateSignature BuildSignature(Slate& slate, const SigningKeys& signing_keys) const;
 	void UpdatePaymentProof(
 		const std::shared_ptr<Wallet>& pWallet,
 		const SecureVector& masterSeed,

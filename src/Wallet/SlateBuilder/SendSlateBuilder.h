@@ -42,12 +42,6 @@ private:
 		const uint16_t slateVersion
 	) const;
 
-	SecretKey CalculatePrivateKey(
-		const BlindingFactor& transactionOffset,
-		const std::vector<OutputDataEntity>& inputs,
-		const std::vector<OutputDataEntity>& changeOutputs
-	) const;
-
 	WalletTx BuildWalletTx(
 		const uint32_t walletTxId,
 		const BlindingFactor& txOffset,

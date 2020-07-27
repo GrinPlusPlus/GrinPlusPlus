@@ -278,7 +278,7 @@ bool Crypto::VerifyPartialSignature(const CompactSignature& partialSignature, co
 	return AggSig::GetInstance().VerifyPartialSignature(partialSignature, publicKey, sumPubKeys, sumPubNonces, message);
 }
 
-bool Crypto::VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey sumPubKeys, const Hash& message)
+bool Crypto::VerifyAggregateSignature(const Signature& aggregateSignature, const PublicKey& sumPubKeys, const Hash& message)
 {
 	return AggSig::GetInstance().VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 }

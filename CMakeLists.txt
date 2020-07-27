@@ -172,3 +172,5 @@ add_subdirectory(src/Server)
 if(GRINPP_TESTS AND NOT LINUX)
     add_subdirectory(tests)
 endif(GRINPP_TESTS AND NOT LINUX)
+
+add_subdirectory(tools)

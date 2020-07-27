@@ -9,7 +9,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class BlindingFactor
+class BlindingFactor : public Traits::IPrintable
 {
 public:
 	//
@@ -70,6 +70,8 @@ public:
 	{
 		return BlindingFactor(CBigInteger<32>::FromHex(hex));
 	}
+
+	std::string Format() const final { return "BlindingFactor{" + ToHex() + "}"; }
 
 	//
 	// Converts BlindingFactor to SecretKey.

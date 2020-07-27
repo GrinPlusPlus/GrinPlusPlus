@@ -6,36 +6,13 @@
 class SignatureUtil
 {
 public:
-	static std::unique_ptr<CompactSignature> GeneratePartialSignature(
-		const SecretKey& secretKey,
-		const SecretKey& secretNonce,
-		const std::vector<SlateSignature>& sigs,
-		const Hash& message)
-	{
-		std::vector<PublicKey> pubKeys;
-		std::vector<PublicKey> pubNonces;
-
-		for (const auto& sig : sigs)
-		{
-			pubKeys.push_back(sig.excess);
-			pubNonces.push_back(sig.nonce);
-		}
-
-		const PublicKey sumPubKeys = Crypto::AddPublicKeys(pubKeys);
-		const PublicKey sumPubNonces = Crypto::AddPublicKeys(pubNonces);
-
-		return Crypto::CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
-	}
-
-	static std::unique_ptr<Signature> AggregateSignatures(const std::vector<SlateSignature>& sigs)
+	static std::unique_ptr<Signature> AggregateSignatures(const Slate& slate)
 	{
 		std::vector<CompactSignature> signatures;
 		std::vector<PublicKey> pubNonces;
 
-		for (const auto& sig : sigs)
+		for (const auto& sig : slate.sigs)
 		{
-			pubNonces.push_back(sig.nonce);
-
 			if (sig.partialOpt.has_value()) {
 				WALLET_INFO_F("Aggregating signature: {}", sig.partialOpt.value());
 				signatures.push_back(sig.partialOpt.value());
@@ -44,7 +21,7 @@ public:
 			}
 		}
 
-		const PublicKey sumPubNonces = Crypto::AddPublicKeys(pubNonces);
+		const PublicKey sumPubNonces = slate.CalculateTotalNonce();
 
 		return Crypto::AggregateSignatures(signatures, sumPubNonces);
 	}
@@ -84,19 +61,5 @@ public:
 		}
 
 		return true;
-	}
-
-	static bool VerifyAggregateSignature(const Signature& aggregateSignature, const std::vector<SlateSignature>& sigs, const Hash& message)
-	{
-		std::vector<PublicKey> pubKeys;
-
-		for (const auto& sig : sigs)
-		{
-			pubKeys.push_back(sig.excess);
-		}
-
-		const PublicKey sumPubKeys = Crypto::AddPublicKeys(pubKeys);
-
-		return Crypto::VerifyAggregateSignature(aggregateSignature, sumPubKeys, message);
 	}
 };

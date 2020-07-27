@@ -17,11 +17,6 @@ public:
 		const uint8_t numOutputs,
 		const EBulletproofType& bulletproofType)
 	{
-		if (totalAmount < numOutputs)
-		{
-			throw InsufficientFundsException();
-		}
-
 		std::vector<OutputDataEntity> outputs;
 		for (uint8_t i = 0; i < numOutputs; i++)
 		{

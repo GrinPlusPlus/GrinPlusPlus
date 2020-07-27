@@ -111,7 +111,7 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
 	}
 
-	Commitment finalExcess = SlateUtil::CalculateFinalExcess(finalizeSlate);
+	Commitment finalExcess = Crypto::ToCommitment(finalizeSlate.CalculateTotalExcess());
 
 	// Verify payment proof addresses & signatures
 	if (!VerifyPaymentProofs(pWalletTx, finalizeSlate, finalExcess))
@@ -133,8 +133,6 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 		);
 		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
 	}
-
-	WALLET_INFO_F("Final transaction: {}", pTransaction->ToJSON().toStyledString());
 
 	// Update WalletTx
 	pWalletTx->SetType(EWalletTxType::SENDING_FINALIZED);
@@ -171,10 +169,11 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 	}
 
 	// Generate partial signature
-	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
+	std::unique_ptr<CompactSignature> pPartialSignature = Crypto::CalculatePartialSignature(
 		context.GetSecretKey(),
 		context.GetSecretNonce(),
-		finalizeSlate.sigs,
+		finalizeSlate.CalculateTotalExcess(),
+		finalizeSlate.CalculateTotalNonce(),
 		kernelMessage
 	);
 	if (pPartialSignature == nullptr)
@@ -212,7 +211,7 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 	const Commitment& finalExcess) const
 {
 	// Aggregate partial signatures
-	auto pAggSignature = SignatureUtil::AggregateSignatures(finalizeSlate.sigs);
+	auto pAggSignature = SignatureUtil::AggregateSignatures(finalizeSlate);
 	if (pAggSignature == nullptr)
 	{
 		WALLET_ERROR_F(
@@ -221,9 +220,15 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		);
 		return nullptr;
 	}
-
-	if (!SignatureUtil::VerifyAggregateSignature(*pAggSignature, finalizeSlate.sigs, kernelMessage))
-	{
+	
+	PublicKey totalExcess = finalizeSlate.CalculateTotalExcess();
+	WALLET_INFO_F(
+		"Validating signature {} for excess {} against message {}.",
+		*pAggSignature,
+		totalExcess,
+		kernelMessage.ToHex()
+	);
+	if (!Crypto::VerifyAggregateSignature(*pAggSignature, totalExcess, kernelMessage)) {
 		WALLET_ERROR_F(
 			"Failed to verify aggregate signature for slate {}",
 			uuids::to_string(finalizeSlate.GetId())
@@ -267,6 +272,8 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		);
 		return nullptr;
 	}
+
+	WALLET_INFO_F("Final transaction: {}", transaction.ToJSON().toStyledString());
 
 	return std::make_unique<Transaction>(std::move(transaction));
 }

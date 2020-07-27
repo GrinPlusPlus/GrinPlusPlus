@@ -7,6 +7,7 @@
 #include <Wallet/Models/Slate/SlateStage.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
+#include <Crypto/Crypto.h>
 #include <Common/Util/BitUtil.h>
 #include <json/json.h>
 #include <stdint.h>
@@ -200,6 +201,40 @@ public:
 		}
 
 		commitments.push_back(SlateCommitment{ features, commitment, std::make_optional(RangeProof(proof)) });
+	}
+
+	PublicKey CalculateTotalExcess() const
+	{
+		std::vector<PublicKey> public_keys;
+		std::transform(
+			sigs.cbegin(), sigs.cend(),
+			std::back_inserter(public_keys),
+			[](const SlateSignature& signature) {
+				WALLET_INFO_F("Adding Pubkey: {}", signature.excess);
+				return signature.excess;
+			}
+		);
+
+		PublicKey total_excess = Crypto::AddPublicKeys(public_keys);
+		WALLET_INFO_F("Total excess: {}", total_excess);
+		return total_excess;
+	}
+
+	PublicKey CalculateTotalNonce() const
+	{
+		std::vector<PublicKey> public_nonces;
+		std::transform(
+			sigs.cbegin(), sigs.cend(),
+			std::back_inserter(public_nonces),
+			[](const SlateSignature& signature) {
+				WALLET_INFO_F("Adding Pubkey: {}", signature.nonce);
+				return signature.nonce;
+			}
+		);
+
+		PublicKey total_nonce = Crypto::AddPublicKeys(public_nonces);
+		WALLET_INFO_F("Total nonce: {}", total_nonce);
+		return total_nonce;
 	}
 
 	/*

@@ -10,17 +10,17 @@
 Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,
 	const SecureVector& masterSeed,
-	const Slate& slate,
+	const Slate& send_slate,
 	const std::optional<SlatepackAddress>& addressOpt) const
 {
 	WALLET_INFO_F(
 		"Receiving {} from {}",
-		slate.GetAmount(),
+		send_slate.GetAmount(),
 		addressOpt.has_value() ? addressOpt.value().ToString() : "UNKNOWN"
 	);
 
 	auto pWallet = wallet.Write();
-	Slate receiveSlate = slate;
+	Slate receiveSlate = send_slate;
 	receiveSlate.stage = ESlateStage::STANDARD_RECEIVED;
 
 	// Verify slate was never received, exactly one kernel exists, and fee is valid.
@@ -41,21 +41,33 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		walletTxId,
 		EBulletproofType::ENHANCED
 	);
-	const SecretKey& secretKey = outputData.GetBlindingFactor();
-	SecretKey secretNonce = Crypto::GenerateSecureNonce();
 
-	// TODO: Adjust offset?
+	const BlindingFactor receiver_offset = RandomNumberGenerator::GenerateRandom32();
+	SigningKeys signing_keys = SlateUtil::CalculateSigningKeys({}, { outputData }, receiver_offset);
+
+	// TODO: DEBUG CODE
+	WALLET_INFO_F(
+		"Signing keys generated: secret_key: {}, secret_nonce: {}, receiver_offset: {}",
+		signing_keys.secret_key.GetBytes().ToHex(),
+		signing_keys.secret_nonce.GetBytes().ToHex(),
+		receiver_offset
+	);
+
+	// Adjust transaction offset
+	receiveSlate.offset = Crypto::AddBlindingFactors({ receiveSlate.offset, receiver_offset }, {});
+	WALLET_INFO_F(
+		"Adjusting original transaction offset {} by {} to get total {}",
+		send_slate.offset,
+		receiver_offset,
+		receiveSlate.offset
+	);
 
 	// Add receiver ParticipantData
-	SlateSignature signature = BuildSignature(receiveSlate, secretKey, secretNonce);
+	SlateSignature signature = BuildSignature(receiveSlate, signing_keys);
 
 	// Add output to Transaction
-	SlateCommitment outputCommit{
-		outputData.GetFeatures(),
-		outputData.GetCommitment(),
-		std::make_optional<RangeProof>(outputData.GetRangeProof())
-	};
-	receiveSlate.commitments.push_back(outputCommit);
+	WALLET_INFO_F("Adding output {} with {}", outputData.GetCommitment(), outputData.GetBlindingFactor()); // TODO: DEBUG CODE
+	receiveSlate.AddOutput(outputData.GetFeatures(), outputData.GetCommitment(), outputData.GetRangeProof());
 
 	UpdatePaymentProof(
 		pWallet.GetShared(),
@@ -85,21 +97,18 @@ bool ReceiveSlateBuilder::VerifySlateStatus(
 {
 	// Slate was already received.
 	std::unique_ptr<WalletTx> pWalletTx = pWallet->GetTxBySlateId(masterSeed, slate.GetId());
-	if (pWalletTx != nullptr && pWalletTx->GetType() != EWalletTxType::RECEIVED_CANCELED)
-	{
-		WALLET_ERROR_F("Already received slate {}", uuids::to_string(slate.GetId()));
-		return false;
+	if (pWalletTx != nullptr) {
+		const EWalletTxType status = pWalletTx->GetType();
+		if (status != EWalletTxType::RECEIVED_CANCELED && status != EWalletTxType::SENDING_STARTED) {
+			WALLET_ERROR_F("Already received slate {}", uuids::to_string(slate.GetId()));
+			return false;
+		}
 	}
-
-	// TODO: Verify fees
 
 	return true;
 }
 
-SlateSignature ReceiveSlateBuilder::BuildSignature(
-	Slate& slate,
-	const SecretKey& secretKey,
-	const SecretKey& secretNonce) const
+SlateSignature ReceiveSlateBuilder::BuildSignature(Slate& slate, const SigningKeys& signing_keys) const
 {
 	const Hash kernelMessage = TransactionKernel::GetSignatureMessage(
 		slate.kernelFeatures,
@@ -107,16 +116,14 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(
 		slate.GetLockHeight()
 	);
 
-	PublicKey excess = Crypto::CalculatePublicKey(secretKey);
-	PublicKey nonce = Crypto::CalculatePublicKey(secretNonce);
-
 	// Generate signature
-	slate.sigs.push_back(SlateSignature{ excess, nonce, std::nullopt });
+	slate.sigs.push_back(SlateSignature{ signing_keys.public_key, signing_keys.public_nonce, std::nullopt });
 
-	std::unique_ptr<CompactSignature> pPartialSignature = SignatureUtil::GeneratePartialSignature(
-		secretKey,
-		secretNonce,
-		slate.sigs,
+	std::unique_ptr<CompactSignature> pPartialSignature = Crypto::CalculatePartialSignature(
+		signing_keys.secret_key,
+		signing_keys.secret_nonce,
+		slate.CalculateTotalExcess(),
+		slate.CalculateTotalNonce(),
 		kernelMessage
 	);
 	if (pPartialSignature == nullptr)
@@ -162,7 +169,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 			);
 		}
 
-		Commitment kernel_commitment = SlateUtil::CalculateFinalExcess(receiveSlate);
+		Commitment kernel_commitment = Crypto::ToCommitment(receiveSlate.CalculateTotalExcess());
 		WALLET_INFO_F("Calculated commitment: {}", kernel_commitment);
 
 		// Message: (amount | kernel commitment | sender address)

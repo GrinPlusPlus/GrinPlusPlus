@@ -1,7 +1,6 @@
 #include "Connection.h"
 #include "MessageRetriever.h"
 #include "MessageProcessor.h"
-#include "MessageSender.h"
 #include "ConnectionManager.h"
 #include "Messages/PingMessage.h"
 #include "Messages/GetPeerAddressesMessage.h"
@@ -16,24 +15,22 @@
 #include <memory>
 
 Connection::Connection(
-	SocketPtr pSocket,
+	const Config& config,
+	const SocketPtr& pSocket,
 	const uint64_t connectionId,
 	ConnectionManager& connectionManager,
 	const ConnectedPeer& connectedPeer,
 	SyncStatusConstPtr pSyncStatus,
 	std::shared_ptr<HandShake> pHandShake,
-	const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-	std::shared_ptr<MessageRetriever> pMessageRetriever,
-	std::shared_ptr<MessageSender> pMessageSender)
-	: m_pSocket(pSocket),
+	const std::weak_ptr<MessageProcessor>& pMessageProcessor)
+	: m_config(config),
+	m_pSocket(pSocket),
 	m_connectionId(connectionId),
 	m_connectionManager(connectionManager),
 	m_connectedPeer(connectedPeer),
 	m_pSyncStatus(pSyncStatus),
 	m_pHandShake(pHandShake),
 	m_pMessageProcessor(pMessageProcessor),
-	m_pMessageRetriever(pMessageRetriever),
-	m_pMessageSender(pMessageSender),
 	m_terminate(false)
 {
 
@@ -41,19 +38,21 @@ Connection::Connection(
 
 Connection::~Connection()
 {
-	Disconnect();
+	Disconnect(true);
 }
 
-void Connection::Disconnect()
+void Connection::Disconnect(const bool wait)
 {
 	m_terminate = true;
-	ThreadUtil::Join(m_connectionThread);
-	m_connectedPeer.GetPeer()->SetConnected(false);
-	m_pSocket.reset();
+	if (wait) {
+		ThreadUtil::Join(m_connectionThread);
+		m_connectedPeer.GetPeer()->SetConnected(false);
+		m_pSocket.reset();
+	}
 }
 
 std::shared_ptr<Connection> Connection::Create(
-	SocketPtr pSocket,
+	const SocketPtr& pSocket,
 	const uint64_t connectionId,
 	const Config& config,
 	ConnectionManager& connectionManager,
@@ -63,19 +62,16 @@ std::shared_ptr<Connection> Connection::Create(
 	SyncStatusConstPtr pSyncStatus)
 {
 	auto pHandShake = std::make_shared<HandShake>(config, connectionManager, pBlockChainServer);
-	auto pMessageRetriever = std::make_shared<MessageRetriever>(config, connectionManager);
-	auto pMessageSender = std::make_shared<MessageSender>(config);
 
 	auto pConnection = std::shared_ptr<Connection>(new Connection(
+		config,
 		pSocket,
 		connectionId,
 		connectionManager,
 		connectedPeer,
 		pSyncStatus,
 		pHandShake,
-		pMessageProcessor,
-		pMessageRetriever,
-		pMessageSender
+		pMessageProcessor
 	));
 	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
 	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
@@ -92,7 +88,7 @@ bool Connection::IsConnectionActive() const
 	return m_pSocket->IsActive();
 }
 
-void Connection::Send(const IMessage& message)
+void Connection::AddToSendQueue(const IMessage& message)
 {
 	m_sendQueue.push_back(message.Clone());
 }
@@ -134,7 +130,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		{
 			LOG_DEBUG("Successful Handshake");
 			pConnection->m_connectionManager.AddConnection(pConnection);
-			pConnection->Send(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+			pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
 		}
 		else
 		{
@@ -156,8 +152,8 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 
 	SyncStatusConstPtr pSyncStatus = pConnection->m_pSyncStatus;
 
-	std::chrono::system_clock::time_point lastPingTime = std::chrono::system_clock::now();
-	std::chrono::system_clock::time_point lastReceivedMessageTime = std::chrono::system_clock::now();
+	auto lastPingTime = std::chrono::system_clock::now();
+	auto lastReceivedMessageTime = std::chrono::system_clock::now();
 
 	while (!pConnection->m_terminate && !pConnection->GetPeer()->IsBanned())
 	{
@@ -172,7 +168,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		if (lastPingTime + std::chrono::seconds(10) < now)
 		{
 			const PingMessage pingMessage(pSyncStatus->GetBlockDifficulty(), pSyncStatus->GetBlockHeight());
-			pConnection->Send(pingMessage);
+			pConnection->AddToSendQueue(pingMessage);
 
 			lastPingTime = now;
 		}
@@ -182,10 +178,10 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			bool messageSentOrReceived = false;
 
 			// Check for received messages and if there is a new message, process it.
-			std::unique_ptr<RawMessage> pRawMessage = pConnection->m_pMessageRetriever->RetrieveMessage(
+			std::unique_ptr<RawMessage> pRawMessage = MessageRetriever(pConnection->m_config).RetrieveMessage(
 				*pConnection->m_pSocket,
-				pConnection->m_connectedPeer,
-				MessageRetriever::NON_BLOCKING
+				*pConnection->GetPeer(),
+				Socket::NON_BLOCKING
 			);
 
 			if (pRawMessage != nullptr)
@@ -193,20 +189,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 				auto pMessageProcessor = pConnection->m_pMessageProcessor.lock();
 				if (pMessageProcessor != nullptr)
 				{
-					const MessageProcessor::EStatus status = pMessageProcessor->ProcessMessage(
-						pConnection->m_connectionId,
-						*pConnection->m_pSocket,
-						pConnection->m_connectedPeer,
-						*pRawMessage
-					);
-
-					if (status == MessageProcessor::EStatus::BAN_PEER)
-					{
-						EBanReason banReason = EBanReason::Abusive; // TODO: Determine real reason.
-						LOG_WARNING_F("Banning peer ({}) for ({}).", pConnection->GetIPAddress(), BanReason::Format(banReason));
-						pConnection->GetPeer()->Ban(banReason);
-						break;
-					}
+					pMessageProcessor->ProcessMessage(*pConnection, *pRawMessage);
 				}
                 
                 lastReceivedMessageTime = std::chrono::system_clock::now();
@@ -219,13 +202,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			{
 				IMessagePtr pMessage = *pMessageToSend;
 				pConnection->m_sendQueue.pop_front(1);
-
-				pConnection->m_pMessageSender->Send(
-					*pConnection->m_pSocket,
-					*pMessage,
-					pConnection->GetPeer()->GetVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1
-				);
-
+				pConnection->SendMsg(*pMessage);
 				messageSentOrReceived = true;
 			}
 			
@@ -274,4 +251,29 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 
 	pConnection->GetSocket()->CloseSocket();
 	pConnection->m_connectedPeer.GetPeer()->SetConnected(false);
+}
+
+bool Connection::SendMsg(const IMessage& message)
+{
+	std::vector<uint8_t> serialized_message = message.Serialize(
+		m_config.GetEnvironment(),
+		GetProtocolVersion()
+	);
+	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {
+		LOG_TRACE_F(
+			"Sending {}b '{}' message to {}",
+			serialized_message.size(),
+			MessageTypes::ToString(message.GetMessageType()),
+			GetSocket()
+		);
+	}
+
+	return GetSocket()->Send(serialized_message, true);
+}
+
+void Connection::BanPeer(const EBanReason reason)
+{
+	LOG_WARNING_F("Banning peer {} for '{}'.", GetIPAddress(), BanReason::Format(reason));
+	GetPeer()->Ban(reason);
+	m_terminate = true;
 }

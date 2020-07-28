@@ -11,8 +11,8 @@
 class PushTransactionHandler : public RPCMethod
 {
 public:
-	PushTransactionHandler(const IBlockChainServerPtr& pBlockChain)
-		: m_pBlockChain(pBlockChain) { }
+	PushTransactionHandler(const IBlockChainServerPtr& pBlockChain, const IP2PServerPtr& pP2PServer)
+		: m_pBlockChain(pBlockChain), m_pP2PServer(pP2PServer) { }
 	~PushTransactionHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
@@ -41,6 +41,8 @@ public:
 		);
 
 		if (status == EBlockChainStatus::SUCCESS) {
+			m_pP2PServer->BroadcastTransaction(pTransaction);
+
 			Json::Value result;
 			result["Ok"] = Json::Value(Json::nullValue);
 			return request.BuildResult(result);
@@ -53,4 +55,5 @@ public:
 
 private:
 	IBlockChainServerPtr m_pBlockChain;
+	IP2PServerPtr m_pP2PServer;
 };

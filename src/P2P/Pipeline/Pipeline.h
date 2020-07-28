@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ConnectionManager.h"
+#include "../Connection.h"
 #include "BlockPipe.h"
 #include "TransactionPipe.h"
 #include "TxHashSetPipe.h"
@@ -8,6 +9,9 @@
 #include <P2P/SyncStatus.h>
 #include <BlockChain/BlockChainServer.h>
 #include <memory>
+
+// Forward Declarations
+class Connection;
 
 class Pipeline
 {
@@ -28,6 +32,21 @@ public:
 	std::shared_ptr<BlockPipe> GetBlockPipe() { return m_pBlockPipe; }
 	std::shared_ptr<TransactionPipe> GetTransactionPipe() { return m_pTransactionPipe; }
 	std::shared_ptr<TxHashSetPipe> GetTxHashSetPipe() { return m_pTxHashSetPipe; }
+
+	void ProcessBlock(Connection& connection, const FullBlock& block)
+	{
+		m_pBlockPipe->AddBlockToProcess(connection.GetPeer(), block);
+	}
+
+	void ProcessTransaction(Connection& connection, const TransactionPtr& pTransaction, const EPoolType poolType)
+	{
+		m_pTransactionPipe->AddTransactionToProcess(connection, pTransaction, poolType);
+	}
+
+	void ReceiveTxHashSet(Connection& connection, const TxHashSetArchiveMessage& message)
+	{
+		m_pTxHashSetPipe->ReceiveTxHashSet(connection, message);
+	}
 
 private:
 	Pipeline(

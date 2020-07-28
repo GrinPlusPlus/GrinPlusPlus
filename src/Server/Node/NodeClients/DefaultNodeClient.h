@@ -118,12 +118,10 @@ public:
 	bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) final
 	{
 		auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
-		if (pTipHeader != nullptr)
-		{
+		if (pTipHeader != nullptr) {
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
 			auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-			if (pTxHashSet != nullptr)
-			{
+			if (pTxHashSet != nullptr) {
 				try
 				{
 					auto result = m_pTransactionPool->AddTransaction(
@@ -134,18 +132,19 @@ public:
 						*pTipHeader
 					);
 					
-					if (result == EAddTransactionStatus::ADDED)
-					{
-						if (poolType == EPoolType::MEMPOOL)
-						{
+					if (result == EAddTransactionStatus::ADDED) {
+						if (poolType == EPoolType::MEMPOOL) {
 							m_pP2PServer->BroadcastTransaction(pTransaction);
 						}
 
 						return true;
+					} else {
+						LOG_ERROR_F("Failed to add {} for reason '{}'", pTransaction, (uint8_t)result);
 					}
 				}
-				catch (std::exception&)
+				catch (std::exception& e)
 				{
+					LOG_ERROR_F("Failed to add {}. Exception: ", pTransaction, e.what());
 					return false;
 				}
 			}

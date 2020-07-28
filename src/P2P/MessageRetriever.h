@@ -2,30 +2,26 @@
 
 #include "Messages/RawMessage.h"
 
+#include <Net/Socket.h>
 #include <Config/Config.h>
 #include <memory>
 #include <vector>
 #include <string>
 
 // Forward Declarations
-class Socket;
-class ConnectedPeer;
-class ConnectionManager;
+class Peer;
 
 class MessageRetriever
 {
 public:
-	MessageRetriever(const Config& config, const ConnectionManager& connectionManager);
+	MessageRetriever(const Config& config) : m_config(config) { }
 
-	enum ERetrievalMode
-	{
-		BLOCKING,
-		NON_BLOCKING
-	};
-
-	std::unique_ptr<RawMessage> RetrieveMessage(Socket& socket, const ConnectedPeer& connectedPeer, const ERetrievalMode retrievalMode) const;
+	std::unique_ptr<RawMessage> RetrieveMessage(
+		Socket& socket,
+		const Peer& peer,
+		const Socket::ERetrievalMode mode
+	) const;
 
 private:
 	const Config& m_config;
-	const ConnectionManager& m_connectionManager;
 };

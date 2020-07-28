@@ -2,6 +2,7 @@
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Infrastructure/Logger.h>
+#include <Infrastructure/ShutdownManager.h>
 
 static unsigned long DEFAULT_TIMEOUT = 5 * 1000; // 5s
 
@@ -264,7 +265,7 @@ bool Socket::SetBlocking(const bool blocking)
 	return m_blocking == blocking;
 }
 
-bool Socket::Send(const std::vector<unsigned char>& message, const bool incrementCount)
+bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
@@ -282,8 +283,28 @@ bool Socket::Send(const std::vector<unsigned char>& message, const bool incremen
 	return bytesWritten == message.size();
 }
 
-bool Socket::Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data)
+bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
 {
+	bool hasReceivedData = HasReceivedData();
+	if (mode == BLOCKING)
+	{
+		std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
+		while (!hasReceivedData)
+		{
+			if (std::chrono::system_clock::now() >= timeout || ShutdownManagerAPI::WasShutdownRequested())
+			{
+				return false;
+			}
+
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5), false);
+			hasReceivedData = HasReceivedData();
+		}
+	}
+
+	if (!hasReceivedData) {
+		return false;
+	}
+
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 	if (data.size() < numBytes)

@@ -30,12 +30,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new BanReasonMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new BanReasonMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::BanReasonMsg; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::BanReasonMsg; }
 	uint32_t GetBanReason() const { return m_banReason; }
 
 	//
@@ -49,7 +49,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint32_t>(m_banReason);
 	}

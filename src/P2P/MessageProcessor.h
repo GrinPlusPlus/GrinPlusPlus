@@ -9,9 +9,8 @@
 #include <memory>
 
 // Forward Declarations
-class Socket;
 class ConnectionManager;
-class ConnectedPeer;
+class Connection;
 class RawMessage;
 class Pipeline;
 class TxHashSetArchiveMessage;
@@ -28,7 +27,7 @@ public:
 		RESOURCE_NOT_FOUND,
 		UNKNOWN_MESSAGE,
 		SYNCING,
-		BAN_PEER
+		DISCONNECT
 	};
 
 	MessageProcessor(
@@ -40,11 +39,11 @@ public:
 		SyncStatusConstPtr pSyncStatus
 	);
 
-	EStatus ProcessMessage(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
+	void ProcessMessage(Connection& connection, const RawMessage& rawMessage);
 
 private:
-	EStatus ProcessMessageInternal(const uint64_t connectionId, Socket& socket, ConnectedPeer& connectedPeer, const RawMessage& rawMessage);
-	EStatus SendTxHashSet(ConnectedPeer& connectedPeer, Socket& socket, const TxHashSetRequestMessage& txHashSetRequestMessage);
+	void ProcessMessageInternal(Connection& connection, const RawMessage& rawMessage);
+	void SendTxHashSet(Connection& connection, const TxHashSetRequestMessage& txHashSetRequestMessage);
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;

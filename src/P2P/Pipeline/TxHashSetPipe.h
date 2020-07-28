@@ -13,6 +13,7 @@
 
 // Forward Declarations
 class Config;
+class Connection;
 class TxHashSetArchiveMessage;
 
 class TxHashSetPipe
@@ -29,7 +30,7 @@ public:
 	// Downloads a TxHashSet and kicks off a new thread to process it.
 	// Caller should ban peer if false is returned.
 	//
-	bool ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
+	void ReceiveTxHashSet(Connection& connection, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
 
 private:
 	TxHashSetPipe(

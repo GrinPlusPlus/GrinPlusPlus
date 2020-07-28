@@ -15,6 +15,20 @@ public:
 
 	virtual MessageTypes::EMessageType GetMessageType() const = 0;
 	virtual void SerializeBody(Serializer& serializer) const = 0;
+
+	std::vector<uint8_t> Serialize(const Environment& environment, const EProtocolVersion protocolVersion) const
+	{
+		Serializer serializer(protocolVersion);
+		serializer.AppendByteVector(environment.GetMagicBytes());
+		serializer.Append<uint8_t>((uint8_t)GetMessageType());
+
+		Serializer bodySerializer(protocolVersion);
+		SerializeBody(bodySerializer);
+		serializer.Append<uint64_t>(bodySerializer.size());
+		serializer.AppendByteVector(bodySerializer.GetBytes());
+
+		return serializer.GetBytes();
+	}
 };
 
 typedef std::shared_ptr<IMessage> IMessagePtr;

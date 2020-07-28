@@ -164,7 +164,7 @@ PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
 	if (pConnection != nullptr)
 	{
-		pConnection->Send(message);
+		pConnection->AddToSendQueue(message);
 		return pConnection->GetPeer();
 	}
 
@@ -178,7 +178,7 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr 
 	{
 		if (pConnection->GetIPAddress() == pPeer->GetIPAddress())
 		{
-			pConnection->Send(message);
+			pConnection->AddToSendQueue(message);
 			return true;
 		}
 	}
@@ -242,7 +242,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 	{
 		try
 		{
-			pConnection->Disconnect();
+			pConnection->Disconnect(true);
 		}
 		catch (std::exception& e)
 		{
@@ -311,7 +311,7 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 			{
 				if (pConnection->GetId() != pBroadcastMessage->m_sourceId)
 				{
-					pConnection->Send(*pBroadcastMessage->m_pMessage);
+					pConnection->AddToSendQueue(*pBroadcastMessage->m_pMessage);
 				}
 			}
 		}

@@ -41,31 +41,22 @@ public:
 	uint64_t GetMessageLength() const { return m_messageLength; }
 
 	//
-	// Validation
-	//
-	bool IsValid(const Config& config) const
-	{
-		if (m_magicBytes[0] == config.GetEnvironment().GetMagicBytes()[0] && m_magicBytes[1] == config.GetEnvironment().GetMagicBytes()[1])
-		{
-			if (m_messageLength <= (MessageTypes::GetMaximumSize(m_messageType) * 4))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	//
 	// Deserialization
 	//
-	static MessageHeader Deserialize(ByteBuffer& byteBuffer)
+	static MessageHeader Deserialize(const Environment& environment, ByteBuffer& byteBuffer)
 	{
 		const uint8_t magicByte1 = byteBuffer.ReadU8();
 		const uint8_t magicByte2 = byteBuffer.ReadU8();
+		if (magicByte1 != environment.GetMagicBytes()[0] || magicByte2 != environment.GetMagicBytes()[1]) {
+			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Bad magic bytes.");
+		}
 
 		const uint8_t messageType = byteBuffer.ReadU8();
 		const uint64_t messageLength = byteBuffer.ReadU64();
+
+		if (messageLength > MessageTypes::GetMaximumSize((MessageTypes::EMessageType)messageType) * 4) {
+			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Message length too long");
+		}
 
 		const std::vector<unsigned char> magicBytes = { magicByte1, magicByte2 };
 		return MessageHeader(magicBytes, (MessageTypes::EMessageType) messageType, messageLength);

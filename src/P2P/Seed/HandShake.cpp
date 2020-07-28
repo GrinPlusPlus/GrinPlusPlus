@@ -4,7 +4,6 @@
 #include "../Messages/ShakeMessage.h"
 #include "../Messages/BanReasonMessage.h"
 #include "../MessageRetriever.h"
-#include "../MessageSender.h"
 #include "../ConnectionManager.h"
 
 #include <Net/SocketException.h>
@@ -59,7 +58,7 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 	if (bHandMessageSent)
 	{
 		// Get Shake Message
-		std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config, m_connectionManager).RetrieveMessage(socket, connectedPeer, MessageRetriever::BLOCKING);
+		std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config).RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
 
 		if (pReceivedMessage.get() != nullptr)
 		{
@@ -102,7 +101,7 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
 	// Get Hand Message
-	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config, m_connectionManager).RetrieveMessage(socket, connectedPeer, MessageRetriever::BLOCKING);
+	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config).RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
 	if (pReceivedMessage != nullptr)
 	{
 		if (pReceivedMessage->GetMessageHeader().GetMessageType() == MessageTypes::Hand)
@@ -166,7 +165,12 @@ bool HandShake::TransmitHandMessage(Socket& socket) const
 	const std::string& userAgent = P2P::USER_AGENT;
 	const HandMessage handMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);
 
-	return MessageSender(m_config).Send(socket, handMessage, EProtocolVersion::V2);
+	std::vector<uint8_t> serialized_message = handMessage.Serialize(
+		m_config.GetEnvironment(),
+		EProtocolVersion::V2
+	);
+
+	return socket.Send(serialized_message, true);
 }
 
 bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVersion) const
@@ -177,5 +181,10 @@ bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVers
 	const std::string& userAgent = P2P::USER_AGENT;
 	const ShakeMessage shakeMessage(protocolVersion, capabilities, std::move(hash), totalDifficulty, userAgent);
 
-	return MessageSender(m_config).Send(socket, shakeMessage, protocolVersion > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1);
+	std::vector<uint8_t> serialized_message = shakeMessage.Serialize(
+		m_config.GetEnvironment(),
+		protocolVersion > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1
+	);
+
+	return socket.Send(serialized_message, true);
 }

@@ -17,6 +17,12 @@ public:
 	Socket(const SocketAddress& address);
 	virtual ~Socket();
 
+	enum ERetrievalMode
+	{
+		BLOCKING,
+		NON_BLOCKING
+	};
+
 	bool Connect(std::shared_ptr<asio::io_context> pContext);
 	bool Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate);
 
@@ -24,29 +30,34 @@ public:
 	bool IsSocketOpen() const;
 	bool IsActive() const;
 
-	virtual std::string Format() const override final { return m_address.Format(); }
+	std::string Format() const final { return m_address.Format(); }
 
-	inline const SocketAddress& GetSocketAddress() const { return m_address; }
-	inline const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }
-	inline uint16_t GetPort() const { return m_address.GetPortNumber(); }
-	inline RateCounter& GetRateCounter() { return m_rateCounter; }
+	const SocketAddress& GetSocketAddress() const { return m_address; }
+	const IPAddress& GetIPAddress() const { return m_address.GetIPAddress(); }
+	uint16_t GetPort() const { return m_address.GetPortNumber(); }
+	RateCounter& GetRateCounter() { return m_rateCounter; }
 
 	bool SetReceiveTimeout(const unsigned long milliseconds);
-	inline unsigned long GetReceiveTimeout() const { return m_receiveTimeout; }
+	unsigned long GetReceiveTimeout() const { return m_receiveTimeout; }
 
 	bool SetSendTimeout(const unsigned long milliseconds);
-	inline unsigned long GetSendTimeout() const { return m_sendTimeout; }
+	unsigned long GetSendTimeout() const { return m_sendTimeout; }
 
 	bool SetReceiveBufferSize(const int size);
-	inline int GetReceiveBufferSize() const { return m_receiveBufferSize; }
+	int GetReceiveBufferSize() const { return m_receiveBufferSize; }
 
 	bool SetBlocking(const bool blocking);
-	inline bool IsBlocking() const { return m_blocking; }
+	bool IsBlocking() const { return m_blocking; }
 
-	bool Send(const std::vector<unsigned char>& message, const bool incrementCount);
+	bool Send(const std::vector<uint8_t>& message, const bool incrementCount);
 
 	bool HasReceivedData();
-	bool Receive(const size_t numBytes, const bool incrementCount, std::vector<unsigned char>& data);
+	bool Receive(
+		const size_t numBytes,
+		const bool incrementCount,
+		const ERetrievalMode mode,
+		std::vector<uint8_t>& data
+	);
 
 private:
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;

@@ -1,5 +1,4 @@
 #include "MessageProcessor.h"
-#include "MessageSender.h"
 #include "BlockLocator.h"
 #include "ConnectionManager.h"
 #include "Pipeline/Pipeline.h"
@@ -63,367 +62,307 @@ MessageProcessor::MessageProcessor(
 
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessage(
-	const uint64_t connectionId,
-	Socket& socket,
-	ConnectedPeer& connectedPeer,
-	const RawMessage& rawMessage)
+void MessageProcessor::ProcessMessage(Connection& connection, const RawMessage& rawMessage)
 {
 	const EMessageType messageType = rawMessage.GetMessageHeader().GetMessageType();
 
 	try
 	{
-		return ProcessMessageInternal(connectionId, socket, connectedPeer, rawMessage);
+		return ProcessMessageInternal(connection, rawMessage);
 	}
 	catch (const BadDataException&)
 	{
-		LOG_ERROR_F("Bad data received in message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
-
-		return EStatus::BAN_PEER;
+		LOG_ERROR_F("Bad data received in message({}) from ({})", MessageTypes::ToString(messageType), connection);
+		connection.BanPeer(EBanReason::Abusive); // TODO: Determine real reason
 	}
 	catch (const BlockChainException&)
 	{
-		LOG_ERROR_F("BlockChain exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
-
-		return EStatus::BAN_PEER;
+		LOG_ERROR_F("BlockChain exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connection);
+		connection.Disconnect();
 	}
 	catch (const DeserializationException&)
 	{
-		LOG_ERROR_F("Deserialization exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connectedPeer);
-
-		return EStatus::BAN_PEER;
+		LOG_ERROR_F("Deserialization exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connection);
+		connection.Disconnect();
 	}
 }
 
-MessageProcessor::EStatus MessageProcessor::ProcessMessageInternal(
-	const uint64_t connectionId,
-	Socket& socket,
-	ConnectedPeer& connectedPeer,
-	const RawMessage& rawMessage)
+void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawMessage& rawMessage)
 {
-	const std::string formattedIPAddress = connectedPeer.GetPeer()->GetIPAddress().Format();
 	const MessageHeader& header = rawMessage.GetMessageHeader();
-	EProtocolVersion protocolVersion = connectedPeer.GetProtocolVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1;
+	EProtocolVersion protocolVersion = connection.GetProtocolVersion();
 	ByteBuffer byteBuffer(rawMessage.GetPayload(), protocolVersion);
 
-	if (header.IsValid(m_config))
+	switch (header.GetMessageType())
 	{
-		switch (header.GetMessageType())
+		case Error:
 		{
-			case Error:
-			{
-				const ErrorMessage errorMessage = ErrorMessage::Deserialize(byteBuffer);
-				LOG_WARNING_F("Error message retrieved from peer({}): ", formattedIPAddress, errorMessage.GetErrorMessage());
+			const ErrorMessage errorMessage = ErrorMessage::Deserialize(byteBuffer);
+			LOG_WARNING_F("Error message \"{}\" retrieved from {}", errorMessage.GetErrorMessage(), connection);
+			break;
+		}
+		case BanReasonMsg:
+		{
+			const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
+			std::string banMessage = BanReason::Format((EBanReason)banReasonMessage.GetBanReason());
+			LOG_WARNING_F("BanReason message '{}' retrieved from {}", banMessage, connection);
+			break;
+		}
+		case Ping:
+		{
+			const PingMessage pingMessage = PingMessage::Deserialize(byteBuffer);
+			connection.UpdateTotals(pingMessage.GetTotalDifficulty(), pingMessage.GetHeight());
 
-				return EStatus::BAN_PEER;
-			}
-			case BanReasonMsg:
-			{
-				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
-				LOG_WARNING_F("BanReason message retrieved from peer({}): {}", formattedIPAddress, BanReason::Format((EBanReason)banReasonMessage.GetBanReason()));
+			auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+			const PongMessage pongMessage(pTipHeader->GetTotalDifficulty(), pTipHeader->GetHeight());
 
-				return EStatus::BAN_PEER;
-			}
-			case Ping:
-			{
-				const PingMessage pingMessage = PingMessage::Deserialize(byteBuffer);
-				connectedPeer.UpdateTotals(pingMessage.GetTotalDifficulty(), pingMessage.GetHeight());
+			connection.SendMsg(pongMessage);
+			break;
+		}
+		case Pong:
+		{
+			const PongMessage pongMessage = PongMessage::Deserialize(byteBuffer);
+			connection.UpdateTotals(pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
+			break;
+		}
+		case GetPeerAddrs:
+		{
+			const GetPeerAddressesMessage getPeerAddressesMessage = GetPeerAddressesMessage::Deserialize(byteBuffer);
+			const Capabilities capabilities = getPeerAddressesMessage.GetCapabilities();
 
-				auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
-				const PongMessage pongMessage(pTipHeader->GetTotalDifficulty(), pTipHeader->GetHeight());
+			const std::vector<PeerPtr> peers = m_peerManager.Read()->GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
+			std::vector<SocketAddress> socketAddresses;
+			std::transform(
+				peers.cbegin(),
+				peers.cend(),
+				std::back_inserter(socketAddresses),
+				[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), this->m_config.GetEnvironment().GetP2PPort()); }
+			);
 
-				return MessageSender(m_config).Send(socket, pongMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-			}
-			case Pong:
-			{
-				const PongMessage pongMessage = PongMessage::Deserialize(byteBuffer);
-				connectedPeer.UpdateTotals(pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
+			LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), connection);
+			connection.SendMsg(PeerAddressesMessage{ std::move(socketAddresses) });
+			break;
+		}
+		case PeerAddrs:
+		{
+			const PeerAddressesMessage peerAddressesMessage = PeerAddressesMessage::Deserialize(byteBuffer);
+			const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
 
-				return EStatus::SUCCESS;
-			}
-			case GetPeerAddrs:
-			{
-				const GetPeerAddressesMessage getPeerAddressesMessage = GetPeerAddressesMessage::Deserialize(byteBuffer);
-				const Capabilities capabilities = getPeerAddressesMessage.GetCapabilities();
+			LOG_TRACE_F("Received {} addresses from {}.", peerAddresses.size(), connection);
+			m_peerManager.Write()->AddFreshPeers(peerAddresses);
+			break;
+		}
+		case GetHeaders:
+		{
+			const GetHeadersMessage getHeadersMessage = GetHeadersMessage::Deserialize(byteBuffer);
+			const std::vector<Hash>& hashes = getHeadersMessage.GetHashes();
 
-				const std::vector<PeerPtr> peers = m_peerManager.Read()->GetPeers(capabilities.GetCapability(), P2P::MAX_PEER_ADDRS);
-				std::vector<SocketAddress> socketAddresses;
-				std::transform(
-					peers.cbegin(),
-					peers.cend(),
-					std::back_inserter(socketAddresses),
-					[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), this->m_config.GetEnvironment().GetP2PPort()); }
-				);
-
-				LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), formattedIPAddress);
-				const PeerAddressesMessage peerAddressesMessage(std::move(socketAddresses));
-
-				return MessageSender(m_config).Send(socket, peerAddressesMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-			}
-			case PeerAddrs:
-			{
-				const PeerAddressesMessage peerAddressesMessage = PeerAddressesMessage::Deserialize(byteBuffer);
-				const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
-
-				LOG_TRACE_F("Received {} addresses from {}.", peerAddresses.size(), formattedIPAddress);
-				m_peerManager.Write()->AddFreshPeers(peerAddresses);
-
-				return EStatus::SUCCESS;
-			}
-			case GetHeaders:
-			{
-				const GetHeadersMessage getHeadersMessage = GetHeadersMessage::Deserialize(byteBuffer);
-				const std::vector<Hash>& hashes = getHeadersMessage.GetHashes();
-
-				std::vector<BlockHeaderPtr> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
-				LOG_DEBUG_F("Sending {} headers to {}.", blockHeaders.size(), formattedIPAddress);
+			std::vector<BlockHeaderPtr> blockHeaders = BlockLocator(m_pBlockChainServer).LocateHeaders(hashes);
+			LOG_DEBUG_F("Sending {} headers to {}.", blockHeaders.size(), connection);
                 
-				const HeadersMessage headersMessage(std::move(blockHeaders));
-				return MessageSender(m_config).Send(socket, headersMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+			connection.SendMsg(HeadersMessage{ std::move(blockHeaders) });
+			break;
+		}
+		case Header:
+		{
+			auto pBlockHeader = HeaderMessage::Deserialize(byteBuffer).GetHeader();
+
+			if (pBlockHeader->GetTotalDifficulty() > connection.GetTotalDifficulty()) {
+				connection.UpdateTotals(pBlockHeader->GetTotalDifficulty(), pBlockHeader->GetHeight());
 			}
-			case Header:
-			{
-				const HeaderMessage headerMessage = HeaderMessage::Deserialize(byteBuffer);
-				auto pBlockHeader = headerMessage.GetHeader();
 
-				if (pBlockHeader->GetTotalDifficulty() > connectedPeer.GetTotalDifficulty())
-				{
-					connectedPeer.UpdateTotals(pBlockHeader->GetTotalDifficulty(), pBlockHeader->GetHeight());
+			if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING) {
+				break;
+			}
+
+			const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(pBlockHeader);
+			if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED) {
+				if (!m_pBlockChainServer->HasBlock(pBlockHeader->GetHeight(), pBlockHeader->GetHash())) {
+					LOG_TRACE_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, connection);
+					const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
+					connection.SendMsg(GetCompactBlockMessage{ pBlockHeader->GetHash() });
 				}
+			} else if (status == EBlockChainStatus::INVALID) {
+				connection.BanPeer(EBanReason::BadBlockHeader);
+			} else {
+				LOG_TRACE_F("Header {} from {} not needed", *pBlockHeader, connection);
+			}
 
-				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
-				{
-					return EStatus::SUCCESS;
-				}
+			break;
+		}
+		case Headers:
+		{
+			const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
+			const std::vector<BlockHeaderPtr>& blockHeaders = headersMessage.GetHeaders();
 
-				const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeader(pBlockHeader);
-				if (status == EBlockChainStatus::SUCCESS || status == EBlockChainStatus::ALREADY_EXISTS || status == EBlockChainStatus::ORPHANED)
-				{
-					if (!m_pBlockChainServer->HasBlock(pBlockHeader->GetHeight(), pBlockHeader->GetHash()))
+			LOG_DEBUG_F("{} headers received from {}", blockHeaders.size(), connection);
+
+			const EBlockChainStatus status = m_pBlockChainServer->AddBlockHeaders(blockHeaders);
+			if (status == EBlockChainStatus::INVALID) {
+				connection.BanPeer(EBanReason::BadBlockHeader);
+			}
+
+			LOG_DEBUG_F("Headers message from {} finished processing", connection);
+			break;
+		}
+		case GetBlock:
+		{
+			const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
+			std::unique_ptr<FullBlock> pBlock = m_pBlockChainServer->GetBlockByHash(getBlockMessage.GetHash());
+			if (pBlock != nullptr) {
+				connection.SendMsg(BlockMessage{ std::move(*pBlock) });
+			}
+
+			break;
+		}
+		case Block:
+		{
+			const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
+			const FullBlock& block = blockMessage.GetBlock();
+
+			LOG_TRACE_F("Block received: {}", block.GetHeight());
+
+			if (m_pSyncStatus->GetStatus() == ESyncStatus::SYNCING_BLOCKS) {
+				m_pPipeline->ProcessBlock(connection, block);
+			} else {
+				const EBlockChainStatus added = m_pBlockChainServer->AddBlock(block);
+				if (added == EBlockChainStatus::SUCCESS) {
+					const HeaderMessage headerMessage(block.GetBlockHeader());
+					m_connectionManager.BroadcastMessage(headerMessage, connection.GetId());
+				} else if (added == EBlockChainStatus::ORPHANED) {
+					if (block.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
 					{
-						LOG_TRACE_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, formattedIPAddress);
-						const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
-						return MessageSender(m_config).Send(socket, getCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
+						connection.SendMsg(GetCompactBlockMessage{ block.GetPreviousHash() });
+					}
+				} else if (added == EBlockChainStatus::INVALID) {
+					connection.BanPeer(EBanReason::BadBlock);
+				}
+			}
+
+			break;
+		}
+		case GetCompactBlock:
+		{
+			const GetCompactBlockMessage getCompactBlockMessage = GetCompactBlockMessage::Deserialize(byteBuffer);
+			std::unique_ptr<CompactBlock> pCompactBlock = m_pBlockChainServer->GetCompactBlockByHash(getCompactBlockMessage.GetHash());
+			if (pCompactBlock != nullptr)
+			{
+				connection.SendMsg(CompactBlockMessage{ *pCompactBlock });
+			}
+
+			break;
+		}
+		case CompactBlockMsg:
+		{
+			const CompactBlockMessage compactBlockMessage = CompactBlockMessage::Deserialize(byteBuffer);
+			const CompactBlock& compactBlock = compactBlockMessage.GetCompactBlock();
+
+			const EBlockChainStatus added = m_pBlockChainServer->AddCompactBlock(compactBlock);
+			if (added == EBlockChainStatus::SUCCESS)
+			{
+				const HeaderMessage headerMessage(compactBlock.GetBlockHeader());
+				m_connectionManager.BroadcastMessage(headerMessage, connection.GetId());
+				break;
+			}
+			else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
+			{
+				connection.SendMsg(GetBlockMessage{ compactBlock.GetHash() });
+				break;
+			}
+			else if (added == EBlockChainStatus::ORPHANED)
+			{
+				if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING)
+				{
+					if (compactBlock.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
+					{
+						connection.SendMsg(GetCompactBlockMessage{ compactBlock.GetPreviousHash() });
 					}
 				}
-				else if (status == EBlockChainStatus::INVALID)
-				{
-					return EStatus::BAN_PEER;
-				}
-				else
-				{
-					LOG_TRACE_F("Header {} from {} not needed", *pBlockHeader, formattedIPAddress);
-				}
-
-				return (status == EBlockChainStatus::SUCCESS) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
 			}
-			case Headers:
-			{
-				IBlockChainServerPtr pBlockChainServer = m_pBlockChainServer;
 
-				const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
-				const std::vector<BlockHeaderPtr>& blockHeaders = headersMessage.GetHeaders();
-
-				LOG_DEBUG_F("{} headers received from {}", blockHeaders.size(), formattedIPAddress);
-
-				const EBlockChainStatus status = pBlockChainServer->AddBlockHeaders(blockHeaders);
-				LOG_DEBUG_F("Headers message from {} finished processing", formattedIPAddress);
-
-				return status == EBlockChainStatus::INVALID ? EStatus::BAN_PEER : EStatus::SUCCESS;
+			break;
+		}
+		case StemTransaction:
+		{
+			if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING) {
+				TransactionPtr pTransaction = StemTransactionMessage::Deserialize(byteBuffer).GetTransaction();
+				m_pPipeline->ProcessTransaction(connection, pTransaction, EPoolType::STEMPOOL);
 			}
-			case GetBlock:
-			{
-				const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
-				std::unique_ptr<FullBlock> pBlock = m_pBlockChainServer->GetBlockByHash(getBlockMessage.GetHash());
-				if (pBlock != nullptr)
-				{
-					BlockMessage blockMessage(std::move(*pBlock));
-					return MessageSender(m_config).Send(socket, blockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-				}
 
-				return EStatus::RESOURCE_NOT_FOUND;
+
+			break;
+		}
+		case TransactionMsg:
+		{
+			if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING) {
+				TransactionPtr pTransaction = TransactionMessage::Deserialize(byteBuffer).GetTransaction();
+				m_pPipeline->ProcessTransaction(connection, pTransaction, EPoolType::MEMPOOL);
 			}
-			case Block:
-			{
-				const BlockMessage blockMessage = BlockMessage::Deserialize(byteBuffer);
-				const FullBlock& block = blockMessage.GetBlock();
 
-				LOG_TRACE_F("Block received: {}", block.GetHeight());
+			break;
+		}
+		case TxHashSetRequest:
+		{
+			SendTxHashSet(connection, TxHashSetRequestMessage::Deserialize(byteBuffer));
+			break;
+		}
+		case TxHashSetArchive:
+		{
+			m_pPipeline->ReceiveTxHashSet(connection, TxHashSetArchiveMessage::Deserialize(byteBuffer));
+			break;
+		}
+		case GetTransactionMsg:
+		{
+			const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
+			const Hash& kernelHash = getTransactionMessage.GetKernelHash();
+			LOG_DEBUG_F("Transaction with kernel {} requested.", kernelHash);
 
-				if (m_pSyncStatus->GetStatus() == ESyncStatus::SYNCING_BLOCKS)
-				{
-					m_pPipeline->GetBlockPipe()->AddBlockToProcess(connectedPeer.GetPeer(), block);
-				}
-				else
-				{
-					const EBlockChainStatus added = m_pBlockChainServer->AddBlock(block);
-					if (added == EBlockChainStatus::SUCCESS)
-					{
-						const HeaderMessage headerMessage(block.GetBlockHeader());
-						m_connectionManager.BroadcastMessage(headerMessage, connectionId);
-						return EStatus::SUCCESS;
-					}
-					else if (added == EBlockChainStatus::ORPHANED)
-					{
-						if (block.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
-						{
-							const GetCompactBlockMessage getPreviousCompactBlockMessage(block.GetPreviousHash());
-							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-						}
-					}
-					else if (added == EBlockChainStatus::INVALID)
-					{
-						return EStatus::BAN_PEER;
-					}
-				}
-
-				return EStatus::SUCCESS;
+			TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
+			if (pTransaction != nullptr) {
+				LOG_DEBUG_F("Transaction {} found.", pTransaction);
+				connection.SendMsg(TransactionMessage{ pTransaction });
 			}
-			case GetCompactBlock:
-			{
-				const GetCompactBlockMessage getCompactBlockMessage = GetCompactBlockMessage::Deserialize(byteBuffer);
-				std::unique_ptr<CompactBlock> pCompactBlock = m_pBlockChainServer->GetCompactBlockByHash(getCompactBlockMessage.GetHash());
-				if (pCompactBlock != nullptr)
-				{
-					const CompactBlockMessage compactBlockMessage(*pCompactBlock);
-					return MessageSender(m_config).Send(socket, compactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-				}
 
-				return EStatus::RESOURCE_NOT_FOUND;
-			}
-			case CompactBlockMsg:
-			{
-				const CompactBlockMessage compactBlockMessage = CompactBlockMessage::Deserialize(byteBuffer);
-				const CompactBlock& compactBlock = compactBlockMessage.GetCompactBlock();
-
-				const EBlockChainStatus added = m_pBlockChainServer->AddCompactBlock(compactBlock);
-				if (added == EBlockChainStatus::SUCCESS)
-				{
-					const HeaderMessage headerMessage(compactBlock.GetBlockHeader());
-					m_connectionManager.BroadcastMessage(headerMessage, connectionId);
-					return EStatus::SUCCESS;
-				}
-				else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
-				{
-					const GetBlockMessage getBlockMessage(compactBlock.GetHash());
-					return MessageSender(m_config).Send(socket, getBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-				}
-				else if (added == EBlockChainStatus::ORPHANED)
-				{
-					if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING)
-					{
-						if (compactBlock.GetTotalDifficulty() > m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED))
-						{
-							const GetCompactBlockMessage getPreviousCompactBlockMessage(compactBlock.GetPreviousHash());
-							return MessageSender(m_config).Send(socket, getPreviousCompactBlockMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-						}
-					}
-				}
-
-				return EStatus::UNKNOWN_ERROR;
-			}
-			case StemTransaction:
-			{
-				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
-				{
-					return EStatus::SYNCING;
-				}
-
-				const StemTransactionMessage transactionMessage = StemTransactionMessage::Deserialize(byteBuffer);
-				TransactionPtr pTransaction = transactionMessage.GetTransaction();
-
-				m_pPipeline->GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::STEMPOOL);
-
-				return EStatus::SUCCESS;
-			}
-			case TransactionMsg:
-			{
-				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
-				{
-					return EStatus::SYNCING;
-				}
-
-				const TransactionMessage transactionMessage = TransactionMessage::Deserialize(byteBuffer);
-				TransactionPtr pTransaction = transactionMessage.GetTransaction();
-
-				return m_pPipeline->GetTransactionPipe()->AddTransactionToProcess(connectionId, connectedPeer.GetPeer(), pTransaction, EPoolType::MEMPOOL) ? EStatus::SUCCESS : EStatus::UNKNOWN_ERROR;
-			}
-			case TxHashSetRequest:
-			{
-				const TxHashSetRequestMessage txHashSetRequestMessage = TxHashSetRequestMessage::Deserialize(byteBuffer);
-
-				return SendTxHashSet(connectedPeer, socket, txHashSetRequestMessage);
-			}
-			case TxHashSetArchive:
-			{
-				const TxHashSetArchiveMessage txHashSetArchiveMessage = TxHashSetArchiveMessage::Deserialize(byteBuffer);
-
-				return m_pPipeline->GetTxHashSetPipe()->ReceiveTxHashSet(connectedPeer.GetPeer(), socket, txHashSetArchiveMessage) ? EStatus::SUCCESS : EStatus::BAN_PEER;
-			}
-			case GetTransactionMsg:
-			{
-				const GetTransactionMessage getTransactionMessage = GetTransactionMessage::Deserialize(byteBuffer);
-				const Hash& kernelHash = getTransactionMessage.GetKernelHash();
-				LOG_DEBUG_F("Transaction with kernel {} requested.", kernelHash);
-
-				TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
-				if (pTransaction != nullptr)
-				{
-					LOG_DEBUG_F("Transaction {} found.", pTransaction);
-					const TransactionMessage transactionMessage(pTransaction);
-					return MessageSender(m_config).Send(socket, transactionMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-				}
-
-				return EStatus::RESOURCE_NOT_FOUND;
-			}
-			case TransactionKernelMsg:
-			{
-				if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
-				{
-					return EStatus::SYNCING;
-				}
-
-				const TransactionKernelMessage transactionKernelMessage = TransactionKernelMessage::Deserialize(byteBuffer);
-				const Hash& kernelHash = transactionKernelMessage.GetKernelHash();
-
-				TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
-				if (pTransaction == nullptr)
-				{
-					const GetTransactionMessage getTransactionMessage(kernelHash);
-					return MessageSender(m_config).Send(socket, getTransactionMessage, protocolVersion) ? EStatus::SUCCESS : EStatus::SOCKET_FAILURE;
-				}
-
-				return EStatus::RESOURCE_NOT_FOUND;
-			}
-			default:
+			break;
+		}
+		case TransactionKernelMsg:
+		{
+			if (m_pSyncStatus->GetStatus() != ESyncStatus::NOT_SYNCING)
 			{
 				break;
 			}
+
+			Hash kernelHash = TransactionKernelMessage::Deserialize(byteBuffer).GetKernelHash();
+			TransactionPtr pTransaction = m_pBlockChainServer->GetTransactionByKernelHash(kernelHash);
+			if (pTransaction == nullptr) {
+				connection.SendMsg(GetTransactionMessage{ std::move(kernelHash) });
+			}
+
+			break;
+		}
+		default:
+		{
+			break;
 		}
 	}
 
-	return EStatus::UNKNOWN_MESSAGE;
+	return;
 }
 
-MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
-	ConnectedPeer& peer,
-	Socket& socket,
-	const TxHashSetRequestMessage& txHashSetRequestMessage)
+void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequestMessage& txHashSetRequestMessage)
 {
 	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
-	if (peer.GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest)
-	{
-		LOG_WARNING_F("Peer ({}) requested multiple TxHashSet's within 2 hours.", socket.GetIPAddress());
-		return EStatus::BAN_PEER;
+	if (connection.GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest) {
+		LOG_WARNING_F("Peer '{}' requested multiple TxHashSet's within 2 hours.", connection.GetIPAddress());
+		connection.BanPeer(EBanReason::Abusive);
 	}
 
-	LOG_INFO_F("Sending TxHashSet snapshot to {}", socket.GetIPAddress());
-	peer.GetPeer()->UpdateLastTxHashSetRequest();
+	LOG_INFO_F("Sending TxHashSet snapshot to {}", connection);
+	connection.GetPeer()->UpdateLastTxHashSetRequest();
 
 	auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
-	if (pHeader == nullptr)
-	{
-		return EStatus::UNKNOWN_ERROR;
+	if (pHeader == nullptr) {
+		return;
 	}
 
 	fs::path zipFilePath;
@@ -434,17 +373,16 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 	}
 	catch (std::exception&)
 	{
-		return EStatus::UNKNOWN_ERROR;
+		return;
 	}
 
 	// Hack until I can determine why zips aren't deleted.
 	FileRemover remover(zipFilePath);
 
 	std::ifstream file(zipFilePath, std::ios::in | std::ios::ate | std::ios::binary);
-	if (!file.is_open())
-	{
+	if (!file.is_open()) {
 		FileUtil::RemoveFile(zipFilePath);
-		return EStatus::UNKNOWN_ERROR;
+		return;
 	}
 	
 	try
@@ -452,10 +390,10 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 		file.seekg(0);
 		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-		EProtocolVersion protocolVersion = peer.GetProtocolVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1;
-		MessageSender(m_config).Send(socket, archiveMessage, protocolVersion);
+		connection.SendMsg(archiveMessage);
 
-		socket.SetBlocking(false);
+		SocketPtr pSocket = connection.GetSocket();
+		pSocket->SetBlocking(false);
 
 		std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
 		uint64_t totalBytesRead = 0;
@@ -465,21 +403,20 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 			const uint64_t bytesRead = file.gcount();
 
 			const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-			const bool sent = socket.Send(bytesToSend, false);
+			const bool sent = pSocket->Send(bytesToSend, false);
 
-			if (!sent || ShutdownManagerAPI::WasShutdownRequested())
-			{
+			if (!sent || ShutdownManagerAPI::WasShutdownRequested()) {
 				LOG_ERROR("Transmission ended abruptly");
 				file.close();
 				FileUtil::RemoveFile(zipFilePath);
 
-				return EStatus::BAN_PEER;
+				return;
 			}
 
 			totalBytesRead += bytesRead;
 		}
 
-		socket.SetBlocking(true);
+		pSocket->SetBlocking(true);
 	}
 	catch (...)
 	{
@@ -493,6 +430,4 @@ MessageProcessor::EStatus MessageProcessor::SendTxHashSet(
 
 	file.close();
 	FileUtil::RemoveFile(zipFilePath);
-
-	return EStatus::SUCCESS;
 }

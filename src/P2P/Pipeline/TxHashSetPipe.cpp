@@ -1,4 +1,5 @@
 #include "TxHashSetPipe.h"
+#include "../Connection.h"
 #include "../ConnectionManager.h"
 #include "../Messages/TxHashSetArchiveMessage.h"
 
@@ -43,28 +44,30 @@ std::shared_ptr<TxHashSetPipe> TxHashSetPipe::Create(
 	));
 }
 
-bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
+void TxHashSetPipe::ReceiveTxHashSet(Connection& connection, const TxHashSetArchiveMessage& txHashSetArchiveMessage)
 {
 	if (m_pSyncStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
 	{
-		LOG_WARNING_F("Received TxHashSet from Peer ({}) when not requested.", pPeer);
-		//return false;
+		LOG_WARNING_F("Received TxHashSet from {} when not requested.", connection);
+		// connection.BanPeer(EBanReason::Abusive);
+		// return;
 	}
 
 	const bool processing = m_processing.exchange(true);
-	if (processing)
-	{
-		LOG_WARNING_F("Received TxHashSet from Peer ({}) when already processing another.", pPeer);
-		return false;
+	if (processing) {
+		LOG_WARNING_F("Received TxHashSet from {} when already processing another.", connection);
+		connection.BanPeer(EBanReason::Abusive);
+		return;
 	}
 
-	LOG_INFO_F("Downloading TxHashSet from {}", pPeer);
+	LOG_INFO_F("Downloading TxHashSet from {}", connection);
 
 	m_pSyncStatus->UpdateDownloaded(0);
 	m_pSyncStatus->UpdateDownloadSize(txHashSetArchiveMessage.GetZippedSize());
 
-	socket.SetReceiveTimeout(10 * 1000);
-	socket.SetReceiveBufferSize(BUFFER_SIZE);
+	SocketPtr pSocket = connection.GetSocket();
+	pSocket->SetReceiveTimeout(10 * 1000);
+	pSocket->SetReceiveBufferSize(BUFFER_SIZE);
 
 	const std::string fileName = StringUtil::Format(
 		"txhashset_{}.zip",
@@ -83,7 +86,7 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 		{
 			const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 
-			const bool received = socket.Receive(bytesToRead, false, buffer);
+			const bool received = pSocket->Receive(bytesToRead, false, Socket::BLOCKING, buffer);
 			if (!received || ShutdownManagerAPI::WasShutdownRequested())
 			{
 				LOG_ERROR("Transmission ended abruptly");
@@ -91,8 +94,9 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 				FileUtil::RemoveFile(txHashSetPath);
 				m_processing = false;
 				m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+				connection.BanPeer(EBanReason::BadTxHashSet);
 
-				return false;
+				return;
 			}
 
 			fout.write((char*)&buffer[0], bytesToRead);
@@ -105,9 +109,11 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 	}
 	catch (...)
 	{
-		LOG_ERROR_F("Exception thrown while downloading TxHashSet from {}", *pPeer);
+		LOG_ERROR_F("Exception thrown while downloading TxHashSet from {}", connection);
 		m_processing = false;
 		m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+		connection.BanPeer(EBanReason::BadTxHashSet);
+
 		throw;
 	}
 
@@ -115,9 +121,13 @@ bool TxHashSetPipe::ReceiveTxHashSet(PeerPtr pPeer, Socket& socket, const TxHash
 
 	ThreadUtil::Join(m_txHashSetThread);
 
-	m_txHashSetThread = std::thread(Thread_ProcessTxHashSet, std::ref(*this), pPeer, txHashSetArchiveMessage.GetBlockHash(), txHashSetPath.u8string());
-
-	return true;
+	m_txHashSetThread = std::thread(
+		Thread_ProcessTxHashSet,
+		std::ref(*this),
+		connection.GetPeer(),
+		txHashSetArchiveMessage.GetBlockHash(),
+		txHashSetPath.u8string()
+	);
 }
 
 void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const fs::path path)

@@ -16,6 +16,7 @@
 
 // Forward Declarations
 class Config;
+class Connection;
 class TxHashSetArchiveMessage;
 
 class TransactionPipe
@@ -28,7 +29,7 @@ public:
 	);
 	~TransactionPipe();
 
-	bool AddTransactionToProcess(const uint64_t connectionId, PeerPtr pPeer, TransactionPtr pTransaction, const EPoolType poolType);
+	bool AddTransactionToProcess(Connection& connection, const TransactionPtr& pTransaction, const EPoolType poolType);
 
 private:
 	TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);

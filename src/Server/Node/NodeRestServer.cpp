@@ -25,7 +25,7 @@ NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_pt
 {
 	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
 	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
-	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChainServer);
+	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChainServer, pNodeContext->m_pP2PServer);
 
 	/* Add v1 handlers */
 	pServer->AddListener("/v1/status", ServerAPI::GetStatus_Handler, pNodeContext.get());

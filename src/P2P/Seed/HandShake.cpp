@@ -168,7 +168,7 @@ bool HandShake::TransmitHandMessage(Socket& socket) const
 
 	std::vector<uint8_t> serialized_message = handMessage.Serialize(
 		m_config.GetEnvironment(),
-		EProtocolVersion::V1
+		EProtocolVersion::V2
 	);
 
 	return socket.Send(serialized_message, true);

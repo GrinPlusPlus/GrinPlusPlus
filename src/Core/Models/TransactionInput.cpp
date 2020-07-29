@@ -5,12 +5,7 @@
 #include <Crypto/Crypto.h>
 
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
-	: m_features(features), m_commitment(std::move(commitment))
-{
-	Serializer serializer;
-	Serialize(serializer);
-	m_hash = Crypto::Blake2b(serializer.GetBytes());
-}
+	: m_features(features), m_commitment(std::move(commitment)) { }
 
 void TransactionInput::Serialize(Serializer& serializer) const
 {
@@ -49,5 +44,11 @@ TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJ
 
 const Hash& TransactionInput::GetHash() const
 {
+	if (m_hash == Hash{}) {
+		Serializer serializer;
+		Serialize(serializer);
+		m_hash = Crypto::Blake2b(serializer.GetBytes());
+	}
+
 	return m_hash;
 }

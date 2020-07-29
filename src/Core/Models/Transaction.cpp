@@ -8,10 +8,6 @@ Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionB
 	: m_offset(std::move(offset)),
 	m_transactionBody(std::move(transactionBody))
 {
-	Serializer serializer;
-	Serialize(serializer);
-
-	m_hash = Crypto::Blake2b(serializer.GetBytes());
 }
 
 void Transaction::Serialize(Serializer& serializer) const
@@ -56,5 +52,11 @@ Transaction Transaction::FromJSON(const Json::Value& transactionJSON)
 
 const Hash& Transaction::GetHash() const
 {
+	if (m_hash == Hash{}) {
+		Serializer serializer;
+		Serialize(serializer);
+		m_hash = Crypto::Blake2b(serializer.GetBytes());
+	}
+
 	return m_hash;
 }

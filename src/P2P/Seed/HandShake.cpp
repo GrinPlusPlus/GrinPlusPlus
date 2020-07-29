@@ -68,7 +68,8 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
 				const ShakeMessage shakeMessage = ShakeMessage::Deserialize(byteBuffer);
 
-				connectedPeer.UpdateVersion(shakeMessage.GetVersion());
+				const uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, shakeMessage.GetVersion());
+				connectedPeer.UpdateVersion(version);
 				connectedPeer.UpdateCapabilities(shakeMessage.GetCapabilities());
 				connectedPeer.UpdateUserAgent(shakeMessage.GetUserAgent());
 				connectedPeer.UpdateTotals(shakeMessage.GetTotalDifficulty(), 0);
@@ -167,7 +168,7 @@ bool HandShake::TransmitHandMessage(Socket& socket) const
 
 	std::vector<uint8_t> serialized_message = handMessage.Serialize(
 		m_config.GetEnvironment(),
-		EProtocolVersion::V2
+		EProtocolVersion::V1
 	);
 
 	return socket.Send(serialized_message, true);

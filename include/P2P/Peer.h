@@ -98,7 +98,11 @@ public:
 		m_connected = connected;
 		m_dirty = true;
 	}
-	void UpdateVersion(const uint32_t version) noexcept { m_version = version; }
+	void UpdateVersion(const uint32_t version) noexcept
+	{
+		m_version = version;
+		m_dirty = true;
+	}
 	void UpdateCapabilities(const Capabilities& capabilities) noexcept { m_capabilities = capabilities; }
 	void UpdateLastContactTime() const noexcept { m_lastContactTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); }
 	void Ban(const EBanReason banReason) noexcept

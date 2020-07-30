@@ -25,5 +25,5 @@ endif(GRINPP_STATIC)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
 
-add_dependencies(${TARGET_NAME} Infrastructure ctaes scrypt secp256k1-zkp sodium chachapoly rfc6234)
-target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure ctaes scrypt secp256k1-zkp sodium chachapoly rfc6234)
+add_dependencies(${TARGET_NAME} Infrastructure ctaes scrypt secp256k1-zkp unofficial-sodium::sodium chachapoly rfc6234)
+target_link_libraries(${TARGET_NAME} PUBLIC Infrastructure ctaes scrypt secp256k1-zkp unofficial-sodium::sodium chachapoly rfc6234)

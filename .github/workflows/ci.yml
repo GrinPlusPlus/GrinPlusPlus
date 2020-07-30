@@ -56,8 +56,10 @@ jobs:
         run: cmake --build . --parallel 4
       - name: Upload artifact
         uses: actions/upload-artifact@v2
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}    
         with:
-          name: ${{ runner.os }}_GrinNode_${{ GITHUB_RUN_ID }}
+          name: ${{ runner.os }}_GrinNode_${{ env.GITHUB_RUN_ID }}
           path: backend/bin/Release/GrinNode*
       - name: Build UI (windows)
         working-directory: frontend

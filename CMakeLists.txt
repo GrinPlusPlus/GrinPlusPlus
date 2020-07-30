@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-if(MSVC)
-    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
-else()
-    #SET(CMAKE_BUILD_TYPE Release)
-endif()
+#if(MSVC)
+#    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
+#else()
+#    SET(CMAKE_BUILD_TYPE Release)
+#endif()
 
 set(PORTABLE 1)
 
@@ -112,12 +112,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 # Dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-#find_package(unofficial-sodium CONFIG REQUIRED)
+find_package(unofficial-sodium CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(RocksDB CONFIG REQUIRED)
 include(sqlite3)
 include(minizip)
 include(jsoncpp)
-include(zlib)
-include(rocksdb)
+#include(zlib)
+#include(rocksdb)
 include(croaring)
 include(civetweb)
 include(uint128)
@@ -131,7 +133,7 @@ add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/chachapoly)
 add_subdirectory(deps/rfc6234)
-add_subdirectory(deps/libsodium-1.0.18)
+#add_subdirectory(deps/libsodium-1.0.18)
 #add_subdirectory(deps/stduuid)
 
 # Grin++ Projects

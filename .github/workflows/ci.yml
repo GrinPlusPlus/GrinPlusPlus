@@ -7,16 +7,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        node-version: [12.x]
         name: [macos, ubuntu, windows]
         include:
           - name: macos
-            os: macos-latest
+            os: macos-10.15
             compiler: gcc
             version: "9"
+            vcpkg_triplet: x64-osx-grinpp
+            cmake_generator: Ninja
+            cmake_platform_args: ''
           - name: ubuntu
-            os: ubuntu-latest
+            os: ubuntu-16.04
+            vcpkg_triplet: x64-linux
+            cmake_generator: Ninja
+            cmake_platform_args: ''
           - name: windows
-            os: windows-latest
+            os: windows-2019
+            vcpkg_triplet: x64-windows-static
+            cmake_generator: 'VS16Win64'
+            cmake_platform_args: ''
 
     steps:
       - name: Checkout Grin++ Backend
@@ -28,6 +38,11 @@ jobs:
         with:
           repository: GrinPlusPlus/GrinPlusPlusUI
           path: frontend
+      - name: Checkout vcpkg
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |
@@ -40,34 +55,46 @@ jobs:
         run: |
           sudo apt install uuid-dev
           sudo apt install libgflags2.2 libgflags-dev
-      - name: make build directory
-        working-directory: backend
-        run: mkdir build
-      - name: configure
-        working-directory: backend/build
-        run: cmake -DCMAKE_BUILD_TYPE=Release ..
-      - name: compile (windows/linux)
-        working-directory: backend/build
-        if: runner.os != 'macOS'
-        run: cmake --build .
-      - name: compile (mac)
-        working-directory: backend/build
-        if: runner.os == 'macOS'
-        run: cmake --build . --parallel 4
+      - name: Cache vcpkg artifacts
+          uses: actions/cache@v2
+          with:
+            path: ${{ github.workspace }}/vcpkg/
+            key: ${{ hashFiles( '.git/HEAD' ) }}--${{ hashFiles( '../backend/vcpkg/*' ) }}${{ runner.os }}
+      - name: Run vcpkg
+          uses: lukka/run-vcpkg@v3
+          with:
+            vcpkgArguments: '--overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
+            vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+      - name: Use Node.js ${{ matrix.node-version }}
+          uses: actions/setup-node@v1
+          with:
+            node-version: ${{ matrix.node-version }}
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v2
+        with:
+          cmakeGenerator: ${{ matrix.cmake_generator }}
+          cmakeBuildType: 'Release'
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: '${{ github.workspace }}/backend/CMakeLists.txt'
+          useVcpkgToolchainFile: true
+          vcpkgTriplet: '${{ matrix.vcpkg_triplet }}'
+          buildDirectory: '${{ github.workspace }}/build'
+          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF"'
+          buildWithCMake: false
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}    
         with:
-          name: ${{ runner.os }}_GrinNode_${{ env.GITHUB_RUN_ID }}
-          path: backend/bin/Release/GrinNode*
+          name: GrinNode_${{ runner.os }}_${{ env.GITHUB_RUN_ID }}
+          path: bin/Release/GrinNode*
       - name: Build UI (windows)
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
+          copy "..\bin\Release\GrinNode.exe" "./bin/"
           npm run clean_build:win && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -75,5 +102,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp ../backend/bin/Release/GrinNode ./bin/
+          cp ../bin/Release/GrinNode ./bin/
           npm run clean_build:nix && npm run release

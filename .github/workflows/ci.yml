@@ -1,77 +1,77 @@
 name: ci
 on: [push]
 jobs:
-    ci:
-        name: ${{ matrix.name }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                name: [macos, ubuntu, windows]
-                include:
-                    - name: macos
-                        os: macos-latest
-                        compiler: gcc
-                        version: "9"
-                    - name: ubuntu
-                        os: ubuntu-latest
-                    - name: windows
-                        os: windows-latest
+  ci:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [macos, ubuntu, windows]
+        include:
+          - name: macos
+            os: macos-latest
+            compiler: gcc
+            version: "9"
+          - name: ubuntu
+            os: ubuntu-latest
+          - name: windows
+            os: windows-latest
 
-        steps:
-            - name: Checkout Grin++ Backend
-                uses: actions/checkout@v2
-                with:
-                    path: backend
-            - name: Checkout Grin++ UI
-                uses: actions/checkout@v2
-                with:
-                    repository: GrinPlusPlus/GrinPlusPlusUI
-                    path: frontend
-            - name: setup macos environment
-                if: runner.os == 'macOS'
-                run: |
-                    brew install gcc cmake
-                    echo "::set-env name=CC::gcc-${{ matrix.version }}"
-                    echo "::set-env name=CXX::g++-${{ matrix.version }}"
-                    brew install gflags
-            - name: setup ubuntu environment
-                if: runner.os == 'Linux'
-                run: |
-                    sudo apt install uuid-dev
-                    sudo apt install libgflags2.2 libgflags-dev
-            - name: make build directory
-                working-directory: backend
-                run: mkdir build
-            - name: configure
-                working-directory: backend/build
-                run: cmake -DCMAKE_BUILD_TYPE=Release ..
-            - name: compile (windows/linux)
-                working-directory: backend/build
-                if: runner.os != 'macOS'
-                run: cmake --build .
-            - name: compile (mac)
-                working-directory: backend/build
-                if: runner.os == 'macOS'
-                run: cmake --build . --parallel 4
-            - name: Upload artifact
-                uses: actions/upload-artifact@v2
-                with:
-                    name: ${{ runner.os }}_GrinNode_${{ GITHUB_RUN_ID }}
-                    path: backend/bin/Release/GrinNode*
-            - name: Build UI (windows)
-                working-directory: frontend
-                if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
-                env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                run: |
-                    copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
-                    npm run clean_build:win && npm run release
-            - name: Build UI (mac/linux)
-                working-directory: frontend
-                if: runner.os != 'windows' && startsWith(github.ref, 'refs/tags/')
-                env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                run: |
-                    cp ../backend/bin/Release/GrinNode ./bin/
-                    npm run clean_build:nix && npm run release
+    steps:
+      - name: Checkout Grin++ Backend
+        uses: actions/checkout@v2
+        with:
+          path: backend
+      - name: Checkout Grin++ UI
+        uses: actions/checkout@v2
+        with:
+          repository: GrinPlusPlus/GrinPlusPlusUI
+          path: frontend
+      - name: setup macos environment
+        if: runner.os == 'macOS'
+        run: |
+          brew install gcc cmake
+          echo "::set-env name=CC::gcc-${{ matrix.version }}"
+          echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          brew install gflags
+      - name: setup ubuntu environment
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install uuid-dev
+          sudo apt install libgflags2.2 libgflags-dev
+      - name: make build directory
+        working-directory: backend
+        run: mkdir build
+      - name: configure
+        working-directory: backend/build
+        run: cmake -DCMAKE_BUILD_TYPE=Release ..
+      - name: compile (windows/linux)
+        working-directory: backend/build
+        if: runner.os != 'macOS'
+        run: cmake --build .
+      - name: compile (mac)
+        working-directory: backend/build
+        if: runner.os == 'macOS'
+        run: cmake --build . --parallel 4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}_GrinNode_${{ GITHUB_RUN_ID }}
+          path: backend/bin/Release/GrinNode*
+      - name: Build UI (windows)
+        working-directory: frontend
+        if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
+          npm run clean_build:win && npm run release
+      - name: Build UI (mac/linux)
+        working-directory: frontend
+        if: runner.os != 'windows' && startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp ../backend/bin/Release/GrinNode ./bin/
+          npm run clean_build:nix && npm run release

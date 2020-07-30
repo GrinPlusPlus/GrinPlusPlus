@@ -56,19 +56,19 @@ jobs:
           sudo apt install uuid-dev
           sudo apt install libgflags2.2 libgflags-dev
       - name: Cache vcpkg artifacts
-          uses: actions/cache@v2
-          with:
-            path: ${{ github.workspace }}/vcpkg/
-            key: ${{ hashFiles( '.git/HEAD' ) }}--${{ hashFiles( '../backend/vcpkg/*' ) }}${{ runner.os }}
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/vcpkg/
+          key: ${{ hashFiles( '.git/HEAD' ) }}--${{ hashFiles( '../backend/vcpkg/*' ) }}${{ runner.os }}
       - name: Run vcpkg
-          uses: lukka/run-vcpkg@v3
-          with:
-            vcpkgArguments: '--overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
-            vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        uses: lukka/run-vcpkg@v3
+        with:
+          vcpkgArguments: '--overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
       - name: Use Node.js ${{ matrix.node-version }}
-          uses: actions/setup-node@v1
-          with:
-            node-version: ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: 'Run CMake'
         uses: lukka/run-cmake@v2
         with:

@@ -19,7 +19,14 @@ jobs:
             os: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout Grin++ Backend
+        uses: actions/checkout@v2
+        with:
+          path: backend
+      - name: Checkout Grin++ UI
+        with:
+          repository: GrinPlusPlus/GrinPlusPlusUI
+          path: frontend
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |
@@ -33,9 +40,16 @@ jobs:
           sudo apt install uuid-dev
           sudo apt install libgflags2.2 libgflags-dev
       - name: make build directory
+        working-directory: backend
         run: mkdir build
-      - name: configure and compile
-        working-directory: build
-        run: |
-          cmake ..
-          cmake --build . --config RelWithDebInfo
+      - name: configure
+        working-directory: backend/build
+        run: cmake -DCMAKE_BUILD_TYPE=Release ..
+      - name: compile (windows/linux)
+        working-directory: backend/build
+        if: runner.os != 'macOS'
+        run: cmake --build .
+      - name: compile (mac)
+        working-directory: backend/build
+        if: runner.os == 'macOS'
+        run: cmake --build . --parallel 6

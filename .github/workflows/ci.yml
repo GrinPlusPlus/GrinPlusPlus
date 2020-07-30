@@ -43,6 +43,7 @@ jobs:
         with:
           repository: microsoft/vcpkg
           path: vcpkg
+          ref: '2020.06'
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |

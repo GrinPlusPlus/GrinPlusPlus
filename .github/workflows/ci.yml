@@ -24,6 +24,7 @@ jobs:
         with:
           path: backend
       - name: Checkout Grin++ UI
+        uses: actions/checkout@v2
         with:
           repository: GrinPlusPlus/GrinPlusPlusUI
           path: frontend

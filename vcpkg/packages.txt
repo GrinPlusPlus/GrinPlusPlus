@@ -1,3 +1,6 @@
 libsodium
 rocksdb
 zlib
+civetweb
+minizip
+roaring

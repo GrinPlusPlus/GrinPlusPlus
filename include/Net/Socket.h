@@ -9,6 +9,12 @@
 #include <memory>
 #include <atomic>
 #include <shared_mutex>
+
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 #include <asio.hpp>
 
 class Socket : public Traits::IPrintable

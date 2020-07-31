@@ -6,7 +6,6 @@
 #include <optional>
 #include <Common/Secure.h>
 #include <Config/Config.h>
-#include <Wallet/NodeClient.h>
 #include <Wallet/Enums/SelectionStrategy.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/Models/DTOs/WalletBalanceDTO.h>
@@ -21,6 +20,9 @@
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <string>
 
+// Forward Declarations
+class INodeClient;
+
 class Wallet
 {
 public:
@@ -30,7 +32,7 @@ public:
 	static Locked<Wallet> LoadWallet(
 		const Config& config,
 		const SecureVector& masterSeed,
-		INodeClientConstPtr pNodeClient,
+		const std::shared_ptr<const INodeClient>& pNodeClient,
 		Locked<IWalletDB> walletDB,
 		const std::string& username
 	);
@@ -71,7 +73,7 @@ public:
 private:
 	Wallet(
 		const Config& config,
-		INodeClientConstPtr pNodeClient,
+		const std::shared_ptr<const INodeClient>& pNodeClient,
 		Locked<IWalletDB> walletDB,
 		const std::string& username,
 		KeyChainPath&& userPath,
@@ -79,7 +81,7 @@ private:
 	);
 
 	const Config& m_config;
-	INodeClientConstPtr m_pNodeClient;
+	std::shared_ptr<const INodeClient> m_pNodeClient;
 	Locked<IWalletDB> m_walletDB;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;

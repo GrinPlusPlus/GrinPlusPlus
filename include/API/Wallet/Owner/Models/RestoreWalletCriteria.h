@@ -4,6 +4,7 @@
 #include <Core/Traits/Jsonable.h>
 #include <Core/Exceptions/APIException.h>
 #include <Common/Secure.h>
+#include <Common/GrinStr.h>
 #include <optional>
 
 class RestoreWalletCriteria : public Traits::IJsonable
@@ -30,7 +31,7 @@ public:
             if (usernameOpt.has_value() && passwordOpt.has_value() && walletSeedOpt.has_value())
             {
                 return RestoreWalletCriteria(
-                    StringUtil::Trim(StringUtil::ToLower(usernameOpt.value())),
+                    GrinStr{ usernameOpt.value() }.Trim().ToLower(),
                     SecureString(passwordOpt.value()),
                     SecureString(walletSeedOpt.value())
                 );

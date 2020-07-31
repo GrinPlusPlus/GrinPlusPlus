@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <inttypes.h>
+#include <cstdint>
 #include <Net/IPAddress.h>
 #include <optional>
 

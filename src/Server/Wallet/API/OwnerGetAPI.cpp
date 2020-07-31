@@ -1,6 +1,11 @@
 #include "OwnerGetAPI.h"
 #include "SessionTokenUtil.h"
 
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 #include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
@@ -18,11 +23,12 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 	if (action == "accounts")
 	{
 		Json::Value accountsNode(Json::arrayValue);
-		std::vector<std::string> accounts = walletManager.GetAllAccounts();
-		for (std::string& account : accounts)
+		auto accounts = walletManager.GetAllAccounts();
+		for (const auto& account : accounts)
 		{
 			accountsNode.append(account);
 		}
+
 		return HTTPUtil::BuildSuccessResponse(pConnection, accountsNode.toStyledString());
 	}
 

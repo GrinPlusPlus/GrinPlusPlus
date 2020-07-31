@@ -2,10 +2,10 @@
 #include "WordList.h"
 
 #include <Wallet/Exceptions/KeyChainException.h>
-#include <Common/Util/StringUtil.h>
+#include <Common/GrinStr.h>
 #include <Crypto/Crypto.h>
 
-SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy)
+SecureString Mnemonic::CreateMnemonic(const std::vector<uint8_t>& entropy)
 {
 	if (entropy.size() % 4 != 0)
 	{
@@ -54,7 +54,7 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<unsigned char>& entropy)
 
 SecureVector Mnemonic::ToEntropy(const SecureString& walletWords)
 {
-	const std::vector<std::string> words = StringUtil::Split(StringUtil::Trim((const std::string&)walletWords), " ");
+	std::vector<GrinStr> words = GrinStr(walletWords.c_str()).Trim().Split(" ");
 	const size_t numWords = words.size();
 	if (numWords < 12 || numWords > 24 || numWords % 3 != 0)
 	{
@@ -103,7 +103,7 @@ SecureVector Mnemonic::ToEntropy(const SecureString& walletWords)
 		}
 	}
 
-	const uint32_t actualChecksum = (Crypto::SHA256((const std::vector<unsigned char>&)entropy)[0] >> (8 - checksumBits)) & mask;
+	const uint32_t actualChecksum = (Crypto::SHA256((const std::vector<uint8_t>&)entropy)[0] >> (8 - checksumBits)) & mask;
 	if (actualChecksum != expectedChecksum)
 	{
 		throw KEYCHAIN_EXCEPTION("Invalid checksum.");

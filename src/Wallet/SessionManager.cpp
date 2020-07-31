@@ -1,15 +1,17 @@
 #include "SessionManager.h"
+#include "ForeignController.h"
 #include "Keychain/SeedEncrypter.h"
 
+#include <Infrastructure/Logger.h>
+#include <Common/Util/VectorUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
-#include <Common/Util/VectorUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Wallet/WalletDB/WalletStore.h>
 
 SessionManager::SessionManager(
 	const Config& config,
-	const INodeClientConstPtr& pNodeClient,
+	const std::shared_ptr<const INodeClient>& pNodeClient,
 	const std::shared_ptr<IWalletStore>& pWalletDB,
 	std::unique_ptr<ForeignController>&& pForeignController)
 	: m_config(config),
@@ -31,7 +33,7 @@ SessionManager::~SessionManager()
 
 Locked<SessionManager> SessionManager::Create(
 	const Config& config,
-	const INodeClientConstPtr& pNodeClient,
+	const std::shared_ptr<const INodeClient>& pNodeClient,
 	const std::shared_ptr<IWalletStore>& pWalletDB,
 	IWalletManager& walletManager)
 {

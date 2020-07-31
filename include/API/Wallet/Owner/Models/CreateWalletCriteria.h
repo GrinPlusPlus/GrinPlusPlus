@@ -4,26 +4,25 @@
 #include <Core/Traits/Jsonable.h>
 #include <Core/Exceptions/APIException.h>
 #include <Common/Secure.h>
+#include <Common/GrinStr.h>
 #include <optional>
 
 class CreateWalletCriteria : public Traits::IJsonable
 {
 public:
     CreateWalletCriteria(
-        const std::string& username,
+        const GrinStr& username,
         SecureString&& password,
         const int numWords
     ) : m_username(username), m_password(std::move(password)), m_numWords(numWords) { }
 
     CreateWalletCriteria(
-        const std::string& username,
+        const GrinStr& username,
         const SecureString& password,
         const int numWords
     ) : m_username(username), m_password(password), m_numWords(numWords) { }
 
-    virtual ~CreateWalletCriteria() = default;
-
-    const std::string& GetUsername() const noexcept { return m_username; }
+    const GrinStr& GetUsername() const noexcept { return m_username; }
     const SecureString& GetPassword() const noexcept { return m_password; }
     int GetNumWords() const noexcept { return m_numWords; }
 
@@ -37,7 +36,7 @@ public:
             if (usernameOpt.has_value() && passwordOpt.has_value() && numWordsOpt.has_value())
             {
                 return CreateWalletCriteria(
-                    StringUtil::Trim(StringUtil::ToLower(usernameOpt.value())),
+                    GrinStr(usernameOpt.value()).Trim().ToLower(),
                     SecureString(passwordOpt.value()),
                     (int)numWordsOpt.value()
                 );
@@ -60,7 +59,7 @@ public:
     }
 
 private:
-    std::string m_username;
+    GrinStr m_username;
     SecureString m_password;
     int m_numWords;
 };

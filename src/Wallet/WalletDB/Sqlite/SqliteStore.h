@@ -12,7 +12,7 @@ public:
 	static std::shared_ptr<SqliteStore> Open(const Config& config);
 	virtual ~SqliteStore() = default;
 
-	std::vector<std::string> GetAccounts() const final;
+	std::vector<GrinStr> GetAccounts() const final;
 	Locked<IWalletDB> OpenWallet(const std::string& username, const SecureVector& masterSeed) final;
 	Locked<IWalletDB> CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) final;
 	void DeleteWallet(const std::string& username) final;

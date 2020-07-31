@@ -19,6 +19,8 @@ public:
 	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);
 	bool DelOnion(const TorAddress& torAddress);
 
+	// TODO: Add GETINFO
+
 private:
 	TorControl(
 		const TorConfig& torConfig,

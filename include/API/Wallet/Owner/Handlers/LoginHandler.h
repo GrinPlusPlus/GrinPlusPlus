@@ -47,10 +47,10 @@ public:
 private:
 	void ValidateInput(const LoginCriteria& criteria) const
 	{
-		std::vector<std::string> accounts = m_pWalletManager->GetAllAccounts();
-		for (const std::string& account : accounts)
+		auto accounts = m_pWalletManager->GetAllAccounts();
+		for (const auto& account : accounts)
 		{
-			if (StringUtil::ToLower(account) == criteria.GetUsername())
+			if (account.ToLower() == criteria.GetUsername())
 			{
 				return;
 			}

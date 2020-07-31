@@ -1,27 +1,32 @@
 #pragma once
 
-#include "Wallet.h"
-#include "ForeignController.h"
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 #include "LoggedInSession.h"
 
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 #include <Config/Config.h>
-#include <Wallet/NodeClient.h>
-#include <Wallet/WalletDB/WalletStore.h>
+#include <Net/Tor/TorProcess.h>
 #include <Wallet/SessionToken.h>
 #include <memory>
 #include <unordered_map>
 
 // Forward Declarations
+class INodeClient;
+class IWalletStore;
 class IWalletManager;
+class ForeignController;
 
 class SessionManager
 {
 public:
 	SessionManager(
 		const Config& config,
-		const INodeClientConstPtr& pNodeClient,
+		const std::shared_ptr<const INodeClient>& pNodeClient,
 		const std::shared_ptr<IWalletStore>& pWalletDB,
 		std::unique_ptr<ForeignController>&& pForeignController
 	);
@@ -29,7 +34,7 @@ public:
 
 	static Locked<SessionManager> Create(
 		const Config& config,
-		const INodeClientConstPtr& pNodeClient,
+		const std::shared_ptr<const INodeClient>& pNodeClient,
 		const std::shared_ptr<IWalletStore>& pWalletDB,
 		IWalletManager& walletManager
 	);
@@ -58,7 +63,7 @@ private:
 	uint64_t m_nextSessionId;
 
 	const Config& m_config;
-	INodeClientConstPtr m_pNodeClient;
+	std::shared_ptr<const INodeClient> m_pNodeClient;
 	std::shared_ptr<IWalletStore> m_pWalletDB;
 	std::unique_ptr<ForeignController> m_pForeignController;
 };

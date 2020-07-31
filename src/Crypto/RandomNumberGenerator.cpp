@@ -4,11 +4,14 @@
 #include <Crypto/CryptoException.h>
 
 #ifdef _WIN32
-#pragma comment(lib, "Bcrypt.lib")
-#include <bcrypt.h>
+	#define WIN32_LEAN_AND_MEAN
+	#include <Windows.h>
+
+	#pragma comment(lib, "Bcrypt.lib")
+	#include <bcrypt.h>
 #else
-#include <fcntl.h>
-#include <unistd.h>
+	#include <fcntl.h>
+	#include <unistd.h>
 #endif
 
 CBigInteger<32> RandomNumberGenerator::GenerateRandom32()

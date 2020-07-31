@@ -12,6 +12,7 @@
 #include <Roaring.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/FileUtil.h>
+#include <Infrastructure/Logger.h>
 #include <fstream>
 #include <functional>
 #include <algorithm>

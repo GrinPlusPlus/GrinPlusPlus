@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../../civetweb/include/civetweb.h"
+// Forward Declarations
+struct mg_connection;
 
 class ChainAPI
 {

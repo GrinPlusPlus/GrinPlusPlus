@@ -27,8 +27,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (pSendSlate == nullptr)
 	{
 		const std::string errorMsg = StringUtil::Format(
-			"Send slate not found for slate ({})",
-			uuids::to_string(finalizeSlate.GetId())
+			"Send slate not found for {}",
+			finalizeSlate
 		);
 		WALLET_ERROR(errorMsg);
 		throw WALLET_EXCEPTION(errorMsg);
@@ -42,8 +42,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (pWalletTx == nullptr || pWalletTx->GetType() != EWalletTxType::SENDING_STARTED)
 	{
 		const std::string errorMsg = StringUtil::Format(
-			"Transaction not found for slate ({})",
-			uuids::to_string(finalizeSlate.GetId())
+			"Transaction not found for {}",
+			finalizeSlate
 		);
 		WALLET_ERROR(errorMsg);
 		throw WALLET_EXCEPTION(errorMsg);
@@ -57,8 +57,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (pSlateContext == nullptr)
 	{
 		WALLET_ERROR_F(
-			"Failed to load slate context for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to load slate context for {}",
+			finalizeSlate
 		);
 		throw WALLET_EXCEPTION("Failed to load slate context.");
 	}
@@ -105,8 +105,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (!AddPartialSignature(*pSlateContext, finalizeSlate, kernelMessage))
 	{
 		WALLET_ERROR_F(
-			"Failed to generate signatures for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to generate signatures for {}",
+			finalizeSlate
 		);
 		throw WALLET_EXCEPTION("Failed to generate signatures.");
 	}
@@ -117,8 +117,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (!VerifyPaymentProofs(pWalletTx, finalizeSlate, finalExcess))
 	{
 		WALLET_ERROR_F(
-			"Failed to verify payment proof for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to verify payment proof for {}",
+			finalizeSlate
 		);
 		throw WALLET_EXCEPTION("Failed to verify payment proof.");
 	}
@@ -128,8 +128,8 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
 	if (pTransaction == nullptr)
 	{
 		WALLET_ERROR_F(
-			"Failed to verify finalized transaction for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to verify finalized transaction for {}",
+			finalizeSlate
 		);
 		throw WALLET_EXCEPTION("Failed to verify finalized transaction.");
 	}
@@ -179,8 +179,8 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 	if (pPartialSignature == nullptr)
 	{
 		WALLET_ERROR_F(
-			"Failed to calculate partial signature for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to calculate partial signature for {}",
+			finalizeSlate
 		);
 		return false;
 	}
@@ -196,8 +196,8 @@ bool FinalizeSlateBuilder::AddPartialSignature(
 
 	if (!SignatureUtil::VerifyPartialSignatures(finalizeSlate.sigs, kernelMessage)) {
 		WALLET_ERROR_F(
-			"Failed to verify partial signature for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to verify partial signature for {}",
+			finalizeSlate
 		);
 		return false;
 	}
@@ -215,8 +215,8 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 	if (pAggSignature == nullptr)
 	{
 		WALLET_ERROR_F(
-			"Failed to aggregate signatures for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to aggregate signatures for {}",
+			finalizeSlate
 		);
 		return nullptr;
 	}
@@ -226,12 +226,12 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		"Validating signature {} for excess {} against message {}.",
 		*pAggSignature,
 		totalExcess,
-		kernelMessage.ToHex()
+		kernelMessage
 	);
 	if (!Crypto::VerifyAggregateSignature(*pAggSignature, totalExcess, kernelMessage)) {
 		WALLET_ERROR_F(
-			"Failed to verify aggregate signature for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to verify aggregate signature for {}",
+			finalizeSlate
 		);
 		return nullptr;
 	}
@@ -247,8 +247,8 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 	if (!KernelSignatureValidator().VerifyKernelSignatures(std::vector<TransactionKernel>({ kernel })))
 	{
 		WALLET_ERROR_F(
-			"Failed to verify kernel signatures for slate {}",
-			uuids::to_string(finalizeSlate.GetId())
+			"Failed to verify kernel signatures for {}",
+			finalizeSlate
 		);
 		return nullptr;
 	}
@@ -266,8 +266,8 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 	catch (std::exception& e)
 	{
 		WALLET_ERROR_F(
-			"Failed to validate transaction for slate {}. Error: {}",
-			uuids::to_string(finalizeSlate.GetId()),
+			"Failed to validate transaction for {}. Error: {}",
+			finalizeSlate,
 			e.what()
 		);
 		return nullptr;

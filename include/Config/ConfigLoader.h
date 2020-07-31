@@ -6,6 +6,7 @@
 #include <Core/Util/JsonUtil.h>
 #include <Core/Exceptions/FileException.h>
 #include <Infrastructure/Logger.h>
+#include <fstream>
 
 class ConfigLoader
 {

@@ -92,14 +92,14 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}    
         with:
           name: GrinNode_${{ runner.os }}_${{ env.GITHUB_RUN_ID }}
-          path: bin/Release/GrinNode*
+          path: backend/bin/Release/GrinNode*
       - name: Build UI (windows)
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          copy "..\bin\Release\GrinNode.exe" "./bin/"
+          copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
           npm run clean_build:win && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -107,5 +107,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp ../bin/Release/GrinNode ./bin/
+          cp ../backend/bin/Release/GrinNode ./bin/
           npm run clean_build:nix && npm run release

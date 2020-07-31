@@ -42,10 +42,10 @@ private:
 	{
 		// TODO: Should we allow usernames to contain spaces or special characters?
 
-		std::vector<std::string> accounts = m_pWalletManager->GetAllAccounts();
-		for (const std::string& account : accounts)
+		auto accounts = m_pWalletManager->GetAllAccounts();
+		for (const auto& account : accounts)
 		{
-			if (StringUtil::ToLower(account) == criteria.GetUsername())
+			if (account.ToLower() == criteria.GetUsername())
 			{
 				throw API_EXCEPTION_F(
 					RPC::ErrorCode::INVALID_PARAMS,

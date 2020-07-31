@@ -12,6 +12,7 @@
 #include <BlockChain/BlockChainServer.h>
 
 #include <filesystem.h>
+#include <fstream>
 
 static const int BUFFER_SIZE = 256 * 1024;
 

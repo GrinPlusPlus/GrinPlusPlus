@@ -4,8 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <stdint.h>
-#include <string>
+#include <cstdint>
 #include <cstring>
 
 //
@@ -103,7 +102,7 @@ public:
 	static uint32_t ReadBE32(const unsigned char* ptr)
 	{
 		uint32_t x;
-		memcpy((char*)&x, ptr, 4);
+		std::memcpy((char*)&x, ptr, 4);
 
 		return GetBigEndian32(x);
 	}
@@ -111,7 +110,7 @@ public:
 	static uint64_t ReadBE64(const unsigned char* ptr)
 	{
 		uint64_t x;
-		memcpy((char*)&x, ptr, 8);
+		std::memcpy((char*)&x, ptr, 8);
 
 		return GetBigEndian64(x);
 	}
@@ -119,19 +118,19 @@ public:
 	static void WriteBE32(unsigned char* ptr, uint32_t x)
 	{
 		uint32_t v = GetBigEndian32(x);
-		memcpy(ptr, (char*)&v, 4);
+		std::memcpy(ptr, (char*)&v, 4);
 	}
 
 	static void WriteBE64(unsigned char* ptr, uint64_t x)
 	{
 		uint64_t v = GetBigEndian64(x);
-		memcpy(ptr, (char*)&v, 8);
+		std::memcpy(ptr, (char*)&v, 8);
 	}
 
 	static uint32_t ReadLE32(const unsigned char* ptr)
 	{
 		uint32_t x;
-		memcpy((char*)&x, ptr, 4);
+		std::memcpy((char*)&x, ptr, 4);
 
 		return GetLittleEndian32(x);
 	}
@@ -139,12 +138,12 @@ public:
 	static void WriteLE32(unsigned char* ptr, uint32_t x)
 	{
 		uint32_t v = GetLittleEndian32(x);
-		memcpy(ptr, (char*)&v, 4);
+		std::memcpy(ptr, (char*)&v, 4);
 	}
 
 	static void WriteLE64(unsigned char* ptr, uint64_t x)
 	{
 		uint64_t v = GetLittleEndian64(x);
-		memcpy(ptr, (char*)&v, 8);
+		std::memcpy(ptr, (char*)&v, 8);
 	}
 };

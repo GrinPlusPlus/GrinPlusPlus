@@ -4,6 +4,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 #include <Common/ImportExport.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
@@ -35,6 +40,7 @@
 #include <Net/Tor/TorProcess.h>
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
+#include <Common/GrinStr.h>
 
 #ifdef MW_WALLET
 #define WALLET_API EXPORT
@@ -76,7 +82,7 @@ public:
 		const bool fromGenesis
 	) = 0;
 
-	virtual std::vector<std::string> GetAllAccounts() const = 0;
+	virtual std::vector<GrinStr> GetAllAccounts() const = 0;
 
 	virtual SlatepackAddress GetSlatepackAddress(const SessionToken& token) const = 0;
 
@@ -107,12 +113,12 @@ public:
 	// Validates the password and then deletes the wallet.
 	//
 	virtual void DeleteWallet(
-		const std::string& username,
+		const GrinStr& username,
 		const SecureString& password
 	) = 0;
 
 	virtual void ChangePassword(
-		const std::string& username,
+		const GrinStr& username,
 		const SecureString& currentPassword,
 		const SecureString& newPassword
 	) = 0;

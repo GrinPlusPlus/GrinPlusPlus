@@ -27,7 +27,6 @@ public:
 	);
 
 private:
-
 	static int OwnerAPIHandler(mg_connection* pConnection, void* pWalletContext);
 
 	const Config& m_config;

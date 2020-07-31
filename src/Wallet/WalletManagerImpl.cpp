@@ -173,7 +173,7 @@ uint16_t WalletManager::GetListenerPort(const SessionToken& token) const
 	return wallet.Read()->GetListenerPort();
 }
 
-std::vector<std::string> WalletManager::GetAllAccounts() const
+std::vector<GrinStr> WalletManager::GetAllAccounts() const
 {
 	return m_pWalletStore->GetAccounts();
 }
@@ -215,13 +215,13 @@ void WalletManager::Logout(const SessionToken& token)
 	m_sessionManager.Write()->Logout(token);
 }
 
-void WalletManager::DeleteWallet(const std::string& username, const SecureString& password)
+void WalletManager::DeleteWallet(const GrinStr& username, const SecureString& password)
 {
 	WALLET_WARNING_F("Attempting to delete wallet with username: {}", username);
 
 	try
 	{
-		const std::string usernameLower = StringUtil::ToLower(username);
+		GrinStr usernameLower = username.ToLower();
 		m_sessionManager.Read()->Authenticate(usernameLower, password);
 
 		m_pWalletStore->DeleteWallet(usernameLower);
@@ -234,11 +234,11 @@ void WalletManager::DeleteWallet(const std::string& username, const SecureString
 }
 
 void WalletManager::ChangePassword(
-	const std::string& username,
+	const GrinStr& username,
 	const SecureString& currentPassword,
 	const SecureString& newPassword)
 {
-	const std::string usernameLower = StringUtil::ToLower(username);
+	GrinStr usernameLower = username.ToLower();
 	EncryptedSeed encrypted = m_pWalletStore->LoadWalletSeed(usernameLower);
 	SecureVector walletSeed = SeedEncrypter().DecryptWalletSeed(encrypted, currentPassword);
 

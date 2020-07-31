@@ -25,7 +25,7 @@ fs::path SqliteStore::GetDBFile(const std::string& username) const
 	return m_walletDirectory / StringUtil::ToWide(username) / "wallet.db";
 }
 
-std::vector<std::string> SqliteStore::GetAccounts() const
+std::vector<GrinStr> SqliteStore::GetAccounts() const
 {
 	return FileUtil::GetSubDirectories(m_walletDirectory, false);
 }

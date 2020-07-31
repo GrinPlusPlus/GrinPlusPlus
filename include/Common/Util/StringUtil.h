@@ -18,6 +18,8 @@
 class StringUtil
 {
 public:
+	friend class GrinStr;
+
 	template<typename ... Args>
 	static std::string Format(const char* format, const Args& ... args)
 	{

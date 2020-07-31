@@ -32,7 +32,11 @@ public:
 	template<class _Rep, class _Period> inline
 	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration, const std::atomic_bool& terminate)
 	{
-		return SleepFor(std::chrono::duration_cast<std::chrono::milliseconds>(duration), std::chrono::milliseconds(5), terminate);
+		return SleepFor(
+			std::chrono::duration_cast<std::chrono::milliseconds>(duration),
+			std::chrono::milliseconds(5),
+			terminate
+		);
 	}
 
 	static void Join(std::thread& thread)

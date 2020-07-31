@@ -1,10 +1,11 @@
 #pragma once
 
-#include <civetweb.h>
-
 #include <Net/Util/HTTPUtil.h>
 #include <Wallet/SessionToken.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
+
+// Forward Declarations
+struct mg_connection;
 
 class SessionTokenUtil
 {

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../../civetweb/include/civetweb.h"
 #include <string>
+
+// Forward Declarations
+struct mg_connection;
 
 class PeersAPI
 {

@@ -41,14 +41,14 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	) final;
 	void Logout(const SessionToken& token) final;
-	void DeleteWallet(const std::string& username, const SecureString& password) final;
+	void DeleteWallet(const GrinStr& username, const SecureString& password) final;
 	void ChangePassword(
-		const std::string& username,
+		const GrinStr& username,
 		const SecureString& currentPassword,
 		const SecureString& newPassword
 	) final;
 
-	std::vector<std::string> GetAllAccounts() const final;
+	std::vector<GrinStr> GetAllAccounts() const final;
 
 	WalletSummaryDTO GetWalletSummary(const SessionToken& token) final;
 	WalletBalanceDTO GetBalance(const SessionToken& token) final;

@@ -3,6 +3,8 @@
 #include <Net/Clients/Client.h>
 #include <Net/Clients/HTTP/HTTP.h>
 #include <Net/Clients/HTTP/HTTPException.h>
+#include <Infrastructure/Logger.h>
+#include <Common/GrinStr.h>
 #include <sstream>
 
 class IHTTPClient : public Client<HTTP::Request, HTTP::Response>
@@ -42,25 +44,25 @@ public:
 			size_t contentLength = 0;
 
 			std::vector<HTTP::Header> headers;
-			std::string header = ReadLine(asio::chrono::seconds(1));
+			GrinStr header = ReadLine(asio::chrono::seconds(1));
 			while (header != "\r")
 			{
-				std::vector<std::string> headerParts = StringUtil::Split(header, ":");
+				std::vector<GrinStr> headerParts = header.Split(":");
 				if (headerParts.size() < 2)
 				{
 					throw HTTP_EXCEPTION("Invalid header: " + header);
 				}
 
-				if (StringUtil::ToLower(StringUtil::Trim(headerParts[0])) == "content-length")
+				if (headerParts[0].Trim().ToLower() == "content-length")
 				{
 					std::istringstream contentLengthStream(headerParts[1]);
 					contentLengthStream >> contentLength;
 				}
 
-				headers.push_back(HTTP::Header(
-					StringUtil::Trim(headerParts[0]),
-					StringUtil::Trim(headerParts[1])
-				));
+				headers.push_back(HTTP::Header{
+					headerParts[0].Trim(),
+					headerParts[1].Trim()
+				});
 
 				header = ReadLine(asio::chrono::seconds(1));
 			}

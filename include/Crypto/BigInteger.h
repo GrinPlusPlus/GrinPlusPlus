@@ -75,13 +75,13 @@ public:
 
 	static CBigInteger<NUM_BYTES, ALLOC> FromHex(const std::string& hex)
 	{
-		std::vector<unsigned char, ALLOC> data = HexUtil::FromHex<ALLOC>(hex);
+		std::vector<uint8_t> data = HexUtil::FromHex(hex);
 		if (data.size() != NUM_BYTES)
 		{
 			throw std::exception();
 		}
 
-		return CBigInteger<NUM_BYTES, ALLOC>(std::move(data));
+		return CBigInteger<NUM_BYTES, ALLOC>(data.data());
 	}
 
 	static CBigInteger<NUM_BYTES, ALLOC> GetMaximumValue()

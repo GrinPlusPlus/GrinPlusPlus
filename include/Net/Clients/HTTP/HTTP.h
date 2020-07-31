@@ -11,16 +11,8 @@ enum class EHTTPMethod
 	POST
 };
 
-class Header
+struct Header
 {
-public:
-	Header(const std::string& type, const std::string& value)
-		: m_type(type), m_value(value)
-	{
-
-	}
-
-private:
 	std::string m_type;
 	std::string m_value;
 };
@@ -28,11 +20,17 @@ private:
 class Request
 {
 public:
-	Request(const EHTTPMethod method, const std::string& location, const std::string& host, const uint16_t port, const std::string& body)
-		: m_method(method), m_location(location), m_host(host), m_port(port), m_body(body)
-	{
-
-	}
+	Request(
+		const EHTTPMethod method,
+		const std::string& location,
+		const std::string& host,
+		const uint16_t port,
+		const std::string& body)
+		: m_method(method),
+		m_location(location),
+		m_host(host),
+		m_port(port),
+		m_body(body) { }
 
 	std::string ToString() const
 	{
@@ -64,10 +62,7 @@ class Response
 {
 public:
 	Response(const unsigned int statusCode, std::vector<Header>&& headers, const std::string& body)
-		: m_statusCode(statusCode), m_headers(std::move(headers)), m_body(body)
-	{
-
-	}
+		: m_statusCode(statusCode), m_headers(std::move(headers)), m_body(body) {}
 
 	unsigned int GetStatusCode() const { return m_statusCode; }
 	const std::vector<Header>& GetHeaders() const { return m_headers; }

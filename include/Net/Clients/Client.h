@@ -1,9 +1,16 @@
 #pragma once
 
 #include <Net/SocketAddress.h>
-#include <asio.hpp>
 #include <functional>
-#include <string>
+#include <Common/GrinStr.h>
+#include <Infrastructure/Logger.h>
+
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
+#include <asio.hpp>
 
 //
 // This class manages socket timeouts by running the io_context using the timed
@@ -96,7 +103,7 @@ protected:
 		}
 	}
 
-	std::string ReadLine(const asio::chrono::steady_clock::duration& timeout)
+	GrinStr ReadLine(const asio::chrono::steady_clock::duration& timeout)
 	{
 		// Start the asynchronous operation. The boost::lambda function object is
 		// used as a callback and will update the ec variable when the operation
@@ -117,7 +124,7 @@ protected:
 			throw asio::system_error(ec);
 		}
 
-		std::string line(m_stringBuffer.substr(0, n - 1));
+		GrinStr line(m_stringBuffer.substr(0, n - 1));
 		m_stringBuffer.erase(0, n);
 		return line;
 	}

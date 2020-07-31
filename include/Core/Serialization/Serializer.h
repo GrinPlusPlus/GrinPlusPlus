@@ -113,7 +113,7 @@ public:
 	SecureVector GetSecureBytes()
 	{
 		SecureVector secureBytes(m_serialized.begin(), m_serialized.end());
-		cleanse(m_serialized.data(), m_serialized.size());
+		SecureMem::Cleanse(m_serialized.data(), m_serialized.size());
 
 		return secureBytes;
 	}

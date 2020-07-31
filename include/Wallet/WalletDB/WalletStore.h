@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Common/ImportExport.h>
+#include <Common/GrinStr.h>
 
 #ifdef MW_WalletDB
 #define WALLET_DB_API EXPORT
@@ -15,7 +16,7 @@ class IWalletStore
 public:
 	virtual ~IWalletStore() = default;
 
-	virtual std::vector<std::string> GetAccounts() const = 0;
+	virtual std::vector<GrinStr> GetAccounts() const = 0;
 
 	virtual Locked<IWalletDB> OpenWallet(const std::string& username, const SecureVector& masterSeed) = 0;
 	virtual Locked<IWalletDB> CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) = 0;

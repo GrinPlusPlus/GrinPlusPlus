@@ -34,7 +34,7 @@ public:
 	void Rollback() noexcept { m_pBitmap->Rollback(); }
 	void Snapshot(const Hash& blockHash)
 	{
-		std::string path = m_path.u8string() + "." + HASH::ShortHash(blockHash);
+		GrinStr pathStr = m_path.u8string() + "." + HASH::ShortHash(blockHash);
 		Roaring snapshotBitmap = m_pBitmap->ToRoaring();
 
 		const size_t numBytes = snapshotBitmap.getSizeInBytes();
@@ -45,7 +45,7 @@ public:
 			throw std::exception(); // TODO: Handle this.
 		}
 
-		FileUtil::SafeWriteToFile(FileUtil::ToPath(path), bytes);
+		FileUtil::SafeWriteToFile(pathStr.ToPath(), bytes);
 	}
 
 	Hash Root(const uint64_t numOutputs) const

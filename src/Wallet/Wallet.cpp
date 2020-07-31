@@ -1,14 +1,28 @@
 #include "Wallet.h"
 #include "WalletRefresher.h"
+
 #include <Wallet/Keychain/KeyChain.h>
+#include <Wallet/NodeClient.h>
 #include <Infrastructure/Logger.h>
 #include <Crypto/CryptoException.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Consensus/Common.h>
 #include <unordered_set>
 
-Wallet::Wallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWalletDB> walletDB, const std::string& username, KeyChainPath&& userPath, const SlatepackAddress& address)
-	: m_config(config), m_pNodeClient(pNodeClient), m_walletDB(walletDB), m_username(username), m_userPath(std::move(userPath)), m_address(address)
+Wallet::Wallet(
+	const Config& config,
+	const std::shared_ptr<const INodeClient>& pNodeClient,
+	Locked<IWalletDB> walletDB,
+	const std::string& username,
+	KeyChainPath&& userPath,
+	const SlatepackAddress& address
+)
+	: m_config(config),
+	m_pNodeClient(pNodeClient),
+	m_walletDB(walletDB),
+	m_username(username),
+	m_userPath(std::move(userPath)),
+	m_address(address)
 {
 
 }
@@ -16,7 +30,7 @@ Wallet::Wallet(const Config& config, INodeClientConstPtr pNodeClient, Locked<IWa
 Locked<Wallet> Wallet::LoadWallet(
 	const Config& config,
 	const SecureVector& masterSeed,
-	INodeClientConstPtr pNodeClient,
+	const std::shared_ptr<const INodeClient>& pNodeClient,
 	Locked<IWalletDB> walletDB,
 	const std::string& username)
 {

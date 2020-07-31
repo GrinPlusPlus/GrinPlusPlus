@@ -3,7 +3,6 @@
 #include <Wallet/SessionToken.h>
 #include <Net/Tor/TorProcess.h>
 #include <API/Wallet/Foreign/ForeignServer.h>
-#include <civetweb.h>
 #include <unordered_map>
 #include <optional>
 #include <string>

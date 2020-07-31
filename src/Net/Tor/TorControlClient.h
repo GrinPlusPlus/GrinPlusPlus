@@ -35,7 +35,7 @@ public:
 
 			std::vector<std::string> response;
 
-			std::string line = StringUtil::Trim(ReadLine(TOR_CONTROL_TIMEOUT));
+			std::string line = ReadLine(TOR_CONTROL_TIMEOUT).Trim();
 			while (line != "250 OK")
 			{
 				if (!StringUtil::StartsWith(line, "250"))
@@ -44,7 +44,7 @@ public:
 				}
 
 				response.push_back(line);
-				line = StringUtil::Trim(ReadLine(TOR_CONTROL_TIMEOUT));
+				line = ReadLine(TOR_CONTROL_TIMEOUT).Trim();
 			}
 
 			return response;

@@ -2,6 +2,8 @@ set(TARGET_NAME Net)
 
 file(GLOB SOURCE_CODE
     "Socket.cpp"
+    "Servers/Server.cpp"
+    "Util/HTTPUtil.cpp"
 )
 
 add_subdirectory(Tor)

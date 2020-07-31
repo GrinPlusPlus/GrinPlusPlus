@@ -68,7 +68,7 @@ public:
 		serializer.Append<uint32_t>(m_keyIndices.size() > 2 ? m_keyIndices[2] : 0);
 		serializer.Append<uint32_t>(m_keyIndices.size() > 3 ? m_keyIndices[3] : 0);
 
-		return HexUtil::ConvertToHex(serializer.GetBytes(), serializer.size());
+		return HexUtil::ConvertToHex(serializer.GetBytes());
 	}
 
 	KeyChainPath GetFirstChild() const

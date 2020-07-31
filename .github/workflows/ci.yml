@@ -55,7 +55,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt install uuid-dev
-          sudo apt install libgflags2.2 libgflags-dev
+          sudo apt install libgflags-dev
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:

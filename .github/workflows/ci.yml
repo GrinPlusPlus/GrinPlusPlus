@@ -83,6 +83,10 @@ jobs:
           buildDirectory: '${{ github.workspace }}/build'
           cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF"'
           buildWithCMake: false
+      - name: 'Build'
+        working-directory: build
+        if: runner.os == 'macOS'
+        run: cmake --build . --parallel 4
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

@@ -7,7 +7,7 @@
 #ifdef _WIN32
 	#define GRIN_WIDE_STR std::wstring
 #else
-	#define GRIN_WIDE_STR GrinStr
+	#define GRIN_WIDE_STR std::string
 #endif
 
 class GrinStr : public std::string

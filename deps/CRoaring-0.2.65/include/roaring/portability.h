@@ -17,7 +17,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 #if !(defined(_XOPEN_SOURCE)) || (_XOPEN_SOURCE < 700)
-#define _XOPEN_SOURCE 700
+//#define _XOPEN_SOURCE 700
 #endif
 
 #include <stdbool.h>

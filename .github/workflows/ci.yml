@@ -85,7 +85,6 @@ jobs:
           buildWithCMake: false
       - name: 'Build'
         working-directory: build
-        if: runner.os == 'macOS'
         run: cmake --build . --parallel 4
       - name: Upload artifact
         uses: actions/upload-artifact@v2

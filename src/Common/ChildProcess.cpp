@@ -44,7 +44,7 @@ ChildProcess::UCPtr ChildProcess::Create(const std::vector<std::string>& args)
 
         uint8_t buffer[4096];
         unsigned int bytesRead = 0;
-        reproc::stream stream = reproc::stream::out;
+        reproc::reproc_stream stream = reproc::reproc_stream::out;
         pChildProcess->m_pProcess->read(&stream, buffer, 4096, &bytesRead);
         if (bytesRead > 0)
         {

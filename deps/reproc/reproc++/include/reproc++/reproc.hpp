@@ -54,7 +54,7 @@ struct options {
 };
 
 /*! `REPROC_STREAM` */
-enum class stream { in, out, err };
+enum class reproc_stream { in, out, err };
 
 /*! `REPROC_INFINITE` */
 REPROCXX_EXPORT extern const milliseconds infinite;
@@ -99,7 +99,7 @@ public:
                                         const options &options = {}) noexcept;
 
   /*! `reproc_read` */
-  REPROCXX_EXPORT std::error_code read(stream *stream,
+  REPROCXX_EXPORT std::error_code read(reproc_stream *stream,
                                        uint8_t *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read) noexcept;
@@ -134,7 +134,7 @@ public:
                                         unsigned int size) noexcept;
 
   /*! `reproc_close` */
-  REPROCXX_EXPORT void close(stream stream) noexcept;
+  REPROCXX_EXPORT void close(reproc_stream stream) noexcept;
 
   /*! `reproc_running` */
   REPROCXX_EXPORT bool running() noexcept;

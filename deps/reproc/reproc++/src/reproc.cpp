@@ -55,7 +55,7 @@ std::error_code process::start(const arguments &arguments,
   return error_to_error_code(error);
 }
 
-std::error_code process::read(stream *stream,
+std::error_code process::read(reproc_stream *stream,
                               uint8_t *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept
@@ -65,7 +65,7 @@ std::error_code process::read(stream *stream,
                                    bytes_read);
 
   if (stream != nullptr) {
-    *stream = static_cast<enum stream>(tmp);
+    *stream = static_cast<enum reproc_stream>(tmp);
   }
 
   return error_to_error_code(error);
@@ -78,7 +78,7 @@ std::error_code process::write(const uint8_t *buffer,
   return error_to_error_code(error);
 }
 
-void process::close(stream stream) noexcept
+void process::close(reproc_stream stream) noexcept
 {
   return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
 }

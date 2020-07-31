@@ -19,7 +19,7 @@ public:
   REPROCXX_EXPORT explicit string(std::string &out, std::string &err) noexcept;
 
   REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+  operator()(reproc_stream stream, const uint8_t *buffer, unsigned int size);
 };
 
 /*! Forwards all output to `out`. */
@@ -32,14 +32,14 @@ public:
                                    std::ostream &err) noexcept;
 
   REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+  operator()(reproc_stream stream, const uint8_t *buffer, unsigned int size);
 };
 
 /*! Discards all output. */
 class discard {
 public:
   REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size) noexcept;
+  operator()(reproc_stream stream, const uint8_t *buffer, unsigned int size) noexcept;
 };
 
 namespace thread_safe {
@@ -53,7 +53,7 @@ public:
   string(std::string &out, std::string &err, std::mutex &mutex) noexcept;
 
   REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+  operator()(reproc_stream stream, const uint8_t *buffer, unsigned int size);
 };
 
 } // namespace thread_safe

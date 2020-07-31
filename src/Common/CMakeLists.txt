@@ -1,6 +1,7 @@
 set(TARGET_NAME Common)
 
 file(GLOB SOURCE_CODE
+    "ChildProcess.cpp"
     "GrinStr.cpp"
     "Secure.cpp"
     "Util/FileUtil.cpp"

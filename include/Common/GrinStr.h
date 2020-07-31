@@ -20,11 +20,16 @@ public:
 	GrinStr(const char* str) : std::string(str) { }
 	GrinStr(const const_iterator& begin, const const_iterator& end) : std::string(begin, end) { }
 
-	GrinStr operator=(const GrinStr& str) const noexcept { return GrinStr(str); }
-	GrinStr operator=(GrinStr&& str) const noexcept { return GrinStr(std::move(str)); }
-	GrinStr operator=(const std::string& str) const noexcept { return GrinStr(str); }
-	GrinStr operator=(std::string&& str) const noexcept { return GrinStr(std::move(str)); }
-	GrinStr operator=(const char* str) const noexcept { return GrinStr(str); }
+	GrinStr& operator=(const GrinStr& str) noexcept
+	{
+		assign(str);
+		return *this;
+	}
+	GrinStr& operator=(const std::string& str) noexcept
+	{
+		assign(str);
+		return *this;
+	}
 
 	std::vector<GrinStr> Split(const GrinStr& delimiter) const;
 

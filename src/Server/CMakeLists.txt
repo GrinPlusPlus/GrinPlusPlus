@@ -22,6 +22,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 
-add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW civetweb)
+add_dependencies(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW)
 target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
-target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW civetweb)
+target_link_libraries(${TARGET_NAME} Infrastructure P2P BlockChain Wallet PoW)

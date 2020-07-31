@@ -27,5 +27,5 @@ else(GRINPP_STATIC)
 endif(GRINPP_STATIC)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core Minizip jsoncpp)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core zlibstatic Minizip jsoncpp)
+add_dependencies(${TARGET_NAME} Infrastructure Crypto Core jsoncpp)
+target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core ZLIB::ZLIB minizip::minizip jsoncpp)

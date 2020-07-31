@@ -1,22 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-#if(MSVC)
-#    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
-#else()
-SET(CMAKE_BUILD_TYPE Release)
-#endif()
-
-set(PORTABLE 1)
-
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
+if(MSVC)
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
+else()
+    SET(CMAKE_BUILD_TYPE Release)
 endif()
 
 if(APPLE)
     set(CMAKE_INSTALL_NAME_DIR "@executable_path")
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-elseif(LINUX)
+elseif(UNIX)
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
@@ -62,8 +56,6 @@ foreach(CompilerFlag ${CompilerFlags})
     set(${CompilerFlag} "${${CompilerFlag}}" CACHE STRING "msvc compiler flags" FORCE)
     message("MSVC flags: ${CompilerFlag}:${${CompilerFlag}}")
 endforeach()
-    #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 
     SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /OPT:REF /INCREMENTAL:NO")
@@ -76,9 +68,9 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(WITH_GFLAGS OFF)
-add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+#add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DNOMINMAX)
-add_definitions(-DASIO_STANDALONE)
+#add_definitions(-DASIO_STANDALONE)
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 include(CheckFunctionExists)
@@ -93,16 +85,12 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps
     ${PROJECT_SOURCE_DIR}/deps/mio/single_include
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
-    ${PROJECT_SOURCE_DIR}/deps/asio/asio/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
-    ${PROJECT_SOURCE_DIR}/deps/rocksdb-6.7.3/include
     ${PROJECT_SOURCE_DIR}/deps/fmt/include
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
-    ${PROJECT_SOURCE_DIR}/deps/zlib
     ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
     ${PROJECT_SOURCE_DIR}/deps/scheduler/include
-    ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -115,13 +103,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(unofficial-sodium CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(RocksDB CONFIG REQUIRED)
+find_package(civetweb CONFIG REQUIRED)
+find_package(asio CONFIG REQUIRED)
+find_package(roaring CONFIG REQUIRED)
+find_package(minizip CONFIG REQUIRED)
 include(sqlite3)
-include(minizip)
 include(jsoncpp)
-include(zlib)
-#include(rocksdb)
-include(croaring)
-include(civetweb)
 include(uint128)
 include(ctaes)
 include(scrypt)
@@ -133,8 +120,6 @@ add_subdirectory(deps/cuckoo)
 add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/chachapoly)
 add_subdirectory(deps/rfc6234)
-#add_subdirectory(deps/libsodium-1.0.18)
-#add_subdirectory(deps/stduuid)
 
 # Grin++ Projects
 add_definitions(-DUNICODE)
@@ -152,8 +137,8 @@ endif()
 
 add_subdirectory(src)
 
-if(GRINPP_TESTS AND NOT LINUX)
+if(GRINPP_TESTS)
     add_subdirectory(tests)
-endif(GRINPP_TESTS AND NOT LINUX)
+endif()
 
 add_subdirectory(tools)

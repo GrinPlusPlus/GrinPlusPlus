@@ -59,7 +59,7 @@ ChildProcess::UCPtr ChildProcess::Create(const std::vector<std::string>& args)
 }
 
 ChildProcess::ChildProcess()
-    : m_pProcess(reproc::process{})
+    : m_pProcess(std::make_unique<reproc::process>(reproc::process()))
 {
 
 }

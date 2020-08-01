@@ -115,6 +115,13 @@ std::unique_ptr<FullBlock> BlockDB::GetBlock(const Hash& hash) const
 	return m_pRocksDB->Get<FullBlock>("BLOCK", key);
 }
 
+void BlockDB::ClearBlocks()
+{
+	LOG_WARNING("Deleting all blocks.");
+
+	m_pRocksDB->DeleteAll("BLOCK");
+}
+
 void BlockDB::AddBlockSums(const Hash& blockHash, const BlockSums& blockSums)
 {
 	LOG_TRACE_F("Adding BlockSums for block {}", blockHash);

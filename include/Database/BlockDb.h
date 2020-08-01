@@ -23,6 +23,7 @@ public:
 
 	virtual void AddBlock(const FullBlock& block) = 0;
 	virtual std::unique_ptr<FullBlock> GetBlock(const Hash& hash) const = 0;
+	virtual void ClearBlocks() = 0;
 
 	virtual void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) = 0;
 	virtual std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const = 0;

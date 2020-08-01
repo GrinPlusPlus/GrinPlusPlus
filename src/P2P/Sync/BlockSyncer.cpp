@@ -182,7 +182,7 @@ bool BlockSyncer::RequestBlocks()
 
 	if (!blocksToRequest.empty())
 	{
-		LOG_TRACE_F("{} blocks requested from %llu peers.", blocksToRequest.size(), numPeers);
+		LOG_TRACE_F("{} blocks requested from {} peers.", blocksToRequest.size(), numPeers);
 	}
 
 	return true;

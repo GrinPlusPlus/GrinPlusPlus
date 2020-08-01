@@ -29,6 +29,7 @@ public:
 
 	void AddBlock(const FullBlock& block) final;
 	std::unique_ptr<FullBlock> GetBlock(const Hash& hash) const final;
+	void ClearBlocks() final;
 
 	void AddBlockSums(const Hash& blockHash, const BlockSums& blockSums) final;
 	std::unique_ptr<BlockSums> GetBlockSums(const Hash& blockHash) const final;

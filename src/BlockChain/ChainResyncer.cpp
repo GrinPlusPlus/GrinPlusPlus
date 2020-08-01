@@ -47,6 +47,7 @@ void ChainResyncer::ResyncChain()
 
 void ChainResyncer::CleanDatabase(const std::shared_ptr<IBlockDB>& pBlockDB)
 {
+	pBlockDB->ClearBlocks();
 	pBlockDB->ClearBlockSums();
 	pBlockDB->ClearOutputPositions();
 	pBlockDB->ClearSpentPositions();

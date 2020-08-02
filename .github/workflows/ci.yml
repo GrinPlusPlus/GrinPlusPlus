@@ -17,6 +17,7 @@ jobs:
             vcpkg_triplet: x64-osx-grinpp
             cmake_generator: Ninja
             cmake_platform_args: ''
+            output_file: 'backend/bin/Release/GrinNode'
           - name: ubuntu
             os: ubuntu-16.04
             compiler: gcc
@@ -24,11 +25,13 @@ jobs:
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
+            output_file: 'backend/bin/Release/GrinNode'
           - name: windows
             os: windows-2019
             vcpkg_triplet: x64-windows-static
             cmake_generator: 'VS16Win64'
             cmake_platform_args: ''
+            output_file: 'backend/bin/Release/Release/GrinNode.exe'
 
     steps:
       - name: Checkout Grin++ Backend
@@ -56,9 +59,11 @@ jobs:
       - name: setup ubuntu environment
         if: runner.os == 'Linux'
         run: |
-          sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev
+          sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev build-essential
           echo "export CC=/usr/bin/gcc-8"
           echo "export CXX=/usr/bin/g++-8"
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 8
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:
@@ -93,7 +98,7 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}    
         with:
           name: GrinNode_${{ runner.os }}_${{ env.GITHUB_RUN_ID }}
-          path: backend/bin/Release/GrinNode*
+          path: ${{ matrix.output_file }}
       - name: Build UI (windows)
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')

@@ -169,7 +169,7 @@ std::error_code process::parse(Parser &&parser)
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(stream::in, &initial, 0)) {
+  if (!parser(reproc_stream::in, &initial, 0)) {
     return {};
   }
 
@@ -177,7 +177,7 @@ std::error_code process::parse(Parser &&parser)
   std::error_code ec;
 
   while (true) {
-    stream stream = {};
+    reproc_stream stream = {};
     unsigned int bytes_read = 0;
     ec = read(&stream, buffer, sizeof(buffer), &bytes_read);
     if (ec) {

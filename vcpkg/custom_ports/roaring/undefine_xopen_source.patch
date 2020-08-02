@@ -1,4 +1,4 @@
-diff --git include/roaring/portability.h include/roaring/portability.h
+diff --git a/include/roaring/portability.h b/include/roaring/portability.h
 index 3b508ad..08265af 100644
 --- include/roaring/portability.h
 +++ include/roaring/portability.h

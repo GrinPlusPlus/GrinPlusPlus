@@ -19,6 +19,8 @@ jobs:
             cmake_platform_args: ''
           - name: ubuntu
             os: ubuntu-16.04
+            compiler: gcc
+            version: "8"
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -54,8 +56,9 @@ jobs:
       - name: setup ubuntu environment
         if: runner.os == 'Linux'
         run: |
-          sudo apt install uuid-dev
-          sudo apt install libgflags-dev
+          sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev
+          echo "export CC=/usr/bin/gcc-8"
+          echo "export CXX=/usr/bin/g++-8"
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:

@@ -2,7 +2,7 @@
 #include "Node/NodeClients/RPCNodeClient.h"
 #include "Wallet/WalletDaemon.h"
 #include "opt.h"
-#include "io.h"
+#include "console.h"
 
 #include <GrinVersion.h>
 #include <Core/Context.h>

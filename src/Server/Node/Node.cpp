@@ -1,7 +1,7 @@
 #include "Node.h"
 #include "NodeRestServer.h"
 #include "NodeClients/DefaultNodeClient.h"
-#include "../io.h"
+#include "../console.h"
 
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>

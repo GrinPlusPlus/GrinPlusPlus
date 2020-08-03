@@ -18,5 +18,5 @@ file(GLOB SOURCE_CODE
 )
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO)
+target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO NOMINMAX)
 target_link_libraries(${TARGET_NAME} PUBLIC ctaes scrypt secp256k1-zkp::secp256k1-zkp unofficial-sodium::sodium chachapoly rfc6234 Common)

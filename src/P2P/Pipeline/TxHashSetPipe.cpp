@@ -6,9 +6,9 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/ShutdownManager.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ShutdownManager.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
 #include <filesystem.h>

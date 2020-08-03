@@ -2,7 +2,7 @@
 #include "ForeignController.h"
 #include "Keychain/SeedEncrypter.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>

@@ -5,7 +5,7 @@
 #include <filesystem.h>
 #include <stdlib.h>
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 MappedFile::~MappedFile()
 {

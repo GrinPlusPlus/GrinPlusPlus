@@ -1,7 +1,7 @@
 #include "ChainStore.h"
 #include <Core/Exceptions/BlockChainException.h>
 #include <Common/Util/FileUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <vector>
 #include <map>
 

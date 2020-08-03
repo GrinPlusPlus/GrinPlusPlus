@@ -3,7 +3,7 @@
 
 #include <Net/Util/HTTPUtil.h>
 #include <BlockChain/BlockChainServer.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/HexUtil.h>
 #include <string>

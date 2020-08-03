@@ -8,7 +8,7 @@
 
 #include <Net/SocketException.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 
 static const uint64_t NONCE = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);

@@ -1,7 +1,7 @@
 #include <Common/ChildProcess.h>
 
 #include <reproc++/reproc.hpp>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <cassert>
 
 ChildProcess::UCPtr ChildProcess::Create(const std::vector<std::string>& args)

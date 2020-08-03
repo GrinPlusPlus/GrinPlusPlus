@@ -3,7 +3,7 @@
 
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Exceptions/BlockChainException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <PMMR/HeaderMMR.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>

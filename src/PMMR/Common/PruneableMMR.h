@@ -14,7 +14,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Traits/Lockable.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 template<size_t DATA_SIZE, class DATA_TYPE>
 class PruneableMMR : public MMR, public Traits::IBatchable

@@ -3,7 +3,7 @@
 #include <Core/Util/JsonUtil.h>
 #include <Wallet/WalletManager.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 

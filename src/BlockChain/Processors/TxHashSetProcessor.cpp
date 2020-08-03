@@ -1,6 +1,6 @@
 #include "TxHashSetProcessor.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Database/BlockDb.h>
 #include <Core/Models/BlockHeader.h>
 #include <BlockChain/BlockChainServer.h>

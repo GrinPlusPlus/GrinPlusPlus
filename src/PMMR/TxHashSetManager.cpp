@@ -7,7 +7,7 @@
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/File/FileRemover.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 #include <filesystem.h>
 

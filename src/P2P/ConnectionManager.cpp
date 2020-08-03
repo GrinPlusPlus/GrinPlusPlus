@@ -7,9 +7,9 @@
 
 #include <thread>
 #include <chrono>
-#include <Infrastructure/ShutdownManager.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ShutdownManager.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>

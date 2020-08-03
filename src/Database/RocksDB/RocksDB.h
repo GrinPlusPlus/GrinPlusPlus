@@ -4,7 +4,7 @@
 #include "DBEntry.h"
 #include <Core/Traits/Batchable.h>
 #include <Database/DatabaseException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Core/Serialization/ByteBuffer.h>
 
 #include <rocksdb/db.h>

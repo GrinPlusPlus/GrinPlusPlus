@@ -1,5 +1,5 @@
 #include <Net/Servers/Server.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Net/Clients/HTTP/HTTPException.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Compat.h>

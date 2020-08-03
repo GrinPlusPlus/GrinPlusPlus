@@ -2,7 +2,7 @@
 #include "RocksDB/RocksDBFactory.h"
 
 #include <Database/DatabaseException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
 #include <utility>
 #include <string>

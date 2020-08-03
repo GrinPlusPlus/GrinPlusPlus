@@ -8,9 +8,9 @@
 #include <Core/Context.h>
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
-#include <Infrastructure/ShutdownManager.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ShutdownManager.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
 #include <stdio.h> 

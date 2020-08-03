@@ -5,7 +5,7 @@
 #include <secp256k1-zkp/secp256k1_aggsig.h>
 #include <secp256k1-zkp/secp256k1_commitment.h>
 #include <secp256k1-zkp/secp256k1_schnorrsig.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Crypto/CryptoException.h>
 

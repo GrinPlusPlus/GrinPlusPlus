@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Net/Tor/TorAddress.h>
 #include <Crypto/ED25519.h>
 #include <Crypto/BigInteger.h>

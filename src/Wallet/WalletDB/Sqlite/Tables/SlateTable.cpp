@@ -2,7 +2,7 @@
 
 #include <Common/Util/StringUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
 void SlateTable::CreateTable(sqlite3& database)

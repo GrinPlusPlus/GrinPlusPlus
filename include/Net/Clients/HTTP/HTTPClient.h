@@ -3,7 +3,7 @@
 #include <Net/Clients/Client.h>
 #include <Net/Clients/HTTP/HTTP.h>
 #include <Net/Clients/HTTP/HTTPException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/GrinStr.h>
 #include <sstream>
 

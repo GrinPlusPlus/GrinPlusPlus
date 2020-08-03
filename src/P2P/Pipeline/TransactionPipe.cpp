@@ -2,8 +2,8 @@
 #include "../Messages/TransactionKernelMessage.h"
 
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
 TransactionPipe::TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)

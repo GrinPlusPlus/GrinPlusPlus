@@ -3,7 +3,7 @@
 
 #include <Core/Util/TransactionUtil.h>
 #include <Common/Util/VectorUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <algorithm>
 #include <unordered_map>
 

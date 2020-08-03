@@ -2,7 +2,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Core/Serialization/Serializer.h>
 #include <Config/Config.h>
 

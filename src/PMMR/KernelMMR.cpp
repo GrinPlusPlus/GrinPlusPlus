@@ -4,7 +4,7 @@
 
 #include <Core/Traits/Lockable.h>
 #include <Common/Util/StringUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 KernelMMR::KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFile<KERNEL_SIZE>> pDataFile)
 	: m_pHashFile(pHashFile),

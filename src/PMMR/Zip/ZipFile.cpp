@@ -1,7 +1,7 @@
 #include "ZipFile.h"
 
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <fstream>
 
 ZipFile::ZipFile(const fs::path& zipFilePath, const unzFile& file)

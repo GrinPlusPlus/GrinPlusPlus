@@ -1,7 +1,7 @@
 #include <Common/Compat.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 #include <fstream>
 #include <cstdlib>

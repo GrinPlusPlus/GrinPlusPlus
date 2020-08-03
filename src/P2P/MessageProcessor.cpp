@@ -36,8 +36,8 @@
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <BlockChain/BlockChainServer.h>
-#include <Infrastructure/ShutdownManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ShutdownManager.h>
+#include <Common/Logger.h>
 #include <thread>
 #include <fstream>
 

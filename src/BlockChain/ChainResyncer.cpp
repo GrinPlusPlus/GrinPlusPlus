@@ -1,6 +1,6 @@
 #include "ChainResyncer.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 ChainResyncer::ChainResyncer(const std::shared_ptr<Locked<ChainState>>& pChainState)
 	: m_pChainState(pChainState) { }

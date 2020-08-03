@@ -4,7 +4,7 @@
 #include <Core/Exceptions/BadDataException.h>
 #include <Consensus/BlockWeight.h>
 #include <Consensus/Sorting.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>
 #include <set>

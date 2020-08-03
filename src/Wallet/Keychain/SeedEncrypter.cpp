@@ -3,7 +3,7 @@
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
 {

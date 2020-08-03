@@ -1,6 +1,6 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/GrinStr.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 #include <string>
 #include <cppcodec/hex_lower.hpp>

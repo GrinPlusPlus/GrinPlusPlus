@@ -2,7 +2,7 @@
 
 #include <Wallet/WalletUtil.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 // If strategy is "ALL", spend all available coins to reduce the fee.
 std::vector<OutputDataEntity> CoinSelection::SelectCoinsToSpend(

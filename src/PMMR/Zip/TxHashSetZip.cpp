@@ -4,7 +4,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <filesystem.h>
 
 TxHashSetZip::TxHashSetZip(const Config& config)

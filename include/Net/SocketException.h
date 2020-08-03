@@ -3,7 +3,7 @@
 #include <exception>
 #include <system_error>
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 class SocketException : public std::exception
 {

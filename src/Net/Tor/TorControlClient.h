@@ -2,7 +2,7 @@
 
 #include <Net/Clients/Client.h>
 #include <Net/Tor/TorException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 static const std::chrono::seconds TOR_CONTROL_TIMEOUT = std::chrono::seconds(3);
 

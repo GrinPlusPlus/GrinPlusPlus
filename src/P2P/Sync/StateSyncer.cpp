@@ -3,8 +3,8 @@
 
 #include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
-#include <Infrastructure/Logger.h>
-#include <Infrastructure/ShutdownManager.h>
+#include <Common/Logger.h>
+#include <Common/ShutdownManager.h>
 
 StateSyncer::StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
 	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)

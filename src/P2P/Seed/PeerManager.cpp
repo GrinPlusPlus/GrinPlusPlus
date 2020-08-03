@@ -4,8 +4,8 @@
 #include <Common/Util/TimeUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Config/Config.h>
-#include <Infrastructure/Logger.h>
-#include <Infrastructure/ThreadManager.h>
+#include <Common/Logger.h>
+#include <Common/ThreadManager.h>
 #include <Crypto/RandomNumberGenerator.h>
 
 PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)

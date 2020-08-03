@@ -8,7 +8,7 @@
 #include <Wallet/WalletUtil.h>
 #include <Crypto/CryptoUtil.h>
 #include <Common/Util/FunctionalUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Consensus/HardForks.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Crypto/ED25519.h>

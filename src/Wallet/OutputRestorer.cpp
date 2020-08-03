@@ -4,7 +4,7 @@
 #include <Wallet/WalletUtil.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 

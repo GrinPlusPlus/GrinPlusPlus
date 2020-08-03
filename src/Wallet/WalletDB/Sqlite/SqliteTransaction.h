@@ -3,7 +3,7 @@
 #include <Common/Util/StringUtil.h>
 #include <libsqlite3/sqlite3.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 class SqliteTransaction
 {

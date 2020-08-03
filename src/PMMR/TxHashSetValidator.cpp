@@ -9,7 +9,7 @@
 #include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/Common.h>
 #include <Common/Util/HexUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 #include <thread>
 

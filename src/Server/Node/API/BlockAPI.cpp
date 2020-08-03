@@ -3,7 +3,7 @@
 
 #include <Net/Util/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 //
 // Handles requests to retrieve a single block by hash, height, or output commitment.

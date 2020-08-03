@@ -3,7 +3,7 @@
 #include <Common/Compat.h>
 #include <Net/SocketAddress.h>
 #include <Common/GrinStr.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 #include <asio.hpp>
 #include <functional>

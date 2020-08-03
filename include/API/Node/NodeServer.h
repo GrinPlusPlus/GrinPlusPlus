@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Net/Servers/RPC/RPCServer.h>
 #include <API/Node/Handlers/GetHeaderHandler.h>
 #include <API/Node/Handlers/GetBlockHandler.h>

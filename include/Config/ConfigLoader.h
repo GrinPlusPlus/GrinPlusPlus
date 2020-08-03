@@ -5,7 +5,7 @@
 #include <Common/Util/FileUtil.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <fstream>
 
 class ConfigLoader

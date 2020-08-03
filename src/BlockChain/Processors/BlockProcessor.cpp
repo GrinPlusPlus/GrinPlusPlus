@@ -6,7 +6,7 @@
 #include <Core/Exceptions/BlockChainException.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Consensus/BlockTime.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <algorithm>

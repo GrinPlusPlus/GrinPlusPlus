@@ -4,7 +4,7 @@
 #include <Consensus/BlockDifficulty.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <PoW/PoWManager.h>
 #include <PMMR/HeaderMMR.h>
 #include <chrono>

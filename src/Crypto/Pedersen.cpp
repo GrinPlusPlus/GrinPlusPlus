@@ -3,7 +3,7 @@
 
 #include <secp256k1-zkp/secp256k1_commitment.h>
 #include <Crypto/CryptoException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 Pedersen& Pedersen::GetInstance()
 {

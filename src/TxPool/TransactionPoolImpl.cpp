@@ -5,7 +5,7 @@
 #include <Database/BlockDb.h>
 #include <Consensus/BlockTime.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Core/Util/FeeUtil.h>
 #include <Core/Validation/TransactionValidator.h>
 

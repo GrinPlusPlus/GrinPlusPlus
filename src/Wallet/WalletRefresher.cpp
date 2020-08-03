@@ -1,7 +1,7 @@
 #include "WalletRefresher.h"
 #include "OutputRestorer.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Wallet/WalletUtil.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>

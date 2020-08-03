@@ -4,7 +4,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment ve
 if(MSVC)
     SET(CMAKE_BUILD_TYPE RelWithDebInfo)
 else()
-    #SET(CMAKE_BUILD_TYPE Release)
+    SET(CMAKE_BUILD_TYPE Release)
 endif()
 
 if(APPLE)

@@ -5,7 +5,7 @@
 
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<Wallet> wallet,

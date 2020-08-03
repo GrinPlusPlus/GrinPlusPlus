@@ -1,7 +1,7 @@
 #include "OutputsTable.h"
 #include "../../WalletEncryptionUtil.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 

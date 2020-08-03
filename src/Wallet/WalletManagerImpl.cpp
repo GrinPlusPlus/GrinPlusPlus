@@ -15,7 +15,7 @@
 #include <Crypto/RandomNumberGenerator.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Net/Tor/TorProcess.h>
 #include <cassert>

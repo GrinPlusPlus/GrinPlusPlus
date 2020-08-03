@@ -2,7 +2,7 @@
 
 #include "cuckoo/cuckarooz/cuckarooz.hpp"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 bool Cuckarooz::Validate(const BlockHeader& blockHeader)
 {

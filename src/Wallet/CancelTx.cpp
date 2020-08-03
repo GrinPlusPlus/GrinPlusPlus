@@ -1,6 +1,6 @@
 #include "CancelTx.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Core/Exceptions/WalletException.h>
 
 void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, WalletTx& walletTx)

@@ -2,7 +2,7 @@
 #include "../Schema.h"
 
 #include <Common/Util/StringUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
 void VersionTable::CreateTable(sqlite3& database)

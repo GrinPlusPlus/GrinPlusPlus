@@ -1,7 +1,7 @@
 #include <Net/Tor/TorProcess.h>
 #include <Net/Tor/TorException.h>
 #include <Net/Tor/TorAddressParser.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <memory>
 
 #include "TorControl.h"

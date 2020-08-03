@@ -8,8 +8,8 @@
 #include "API/PeersAPI.h"
 #include "API/TxHashSetAPI.h"
 
-#include <Infrastructure/Logger.h>
-#include <Infrastructure/ShutdownManager.h>
+#include <Common/Logger.h>
+#include <Common/ShutdownManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <P2P/P2PServer.h>
 #include <BlockChain/BlockChainServer.h>

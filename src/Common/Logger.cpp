@@ -1,7 +1,7 @@
-#include <Infrastructure/ThreadManager.h>
+#include <Common/ThreadManager.h>
 
 #include <spdlog/spdlog.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/FileUtil.h>
 #include <fstream>
 #include <memory>

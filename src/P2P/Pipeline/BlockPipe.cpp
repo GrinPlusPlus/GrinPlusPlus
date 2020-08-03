@@ -3,8 +3,8 @@
 #include "../ConnectionManager.h"
 
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <BlockChain/BlockChainServer.h>
 
 BlockPipe::BlockPipe(const Config& config, IBlockChainServerPtr pBlockChainServer)

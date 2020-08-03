@@ -3,7 +3,7 @@
 
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/NodeClient.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Crypto/CryptoException.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Consensus/Common.h>

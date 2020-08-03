@@ -1,7 +1,7 @@
 #include "ForeignController.h"
 #include <Wallet/Keychain/KeyChain.h>
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Wallet/WalletManager.h>
 #include <Net/Util/HTTPUtil.h>
 #include <Net/Clients/RPC/RPC.h>

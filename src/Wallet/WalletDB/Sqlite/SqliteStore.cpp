@@ -11,7 +11,7 @@
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
 

@@ -7,7 +7,7 @@
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/TransactionBody.h>
 #include <Common/Util/FunctionalUtil.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <optional>
 
 class KernelSumValidator

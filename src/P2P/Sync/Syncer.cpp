@@ -5,8 +5,8 @@
 
 #include <BlockChain/BlockChainServer.h>
 #include <P2P/SyncStatus.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
 static const int MINIMUM_NUM_PEERS = 4;

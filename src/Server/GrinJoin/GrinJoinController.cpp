@@ -3,7 +3,7 @@
 
 #include <Net/Clients/RPC/RPC.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/ThreadManager.h>
+#include <Common/ThreadManager.h>
 
 std::unique_ptr<GrinJoinController> GrinJoinController::Create(
 	const TorProcess::Ptr& pTorProcess,

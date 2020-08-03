@@ -1,6 +1,6 @@
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 #include "ThirdParty/Blake2.h"
 #include "ThirdParty/sha256.h"

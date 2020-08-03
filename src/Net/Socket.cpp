@@ -1,8 +1,8 @@
 #include <Net/Socket.h>
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/Logger.h>
-#include <Infrastructure/ShutdownManager.h>
+#include <Common/Logger.h>
+#include <Common/ShutdownManager.h>
 
 static unsigned long DEFAULT_TIMEOUT = 5 * 1000; // 5s
 

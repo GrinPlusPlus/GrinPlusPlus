@@ -3,7 +3,7 @@
 #include "../Messages/GetHeadersMessage.h"
 
 #include <BlockChain/BlockChainServer.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 HeaderSyncer::HeaderSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
 	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)

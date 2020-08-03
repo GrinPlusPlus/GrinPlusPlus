@@ -1,5 +1,5 @@
-#include <Infrastructure/ShutdownManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ShutdownManager.h>
+#include <Common/Logger.h>
 #include <csignal>
 #include <atomic>
 

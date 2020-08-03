@@ -4,7 +4,7 @@
 #include <P2P/Peer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
 	Socket& socket,

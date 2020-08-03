@@ -1,6 +1,6 @@
 #include "DNSSeeder.h"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <asio.hpp>
 
 DNSSeeder::DNSSeeder(const Config& config)

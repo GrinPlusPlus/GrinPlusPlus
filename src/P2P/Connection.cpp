@@ -8,8 +8,8 @@
 
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 #include <thread>
 #include <chrono>
 #include <memory>

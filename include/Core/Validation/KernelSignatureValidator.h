@@ -2,7 +2,7 @@
 
 #include <Crypto/Crypto.h>
 #include <Core/Models/TransactionKernel.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 class KernelSignatureValidator
 {

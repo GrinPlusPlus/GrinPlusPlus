@@ -7,8 +7,8 @@
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
-#include <Infrastructure/ThreadManager.h>
-#include <Infrastructure/Logger.h>
+#include <Common/ThreadManager.h>
+#include <Common/Logger.h>
 
 Dandelion::Dandelion(
 	const Config& config,

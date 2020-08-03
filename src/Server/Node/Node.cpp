@@ -9,7 +9,7 @@
 #include <Crypto/Crypto.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Database/Database.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <PMMR/TxHashSetManager.h>
 
 #include <iostream>

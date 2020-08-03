@@ -4,7 +4,7 @@
 #include <Crypto/Crypto.h>
 #include <Common/Util/HexUtil.h>
 #include <Core/Validation/KernelSumValidator.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <numeric>
 

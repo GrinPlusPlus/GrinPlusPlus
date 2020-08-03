@@ -3,7 +3,7 @@
 #include <Common/Util/FileUtil.h>
 #include <Core/File/File.h>
 #include <Core/Exceptions/FileException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <fstream>
 #include <filesystem.h>
 

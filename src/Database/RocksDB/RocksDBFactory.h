@@ -4,7 +4,7 @@
 #include "RocksDBTable.h"
 
 #include <Database/DatabaseException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
 #include <filesystem.h>

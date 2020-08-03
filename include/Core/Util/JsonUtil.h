@@ -7,7 +7,7 @@
 #include <Crypto/Signature.h>
 #include <Crypto/RangeProof.h>
 #include <Core/Exceptions/DeserializationException.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <json/json.h>
 #include <sstream>
 #include <optional>

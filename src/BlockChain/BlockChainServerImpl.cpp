@@ -9,7 +9,7 @@
 #include "ChainResyncer.h"
 
 #include <GrinVersion.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
 #include <Crypto/Crypto.h>

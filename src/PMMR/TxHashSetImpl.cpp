@@ -9,7 +9,7 @@
 #include <Common/Util/StringUtil.h>
 #include <BlockChain/BlockChainServer.h>
 #include <Database/BlockDb.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <P2P/SyncStatus.h>
 #include <thread>
 

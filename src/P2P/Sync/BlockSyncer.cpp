@@ -3,7 +3,7 @@
 #include "../Messages/GetBlockMessage.h"
 
 #include <BlockChain/BlockChainServer.h>
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 

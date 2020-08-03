@@ -2,7 +2,7 @@
 
 #include "cuckoo/cuckarood/cuckarood.hpp"
 
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 
 bool Cuckarood::Validate(const BlockHeader& blockHeader)
 {

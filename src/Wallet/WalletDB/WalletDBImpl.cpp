@@ -1,7 +1,7 @@
 #include <Wallet/WalletDB/WalletDB.h>
 
 #include "Sqlite/SqliteStore.h"
-#include <Infrastructure/Logger.h>
+#include <Common/Logger.h>
 #include <Wallet/WalletDB/WalletStore.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 

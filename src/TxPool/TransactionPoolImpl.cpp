@@ -36,7 +36,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(*pTransaction))
 	{
 		LOG_TRACE_F("Duplicate transaction ({})", *pTransaction);
-		return EAddTransactionStatus::DUPLICATE;
+		return EAddTransactionStatus::DUPL_TX;
 	}
 
 	// Verify fee meets minimum

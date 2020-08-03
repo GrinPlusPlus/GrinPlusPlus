@@ -5,7 +5,7 @@
 #pragma warning(disable:4267)
 #pragma warning(disable:4334)
 #pragma warning(disable:4018)
-#include <mio/mio.hpp>
+#include <mio/mmap.hpp>
 #pragma warning(pop)
 
 class MappedFile : public IMappedFile

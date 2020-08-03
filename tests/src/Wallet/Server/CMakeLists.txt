@@ -6,5 +6,4 @@ file(GLOB SOURCE_CODE
 )
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
-add_dependencies(${TARGET_NAME}  Infrastructure P2P BlockChain Wallet PoW)
-target_link_libraries(${TARGET_NAME}  Infrastructure P2P BlockChain Wallet PoW)
+target_link_libraries(${TARGET_NAME} Common P2P BlockChain Wallet PoW)

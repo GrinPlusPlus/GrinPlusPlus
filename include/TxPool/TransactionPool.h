@@ -30,7 +30,7 @@ class IBlockDB;
 enum class EAddTransactionStatus
 {
 	ADDED,
-	DUPLICATE,
+	DUPL_TX,
 	LOW_FEE,
 	TX_INVALID,
 	NOT_ADDED

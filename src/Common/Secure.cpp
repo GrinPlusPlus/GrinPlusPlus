@@ -4,11 +4,9 @@
 #define __STDC_WANT_LIB_EXT1__ 1
 #endif
 #include <string.h>
+#include <Common/Compat.h>
 
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#else
+#ifndef _WIN32
 #include <sys/mman.h>
 #endif
 

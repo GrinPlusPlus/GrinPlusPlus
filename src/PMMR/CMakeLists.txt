@@ -20,12 +20,6 @@ file(GLOB SOURCE_CODE
 )
 
 
-if(GRINPP_STATIC)
-	add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-else(GRINPP_STATIC)
-	add_library(${TARGET_NAME} SHARED ${SOURCE_CODE})
-endif(GRINPP_STATIC)
-
+add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core jsoncpp)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core ZLIB::ZLIB minizip::minizip jsoncpp)
+target_link_libraries(${TARGET_NAME} Common Crypto Core ZLIB::ZLIB minizip::minizip jsoncpp)

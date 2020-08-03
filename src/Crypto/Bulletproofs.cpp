@@ -1,7 +1,7 @@
 #include "Bulletproofs.h"
 #include "Pedersen.h"
-#include "secp256k1-zkp/include/secp256k1_bulletproofs.h"
 
+#include <secp256k1-zkp/secp256k1_bulletproofs.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Crypto/CryptoException.h>

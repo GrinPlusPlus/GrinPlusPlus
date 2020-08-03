@@ -17,7 +17,4 @@ else(WIN32)
 endif(WIN32)
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE} ${OS_SPECIFIC_FILES})
-
-
-add_dependencies(${TARGET_NAME} Crypto jsoncpp fmt bitcoin)
-target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp roaring::roaring fmt bitcoin)
+target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp roaring::roaring bitcoin mio::mio)

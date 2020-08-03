@@ -1,6 +1,6 @@
 #pragma once
 
-#include "secp256k1-zkp/include/secp256k1.h"
+#include <secp256k1-zkp/secp256k1.h>
 
 // SEE: https://github.com/mimblewimble/rust-secp256k1-zkp/blob/304ef7264a0dd9ef4efaaa0e28480cb030c18265/src/constants.rs#L138-L188
 secp256k1_pubkey GENERATOR_J_PUB = {{

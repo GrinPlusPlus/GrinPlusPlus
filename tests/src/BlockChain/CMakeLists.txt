@@ -5,6 +5,4 @@ file(GLOB SOURCE_CODE
 )
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
-
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain TestUtil)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core BlockChain fmt Keychain TestUtil)
+target_link_libraries(${TARGET_NAME} Common Crypto Core BlockChain Keychain TestUtil)

@@ -60,7 +60,11 @@
 
 #elif defined(__WINDOWS__)
 
-#	include <winsock2.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
+//#	include <winsock2.h>
 //#	include <sys/param.h>
 
 #	if BYTE_ORDER == LITTLE_ENDIAN

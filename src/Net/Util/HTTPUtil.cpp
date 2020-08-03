@@ -3,11 +3,7 @@
 #include <Net/Clients/HTTP/HTTPException.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/Exceptions/DeserializationException.h>
-
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
+#include <Common/Compat.h>
 
 #include <civetweb.h>
 

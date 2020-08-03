@@ -1,3 +1,4 @@
+#include <Common/Compat.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Exceptions/FileException.h>
 #include <Infrastructure/Logger.h>
@@ -5,10 +6,7 @@
 #include <fstream>
 #include <cstdlib>
 
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#else
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 

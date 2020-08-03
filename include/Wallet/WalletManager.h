@@ -4,11 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
-
+#include <Common/Compat.h>
 #include <Common/ImportExport.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>

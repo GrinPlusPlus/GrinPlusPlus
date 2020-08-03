@@ -4,7 +4,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment ve
 if(MSVC)
     SET(CMAKE_BUILD_TYPE RelWithDebInfo)
 else()
-    SET(CMAKE_BUILD_TYPE Release)
+    #SET(CMAKE_BUILD_TYPE Release)
 endif()
 
 if(APPLE)
@@ -51,6 +51,8 @@ if(MSVC)
         CMAKE_C_FLAGS_MINSIZEREL
         CMAKE_C_FLAGS_RELWITHDEBINFO
     )
+
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
 foreach(CompilerFlag ${CompilerFlags})
     string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
     set(${CompilerFlag} "${${CompilerFlag}}" CACHE STRING "msvc compiler flags" FORCE)
@@ -69,8 +71,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(WITH_GFLAGS OFF)
 #add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
-add_definitions(-DNOMINMAX)
-#add_definitions(-DASIO_STANDALONE)
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 include(CheckFunctionExists)
@@ -86,7 +86,6 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/mio/single_include
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
-    ${PROJECT_SOURCE_DIR}/deps/fmt/include
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
     ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
@@ -99,6 +98,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 
 # Dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+add_definitions(-DUNICODE)
 
 find_package(unofficial-sodium CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -107,12 +107,15 @@ find_package(civetweb CONFIG REQUIRED)
 find_package(asio CONFIG REQUIRED)
 find_package(roaring CONFIG REQUIRED)
 find_package(minizip CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(secp256k1-zkp CONFIG REQUIRED)
+find_package(mio CONFIG REQUIRED)
+
 include(sqlite3)
 include(jsoncpp)
 include(uint128)
 include(ctaes)
 include(scrypt)
-include(secp256k1-zkp)
 include(sha3)
 include(reproc)
 include(bitcoin)
@@ -121,22 +124,9 @@ add_subdirectory(deps/cppcodec)
 add_subdirectory(deps/chachapoly)
 add_subdirectory(deps/rfc6234)
 
-# Grin++ Projects
-add_definitions(-DUNICODE)
-include(fmtlib)
-add_definitions(-DSPDLOG_WCHAR_FILENAMES)
-option(GRINPP_TESTS "Build tests" true)
-option(GRINPP_STATIC "Static build" true)
-if(GRINPP_STATIC)
-    add_definitions(-DGRINPP_STATIC)
-else()
-    if(GRINPP_TESTS)
-        MESSAGE(FATAL_ERROR "Tests require a static build")
-    endif()
-endif()
-
 add_subdirectory(src)
 
+option(GRINPP_TESTS "Build tests" true)
 if(GRINPP_TESTS)
     add_subdirectory(tests)
 endif()

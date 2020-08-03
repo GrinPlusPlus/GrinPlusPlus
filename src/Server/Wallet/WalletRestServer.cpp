@@ -1,11 +1,7 @@
 #include "WalletRestServer.h"
 #include "WalletContext.h"
 #include "API/OwnerGetAPI.h"
-
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
+#include <Common/Compat.h>
 
 #include <civetweb.h>
 #include <Net/Util/HTTPUtil.h>

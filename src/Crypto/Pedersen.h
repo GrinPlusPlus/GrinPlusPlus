@@ -1,6 +1,6 @@
 #pragma once
 
-#include "secp256k1-zkp/include/secp256k1_commitment.h"
+#include <secp256k1-zkp/secp256k1_commitment.h>
 
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/SecretKey.h>

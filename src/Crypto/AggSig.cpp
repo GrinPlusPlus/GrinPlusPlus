@@ -1,11 +1,10 @@
 #include "AggSig.h"
-
-#include "secp256k1-zkp/include/secp256k1_generator.h"
-#include "secp256k1-zkp/include/secp256k1_aggsig.h"
-#include "secp256k1-zkp/include/secp256k1_commitment.h"
-#include "secp256k1-zkp/include/secp256k1_schnorrsig.h"
 #include "Pedersen.h"
 
+#include <secp256k1-zkp/secp256k1_generator.h>
+#include <secp256k1-zkp/secp256k1_aggsig.h>
+#include <secp256k1-zkp/secp256k1_commitment.h>
+#include <secp256k1-zkp/secp256k1_schnorrsig.h>
 #include <Infrastructure/Logger.h>
 #include <Crypto/RandomNumberGenerator.h>
 #include <Crypto/CryptoException.h>

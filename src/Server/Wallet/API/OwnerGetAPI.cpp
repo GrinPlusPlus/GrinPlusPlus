@@ -1,10 +1,6 @@
 #include "OwnerGetAPI.h"
 #include "SessionTokenUtil.h"
-
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
+#include <Common/Compat.h>
 
 #include <Net/Util/HTTPUtil.h>
 #include <Core/Util/JsonUtil.h>

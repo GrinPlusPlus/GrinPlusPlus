@@ -1,9 +1,6 @@
 #include <catch.hpp>
 
-//#include "../secp256k1-zkp/include/secp256k1_commitment.h"
-//#include "../secp256k1-zkp/include/secp256k1_generator.h"
-
-#include "../secp256k1-zkp/include/secp256k1.h"
+#include <secp256k1-zkp/secp256k1.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/RandomNumberGenerator.h>
 

@@ -15,5 +15,4 @@ else(APPLE)
 endif(APPLE)
 
 add_library(${TARGET_NAME} STATIC ${Keychain_SRC})
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core ${OS_LIBS})
+target_link_libraries(${TARGET_NAME} Common Crypto Core ${OS_LIBS})

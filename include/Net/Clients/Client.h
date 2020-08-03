@@ -1,16 +1,12 @@
 #pragma once
 
+#include <Common/Compat.h>
 #include <Net/SocketAddress.h>
-#include <functional>
 #include <Common/GrinStr.h>
 #include <Infrastructure/Logger.h>
 
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
-
 #include <asio.hpp>
+#include <functional>
 
 //
 // This class manages socket timeouts by running the io_context using the timed

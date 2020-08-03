@@ -2,11 +2,9 @@
 
 #include <random>
 #include <Crypto/CryptoException.h>
+#include <Common/Compat.h>
 
 #ifdef _WIN32
-	#define WIN32_LEAN_AND_MEAN
-	#include <Windows.h>
-
 	#pragma comment(lib, "Bcrypt.lib")
 	#include <bcrypt.h>
 #else

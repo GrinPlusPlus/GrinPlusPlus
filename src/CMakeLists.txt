@@ -6,7 +6,6 @@ if (MSVC)
      endif()
 endif (MSVC)
 
-add_subdirectory(Infrastructure)
 add_subdirectory(Common)
 add_subdirectory(Crypto)
 add_subdirectory(Core)

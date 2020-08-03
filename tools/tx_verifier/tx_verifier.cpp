@@ -5,6 +5,8 @@
 #include <Core/Util/JsonUtil.h>
 #include <Core/Validation/TransactionValidator.h>
 
+#include "../../src/P2P/Messages/TransactionMessage.h"
+
 int main(int argc, char* argv[])
 {
     if (argc < 2)
@@ -50,6 +52,12 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Transaction is valid" << std::endl;
+
+    bytes = TransactionMessage(std::make_shared<Transaction>(*pTransaction)).Serialize(Environment(EEnvironmentType::MAINNET), EProtocolVersion::V2);
+    std::cout << HexUtil::ConvertToHex(bytes) << std::endl;
+
+
+    std::cout << HexUtil::ConvertToHex(std::vector<uint8_t>{ bytes.begin() + 11, bytes.end() }) << std::endl;
 
     return 0;
 }

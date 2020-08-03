@@ -4,10 +4,6 @@ file(GLOB SOURCE_CODE
 	"*.cpp"
 )
 
-remove_definitions(-DNOMINMAX)
-
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_WALLET)
-
-add_dependencies(${TARGET_NAME} Infrastructure Crypto Core BlockChain Keychain WalletDB Wallet TestUtil chachapoly)
-target_link_libraries(${TARGET_NAME} Infrastructure Crypto Core BlockChain Keychain WalletDB Wallet TestUtil chachapoly)
+target_link_libraries(${TARGET_NAME} Common Crypto Core BlockChain Keychain WalletDB Wallet TestUtil chachapoly)

@@ -5,3 +5,6 @@ civetweb
 minizip
 roaring
 asio
+fmt
+secp256k1-zkp
+mio

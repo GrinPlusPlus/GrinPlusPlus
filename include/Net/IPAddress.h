@@ -1,16 +1,13 @@
 #pragma once
 
+#include <Common/Compat.h>
 #include <Core/Traits/Printable.h>
 #include <Core/Traits/Serializable.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Core/Serialization/ByteBuffer.h>
 
-#if defined(_MSC_VER)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
-
-#include <asio/ip/address.hpp>
+#include <asio.hpp>
+//#include <asio/ip/address.hpp>
 
 class IPAddress : public Traits::IPrintable, public Traits::ISerializable
 {

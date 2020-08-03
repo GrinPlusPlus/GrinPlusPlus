@@ -19,7 +19,7 @@ file(GLOB SOURCE_CODE
 
 remove_definitions(-DNOMINMAX)
 
-if (LINUX)
+if (UNIX AND NOT APPLE)
 	set(OS_LIBS uuid)
 else()
 	set(OS_LIBS "")

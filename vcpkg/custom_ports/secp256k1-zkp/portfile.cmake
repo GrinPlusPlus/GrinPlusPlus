@@ -33,4 +33,3 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
 
 # Handle copyright
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/secp256k1-zkp RENAME copyright)
-#file(INSTALL ${CMAKE_CURRENT_LIST_DIR}/secp256k1-zkp.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/secp256k1-zkp RENAME secp256k1-zkp-config.cmake)

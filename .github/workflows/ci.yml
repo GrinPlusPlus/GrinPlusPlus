@@ -18,6 +18,7 @@ jobs:
             cmake_generator: Ninja
             cmake_platform_args: ''
             output_file: 'backend/bin/Release/GrinNode'
+            release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
             os: ubuntu-16.04
             compiler: gcc
@@ -26,12 +27,14 @@ jobs:
             cmake_generator: Ninja
             cmake_platform_args: ''
             output_file: 'backend/bin/Release/GrinNode'
+            release_command: 'npm run clean_build:nix && npm run release'
           - name: windows
             os: windows-2019
             vcpkg_triplet: x64-windows-static
             cmake_generator: 'VS16Win64'
             cmake_platform_args: ''
             output_file: 'backend/bin/Release/Release/GrinNode.exe'
+            release_command: 'npm run clean_build:win && npm run release'
 
     steps:
       - name: Checkout Grin++ Backend
@@ -105,7 +108,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
+          mkdir -p bin
+          copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
           npm version from-git
           npm run clean_build:win && npm run release
@@ -115,6 +119,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          mkdir -p bin
           cp ../backend/bin/Release/GrinNode ./bin/
           npm version from-git
           npm run clean_build:nix && npm run release

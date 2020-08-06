@@ -111,7 +111,7 @@ jobs:
           mkdir -p bin
           copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
-          npm version from-git
+          npm version ${{ github.event.release.tag_name }}
           npm run clean_build:win && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -121,5 +121,5 @@ jobs:
         run: |
           mkdir -p bin
           cp ../backend/bin/Release/GrinNode ./bin/
-          npm version from-git
+          npm version ${{ github.event.release.tag_name }}
           npm run clean_build:nix && npm run release

@@ -99,13 +99,6 @@ jobs:
         with:
           name: GrinNode_${{ runner.os }}_${{ env.GITHUB_RUN_ID }}
           path: ${{ matrix.output_file }}
-      - name: manifest Version
-        uses: deef0000dragon1/json-edit-action/@v1
-        if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
-        env:
-          KEY: version
-          VALUE: ${GITHUB_REF##*/v}
-          FILE: ${{ github.workspace }}/frontend/package.json
       - name: Build UI (windows)
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
@@ -114,6 +107,7 @@ jobs:
         run: |
           copy "..\backend\bin\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
+          npm version from-git
           npm run clean_build:win && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -122,4 +116,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp ../backend/bin/Release/GrinNode ./bin/
+          npm version from-git
           npm run clean_build:nix && npm run release

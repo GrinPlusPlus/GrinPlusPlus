@@ -19,6 +19,7 @@ add_library(secp256k1-zkp ${SOURCES})
 add_library(secp256k1-zkp::secp256k1-zkp ALIAS secp256k1-zkp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS secp256k1-zkp EXPORT secp256k1-zkp-config
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

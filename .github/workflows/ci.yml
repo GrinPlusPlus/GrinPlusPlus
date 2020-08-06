@@ -112,7 +112,7 @@ jobs:
           copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
           npm version ${{ github.event.release.tag_name }}
-          npm run clean_build:win && npm run release
+          npm install && npm run build && xcopy src\electron-starter.js build\electron-starter.js* && xcopy src\notarize.js build\notarize.js*` && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
         if: runner.os != 'windows' && startsWith(github.ref, 'refs/tags/')

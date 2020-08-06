@@ -115,7 +115,7 @@ jobs:
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SOURCE_NAME: ${{ steps.branch_name.outputs.SOURCE_NAME }}
           SOURCE_BRANCH: ${{ steps.branch_name.outputs.SOURCE_BRANCH }}
           SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}

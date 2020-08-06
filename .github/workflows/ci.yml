@@ -62,6 +62,7 @@ jobs:
       - name: setup ubuntu environment
         if: runner.os == 'Linux'
         run: |
+          echo "Tag Name: ${{ github.event.release.tag_name }}"
           sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev build-essential
           echo "export CC=/usr/bin/gcc-8"
           echo "export CXX=/usr/bin/g++-8"
@@ -111,7 +112,7 @@ jobs:
           mkdir -p bin
           copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
-          npm version ${{ github.event.release.tag_name }}
+          npm version ${{ github.event.release.tag_name }} --allow-same-version --git-tag-version false
           npm install && npm run build && xcopy src\electron-starter.js build\electron-starter.js* && xcopy src\notarize.js build\notarize.js*` && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -121,5 +122,5 @@ jobs:
         run: |
           mkdir -p bin
           cp ../backend/bin/Release/GrinNode ./bin/
-          npm version ${{ github.event.release.tag_name }}
+          npm version ${{ github.event.release.tag_name }} --allow-same-version --git-tag-version false
           npm run clean_build:nix && npm run release

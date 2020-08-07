@@ -12,6 +12,7 @@ jobs:
         include:
           - name: macos
             os: macos-10.15
+            os_name: mac
             compiler: gcc
             version: "9"
             vcpkg_triplet: x64-osx-grinpp
@@ -21,6 +22,7 @@ jobs:
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
             os: ubuntu-16.04
+            os_name: linux
             compiler: gcc
             version: "8"
             vcpkg_triplet: x64-linux
@@ -30,6 +32,7 @@ jobs:
             release_command: 'npm run clean_build:nix && npm run release'
           - name: windows
             os: windows-2019
+            os_name: win
             vcpkg_triplet: x64-windows-static
             cmake_generator: 'VS16Win64'
             cmake_platform_args: ''
@@ -127,5 +130,6 @@ jobs:
         run: |
           mkdir -p bin
           cp ../backend/bin/Release/GrinNode ./bin/
+          cp -R ../backend/dist/${{ matrix.os_name }}/tor ./bin/tor
           npm version ${{ steps.tagName.outputs.tag }} --allow-same-version --git-tag-version false
           npm run clean_build:nix && npm run release

@@ -37,6 +37,8 @@ jobs:
             release_command: 'npm run clean_build:win && npm run release'
 
     steps:
+      - uses: olegtarasov/get-tag@v2
+        id: tagName
       - name: Checkout Grin++ Backend
         uses: actions/checkout@v2
         with:
@@ -62,7 +64,7 @@ jobs:
       - name: setup ubuntu environment
         if: runner.os == 'Linux'
         run: |
-          echo "Tag Name: ${GITHUB_REF#refs/tags/}"
+          echo "Tag Name: ${{ steps.tagName.outputs.tag }}"
           sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev build-essential
           echo "export CC=/usr/bin/gcc-8"
           echo "export CXX=/usr/bin/g++-8"
@@ -112,7 +114,7 @@ jobs:
           mkdir -p bin
           copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
           xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
-          npm version ${GITHUB_REF#refs/tags/} --allow-same-version --git-tag-version false
+          npm version ${{ steps.tagName.outputs.tag }} --allow-same-version --git-tag-version false
           npm install && npm run build && xcopy src\electron-starter.js build\electron-starter.js* && xcopy src\notarize.js build\notarize.js*` && npm run release
       - name: Build UI (mac/linux)
         working-directory: frontend
@@ -122,5 +124,5 @@ jobs:
         run: |
           mkdir -p bin
           cp ../backend/bin/Release/GrinNode ./bin/
-          npm version ${{ github.event.release.tag_name }} --allow-same-version --git-tag-version false
+          npm version ${{ steps.tagName.outputs.tag }} --allow-same-version --git-tag-version false
           npm run clean_build:nix && npm run release

@@ -1,12 +1,13 @@
 #pragma once
 
-#include "RocksDB/RocksDB.h"
-
 #include <Database/BlockDb.h>
 #include <Config/Config.h>
 #include <caches/Cache.h>
 #include <mutex>
 #include <set>
+
+// Forward Declarations
+class RocksDB;
 
 class BlockDB : public IBlockDB
 {
@@ -19,8 +20,8 @@ public:
 
 	void Commit() final;
 	void Rollback() noexcept final;
-	void OnInitWrite() final { m_pRocksDB->OnInitWrite(); }
-	void OnEndWrite() final { m_pRocksDB->OnEndWrite(); }
+	void OnInitWrite() final;
+	void OnEndWrite() final;
 
 	BlockHeaderPtr GetBlockHeader(const Hash& hash) const final;
 
@@ -45,11 +46,6 @@ public:
 	void ClearSpentPositions() final;
 
 private:
-	//Status Read(ColumnFamilyHandle* pFamilyHandle, const Slice& key, std::string* pValue) const;
-	//Status Write(ColumnFamilyHandle* pFamilyHandle, const Slice& key, const Slice& value);
-	//Status Delete(ColumnFamilyHandle* pFamilyHandle, const Slice& key);
-	//void DeleteAll(ColumnFamilyHandle* pFamilyHandle);
-
 	const Config& m_config;
 	std::shared_ptr<RocksDB> m_pRocksDB;
 	FIFOCache<Hash, BlockHeaderPtr> m_blockHeadersCache;

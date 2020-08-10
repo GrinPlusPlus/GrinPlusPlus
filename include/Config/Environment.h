@@ -10,8 +10,8 @@ public:
 	// Getters
 	//
 	const FullBlock& GetGenesisBlock() const noexcept { return m_block; }
-	const BlockHeaderPtr& GetGenesisHeader() const noexcept { return m_block.GetBlockHeader(); }
-	const Hash& GetGenesisHash() const noexcept { return m_block.GetBlockHeader()->GetHash(); }
+	const BlockHeaderPtr& GetGenesisHeader() const noexcept { return m_block.GetHeader(); }
+	const Hash& GetGenesisHash() const noexcept { return m_block.GetHash(); }
 
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
 	uint16_t GetP2PPort() const noexcept { return m_port; }

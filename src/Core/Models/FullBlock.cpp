@@ -1,10 +1,10 @@
 #include <Core/Models/FullBlock.h>
 
 FullBlock::FullBlock(BlockHeaderPtr pBlockHeader, TransactionBody&& transactionBody)
-	: m_pBlockHeader(pBlockHeader), m_transactionBody(std::move(transactionBody)), m_validated(false)
-{
+	: m_pBlockHeader(pBlockHeader), m_transactionBody(std::move(transactionBody)), m_validated(false) { }
 
-}
+FullBlock::FullBlock()
+	: m_pBlockHeader(nullptr), m_transactionBody(), m_validated(false) { }
 
 void FullBlock::Serialize(Serializer& serializer) const
 {
@@ -23,7 +23,7 @@ FullBlock FullBlock::Deserialize(ByteBuffer& byteBuffer)
 Json::Value FullBlock::ToJSON() const
 {
 	Json::Value json;
-	json["header"] = GetBlockHeader()->ToJSON();
+	json["header"] = GetHeader()->ToJSON();
 
 	// Transaction Inputs
 	Json::Value inputsJSON;

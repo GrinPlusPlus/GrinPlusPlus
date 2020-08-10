@@ -38,9 +38,9 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 	if (candidateHeight == 0)
 	{
 		auto locked = MultiLocker().Lock(*pDatabase, *pHeaderMMR);
-		std::get<0>(locked)->AddBlockHeader(genesisBlock.GetBlockHeader());
-		std::get<1>(locked)->AddHeader(*genesisBlock.GetBlockHeader());
-		pTxHashSetManager->Write()->Open(genesisBlock.GetBlockHeader(), genesisBlock);
+		std::get<0>(locked)->AddBlockHeader(genesisBlock.GetHeader());
+		std::get<1>(locked)->AddHeader(*genesisBlock.GetHeader());
+		pTxHashSetManager->Write()->Open(genesisBlock.GetHeader(), genesisBlock);
 
 		const BlockSums blockSums(
 			genesisBlock.GetOutputs().front().GetCommitment(),
@@ -168,11 +168,11 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 				std::unique_ptr<OutputLocation> pOutputLocation = GetBlockDB()->GetOutputPosition(output.GetCommitment());
 				if (pOutputLocation != nullptr)
 				{
-					outputsFound.emplace_back(OutputDTO(false, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof()));
+					outputsFound.emplace_back(OutputDTO{ false, OutputIdentifier::FromOutput(output), *pOutputLocation, output.GetRangeProof() });
 				}
 			}
 
-			return std::make_unique<BlockWithOutputs>(BlockWithOutputs(BlockIdentifier::FromHeader(*pBlock->GetBlockHeader()), std::move(outputsFound)));
+			return std::make_unique<BlockWithOutputs>(BlockWithOutputs{ BlockIdentifier::FromHeader(*pBlock->GetHeader()), std::move(outputsFound) });
 		}
 	}
 

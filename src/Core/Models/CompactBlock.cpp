@@ -73,7 +73,7 @@ CompactBlock CompactBlock::Deserialize(ByteBuffer& byteBuffer)
 Json::Value CompactBlock::ToJSON() const
 {
 	Json::Value json;
-	json["header"] = GetBlockHeader()->ToJSON();
+	json["header"] = GetHeader()->ToJSON();
 
 	// Short Ids
 	Json::Value inputsNode;

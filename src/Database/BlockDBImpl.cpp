@@ -1,5 +1,6 @@
 #include "BlockDBImpl.h"
 #include "RocksDB/RocksDBFactory.h"
+#include "RocksDB/RocksDB.h"
 
 #include <Database/DatabaseException.h>
 #include <Common/Logger.h>
@@ -202,4 +203,14 @@ void BlockDB::ClearSpentPositions()
 	LOG_WARNING("Deleting all spent positions.");
 
 	m_pRocksDB->DeleteAll("SPENT_OUTPUTS");
+}
+
+void BlockDB::OnInitWrite()
+{
+	m_pRocksDB->OnInitWrite();
+}
+
+void BlockDB::OnEndWrite()
+{
+	m_pRocksDB->OnEndWrite();
 }

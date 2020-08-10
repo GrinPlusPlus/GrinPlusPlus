@@ -385,7 +385,7 @@ TEST_CASE("Reorg Chain")
 	});
 
 	FullBlock block30a = miner.MineNextBlock(
-		minedChain.back().block.GetBlockHeader(),
+		minedChain.back().block.GetHeader(),
 		*pCombinedTx30a
 	);
 
@@ -404,14 +404,14 @@ TEST_CASE("Reorg Chain")
 
 	// Create block 28b
 	FullBlock block28b = miner.MineNextBlock(
-		minedChain[27].block.GetBlockHeader(),
+		minedChain[27].block.GetHeader(),
 		*pCombinedTx28b
 	);
 
 	// Create block 29b
 	Test::Tx coinbaseTx29b = txBuilder.BuildCoinbaseTx(KeyChainPath({ 1, 29 }));
 	FullBlock block29b = miner.MineNextBlock(
-		minedChain[27].block.GetBlockHeader(),
+		minedChain[27].block.GetHeader(),
 		*coinbaseTx29b.pTransaction,
 		{ block28b }
 	);
@@ -419,7 +419,7 @@ TEST_CASE("Reorg Chain")
 	// Create block 30b
 	Test::Tx coinbaseTx30b = txBuilder.BuildCoinbaseTx(KeyChainPath({ 1, 30 }));
 	FullBlock block30b = miner.MineNextBlock(
-		minedChain[27].block.GetBlockHeader(),
+		minedChain[27].block.GetHeader(),
 		*coinbaseTx30b.pTransaction,
 		{ block28b, block29b }
 	);
@@ -427,7 +427,7 @@ TEST_CASE("Reorg Chain")
 	// Create block 31b
 	Test::Tx coinbaseTx31b = txBuilder.BuildCoinbaseTx(KeyChainPath({ 1, 31 }));
 	FullBlock block31b = miner.MineNextBlock(
-		minedChain[27].block.GetBlockHeader(),
+		minedChain[27].block.GetHeader(),
 		*coinbaseTx31b.pTransaction,
 		{ block28b, block29b, block30b }
 	);

@@ -44,7 +44,7 @@ public:
 	//
 	// Getters
 	//
-	const BlockHeaderPtr& GetBlockHeader() const { return m_pBlockHeader; }
+	const BlockHeaderPtr& GetHeader() const { return m_pBlockHeader; }
 	uint64_t GetNonce() const { return m_nonce; }
 
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }

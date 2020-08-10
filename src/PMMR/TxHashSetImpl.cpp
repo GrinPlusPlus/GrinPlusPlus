@@ -156,7 +156,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		m_pKernelMMR->ApplyKernel(kernel);
 	}
 
-	m_pBlockHeader = block.GetBlockHeader();
+	m_pBlockHeader = block.GetHeader();
 
 	return true;
 }

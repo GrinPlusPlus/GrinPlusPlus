@@ -22,7 +22,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	const uint64_t candidateHeight = m_pChainState->Read()->GetHeight(EChainType::CANDIDATE);
 	const uint64_t horizonHeight = Consensus::GetHorizonHeight(candidateHeight);
 
-	BlockHeaderPtr pHeader = block.GetBlockHeader();
+	BlockHeaderPtr pHeader = block.GetHeader();
 	if (pHeader->GetHeight() <= horizonHeight)
 	{
 		LOG_WARNING("Can't process blocks beyond horizon.");

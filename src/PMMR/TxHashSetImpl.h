@@ -21,7 +21,6 @@ public:
 	);
 	virtual ~TxHashSet() = default;
 
-	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
 	BlockHeaderPtr GetFlushedBlockHeader() const noexcept final { return m_pBlockHeaderBackup; }
 
 	bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const final;

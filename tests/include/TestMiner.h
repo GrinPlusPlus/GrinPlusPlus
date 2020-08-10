@@ -58,7 +58,7 @@ public:
 				std::make_optional<KeyChainPath>(keyChainPath)
 			});
 
-			pPreviousHeader = block.GetBlockHeader();
+			pPreviousHeader = block.GetHeader();
 		}
 
 		return minedBlocks;
@@ -77,7 +77,7 @@ public:
 		Hash headerRoot = CalculateHeaderRoot(pPreviousHeader, blocksToApply);
 		auto roots = CalculateTxHashSetInfo(pPreviousHeader, transaction, blocksToApply);
 
-		auto pPrevHeader = blocksToApply.empty() ? pPreviousHeader : blocksToApply.back().GetBlockHeader();
+		auto pPrevHeader = blocksToApply.empty() ? pPreviousHeader : blocksToApply.back().GetHeader();
 
 		auto pHeader = std::make_shared<BlockHeader>(
 			(uint16_t)1,
@@ -115,7 +115,7 @@ private:
 
 		for (const FullBlock& blockToApply : blocksToApply)
 		{
-			pHeaderMMRBatch->AddHeader(*blockToApply.GetBlockHeader());
+			pHeaderMMRBatch->AddHeader(*blockToApply.GetHeader());
 		}
 
 		Hash headerRoot = pHeaderMMRBatch->Root(pPreviousHeader->GetHeight() + blocksToApply.size());

@@ -227,7 +227,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			} else {
 				const EBlockChainStatus added = m_pBlockChain->AddBlock(block);
 				if (added == EBlockChainStatus::SUCCESS) {
-					const HeaderMessage headerMessage(block.GetBlockHeader());
+					const HeaderMessage headerMessage(block.GetHeader());
 					m_connectionManager.BroadcastMessage(headerMessage, connection.GetId());
 				} else if (added == EBlockChainStatus::ORPHANED) {
 					if (block.GetTotalDifficulty() > m_pBlockChain->GetTotalDifficulty(EChainType::CONFIRMED))
@@ -260,7 +260,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			const EBlockChainStatus added = m_pBlockChain->AddCompactBlock(compactBlock);
 			if (added == EBlockChainStatus::SUCCESS)
 			{
-				const HeaderMessage headerMessage(compactBlock.GetBlockHeader());
+				const HeaderMessage headerMessage(compactBlock.GetHeader());
 				m_connectionManager.BroadcastMessage(headerMessage, connection.GetId());
 				break;
 			}

@@ -25,7 +25,7 @@ public:
 	FullBlock(BlockHeaderPtr pBlockHeader, TransactionBody&& transactionBody);
 	FullBlock(const FullBlock& other) = default;
 	FullBlock(FullBlock&& other) noexcept = default;
-	FullBlock() = default;
+	FullBlock();
 
 	//
 	// Destructor
@@ -42,7 +42,6 @@ public:
 	// Getters
 	//
 	const BlockHeaderPtr& GetHeader() const noexcept { return m_pBlockHeader; }
-	const BlockHeaderPtr& GetBlockHeader() const noexcept { return m_pBlockHeader; }
 	const TransactionBody& GetTransactionBody() const noexcept { return m_transactionBody; }
 
 	const std::vector<TransactionInput>& GetInputs() const noexcept { return m_transactionBody.GetInputs(); }

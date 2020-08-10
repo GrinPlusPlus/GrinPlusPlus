@@ -92,7 +92,7 @@ public:
         std::transform(
             m_blocks.cbegin(), m_blocks.cend(),
             std::back_inserter(headers),
-            [](const MinedBlock& block) { return *block.block.GetBlockHeader(); }
+            [](const MinedBlock& block) { return *block.block.GetHeader(); }
         );
 
         return RootCalculator::CalculateRoot(headers);

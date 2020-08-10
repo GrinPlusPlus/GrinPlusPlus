@@ -26,7 +26,7 @@ void OrphanPool::AddOrphanBlock(const FullBlock& block)
 {
 	if (!m_orphanHeadersByHash.Cached(block.GetHash()))
 	{
-		m_orphanHeadersByHash.Put(block.GetHash(), block.GetBlockHeader());
+		m_orphanHeadersByHash.Put(block.GetHash(), block.GetHeader());
 	}
 
 	auto heightIter = m_orphansByHeight.find(block.GetHeight());

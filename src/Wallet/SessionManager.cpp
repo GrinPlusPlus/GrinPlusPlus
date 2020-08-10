@@ -5,7 +5,7 @@
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/WalletDB/WalletStore.h>
 
@@ -19,7 +19,7 @@ SessionManager::SessionManager(
 	m_pWalletDB(pWalletDB),
 	m_pForeignController(std::move(pForeignController))
 {
-	m_nextSessionId = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
+	m_nextSessionId = CSPRNG::GenerateRandom(0, UINT64_MAX);
 }
 
 SessionManager::~SessionManager()
@@ -133,7 +133,7 @@ SessionToken SessionManager::Login(
 	SecureVector seedWithChecksum = seed;
 	seedWithChecksum.insert(seedWithChecksum.end(), checksum.begin(), checksum.end());
 
-	SecureVector tokenKey = RandomNumberGenerator::GenerateRandomBytes(seedWithChecksum.size());
+	SecureVector tokenKey = CSPRNG::GenerateRandomBytes(seedWithChecksum.size());
 
 	SecureVector encryptedSeedWithCS(seedWithChecksum.size());
 	for (size_t i = 0; i < seedWithChecksum.size(); i++)

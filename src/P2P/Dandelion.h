@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <TxPool/TransactionPool.h>
 #include <P2P/Peer.h>
 
@@ -18,9 +18,9 @@ public:
 	static std::shared_ptr<Dandelion> Create(
 		const Config& config,
 		ConnectionManager& connectionManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-		ITransactionPoolPtr pTransactionPool,
+		const ITransactionPool::Ptr& pTransactionPool,
 		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
 	);
 	~Dandelion();
@@ -29,9 +29,9 @@ private:
 	Dandelion(
 		const Config& config,
 		ConnectionManager& connectionManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-		ITransactionPoolPtr pTransactionPool,
+		const ITransactionPool::Ptr& pTransactionPool,
 		std::shared_ptr<const Locked<IBlockDB>> pBlockDB
 	);
 
@@ -43,9 +43,9 @@ private:
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<Locked<TxHashSetManager>> m_pTxHashSetManager;
-	ITransactionPoolPtr m_pTransactionPool;
+	ITransactionPool::Ptr m_pTransactionPool;
 	std::shared_ptr<const Locked<IBlockDB>> m_pBlockDB;
 
 	std::atomic_bool m_terminate = true;

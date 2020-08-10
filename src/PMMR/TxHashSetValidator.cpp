@@ -10,14 +10,8 @@
 #include <Consensus/Common.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Logger.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <thread>
-
-TxHashSetValidator::TxHashSetValidator(const IBlockChainServer& blockChainServer)
-	: m_blockChainServer(blockChainServer)
-{
-
-}
 
 std::unique_ptr<BlockSums> TxHashSetValidator::Validate(TxHashSet& txHashSet, const BlockHeader& blockHeader, SyncStatus& syncStatus) const
 {
@@ -190,7 +184,7 @@ bool TxHashSetValidator::ValidateKernelHistory(const KernelMMR& kernelMMR, const
 	const uint64_t totalHeight = blockHeader.GetHeight();
 	for (uint64_t height = 0; height <= totalHeight; height++)
 	{
-		auto pHeader = m_blockChainServer.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
+		auto pHeader = m_blockChain.GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 		if (pHeader == nullptr)
 		{
 			LOG_ERROR_F("No header found at height ({})", height);

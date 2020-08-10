@@ -12,11 +12,11 @@
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Core/Exceptions/WalletException.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
-#include <Net/Tor/TorAddressParser.h>
+#include <Net/Tor/TorConnection.h>
 #include <Net/Tor/TorProcess.h>
 #include <cassert>
 #include <thread>
@@ -46,7 +46,7 @@ CreateWalletResponse WalletManager::InitializeNewWallet(
 	);
 
 	const size_t entropyBytes = (4 * criteria.GetNumWords()) / 3;
-	const SecureVector walletSeed = RandomNumberGenerator::GenerateRandomBytes(entropyBytes);
+	const SecureVector walletSeed = CSPRNG::GenerateRandomBytes(entropyBytes);
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, criteria.GetPassword());
 	SecureString walletWords = Mnemonic::CreateMnemonic((const std::vector<uint8_t>&)walletSeed);
 

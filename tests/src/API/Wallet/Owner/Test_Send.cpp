@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <Net/Clients/RPC/RPCClient.h>
+#include <API/Wallet/Owner/Models/SendResponse.h>
 
 #include <TestServer.h>
 #include <TestChain.h>

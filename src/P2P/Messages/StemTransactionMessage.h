@@ -33,12 +33,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new StemTransactionMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new StemTransactionMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::StemTransaction; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::StemTransaction; }
 	TransactionPtr GetTransaction() const { return m_pTransaction; }
 
 	//
@@ -51,7 +51,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_pTransaction->Serialize(serializer);
 	}

@@ -2,7 +2,7 @@
 
 #include <Core/Traits/Printable.h>
 #include <Core/Exceptions/DeserializationException.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -29,7 +29,7 @@ public:
 
 	const std::vector<uint32_t>& GetKeyIndices() const { return m_keyIndices; }
 
-	virtual std::string Format() const override final
+	std::string Format() const final
 	{
 		std::string path = "m";
 		for (const uint32_t keyIndex : m_keyIndices)
@@ -81,7 +81,7 @@ public:
 	KeyChainPath GetRandomChild() const
 	{
 		std::vector<uint32_t> keyIndicesCopy = m_keyIndices;
-		keyIndicesCopy.push_back((uint32_t)RandomNumberGenerator::GenerateRandom(0, MINIMUM_HARDENED_INDEX - 1000000));
+		keyIndicesCopy.push_back((uint32_t)CSPRNG::GenerateRandom(0, MINIMUM_HARDENED_INDEX - 1000000));
 		return KeyChainPath(std::move(keyIndicesCopy));
 	}
 

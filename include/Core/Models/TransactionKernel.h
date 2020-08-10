@@ -67,8 +67,8 @@ public:
 	//
 	// Traits
 	//
-	virtual const Hash& GetHash() const override final;
-	virtual const Commitment& GetCommitment() const override final { return m_excessCommitment; }
+	const Hash& GetHash() const final;
+	const Commitment& GetCommitment() const final { return m_excessCommitment; }
 
 private:
 	// Options for a kernel's structure or use

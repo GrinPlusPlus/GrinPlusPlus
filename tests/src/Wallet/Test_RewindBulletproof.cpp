@@ -11,7 +11,7 @@ TEST_CASE("REWIND_BULLETPROOF_ORIGINAL")
 	ConfigPtr pConfig = ConfigLoader().Load(EEnvironmentType::MAINNET);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	const CBigInteger<32> masterSeed = RandomNumberGenerator::GenerateRandom32();
+	const CBigInteger<32> masterSeed = CSPRNG::GenerateRandom32();
 	const SecureVector masterSeedBytes(masterSeed.GetData().begin(), masterSeed.GetData().end());
 	const uint64_t amount = 45;
 	KeyChainPath keyId(std::vector<uint32_t>({ 1, 2, 3 }));
@@ -34,7 +34,7 @@ TEST_CASE("REWIND_BULLETPROOF_ENHANCED")
 	ConfigPtr pConfig = ConfigLoader().Load(EEnvironmentType::MAINNET);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	const CBigInteger<32> masterSeed = RandomNumberGenerator::GenerateRandom32();
+	const CBigInteger<32> masterSeed = CSPRNG::GenerateRandom32();
 	const SecureVector masterSeedBytes(masterSeed.GetData().begin(), masterSeed.GetData().end());
 	const uint64_t amount = 45;
 	KeyChainPath keyId(std::vector<uint32_t>({ 1, 2, 3 }));

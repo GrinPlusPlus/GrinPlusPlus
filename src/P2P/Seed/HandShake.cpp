@@ -7,22 +7,11 @@
 #include "../ConnectionManager.h"
 
 #include <Net/SocketException.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 
-static const uint64_t NONCE = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
-
-HandShake::HandShake(
-	const Config& config,
-	ConnectionManager& connectionManager,
-	IBlockChainServerPtr pBlockChainServer)
-	: m_config(config),
-	m_connectionManager(connectionManager),
-	m_pBlockChainServer(pBlockChainServer)
-{
-
-}
+static const uint64_t NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
 
 bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const
 {
@@ -160,7 +149,7 @@ bool HandShake::TransmitHandMessage(Socket& socket) const
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
 	const uint64_t nonce = NONCE;
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
-	const uint64_t totalDifficulty = m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED);
+	const uint64_t totalDifficulty = m_pSyncStatus->GetBlockDifficulty();
 	SocketAddress senderAddress(localHostIP, m_config.GetEnvironment().GetP2PPort());
 	SocketAddress receiverAddress(localHostIP, portNumber);
 	const std::string& userAgent = P2P::USER_AGENT;
@@ -178,7 +167,7 @@ bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVers
 {
 	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
 	Hash hash = m_config.GetEnvironment().GetGenesisHash();
-	const uint64_t totalDifficulty = m_pBlockChainServer->GetTotalDifficulty(EChainType::CONFIRMED);
+	const uint64_t totalDifficulty = m_pSyncStatus->GetBlockDifficulty();
 	const std::string& userAgent = P2P::USER_AGENT;
 	const ShakeMessage shakeMessage(protocolVersion, capabilities, std::move(hash), totalDifficulty, userAgent);
 

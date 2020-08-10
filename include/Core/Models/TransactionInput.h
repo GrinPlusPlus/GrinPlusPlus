@@ -46,7 +46,7 @@ public:
 	// Getters
 	//
 	EOutputFeatures GetFeatures() const { return m_features; }
-	virtual const Commitment& GetCommitment() const override final { return m_commitment; }
+	const Commitment& GetCommitment() const final { return m_commitment; }
 
 	bool IsCoinbase() const { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
 
@@ -61,7 +61,7 @@ public:
 	//
 	// Traits
 	//
-	virtual const Hash& GetHash() const override final;
+	const Hash& GetHash() const final;
 
 private:
 	// The features of the output being spent. 

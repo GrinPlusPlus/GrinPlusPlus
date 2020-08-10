@@ -11,11 +11,11 @@ TEST_CASE("Chain Batching")
 	auto pAllocator = std::make_shared<BlockIndexAllocator>();
 	auto pGenesisIndex = pAllocator->GetOrCreateIndex(pTestServer->GetGenesisHeader()->GetHash(), 0);
 
-	Hash hash1 = RandomNumberGenerator::GenerateRandom32();
-	Hash hash2a = RandomNumberGenerator::GenerateRandom32();
-	Hash hash2b = RandomNumberGenerator::GenerateRandom32();
-	Hash hash3b = RandomNumberGenerator::GenerateRandom32();
-	Hash hash4b = RandomNumberGenerator::GenerateRandom32();
+	Hash hash1 = CSPRNG::GenerateRandom32();
+	Hash hash2a = CSPRNG::GenerateRandom32();
+	Hash hash2b = CSPRNG::GenerateRandom32();
+	Hash hash3b = CSPRNG::GenerateRandom32();
+	Hash hash4b = CSPRNG::GenerateRandom32();
 
 	Locked<Chain> chain(Chain::Load(pAllocator, EChainType::CANDIDATE, chain_path, pGenesisIndex));
 

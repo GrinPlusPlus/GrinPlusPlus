@@ -43,10 +43,10 @@ public:
 	std::shared_ptr<const BlockIndex> AddBlock(const Hash& hash, const uint64_t height);
 	void Rewind(const uint64_t lastHeight);
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
-	virtual void OnInitWrite() override final;
-	virtual void OnEndWrite() override final;
+	void Commit() final;
+	void Rollback() noexcept final;
+	void OnInitWrite() final;
+	void OnEndWrite() final;
 
 private:
 	Chain(

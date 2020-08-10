@@ -63,7 +63,7 @@ public:
 	//
 	const IPAddress& GetIPAddress() const { return m_ipAddress; }
 	const uint16_t GetPortNumber() const { return m_port; }
-	virtual std::string Format() const override final
+	std::string Format() const final
 	{
 		return m_ipAddress.Format() + ":" + std::to_string(m_port);
 	}

@@ -102,7 +102,7 @@ public:
 	//
 	// Serialization
 	//
-	virtual void Serialize(Serializer& serializer) const override final
+	void Serialize(Serializer& serializer) const final
 	{
 		serializer.Append<uint8_t>(OUTPUT_DATA_FORMAT);
 		serializer.AppendVarStr(m_keyChainPath.Format());
@@ -179,7 +179,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return m_output.GetCommitment().Format(); }
+	std::string Format() const final { return m_output.GetCommitment().Format(); }
 
 private:
 	KeyChainPath m_keyChainPath;

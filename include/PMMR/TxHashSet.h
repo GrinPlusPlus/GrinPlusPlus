@@ -15,7 +15,7 @@ class Config;
 class FullBlock;
 class Commitment;
 class OutputIdentifier;
-class IBlockChainServer;
+class IBlockChain;
 class IBlockDB;
 class Transaction;
 class TransactionBody;
@@ -32,7 +32,7 @@ public:
 	//
 	virtual std::unique_ptr<BlockSums> ValidateTxHashSet(
 		const BlockHeader& header,
-		const IBlockChainServer& blockChainServer,
+		const IBlockChain& blockChain,
 		SyncStatus& syncStatus
 	) = 0;
 

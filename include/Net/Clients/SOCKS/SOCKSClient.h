@@ -19,7 +19,7 @@ public:
 	virtual ~SOCKSClient() = default;
 
 private:
-	virtual void EstablishConnection(const std::string& destination, const uint16_t port) override final
+	void EstablishConnection(const std::string& destination, const uint16_t port) final
 	{
 		EstablishConnectionInternal(destination, port, 1);
 	}

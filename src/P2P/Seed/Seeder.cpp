@@ -7,31 +7,11 @@
 #include <P2P/Capabilities.h>
 #include <Net/SocketAddress.h>
 #include <Net/Socket.h>
-#include <BlockChain/BlockChainServer.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <algorithm>
-
-Seeder::Seeder(
-	Context::Ptr pContext,
-	ConnectionManager& connectionManager,
-	Locked<PeerManager> peerManager,
-	IBlockChainServerPtr pBlockChainServer,
-	std::shared_ptr<MessageProcessor> pMessageProcessor,
-	SyncStatusConstPtr pSyncStatus)
-	: m_pContext(pContext),
-	m_connectionManager(connectionManager),
-	m_peerManager(peerManager),
-	m_pBlockChainServer(pBlockChainServer),
-	m_pMessageProcessor(pMessageProcessor),
-	m_pSyncStatus(pSyncStatus),
-	m_pAsioContext(std::make_shared<asio::io_context>()),
-	m_terminate(false)
-{
-
-}
 
 Seeder::~Seeder()
 {
@@ -45,7 +25,7 @@ std::unique_ptr<Seeder> Seeder::Create(
 	Context::Ptr pContext,
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	std::shared_ptr<Pipeline> pPipeline,
 	SyncStatusConstPtr pSyncStatus)
 {
@@ -53,7 +33,7 @@ std::unique_ptr<Seeder> Seeder::Create(
 		pContext->GetConfig(),
 		connectionManager,
 		peerManager,
-		pBlockChainServer,
+		pBlockChain,
 		pPipeline,
 		pSyncStatus
 	);
@@ -61,7 +41,7 @@ std::unique_ptr<Seeder> Seeder::Create(
 		pContext,
 		connectionManager,
 		peerManager,
-		pBlockChainServer,
+		pBlockChain,
 		pMessageProcessor,
 		pSyncStatus
 	));
@@ -141,13 +121,12 @@ void Seeder::Thread_Listener(Seeder& seeder)
 					if (connectionAdded)
 					{
 						auto pPeer = seeder.m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
-						ConnectionPtr pConnection = Connection::Create(
+						Connection::CreateInbound(
+							pPeer,
 							pSocket,
 							seeder.m_nextId++,
 							seeder.m_pContext->GetConfig(),
 							seeder.m_connectionManager,
-							seeder.m_pBlockChainServer,
-							ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
 							seeder.m_pMessageProcessor,
 							seeder.m_pSyncStatus
 						);
@@ -175,23 +154,15 @@ ConnectionPtr Seeder::SeedNewConnection()
 	PeerPtr pPeer = m_peerManager.Write()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
 	if (pPeer != nullptr)
 	{
-		LOG_TRACE_F("Trying to seed: {}", pPeer);
-		const uint16_t portNumber = m_pContext->GetConfig().GetEnvironment().GetP2PPort();
-		ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND, portNumber);
-		SocketAddress address(pPeer->GetIPAddress(), portNumber);
-		SocketPtr pSocket(new Socket(std::move(address)));
-		ConnectionPtr pConnection = Connection::Create(
-			pSocket,
+		LOG_TRACE_F("Attempting to seed: {}", pPeer);
+		return Connection::CreateOutbound(
+			pPeer,
 			m_nextId++,
 			m_pContext->GetConfig(),
 			m_connectionManager,
-			m_pBlockChainServer,
-			connectedPeer,
 			m_pMessageProcessor,
 			m_pSyncStatus
 		);
-
-		return pConnection;
 	}
 	else if (!m_usedDNS.exchange(true))
 	{

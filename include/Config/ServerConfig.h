@@ -12,7 +12,6 @@ public:
 	// Getters
 	//
 	uint16_t GetRestAPIPort() const { return m_restAPIPort; }
-	const std::string& GetGrinJoinSecretKey() const { return m_grinjoinSecretKey; }
 
 	//
 	// Constructor
@@ -41,5 +40,4 @@ public:
 
 private:
 	uint16_t m_restAPIPort;
-	std::string m_grinjoinSecretKey;
 };

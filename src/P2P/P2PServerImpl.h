@@ -17,35 +17,25 @@ class P2PServer : public IP2PServer
 public:
 	static std::shared_ptr<P2PServer> Create(
 		const Context::Ptr& pContext,
-		std::shared_ptr<IBlockChainServer> pBlockChainServer,
+		const std::shared_ptr<IBlockChain>& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<IDatabase> pDatabase,
-		std::shared_ptr<ITransactionPool> pTransactionPool
+		const ITransactionPool::Ptr& pTransactionPool
 	);
 	virtual ~P2PServer();
 
-	virtual SyncStatusConstPtr GetSyncStatus() const override final { return m_pSyncStatus; }
+	SyncStatusConstPtr GetSyncStatus() const final { return m_pSyncStatus; }
 
-	virtual std::pair<size_t, size_t> GetNumberOfConnectedPeers() const override final;
-	virtual std::vector<PeerConstPtr> GetAllPeers() const override final;
-	virtual std::vector<ConnectedPeer> GetConnectedPeers() const override final;
+	std::pair<size_t, size_t> GetNumberOfConnectedPeers() const final;
+	std::vector<PeerConstPtr> GetAllPeers() const final;
+	std::vector<ConnectedPeer> GetConnectedPeers() const final;
+	std::optional<PeerConstPtr> GetPeer(const IPAddress& address) const final;
 
-	virtual std::optional<PeerConstPtr> GetPeer(
-		const IPAddress& address
-	) const override final;
+	bool BanPeer(const IPAddress& address, const EBanReason banReason) final;
+	void UnbanPeer(const IPAddress& address) final;
+	bool UnbanAllPeers() final;
 
-	virtual bool BanPeer(
-		const IPAddress& address,
-		const EBanReason banReason
-	) override final;
-
-	virtual void UnbanPeer(
-		const IPAddress& address
-	) override final;
-
-	virtual bool UnbanAllPeers() override final;
-
-	virtual void BroadcastTransaction(const TransactionPtr& pTransaction) override final;
+	void BroadcastTransaction(const TransactionPtr& pTransaction) final;
 
 private:
 	P2PServer(

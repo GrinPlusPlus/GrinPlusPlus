@@ -33,12 +33,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new TransactionMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new TransactionMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TransactionMsg; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::TransactionMsg; }
 	TransactionPtr GetTransaction() const { return m_pTransaction; }
 
 	//
@@ -51,7 +51,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_pTransaction->Serialize(serializer);
 		LOG_INFO_F("Serialized TransactionMsg: {}", HexUtil::ConvertToHex(serializer.GetBytes()));

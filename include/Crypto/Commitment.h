@@ -79,7 +79,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return "Commitment{" + m_commitmentBytes.ToHex() + "}"; }
+	std::string Format() const final { return "Commitment{" + m_commitmentBytes.ToHex() + "}"; }
 
 private:
 	// The 33 byte commitment.

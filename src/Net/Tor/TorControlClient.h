@@ -27,7 +27,7 @@ public:
 	// Writes the given string to the socket, and reads each line until "250 OK" is read.
 	// throws TorException - If a line is read indicating a failure (ie not prefixed with "250").
 	//
-	virtual std::vector<std::string> Invoke(const std::string& request) override final
+	std::vector<std::string> Invoke(const std::string& request) final
 	{
 		try
 		{

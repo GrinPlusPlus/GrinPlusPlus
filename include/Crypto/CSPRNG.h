@@ -18,7 +18,7 @@
 //
 // A wrapper around a third-party CSPRNG random number generator to generate cryptographically-secure random numbers.
 //
-class CRYPTO_API RandomNumberGenerator
+class CRYPTO_API CSPRNG
 {
 public:
 	//

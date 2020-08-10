@@ -3,16 +3,16 @@
 #include <Common/Logger.h>
 #include <Database/BlockDb.h>
 #include <Core/Models/BlockHeader.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/HexUtil.h>
 
 TxHashSetProcessor::TxHashSetProcessor(
 	const Config& config,
-	IBlockChainServer& blockChainServer,
+	IBlockChain& blockChain,
 	std::shared_ptr<Locked<ChainState>> pChainState)
 	: m_config(config),
-	m_blockChainServer(blockChainServer),
+	m_blockChain(blockChain),
 	m_pChainState(pChainState)
 {
 
@@ -39,7 +39,7 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 	}
 
 	// 3. Validate entire TxHashSet
-	auto pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChainServer, syncStatus);
+	auto pBlockSums = pTxHashSet->ValidateTxHashSet(*pHeader, m_blockChain, syncStatus);
 	if (pBlockSums == nullptr)
 	{
 		LOG_ERROR_F("Validation of {} failed.", path);

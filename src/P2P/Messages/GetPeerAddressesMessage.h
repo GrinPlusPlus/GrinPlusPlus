@@ -31,12 +31,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new GetPeerAddressesMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new GetPeerAddressesMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::GetPeerAddrs; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::GetPeerAddrs; }
 	const Capabilities& GetCapabilities() const { return m_capabilities; }
 
 	//
@@ -49,7 +49,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_capabilities.Serialize(serializer);
 	}

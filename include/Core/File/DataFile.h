@@ -21,7 +21,7 @@ public:
 		return std::make_shared<DataFile>(DataFile(pFile));
 	}
 
-	virtual void Commit() override final
+	void Commit() final
 	{
 		if (IsDirty())
 		{
@@ -34,7 +34,7 @@ public:
 		SetDirty(false);
 	}
 
-	virtual void Rollback() noexcept override final
+	void Rollback() noexcept final
 	{
 		if (IsDirty())
 		{

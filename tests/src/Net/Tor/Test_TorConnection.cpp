@@ -3,7 +3,7 @@
 #include <TorProcessManager.h>
 #include <TestServer.h>
 #include <TestWalletServer.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Net/Tor/TorConnection.h>
 
 TEST_CASE("TorConnection - Multiple calls")

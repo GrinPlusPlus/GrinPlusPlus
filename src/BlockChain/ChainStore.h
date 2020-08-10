@@ -9,10 +9,10 @@ class ChainStore : public Traits::IBatchable
 public:
 	static std::shared_ptr<Locked<ChainStore>> Load(const Config& config, std::shared_ptr<BlockIndex>);
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
-	virtual void OnInitWrite() override final;
-	virtual void OnEndWrite() override final;
+	void Commit() final;
+	void Rollback() noexcept final;
+	void OnInitWrite() final;
+	void OnEndWrite() final;
 
 	std::shared_ptr<Chain> GetChain(const EChainType chainType);
 	std::shared_ptr<const Chain> GetChain(const EChainType chainType) const;

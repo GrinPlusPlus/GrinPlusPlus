@@ -47,7 +47,7 @@ public:
 	// Getters
 	//
 	EOutputFeatures GetFeatures() const { return m_features; }
-	virtual const Commitment& GetCommitment() const override final { return m_commitment; }
+	const Commitment& GetCommitment() const final { return m_commitment; }
 	const RangeProof& GetRangeProof() const { return m_rangeProof; }
 
 	bool IsCoinbase() const { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
@@ -63,8 +63,8 @@ public:
 	//
 	// Traits
 	//
-	virtual const Hash& GetHash() const override final;
-	virtual std::string Format() const override final { return m_commitment.Format(); }
+	const Hash& GetHash() const final;
+	std::string Format() const final { return m_commitment.Format(); }
 
 private:
 	// Options for an output's structure or use

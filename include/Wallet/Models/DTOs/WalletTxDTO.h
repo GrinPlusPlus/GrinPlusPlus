@@ -9,10 +9,7 @@ class WalletTxDTO
 {
 public:
 	WalletTxDTO(const WalletTx& walletTx, const std::vector<Commitment>& kernels, const std::vector<WalletOutputDTO>& outputs)
-		: m_walletTx(walletTx), m_kernels(kernels), m_outputs(outputs)
-	{
-
-	}
+		: m_walletTx(walletTx), m_kernels(kernels), m_outputs(outputs) { }
 
 	uint32_t GetId() const noexcept { return m_walletTx.GetId(); }
 	const WalletTx& GetTx() const noexcept { return m_walletTx; }
@@ -33,13 +30,11 @@ public:
 		JsonUtil::AddOptionalField(transactionJSON, "fee", m_walletTx.GetFee());
 		JsonUtil::AddOptionalField(transactionJSON, "confirmed_height", m_walletTx.GetConfirmationHeight());
 
-		if (m_walletTx.GetSlateId().has_value())
-		{
+		if (m_walletTx.GetSlateId().has_value()) {
 			transactionJSON["slate_id"] = uuids::to_string(m_walletTx.GetSlateId().value());
 		}
 
-		if (m_walletTx.GetConfirmationTime().has_value())
-		{
+		if (m_walletTx.GetConfirmationTime().has_value()) {
 			transactionJSON["confirmation_date_time"] = TimeUtil::ToSeconds(m_walletTx.GetConfirmationTime().value());
 		}
 

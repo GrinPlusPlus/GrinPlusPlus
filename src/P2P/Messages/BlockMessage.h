@@ -32,12 +32,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new BlockMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new BlockMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Block; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Block; }
 	const FullBlock& GetBlock() const { return m_block; }
 
 	//
@@ -50,7 +50,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_block.Serialize(serializer);
 	}

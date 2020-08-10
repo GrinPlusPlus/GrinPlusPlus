@@ -2,24 +2,9 @@
 #include "../ConnectionManager.h"
 #include "../Messages/GetBlockMessage.h"
 
-#include <BlockChain/BlockChainServer.h>
 #include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
-
-BlockSyncer::BlockSyncer(
-	std::weak_ptr<ConnectionManager> pConnectionManager,
-	IBlockChainServerPtr pBlockChainServer,
-	std::shared_ptr<Pipeline> pPipeline)
-	: m_pConnectionManager(pConnectionManager),
-	m_pBlockChainServer(pBlockChainServer),
-	m_pPipeline(pPipeline),
-	m_timeout(std::chrono::system_clock::now()),
-	m_lastHeight(0),
-	m_highestRequested(0)
-{
-
-}
+#include <Crypto/CSPRNG.h>
 
 bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus, const bool startup)
 {
@@ -68,7 +53,7 @@ bool BlockSyncer::IsBlockSyncDue(const SyncStatus& syncStatus)
 	}
 
 	// Make sure we have valid requests for the first 15 blocks.
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(15);
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChain->GetBlocksNeeded(15);
 	for (auto iter = blocksNeeded.cbegin(); iter != blocksNeeded.cend(); iter++)
 	{
 		auto requestedBlocksIter = m_requestedBlocks.find(iter->first);
@@ -112,7 +97,7 @@ bool BlockSyncer::RequestBlocks()
 	}
 
 	const uint64_t numBlocksNeeded = 16 * numPeers;
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChainServer->GetBlocksNeeded(2 * numBlocksNeeded);
+	std::vector<std::pair<uint64_t, Hash>> blocksNeeded = m_pBlockChain->GetBlocksNeeded(2 * numBlocksNeeded);
 	if (blocksNeeded.empty())
 	{
 		LOG_TRACE("No blocks needed.");
@@ -160,7 +145,7 @@ bool BlockSyncer::RequestBlocks()
 		++blockIndex;
 	}
 
-	size_t nextPeer = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
+	size_t nextPeer = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
 	for (size_t i = 0; i < blocksToRequest.size(); i++)
 	{
 		const GetBlockMessage getBlockMessage(blocksToRequest[i].second);

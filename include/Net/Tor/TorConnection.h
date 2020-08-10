@@ -1,40 +1,24 @@
 #pragma once
 
-#include <Net/Clients/SOCKS/SOCKSClient.h>
-#include <Net/Clients/RPC/RPCClient.h>
+#include <Net/SocketAddress.h>
+#include <Net/Clients/RPC/RPC.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorException.h>
 #include <memory>
 
+// Forward Declarations
+class HttpRpcClient;
+
 class TorConnection
 {
 public:
-	TorConnection(const TorAddress& address, SocketAddress&& proxyAddress)
-		: m_address(address),
-		m_rpcClient(std::shared_ptr<HTTPClient>((HTTPClient*)new SOCKSClient(std::move(proxyAddress))))
-	{
+	TorConnection(const TorAddress& address, SocketAddress&& proxyAddress);
 
-	}
-
-	RPC::Response Invoke(const RPC::Request& request, const std::string& location)
-	{
-		try
-		{
-			return m_rpcClient.Invoke(m_address.ToString(), location, 80, request);
-		}
-		catch (TorException&)
-		{
-			throw;
-		}
-		catch (std::exception& e)
-		{
-			throw TOR_EXCEPTION(e.what());
-		}
-	}
+	RPC::Response Invoke(const RPC::Request& request, const std::string& location);
 
 private:
 	TorAddress m_address;
-	HttpRpcClient m_rpcClient;
+	std::shared_ptr<HttpRpcClient> m_pRpcClient;
 };
 
 typedef std::shared_ptr<TorConnection> TorConnectionPtr;

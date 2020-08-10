@@ -5,7 +5,7 @@
 
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Crypto/Crypto.h>
 #include <Consensus/BlockDifficulty.h>
 #include <Database/Database.h>
@@ -18,12 +18,10 @@
 Node::Node(
 	const Context::Ptr& pContext,
 	std::unique_ptr<NodeRestServer>&& pNodeRestServer,
-	std::shared_ptr<DefaultNodeClient> pNodeClient,
-	std::unique_ptr<GrinJoinController>&& pGrinJoinController)
+	std::shared_ptr<DefaultNodeClient> pNodeClient)
 	: m_pContext(pContext),
 	m_pNodeRestServer(std::move(pNodeRestServer)),
-	m_pNodeClient(pNodeClient),
-	m_pGrinJoinController(std::move(pGrinJoinController))
+	m_pNodeClient(pNodeClient)
 {
 
 }
@@ -41,21 +39,10 @@ std::unique_ptr<Node> Node::Create(const Context::Ptr& pContext)
 		pNodeClient->GetNodeContext()
 	);
 
-	std::unique_ptr<GrinJoinController> pGrinJoinController = nullptr;
-	if (!pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey().empty())
-	{
-		pGrinJoinController = GrinJoinController::Create(
-			pContext->GetTorProcess(),
-			pNodeClient->GetNodeContext(),
-			pContext->GetConfig().GetServerConfig().GetGrinJoinSecretKey()
-		);
-	}
-
 	return std::make_unique<Node>(
 		pContext,
 		std::move(pNodeRestServer),
-		pNodeClient,
-		std::move(pGrinJoinController)
+		pNodeClient
 	);
 }
 

@@ -30,12 +30,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new ErrorMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new ErrorMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Error; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Error; }
 	uint32_t GetErrorCode() const { return m_errorCode; }
 	const std::string& GetErrorMessage() const { return m_message; }
 
@@ -51,7 +51,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint32_t>(m_errorCode);
 		serializer.AppendVarStr(m_message);

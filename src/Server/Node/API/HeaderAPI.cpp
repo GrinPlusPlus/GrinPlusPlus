@@ -2,7 +2,7 @@
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/HexUtil.h>
@@ -21,7 +21,7 @@ int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 	try
 	{
 		const std::string requestedHeader = HTTPUtil::GetURIParam(conn, "/v1/headers/");
-		auto pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChainServer);
+		auto pBlockHeader = GetHeader(requestedHeader, ((NodeContext*)pNodeContext)->m_pBlockChain);
 
 		if (nullptr != pBlockHeader)
 		{
@@ -37,14 +37,14 @@ int HeaderAPI::GetHeader_Handler(struct mg_connection* conn, void* pNodeContext)
 	return HTTPUtil::BuildBadRequestResponse(conn, response);
 }
 
-BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer)
+BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, const IBlockChain::Ptr& pBlockChain)
 {
 	if (requestedHeader.length() == 64 && HexUtil::IsValidHex(requestedHeader))
 	{
 		try
 		{
 			const Hash hash = Hash::FromHex(requestedHeader);
-			auto pHeader = pBlockChainServer->GetBlockHeaderByHash(hash);
+			auto pHeader = pBlockChain->GetBlockHeaderByHash(hash);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header with hash {}.", requestedHeader);
@@ -65,7 +65,7 @@ BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockCh
 		try
 		{
 			const Commitment outputCommitment(CBigInteger<33>::FromHex(requestedHeader));
-			auto pHeader = pBlockChainServer->GetBlockHeaderByCommitment(outputCommitment);
+			auto pHeader = pBlockChain->GetBlockHeaderByCommitment(outputCommitment);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header with output commitment {}.", requestedHeader);
@@ -88,7 +88,7 @@ BlockHeaderPtr HeaderAPI::GetHeader(const std::string& requestedHeader, IBlockCh
 			std::string::size_type sz = 0;
 			const uint64_t height = std::stoull(requestedHeader, &sz, 0);
 
-			auto pHeader = pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
+			auto pHeader = pBlockChain->GetBlockHeaderByHeight(height, EChainType::CANDIDATE);
 			if (pHeader != nullptr)
 			{
 				LOG_INFO_F("Found header at height {}.", requestedHeader);

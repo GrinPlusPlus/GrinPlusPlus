@@ -22,6 +22,9 @@ public:
 	const unsigned char* data() const noexcept { return m_compressedKey.data(); }
 	size_t size() const noexcept { return m_compressedKey.size(); }
 
+	std::vector<uint8_t>::const_iterator cbegin() const noexcept { return GetCompressedVec().cbegin(); }
+	std::vector<uint8_t>::const_iterator cend() const noexcept { return GetCompressedVec().cend(); }
+
 	void Serialize(Serializer& serializer) const
 	{
 		serializer.AppendBigInteger(m_compressedKey);

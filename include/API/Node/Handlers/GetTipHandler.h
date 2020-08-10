@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Consensus/HardForks.h>
@@ -10,7 +9,7 @@
 class GetTipHandler : public RPCMethod
 {
 public:
-	GetTipHandler(const IBlockChainServerPtr& pBlockChain)
+	GetTipHandler(const IBlockChain::Ptr& pBlockChain)
 		: m_pBlockChain(pBlockChain) { }
 	~GetTipHandler() = default;
 
@@ -32,5 +31,5 @@ public:
 	bool ContainsSecrets() const noexcept final { return false; }
 
 private:
-	IBlockChainServerPtr m_pBlockChain;
+	IBlockChain::Ptr m_pBlockChain;
 };

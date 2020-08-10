@@ -8,24 +8,18 @@
 
 static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
-OutputRestorer::OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain)
-	: m_config(config), m_pNodeClient(pNodeClient), m_keyChain(keyChain)
-{
-
-}
-
-std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(Writer<IWalletDB> pBatch, const bool fromGenesis) const
+std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const std::shared_ptr<IWalletDB>& pBatch, const bool fromGenesis) const
 {
 	const uint64_t chainHeight = m_pNodeClient->GetChainHeight();
 
 	uint64_t nextLeafIndex = fromGenesis ? 0 : pBatch->GetRestoreLeafIndex() + 1;
+	uint64_t highestIndex = 0;
 
 	std::vector<OutputDataEntity> walletOutputs;
 	while (true)
 	{
 		std::unique_ptr<OutputRange> pOutputRange = m_pNodeClient->GetOutputsByLeafIndex(nextLeafIndex, NUM_OUTPUTS_PER_BATCH);
-		if (pOutputRange == nullptr || pOutputRange->GetLastRetrievedIndex() == 0)
-		{
+		if (pOutputRange == nullptr || pOutputRange->GetLastRetrievedIndex() == 0) {
 			// No new outputs since last restore
 			return std::vector<OutputDataEntity>();
 		}
@@ -34,15 +28,19 @@ std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(Writer<IWalle
 		for (const OutputDTO& output : outputs)
 		{
 			std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(output, chainHeight);
-			if (pOutputDataEntity != nullptr)
-			{
+			if (pOutputDataEntity != nullptr) {
 				walletOutputs.emplace_back(*pOutputDataEntity);
 			}
 		}
 
+		if (highestIndex == 0) {
+			// Cache this, rather than use the new response from pOutputRange.
+			// Otherwise, pOutputRange->GetHighestIndex() could continue to rise slowly during sync, tying up this thread.
+			highestIndex = pOutputRange->GetHighestIndex();
+		}
+
 		nextLeafIndex = pOutputRange->GetLastRetrievedIndex() + 1;
-		if (nextLeafIndex > pOutputRange->GetHighestIndex())
-		{
+		if (nextLeafIndex > highestIndex) {
 			break;
 		}
 	}

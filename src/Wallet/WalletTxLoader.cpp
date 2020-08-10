@@ -1,5 +1,6 @@
 #include "WalletTxLoader.h"
 
+#include <Wallet/WalletDB/WalletDB.h>
 #include <Common/Util/FunctionalUtil.h>
 
 std::vector<WalletTxDTO> WalletTxLoader::LoadTransactions(
@@ -11,35 +12,41 @@ std::vector<WalletTxDTO> WalletTxLoader::LoadTransactions(
 	std::vector<WalletTx> walletTransactions = LoadWalletTxs(pWalletDB, masterSeed, criteria);
 
 	std::vector<WalletTxDTO> walletTxDTOs;
-	for (const WalletTx& walletTx : walletTransactions)
-	{
-		std::vector<Commitment> kernels;
-		auto txOpt = walletTx.GetTransaction();
-		if (txOpt.has_value())
-		{
-			FunctionalUtil::transform_if(
-				txOpt.value().GetKernels().begin(), txOpt.value().GetKernels().end(),
-				std::back_inserter(kernels),
-				[](const TransactionKernel& kernel) {
-					return kernel.GetExcessCommitment() != CBigInteger<33>::ValueOf(0);
-				},
-				[](const TransactionKernel& kernel) { return kernel.GetExcessCommitment(); }
-			);
-		}
-
-		std::vector<WalletOutputDTO> outputDTOs;
-		for (const OutputDataEntity& output : outputs)
-		{
-			if (output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId())
-			{
-				outputDTOs.emplace_back(WalletOutputDTO::FromOutputData(output));
-			}
-		}
-
-		walletTxDTOs.emplace_back(WalletTxDTO(walletTx, kernels, outputDTOs));
-	}
+	std::transform(
+		walletTransactions.cbegin(), walletTransactions.cend(),
+		std::back_inserter(walletTxDTOs),
+		[this, &outputs](const WalletTx& walletTx) { return ToDTO(outputs, walletTx); }
+	);
 
 	return walletTxDTOs;
+}
+
+WalletTxDTO WalletTxLoader::ToDTO(const std::vector<OutputDataEntity>& outputs, const WalletTx& walletTx) const
+{
+	std::vector<Commitment> kernels;
+	auto txOpt = walletTx.GetTransaction();
+	if (txOpt.has_value()) {
+		FunctionalUtil::transform_if(
+			txOpt.value().GetKernels().cbegin(), txOpt.value().GetKernels().cend(),
+			std::back_inserter(kernels),
+			[](const TransactionKernel& kernel) {
+				return kernel.GetExcessCommitment() != CBigInteger<33>::ValueOf(0);
+			},
+			[](const TransactionKernel& kernel) { return kernel.GetExcessCommitment(); }
+		);
+	}
+
+	std::vector<WalletOutputDTO> outputDTOs;
+	FunctionalUtil::transform_if(
+		outputs.cbegin(), outputs.cend(),
+		std::back_inserter(outputDTOs),
+		[&walletTx](const OutputDataEntity& output) {
+			return output.GetWalletTxId().has_value() && output.GetWalletTxId().value() == walletTx.GetId();
+		},
+		[](const OutputDataEntity& output) { return WalletOutputDTO::FromOutputData(output); }
+	);
+
+	return WalletTxDTO{ walletTx, kernels, outputDTOs };
 }
 
 std::vector<WalletTx> WalletTxLoader::LoadWalletTxs(
@@ -62,18 +69,15 @@ std::vector<WalletTx> WalletTxLoader::LoadWalletTxs(
 bool WalletTxLoader::MeetsCriteria(const WalletTx& walletTx, const ListTxsCriteria& criteria) const
 {
 	std::chrono::system_clock::time_point txDateTime = walletTx.GetCreationTime();
-	if (walletTx.GetConfirmationTime().has_value() && walletTx.GetConfirmationTime().value() < txDateTime)
-	{
+	if (walletTx.GetConfirmationTime().has_value() && walletTx.GetConfirmationTime().value() < txDateTime) {
 		txDateTime = walletTx.GetConfirmationTime().value();
 	}
 
-	if (criteria.GetStartRange().has_value() && criteria.GetStartRange().value() > txDateTime)
-	{
+	if (criteria.GetStartRange().has_value() && criteria.GetStartRange().value() > txDateTime) {
 		return false;
 	}
 
-	if (criteria.GetEndRange().has_value() && criteria.GetEndRange().value() < txDateTime)
-	{
+	if (criteria.GetEndRange().has_value() && criteria.GetEndRange().value() < txDateTime) {
 		return false;
 	}
 

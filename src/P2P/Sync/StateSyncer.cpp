@@ -1,18 +1,9 @@
 #include "StateSyncer.h"
 #include "../Messages/TxHashSetRequestMessage.h"
 
-#include <BlockChain/BlockChainServer.h>
 #include <Consensus/BlockTime.h>
 #include <Common/Logger.h>
 #include <Common/ShutdownManager.h>
-
-StateSyncer::StateSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)
-{
-	m_timeRequested = std::chrono::system_clock::now();
-	m_requestedHeight = 0;
-	m_pPeer = nullptr;
-}
 
 bool StateSyncer::SyncState(SyncStatus& syncStatus)
 {
@@ -109,7 +100,7 @@ bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 	{
 		const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 		const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
-		Hash hash = m_pBlockChainServer->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
+		Hash hash = m_pBlockChain->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
 
 		const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
 		m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);

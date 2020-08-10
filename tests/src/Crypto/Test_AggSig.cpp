@@ -2,20 +2,20 @@
 
 #include <secp256k1-zkp/secp256k1.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 TEST_CASE("AggSig Interaction")
 {
-	Hash message = RandomNumberGenerator::GenerateRandom32();
+	Hash message = CSPRNG::GenerateRandom32();
 
 	// Generate sender keypairs
-	SecretKey secretKeySender = RandomNumberGenerator::GenerateRandom32();
+	SecretKey secretKeySender = CSPRNG::GenerateRandom32();
 	PublicKey publicKeySender = Crypto::CalculatePublicKey(secretKeySender);
 	SecretKey secretNonceSender = Crypto::GenerateSecureNonce();
 	PublicKey publicNonceSender = Crypto::CalculatePublicKey(secretNonceSender);
 
 	// Generate receiver keypairs
-	SecretKey secretKeyReceiver = RandomNumberGenerator::GenerateRandom32();
+	SecretKey secretKeyReceiver = CSPRNG::GenerateRandom32();
 	PublicKey publicKeyReceiver = Crypto::CalculatePublicKey(secretKeyReceiver);
 	SecretKey secretNonceReceiver = Crypto::GenerateSecureNonce();
 	PublicKey publicNonceReceiver = Crypto::CalculatePublicKey(secretNonceReceiver);

@@ -2,17 +2,7 @@
 #include "../BlockLocator.h"
 #include "../Messages/GetHeadersMessage.h"
 
-#include <BlockChain/BlockChainServer.h>
 #include <Common/Logger.h>
-
-HeaderSyncer::HeaderSyncer(std::weak_ptr<ConnectionManager> pConnectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer)
-{
-	m_timeout = std::chrono::system_clock::now();
-	m_lastHeight = 0;
-	m_pPeer = nullptr;
-	m_retried = false;
-}
 
 bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 {
@@ -95,7 +85,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 {
 	LOG_TRACE("Requesting headers.");
 
-	std::vector<Hash> locators = BlockLocator(m_pBlockChainServer).GetLocators(syncStatus);
+	std::vector<Hash> locators = BlockLocator(m_pBlockChain).GetLocators(syncStatus);
 
 	const GetHeadersMessage getHeadersMessage(std::move(locators));
 

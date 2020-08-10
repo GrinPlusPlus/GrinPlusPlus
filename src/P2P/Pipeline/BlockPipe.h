@@ -3,7 +3,7 @@
 #include <Crypto/Hash.h>
 #include <P2P/Peer.h>
 #include <Core/Models/FullBlock.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Common/ConcurrentQueue.h>
 #include <string>
 #include <cstdint>
@@ -20,7 +20,7 @@ class BlockPipe
 public:
 	static std::shared_ptr<BlockPipe> Create(
 		const Config& config,
-		IBlockChainServerPtr pBlockChainServer
+		const IBlockChain::Ptr& pBlockChain
 	);
 	~BlockPipe();
 
@@ -28,10 +28,10 @@ public:
 	bool IsProcessingBlock(const Hash& hash) const;
 
 private:
-	BlockPipe(const Config& config, IBlockChainServerPtr pBlockChainServer);
+	BlockPipe(const Config& config, const IBlockChain::Ptr& pBlockChain);
 
 	const Config& m_config;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 
 	struct BlockEntry
 	{

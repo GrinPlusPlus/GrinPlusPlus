@@ -48,7 +48,7 @@ public:
 		return json;
 	}
 
-	virtual std::string Format() const override final { return m_pPeer->Format(); }
+	std::string Format() const final { return m_pPeer->Format(); }
 
 private:
 	EDirection m_direction;

@@ -22,13 +22,13 @@ public:
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;
 	bool Rewind(const uint64_t size);
 
-	virtual Hash Root(const uint64_t size) const override final;
-	virtual uint64_t GetSize() const override final { return m_pHashFile->GetSize(); }
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const override final { return std::make_unique<Hash>(m_pHashFile->GetDataAt(mmrIndex)); }
-	virtual std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const override final;
+	Hash Root(const uint64_t size) const final;
+	uint64_t GetSize() const final { return m_pHashFile->GetSize(); }
+	std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const final { return std::make_unique<Hash>(m_pHashFile->GetDataAt(mmrIndex)); }
+	std::vector<Hash> GetLastLeafHashes(const uint64_t numHashes) const final;
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
+	void Commit() final;
+	void Rollback() noexcept final;
 
 	void ApplyKernel(const TransactionKernel& kernel);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Traits/Jsonable.h>
+#include <Wallet/Models/Slate/Slate.h>
 #include <string>
 
 class SendResponse : public Traits::IJsonable

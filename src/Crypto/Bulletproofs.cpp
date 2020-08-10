@@ -3,7 +3,7 @@
 
 #include <secp256k1-zkp/secp256k1_bulletproofs.h>
 #include <Common/Util/FunctionalUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Crypto/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
@@ -84,7 +84,7 @@ RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretK
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
-	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey randomSeed = CSPRNG::GenerateRandom32();
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
 	if (randomizeResult != 1)
 	{

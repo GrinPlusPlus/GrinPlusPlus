@@ -36,7 +36,8 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 
 	// 1. Check for own outputs in new blocks.
 	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
-	std::vector<OutputDataEntity> restoredOutputs = OutputRestorer(m_config, m_pNodeClient, keyChain).FindAndRewindOutputs(pBatch, fromGenesis);
+	OutputRestorer restorer(m_config, m_pNodeClient, keyChain);
+	std::vector<OutputDataEntity> restoredOutputs = restorer.FindAndRewindOutputs(pBatch.GetShared(), fromGenesis);
 
 	// 2. For each restored output, look for OutputDataEntity with matching commitment.
 	for (OutputDataEntity& restoredOutput : restoredOutputs)
@@ -106,7 +107,6 @@ void WalletRefresher::RefreshOutputs(const SecureVector& masterSeed, Writer<IWal
 		}*/
 
 		// TODO: What if commitment has mmr_index?
-		WALLET_TRACE_F("Refreshing output with commitment: {}", commitment);
 		commitments.push_back(commitment);		
 	}
 

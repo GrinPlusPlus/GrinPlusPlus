@@ -5,12 +5,12 @@
 #include <Models/MinedBlock.h>
 
 #include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <PMMR/HeaderMMR.h>
 #include <PMMR/TxHashSet.h>
 #include <Database/BlockDb.h>
 #include <Common/Util/TimeUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Consensus/Common.h>
 
@@ -47,7 +47,7 @@ public:
 			Test::Tx tx = txBuilder.BuildCoinbaseTx(keyChainPath, coinbaseAmount);
 
 			FullBlock block = MineNextBlock(pPreviousHeader, *tx.pTransaction, {});
-			if (m_pTestServer->GetBlockChainServer()->AddBlock(block) != EBlockChainStatus::SUCCESS)
+			if (m_pTestServer->GetBlockChain()->AddBlock(block) != EBlockChainStatus::SUCCESS)
 			{
 				throw std::exception();
 			}
@@ -93,7 +93,7 @@ public:
 			roots.GetKernelInfo().size,
 			pPrevHeader->GetTotalDifficulty() + 1,
 			10,
-			RandomNumberGenerator::GenerateRandom(0, UINT64_MAX),
+			CSPRNG::GenerateRandom(0, UINT64_MAX),
 			GeneratePoW(pPrevHeader)
 		);
 

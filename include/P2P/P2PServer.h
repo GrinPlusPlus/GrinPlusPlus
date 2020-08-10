@@ -22,7 +22,7 @@
 #endif
 
 // Forward Declarations
-class IBlockChainServer;
+class IBlockChain;
 class IDatabase;
 
 //
@@ -72,9 +72,9 @@ namespace P2PAPI
 	//
 	P2P_API IP2PServerPtr StartP2PServer(
 		const Context::Ptr& pContext,
-		IBlockChainServerPtr pBlockChainServer,
+		const std::shared_ptr<IBlockChain>& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		IDatabasePtr pDatabase,
-		ITransactionPoolPtr pTransactionPool
+		const ITransactionPool::Ptr& pTransactionPool
 	);
 }

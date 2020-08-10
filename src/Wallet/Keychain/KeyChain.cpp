@@ -2,6 +2,7 @@
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
+#include <Crypto/CSPRNG.h>
 #include <Crypto/ED25519.h>
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Common/Exceptions/UnimplementedException.h>
@@ -22,7 +23,7 @@ KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed
 
 KeyChain KeyChain::FromRandom(const Config& config)
 {
-	SecretKey masterSeed(RandomNumberGenerator::GenerateRandom32().GetData());
+	SecretKey masterSeed(CSPRNG::GenerateRandom32().GetData());
 	return KeyChain::FromSeed(config, masterSeed.GetSecure());
 }
 

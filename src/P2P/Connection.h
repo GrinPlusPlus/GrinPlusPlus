@@ -4,9 +4,9 @@
 
 #include <Core/Enums/ProtocolVersion.h>
 #include <Common/ConcurrentQueue.h>
-#include <BlockChain/BlockChainServer.h>
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
+#include <P2P/SyncStatus.h>
 #include <Config/Config.h>
 #include <atomic>
 #include <queue>
@@ -14,7 +14,6 @@
 // Forward Declarations
 class IMessage;
 class ConnectionManager;
-class HandShake;
 class MessageProcessor;
 class MessageRetriever;
 
@@ -23,9 +22,11 @@ class MessageRetriever;
 // Each Connection will run on its own thread, and will watch the socket for messages,
 // and will ping the peer when it hasn't been heard from in a while.
 //
-class Connection : public Traits::IPrintable
+class Connection : public Traits::IPrintable, public std::enable_shared_from_this<Connection>
 {
 public:
+	using Ptr = std::shared_ptr<Connection>;
+
 	Connection(
 		const Config& config,
 		const SocketPtr& pSocket,
@@ -33,23 +34,38 @@ public:
 		ConnectionManager& connectionManager,
 		const ConnectedPeer& connectedPeer,
 		SyncStatusConstPtr pSyncStatus,
-		std::shared_ptr<HandShake> pHandShake,
 		const std::weak_ptr<MessageProcessor>& pMessageProcessor
-	);
+	)	: m_config(config),
+		m_pSocket(pSocket),
+		m_connectionId(connectionId),
+		m_connectionManager(connectionManager),
+		m_connectedPeer(connectedPeer),
+		m_pSyncStatus(pSyncStatus),
+		m_pMessageProcessor(pMessageProcessor),
+		m_terminate(false) { }
+
 	Connection(const Connection&) = delete;
 	Connection& operator=(const Connection&) = delete;
 	Connection(Connection&&) = delete;
-	~Connection();
+	~Connection() { Disconnect(true); }
 
-	static std::shared_ptr<Connection> Create(
+	static Connection::Ptr CreateInbound(
+		const PeerPtr& pPeer,
 		const SocketPtr& pSocket,
 		const uint64_t connectionId,
 		const Config& config,
 		ConnectionManager& connectionManager,
-		IBlockChainServerPtr pBlockChainServer,
-		const ConnectedPeer& connectedPeer,
 		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-		SyncStatusConstPtr pSyncStatus
+		const SyncStatusConstPtr& pSyncStatus
+	);
+
+	static Connection::Ptr CreateOutbound(
+		const PeerPtr& pPeer,
+		const uint64_t connectionId,
+		const Config& config,
+		ConnectionManager& connectionManager,
+		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
+		const SyncStatusConstPtr& pSyncStatus
 	);
 
 	void Disconnect(const bool wait = false);
@@ -78,11 +94,13 @@ public:
 private:
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 
+	void Connect();
+	void Run();
+
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
 
-	std::shared_ptr<HandShake> m_pHandShake;
 	std::weak_ptr<MessageProcessor> m_pMessageProcessor;
 
 	std::atomic<bool> m_terminate;

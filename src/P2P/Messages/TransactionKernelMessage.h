@@ -37,12 +37,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new TransactionKernelMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new TransactionKernelMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TransactionKernelMsg; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::TransactionKernelMsg; }
 	const Hash& GetKernelHash() const { return m_kernelHash; }
 
 	//
@@ -55,7 +55,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.AppendBigInteger<32>(m_kernelHash);
 	}

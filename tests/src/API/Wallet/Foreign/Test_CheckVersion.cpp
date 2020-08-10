@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <API/Wallet/Foreign/ForeignServer.h>
+#include <API/Wallet/Foreign/Models/CheckVersionResponse.h>
 #include <Net/Clients/RPC/RPCClient.h>
 
 #include <TestServer.h>

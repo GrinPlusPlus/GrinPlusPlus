@@ -1,14 +1,14 @@
 #include <Crypto/Age.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/Curve25519.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Crypto/ChaChaPoly.h>
 
 std::vector<uint8_t> Age::Encrypt(
     const std::vector<x25519_public_key_t>& recipients,
     const std::vector<uint8_t>& payload)
 {
-    CBigInteger<16> file_key(RandomNumberGenerator().GenerateRandomBytes(16).data());
+    CBigInteger<16> file_key(CSPRNG().GenerateRandomBytes(16).data());
 
     SecretKey mac_key = Crypto::HKDF(
         std::nullopt,
@@ -19,7 +19,7 @@ std::vector<uint8_t> Age::Encrypt(
 
     age::Header header = age::Header::Create(mac_key, recipient_lines);
 
-    CBigInteger<16> nonce(RandomNumberGenerator().GenerateRandomBytes(16).data());
+    CBigInteger<16> nonce(CSPRNG().GenerateRandomBytes(16).data());
     SecretKey payload_key = Crypto::HKDF(
         std::make_optional(nonce.GetData()),
         "payload",

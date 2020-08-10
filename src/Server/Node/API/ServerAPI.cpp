@@ -56,7 +56,7 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 	
-	auto pTip = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+	auto pTip = pServer->m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 	if (pTip == nullptr)
 	{
 		return HTTPUtil::BuildInternalErrorResponse(conn, "Failed to find tip.");
@@ -90,7 +90,7 @@ int ServerAPI::GetStatus_Handler(struct mg_connection* conn, void* pNodeContext)
 	tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
 	statusNode["chain"] = tipNode;
 
-	const uint64_t headerHeight = pServer->m_pBlockChainServer->GetHeight(EChainType::CANDIDATE);
+	const uint64_t headerHeight = pServer->m_pBlockChain->GetHeight(EChainType::CANDIDATE);
 	statusNode["header_height"] = headerHeight;
 
 	return HTTPUtil::BuildSuccessResponse(conn, statusNode.toStyledString());
@@ -135,7 +135,7 @@ int ServerAPI::ResyncChain_Handler(struct mg_connection* conn, void* pNodeContex
 {
 	NodeContext* pServer = (NodeContext*)pNodeContext;
 
-	pServer->m_pBlockChainServer->ResyncChain();
+	pServer->m_pBlockChain->ResyncChain();
 	pServer->m_pP2PServer->UnbanAllPeers();
 
 	return HTTPUtil::BuildSuccessResponse(conn, "");

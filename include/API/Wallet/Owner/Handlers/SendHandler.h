@@ -7,7 +7,6 @@
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Tor/TorConnection.h>
 #include <Net/Tor/TorProcess.h>
-#include <Net/Tor/TorAddressParser.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Common/Util/FileUtil.h>
 #include <API/Wallet/Owner/Models/Errors.h>

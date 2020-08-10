@@ -6,20 +6,20 @@
 
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 
 Dandelion::Dandelion(
 	const Config& config,
 	ConnectionManager& connectionManager,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-	ITransactionPoolPtr pTransactionPool,
+	const ITransactionPool::Ptr& pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 	: m_config(config), 
 	m_connectionManager(connectionManager), 
-	m_pBlockChainServer(pBlockChainServer),
+	m_pBlockChain(pBlockChain),
 	m_pTxHashSetManager(pTxHashSetManager),
 	m_pTransactionPool(pTransactionPool),
 	m_pBlockDB(pBlockDB),
@@ -39,15 +39,15 @@ Dandelion::~Dandelion()
 std::shared_ptr<Dandelion> Dandelion::Create(
 	const Config& config,
 	ConnectionManager& connectionManager,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
-	ITransactionPoolPtr pTransactionPool,
+	const ITransactionPool::Ptr& pTransactionPool,
 	std::shared_ptr<const Locked<IBlockDB>> pBlockDB)
 {
 	auto pDandelion = std::shared_ptr<Dandelion>(new Dandelion(
 		config,
 		connectionManager,
-		pBlockChainServer,
+		pBlockChain,
 		pTxHashSetManager,
 		pTransactionPool,
 		pBlockDB
@@ -120,7 +120,7 @@ bool Dandelion::ProcessStemPhase()
 
 		const uint16_t relaySeconds = m_config.GetNodeConfig().GetDandelion().GetRelaySeconds();
 		m_relayExpirationTime = std::chrono::system_clock::now() + std::chrono::seconds(relaySeconds);
-		const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
+		const size_t index = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
 		m_relayPeer = mostWorkPeers[index];
 	}
 
@@ -155,7 +155,7 @@ bool Dandelion::ProcessStemPhase()
 		if (!success)
 		{
 			LOG_WARNING("Failed to stem, fluffing instead");
-			const bool added = m_pBlockChainServer->AddTransaction(pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
+			const bool added = m_pBlockChain->AddTransaction(pTransactionToStem, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS;
 			if (added)
 			{
 				m_connectionManager.BroadcastMessage(TransactionMessage(pTransactionToStem), 0);
@@ -204,7 +204,7 @@ bool Dandelion::ProcessExpiredEntries()
 		LOG_INFO_F("{} transactions expired, fluffing now", expiredTransactions.size());
 		for (auto& pTransaction : expiredTransactions)
 		{
-			if (m_pBlockChainServer->AddTransaction(pTransaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
+			if (m_pBlockChain->AddTransaction(pTransaction, EPoolType::MEMPOOL) == EBlockChainStatus::SUCCESS)
 			{
 				m_connectionManager.BroadcastMessage(TransactionMessage(pTransaction), 0);
 			}

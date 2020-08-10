@@ -25,7 +25,7 @@ public:
 	BlockHeaderPtr GetFlushedBlockHeader() const noexcept final { return m_pBlockHeaderBackup; }
 
 	bool IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transaction& transaction) const final;
-	std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus) final;
+	std::unique_ptr<BlockSums> ValidateTxHashSet(const BlockHeader& header, const IBlockChain& blockChain, SyncStatus& syncStatus) final;
 	bool ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& block) final;
 	bool ValidateRoots(const BlockHeader& blockHeader) const final;
 	TxHashSetRoots GetRoots(const std::shared_ptr<const IBlockDB>& pBlockDB, const TransactionBody& body) final;

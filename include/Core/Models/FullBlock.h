@@ -116,7 +116,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return m_pBlockHeader->Format(); }
+	std::string Format() const final { return m_pBlockHeader->Format(); }
 
 private:
 	BlockHeaderPtr m_pBlockHeader;

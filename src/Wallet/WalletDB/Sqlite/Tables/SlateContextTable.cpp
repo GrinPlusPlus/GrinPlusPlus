@@ -53,7 +53,7 @@ void SlateContextTable::SaveSlateContext(
 	const std::string slateIdStr = uuids::to_string(slateId);
 	sqlite3_bind_text(stmt, 1, slateIdStr.c_str(), (int)slateIdStr.size(), NULL);
 
-	CBigInteger<16> iv(RandomNumberGenerator::GenerateRandomBytes(16).data());
+	CBigInteger<16> iv(CSPRNG::GenerateRandomBytes(16).data());
 	sqlite3_bind_blob(stmt, 2, (const void*)iv.data(), 16, NULL);
 
 	std::vector<uint8_t> encrypted = Encrypt(masterSeed, slateId, iv, slateContext);

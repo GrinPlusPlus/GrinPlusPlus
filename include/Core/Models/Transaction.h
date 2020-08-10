@@ -68,7 +68,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return GetHash().Format(); }
+	std::string Format() const final { return GetHash().Format(); }
 
 private:
 	// The kernel "offset" k2 excess is k1G after splitting the key k = k1 + k2.

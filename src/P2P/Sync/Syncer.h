@@ -4,7 +4,7 @@
 #include "../Pipeline/Pipeline.h"
 
 #include <P2P/SyncStatus.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <atomic>
 #include <thread>
 
@@ -16,7 +16,7 @@ class Syncer
 public:
 	static std::shared_ptr<Syncer> Create(
 		std::weak_ptr<ConnectionManager> pConnectionManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Pipeline> pPipeline,
 		SyncStatusPtr pSyncStatus
 	);
@@ -25,7 +25,7 @@ public:
 private:
 	Syncer(
 		std::weak_ptr<ConnectionManager> pConnectionManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Pipeline> pPipeline,
 		SyncStatusPtr pSyncStatus
 	);
@@ -34,7 +34,7 @@ private:
 	void UpdateSyncStatus();
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<Pipeline> m_pPipeline;
 	SyncStatusPtr m_pSyncStatus;
 

@@ -1,6 +1,8 @@
 #include <Net/Tor/TorProcess.h>
 #include <Net/Tor/TorException.h>
 #include <Net/Tor/TorAddressParser.h>
+#include <Net/Tor/TorConnection.h>
+#include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
 #include <memory>
 
@@ -27,7 +29,8 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 	try
 	{
 		LOG_INFO("Initializing Tor");
-		pProcess->m_pControl = TorControl::Create(TorConfig(pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath));
+		TorConfig config{ pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath };
+		pProcess->m_pControl = TorControl::Create(config);
 		LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
 	}
 	catch (const std::exception& e)
@@ -40,9 +43,8 @@ bool TorProcess::RetryInit()
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
 
-	if (m_pControl == nullptr)
-	{
-		m_pControl = TorControl::Create(TorConfig(m_socksPort, m_controlPort, m_torDataPath));
+	if (m_pControl == nullptr) {
+		m_pControl = TorControl::Create(TorConfig{ m_socksPort, m_controlPort, m_torDataPath });
 	}
 
 	return m_pControl != nullptr;
@@ -54,18 +56,13 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const ed25519_secret_key_t& 
 
 	try
 	{
-		if (m_pControl != nullptr)
-		{
+		if (m_pControl != nullptr) {
 			const std::string address = m_pControl->AddOnion(secretKey, 80, portNumber);
-			if (!address.empty())
-			{
+			if (!address.empty()) {
 				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
-				if (!torAddress.has_value())
-				{
+				if (!torAddress.has_value()) {
 					LOG_ERROR_F("Failed to parse listener address: {}", address);
-				}
-				else
-				{
+				} else {
 					return std::make_shared<TorAddress>(torAddress.value());
 				}
 			}
@@ -85,18 +82,13 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serialize
 
 	try
 	{
-		if (m_pControl != nullptr)
-		{
+		if (m_pControl != nullptr) {
 			const std::string address = m_pControl->AddOnion(serializedKey, 80, portNumber);
-			if (!address.empty())
-			{
+			if (!address.empty()) {
 				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
-				if (!torAddress.has_value())
-				{
+				if (!torAddress.has_value()) {
 					LOG_ERROR_F("Failed to parse listener address: {}", address);
-				}
-				else
-				{
+				} else {
 					return std::make_shared<TorAddress>(torAddress.value());
 				}
 			}
@@ -116,8 +108,7 @@ bool TorProcess::RemoveListener(const TorAddress& torAddress)
 
 	try
 	{
-		if (m_pControl != nullptr)
-		{
+		if (m_pControl != nullptr) {
 			return m_pControl->DelOnion(torAddress);
 		}
 	}
@@ -135,9 +126,7 @@ std::shared_ptr<TorConnection> TorProcess::Connect(const TorAddress& address)
 
 	try
 	{
-		SocketAddress proxyAddress("127.0.0.1", m_socksPort);
-
-		return std::make_shared<TorConnection>(address, std::move(proxyAddress));
+		return std::make_shared<TorConnection>(address, SocketAddress{ "127.0.0.1", m_socksPort });
 	}
 	catch (std::exception& e)
 	{

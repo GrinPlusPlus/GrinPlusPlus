@@ -121,7 +121,7 @@ Slate SendSlateBuilder::Build(
 	}
 
 	// Select random transaction offset, and calculate secret key used in kernel signature.
-	BlindingFactor transactionOffset = RandomNumberGenerator::GenerateRandom32();
+	BlindingFactor transactionOffset = CSPRNG::GenerateRandom32();
 	SigningKeys signing_keys = SlateUtil::CalculateSigningKeys(
 		inputs,
 		changeOutputs,

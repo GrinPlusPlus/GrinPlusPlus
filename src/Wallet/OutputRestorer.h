@@ -9,10 +9,11 @@
 class OutputRestorer
 {
 public:
-	OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain);
+	OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain)
+		: m_config(config), m_pNodeClient(pNodeClient), m_keyChain(keyChain) { }
 
 	std::vector<OutputDataEntity> FindAndRewindOutputs(
-		Writer<IWalletDB> pBatch,
+		const std::shared_ptr<IWalletDB>& pBatch,
 		const bool fromGenesis
 	) const;
 

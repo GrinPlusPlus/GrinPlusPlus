@@ -7,7 +7,7 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Database/BlockDb.h>
 #include <Common/Logger.h>
 #include <P2P/SyncStatus.h>
@@ -79,14 +79,14 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 	return true;
 }
 
-std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChainServer& blockChainServer, SyncStatus& syncStatus)
+std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& header, const IBlockChain& blockChain, SyncStatus& syncStatus)
 {
 	std::unique_ptr<BlockSums> pBlockSums = nullptr;
 
 	try
 	{
 		LOG_INFO("Validating TxHashSet for block " + header.GetHash().ToHex());
-		pBlockSums = TxHashSetValidator(blockChainServer).Validate(*this, header, syncStatus);
+		pBlockSums = TxHashSetValidator(blockChain).Validate(*this, header, syncStatus);
 		if (pBlockSums != nullptr)
 		{
 			LOG_INFO("Successfully validated TxHashSet");

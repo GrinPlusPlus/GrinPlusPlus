@@ -1,12 +1,9 @@
 #pragma once
 
-#include "../ConnectionManager.h"
-
 #include <Crypto/Hash.h>
 #include <P2P/Peer.h>
 #include <TxPool/PoolType.h>
 #include <Core/Models/Transaction.h>
-#include <BlockChain/BlockChainServer.h>
 #include <Common/ConcurrentQueue.h>
 #include <string>
 #include <cstdint>
@@ -17,6 +14,8 @@
 // Forward Declarations
 class Config;
 class Connection;
+class ConnectionManager;
+class IBlockChain;
 class TxHashSetArchiveMessage;
 
 class TransactionPipe
@@ -24,19 +23,23 @@ class TransactionPipe
 public:
 	static std::shared_ptr<TransactionPipe> Create(
 		const Config& config,
-		ConnectionManagerPtr pConnectionManager,
-		IBlockChainServerPtr pBlockChainServer
+		const std::shared_ptr<ConnectionManager>& pConnectionManager,
+		const std::shared_ptr<IBlockChain>& pBlockChain
 	);
 	~TransactionPipe();
 
 	bool AddTransactionToProcess(Connection& connection, const TransactionPtr& pTransaction, const EPoolType poolType);
 
 private:
-	TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer);
+	TransactionPipe(
+		const Config& config,
+		const std::shared_ptr<ConnectionManager>& pConnectionManager,
+		const std::shared_ptr<IBlockChain>& pBlockChain
+	);
 
 	const Config& m_config;
-	ConnectionManagerPtr m_pConnectionManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	std::shared_ptr<ConnectionManager> m_pConnectionManager;
+	std::shared_ptr<IBlockChain> m_pBlockChain;
 
 	static void Thread_ProcessTransactions(TransactionPipe& pipeline);
 	std::thread m_transactionThread;

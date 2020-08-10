@@ -3,12 +3,12 @@
 #include "../ConnectionManager.h"
 #include "../Pipeline/Pipeline.h"
 
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <chrono>
 #include <deque>
 #include <unordered_set>
 #include <unordered_map>
-#include <stdint.h>
+#include <cstdint>
 
 // Forward Declarations
 class SyncStatus;
@@ -17,10 +17,15 @@ class BlockSyncer
 {
 public:
 	BlockSyncer(
-		std::weak_ptr<ConnectionManager> pConnectionManager,
-		IBlockChainServerPtr pBlockChainServer,
-		std::shared_ptr<Pipeline> pPipeline
-	);
+		const std::weak_ptr<ConnectionManager>& pConnectionManager,
+		const IBlockChain::Ptr& pBlockChain,
+		const std::shared_ptr<Pipeline>& pPipeline
+	) : m_pConnectionManager(pConnectionManager),
+		m_pBlockChain(pBlockChain),
+		m_pPipeline(pPipeline),
+		m_timeout(std::chrono::system_clock::now()),
+		m_lastHeight(0),
+		m_highestRequested(0) { }
 
 	bool SyncBlocks(const SyncStatus& syncStatus, const bool startup);
 
@@ -30,7 +35,7 @@ private:
 	bool IsSlowPeer(PeerConstPtr pPeer) const { return m_slowPeers.find(pPeer->GetIPAddress()) != m_slowPeers.end(); }
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<Pipeline> m_pPipeline;
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeout;

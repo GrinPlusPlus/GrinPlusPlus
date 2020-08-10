@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>    // for types uint32_t,uint64_t
+#include <cstdint>    // for types uint32_t,uint64_t
 
 #include "portable_endian.h"
 
@@ -12,9 +12,13 @@ public:
   uint64_t k2;
   uint64_t k3;
 
-  void setkeys(const char *keybuf);
-
-  uint64_t siphash24(const uint64_t nonce) const;
+  siphash_keys(const char* keybuf)
+  {
+      k0 = htole64(((uint64_t*)keybuf)[0]);
+      k1 = htole64(((uint64_t*)keybuf)[1]);
+      k2 = htole64(((uint64_t*)keybuf)[2]);
+      k3 = htole64(((uint64_t*)keybuf)[3]);
+  }
 };
 
 template <int rotE = 21>

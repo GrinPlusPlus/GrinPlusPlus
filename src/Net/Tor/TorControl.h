@@ -1,12 +1,12 @@
 #pragma once
 
-#include "TorControlClient.h"
-
-#include <Crypto/SecretKey.h>
-#include <Crypto/ED25519.h>
+#include <Crypto/Models/ed25519_secret_key.h>
 #include <Config/TorConfig.h>
 #include <Net/Tor/TorAddress.h>
 #include <Common/ChildProcess.h>
+
+// Forward Declarations
+class TorControlClient;
 
 class TorControl
 {
@@ -28,7 +28,7 @@ private:
 		ChildProcess::UCPtr&& pProcess
 	);
 
-	static bool Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password);
+	static bool Authenticate(const std::shared_ptr<TorControlClient>& pClient, const std::string& password);
 
 	const TorConfig& m_torConfig;
 	std::shared_ptr<TorControlClient> m_pClient;

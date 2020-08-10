@@ -14,33 +14,6 @@
 #include <chrono>
 #include <memory>
 
-Connection::Connection(
-	const Config& config,
-	const SocketPtr& pSocket,
-	const uint64_t connectionId,
-	ConnectionManager& connectionManager,
-	const ConnectedPeer& connectedPeer,
-	SyncStatusConstPtr pSyncStatus,
-	std::shared_ptr<HandShake> pHandShake,
-	const std::weak_ptr<MessageProcessor>& pMessageProcessor)
-	: m_config(config),
-	m_pSocket(pSocket),
-	m_connectionId(connectionId),
-	m_connectionManager(connectionManager),
-	m_connectedPeer(connectedPeer),
-	m_pSyncStatus(pSyncStatus),
-	m_pHandShake(pHandShake),
-	m_pMessageProcessor(pMessageProcessor),
-	m_terminate(false)
-{
-
-}
-
-Connection::~Connection()
-{
-	Disconnect(true);
-}
-
 void Connection::Disconnect(const bool wait)
 {
 	m_terminate = true;
@@ -51,28 +24,51 @@ void Connection::Disconnect(const bool wait)
 	}
 }
 
-std::shared_ptr<Connection> Connection::Create(
+Connection::Ptr Connection::CreateInbound(
+	const PeerPtr& pPeer,
 	const SocketPtr& pSocket,
 	const uint64_t connectionId,
 	const Config& config,
 	ConnectionManager& connectionManager,
-	IBlockChainServerPtr pBlockChainServer,
-	const ConnectedPeer& connectedPeer,
 	const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-	SyncStatusConstPtr pSyncStatus)
+	const SyncStatusConstPtr& pSyncStatus)
 {
-	auto pHandShake = std::make_shared<HandShake>(config, connectionManager, pBlockChainServer);
+	auto pConnection = std::make_shared<Connection>(
+		config,
+		pSocket,
+		connectionId,
+		connectionManager,
+		ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
+		pSyncStatus,
+		pMessageProcessor
+	);
+	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
+	return pConnection;
+}
 
-	auto pConnection = std::shared_ptr<Connection>(new Connection(
+Connection::Ptr Connection::CreateOutbound(
+	const PeerPtr& pPeer,
+	const uint64_t connectionId,
+	const Config& config,
+	ConnectionManager& connectionManager,
+	const std::weak_ptr<MessageProcessor>& pMessageProcessor,
+	const SyncStatusConstPtr& pSyncStatus)
+{
+	ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND, config.GetP2PPort());
+	SocketPtr pSocket = std::make_shared<Socket>(
+		SocketAddress{ pPeer->GetIPAddress(), config.GetP2PPort() }
+	);
+	ConnectionPtr pConnection = std::make_shared<Connection>(
 		config,
 		pSocket,
 		connectionId,
 		connectionManager,
 		connectedPeer,
 		pSyncStatus,
-		pHandShake,
 		pMessageProcessor
-	));
+	);
+
 	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
 	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
 	return pConnection;
@@ -107,68 +103,65 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 {
 	try
 	{
-		EDirection direction = EDirection::INBOUND;
-		bool connected = pConnection->GetSocket()->IsSocketOpen();
-		if (!connected)
-		{
-			pConnection->m_pContext = std::make_shared<asio::io_context>();
-			direction = EDirection::OUTBOUND;
-			connected = pConnection->m_pSocket->Connect(pConnection->m_pContext);
-		}
-
-		bool handshakeSuccess = false;
-		if (connected)
-		{
-			handshakeSuccess = pConnection->m_pHandShake->PerformHandshake(
-				*pConnection->m_pSocket,
-				pConnection->m_connectedPeer,
-				direction
-			);
-		}
-
-		if (handshakeSuccess)
-		{
-			LOG_DEBUG("Successful Handshake");
-			pConnection->m_connectionManager.AddConnection(pConnection);
-			pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-		}
-		else
-		{
-			pConnection->m_pSocket->CloseSocket();
-			pConnection->m_terminate = true;
-			ThreadUtil::Detach(pConnection->m_connectionThread);
-			return;
-		}
+		pConnection->Connect();
 	}
 	catch (...)
 	{
+		if (pConnection->m_pSocket->IsSocketOpen()) {
+			pConnection->m_pSocket->CloseSocket();
+		}
+
         LOG_ERROR("Exception caught");
         pConnection->m_terminate = true;
 		ThreadUtil::Detach(pConnection->m_connectionThread);
 		return;
 	}
 
-	pConnection->m_connectedPeer.GetPeer()->SetConnected(true);
+	pConnection->GetPeer()->SetConnected(true);
+	pConnection->Run();
+	pConnection->GetSocket()->CloseSocket();
+	pConnection->GetPeer()->SetConnected(false);
+}
 
-	SyncStatusConstPtr pSyncStatus = pConnection->m_pSyncStatus;
+void Connection::Connect()
+{
+	EDirection direction = m_pSocket->IsSocketOpen() ? EDirection::INBOUND : EDirection::OUTBOUND;
+	if (direction == EDirection::OUTBOUND)
+	{
+		m_pContext = std::make_shared<asio::io_context>();
+		if (!m_pSocket->Connect(m_pContext)) {
+			throw std::exception();
+		}
+	}
 
+	HandShake handShake(m_config, m_connectionManager, m_pSyncStatus);
+	if (!handShake.PerformHandshake(*m_pSocket, m_connectedPeer, direction)) {
+		throw std::exception();
+	}
+
+	LOG_DEBUG("Successful Handshake");
+	m_connectionManager.AddConnection(shared_from_this());
+	SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+}
+
+void Connection::Run()
+{
 	auto lastPingTime = std::chrono::system_clock::now();
 	auto lastReceivedMessageTime = std::chrono::system_clock::now();
 
-	while (!pConnection->m_terminate && !pConnection->GetPeer()->IsBanned())
+	while (!m_terminate && !GetPeer()->IsBanned())
 	{
-		if (pConnection->ExceedsRateLimit())
-		{
-			LOG_WARNING_F("Banning peer ({}) for exceeding rate limit.", pConnection->GetIPAddress());
-			pConnection->GetPeer()->Ban(EBanReason::Abusive);
+		if (ExceedsRateLimit()) {
+			LOG_WARNING_F("Banning peer ({}) for exceeding rate limit.", GetIPAddress());
+			GetPeer()->Ban(EBanReason::Abusive);
 			break;
 		}
 
 		auto now = std::chrono::system_clock::now();
-		if (lastPingTime + std::chrono::seconds(10) < now)
-		{
-			const PingMessage pingMessage(pSyncStatus->GetBlockDifficulty(), pSyncStatus->GetBlockHeight());
-			pConnection->AddToSendQueue(pingMessage);
+		if (lastPingTime + std::chrono::seconds(10) < now) {
+			uint64_t block_difficulty = m_pSyncStatus->GetBlockDifficulty();
+			uint64_t block_height = m_pSyncStatus->GetBlockHeight();
+			AddToSendQueue(PingMessage{ block_difficulty, block_height });
 
 			lastPingTime = now;
 		}
@@ -178,42 +171,37 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			bool messageSentOrReceived = false;
 
 			// Check for received messages and if there is a new message, process it.
-			std::unique_ptr<RawMessage> pRawMessage = MessageRetriever(pConnection->m_config).RetrieveMessage(
-				*pConnection->m_pSocket,
-				*pConnection->GetPeer(),
+			std::unique_ptr<RawMessage> pRawMessage = MessageRetriever(m_config).RetrieveMessage(
+				*m_pSocket,
+				*GetPeer(),
 				Socket::NON_BLOCKING
 			);
 
-			if (pRawMessage != nullptr)
-			{
-				auto pMessageProcessor = pConnection->m_pMessageProcessor.lock();
-				if (pMessageProcessor != nullptr)
-				{
-					pMessageProcessor->ProcessMessage(*pConnection, *pRawMessage);
+			if (pRawMessage != nullptr) {
+				auto pMessageProcessor = m_pMessageProcessor.lock();
+				if (pMessageProcessor != nullptr) {
+					pMessageProcessor->ProcessMessage(*this, *pRawMessage);
 				}
-                
-                lastReceivedMessageTime = std::chrono::system_clock::now();
+
+				lastReceivedMessageTime = std::chrono::system_clock::now();
 				messageSentOrReceived = true;
 			}
 
 			// Send the next message in the queue, if one exists.
-			auto pMessageToSend = pConnection->m_sendQueue.copy_front();
-			if (pMessageToSend != nullptr)
-			{
+			auto pMessageToSend = m_sendQueue.copy_front();
+			if (pMessageToSend != nullptr) {
 				IMessagePtr pMessage = *pMessageToSend;
-				pConnection->m_sendQueue.pop_front(1);
-				pConnection->SendMsg(*pMessage);
+				m_sendQueue.pop_front(1);
+				SendMsg(*pMessage);
 				messageSentOrReceived = true;
 			}
-			
-			if (!messageSentOrReceived)
-			{
-				if ((lastReceivedMessageTime + std::chrono::seconds(30)) < std::chrono::system_clock::now())
-				{
+
+			if (!messageSentOrReceived) {
+				if ((lastReceivedMessageTime + std::chrono::seconds(30)) < std::chrono::system_clock::now()) {
 					break;
 				}
 
-				ThreadUtil::SleepFor(std::chrono::milliseconds(5), pConnection->m_terminate);
+				ThreadUtil::SleepFor(std::chrono::milliseconds(5), m_terminate);
 			}
 		}
 		catch (const DeserializationException&)
@@ -223,7 +211,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 		}
 		catch (const SocketException&)
 		{
-			#ifdef _WIN32
+#ifdef _WIN32
 			const int lastError = WSAGetLastError();
 
 			TCHAR* s = NULL;
@@ -234,7 +222,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			LOG_DEBUG("Socket exception occurred: " + errorMessage);
 
 			LocalFree(s);
-			#endif
+#endif
 			break;
 		}
 		catch (const std::exception& e)
@@ -248,9 +236,6 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			break;
 		}
 	}
-
-	pConnection->GetSocket()->CloseSocket();
-	pConnection->m_connectedPeer.GetPeer()->SetConnected(false);
 }
 
 bool Connection::SendMsg(const IMessage& message)

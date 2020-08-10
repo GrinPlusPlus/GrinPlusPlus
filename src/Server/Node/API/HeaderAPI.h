@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <string>
 
 // Forward Declarations
@@ -12,5 +12,5 @@ public:
 	static int GetHeader_Handler(struct mg_connection* conn, void* pNodeContext);
 
 private:
-	static BlockHeaderPtr GetHeader(const std::string& requestedHeader, IBlockChainServerPtr pBlockChainServer);
+	static BlockHeaderPtr GetHeader(const std::string& requestedHeader, const IBlockChain::Ptr& pBlockChain);
 };

@@ -37,12 +37,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new CompactBlockMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new CompactBlockMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::CompactBlockMsg; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::CompactBlockMsg; }
 	const CompactBlock& GetCompactBlock() const { return m_block; }
 
 	//
@@ -55,7 +55,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_block.Serialize(serializer);
 	}

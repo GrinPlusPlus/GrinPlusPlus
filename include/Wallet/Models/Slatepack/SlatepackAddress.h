@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Crypto/Curve25519.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Core/Serialization/Serializer.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorAddressParser.h>
@@ -24,7 +24,7 @@ public:
 
     static SlatepackAddress Random()
     {
-        SecretKey sec_key = RandomNumberGenerator().GenerateRandomBytes(32);
+        SecretKey sec_key = CSPRNG().GenerateRandomBytes(32);
         return SlatepackAddress(ED25519::CalculateKeypair(sec_key).public_key);
     }
 

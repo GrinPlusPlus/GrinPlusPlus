@@ -1,7 +1,7 @@
 #include "CompactBlockFactory.h"
 
 #include <Common/Util/FunctionalUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block)
 {
@@ -27,7 +27,7 @@ CompactBlock CompactBlockFactory::CreateCompactBlock(const FullBlock& block)
 	);
 
 	// Get ShortIds
-	const uint64_t nonce = RandomNumberGenerator::GenerateRandom(0, UINT64_MAX);
+	const uint64_t nonce = CSPRNG::GenerateRandom(0, UINT64_MAX);
 	std::vector<ShortId> kernelIds;
 	FunctionalUtil::transform_if(
 		blockKernels.cbegin(),

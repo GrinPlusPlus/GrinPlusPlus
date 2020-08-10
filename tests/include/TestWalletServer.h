@@ -5,6 +5,7 @@
 #include <TorProcessManager.h>
 #include <Wallet/WalletManager.h>
 #include <API/Wallet/Owner/OwnerServer.h>
+#include <Net/Clients/RPC/RPCClient.h>
 
 class TestWalletServer
 {

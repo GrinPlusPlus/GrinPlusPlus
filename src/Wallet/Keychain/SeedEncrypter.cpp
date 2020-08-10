@@ -2,7 +2,7 @@
 
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 
 SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
@@ -36,7 +36,7 @@ EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, c
 {
 	WALLET_INFO("Encrypting wallet seed");
 
-	CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
+	CBigInteger<32> randomNumber = CSPRNG::GenerateRandom32();
 	CBigInteger<16> iv = CBigInteger<16>(&randomNumber.GetData()[0]);
 	CBigInteger<8> salt(std::vector<unsigned char>(randomNumber.GetData().cbegin() + 16, randomNumber.GetData().cbegin() + 24));
 

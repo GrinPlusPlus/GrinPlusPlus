@@ -6,7 +6,7 @@
 #include <secp256k1-zkp/secp256k1_commitment.h>
 #include <secp256k1-zkp/secp256k1_schnorrsig.h>
 #include <Common/Logger.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Crypto/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
@@ -33,7 +33,7 @@ SecretKey AggSig::GenerateSecureNonce() const
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
 	std::vector<unsigned char> nonce(32);
-	const SecretKey seed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey seed = CSPRNG::GenerateRandom32();
 
 	const int result = secp256k1_aggsig_export_secnonce_single(m_pContext, nonce.data(), seed.data());
 	if (result == 1)
@@ -48,7 +48,7 @@ std::unique_ptr<Signature> AggSig::BuildSignature(const SecretKey& secretKey, co
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
-	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey randomSeed = CSPRNG::GenerateRandom32();
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
 	if (randomizeResult != 1)
 	{
@@ -99,7 +99,7 @@ std::unique_ptr<CompactSignature> AggSig::CalculatePartialSignature(const Secret
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
-	const SecretKey randomSeed = RandomNumberGenerator::GenerateRandom32();
+	const SecretKey randomSeed = CSPRNG::GenerateRandom32();
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
     if (randomizeResult != 1)
     {

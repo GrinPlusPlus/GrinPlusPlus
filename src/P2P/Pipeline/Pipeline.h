@@ -7,7 +7,7 @@
 #include "TxHashSetPipe.h"
 
 #include <P2P/SyncStatus.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <memory>
 
 // Forward Declarations
@@ -19,12 +19,12 @@ public:
 	static std::shared_ptr<Pipeline> Create(
 		const Config& config,
 		ConnectionManagerPtr pConnectionManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		SyncStatusPtr pSyncStatus)
 	{
-		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pBlockChainServer);
-		std::shared_ptr<TransactionPipe> pTransactionPipe = TransactionPipe::Create(config, pConnectionManager, pBlockChainServer);
-		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pBlockChainServer, pSyncStatus);
+		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pBlockChain);
+		std::shared_ptr<TransactionPipe> pTransactionPipe = TransactionPipe::Create(config, pConnectionManager, pBlockChain);
+		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pBlockChain, pSyncStatus);
 
 		return std::shared_ptr<Pipeline>(new Pipeline(pBlockPipe, pTransactionPipe, pTxHashSetPipe));
 	}

@@ -4,18 +4,10 @@
 #include <Core/Util/TransactionUtil.h>
 #include <Database/BlockDb.h>
 #include <Consensus/BlockTime.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 #include <Core/Util/FeeUtil.h>
 #include <Core/Validation/TransactionValidator.h>
-
-TransactionPool::TransactionPool(const Config& config)
-	: m_config(config), 
-	m_memPool(),
-	m_stemPool()
-{
-
-}
 
 std::vector<TransactionPtr> TransactionPool::GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const
 {
@@ -81,7 +73,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 	else if (poolType == EPoolType::STEMPOOL)
 	{
-		const uint8_t random = (uint8_t)RandomNumberGenerator::GenerateRandom(0, 100);
+		const uint8_t random = (uint8_t)CSPRNG::GenerateRandom(0, 100);
 		if (random <= m_config.GetNodeConfig().GetDandelion().GetStemProbability())
 		{
 			LOG_INFO_F("Stemming transaction ({})", *pTransaction);
@@ -92,10 +84,6 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 			LOG_INFO_F("Fluffing transaction ({})", *pTransaction);
 			m_stemPool.AddTransaction(pTransaction, EDandelionStatus::TO_FLUFF);
 		}
-	}
-	else if (poolType == EPoolType::JOINPOOL)
-	{
-		m_joinPool.AddTransaction(pTransaction, EDandelionStatus::TO_FLUFF);
 	}
 
 	return EAddTransactionStatus::ADDED;
@@ -131,7 +119,6 @@ void TransactionPool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, I
 	// Now reconcile our stempool, accounting for the updated txpool txs.
 	auto pMemPoolAggTx = m_memPool.Aggregate();
 	m_stemPool.ReconcileBlock(pBlockDB, pTxHashSet, block, pMemPoolAggTx);
-	m_joinPool.ReconcileBlock(pBlockDB, pTxHashSet, block, pMemPoolAggTx);
 }
 
 TransactionPtr TransactionPool::GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet)
@@ -202,22 +189,8 @@ std::vector<TransactionPtr> TransactionPool::GetExpiredTransactions() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
-	const uint16_t embargoSeconds = m_config.GetNodeConfig().GetDandelion().GetEmbargoSeconds() + (uint16_t)RandomNumberGenerator::GenerateRandom(0, 30);
+	const uint16_t embargoSeconds = m_config.GetNodeConfig().GetDandelion().GetEmbargoSeconds() + (uint16_t)CSPRNG::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
-}
-
-void TransactionPool::FluffJoinPool()
-{
-	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
-	TransactionPtr pAggregatedTx = m_joinPool.Aggregate();
-	if (pAggregatedTx != nullptr)
-	{
-		LOG_INFO_F("Fluffing transaction with {} kernels", pAggregatedTx->GetKernels().size());
-		m_stemPool.AddTransaction(pAggregatedTx, EDandelionStatus::TO_FLUFF);
-	}
-
-	m_joinPool.Clear();
 }
 
 namespace TxPoolAPI

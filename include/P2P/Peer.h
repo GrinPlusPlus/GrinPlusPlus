@@ -187,7 +187,7 @@ public:
 		return json;
 	}
 
-	virtual std::string Format() const override final { return m_ipAddress.Format(); }
+	std::string Format() const final { return m_ipAddress.Format(); }
 
 private:
 	std::atomic_bool m_dirty;

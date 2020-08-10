@@ -2,7 +2,7 @@
 
 #include <Core/Context.h>
 #include <Wallet/NodeClient.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
@@ -13,12 +13,12 @@ public:
 	TestNodeClient(
 		const IDatabasePtr& pDatabase,
 		Locked<TxHashSetManager> pTxHashSetManager,
-		const ITransactionPoolPtr& pTransactionPool,
-		const IBlockChainServerPtr& pBlockChainServer)
+		const ITransactionPool::Ptr& pTransactionPool,
+		const IBlockChain::Ptr& pBlockChain)
 		: m_pDatabase(pDatabase),
 		m_pTxHashSetManager(pTxHashSetManager),
 		m_pTransactionPool(pTransactionPool),
-		m_pBlockChainServer(pBlockChainServer)
+		m_pBlockChain(pBlockChain)
 	{
 
 	}
@@ -26,12 +26,12 @@ public:
 
 	uint64_t GetChainHeight() const final
 	{
-		return m_pBlockChainServer->GetHeight(EChainType::CONFIRMED);
+		return m_pBlockChain->GetHeight(EChainType::CONFIRMED);
 	}
 
 	BlockHeaderPtr GetBlockHeader(const uint64_t height) const final
 	{
-		return m_pBlockChainServer->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);
+		return m_pBlockChain->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);
 	}
 
 	std::map<Commitment, OutputLocation> GetOutputsByCommitment(const std::vector<Commitment>& commitments) const final
@@ -51,7 +51,7 @@ public:
 
 	std::vector<BlockWithOutputs> GetBlockOutputs(const uint64_t startHeight, const uint64_t maxHeight) const final
 	{
-		return m_pBlockChainServer->GetOutputsByHeight(startHeight, maxHeight);
+		return m_pBlockChain->GetOutputsByHeight(startHeight, maxHeight);
 	}
 
 	std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const final
@@ -68,7 +68,7 @@ public:
 
 	bool PostTransaction(TransactionPtr pTransaction, const EPoolType poolType) final
 	{
-		auto pTipHeader = m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+		auto pTipHeader = m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTipHeader != nullptr)
 		{
 			auto pBlockDB = m_pDatabase->GetBlockDB()->Read();
@@ -103,6 +103,6 @@ public:
 private:
 	IDatabasePtr m_pDatabase;
 	Locked<TxHashSetManager> m_pTxHashSetManager;
-	ITransactionPoolPtr m_pTransactionPool;
-	IBlockChainServerPtr m_pBlockChainServer;
+	ITransactionPool::Ptr m_pTransactionPool;
+	IBlockChain::Ptr m_pBlockChain;
 };

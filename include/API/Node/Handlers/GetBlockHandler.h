@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Config/Config.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <API/Wallet/Owner/Models/Errors.h>
@@ -10,7 +10,7 @@
 class GetBlockHandler : public RPCMethod
 {
 public:
-	GetBlockHandler(const IBlockChainServerPtr& pBlockChain)
+	GetBlockHandler(const IBlockChain::Ptr& pBlockChain)
 		: m_pBlockChain(pBlockChain) { }
 	~GetBlockHandler() = default;
 
@@ -53,5 +53,5 @@ public:
 	bool ContainsSecrets() const noexcept final { return false; }
 
 private:
-	IBlockChainServerPtr m_pBlockChain;
+	IBlockChain::Ptr m_pBlockChain;
 };

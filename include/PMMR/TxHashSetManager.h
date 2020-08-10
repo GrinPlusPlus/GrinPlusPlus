@@ -16,6 +16,9 @@
 class TXHASHSET_API TxHashSetManager : public Traits::IBatchable
 {
 public:
+	using Ptr = std::shared_ptr<TxHashSetManager>;
+	using CPtr = std::shared_ptr<TxHashSetManager>;
+
 	TxHashSetManager(const Config& config);
 	~TxHashSetManager() = default;
 
@@ -29,7 +32,7 @@ public:
 	static ITxHashSetPtr LoadFromZip(const Config& config, const fs::path& zipFilePath, BlockHeaderPtr pHeader);
 	fs::path SaveSnapshot(std::shared_ptr<IBlockDB> pBlockDB, BlockHeaderPtr pHeader) const;
 
-	virtual void Commit() override final
+	void Commit() final
 	{
 		if (m_pTxHashSet != nullptr)
 		{
@@ -37,7 +40,7 @@ public:
 		}
 	}
 
-	virtual void Rollback() noexcept override final
+	void Rollback() noexcept final
 	{
 		if (m_pTxHashSet != nullptr)
 		{
@@ -49,6 +52,3 @@ private:
 	const Config& m_config;
 	std::shared_ptr<ITxHashSet> m_pTxHashSet;
 };
-
-typedef std::shared_ptr<TxHashSetManager> TxHashSetManagerPtr;
-typedef std::shared_ptr<TxHashSetManager> TxHashSetManagerConstPtr;

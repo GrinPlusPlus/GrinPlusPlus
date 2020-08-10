@@ -12,22 +12,20 @@
 class TransactionPool : public ITransactionPool
 {
 public:
-	TransactionPool(const Config& config);
+	TransactionPool(const Config& config)
+		: m_config(config), m_memPool(), m_stemPool() { }
     virtual ~TransactionPool() = default;
 
-	virtual std::vector<TransactionPtr> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const override final;
-	virtual EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, TransactionPtr pTransaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) override final;
-	virtual std::vector<TransactionPtr> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const override final;
-	virtual TransactionPtr FindTransactionByKernelHash(const Hash& kernelHash) const override final;
-	virtual void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block) override final;
+	std::vector<TransactionPtr> GetTransactionsByShortId(const Hash& hash, const uint64_t nonce, const std::set<ShortId>& missingShortIds) const final;
+	EAddTransactionStatus AddTransaction(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, TransactionPtr pTransaction, const EPoolType poolType, const BlockHeader& lastConfirmedBlock) final;
+	std::vector<TransactionPtr> FindTransactionsByKernel(const std::set<TransactionKernel>& kernels) const final;
+	TransactionPtr FindTransactionByKernelHash(const Hash& kernelHash) const final;
+	void ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet, const FullBlock& block) final;
 
 	// Dandelion
-	virtual TransactionPtr GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
-	virtual TransactionPtr GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) override final;
-	virtual std::vector<TransactionPtr> GetExpiredTransactions() const override final;
-
-	// GrinJoin
-	virtual void FluffJoinPool() override final;
+	TransactionPtr GetTransactionToStem(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) final;
+	TransactionPtr GetTransactionToFluff(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetConstPtr pTxHashSet) final;
+	std::vector<TransactionPtr> GetExpiredTransactions() const final;
 
 private:
 	const Config& m_config;
@@ -35,5 +33,4 @@ private:
 
 	Pool m_memPool;
 	Pool m_stemPool;
-	Pool m_joinPool;
 };

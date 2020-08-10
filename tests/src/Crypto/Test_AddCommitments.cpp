@@ -3,13 +3,13 @@
 #include <secp256k1-zkp/secp256k1_commitment.h>
 #include <secp256k1-zkp/secp256k1_generator.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 TEST_CASE("Crypto::AddCommitment")
 {
 	// Test adding blinded commitment with transparent one
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
+		BlindingFactor blind_a = CSPRNG::GenerateRandom32() / 2;
 
 		Commitment commit_a = Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = Crypto::CommitTransparent(2);
@@ -22,8 +22,8 @@ TEST_CASE("Crypto::AddCommitment")
 
 	// Test adding 2 blinded commitment
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
-		BlindingFactor blind_b = RandomNumberGenerator::GenerateRandom32() / 2;
+		BlindingFactor blind_a = CSPRNG::GenerateRandom32() / 2;
+		BlindingFactor blind_b = CSPRNG::GenerateRandom32() / 2;
 
 		Commitment commit_a = Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = Crypto::CommitBlinded(2, blind_b);
@@ -42,8 +42,8 @@ TEST_CASE("Crypto::AddCommitment")
 
 	// Test adding negative blinded commitment
 	{
-		BlindingFactor blind_a = RandomNumberGenerator::GenerateRandom32() / 2;
-		BlindingFactor blind_b = RandomNumberGenerator::GenerateRandom32() / 2;
+		BlindingFactor blind_a = CSPRNG::GenerateRandom32() / 2;
+		BlindingFactor blind_b = CSPRNG::GenerateRandom32() / 2;
 
 		Commitment commit_a = Crypto::CommitBlinded(3, blind_a);
 		Commitment commit_b = Crypto::CommitBlinded(2, blind_b);

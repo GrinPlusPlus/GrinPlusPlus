@@ -5,15 +5,15 @@
 #include <Common/Util/StringUtil.h>
 #include <Crypto/Crypto.h>
 #include <json/json.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 
 int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 {
-	IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
+	IBlockChain::Ptr pBlockChain = ((NodeContext*)pNodeContext)->m_pBlockChain;
 
 	try
 	{
-		auto pTip = pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+		auto pTip = pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTip != nullptr)
 		{
 			Json::Value chainNode;
@@ -77,7 +77,7 @@ int ChainAPI::GetChainOutputsByHeight_Handler(struct mg_connection* conn, void* 
 
 		Json::Value json;
 
-		std::vector<BlockWithOutputs> blocksWithOutputs = pServer->m_pBlockChainServer->GetOutputsByHeight(startHeight, endHeight);
+		std::vector<BlockWithOutputs> blocksWithOutputs = pServer->m_pBlockChain->GetOutputsByHeight(startHeight, endHeight);
 		for (const BlockWithOutputs& block : blocksWithOutputs)
 		{
 			/*

@@ -2,7 +2,7 @@
 
 #include <Config/Config.h>
 #include <Core/Validation/TransactionValidator.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <API/Wallet/Owner/Models/Errors.h>
@@ -11,7 +11,7 @@
 class PushTransactionHandler : public RPCMethod
 {
 public:
-	PushTransactionHandler(const IBlockChainServerPtr& pBlockChain, const IP2PServerPtr& pP2PServer)
+	PushTransactionHandler(const IBlockChain::Ptr& pBlockChain, const IP2PServerPtr& pP2PServer)
 		: m_pBlockChain(pBlockChain), m_pP2PServer(pP2PServer) { }
 	~PushTransactionHandler() = default;
 
@@ -54,6 +54,6 @@ public:
 	bool ContainsSecrets() const noexcept final { return false; }
 
 private:
-	IBlockChainServerPtr m_pBlockChain;
+	IBlockChain::Ptr m_pBlockChain;
 	IP2PServerPtr m_pP2PServer;
 };

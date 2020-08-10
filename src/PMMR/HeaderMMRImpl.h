@@ -12,19 +12,19 @@ class HeaderMMR : public IHeaderMMR
 public:
 	static std::shared_ptr<HeaderMMR> Load(const fs::path& path);
 
-	virtual void AddHeader(const BlockHeader& header) override final;
-	virtual Hash Root(const uint64_t lastHeight) const override final;
-	virtual void Rewind(const uint64_t size) override final;
+	void AddHeader(const BlockHeader& header) final;
+	Hash Root(const uint64_t lastHeight) const final;
+	void Rewind(const uint64_t size) final;
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
+	void Commit() final;
+	void Rollback() noexcept final;
 
 private:
 	HeaderMMR(std::shared_ptr<Locked<HashFile>> pHashFile);
 
 	std::shared_ptr<Locked<HashFile>> m_pLockedHashFile;
 
-	virtual void OnInitWrite() override final
+	void OnInitWrite() final
 	{
 		SetDirty(false);
 
@@ -33,7 +33,7 @@ private:
 		m_batchDataOpt = std::make_optional(std::move(batch));
 	}
 
-	virtual void OnEndWrite() override final
+	void OnEndWrite() final
 	{
 		m_batchDataOpt = std::nullopt;
 	}

@@ -33,12 +33,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PeerAddressesMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new PeerAddressesMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::PeerAddrs; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::PeerAddrs; }
 	const std::vector<SocketAddress>& GetPeerAddresses() const { return m_peerAddresses; }
 
 	//
@@ -58,7 +58,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint32_t>((uint32_t)m_peerAddresses.size());
 		for (auto iter = m_peerAddresses.cbegin(); iter != m_peerAddresses.cend(); iter++)

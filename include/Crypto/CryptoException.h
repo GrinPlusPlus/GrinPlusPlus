@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <exception>
 
 class CryptoException : public std::exception

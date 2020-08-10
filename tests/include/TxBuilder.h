@@ -4,7 +4,7 @@
 
 #include <Core/Models/Transaction.h>
 #include <Wallet/Keychain/KeyChain.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/CryptoUtil.h>
 #include <tuple>
@@ -45,7 +45,7 @@ public:
         const std::vector<Test::Input>& inputs,
         const std::vector<Test::Output>& outputs)
     {
-        BlindingFactor txOffset = RandomNumberGenerator::GenerateRandom32();
+        BlindingFactor txOffset = CSPRNG::GenerateRandom32();
 
         // Calculate sum inputs blinding factors xI.
         std::vector<BlindingFactor> inputBlindingFactors;

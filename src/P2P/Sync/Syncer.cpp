@@ -3,7 +3,7 @@
 #include "StateSyncer.h"
 #include "BlockSyncer.h"
 
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <P2P/SyncStatus.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
@@ -13,11 +13,11 @@ static const int MINIMUM_NUM_PEERS = 4;
 
 Syncer::Syncer(
 	std::weak_ptr<ConnectionManager> pConnectionManager,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	std::shared_ptr<Pipeline> pPipeline,
 	SyncStatusPtr pSyncStatus)
 	: m_pConnectionManager(pConnectionManager),
-	m_pBlockChainServer(pBlockChainServer),
+	m_pBlockChain(pBlockChain),
 	m_pPipeline(pPipeline),
 	m_pSyncStatus(pSyncStatus),
 	m_terminate(false)
@@ -33,13 +33,13 @@ Syncer::~Syncer()
 
 std::shared_ptr<Syncer> Syncer::Create(
 	std::weak_ptr<ConnectionManager> pConnectionManager,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	std::shared_ptr<Pipeline> pPipeline,
 	SyncStatusPtr pSyncStatus)
 {
 	std::shared_ptr<Syncer> pSyncer = std::shared_ptr<Syncer>(new Syncer(
 		pConnectionManager,
-		pBlockChainServer,
+		pBlockChain,
 		pPipeline,
 		pSyncStatus
 	));
@@ -53,9 +53,9 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	ThreadManagerAPI::SetCurrentThreadName("SYNC");
 	LOG_DEBUG("BEGIN");
 
-	HeaderSyncer headerSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer);
-	StateSyncer stateSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer);
-	BlockSyncer blockSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChainServer, syncer.m_pPipeline);
+	HeaderSyncer headerSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain);
+	StateSyncer stateSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain);
+	BlockSyncer blockSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain, syncer.m_pPipeline);
 	bool startup = true;
 
 	while (!syncer.m_terminate)
@@ -110,6 +110,6 @@ void Syncer::Thread_Sync(Syncer& syncer)
 
 void Syncer::UpdateSyncStatus()
 {
-	m_pBlockChainServer->UpdateSyncStatus(*m_pSyncStatus);
+	m_pBlockChain->UpdateSyncStatus(*m_pSyncStatus);
 	m_pConnectionManager.lock()->UpdateSyncStatus(*m_pSyncStatus);
 }

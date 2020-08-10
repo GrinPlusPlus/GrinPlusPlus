@@ -1,17 +1,14 @@
 #pragma once
 
-#include <Config/Config.h>
-#include <Crypto/SecretKey.h>
-#include <Crypto/ED25519.h>
+#include <Crypto/Models/ed25519_secret_key.h>
 #include <Net/Tor/TorAddress.h>
-#include <Net/Tor/TorConnection.h>
-#include <Common/Util/ThreadUtil.h>
 
 #include <thread>
 #include <mutex>
 
 // Forward Declarations
 class TorControl;
+class TorConnection;
 
 class TorProcess
 {

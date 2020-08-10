@@ -9,24 +9,12 @@
 #include <Common/ShutdownManager.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 
 #include <filesystem.h>
 #include <fstream>
 
 static const int BUFFER_SIZE = 256 * 1024;
-
-TxHashSetPipe::TxHashSetPipe(
-	const Config& config,
-	IBlockChainServerPtr pBlockChainServer,
-	SyncStatusPtr pSyncStatus)
-	: m_config(config),
-	m_pBlockChainServer(pBlockChainServer),
-	m_pSyncStatus(pSyncStatus),
-	m_processing(false)
-{
-
-}
 
 TxHashSetPipe::~TxHashSetPipe()
 {
@@ -35,12 +23,12 @@ TxHashSetPipe::~TxHashSetPipe()
 
 std::shared_ptr<TxHashSetPipe> TxHashSetPipe::Create(
 	const Config& config,
-	IBlockChainServerPtr pBlockChainServer,
+	const IBlockChain::Ptr& pBlockChain,
 	SyncStatusPtr pSyncStatus)
 {
 	return std::shared_ptr<TxHashSetPipe>(new TxHashSetPipe(
 		config,
-		pBlockChainServer,
+		pBlockChain,
 		pSyncStatus
 	));
 }
@@ -143,7 +131,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPe
 		pSyncStatus->UpdateProcessingStatus(0);
 		pSyncStatus->UpdateStatus(ESyncStatus::PROCESSING_TXHASHSET);
 
-		const EBlockChainStatus processStatus = pipeline.m_pBlockChainServer->ProcessTransactionHashSet(blockHash, path, *pSyncStatus);
+		const EBlockChainStatus processStatus = pipeline.m_pBlockChain->ProcessTransactionHashSet(blockHash, path, *pSyncStatus);
 		if (processStatus == EBlockChainStatus::INVALID)
 		{
 			LOG_ERROR("Invalid TxHashSet received.");

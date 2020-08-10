@@ -1,4 +1,4 @@
-#include "BlockChainServerImpl.h"
+#include "BlockChainImpl.h"
 #include "BlockHydrator.h"
 #include "CompactBlockFactory.h"
 #include "Validators/BlockHeaderValidator.h"
@@ -18,7 +18,7 @@
 #include <filesystem.h>
 #include <algorithm>
 
-BlockChainServer::BlockChainServer(
+BlockChain::BlockChain(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
@@ -35,7 +35,7 @@ BlockChainServer::BlockChainServer(
 
 }
 
-std::shared_ptr<BlockChainServer> BlockChainServer::Create(
+std::shared_ptr<BlockChain> BlockChain::Create(
 	const Config& config,
 	std::shared_ptr<Locked<IBlockDB>> pDatabase,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
@@ -98,7 +98,7 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 		FileUtil::WriteTextToFile(versionPath, GRINPP_VERSION);
 	}
 
-	return std::shared_ptr<BlockChainServer>(new BlockChainServer(
+	return std::shared_ptr<BlockChain>(new BlockChain(
 		config,
 		pDatabase,
 		pTxHashSetManager,
@@ -108,27 +108,27 @@ std::shared_ptr<BlockChainServer> BlockChainServer::Create(
 	));
 }
 
-void BlockChainServer::ResyncChain()
+void BlockChain::ResyncChain()
 {
 	ChainResyncer(m_pChainState).ResyncChain();
 }
 
-void BlockChainServer::UpdateSyncStatus(SyncStatus& syncStatus) const
+void BlockChain::UpdateSyncStatus(SyncStatus& syncStatus) const
 {
 	m_pChainState->Read()->UpdateSyncStatus(syncStatus);
 }
 
-uint64_t BlockChainServer::GetHeight(const EChainType chainType) const
+uint64_t BlockChain::GetHeight(const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetHeight(chainType);
 }
 
-uint64_t BlockChainServer::GetTotalDifficulty(const EChainType chainType) const
+uint64_t BlockChain::GetTotalDifficulty(const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetTotalDifficulty(chainType);
 }
 
-EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
+EBlockChainStatus BlockChain::AddBlock(const FullBlock& block)
 {
 	try
 	{
@@ -141,7 +141,7 @@ EBlockChainStatus BlockChainServer::AddBlock(const FullBlock& block)
 	}
 }
 
-EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactBlock)
+EBlockChainStatus BlockChain::AddCompactBlock(const CompactBlock& compactBlock)
 {
 	const Hash& hash = compactBlock.GetHash();
 	const uint64_t height = compactBlock.GetHeight();
@@ -177,7 +177,7 @@ EBlockChainStatus BlockChainServer::AddCompactBlock(const CompactBlock& compactB
 	return EBlockChainStatus::TRANSACTIONS_MISSING;
 }
 
-fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
+fs::path BlockChain::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 {
 	// TODO: Use reader if possible
 	auto pBatch = m_pChainState->BatchWrite(); // DO NOT COMMIT THIS BATCH
@@ -190,7 +190,7 @@ fs::path BlockChainServer::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 	return pBatch->GetTxHashSetManager()->SaveSnapshot(pBatch->GetBlockDB(), pBlockHeader);
 }
 
-EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
+EBlockChainStatus BlockChain::ProcessTransactionHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus)
 {
 	try
 	{
@@ -208,7 +208,7 @@ EBlockChainStatus BlockChainServer::ProcessTransactionHashSet(const Hash& blockH
 	return EBlockChainStatus::INVALID;
 }
 
-EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, const EPoolType poolType)
+EBlockChainStatus BlockChain::AddTransaction(TransactionPtr pTransaction, const EPoolType poolType)
 {
 	try
 	{
@@ -245,12 +245,12 @@ EBlockChainStatus BlockChainServer::AddTransaction(TransactionPtr pTransaction, 
 	return EBlockChainStatus::INVALID;
 }
 
-TransactionPtr BlockChainServer::GetTransactionByKernelHash(const Hash& kernelHash) const
+TransactionPtr BlockChain::GetTransactionByKernelHash(const Hash& kernelHash) const
 {
 	return m_pTransactionPool->FindTransactionByKernelHash(kernelHash);
 }
 
-EBlockChainStatus BlockChainServer::AddBlockHeader(BlockHeaderPtr pBlockHeader)
+EBlockChainStatus BlockChain::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
 	try
 	{
@@ -263,7 +263,7 @@ EBlockChainStatus BlockChainServer::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 	}
 }
 
-EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
+EBlockChainStatus BlockChain::AddBlockHeaders(const std::vector<BlockHeaderPtr>& blockHeaders)
 {
 	try
 	{
@@ -279,7 +279,7 @@ EBlockChainStatus BlockChainServer::AddBlockHeaders(const std::vector<BlockHeade
 	}
 }
 
-std::vector<BlockHeaderPtr> BlockChainServer::GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const
+std::vector<BlockHeaderPtr> BlockChain::GetBlockHeadersByHash(const std::vector<CBigInteger<32>>& hashes) const
 {
 	auto pReader = m_pChainState->Read();
 
@@ -296,27 +296,27 @@ std::vector<BlockHeaderPtr> BlockChainServer::GetBlockHeadersByHash(const std::v
 	return headers;
 }
 
-BlockHeaderPtr BlockChainServer::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
+BlockHeaderPtr BlockChain::GetBlockHeaderByHeight(const uint64_t height, const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByHeight(height, chainType);
 }
 
-BlockHeaderPtr BlockChainServer::GetBlockHeaderByHash(const CBigInteger<32>& hash) const
+BlockHeaderPtr BlockChain::GetBlockHeaderByHash(const CBigInteger<32>& hash) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByHash(hash);
 }
 
-BlockHeaderPtr BlockChainServer::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
+BlockHeaderPtr BlockChain::GetBlockHeaderByCommitment(const Commitment& outputCommitment) const
 {
 	return m_pChainState->Read()->GetBlockHeaderByCommitment(outputCommitment);
 }
 
-BlockHeaderPtr BlockChainServer::GetTipBlockHeader(const EChainType chainType) const
+BlockHeaderPtr BlockChain::GetTipBlockHeader(const EChainType chainType) const
 {
 	return m_pChainState->Read()->GetTipBlockHeader(chainType);
 }
 
-std::unique_ptr<CompactBlock> BlockChainServer::GetCompactBlockByHash(const Hash& hash) const
+std::unique_ptr<CompactBlock> BlockChain::GetCompactBlockByHash(const Hash& hash) const
 {
 	std::unique_ptr<FullBlock> pBlock = m_pChainState->Read()->GetBlockByHash(hash);
 	if (pBlock != nullptr)
@@ -327,7 +327,7 @@ std::unique_ptr<CompactBlock> BlockChainServer::GetCompactBlockByHash(const Hash
 	return std::unique_ptr<CompactBlock>(nullptr);
 }
 
-std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Commitment& outputCommitment) const
+std::unique_ptr<FullBlock> BlockChain::GetBlockByCommitment(const Commitment& outputCommitment) const
 {
 	auto pHeader = m_pChainState->Read()->GetBlockHeaderByCommitment(outputCommitment);
 	if (pHeader != nullptr)
@@ -338,17 +338,17 @@ std::unique_ptr<FullBlock> BlockChainServer::GetBlockByCommitment(const Commitme
 	return std::unique_ptr<FullBlock>(nullptr);
 }
 
-std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHash(const Hash& hash) const
+std::unique_ptr<FullBlock> BlockChain::GetBlockByHash(const Hash& hash) const
 {
 	return m_pChainState->Read()->GetBlockByHash(hash);
 }
 
-std::unique_ptr<FullBlock> BlockChainServer::GetBlockByHeight(const uint64_t height) const
+std::unique_ptr<FullBlock> BlockChain::GetBlockByHeight(const uint64_t height) const
 {
 	return m_pChainState->Read()->GetBlockByHeight(height);
 }
 
-std::vector<BlockWithOutputs> BlockChainServer::GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const
+std::vector<BlockWithOutputs> BlockChain::GetOutputsByHeight(const uint64_t startHeight, const uint64_t maxHeight) const
 {
 	auto pChainStateReader = m_pChainState->Read();
 	const uint64_t highestHeight = (std::min)(pChainStateReader->GetHeight(EChainType::CONFIRMED), maxHeight);
@@ -371,7 +371,7 @@ std::vector<BlockWithOutputs> BlockChainServer::GetOutputsByHeight(const uint64_
 	return blocksWithOutputs;
 }
 
-bool BlockChainServer::HasBlock(const uint64_t height, const Hash& hash) const
+bool BlockChain::HasBlock(const uint64_t height, const Hash& hash) const
 {
 	auto pChainStateReader = m_pChainState->Read();
 	
@@ -380,12 +380,12 @@ bool BlockChainServer::HasBlock(const uint64_t height, const Hash& hash) const
 	return pIndex != nullptr && pIndex->GetHash() == hash;
 }
 
-std::vector<std::pair<uint64_t, Hash>> BlockChainServer::GetBlocksNeeded(const uint64_t maxNumBlocks) const
+std::vector<std::pair<uint64_t, Hash>> BlockChain::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {
 	return m_pChainState->Read()->GetBlocksNeeded(maxNumBlocks);
 }
 
-bool BlockChainServer::ProcessNextOrphanBlock()
+bool BlockChain::ProcessNextOrphanBlock()
 {
 	BlockHeaderPtr pNextHeader = nullptr;
 	std::shared_ptr<const FullBlock> pOrphanBlock = nullptr;
@@ -419,13 +419,15 @@ bool BlockChainServer::ProcessNextOrphanBlock()
 
 namespace BlockChainAPI
 {
-	BLOCK_CHAIN_API std::shared_ptr<IBlockChainServer> StartBlockChainServer(
+	BLOCK_CHAIN_API std::shared_ptr<IBlockChain> OpenBlockChain(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		std::shared_ptr<ITransactionPool> pTransactionPool,
 		std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
 	{
-		return BlockChainServer::Create(config, pDatabase, pTxHashSetManager, pTransactionPool, pHeaderMMR);
+		// TODO: Catch exceptions thrown. If any exceptions, delete the NODE directory and resync.
+		// It would also be a good idea to re-validate the MMRs on load.
+		return BlockChain::Create(config, pDatabase, pTxHashSetManager, pTransactionPool, pHeaderMMR);
 	}
 }

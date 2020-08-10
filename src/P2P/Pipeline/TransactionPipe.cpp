@@ -1,13 +1,14 @@
 #include "TransactionPipe.h"
 #include "../Messages/TransactionKernelMessage.h"
+#include "../ConnectionManager.h"
 
 #include <Common/Util/ThreadUtil.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 
-TransactionPipe::TransactionPipe(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_pConnectionManager(pConnectionManager), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
+TransactionPipe::TransactionPipe(const Config& config, const std::shared_ptr<ConnectionManager>& pConnectionManager, const std::shared_ptr<IBlockChain>& pBlockChain)
+	: m_config(config), m_pConnectionManager(pConnectionManager), m_pBlockChain(pBlockChain), m_terminate(false)
 {
 
 }
@@ -19,9 +20,12 @@ TransactionPipe::~TransactionPipe()
 	ThreadUtil::Join(m_transactionThread);
 }
 
-std::shared_ptr<TransactionPipe> TransactionPipe::Create(const Config& config, ConnectionManagerPtr pConnectionManager, IBlockChainServerPtr pBlockChainServer)
+std::shared_ptr<TransactionPipe> TransactionPipe::Create(
+	const Config& config,
+	const std::shared_ptr<ConnectionManager>& pConnectionManager,
+	const std::shared_ptr<IBlockChain>& pBlockChain)
 {
-	std::shared_ptr<TransactionPipe> pTxPipe = std::shared_ptr<TransactionPipe>(new TransactionPipe(config, pConnectionManager, pBlockChainServer));
+	std::shared_ptr<TransactionPipe> pTxPipe = std::shared_ptr<TransactionPipe>(new TransactionPipe(config, pConnectionManager, pBlockChain));
 	pTxPipe->m_transactionThread = std::thread(Thread_ProcessTransactions, std::ref(*pTxPipe.get()));
 
 	return pTxPipe;
@@ -39,7 +43,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 			std::unique_ptr<TxEntry> pTxEntry = pipeline.m_transactionsToProcess.copy_front();
 			if (pTxEntry != nullptr)
 			{
-				const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddTransaction(pTxEntry->pTransaction, pTxEntry->poolType);
+				const EBlockChainStatus status = pipeline.m_pBlockChain->AddTransaction(pTxEntry->pTransaction, pTxEntry->poolType);
 				if (status == EBlockChainStatus::SUCCESS && pTxEntry->poolType == EPoolType::MEMPOOL)
 				{
 					// Broacast TransactionKernelMsg

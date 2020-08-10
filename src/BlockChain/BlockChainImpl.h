@@ -4,22 +4,22 @@
 #include "ChainStore.h"
 
 #include <TxPool/TransactionPool.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <PMMR/HeaderMMR.h>
 #include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
 #include <P2P/SyncStatus.h>
-#include <stdint.h>
+#include <cstdint>
 #include <mutex>
 
-class BlockChainServer : public IBlockChainServer
+class BlockChain : public IBlockChain
 {
 public:
 	//
 	// Initializes the blockchain by loading the previously downloaded and verified blocks from the database.
 	// If this is the first time opening BitcoinDB (ie. no blockchain database exists), the blockchain is populated with only the genesis block.
 	//
-	static std::shared_ptr<BlockChainServer> Create(
+	static std::shared_ptr<BlockChain> Create(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
@@ -62,7 +62,7 @@ public:
 	bool ProcessNextOrphanBlock() final;
 
 private:
-	BlockChainServer(
+	BlockChain(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,

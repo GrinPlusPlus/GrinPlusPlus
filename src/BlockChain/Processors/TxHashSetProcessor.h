@@ -10,14 +10,14 @@
 #include <string>
 
 // Forward Declarations
-class IBlockChainServer;
+class IBlockChain;
 class BlockHeader;
 class IBlockDB;
 
 class TxHashSetProcessor
 {
 public:
-	TxHashSetProcessor(const Config& config, IBlockChainServer& blockChainServer, std::shared_ptr<Locked<ChainState>> pChainState);
+	TxHashSetProcessor(const Config& config, IBlockChain& blockChain, std::shared_ptr<Locked<ChainState>> pChainState);
 
 	bool ProcessTxHashSet(const Hash& blockHash, const fs::path& path, SyncStatus& syncStatus);
 
@@ -25,6 +25,6 @@ private:
 	bool UpdateConfirmedChain(Writer<ChainState> pLockedState, const BlockHeader& blockHeader);
 
 	const Config& m_config;
-	IBlockChainServer& m_blockChainServer;
+	IBlockChain& m_blockChain;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

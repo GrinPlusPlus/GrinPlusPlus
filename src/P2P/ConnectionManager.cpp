@@ -13,7 +13,7 @@
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 ConnectionManager::ConnectionManager()
 	: m_connections(std::make_shared<std::vector<ConnectionPtr>>()),
@@ -290,7 +290,7 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 		return nullptr;
 	}
 
-	const size_t index = RandomNumberGenerator::GenerateRandom(0, mostWorkPeers.size() - 1);
+	const size_t index = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
 
 	return mostWorkPeers[index];
 }

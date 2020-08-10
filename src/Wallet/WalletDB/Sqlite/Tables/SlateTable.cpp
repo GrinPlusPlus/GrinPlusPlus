@@ -1,7 +1,7 @@
 #include "SlateTable.h"
 
 #include <Common/Util/StringUtil.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
@@ -48,7 +48,7 @@ void SlateTable::SaveSlate(
 	const std::string stage = slate.stage.ToString();
 	sqlite3_bind_text(stmt, 2, stage.c_str(), (int)stage.size(), NULL);
 
-	CBigInteger<16> iv(RandomNumberGenerator::GenerateRandomBytes(16).data());
+	CBigInteger<16> iv(CSPRNG::GenerateRandomBytes(16).data());
 	sqlite3_bind_blob(stmt, 3, (const void*)iv.data(), (int)iv.size(), NULL);
 
 	const std::vector<unsigned char> encrypted = Encrypt(masterSeed, iv, slate);

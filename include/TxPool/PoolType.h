@@ -3,6 +3,5 @@
 enum class EPoolType
 {
 	STEMPOOL,
-	MEMPOOL,
-	JOINPOOL
+	MEMPOOL
 };

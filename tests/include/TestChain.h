@@ -29,7 +29,7 @@ public:
             Test::Tx coinbase = pWallet->CreateCoinbase(KeyChainPath::FromString("m/0/0/" + std::to_string(i)), 0);
             MinedBlock block = AddNextBlock({ coinbase });
 
-            m_pServer->GetBlockChainServer()->AddBlock(block.block);
+            m_pServer->GetBlockChain()->AddBlock(block.block);
         }
 
         pWallet->RefreshWallet();

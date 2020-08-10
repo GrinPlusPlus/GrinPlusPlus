@@ -40,12 +40,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new ShakeMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new ShakeMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Shake; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Shake; }
 	uint32_t GetVersion() const { return m_version; }
 	const Capabilities& GetCapabilities() const { return m_capabilities; }
 	const Hash& GetHash() const { return m_hash; }
@@ -67,7 +67,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint32_t>(m_version);
 		m_capabilities.Serialize(serializer);

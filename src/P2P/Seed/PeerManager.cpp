@@ -6,7 +6,7 @@
 #include <Config/Config.h>
 #include <Common/Logger.h>
 #include <Common/ThreadManager.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
 	: m_taskId(0), m_pContext(pContext), m_pPeerDB(pPeerDB)
@@ -268,7 +268,7 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
 	);
 	
 	auto iter = m_peersByAddress.begin();
-	std::advance(iter, RandomNumberGenerator::GenerateRandom(0, numPeers));
+	std::advance(iter, CSPRNG::GenerateRandom(0, numPeers));
 
 	for (size_t i = 0; i < numPeers; i++)
 	{

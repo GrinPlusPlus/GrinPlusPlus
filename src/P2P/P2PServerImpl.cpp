@@ -4,7 +4,7 @@
 #include "Pipeline/Pipeline.h"
 #include "Sync/Syncer.h"
 #include "Messages/TransactionKernelMessage.h"
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 
 P2PServer::P2PServer(
 	SyncStatusConstPtr pSyncStatus,
@@ -37,10 +37,10 @@ P2PServer::~P2PServer()
 
 std::shared_ptr<P2PServer> P2PServer::Create(
 	const Context::Ptr& pContext,
-	std::shared_ptr<IBlockChainServer> pBlockChainServer,
+	const std::shared_ptr<IBlockChain>& pBlockChain,
 	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	std::shared_ptr<IDatabase> pDatabase,
-	std::shared_ptr<ITransactionPool> pTransactionPool)
+	const ITransactionPool::Ptr& pTransactionPool)
 {
 	// Sync Status
 	SyncStatusPtr pSyncStatus(new SyncStatus());
@@ -60,7 +60,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	std::shared_ptr<Pipeline> pPipeline = Pipeline::Create(
 		config,
 		pConnectionManager,
-		pBlockChainServer,
+		pBlockChain,
 		pSyncStatus
 	);
 
@@ -69,7 +69,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 		pContext,
 		*pConnectionManager,
 		*peerManager,
-		pBlockChainServer,
+		pBlockChain,
 		pPipeline,
 		pSyncStatus
 	);
@@ -77,7 +77,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	// Syncer
 	std::shared_ptr<Syncer> pSyncer = Syncer::Create(
 		pConnectionManager,
-		pBlockChainServer,
+		pBlockChain,
 		pPipeline,
 		pSyncStatus
 	);
@@ -86,7 +86,7 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	std::shared_ptr<Dandelion> pDandelion = Dandelion::Create(
 		config,
 		*pConnectionManager,
-		pBlockChainServer,
+		pBlockChain,
 		pTxHashSetManager,
 		pTransactionPool,
 		pDatabase->GetBlockDB()
@@ -177,11 +177,11 @@ namespace P2PAPI
 {
 	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(
 		const Context::Ptr& pContext,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		IDatabasePtr pDatabase,
-		ITransactionPoolPtr pTransactionPool)
+		const ITransactionPool::Ptr& pTransactionPool)
 	{
-		return P2PServer::Create(pContext, pBlockChainServer, pTxHashSetManager, pDatabase, pTransactionPool);
+		return P2PServer::Create(pContext, pBlockChain, pTxHashSetManager, pDatabase, pTransactionPool);
 	}
 }

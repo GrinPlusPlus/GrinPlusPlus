@@ -4,11 +4,11 @@
 #include <TestNodeClient.h>
 
 #include <Core/File/FileRemover.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <Database/Database.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 #include <thread>
 
 class TestServer
@@ -22,9 +22,9 @@ public:
 		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
 		IDatabasePtr pDatabase = DatabaseAPI::OpenDatabase(*pConfig);
 		auto pTxHashSetManager = std::make_shared<Locked<TxHashSetManager>>(std::make_shared<TxHashSetManager>(*pConfig));
-		ITransactionPoolPtr pTxPool = TxPoolAPI::CreateTransactionPool(*pConfig);
+		ITransactionPool::Ptr pTxPool = TxPoolAPI::CreateTransactionPool(*pConfig);
 		auto pHeaderMMR = HeaderMMRAPI::OpenHeaderMMR(*pConfig);
-		IBlockChainServerPtr pBlockChainServer = BlockChainAPI::StartBlockChainServer(
+		IBlockChain::Ptr pBlockChain = BlockChainAPI::OpenBlockChain(
 			*pConfig,
 			pDatabase->GetBlockDB(),
 			pTxHashSetManager,
@@ -38,7 +38,7 @@ public:
 			pTxHashSetManager,
 			pTxPool,
 			pHeaderMMR,
-			pBlockChainServer
+			pBlockChain
 		);
 	}
 
@@ -46,15 +46,15 @@ public:
 		const ConfigPtr& pConfig,
 		const IDatabasePtr& pDatabase,
 		const std::shared_ptr<Locked<TxHashSetManager>>& pTxHashSetManager,
-		const ITransactionPoolPtr& pTxPool,
+		const ITransactionPool::Ptr& pTxPool,
 		const std::shared_ptr<Locked<IHeaderMMR>>& pHeaderMMR,
-		const IBlockChainServerPtr& pBlockChainServer
+		const IBlockChain::Ptr& pBlockChain
 	) : m_pConfig(pConfig),
 		m_pDatabase(pDatabase),
 		m_pTxHashSetManager(pTxHashSetManager),
 		m_pTxPool(pTxPool),
 		m_pHeaderMMR(pHeaderMMR),
-		m_pBlockChainServer(pBlockChainServer),
+		m_pBlockChain(pBlockChain),
 		m_tempDirs(0)
 	{
 
@@ -68,7 +68,7 @@ public:
 		m_pTxHashSetManager.reset();
 		m_pTxPool.reset();
 		m_pHeaderMMR.reset();
-		m_pBlockChainServer.reset();
+		m_pBlockChain.reset();
 		FileUtil::RemoveFile(dataPath / "NODE" / "CHAIN");
 		FileUtil::RemoveFile(dataPath / "NODE" / "DB");
 		FileUtil::RemoveFile(dataPath / "NODE" / "TXHASHSET");
@@ -82,10 +82,12 @@ public:
 
 	const IDatabasePtr& GetDatabase() const noexcept { return m_pDatabase; }
 	const std::shared_ptr<Locked<TxHashSetManager>>& GetTxHashSetManager() const noexcept { return m_pTxHashSetManager; }
-	const ITransactionPoolPtr& GetTxPool() const noexcept { return m_pTxPool; }
+	const ITransactionPool::Ptr& GetTxPool() const noexcept { return m_pTxPool; }
 	const std::shared_ptr<Locked<IHeaderMMR>>& GetHeaderMMR() const noexcept { return m_pHeaderMMR; }
-	IBlockChainServer* GetBlockChainServer() const noexcept { return m_pBlockChainServer.get(); }
-	std::shared_ptr<INodeClient> GetNodeClient() const noexcept { return std::shared_ptr<INodeClient>(new TestNodeClient(m_pDatabase, *m_pTxHashSetManager, m_pTxPool, m_pBlockChainServer)); }
+	const IBlockChain::Ptr& GetBlockChain() const noexcept { return m_pBlockChain; }
+	std::shared_ptr<INodeClient> GetNodeClient() const noexcept {
+		return std::shared_ptr<INodeClient>(new TestNodeClient(m_pDatabase, *m_pTxHashSetManager, m_pTxPool, m_pBlockChain));
+	}
 
 	fs::path GenerateTempDir()
 	{ 
@@ -98,9 +100,9 @@ private:
 	ConfigPtr m_pConfig;
 	IDatabasePtr m_pDatabase;
 	std::shared_ptr<Locked<TxHashSetManager>> m_pTxHashSetManager;
-	ITransactionPoolPtr m_pTxPool;
+	ITransactionPool::Ptr m_pTxPool;
 	std::shared_ptr<Locked<IHeaderMMR>> m_pHeaderMMR;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 
 	size_t m_tempDirs;
 };

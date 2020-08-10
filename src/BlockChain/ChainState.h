@@ -15,9 +15,6 @@
 #include <Database/Database.h>
 #include <TxPool/TransactionPool.h>
 
-// Forward Declarations
-class ITransactionPool;
-
 class ChainState : public Traits::IBatchable
 {
 public:
@@ -48,10 +45,10 @@ public:
 
 	std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const;
 
-	virtual void Commit() override final;
-	virtual void Rollback() noexcept override final;
-	virtual void OnInitWrite() override final;
-	virtual void OnEndWrite() override final;
+	void Commit() final;
+	void Rollback() noexcept final;
+	void OnInitWrite() final;
+	void OnEndWrite() final;
 
 	std::shared_ptr<ChainStore> GetChainStore()
 	{
@@ -152,7 +149,7 @@ public:
 	}
 
 	std::shared_ptr<OrphanPool> GetOrphanPool() { return m_pOrphanPool; }
-	ITransactionPoolPtr GetTransactionPool() { return m_pTransactionPool; }
+	ITransactionPool::Ptr GetTransactionPool() { return m_pTransactionPool; }
 
 private:
 	ChainState(

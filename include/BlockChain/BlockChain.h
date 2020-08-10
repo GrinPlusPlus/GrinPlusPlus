@@ -11,8 +11,6 @@
 #include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <BlockChain/ChainType.h>
 #include <Core/Models/BlockHeader.h>
-#include <Core/Models/FullBlock.h>
-#include <Core/Models/CompactBlock.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Traits/Lockable.h>
 #include <Crypto/BigInteger.h>
@@ -28,6 +26,8 @@ class IBlockDB;
 class TxHashSetManager;
 class ITransactionPool;
 class SyncStatus;
+class FullBlock;
+class CompactBlock;
 
 #ifdef MW_BLOCK_CHAIN
 #define BLOCK_CHAIN_API EXPORT
@@ -39,10 +39,12 @@ class SyncStatus;
 // This interface acts as the single entry-point into the BlockChain shared library.
 // This handles validation and in-memory storage of all block headers, transactions, and UTXOs.
 //
-class IBlockChainServer
+class IBlockChain
 {
 public:
-	virtual ~IBlockChainServer() = default;
+	using Ptr = std::shared_ptr<IBlockChain>;
+
+	virtual ~IBlockChain() = default;
 
 	virtual void ResyncChain() = 0;
 
@@ -134,14 +136,12 @@ public:
 	virtual bool ProcessNextOrphanBlock() = 0;
 };
 
-typedef std::shared_ptr<IBlockChainServer> IBlockChainServerPtr;
-
 namespace BlockChainAPI
 {
 	//
 	// Creates a new instance of the BlockChain server.
 	//
-	BLOCK_CHAIN_API IBlockChainServerPtr StartBlockChainServer(
+	BLOCK_CHAIN_API IBlockChain::Ptr OpenBlockChain(
 		const Config& config,
 		std::shared_ptr<Locked<IBlockDB>> pDatabase,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,

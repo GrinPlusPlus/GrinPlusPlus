@@ -30,12 +30,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new PongMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new PongMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Pong; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Pong; }
 	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
 	uint64_t GetHeight() const { return m_height; }
 
@@ -51,7 +51,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint64_t>(m_totalDifficulty);
 		serializer.Append<uint64_t>(m_height);

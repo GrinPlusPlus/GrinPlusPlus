@@ -21,7 +21,7 @@ int TxHashSetAPI::GetRoots_Handler(struct mg_connection* conn, void* pNodeContex
 
 	try
 	{
-		auto pTipHeader = pServer->m_pBlockChainServer->GetTipBlockHeader(EChainType::CONFIRMED);
+		auto pTipHeader = pServer->m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 		if (pTipHeader != nullptr)
 		{
 			Json::Value rootNode;

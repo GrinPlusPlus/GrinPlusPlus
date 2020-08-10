@@ -44,12 +44,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new HandMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new HandMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Hand; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Hand; }
 	uint32_t GetVersion() const { return m_version; }
 	const Capabilities& GetCapabilities() const { return m_capabilities; }
 	uint64_t GetNonce() const { return m_nonce; }
@@ -77,7 +77,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint32_t>(m_version);
 		m_capabilities.Serialize(serializer);

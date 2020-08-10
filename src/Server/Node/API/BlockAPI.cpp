@@ -2,6 +2,7 @@
 #include "../NodeContext.h"
 
 #include <Net/Util/HTTPUtil.h>
+#include <Core/Models/CompactBlock.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
 
@@ -22,14 +23,14 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 		const std::string requestedBlock = HTTPUtil::GetURIParam(conn, "/v1/blocks/");
 		const std::string queryString = HTTPUtil::GetQueryString(conn);
 
-		IBlockChainServerPtr pBlockChainServer = ((NodeContext*)pNodeContext)->m_pBlockChainServer;
+		IBlockChain::Ptr pBlockChain = ((NodeContext*)pNodeContext)->m_pBlockChain;
 		if (queryString == "compact")
 		{
-			std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChainServer);
+			std::unique_ptr<FullBlock> pBlock = GetBlock(requestedBlock, pBlockChain);
 			if (pBlock != nullptr)
 			{
 				std::unique_ptr<CompactBlock> pCompactBlock =
-					pBlockChainServer->GetCompactBlockByHash(pBlock->GetHash());
+					pBlockChain->GetCompactBlockByHash(pBlock->GetHash());
 				if (pCompactBlock != nullptr)
 				{
 					return HTTPUtil::BuildSuccessResponse(conn, pCompactBlock->ToJSON().toStyledString());
@@ -38,7 +39,7 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 		}
 		else
 		{
-			std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, pBlockChainServer);
+			std::unique_ptr<FullBlock> pFullBlock = GetBlock(requestedBlock, pBlockChain);
 			if (pFullBlock != nullptr)
 			{
 				return HTTPUtil::BuildSuccessResponse(conn, pFullBlock->ToJSON().toStyledString());
@@ -55,14 +56,14 @@ int BlockAPI::GetBlock_Handler(struct mg_connection* conn, void* pNodeContext)
 
 std::unique_ptr<FullBlock> BlockAPI::GetBlock(
 	const std::string& requestedBlock,
-	IBlockChainServerPtr pBlockChainServer)
+	const IBlockChain::Ptr& pBlockChain)
 {
 	if (requestedBlock.length() == 64 && HexUtil::IsValidHex(requestedBlock))
 	{
 		try
 		{
 			std::unique_ptr<FullBlock> pBlock =
-				pBlockChainServer->GetBlockByHash(Hash::FromHex(requestedBlock));
+				pBlockChain->GetBlockByHash(Hash::FromHex(requestedBlock));
 			if (pBlock != nullptr)
 			{
 				LOG_DEBUG_F("Found block with hash {}.", requestedBlock);
@@ -83,7 +84,7 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(
 		try
 		{
 			std::unique_ptr<FullBlock> pBlock =
-				pBlockChainServer->GetBlockByCommitment(Commitment::FromHex(requestedBlock));
+				pBlockChain->GetBlockByCommitment(Commitment::FromHex(requestedBlock));
 			if (pBlock != nullptr)
 			{
 				LOG_DEBUG_F("Found block with output commitment {}.", requestedBlock);
@@ -106,7 +107,7 @@ std::unique_ptr<FullBlock> BlockAPI::GetBlock(
 			std::string::size_type sz = 0;
 			const uint64_t height = std::stoull(requestedBlock, &sz, 0);
 
-			std::unique_ptr<FullBlock> pBlock = pBlockChainServer->GetBlockByHeight(height);
+			std::unique_ptr<FullBlock> pBlock = pBlockChain->GetBlockByHeight(height);
 			if (pBlock != nullptr)
 			{
 				LOG_INFO_F("Found block at height {}.", requestedBlock);

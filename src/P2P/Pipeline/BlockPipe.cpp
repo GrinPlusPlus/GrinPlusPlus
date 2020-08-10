@@ -5,10 +5,10 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Common/ThreadManager.h>
 #include <Common/Logger.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 
-BlockPipe::BlockPipe(const Config& config, IBlockChainServerPtr pBlockChainServer)
-	: m_config(config), m_pBlockChainServer(pBlockChainServer), m_terminate(false)
+BlockPipe::BlockPipe(const Config& config, const IBlockChain::Ptr& pBlockChain)
+	: m_config(config), m_pBlockChain(pBlockChain), m_terminate(false)
 {
 }
 
@@ -20,9 +20,9 @@ BlockPipe::~BlockPipe()
 	ThreadUtil::Join(m_processThread);
 }
 
-std::shared_ptr<BlockPipe> BlockPipe::Create(const Config& config, IBlockChainServerPtr pBlockChainServer)
+std::shared_ptr<BlockPipe> BlockPipe::Create(const Config& config, const IBlockChain::Ptr& pBlockChain)
 {
-	std::shared_ptr<BlockPipe> pBlockPipe = std::shared_ptr<BlockPipe>(new BlockPipe(config, pBlockChainServer));
+	std::shared_ptr<BlockPipe> pBlockPipe = std::shared_ptr<BlockPipe>(new BlockPipe(config, pBlockChain));
 	pBlockPipe->m_blockThread = std::thread(Thread_ProcessNewBlocks, std::ref(*pBlockPipe.get()));
 	pBlockPipe->m_processThread = std::thread(Thread_PostProcessBlocks, std::ref(*pBlockPipe.get()));
 
@@ -69,7 +69,7 @@ void BlockPipe::ProcessNewBlock(BlockPipe& pipeline, const BlockEntry& blockEntr
 {
 	try
 	{
-		const EBlockChainStatus status = pipeline.m_pBlockChainServer->AddBlock(blockEntry.m_block);
+		const EBlockChainStatus status = pipeline.m_pBlockChain->AddBlock(blockEntry.m_block);
 		if (status == EBlockChainStatus::INVALID)
 		{
 			blockEntry.m_peer->Ban(EBanReason::BadBlock);
@@ -89,7 +89,7 @@ void BlockPipe::Thread_PostProcessBlocks(BlockPipe& pipeline)
 
 	while (!pipeline.m_terminate)
 	{
-		if (!pipeline.m_pBlockChainServer->ProcessNextOrphanBlock())
+		if (!pipeline.m_pBlockChain->ProcessNextOrphanBlock())
 		{
 			ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
 		}

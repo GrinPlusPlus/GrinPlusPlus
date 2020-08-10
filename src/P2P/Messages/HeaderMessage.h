@@ -32,12 +32,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new HeaderMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new HeaderMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Header; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Header; }
 	const BlockHeaderPtr& GetHeader() const { return m_pHeader; }
 
 	//
@@ -50,7 +50,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		m_pHeader->Serialize(serializer);
 	}

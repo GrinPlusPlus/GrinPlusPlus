@@ -1,11 +1,11 @@
 #include "TorControl.h"
+#include "TorControlClient.h"
 
 #include <Net/Tor/TorException.h>
-#include <filesystem.h>
-#include <Crypto/Crypto.h>
-#include <Net/SocketException.h>
 #include <Common/Util/StringUtil.h>
 #include <cppcodec/base64_rfc4648.hpp>
+#include <Crypto/ED25519.h>
+#include <filesystem.h>
 
 TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::UCPtr&& pProcess)
 	: m_torConfig(config), m_pClient(pClient), m_pProcess(std::move(pProcess))
@@ -47,8 +47,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 
 		// TODO: Determine if process is already running.
 		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);
-		if (pProcess == nullptr)
-		{
+		if (pProcess == nullptr) {
 			// Fallback to tor on path
 			args[0] = "tor";
 			pProcess = ChildProcess::Create(args);
@@ -66,8 +65,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 			connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
 		}
 
-		if (connected && Authenticate(pClient, torConfig.GetControlPassword()))
-		{
+		if (connected && Authenticate(pClient, torConfig.GetControlPassword())) {
 			return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, std::move(pProcess)));
 		}
 	}
@@ -79,7 +77,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 	return nullptr;
 }
 
-bool TorControl::Authenticate(std::shared_ptr<TorControlClient> pClient, const std::string& password)
+bool TorControl::Authenticate(const std::shared_ptr<TorControlClient>& pClient, const std::string& password)
 {
 	std::string command = StringUtil::Format("AUTHENTICATE \"{}\"\n", password);
 
@@ -112,8 +110,7 @@ std::string TorControl::AddOnion(const std::string& serializedKey, const uint16_
 	std::vector<std::string> response = m_pClient->Invoke(command);
 	for (std::string& line : response)
 	{
-		if (StringUtil::StartsWith(line, "250-ServiceID="))
-		{
+		if (StringUtil::StartsWith(line, "250-ServiceID=")) {
 			const size_t prefix = std::string("250-ServiceID=").size();
 			return line.substr(prefix);
 		}

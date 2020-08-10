@@ -32,12 +32,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new HeadersMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new HeadersMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::Headers; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::Headers; }
 	const std::vector<BlockHeaderPtr>& GetHeaders() const { return m_headers; }
 
 	//
@@ -57,7 +57,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.Append<uint16_t>((uint16_t)m_headers.size());
 		for (auto iter = m_headers.cbegin(); iter != m_headers.cend(); iter++)

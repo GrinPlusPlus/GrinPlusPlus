@@ -42,7 +42,7 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		EBulletproofType::ENHANCED
 	);
 
-	const BlindingFactor receiver_offset = RandomNumberGenerator::GenerateRandom32();
+	const BlindingFactor receiver_offset = CSPRNG::GenerateRandom32();
 	SigningKeys signing_keys = SlateUtil::CalculateSigningKeys({}, { outputData }, receiver_offset);
 
 	// Adjust transaction offset

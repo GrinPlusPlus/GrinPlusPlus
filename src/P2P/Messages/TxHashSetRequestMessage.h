@@ -32,12 +32,12 @@ public:
 	//
 	// Clone
 	//
-	virtual IMessagePtr Clone() const override final { return IMessagePtr(new TxHashSetRequestMessage(*this)); }
+	IMessagePtr Clone() const final { return IMessagePtr(new TxHashSetRequestMessage(*this)); }
 
 	//
 	// Getters
 	//
-	virtual MessageTypes::EMessageType GetMessageType() const override final { return MessageTypes::TxHashSetRequest; }
+	MessageTypes::EMessageType GetMessageType() const final { return MessageTypes::TxHashSetRequest; }
 	const Hash& GetBlockHash() const { return m_blockHash; }
 
 	//
@@ -52,7 +52,7 @@ public:
 	}
 
 protected:
-	virtual void SerializeBody(Serializer& serializer) const override final
+	void SerializeBody(Serializer& serializer) const final
 	{
 		serializer.AppendBigInteger(m_blockHash);
 		serializer.Append<uint64_t>(m_blockHeight);

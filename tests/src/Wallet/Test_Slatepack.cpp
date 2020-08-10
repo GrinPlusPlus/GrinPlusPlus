@@ -80,11 +80,11 @@ TEST_CASE("Slatepack - Recieve")
 
 TEST_CASE("Slatepack - E2E")
 {
-    ed25519_keypair_t sender_edwards_keypair = ED25519::CalculateKeypair(RandomNumberGenerator::GenerateRandom32());
+    ed25519_keypair_t sender_edwards_keypair = ED25519::CalculateKeypair(CSPRNG::GenerateRandom32());
     x25519_keypair_t sender_x_keypair = Curve25519::ToX25519(sender_edwards_keypair);
     SlatepackAddress sender_address(sender_edwards_keypair.public_key);
 
-    ed25519_keypair_t receiver_edwards_keypair = ED25519::CalculateKeypair(RandomNumberGenerator::GenerateRandom32());
+    ed25519_keypair_t receiver_edwards_keypair = ED25519::CalculateKeypair(CSPRNG::GenerateRandom32());
     x25519_keypair_t receiver_x_keypair = Curve25519::ToX25519(receiver_edwards_keypair);
     SlatepackAddress receiver_address(receiver_edwards_keypair.public_key);
 

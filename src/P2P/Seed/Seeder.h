@@ -5,7 +5,7 @@
 
 #include <Config/Config.h>
 #include <Core/Context.h>
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <P2P/Direction.h>
 #include <cstdint>
 #include <memory>
@@ -26,7 +26,7 @@ public:
 		Context::Ptr pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Pipeline> pPipeline,
 		SyncStatusConstPtr pSyncStatus
 	);
@@ -37,10 +37,17 @@ private:
 		Context::Ptr pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<MessageProcessor> pMessageProcessor,
 		SyncStatusConstPtr pSyncStatus
-	);
+	) : m_pContext(pContext),
+		m_connectionManager(connectionManager),
+		m_peerManager(peerManager),
+		m_pBlockChain(pBlockChain),
+		m_pMessageProcessor(pMessageProcessor),
+		m_pSyncStatus(pSyncStatus),
+		m_pAsioContext(std::make_shared<asio::io_context>()),
+		m_terminate(false) { }
 
 	static void Thread_Seed(Seeder& seeder);
 	static void Thread_Listener(Seeder& seeder);
@@ -50,7 +57,7 @@ private:
 	Context::Ptr m_pContext;
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<MessageProcessor> m_pMessageProcessor;
 	SyncStatusConstPtr m_pSyncStatus;
 

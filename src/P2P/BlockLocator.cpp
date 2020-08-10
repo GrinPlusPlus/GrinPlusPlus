@@ -3,12 +3,6 @@
 #include <P2P/Common.h>
 #include <cmath>
 
-BlockLocator::BlockLocator(IBlockChainServerPtr pBlockChainServer)
-	: m_pBlockChainServer(pBlockChainServer)
-{
-
-}
-
 std::vector<Hash> BlockLocator::GetLocators(const SyncStatus& syncStatus) const
 {
 	const std::vector<uint64_t> locatorHeights = GetLocatorHeights(syncStatus);
@@ -17,7 +11,7 @@ std::vector<Hash> BlockLocator::GetLocators(const SyncStatus& syncStatus) const
 	locators.reserve(locatorHeights.size());
 	for (const uint64_t locatorHeight : locatorHeights)
 	{
-		auto pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(locatorHeight, EChainType::CANDIDATE);
+		auto pHeader = m_pBlockChain->GetBlockHeaderByHeight(locatorHeight, EChainType::CANDIDATE);
 		if (pHeader != nullptr)
 		{
 			locators.push_back(pHeader->GetHash());
@@ -64,13 +58,13 @@ std::vector<BlockHeaderPtr> BlockLocator::LocateHeaders(const std::vector<Hash>&
 	auto pCommonHeader = FindCommonHeader(locatorHashes);
 	if (pCommonHeader != nullptr)
 	{
-		const uint64_t totalHeight = m_pBlockChainServer->GetHeight(EChainType::CANDIDATE);
+		const uint64_t totalHeight = m_pBlockChain->GetHeight(EChainType::CANDIDATE);
 		const uint64_t headerHeight = pCommonHeader->GetHeight();
 		const uint64_t numHeadersToSend = (std::min)(totalHeight - headerHeight, (uint64_t)P2P::MAX_BLOCK_HEADERS);
 
 		for (int i = 1; i <= numHeadersToSend; i++)
 		{
-			auto pHeader = m_pBlockChainServer->GetBlockHeaderByHeight(headerHeight + i, EChainType::CANDIDATE);
+			auto pHeader = m_pBlockChain->GetBlockHeaderByHeight(headerHeight + i, EChainType::CANDIDATE);
 			if (pHeader == nullptr)
 			{
 				break;
@@ -87,7 +81,7 @@ BlockHeaderPtr BlockLocator::FindCommonHeader(const std::vector<Hash>& locatorHa
 {
 	for (const Hash& locatorHash : locatorHashes)
 	{
-		auto pHeader = m_pBlockChainServer->GetBlockHeaderByHash(locatorHash);
+		auto pHeader = m_pBlockChain->GetBlockHeaderByHash(locatorHash);
 		if (pHeader != nullptr)
 		{
 			return pHeader;

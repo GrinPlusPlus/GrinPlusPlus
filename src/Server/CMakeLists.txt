@@ -15,11 +15,10 @@ file(GLOB SOURCE_CODE
 	"Wallet/WalletDaemon.cpp"
 	"Wallet/WalletRestServer.cpp"
 	"Wallet/API/OwnerGetAPI.cpp"
-	"GrinJoin/GrinJoinController.cpp"
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE ssize_t=SSIZE_T)
-target_link_libraries(${TARGET_NAME} Common P2P BlockChain Wallet PoW)
+target_link_libraries(${TARGET_NAME} Common P2P BlockChain Wallet PoW API)

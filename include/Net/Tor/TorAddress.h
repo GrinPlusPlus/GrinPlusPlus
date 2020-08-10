@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <Crypto/ED25519.h>
+#include <Crypto/Models/ed25519_public_key.h>
 
 class TorAddress
 {

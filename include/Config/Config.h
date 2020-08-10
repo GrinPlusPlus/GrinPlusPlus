@@ -47,6 +47,8 @@ public:
 	const ServerConfig& GetServerConfig() const noexcept { return m_serverConfig; }
 	const TorConfig& GetTorConfig() const noexcept { return m_torConfig; }
 
+	uint16_t GetP2PPort() const noexcept { return m_environment.GetP2PPort(); }
+
 private:
 	Config(const Json::Value& json, const EEnvironmentType environment, const fs::path& dataPath)
 		: m_json(json),

@@ -1,4 +1,4 @@
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 #include <random>
 #include <Crypto/CryptoException.h>
@@ -12,13 +12,13 @@
 	#include <unistd.h>
 #endif
 
-CBigInteger<32> RandomNumberGenerator::GenerateRandom32()
+CBigInteger<32> CSPRNG::GenerateRandom32()
 {
 	const SecureVector randomBytes = GenerateRandomBytes(32);
 	return CBigInteger<32>(randomBytes.data());
 }
 
-SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
+SecureVector CSPRNG::GenerateRandomBytes(const size_t numBytes)
 {
 	SecureVector buffer(numBytes);
 #ifdef _WIN32
@@ -49,7 +49,7 @@ SecureVector RandomNumberGenerator::GenerateRandomBytes(const size_t numBytes)
 	return buffer;
 }
 
-uint64_t RandomNumberGenerator::GenerateRandom(const uint64_t minimum, const uint64_t maximum)
+uint64_t CSPRNG::GenerateRandom(const uint64_t minimum, const uint64_t maximum)
 {
 	std::random_device seeder;
 	std::mt19937 engine(seeder());

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Crypto/Crypto.h>
 #include <Crypto/PublicKey.h>
 #include <Crypto/Signature.h>
 #include <Core/Util/JsonUtil.h>

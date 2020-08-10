@@ -63,12 +63,12 @@ public:
     bool IsV4() const noexcept { return m_address.is_v4(); }
     bool IsV6() const noexcept { return m_address.is_v6(); }
     bool IsLocalhost() const noexcept { return m_address.is_loopback(); }
-    virtual std::string Format() const override final { return m_address.to_string(); }
+    std::string Format() const final { return m_address.to_string(); }
 
     //
     // Serialization/Deserialization
     //
-    virtual void Serialize(Serializer& serializer) const override final
+    void Serialize(Serializer& serializer) const final
     {
         if (IsV4())
         {

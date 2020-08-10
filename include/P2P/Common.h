@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <string>
-#include <stdint.h>
+#include <cstdint>
 
 #include <Consensus/BlockWeight.h>
 #include <GrinVersion.h>

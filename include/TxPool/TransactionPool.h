@@ -11,7 +11,6 @@
 #include <Core/Models/ShortId.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockHeader.h>
-#include <Core/Models/BlockSums.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Crypto/Hash.h>
@@ -39,6 +38,9 @@ enum class EAddTransactionStatus
 class ITransactionPool
 {
 public:
+	using Ptr = std::shared_ptr<ITransactionPool>;
+	using CPtr = std::shared_ptr<const ITransactionPool>;
+
 	virtual ~ITransactionPool() = default;
 
 	//
@@ -87,23 +89,14 @@ public:
 		ITxHashSetConstPtr pTxHashSet
 	) = 0;
 	virtual std::vector<TransactionPtr> GetExpiredTransactions() const = 0;
-
-	//
-	// Adds all JoinPool txs to the stem pool in preparation of fluffing.
-	// The transactions are not removed from the join pool until they are seen in a block.
-	//
-	virtual void FluffJoinPool() = 0;
 };
-
-typedef std::shared_ptr<ITransactionPool> ITransactionPoolPtr;
-typedef std::shared_ptr<const ITransactionPool> ITransactionPoolConstPtr;
 
 namespace TxPoolAPI
 {
 	//
 	// Creates a new instance of the Transaction Pool.
 	//
-	TX_POOL_API ITransactionPoolPtr CreateTransactionPool(
+	TX_POOL_API ITransactionPool::Ptr CreateTransactionPool(
 		const Config& config
 	);
 }

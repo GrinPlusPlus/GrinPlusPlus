@@ -8,10 +8,7 @@ class BlockIdentifier
 {
 public:
 	BlockIdentifier(const Hash& hash, const Hash& previousHash, const uint64_t height)
-		: m_hash(hash), m_previousHash(previousHash), m_height(height)
-	{
-
-	}
+		: m_hash(hash), m_previousHash(previousHash), m_height(height) { }
 
 	static BlockIdentifier FromHeader(const BlockHeader& header)
 	{
@@ -21,9 +18,9 @@ public:
 		return BlockIdentifier(headerHash, previousHash, height);
 	}
 
-	const Hash& GetHash() const { return m_hash; }
-	const Hash& GetPreviousHash() const { return m_previousHash; }
-	uint64_t GetHeight() const { return m_height; }
+	const Hash& GetHash() const noexcept { return m_hash; }
+	const Hash& GetPreviousHash() const noexcept { return m_previousHash; }
+	uint64_t GetHeight() const noexcept { return m_height; }
 
 	Json::Value ToJSON() const
 	{

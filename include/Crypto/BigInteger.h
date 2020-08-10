@@ -110,7 +110,7 @@ public:
 
 		return stream.str();
 	}
-	virtual std::string Format() const override final { return ToHex(); }
+	std::string Format() const final { return ToHex(); }
 
 	//
 	// Operators

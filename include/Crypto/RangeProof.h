@@ -77,7 +77,7 @@ public:
 	//
 	// Traits
 	//
-	virtual std::string Format() const override final { return HexUtil::ConvertToHex(m_proofBytes); }
+	std::string Format() const final { return HexUtil::ConvertToHex(m_proofBytes); }
 
 private:
 	// The proof itself, at most 675 bytes long.

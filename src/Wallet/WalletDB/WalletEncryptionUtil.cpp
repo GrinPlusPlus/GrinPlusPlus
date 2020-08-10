@@ -1,7 +1,7 @@
 #include "WalletEncryptionUtil.h"
 
 #include <Crypto/Crypto.h>
-#include <Crypto/RandomNumberGenerator.h>
+#include <Crypto/CSPRNG.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
 
@@ -10,7 +10,7 @@ std::vector<unsigned char> WalletEncryptionUtil::Encrypt(
 	const std::string& dataType,
 	const SecureVector& bytes)
 {
-	const CBigInteger<32> randomNumber = RandomNumberGenerator::GenerateRandom32();
+	const CBigInteger<32> randomNumber = CSPRNG::GenerateRandom32();
 	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
 	const SecretKey key = WalletEncryptionUtil::CreateSecureKey(masterSeed, dataType);
 

@@ -3,7 +3,7 @@
 #include "Messages/RawMessage.h"
 #include "Seed/PeerManager.h"
 
-#include <BlockChain/BlockChainServer.h>
+#include <BlockChain/BlockChain.h>
 #include <P2P/ConnectedPeer.h>
 #include <Config/Config.h>
 #include <memory>
@@ -34,7 +34,7 @@ public:
 		const Config& config,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
-		IBlockChainServerPtr pBlockChainServer,
+		const IBlockChain::Ptr& pBlockChain,
 		const std::shared_ptr<Pipeline>& pipeline,
 		SyncStatusConstPtr pSyncStatus
 	);
@@ -48,7 +48,7 @@ private:
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
-	IBlockChainServerPtr m_pBlockChainServer;
+	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<Pipeline> m_pPipeline;
 	SyncStatusConstPtr m_pSyncStatus;
 };

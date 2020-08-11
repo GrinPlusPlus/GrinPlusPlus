@@ -12,6 +12,28 @@
 // used to mask siphash output
 #define NODEMASK ((word_t)NNODES - 1)
 
+
+// fills buffer with EDGE_BLOCK_SIZE siphash outputs for block containing edge in cuckaroo graph
+// return siphash output for given edge
+uint64_t cuckaroom_sipblock(siphash_keys& keys, const word_t edge, uint64_t* buf)
+{
+	siphash_state<> shs(keys);
+	word_t edge0 = edge & ~EDGE_BLOCK_MASK;
+
+	for (uint32_t i = 0; i < EDGE_BLOCK_SIZE; i++)
+	{
+		shs.hash24(edge0 + i);
+		buf[i] = shs.xor_lanes();
+	}
+
+	for (uint32_t i = EDGE_BLOCK_MASK; i; i--)
+	{
+		buf[i - 1] ^= buf[i];
+	}
+
+	return buf[edge & EDGE_BLOCK_MASK];
+}
+
 // verify that edges are ascending and form a cycle in header-generated graph
 int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys)
 {
@@ -21,17 +43,25 @@ int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys)
 
 	for (u32 n = 0; n < PROOFSIZE; n++)
 	{
-		if (edges[n] > EDGEMASK)
+		if (edges[n] > EDGEMASK) {
 			return POW_TOO_BIG;
-		if (n && edges[n] <= edges[n - 1])
+		}
+
+		if (n && edges[n] <= edges[n - 1]) {
 			return POW_TOO_SMALL;
-		u64 edge = sipblock(keys, edges[n], sips);
+		}
+
+		u64 edge = cuckaroom_sipblock(keys, edges[n], sips);
 		xorfrom ^= from[n] = edge & EDGEMASK;
 		xorto ^= to[n] = (edge >> 32) & EDGEMASK;
 		visited[n] = false;
 	}
-	if (xorfrom != xorto)              // optional check for obviously bad proofs
+
+	if (xorfrom != xorto) {
+		// optional check for obviously bad proofs
 		return POW_NON_MATCHING;
+	}
+
 	u32 n = 0, i = 0;
 	do {                        // follow cycle
 		if (visited[i])
@@ -56,8 +86,8 @@ bool Cuckaroom::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-	const std::vector<unsigned char> preProofOfWork = blockHeader.GetPreProofOfWork();
-	siphash_keys keys((const char*)Crypto::Blake2b(preProofOfWork).data());
+	Hash prePoWHash = Crypto::Blake2b(blockHeader.GetPreProofOfWork());
+	siphash_keys keys((const char*)prePoWHash.data());
 	const int result = verify_cuckaroom((const word_t*)proofNonces.data(), keys);
 	if (result != POW_OK) {
 		LOG_ERROR_F("Failed with result: {}", errstr[result]);

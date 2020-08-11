@@ -69,8 +69,8 @@ bool Cuckaroo::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-	const std::vector<unsigned char> preProofOfWork = blockHeader.GetPreProofOfWork();
-	siphash_keys keys((const char*)Crypto::Blake2b(preProofOfWork).data());
+    Hash prePoWHash = Crypto::Blake2b(blockHeader.GetPreProofOfWork());
+    siphash_keys keys((const char*)prePoWHash.data());
 	const int result = verify_cuckaroo(proofNonces.data(), keys, proofOfWork.GetEdgeBits());
 	if (result != POW_OK) {
 		LOG_ERROR_F("Failed with result: {}", errstr[result]);

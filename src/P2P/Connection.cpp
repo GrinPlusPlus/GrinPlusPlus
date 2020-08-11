@@ -105,13 +105,13 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 	{
 		pConnection->Connect();
 	}
-	catch (...)
+	catch (const std::exception& e)
 	{
 		if (pConnection->m_pSocket->IsSocketOpen()) {
 			pConnection->m_pSocket->CloseSocket();
 		}
 
-        LOG_ERROR("Exception caught");
+        LOG_ERROR_F("Exception caught: {}", e);
         pConnection->m_terminate = true;
 		ThreadUtil::Detach(pConnection->m_connectionThread);
 		return;

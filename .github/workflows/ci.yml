@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p bin
           copy "..\backend\bin\Release\Release\GrinNode.exe" "./bin/"
-          xcopy "${{ github.workspace }}\backend\dist\win" "./bin" /E /H /C /I
+          xcopy "..\backend\dist\win" "./bin" /E /H /C /I
           npm version ${{ steps.tagName.outputs.tag }} --allow-same-version --git-tag-version false
           npm install && npm run build && xcopy src\electron-starter.js build\electron-starter.js* && xcopy src\notarize.js build\notarize.js*` && npm run release
       - name: Build UI (mac/linux)

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Roaring.h>
-
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>

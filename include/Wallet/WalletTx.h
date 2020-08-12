@@ -3,9 +3,7 @@
 #include <Wallet/WalletTxType.h>
 #include <Wallet/Models/Slate/SlatePaymentProof.h>
 #include <Core/Models/Transaction.h>
-#include <Crypto/ED25519.h>
 #include <Common/Util/TimeUtil.h>
-#include <Crypto/Signature.h>
 #include <json/json.h>
 #include <uuid.h>
 #include <chrono>

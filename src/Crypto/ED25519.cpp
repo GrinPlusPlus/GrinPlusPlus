@@ -91,7 +91,7 @@ ed25519_signature_t ED25519::Sign(const ed25519_secret_key_t& secretKey, const s
 		throw CryptoException("ED25519::Sign");
 	}
 
-	return ed25519_signature_t(CBigInteger<64>{ std::move(signature_bytes) });
+	return ed25519_signature_t(CBigInteger<64>{ std::vector<uint8_t>(signature_bytes.cbegin(), signature_bytes.cbegin() + 64) });
 }
 
 // Given an ed25519_secret_key_t, calculates the 32-byte secret scalar (a) and the PRF secret (RH).

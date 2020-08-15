@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/Hash.h>
 #include <Crypto/BigInteger.h>
@@ -14,6 +12,7 @@
 #include <Core/Traits/Serializable.h>
 #include <Common/Util/HexUtil.h>
 #include <json/json.h>
+#include <cstdint>
 #include <memory>
 
 class BlockHeader : public Traits::IPrintable, public Traits::ISerializable, public Traits::IHashable

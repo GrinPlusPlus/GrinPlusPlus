@@ -6,7 +6,7 @@
 #include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <Core/Models/DTOs/OutputRange.h>
 #include <TxPool/PoolType.h>
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 
 //

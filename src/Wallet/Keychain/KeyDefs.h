@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <Crypto/BigInteger.h>
 
 namespace KeyDefs

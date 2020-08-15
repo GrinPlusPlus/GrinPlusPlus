@@ -2,7 +2,7 @@
 
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
-#include <stdint.h>
+#include <cstdint>
 
 static const uint8_t USER_METADATA_FORMAT = 0;
 

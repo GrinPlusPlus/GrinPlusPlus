@@ -3,7 +3,7 @@
 #include <Core/Traits/Printable.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Crypto/CSPRNG.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 

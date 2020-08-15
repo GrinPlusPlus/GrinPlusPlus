@@ -3,8 +3,7 @@
 #include <Core/Models/Features.h>
 #include <Core/Util/FeeUtil.h>
 #include <Consensus/BlockTime.h>
-#include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 
 class WalletUtil
 {

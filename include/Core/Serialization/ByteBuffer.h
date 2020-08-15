@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <array>
 

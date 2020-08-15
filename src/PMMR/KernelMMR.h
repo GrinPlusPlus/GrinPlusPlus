@@ -9,7 +9,7 @@
 #include <Core/Traits/Lockable.h>
 #include <Crypto/Hash.h>
 #include <filesystem.h>
-#include <stdint.h>
+#include <cstdint>
 
 #define KERNEL_SIZE 114
 

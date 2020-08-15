@@ -3,7 +3,7 @@
 #include "MessageTypes.h"
 
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 #include <Config/Config.h>
 #include <Core/Serialization/ByteBuffer.h>
 

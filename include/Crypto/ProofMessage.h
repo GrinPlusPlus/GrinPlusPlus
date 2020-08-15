@@ -2,7 +2,7 @@
 
 #include <Crypto/BulletproofType.h>
 #include <Crypto/BigInteger.h>
-#include <stdint.h>
+#include <cstdint>
 
 class ProofMessage
 {

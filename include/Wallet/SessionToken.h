@@ -4,7 +4,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <cppcodec/base64_rfc4648.hpp>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 

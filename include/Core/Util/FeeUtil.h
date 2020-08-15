@@ -3,7 +3,7 @@
 #include <Core/Models/Transaction.h>
 
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 
 class FeeUtil
 {

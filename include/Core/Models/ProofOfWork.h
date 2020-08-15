@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <Crypto/Hash.h>
 #include <Crypto/BigInteger.h>
 #include <Consensus/BlockDifficulty.h>

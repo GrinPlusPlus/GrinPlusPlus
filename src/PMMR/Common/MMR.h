@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Crypto/Hash.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 class MMR

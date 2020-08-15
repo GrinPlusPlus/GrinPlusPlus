@@ -7,9 +7,6 @@
 #include <Common/ImportExport.h>
 #include <Common/Secure.h>
 #include <Crypto/BigInteger.h>
-#include <stdint.h>
-#include <vector>
-#include <memory>
 #include <Crypto/Commitment.h>
 #include <Crypto/RangeProof.h>
 #include <Crypto/BlindingFactor.h>
@@ -20,6 +17,9 @@
 #include <Crypto/PublicKey.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/ScryptParameters.h>
+#include <cstdint>
+#include <vector>
+#include <memory>
 
 #ifdef MW_CRYPTO
 #define CRYPTO_API EXPORT

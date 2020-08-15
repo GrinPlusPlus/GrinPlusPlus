@@ -5,7 +5,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <stdint.h>
+#include <cstdint>
 
 class TimeUtil
 {

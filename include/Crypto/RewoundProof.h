@@ -2,7 +2,7 @@
 
 #include <Crypto/SecretKey.h>
 #include <Crypto/ProofMessage.h>
-#include <stdint.h>
+#include <cstdint>
 
 class RewoundProof
 {
@@ -13,9 +13,9 @@ public:
 
 	}
 
-	inline uint64_t GetAmount() const { return m_amount; }
-	inline const std::unique_ptr<SecretKey>& GetBlindingFactor() const { return m_pBlindingFactor; }
-	inline const ProofMessage& GetProofMessage() const { return m_proofMessage; }
+	uint64_t GetAmount() const noexcept { return m_amount; }
+	const std::unique_ptr<SecretKey>& GetBlindingFactor() const noexcept { return m_pBlindingFactor; }
+	const ProofMessage& GetProofMessage() const noexcept { return m_proofMessage; }
 
 private:
 	uint64_t m_amount;

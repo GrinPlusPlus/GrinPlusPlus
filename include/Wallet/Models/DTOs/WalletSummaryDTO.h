@@ -4,7 +4,7 @@
 #include <Wallet/WalletTx.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
 #include <json/json.h>
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 class WalletSummaryDTO

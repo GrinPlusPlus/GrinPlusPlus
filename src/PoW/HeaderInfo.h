@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Consensus/BlockDifficulty.h>
-#include <stdint.h>
+#include <cstdint>
 
 // Minimal header information required for the Difficulty calculation to take place.
 struct HeaderInfo

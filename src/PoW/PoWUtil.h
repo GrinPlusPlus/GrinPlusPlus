@@ -3,7 +3,7 @@
 #include "PoWType.h"
 
 #include <Config/Config.h>
-#include <stdint.h>
+#include <cstdint>
 
 class PoWUtil
 {

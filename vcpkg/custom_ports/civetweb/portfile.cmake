@@ -18,6 +18,11 @@ vcpkg_from_github(
 #    ssl CIVETWEB_ENABLE_SSL
 #)
 
+if (VCPKG_TARGET_IS_OSX)
+    string(APPEND VCPKG_C_FLAGS " -Wno-implicit-function-declaration")
+    string(APPEND VCPKG_CXX_FLAGS " -Wno-implicit-function-declaration")
+endif()
+
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA

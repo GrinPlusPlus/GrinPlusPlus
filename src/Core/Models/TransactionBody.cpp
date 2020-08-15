@@ -16,19 +16,19 @@ void TransactionBody::Serialize(Serializer& serializer) const
 	serializer.Append<uint64_t>(m_kernels.size());
 
 	// Serialize Inputs
-	for (auto input : m_inputs)
+	for (const auto& input : m_inputs)
 	{
 		input.Serialize(serializer);
 	}
 
 	// Serialize Outputs
-	for (auto output : m_outputs)
+	for (const auto& output : m_outputs)
 	{
 		output.Serialize(serializer);
 	}
 
 	// Serialize Kernels
-	for (auto kernel : m_kernels)
+	for (const auto& kernel : m_kernels)
 	{
 		kernel.Serialize(serializer);
 	}

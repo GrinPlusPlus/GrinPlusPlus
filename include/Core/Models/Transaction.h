@@ -13,6 +13,7 @@
 #include <Crypto/BlindingFactor.h>
 #include <Core/Traits/Printable.h>
 #include <json/json.h>
+#include <mutex>
 #include <memory>
 
 ////////////////////////////////////////
@@ -25,8 +26,8 @@ public:
 	// Constructors
 	//
 	Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody);
-	Transaction(const Transaction& transaction) = default;
-	Transaction(Transaction&& transaction) noexcept = default;
+	Transaction(const Transaction& transaction);
+	Transaction(Transaction&& transaction) noexcept;
 	Transaction() = default;
 
 	//
@@ -37,7 +38,7 @@ public:
 	//
 	// Operators
 	//
-	Transaction& operator=(const Transaction& transaction) = default;
+	Transaction& operator=(const Transaction& transaction);
 	Transaction& operator=(Transaction&& transaction) noexcept = default;
 	inline bool operator<(const Transaction& transaction) const { return GetHash() < transaction.GetHash(); }
 	inline bool operator==(const Transaction& transaction) const { return GetHash() == transaction.GetHash(); }
@@ -78,6 +79,7 @@ private:
 	TransactionBody m_transactionBody;
 
 	mutable Hash m_hash;
+	mutable std::mutex m_mutex;
 };
 
 typedef std::shared_ptr<const Transaction> TransactionPtr;

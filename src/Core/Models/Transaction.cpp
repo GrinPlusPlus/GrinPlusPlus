@@ -5,9 +5,20 @@
 #include <Core/Util/JsonUtil.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
-	: m_offset(std::move(offset)),
-	m_transactionBody(std::move(transactionBody))
+	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody)) { }
+
+Transaction::Transaction(const Transaction& tx)
+	: m_offset(tx.m_offset), m_transactionBody(tx.m_transactionBody), m_hash(tx.GetHash()) { }
+
+Transaction::Transaction(Transaction&& tx) noexcept
+	: m_offset(std::move(tx.m_offset)), m_transactionBody(std::move(tx.m_transactionBody)), m_hash(std::move(tx.m_hash)) { }
+
+Transaction& Transaction::operator=(const Transaction& tx)
 {
+	m_offset = tx.m_offset;
+	m_transactionBody = tx.m_transactionBody;
+	m_hash = tx.GetHash();
+	return *this;
 }
 
 void Transaction::Serialize(Serializer& serializer) const
@@ -52,6 +63,8 @@ Transaction Transaction::FromJSON(const Json::Value& transactionJSON)
 
 const Hash& Transaction::GetHash() const
 {
+	std::unique_lock lock(m_mutex);
+
 	if (m_hash == Hash{}) {
 		Serializer serializer;
 		Serialize(serializer);

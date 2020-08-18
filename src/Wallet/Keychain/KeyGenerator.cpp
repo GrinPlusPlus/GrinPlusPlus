@@ -5,27 +5,21 @@
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/VectorUtil.h>
 #include <Core/Serialization/Serializer.h>
+#include <Wallet/PublicExtKey.h>
 
-KeyGenerator::KeyGenerator(const Config& config)
-	: m_config(config)
-{
-
-}
+static const std::vector<uint8_t> KEY({ 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' });
 
 PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 {
-	const std::vector<unsigned char> key({ 'I','a','m','V','o', 'l', 'd', 'e', 'm', 'o', 'r', 't' });
-	const CBigInteger<64> hash = Crypto::HMAC_SHA512(key, (const std::vector<unsigned char>&)seed);
-	const std::vector<unsigned char>& vchHash = hash.GetData();
+	const CBigInteger<64> hash = Crypto::HMAC_SHA512(KEY, seed.data(), seed.size());
 
-	CBigInteger<32> masterSecretKey(&vchHash[0]);
+	CBigInteger<32> masterSecretKey(hash.data());
 
-	if (masterSecretKey == KeyDefs::BIG_INT_ZERO || masterSecretKey >= KeyDefs::SECP256K1_N)
-	{
+	if (masterSecretKey == KeyDefs::BIG_INT_ZERO || masterSecretKey >= KeyDefs::SECP256K1_N) {
 		throw std::out_of_range("The seed resulted in an invalid private key."); // Less than 2^127 chance.
 	}
 
-	CBigInteger<32> masterChainCode(&vchHash[32]);
+	CBigInteger<32> masterChainCode(&hash[32]);
 
 	return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
 }
@@ -63,18 +57,15 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 
 	serializer.Append<uint32_t>(childKeyIndex);
 
-	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetVec(), serializer.GetBytes());
+	const std::vector<uint8_t>& serialized_bytes = serializer.GetBytes();
+	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetVec(), serialized_bytes.data(), serialized_bytes.size());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();
 
-	std::vector<unsigned char> vchLeft;
-	vchLeft.insert(vchLeft.begin(), hmacSha512Vector.cbegin(), hmacSha512Vector.cbegin() + 32);
-	SecretKey left(std::move(vchLeft));
+	SecretKey left(std::vector<uint8_t>{ hmacSha512Vector.cbegin(), hmacSha512Vector.cbegin() + 32 });
 
 	SecretKey childPrivateKey = Crypto::AddPrivateKeys(left, parentExtendedKey.GetPrivateKey());
 
-	std::vector<unsigned char> vchRight;
-	vchRight.insert(vchRight.begin(), hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64);
-	CBigInteger<32> childChainCode(vchRight);
+	CBigInteger<32> childChainCode(std::vector<uint8_t>{ hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64 });
 
 	return PrivateExtKey::Create(
 		m_config.GetWalletConfig().GetPrivateKeyVersion(),

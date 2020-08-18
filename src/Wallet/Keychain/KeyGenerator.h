@@ -1,10 +1,8 @@
 #pragma once
 
 #include <Wallet/PrivateExtKey.h>
-#include <Wallet/PublicExtKey.h>
 
 #include <Common/Secure.h>
-#include <Crypto/SecretKey.h>
 #include <Config/Config.h>
 
 //
@@ -13,7 +11,7 @@
 class KeyGenerator
 {
 public:
-	KeyGenerator(const Config& config);
+	KeyGenerator(const Config& config) : m_config(config) { }
 
 	//
 	// Generates a master private key for an HD wallet from a 32 byte seed.

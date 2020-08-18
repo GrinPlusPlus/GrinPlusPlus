@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Common/Util/StringUtil.h>
 #include <exception>
 
 #define WALLET_STORE_EXCEPTION(msg) WalletStoreException(msg, __func__)
+#define WALLET_STORE_EXCEPTION_F(msg, ...) WalletStoreException(StringUtil::Format(msg, __VA_ARGS__), __func__)
 
 class WalletStoreException : public std::exception
 {

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "sha512.h"
+#include <bitcoin/sha512.h>
 
 #include <Core/Serialization/EndianHelper.h>
 #include <string.h>

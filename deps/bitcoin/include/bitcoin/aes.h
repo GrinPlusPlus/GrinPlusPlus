@@ -8,7 +8,7 @@
 #define BITCOIN_CRYPTO_AES_H
 
 extern "C" {
-#include "ctaes/ctaes.h"
+#include <bitcoin/ctaes.h>
 }
 
 static const int AES_BLOCKSIZE = 16;

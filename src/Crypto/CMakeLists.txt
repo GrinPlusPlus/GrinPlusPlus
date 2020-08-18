@@ -9,15 +9,8 @@ file(GLOB SOURCE_CODE
 	"ED25519.cpp"
 	"Pedersen.cpp"
 	"PublicKeys.cpp"
-	"ThirdParty/Blake2b.cpp"
-	"ThirdParty/sha256.cpp"
-	"ThirdParty/sha512.cpp"
-	"ThirdParty/hmac_sha256.cpp"
-	"ThirdParty/hmac_sha512.cpp"
-	"ThirdParty/ripemd160.cpp"
-	"ThirdParty/aes.cpp"
 )
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_CRYPTO NOMINMAX)
-target_link_libraries(${TARGET_NAME} PUBLIC ctaes scrypt secp256k1-zkp::secp256k1-zkp unofficial-sodium::sodium chachapoly rfc6234 Common)
+target_link_libraries(${TARGET_NAME} PUBLIC bitcoin scrypt secp256k1-zkp::secp256k1-zkp unofficial-sodium::sodium chachapoly rfc6234 Common)

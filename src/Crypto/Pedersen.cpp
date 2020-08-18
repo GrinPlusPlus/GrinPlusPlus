@@ -5,9 +5,11 @@
 #include <Crypto/CryptoException.h>
 #include <Common/Logger.h>
 
+static Pedersen instance;
+
 Pedersen& Pedersen::GetInstance()
 {
-	static Pedersen instance;
+	//static Pedersen instance;
 	return instance;
 }
 

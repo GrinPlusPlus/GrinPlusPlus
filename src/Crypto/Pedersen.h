@@ -15,6 +15,8 @@ class Pedersen
 {
 public:
 	static Pedersen& GetInstance();
+	Pedersen();
+	~Pedersen();
 
 	Commitment PedersenCommit(const uint64_t value, const BlindingFactor& blindingFactor) const;
 	Commitment PedersenCommitSum(const std::vector<Commitment>& positive, const std::vector<Commitment>& negative) const;
@@ -28,9 +30,6 @@ public:
 	static void CleanupCommitments(std::vector<secp256k1_pedersen_commitment*>& commitments);
 
 private:
-	Pedersen();
-	~Pedersen();
-
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;
 };

@@ -2,38 +2,39 @@
 
 #include <string>
 #include <exception>
+#include <Common/Util/StringUtil.h>
+
+#define CRYPTO_EXCEPTION(msg) CryptoException(msg, __func__)
+#define CRYPTO_EXCEPTION_F(msg, ...) CryptoException(StringUtil::Format(msg, __VA_ARGS__), __func__)
 
 class CryptoException : public std::exception
 {
 private:
-	struct ExceptionData
-	{
-		char const* m_pMessage;
-	};
-
-	ExceptionData m_data;
+	std::string m_what;
 
 public:
 	explicit CryptoException() noexcept
-		: m_data()
 	{
-		m_data.m_pMessage = nullptr;
+		m_what = "An error occurred while performing a cryptographic operation.";
 	}
 
 	explicit CryptoException(char const* const pMessage) noexcept
-		: m_data()
 	{
-		m_data.m_pMessage = pMessage;
+		m_what = pMessage;
 	}
 
 	explicit CryptoException(const std::string& message) noexcept
-		: m_data()
 	{
-		m_data.m_pMessage = message.c_str();
+		m_what = message;
+	}
+
+	CryptoException(const std::string& message, const std::string& function) noexcept
+	{
+		m_what = function + ": " + message;
 	}
 
 	const char* what() const throw()
 	{
-		return m_data.m_pMessage != nullptr ? m_data.m_pMessage : "An error occurred while performing a cryptographic operation.";
+		return m_what.c_str();
 	}
 };

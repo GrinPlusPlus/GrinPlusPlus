@@ -12,6 +12,8 @@
 class IExtendedKey
 {
 public:
+	virtual ~IExtendedKey() = default;
+
 	//
 	// 4 byte: version bytes (mainnet: TODO: public, TODO: private; floonet: 0x033C08DF public, 0x033C04A4 private)
 	// 1 byte: depth: 0x00 for master nodes, 0x01 for level-1 derived keys, ....

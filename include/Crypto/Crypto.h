@@ -74,7 +74,8 @@ public:
 	//
 	static CBigInteger<64> HMAC_SHA512(
 		const std::vector<unsigned char>& key,
-		const std::vector<unsigned char>& data
+		const uint8_t* data,
+		const size_t len
 	);
 
 	//

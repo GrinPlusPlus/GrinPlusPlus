@@ -71,7 +71,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 		}
 		else if (version > LATEST_SCHEMA_VERSION)
 		{
-			throw WALLET_STORE_EXCEPTION("Sqlite database has higher version than supported.");
+			throw WALLET_STORE_EXCEPTION_F("Sqlite database has higher version ({}) than supported ({})", version, LATEST_SCHEMA_VERSION);
 		}
 	}
 	catch (std::exception&)

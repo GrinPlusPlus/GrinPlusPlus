@@ -60,7 +60,7 @@ jobs:
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |
-          brew install gcc cmake openssl
+          brew install gcc cmake
           echo "::set-env name=CC::gcc-${{ matrix.version }}"
           echo "::set-env name=CXX::g++-${{ matrix.version }}"
           brew install gflags
@@ -84,12 +84,6 @@ jobs:
           vcpkgArguments: '--overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
-      - name: Print Error Logs
-        working-directory: backend
-        if: ${{ failure() }}
-        run: |
-          cat /Users/runner/work/GrinPlusPlus/GrinPlusPlus/vcpkg/buildtrees/civetweb/config-x64-osx-grinpp-dbg-out.log
-          cat /Users/runner/work/GrinPlusPlus/GrinPlusPlus/vcpkg/buildtrees/civetweb/config-x64-osx-grinpp-dbg-err.log
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:

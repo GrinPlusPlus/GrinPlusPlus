@@ -84,6 +84,12 @@ jobs:
           vcpkgArguments: '--overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
+      - name: Print Error Logs
+        working-directory: backend
+        if: ${{ always() }}
+        run: |
+          cat /Users/runner/work/GrinPlusPlus/GrinPlusPlus/vcpkg/buildtrees/civetweb/config-x64-osx-grinpp-dbg-out.log
+          cat /Users/runner/work/GrinPlusPlus/GrinPlusPlus/vcpkg/buildtrees/civetweb/config-x64-osx-grinpp-dbg-err.log
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:

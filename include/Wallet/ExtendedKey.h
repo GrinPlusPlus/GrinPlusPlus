@@ -50,7 +50,7 @@ protected:
 
 	}
 
-	const PublicKey& GetKeyBytes() const { return m_keyBytes; }
+	const PublicKey& GetKeyBytes() const noexcept { return m_keyBytes; }
 
 private:
 	uint32_t m_network;

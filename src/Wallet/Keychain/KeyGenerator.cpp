@@ -38,7 +38,7 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 		std::move(parentCompressedKey)
 	);
 
-	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(publicKey.GetPublicKey().GetCompressedBytes().GetData()).GetData());
+	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(publicKey.vec()).GetData());
 	const uint32_t parentFingerprint = BitUtil::ConvertToU32(parentIdentifier[0], parentIdentifier[1], parentIdentifier[2], parentIdentifier[3]);
 
 	Serializer serializer(37); // Reserve 37 bytes: 1 byte for 0x00 padding (hardened) or 0x02/0x03 point parity (normal), 32 bytes for private key (hardened) or public key X coord, 4 bytes for index.

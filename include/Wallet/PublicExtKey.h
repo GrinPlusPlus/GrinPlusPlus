@@ -12,6 +12,7 @@ public:
 	}
 
 	const PublicKey& GetPublicKey() const { return GetKeyBytes(); }
+	const std::vector<uint8_t>& vec() const noexcept { return GetKeyBytes().vec(); }
 	
 	static PublicExtKey Deserialize(ByteBuffer& byteBuffer)
 	{ 

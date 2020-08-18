@@ -19,6 +19,7 @@ public:
 	const std::vector<unsigned char>& GetCompressedVec() const noexcept { return m_compressedKey.GetData(); }
 	std::string ToHex() const noexcept { return m_compressedKey.ToHex(); }
 
+	const std::vector<uint8_t>& vec() const noexcept { return m_compressedKey.GetData(); }
 	unsigned char* data() noexcept { return m_compressedKey.data(); }
 	const unsigned char* data() const noexcept { return m_compressedKey.data(); }
 	size_t size() const noexcept { return m_compressedKey.size(); }

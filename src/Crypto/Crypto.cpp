@@ -173,18 +173,14 @@ struct SecpContext
 	secp256k1_context* pContext;
 };
 
-static SecpContext ctx;
+static SecpContext secp_context;
 
 SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& secretKey2)
 {
-	//secp256k1_context* pContext = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
-
 	SecretKey result(secretKey1.GetVec());
-	const int tweak_result = secp256k1_ec_privkey_tweak_add(ctx.pContext, (unsigned char*)result.data(), secretKey2.data());
-	//secp256k1_context_destroy(pContext);
+	const int tweak_result = secp256k1_ec_privkey_tweak_add(secp_context.pContext, result.data(), secretKey2.data());
 
-	if (tweak_result != 1)
-	{
+	if (tweak_result != 1) {
 		throw CRYPTO_EXCEPTION_F("secp256k1_ec_privkey_tweak_add failed with error {}", tweak_result);
 	}
 

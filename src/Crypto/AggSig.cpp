@@ -12,9 +12,10 @@
 const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
 
+static AggSig instance;
+
 AggSig& AggSig::GetInstance()
 {
-	static AggSig instance;
 	return instance;
 }
 

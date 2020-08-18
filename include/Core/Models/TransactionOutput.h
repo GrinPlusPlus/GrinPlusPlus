@@ -63,7 +63,7 @@ public:
 	//
 	// Traits
 	//
-	const Hash& GetHash() const final;
+	const Hash& GetHash() const final { return m_hash; }
 	std::string Format() const final { return m_commitment.Format(); }
 
 private:

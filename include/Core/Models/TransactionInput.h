@@ -61,7 +61,7 @@ public:
 	//
 	// Traits
 	//
-	const Hash& GetHash() const final;
+	const Hash& GetHash() const final { return m_hash; }
 
 private:
 	// The features of the output being spent. 

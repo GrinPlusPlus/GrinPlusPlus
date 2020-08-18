@@ -10,9 +10,10 @@ const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;
 const size_t MAX_GENERATORS = 256;
 
+static Bulletproofs instance;
+
 Bulletproofs& Bulletproofs::GetInstance()
 {
-	static Bulletproofs instance;
 	return instance;
 }
 

@@ -17,6 +17,8 @@ class Bulletproofs
 {
 public:
 	static Bulletproofs& GetInstance();
+	Bulletproofs();
+	~Bulletproofs();
 
 	bool VerifyBulletproofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs) const;
 
@@ -35,9 +37,6 @@ public:
 	) const;
 
 private:
-	Bulletproofs();
-	~Bulletproofs();
-
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;
 	secp256k1_bulletproof_generators* m_pGenerators;

@@ -67,7 +67,7 @@ public:
 	//
 	// Traits
 	//
-	const Hash& GetHash() const final;
+	const Hash& GetHash() const final { return m_hash; }
 	const Commitment& GetCommitment() const final { return m_excessCommitment; }
 
 private:

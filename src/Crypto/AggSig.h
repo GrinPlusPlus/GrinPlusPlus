@@ -18,6 +18,8 @@ class AggSig
 {
 public:
 	static AggSig& GetInstance();
+	AggSig();
+	~AggSig();
 
 	SecretKey GenerateSecureNonce() const;
 
@@ -34,9 +36,6 @@ public:
 	CompactSignature ToCompact(const Signature& signature) const;
 
 private:
-	AggSig();
-	~AggSig();
-
 	mutable std::shared_mutex m_mutex;
 	secp256k1_context* m_pContext;
 };

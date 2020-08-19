@@ -4,7 +4,7 @@
 
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Crypto/CSPRNG.h>
 #include <Wallet/Exceptions/SessionTokenException.h>
 #include <Wallet/WalletDB/WalletStore.h>
@@ -125,7 +125,7 @@ SessionToken SessionManager::Login(
 	const std::string& username,
 	const SecureVector& seed)
 {
-	Hash hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
+	Hash hash = Hasher::SHA256((const std::vector<unsigned char>&)seed);
 	std::vector<unsigned char> checksum(
 		hash.GetData().cbegin(),
 		hash.GetData().cbegin() + 4
@@ -198,7 +198,7 @@ SecureVector SessionManager::GetSeed(const SessionToken& token) const
 		}
 
 		SecureVector seed(seedWithCS.cbegin(), seedWithCS.cbegin() + seedWithCS.size() - 4);
-		CBigInteger<32> hash = Crypto::SHA256((const std::vector<unsigned char>&)seed);
+		CBigInteger<32> hash = Hasher::SHA256((const std::vector<unsigned char>&)seed);
 		for (int i = 0; i < 4; i++)
 		{
 			if (seedWithCS[(seedWithCS.size() - 4) + i] != hash[i])

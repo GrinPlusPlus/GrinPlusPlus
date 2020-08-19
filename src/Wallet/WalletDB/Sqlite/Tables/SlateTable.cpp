@@ -1,7 +1,9 @@
 #include "SlateTable.h"
 
 #include <Common/Util/StringUtil.h>
+#include <Crypto/AES.h>
 #include <Crypto/CSPRNG.h>
+#include <Crypto/Hasher.h>
 #include <Common/Logger.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
@@ -133,7 +135,7 @@ std::vector<uint8_t> SlateTable::Encrypt(
 	// Encrypt slate
 	Serializer serializer;
 	slate.Serialize(serializer);
-	std::vector<uint8_t> encryptedSlate = Crypto::AES256_Encrypt(serializer.GetSecureBytes(), DeriveAESKey(masterSeed, slate.slateId), iv);
+	std::vector<uint8_t> encryptedSlate = AES::AES256_Encrypt(serializer.GetSecureBytes(), DeriveAESKey(masterSeed, slate.slateId), iv);
 
 	return encryptedSlate;
 }
@@ -145,7 +147,7 @@ Slate SlateTable::Decrypt(
 	const std::vector<uint8_t>& encrypted)
 {
 	SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	SecureVector decrypted = Crypto::AES256_Decrypt(encrypted, aesKey, iv);
+	SecureVector decrypted = AES::AES256_Decrypt(encrypted, aesKey, iv);
 
 	ByteBuffer byteBuffer(std::vector<unsigned char>{ decrypted.begin(), decrypted.end() });
 	return Slate::Deserialize(byteBuffer);
@@ -158,5 +160,5 @@ Hash SlateTable::DeriveAESKey(const SecureVector& masterSeed, const uuids::uuid&
 	serializer.AppendVarStr(uuids::to_string(slateId));
 	serializer.AppendVarStr("slate");
 
-	return Crypto::Blake2b(serializer.GetBytes());
+	return Hasher::Blake2b(serializer.GetBytes());
 }

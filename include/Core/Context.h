@@ -3,6 +3,7 @@
 #include <Config/Config.h>
 #include <Net/Tor/TorProcess.h>
 #include <scheduler/Scheduler.h>
+#include <Common/Logger.h>
 #include <memory>
 #include <cassert>
 

@@ -6,7 +6,7 @@
 #include <Wallet/Keychain/KeyChain.h>
 #include <Crypto/CSPRNG.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/CryptoUtil.h>
+#include <Crypto/Hasher.h>
 #include <tuple>
 
 class TxBuilder
@@ -72,10 +72,10 @@ public:
         BlindingFactor outputBFSum = Crypto::AddBlindingFactors(outputBlindingFactors, {});
 
         // Calculate total blinding excess sum for all inputs and outputs xS1 = xC - xI
-        BlindingFactor totalExcess = CryptoUtil::AddBlindingFactors(&outputBFSum, &inputBFSum);
+        BlindingFactor totalExcess = Crypto::AddBlindingFactors({ outputBFSum }, { inputBFSum });
 
         // Subtract random kernel offset oS from xS1. Calculate xS = xS1 - oS
-        BlindingFactor privateKeyBF = CryptoUtil::AddBlindingFactors(&totalExcess, &txOffset);
+        BlindingFactor privateKeyBF = Crypto::AddBlindingFactors({ totalExcess }, { txOffset });
 
         TransactionKernel kernel = BuildKernel(
             EKernelFeatures::DEFAULT_KERNEL,
@@ -116,7 +116,7 @@ private:
         auto pSignature = Crypto::BuildCoinbaseSignature(
             BlindingFactor(blind).ToSecretKey(),
             commit,
-            Crypto::Blake2b(serializer.GetBytes())
+            Hasher::Blake2b(serializer.GetBytes())
         );
 
         return TransactionKernel(

@@ -1,6 +1,6 @@
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Util/JsonUtil.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof)
 	: m_features(features), m_commitment(std::move(commitment)), m_rangeProof(std::move(rangeProof))
@@ -11,7 +11,7 @@ TransactionOutput::TransactionOutput(const EOutputFeatures features, Commitment&
 
 		// Serialize Commitment
 		m_commitment.Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 TransactionOutput::TransactionOutput(const EOutputFeatures features, const Commitment& commitment, const RangeProof& rangeProof)
@@ -23,7 +23,7 @@ TransactionOutput::TransactionOutput(const EOutputFeatures features, const Commi
 
 		// Serialize Commitment
 		m_commitment.Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 void TransactionOutput::Serialize(Serializer& serializer) const

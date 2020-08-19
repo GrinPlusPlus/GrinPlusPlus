@@ -3,7 +3,7 @@
 
 #include <Net/Util/HTTPUtil.h>
 #include <Common/Util/StringUtil.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <json/json.h>
 
 /*
@@ -255,7 +255,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 
 				Serializer proofSerializer;
 				info.GetRangeProof().Serialize(proofSerializer);
-				outputNode["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
+				outputNode["proof_hash"] = Hasher::Blake2b(proofSerializer.GetBytes()).ToHex();
 
 				outputNode["block_height"] = info.GetLocation().GetBlockHeight();
 				outputNode["merkle_proof"] = Json::nullValue;

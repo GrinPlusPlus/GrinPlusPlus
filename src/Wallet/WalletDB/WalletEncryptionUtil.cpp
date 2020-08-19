@@ -1,6 +1,7 @@
 #include "WalletEncryptionUtil.h"
 
-#include <Crypto/Crypto.h>
+#include <Crypto/AES.h>
+#include <Crypto/Hasher.h>
 #include <Crypto/CSPRNG.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
@@ -14,8 +15,7 @@ std::vector<unsigned char> WalletEncryptionUtil::Encrypt(
 	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
 	const SecretKey key = WalletEncryptionUtil::CreateSecureKey(masterSeed, dataType);
 
-	const std::vector<unsigned char> encryptedBytes =
-		Crypto::AES256_Encrypt(bytes, key, iv);
+	const std::vector<unsigned char> encryptedBytes = AES::AES256_Encrypt(bytes, key, iv);
 
 	Serializer serializer;
 	serializer.Append<uint8_t>(ENCRYPTION_FORMAT);
@@ -46,7 +46,7 @@ SecureVector WalletEncryptionUtil::Decrypt(
 		byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
 	const SecretKey key = WalletEncryptionUtil::CreateSecureKey(masterSeed, dataType);
 
-	return Crypto::AES256_Decrypt(encryptedBytes, key, iv);
+	return AES::AES256_Decrypt(encryptedBytes, key, iv);
 }
 
 SecretKey WalletEncryptionUtil::CreateSecureKey(
@@ -63,5 +63,5 @@ SecretKey WalletEncryptionUtil::CreateSecureKey(
 		nonceSerializer.GetBytes().end()
 	);
 
-	return Crypto::Blake2b((const std::vector<unsigned char>&)seedWithNonce);
+	return Hasher::Blake2b((const std::vector<unsigned char>&)seedWithNonce);
 }

@@ -1,6 +1,8 @@
 #include "Cuckaroo.h"
 #include "Common.h"
 
+#include <Crypto/Hasher.h>
+
 // verify that edges are ascending and form a cycle in header-generated graph
 int verify_cuckaroo(const uint64_t edges[PROOFSIZE], siphash_keys& keys, const uint8_t edgeBits)
 {
@@ -69,7 +71,7 @@ bool Cuckaroo::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-    Hash prePoWHash = Crypto::Blake2b(blockHeader.GetPreProofOfWork());
+    Hash prePoWHash = Hasher::Blake2b(blockHeader.GetPreProofOfWork());
     siphash_keys keys((const char*)prePoWHash.data());
 	const int result = verify_cuckaroo(proofNonces.data(), keys, proofOfWork.GetEdgeBits());
 	if (result != POW_OK) {

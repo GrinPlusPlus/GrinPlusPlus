@@ -2,6 +2,8 @@
 
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
+#include <Crypto/AES.h>
+#include <Crypto/Hasher.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
 void SlateContextTable::CreateTable(sqlite3& database)
@@ -127,7 +129,7 @@ std::vector<unsigned char> SlateContextTable::Encrypt(
 	Serializer serializer;
 	slateContext.Serialize(serializer);
 	const SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	std::vector<uint8_t> encrypted = Crypto::AES256_Encrypt(serializer.GetSecureBytes(), aesKey, iv);
+	std::vector<uint8_t> encrypted = AES::AES256_Encrypt(serializer.GetSecureBytes(), aesKey, iv);
 
 	return encrypted;
 }
@@ -139,7 +141,7 @@ SlateContextEntity SlateContextTable::Decrypt(
 	const std::vector<unsigned char>& encrypted)
 {
 	const SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	SecureVector decrypted = Crypto::AES256_Decrypt(encrypted, aesKey, iv);
+	SecureVector decrypted = AES::AES256_Decrypt(encrypted, aesKey, iv);
 
 	ByteBuffer byteBuffer(std::vector<unsigned char>{ decrypted.begin(), decrypted.end() });
 	return SlateContextEntity::Deserialize(byteBuffer);
@@ -152,5 +154,5 @@ Hash SlateContextTable::DeriveAESKey(const SecureVector& masterSeed, const uuids
 	serializer.AppendVarStr(uuids::to_string(slateId));
 	serializer.AppendVarStr("context");
 
-	return Crypto::Blake2b(serializer.GetBytes());
+	return Hasher::Blake2b(serializer.GetBytes());
 }

@@ -2,7 +2,7 @@
 
 #include <Core/Traits/Serializable.h>
 #include <Core/Traits/Hashable.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Hasher.h>
 #include <PMMR/Common/MMRUtil.h>
 #include <PMMR/Common/MMRHashUtil.h>
 #include <type_traits>
@@ -20,7 +20,7 @@ public:
         for (size_t leafIdx = 0; leafIdx < leaves.size(); leafIdx++)
         {
 			uint64_t position = MMRUtil::GetPMMRIndex(leafIdx);
-            hashes.push_back(Crypto::Blake2b(leaves[leafIdx].SerializeWithIndex(position)));
+            hashes.push_back(Hasher::Blake2b(leaves[leafIdx].SerializeWithIndex(position)));
 
 			const uint64_t nextLeafPosition = MMRUtil::GetPMMRIndex(leafIdx + 1);
 

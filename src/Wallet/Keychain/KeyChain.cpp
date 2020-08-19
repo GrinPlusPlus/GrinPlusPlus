@@ -4,6 +4,8 @@
 
 #include <Crypto/CSPRNG.h>
 #include <Crypto/ED25519.h>
+#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Common/Exceptions/UnimplementedException.h>
 #include <Common/Util/VectorUtil.h>
@@ -48,7 +50,7 @@ SecretKey KeyChain::DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t
 ed25519_keypair_t KeyChain::DeriveED25519Key(const KeyChainPath& keyPath) const
 {
 	SecretKey preSeed = DerivePrivateKey(keyPath);
-	SecretKey seed = Crypto::Blake2b(preSeed.GetVec());
+	SecretKey seed = Hasher::Blake2b(preSeed.GetVec());
 
 	return ED25519::CalculateKeypair(seed);
 }
@@ -64,7 +66,7 @@ std::unique_ptr<RewoundProof> KeyChain::RewindRangeProof(const Commitment& commi
 	{
 		PublicKey masterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey());
 
-		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedVec());
+		const SecretKey rewindNonceHash = Hasher::Blake2b(masterPublicKey.GetCompressedVec());
 
 		return Crypto::RewindRangeProof(commitment, rangeProof, CreateNonce(commitment, rewindNonceHash));
 	}
@@ -89,10 +91,10 @@ RangeProof KeyChain::GenerateRangeProof(
 	}
 	else if (bulletproofType == EBulletproofType::ENHANCED)
 	{
-		const SecretKey privateNonceHash = Crypto::Blake2b(m_masterKey.GetPrivateKey().GetVec());
+		const SecretKey privateNonceHash = Hasher::Blake2b(m_masterKey.GetPrivateKey().GetVec());
 
 		PublicKey masterPublicKey = Crypto::CalculatePublicKey(m_masterKey.GetPrivateKey());
-		const SecretKey rewindNonceHash = Crypto::Blake2b(masterPublicKey.GetCompressedVec());
+		const SecretKey rewindNonceHash = Hasher::Blake2b(masterPublicKey.GetCompressedVec());
 
 		return Crypto::GenerateRangeProof(amount, blindingFactor, CreateNonce(commitment, privateNonceHash), CreateNonce(commitment, rewindNonceHash), proofMessage);
 	}
@@ -102,5 +104,5 @@ RangeProof KeyChain::GenerateRangeProof(
 
 SecretKey KeyChain::CreateNonce(const Commitment& commitment, const SecretKey& nonceHash) const
 {
-	return Crypto::Blake2b(commitment.GetVec(), nonceHash.GetVec());
+	return Hasher::Blake2b(commitment.GetVec(), nonceHash.GetVec());
 }

@@ -1,18 +1,8 @@
 #include <Crypto/Crypto.h>
-#include <Crypto/CryptoException.h>
-#include <Common/Logger.h>
-#include <sodium/crypto_generichash_blake2b.h>
+#include <Core/Traits/Lockable.h>
 #include <cassert>
 
-#include "ThirdParty/siphash.h"
-
-#include <bitcoin/sha256.h>
-#include <bitcoin/ripemd160.h>
-#include <bitcoin/hmac_sha256.h>
-#include <bitcoin/hmac_sha512.h>
-#include <bitcoin/aes.h>
-#include <scrypt/crypto_scrypt.h>
-#include <sha.h>
+#include "Context.h"
 
 // Secp256k1
 #include "AggSig.h"
@@ -24,70 +14,7 @@
 #pragma comment(lib, "crypt32")
 #endif
 
-CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& input)
-{
-	CBigInteger<32> output;
-
-	int result = crypto_generichash_blake2b(output.data(), output.size(), input.data(), input.size(), nullptr, 0);
-	assert(result == 0);
-
-	return output;
-}
-
-CBigInteger<32> Crypto::Blake2b(const std::vector<unsigned char>& key, const std::vector<unsigned char>& input)
-{
-	CBigInteger<32> output;
-
-	int result = crypto_generichash_blake2b(output.data(), output.size(), input.data(), input.size(), key.data(), key.size());
-	assert(result == 0);
-
-	return output;
-}
-
-CBigInteger<32> Crypto::SHA256(const std::vector<unsigned char> & input)
-{
-	std::vector<unsigned char> sha256(32, 0);
-
-	CSHA256().Write(input.data(), input.size()).Finalize(sha256.data());
-
-	return CBigInteger<32>(sha256);
-}
-
-CBigInteger<64> Crypto::SHA512(const std::vector<unsigned char> & input)
-{
-	std::vector<unsigned char> sha512(64, 0);
-
-	CSHA512().Write(input.data(), input.size()).Finalize(sha512.data());
-
-	return CBigInteger<64>(sha512);
-}
-
-CBigInteger<20> Crypto::RipeMD160(const std::vector<unsigned char>& input)
-{
-	std::vector<unsigned char> ripemd(32, 0);
-
-	CRIPEMD160().Write(input.data(), input.size()).Finalize(ripemd.data());
-
-	return CBigInteger<20>(ripemd);
-}
-
-CBigInteger<32> Crypto::HMAC_SHA256(const std::vector<unsigned char>& key, const std::vector<unsigned char>& data)
-{
-	std::vector<unsigned char> result(32);
-
-	CHMAC_SHA256(key.data(), key.size()).Write(data.data(), data.size()).Finalize(result.data());
-
-	return CBigInteger<32>(result.data());
-}
-
-CBigInteger<64> Crypto::HMAC_SHA512(const std::vector<unsigned char>& key, const uint8_t* data, const size_t len)
-{
-	CBigInteger<64> result;
-
-	CHMAC_SHA512(key.data(), key.size()).Write(data, len).Finalize(result.data());
-
-	return result;
-}
+Locked<Context> SECP256K1_CONTEXT(std::make_shared<Context>());
 
 Commitment Crypto::CommitTransparent(const uint64_t value)
 {
@@ -157,29 +84,11 @@ SecretKey Crypto::BlindSwitch(const SecretKey& secretKey, const uint64_t amount)
 	return Pedersen::GetInstance().BlindSwitch(secretKey, amount);
 }
 
-// Temporary hack since creating a context too often crashes on mac & linux
-struct SecpContext
-{
-	SecpContext()
-	{
-		pContext = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
-	}
-
-	~SecpContext()
-	{
-		secp256k1_context_destroy(pContext);
-	}
-
-	secp256k1_context* pContext;
-};
-
-static SecpContext secp_context;
-
 SecretKey Crypto::AddPrivateKeys(const SecretKey& secretKey1, const SecretKey& secretKey2)
 {
 	SecretKey result(secretKey1.GetVec());
-	const int tweak_result = secp256k1_ec_privkey_tweak_add(secp_context.pContext, result.data(), secretKey2.data());
 
+	const int tweak_result = secp256k1_ec_privkey_tweak_add(SECP256K1_CONTEXT.Read()->Get(), result.data(), secretKey2.data());
 	if (tweak_result != 1) {
 		throw CRYPTO_EXCEPTION_F("secp256k1_ec_privkey_tweak_add failed with error {}", tweak_result);
 	}
@@ -200,69 +109,6 @@ std::unique_ptr<RewoundProof> Crypto::RewindRangeProof(const Commitment& commitm
 bool Crypto::VerifyRangeProofs(const std::vector<std::pair<Commitment, RangeProof>>& rangeProofs)
 {
 	return Bulletproofs::GetInstance().VerifyBulletproofs(rangeProofs);
-}
-
-uint64_t Crypto::SipHash24(const uint64_t k0, const uint64_t k1, const std::vector<unsigned char>& data)
-{
-	const std::vector<uint64_t> key = { k0, k1 };
-
-	return siphash24(&key[0], &data[0], data.size());
-}
-
-std::vector<unsigned char> Crypto::AES256_Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv)
-{   
-	std::vector<unsigned char> ciphertext;
-
-	// max ciphertext len for a n bytes of plaintext is n + AES_BLOCKSIZE bytes
-	ciphertext.resize(input.size() + AES_BLOCKSIZE);
-
-	AES256CBCEncrypt enc(key.data(), iv.data(), true);
-	const size_t nLen = enc.Encrypt(&input[0], (int)input.size(), ciphertext.data());
-	if (nLen < input.size())
-	{
-		throw CryptoException();
-	}
-
-	ciphertext.resize(nLen);
-
-	return ciphertext ;
-}
-
-SecureVector Crypto::AES256_Decrypt(const std::vector<unsigned char>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv)
-{    
-	SecureVector plaintext;
-
-	// plaintext will always be equal to or lesser than length of ciphertext
-	size_t nLen = ciphertext.size();
-
-	plaintext.resize(nLen);
-
-	AES256CBCDecrypt dec(key.data(), iv.data(), true);
-	nLen = dec.Decrypt(ciphertext.data(), (int)ciphertext.size(), plaintext.data());
-	if (nLen == 0)
-	{
-		throw CryptoException();
-	}
-
-	plaintext.resize(nLen);
-
-	return plaintext;
-}
-
-SecretKey Crypto::PBKDF(const SecureString& password, const std::vector<unsigned char>& salt, const ScryptParameters& parameters)
-{
-	SecureVector buffer(64);
-	if (crypto_scrypt((const unsigned char*)password.data(), password.size(), salt.data(), salt.size(), parameters.N, parameters.r, parameters.p, buffer.data(), buffer.size()) == 0)
-	{
-		CBigInteger<32> output;
-
-		int result = crypto_generichash_blake2b(output.data(), output.size(), buffer.data(), buffer.size(), nullptr, 0);
-		assert(result == 0);
-
-		return SecretKey(std::move(output));
-	}
-
-	throw CryptoException();
 }
 
 PublicKey Crypto::CalculatePublicKey(const SecretKey& privateKey)
@@ -325,29 +171,4 @@ bool Crypto::VerifyKernelSignatures(const std::vector<const Signature*>& signatu
 SecretKey Crypto::GenerateSecureNonce()
 {
 	return AggSig::GetInstance().GenerateSecureNonce();
-}
-
-SecretKey Crypto::HKDF(const std::optional<std::vector<uint8_t>>& saltOpt,
-	const std::string& label,
-	const std::vector<uint8_t>& inputKeyingMaterial)
-{
-	SecretKey output;
-
-	//std::vector<uint8_t> info(label.cbegin(), label.cend());
-	const int result = hkdf(
-		SHAversion::SHA256,
-		saltOpt.has_value() ? saltOpt.value().data() : nullptr,
-		saltOpt.has_value() ? (int)saltOpt.value().size() : 0,
-		inputKeyingMaterial.data(),
-		(int)inputKeyingMaterial.size(),
-		(const unsigned char*)label.data(),
-		(int)label.size(),
-		output.data(),
-		(int)output.size()
-	);
-	if (result != shaSuccess) {
-		throw CryptoException();
-	}
-
-	return output;
 }

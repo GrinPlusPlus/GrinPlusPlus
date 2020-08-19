@@ -1,6 +1,6 @@
 #include <Core/Models/ProofOfWork.h>
 #include <Consensus/BlockDifficulty.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 
 ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces)
 	: m_edgeBits(edgeBits),
@@ -8,7 +8,7 @@ ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNo
 {
 	Serializer serializer;
 	SerializeCycle(serializer);
-	m_hash = Crypto::Blake2b(serializer.GetBytes());
+	m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 ProofOfWork::ProofOfWork(const uint8_t edgeBits, std::vector<uint64_t>&& proofNonces, Hash&& hash)
@@ -52,7 +52,7 @@ ProofOfWork ProofOfWork::Deserialize(ByteBuffer& byteBuffer)
 
 	const int bytes_len = ((edgeBits * Consensus::PROOFSIZE) + 7) / 8;
 	const std::vector<unsigned char> bits = byteBuffer.ReadVector(bytes_len);
-	Hash hash = Crypto::Blake2b(bits);
+	Hash hash = Hasher::Blake2b(bits);
 
 	std::vector<uint64_t> proofNonces = DeserializeProofNonces(bits, edgeBits);
 

@@ -1,7 +1,7 @@
 #include <catch.hpp>
 
 #include <Config/Genesis.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 
 TEST_CASE("Mainnet Genesis")
 {
@@ -10,7 +10,7 @@ TEST_CASE("Mainnet Genesis")
 
 	Serializer serializer;
 	genesis.Serialize(serializer);
-	const Hash fullHash = Crypto::Blake2b(serializer.GetBytes());
+	const Hash fullHash = Hasher::Blake2b(serializer.GetBytes());
 	REQUIRE(fullHash == Hash::FromHex("6be6f34b657b785e558e85cc3b8bdb5bcbe8c10e7e58524c8027da7727e189ef"));
 }
 
@@ -21,6 +21,6 @@ TEST_CASE("Floonet Genesis")
 
 	Serializer serializer;
 	genesis.Serialize(serializer);
-	const Hash fullHash = Crypto::Blake2b(serializer.GetBytes());
+	const Hash fullHash = Hasher::Blake2b(serializer.GetBytes());
 	REQUIRE(fullHash == Hash::FromHex("91c638fc019a54e6652bd6bb3d9c5e0c17e889cef34a5c28528e7eb61a884dc4"));
 }

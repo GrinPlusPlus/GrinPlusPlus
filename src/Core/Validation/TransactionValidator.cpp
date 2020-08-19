@@ -1,11 +1,10 @@
 #include <Core/Validation/TransactionValidator.h>
 #include <Core/Validation/TransactionBodyValidator.h>
 
-#include <Crypto/Crypto.h>
 #include <Common/Util/HexUtil.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Logger.h>
-#include <Common/Util/FunctionalUtil.h>
+#include <algorithm>
 #include <numeric>
 
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic

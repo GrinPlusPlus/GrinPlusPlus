@@ -1,12 +1,15 @@
 set(TARGET_NAME Crypto)
 
 file(GLOB SOURCE_CODE
+	"AES.cpp"
 	"Age.cpp"
 	"AggSig.cpp"
 	"Bulletproofs.cpp"
 	"Crypto.cpp"
 	"CSPRNG.cpp"
 	"ED25519.cpp"
+	"Hasher.cpp"
+	"KDF.cpp"
 	"Pedersen.cpp"
 	"PublicKeys.cpp"
 )

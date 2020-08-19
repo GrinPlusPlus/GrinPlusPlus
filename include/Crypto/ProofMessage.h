@@ -8,7 +8,7 @@ class ProofMessage
 {
 public:
 	ProofMessage(CBigInteger<20>&& proofMessageBytes)
-		: m_proofMessageBytes(proofMessageBytes)
+		: m_proofMessageBytes(std::move(proofMessageBytes))
 	{
 
 	}
@@ -21,9 +21,8 @@ public:
 			serializer.Append(keyIndex);
 		}
 
-		std::vector<unsigned char> paddedPath(20, 0);
-		if (bulletproofType == EBulletproofType::ENHANCED)
-		{
+		CBigInteger<20> paddedPath;
+		if (bulletproofType == EBulletproofType::ENHANCED) {
 			paddedPath[2] = 1;
 			paddedPath[3] = (unsigned char)keyIndices.size();
 		}
@@ -33,7 +32,7 @@ public:
 			paddedPath[i + 4] = serializer.GetBytes()[i];
 		}
 
-		return ProofMessage(CBigInteger<20>(paddedPath));
+		return ProofMessage(std::move(paddedPath));
 	}
 
 	std::vector<uint32_t> ToKeyIndices(const EBulletproofType& bulletproofType) const
@@ -41,24 +40,19 @@ public:
 		ByteBuffer byteBuffer(m_proofMessageBytes.GetData());
 
 		size_t length = 3;
-		if (bulletproofType == EBulletproofType::ENHANCED)
-		{
+		if (bulletproofType == EBulletproofType::ENHANCED) {
 			byteBuffer.ReadU8(); // RESERVED: Always 0
 			byteBuffer.ReadU8(); // Wallet Type
 			byteBuffer.ReadU8(); // Switch Commits - Always true for now.
 			length = byteBuffer.ReadU8();
-		}
-		else
-		{
+		} else {
 			const uint32_t first4Bytes = byteBuffer.ReadU32();
-			if (first4Bytes != 0)
-			{
+			if (first4Bytes != 0) {
 				throw DESERIALIZATION_EXCEPTION("Expected first 4 bytes to be 0");
 			}
 		}
 
-		if (length == 0)
-		{
+		if (length == 0) {
 			length = 3;
 		}
 
@@ -71,8 +65,9 @@ public:
 		return keyIndices;
 	}
 
-	inline const CBigInteger<20>& GetBytes() const { return m_proofMessageBytes; }
-	inline const unsigned char* data() const { return m_proofMessageBytes.data(); }
+	const CBigInteger<20>& GetBytes() const noexcept { return m_proofMessageBytes; }
+	unsigned char* data() noexcept { return m_proofMessageBytes.data(); }
+	const unsigned char* data() const noexcept { return m_proofMessageBytes.data(); }
 
 private:
 	CBigInteger<20> m_proofMessageBytes;

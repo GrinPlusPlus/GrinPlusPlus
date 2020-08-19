@@ -1,8 +1,8 @@
 #include <Crypto/Age.h>
-#include <Crypto/Crypto.h>
 #include <Crypto/Curve25519.h>
 #include <Crypto/CSPRNG.h>
 #include <Crypto/ChaChaPoly.h>
+#include <Crypto/KDF.h>
 
 std::vector<uint8_t> Age::Encrypt(
     const std::vector<x25519_public_key_t>& recipients,
@@ -10,7 +10,7 @@ std::vector<uint8_t> Age::Encrypt(
 {
     CBigInteger<16> file_key(CSPRNG().GenerateRandomBytes(16).data());
 
-    SecretKey mac_key = Crypto::HKDF(
+    SecretKey mac_key = KDF::HKDF(
         std::nullopt,
         "header",
         file_key.GetData()
@@ -20,7 +20,7 @@ std::vector<uint8_t> Age::Encrypt(
     age::Header header = age::Header::Create(mac_key, recipient_lines);
 
     CBigInteger<16> nonce(CSPRNG().GenerateRandomBytes(16).data());
-    SecretKey payload_key = Crypto::HKDF(
+    SecretKey payload_key = KDF::HKDF(
         std::make_optional(nonce.GetData()),
         "payload",
         file_key.GetData()
@@ -129,14 +129,14 @@ std::vector<uint8_t> Age::TryDecrypt(
             recipient_line.encrypted_file_key.GetData()
         );
 
-        SecretKey mac_key = Crypto::HKDF(
+        SecretKey mac_key = KDF::HKDF(
             std::nullopt,
             "header",
             decrypted_file_key
         );
         //header.VerifyMac(mac_key);
 
-        SecretKey payload_key = Crypto::HKDF(
+        SecretKey payload_key = KDF::HKDF(
             std::make_optional(file_key_nonce.GetData()),
             "payload",
             decrypted_file_key

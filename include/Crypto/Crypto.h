@@ -4,7 +4,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Common/Secure.h>
 #include <Crypto/BigInteger.h>
 #include <Crypto/Commitment.h>
@@ -16,68 +15,16 @@
 #include <Crypto/Hash.h>
 #include <Crypto/PublicKey.h>
 #include <Crypto/SecretKey.h>
-#include <Crypto/ScryptParameters.h>
 #include <cstdint>
 #include <vector>
 #include <memory>
 
-#ifdef MW_CRYPTO
-#define CRYPTO_API EXPORT
-#else
-#define CRYPTO_API IMPORT
-#endif
-
 //
 // Exported class that serves as a lightweight, easy-to-use wrapper for secp256k1-zkp and other crypto dependencies.
 //
-class CRYPTO_API Crypto
+class Crypto
 {
 public:
-	//
-	// Uses Blake2b to hash the given input into a 32 byte hash.
-	//
-	static CBigInteger<32> Blake2b(const std::vector<unsigned char>& input);
-
-	//
-	// Uses Blake2b to hash the given input into a 32 byte hash using a key.
-	//
-	static CBigInteger<32> Blake2b(
-		const std::vector<unsigned char>& key,
-		const std::vector<unsigned char>& input
-	);
-
-	//
-	// Uses SHA256 to hash the given input into a 32 byte hash.
-	//
-	static CBigInteger<32> SHA256(const std::vector<unsigned char> & input);
-
-	//
-	// Uses SHA512 to hash the given input into a 64 byte hash.
-	//
-	static CBigInteger<64> SHA512(const std::vector<unsigned char> & input);
-
-	//
-	// Uses RipeMD160 to hash the given input into a 20 byte hash.
-	//
-	static CBigInteger<20> RipeMD160(const std::vector<unsigned char>& input);
-
-	//
-	//
-	//
-	static CBigInteger<32> HMAC_SHA256(
-		const std::vector<unsigned char>& key,
-		const std::vector<unsigned char>& data
-	);
-
-	//
-	//
-	//
-	static CBigInteger<64> HMAC_SHA512(
-		const std::vector<unsigned char>& key,
-		const uint8_t* data,
-		const size_t len
-	);
-
 	//
 	// Creates a pedersen commitment from a value with a zero blinding factor.
 	//
@@ -141,43 +88,6 @@ public:
 		const std::vector<const Signature*>& signatures,
 		const std::vector<const Commitment*>& publicKeys,
 		const std::vector<const Hash*>& messages
-	);
-
-	//
-	//
-	//
-	static uint64_t SipHash24(
-		const uint64_t k0,
-		const uint64_t k1,
-		const std::vector<unsigned char>& data
-	);
-
-	//
-	// Encrypts the input with AES256 using the given key.
-	//
-	static std::vector<unsigned char> AES256_Encrypt(
-		const SecureVector& input,
-		const SecretKey& key,
-		const CBigInteger<16>& iv
-	);
-
-	//
-	// Decrypts the input with AES256 using the given key.
-	//
-	static SecureVector AES256_Decrypt(
-		const std::vector<unsigned char>& ciphertext,
-		const SecretKey& key,
-		const CBigInteger<16>& iv
-	);
-
-	//
-	// Uses Scrypt to hash the given password and the given salt. It then blake2b hashes the output.
-	// The returned hash will be a 32 byte SecretKey.
-	//
-	static SecretKey PBKDF(
-		const SecureString& password,
-		const std::vector<unsigned char>& salt,
-		const ScryptParameters& parameters
 	);
 
 	//
@@ -265,10 +175,4 @@ public:
 	);
 
 	static SecretKey GenerateSecureNonce();
-
-	static SecretKey HKDF(
-		const std::optional<std::vector<uint8_t>>& saltOpt,
-		const std::string& label,
-		const std::vector<uint8_t>& inputKeyingMaterial
-	);
 };

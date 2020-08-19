@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Core/Serialization/Base58.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <bitcoin/util/strencodings.h>
 
 #include <assert.h>
@@ -220,5 +220,5 @@ Hash Base58::SHA256d(
     const std::vector<uint8_t>::const_iterator& pend)
 {
     std::vector<uint8_t> bytes{ pbegin, pend };
-    return Crypto::SHA256(Crypto::SHA256(bytes).GetData());
+    return Hasher::SHA256(Hasher::SHA256(bytes).GetData());
 }

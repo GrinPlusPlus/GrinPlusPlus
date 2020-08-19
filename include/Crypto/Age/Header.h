@@ -2,6 +2,7 @@
 
 #include <Crypto/Age/RecipientLine.h>
 #include <Crypto/Hash.h>
+#include <Crypto/Hasher.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/X25519.h>
 #include <Crypto/CryptoException.h>
@@ -29,7 +30,7 @@ namespace age
             );
             std::vector<uint8_t> encoded_u8(encoded_without_mac.cbegin(), encoded_without_mac.cend());
 
-            Hash mac = Crypto::HMAC_SHA256(mac_key.GetVec(), encoded_u8);
+            Hash mac = Hasher::HMAC_SHA256(mac_key.GetVec(), encoded_u8);
 
             return { mac, recipients };
         }
@@ -47,7 +48,7 @@ namespace age
             );
             std::vector<uint8_t> encoded_u8(encoded_without_mac.cbegin(), encoded_without_mac.cend());
 
-            Hash actual = Crypto::HMAC_SHA256(mac_key.GetVec(), encoded_u8);
+            Hash actual = Hasher::HMAC_SHA256(mac_key.GetVec(), encoded_u8);
 
             if (actual != mac) {
                 throw CryptoException("MAC invalid");

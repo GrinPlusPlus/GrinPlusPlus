@@ -3,7 +3,7 @@
 #include <Core/Models/OutputIdentifier.h>
 #include <Core/Models/OutputLocation.h>
 #include <Crypto/RangeProof.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <json/json.h>
 
 class OutputDTO
@@ -44,7 +44,7 @@ public:
 
 		Serializer proofSerializer;
 		m_rangeProof.Serialize(proofSerializer);
-		json["proof_hash"] = Crypto::Blake2b(proofSerializer.GetBytes()).ToHex();
+		json["proof_hash"] = Hasher::Blake2b(proofSerializer.GetBytes()).ToHex();
 
 		json["block_height"] = m_location.GetBlockHeight();
 		json["merkle_proof"] = Json::nullValue;

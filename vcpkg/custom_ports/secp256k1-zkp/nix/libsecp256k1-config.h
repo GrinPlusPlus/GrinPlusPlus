@@ -157,10 +157,10 @@
 #define USE_NUM_NONE 1
 
 /* Define this symbol to use the 4x64 scalar implementation */
-//#define USE_SCALAR_4X64 1
+#define USE_SCALAR_4X64 1
 
 /* Define this symbol to use the 8x32 scalar implementation */
-#define USE_SCALAR_8X32 1
+//#define USE_SCALAR_8X32 1
 
 /* Define this symbol to use the native scalar inverse implementation */
 #define USE_SCALAR_INV_BUILTIN 1

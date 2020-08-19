@@ -2,6 +2,7 @@
 #include "KeyDefs.h"
 
 #include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/VectorUtil.h>
 #include <Core/Serialization/Serializer.h>
@@ -11,7 +12,7 @@ static const std::vector<uint8_t> KEY({ 'I','a','m','V','o', 'l', 'd', 'e', 'm',
 
 PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 {
-	const CBigInteger<64> hash = Crypto::HMAC_SHA512(KEY, seed.data(), seed.size());
+	const CBigInteger<64> hash = Hasher::HMAC_SHA512(KEY, seed.data(), seed.size());
 
 	CBigInteger<32> masterSecretKey(hash.data());
 
@@ -38,7 +39,7 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 		std::move(parentCompressedKey)
 	);
 
-	CBigInteger<20> parentIdentifier = Crypto::RipeMD160(Crypto::SHA256(publicKey.vec()).GetData());
+	CBigInteger<20> parentIdentifier = Hasher::RipeMD160(Hasher::SHA256(publicKey.vec()).GetData());
 	const uint32_t parentFingerprint = BitUtil::ConvertToU32(parentIdentifier[0], parentIdentifier[1], parentIdentifier[2], parentIdentifier[3]);
 
 	Serializer serializer(37); // Reserve 37 bytes: 1 byte for 0x00 padding (hardened) or 0x02/0x03 point parity (normal), 32 bytes for private key (hardened) or public key X coord, 4 bytes for index.
@@ -58,7 +59,7 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 	serializer.Append<uint32_t>(childKeyIndex);
 
 	const std::vector<uint8_t>& serialized_bytes = serializer.GetBytes();
-	const CBigInteger<64> hmacSha512 = Crypto::HMAC_SHA512(parentExtendedKey.GetChainCode().GetVec(), serialized_bytes.data(), serialized_bytes.size());
+	const CBigInteger<64> hmacSha512 = Hasher::HMAC_SHA512(parentExtendedKey.GetChainCode().GetVec(), serialized_bytes.data(), serialized_bytes.size());
 	const std::vector<unsigned char>& hmacSha512Vector = hmacSha512.GetData();
 
 	SecretKey left(std::vector<uint8_t>{ hmacSha512Vector.cbegin(), hmacSha512Vector.cbegin() + 32 });

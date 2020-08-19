@@ -3,6 +3,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 #include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Consensus/BlockTime.h>
 
 TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
@@ -10,7 +11,7 @@ TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint6
 {
 		Serializer serializer{ EProtocolVersion::V1 };
 		Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig)
@@ -18,7 +19,7 @@ TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint6
 {
 		Serializer serializer{ EProtocolVersion::V1 };
 		Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 void TransactionKernel::Serialize(Serializer& serializer) const
@@ -171,7 +172,7 @@ Hash TransactionKernel::GetSignatureMessage(const EKernelFeatures features, cons
 		serializer.Append<uint16_t>((uint16_t)lockHeight);
 	}
 
-	return Crypto::Blake2b(serializer.GetBytes());
+	return Hasher::Blake2b(serializer.GetBytes());
 }
 
 Hash TransactionKernel::GetSignatureMessage() const

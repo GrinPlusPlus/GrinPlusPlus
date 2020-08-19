@@ -1,7 +1,6 @@
 #include "ContextualBlockValidator.h"
 #include "BlockValidator.h"
 
-#include <Crypto/Crypto.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Validation/KernelSumValidator.h>

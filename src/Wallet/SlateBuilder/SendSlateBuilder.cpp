@@ -6,7 +6,6 @@
 
 #include <Core/Exceptions/WalletException.h>
 #include <Wallet/WalletUtil.h>
-#include <Crypto/CryptoUtil.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Common/Logger.h>
 #include <Consensus/HardForks.h>

@@ -5,6 +5,7 @@
 #include <Wallet/NodeClient.h>
 #include <Common/Logger.h>
 #include <Crypto/CryptoException.h>
+#include <Crypto/Hasher.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Consensus/Common.h>
 #include <unordered_set>
@@ -225,7 +226,7 @@ BuildCoinbaseResponse Wallet::CreateCoinbase(
 	auto pSignature = Crypto::BuildCoinbaseSignature(
 		blindingFactor,
 		kernelCommitment,
-		Crypto::Blake2b(serializer.GetBytes())
+		Hasher::Blake2b(serializer.GetBytes())
 	);
 	TransactionKernel kernel(
 		EKernelFeatures::COINBASE_KERNEL,

@@ -54,7 +54,7 @@ TEST_CASE("Slatepack - Recieve")
     std::vector<uint8_t> salt;
     salt.insert(salt.end(), ephemeral_public_key.cbegin(), ephemeral_public_key.cend());
     salt.insert(salt.end(), x_keypair.pubkey.cbegin(), x_keypair.pubkey.cend());
-    SecretKey enc_key = Crypto::HKDF(
+    SecretKey enc_key = KDF::HKDF(
         std::make_optional(std::move(salt)),
         "age-encryption.org/v1/X25519",
         shared_secret.GetVec()

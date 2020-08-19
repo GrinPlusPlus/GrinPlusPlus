@@ -1,6 +1,8 @@
 #include "Cuckarood.h"
 #include "Common.h"
 
+#include <Crypto/Hasher.h>
+
 // the main parameter is the number of bits in an edge index,
 // i.e. the 2-log of the number of edges
 #define EDGEBITS 29
@@ -62,7 +64,7 @@ bool Cuckarood::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-    Hash prePoWHash = Crypto::Blake2b(blockHeader.GetPreProofOfWork());
+    Hash prePoWHash = Hasher::Blake2b(blockHeader.GetPreProofOfWork());
     siphash_keys keys((const char*)prePoWHash.data());
 	const int result = verify_cuckarood((const word_t*)proofNonces.data(), keys);
 	if (result != POW_OK) {

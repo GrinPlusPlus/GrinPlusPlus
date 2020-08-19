@@ -3,7 +3,7 @@
 
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Common/GrinStr.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 
 SecureString Mnemonic::CreateMnemonic(const std::vector<uint8_t>& entropy)
 {
@@ -30,7 +30,7 @@ SecureString Mnemonic::CreateMnemonic(const std::vector<uint8_t>& entropy)
 	}
 
 	const uint8_t mask = (uint8_t)((1 << checksumBits) - 1);
-	const uint32_t checksum = (Crypto::SHA256(entropy)[0] >> (8 - checksumBits)) & mask;
+	const uint32_t checksum = (Hasher::SHA256(entropy)[0] >> (8 - checksumBits)) & mask;
 	for (size_t i = checksumBits; i > 0; i--)
 	{
 		uint16_t bit = (checksum & (1 << (i - 1))) == 0 ? 0 : 1;
@@ -103,7 +103,7 @@ SecureVector Mnemonic::ToEntropy(const SecureString& walletWords)
 		}
 	}
 
-	const uint32_t actualChecksum = (Crypto::SHA256((const std::vector<uint8_t>&)entropy)[0] >> (8 - checksumBits)) & mask;
+	const uint32_t actualChecksum = (Hasher::SHA256((const std::vector<uint8_t>&)entropy)[0] >> (8 - checksumBits)) & mask;
 	if (actualChecksum != expectedChecksum)
 	{
 		throw KEYCHAIN_EXCEPTION("Invalid checksum.");

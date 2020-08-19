@@ -2,14 +2,14 @@
 
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
 	: m_features(features), m_commitment(std::move(commitment))
 {
 		Serializer serializer;
 		Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
 void TransactionInput::Serialize(Serializer& serializer) const

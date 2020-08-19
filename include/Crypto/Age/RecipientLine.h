@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Crypto.h>
+#include <Crypto/KDF.h>
 #include <Crypto/X25519.h>
 #include <Crypto/SecretKey.h>
 #include <Common/Util/StringUtil.h>
@@ -31,7 +31,7 @@ namespace age
             std::vector<uint8_t> salt;
             salt.insert(salt.end(), ephemeral_public_key.cbegin(), ephemeral_public_key.cend());
             salt.insert(salt.end(), public_key.cbegin(), public_key.cend());
-            SecretKey enc_key = Crypto::HKDF(
+            SecretKey enc_key = KDF::HKDF(
                 std::make_optional(std::move(salt)),
                 "age-encryption.org/v1/X25519",
                 shared_secret.GetVec()

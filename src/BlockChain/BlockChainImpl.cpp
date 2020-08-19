@@ -12,7 +12,6 @@
 #include <Common/Logger.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
-#include <Crypto/Crypto.h>
 #include <PMMR/TxHashSet.h>
 #include <Consensus/BlockTime.h>
 #include <filesystem.h>

@@ -1,6 +1,6 @@
 #include <Core/Models/BlockHeader.h>
-#include <Crypto/Crypto.h>
 #include <Common/Util/TimeUtil.h>
+#include <Core/Util/JsonUtil.h>
 
 BlockHeader::BlockHeader(
 	const uint16_t version,

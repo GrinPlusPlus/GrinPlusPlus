@@ -5,6 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cstdint>
+#include <Core/Util/JsonUtil.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Traits/Serializable.h>

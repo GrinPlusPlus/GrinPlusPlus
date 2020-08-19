@@ -2,7 +2,7 @@
 #include "MMRUtil.h"
 #include "LeafSet.h"
 
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Core/Serialization/Serializer.h>
 
 void MMRHashUtil::AddHashes(
@@ -145,7 +145,7 @@ Hash MMRHashUtil::HashLeafWithIndex(const std::vector<unsigned char>& serialized
 	Serializer hashSerializer;
 	hashSerializer.Append<uint64_t>(mmrIndex);
 	hashSerializer.AppendByteVector(serializedLeaf);
-	return Crypto::Blake2b(hashSerializer.GetBytes());
+	return Hasher::Blake2b(hashSerializer.GetBytes());
 }
 
 Hash MMRHashUtil::HashParentWithIndex(const Hash& leftChild, const Hash& rightChild, const uint64_t parentIndex)
@@ -154,5 +154,5 @@ Hash MMRHashUtil::HashParentWithIndex(const Hash& leftChild, const Hash& rightCh
 	serializer.Append<uint64_t>(parentIndex);
 	serializer.AppendBigInteger<32>(leftChild);
 	serializer.AppendBigInteger<32>(rightChild);
-	return Crypto::Blake2b(serializer.GetBytes());
+	return Hasher::Blake2b(serializer.GetBytes());
 }

@@ -1,6 +1,6 @@
 #include <Core/Models/Transaction.h>
 
-#include <Crypto/Crypto.h>
+#include <Crypto/Hasher.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 
@@ -68,7 +68,7 @@ const Hash& Transaction::GetHash() const
 	if (m_hash == Hash{}) {
 		Serializer serializer;
 		Serialize(serializer);
-		m_hash = Crypto::Blake2b(serializer.GetBytes());
+		m_hash = Hasher::Blake2b(serializer.GetBytes());
 	}
 
 	return m_hash;

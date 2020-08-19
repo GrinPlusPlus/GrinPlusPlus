@@ -1,6 +1,8 @@
 #include "Cuckatoo.h"
 #include "Common.h"
 
+#include <Crypto/Hasher.h>
+
 // generate edge endpoint in cuck(at)oo graph without partition bit
 word_t sipnode(siphash_keys* keys, word_t edge, u32 uorv, const word_t edgeMask)
 {
@@ -77,7 +79,7 @@ bool Cuckatoo::Validate(const BlockHeader& blockHeader)
 		return false;
 	}
 
-    Hash prePoWHash = Crypto::Blake2b(blockHeader.GetPreProofOfWork());
+    Hash prePoWHash = Hasher::Blake2b(blockHeader.GetPreProofOfWork());
     siphash_keys keys((const char*)prePoWHash.data());
 	const int result = verify_cuckatoo(proofNonces.data(), &keys, proofOfWork.GetEdgeBits());
 	if (result != POW_OK) {

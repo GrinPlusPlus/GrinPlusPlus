@@ -10,14 +10,11 @@ class UserMetadata
 {
 public:
 	UserMetadata(const uint32_t nextTxId, const uint64_t refreshBlockHeight, const uint64_t restoreLeafIndex)
-		: m_nextTxId(nextTxId), m_refreshBlockHeight(refreshBlockHeight), m_restoreLeafIndex(restoreLeafIndex)
-	{
+		: m_nextTxId(nextTxId), m_refreshBlockHeight(refreshBlockHeight), m_restoreLeafIndex(restoreLeafIndex) { }
 
-	}
-
-	inline uint32_t GetNextTxId() const { return m_nextTxId; }
-	inline uint64_t GetRefreshBlockHeight() const { return m_refreshBlockHeight; }
-	inline uint64_t GetRestoreLeafIndex() const { return m_restoreLeafIndex; }
+	uint32_t GetNextTxId() const noexcept { return m_nextTxId; }
+	uint64_t GetRefreshBlockHeight() const noexcept { return m_refreshBlockHeight; }
+	uint64_t GetRestoreLeafIndex() const noexcept { return m_restoreLeafIndex; }
 
 	void Serialize(Serializer& serializer) const
 	{

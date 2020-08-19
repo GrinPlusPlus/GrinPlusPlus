@@ -1,25 +1,27 @@
 #pragma once
 
-#include <libsqlite3/sqlite3.h>
 #include <Common/Secure.h>
 #include <uuid.h>
 #include <Wallet/Models/Slate/Slate.h>
 
+// Forward Declarations
+struct SqliteDB;
+
 class SlateTable
 {
 public:
-	static void CreateTable(sqlite3& database);
-	static void UpdateSchema(sqlite3& database, const int previousVersion);
+	static void CreateTable(SqliteDB& database);
+	static void UpdateSchema(SqliteDB& database, const int previousVersion);
 
 	static std::unique_ptr<Slate> LoadSlate(
-		sqlite3& database,
+		SqliteDB& database,
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
 		const SlateStage& stage
 	);
 
 	static void SaveSlate(
-		sqlite3& database,
+		SqliteDB& database,
 		const SecureVector& masterSeed,
 		const Slate& slate
 	);

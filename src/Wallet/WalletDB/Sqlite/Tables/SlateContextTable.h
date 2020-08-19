@@ -1,26 +1,27 @@
 #pragma once
 
-#include <libsqlite3/sqlite3.h>
 #include <Common/Secure.h>
 #include <uuid.h>
 #include <Wallet/Models/Slate/SlateStage.h>
 #include <Wallet/WalletDB/Models/SlateContextEntity.h>
 
+#include "../SqliteDB.h"
+
 class SlateContextTable
 {
 public:
-	static void CreateTable(sqlite3& database);
-	static void UpdateSchema(sqlite3& database, const int previousVersion);
+	static void CreateTable(SqliteDB& database);
+	static void UpdateSchema(SqliteDB& database, const int previousVersion);
 
 	static void SaveSlateContext(
-		sqlite3& database,
+		SqliteDB& database,
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId,
 		const SlateContextEntity& slateContext
 	);
 	
 	static std::unique_ptr<SlateContextEntity> LoadSlateContext(
-		sqlite3& database,
+		SqliteDB& database,
 		const SecureVector& masterSeed,
 		const uuids::uuid& slateId
 	);

@@ -31,7 +31,7 @@ void WalletSqlite::Rollback() noexcept
 
 void WalletSqlite::OnInitWrite()
 {
-	m_pTransaction = std::make_unique<SqliteTransaction>(SqliteTransaction(*m_pDatabase));
+	m_pTransaction = std::make_unique<SqliteTransaction>(m_pDatabase);
 	m_pTransaction->Begin();
 	SetDirty(true);
 }
@@ -43,39 +43,24 @@ void WalletSqlite::OnEndWrite()
 
 KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 {
-	sqlite3_stmt* stmt = nullptr;
-	const std::string query = "SELECT next_child_index FROM accounts WHERE parent_path='" + parentPath.Format() + "'";
-	if (sqlite3_prepare_v2(m_pDatabase, query.c_str(), -1, &stmt, NULL) != SQLITE_OK)
-	{
-		WALLET_ERROR_F("Error while compiling sql: {}", sqlite3_errmsg(m_pDatabase));
-		sqlite3_finalize(stmt);
-		throw WALLET_STORE_EXCEPTION("Error compiling statement.");
-	}
+	std::string get_next_child_query = StringUtil::Format("SELECT next_child_index FROM accounts WHERE parent_path='{}'", parentPath.Format());
+	auto pStatement = m_pDatabase->Query(get_next_child_query);
 
-	if (sqlite3_step(stmt) != SQLITE_ROW)
-	{
+	if (!pStatement->Step()) {
 		WALLET_ERROR_F("Account not found for user: {}", m_username);
-		sqlite3_finalize(stmt);
 		throw WALLET_STORE_EXCEPTION("Account not found.");
 	}
 
-	const uint32_t nextChildIndex = (uint32_t)sqlite3_column_int(stmt, 0);
+	const uint32_t nextChildIndex = (uint32_t)pStatement->GetColumnInt(0);
 	KeyChainPath nextChildPath = parentPath.GetChild(nextChildIndex);
+	pStatement->Finalize();
 
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		WALLET_ERROR_F("Error finalizing statement: {}", sqlite3_errmsg(m_pDatabase));
-		throw WALLET_STORE_EXCEPTION("Error finalizing statement.");
-	}
-
-	char* error = nullptr;
-	const std::string update = "UPDATE accounts SET next_child_index=" + std::to_string(nextChildPath.GetKeyIndices().back() + 1) + " WHERE parent_path='" + parentPath.Format() + "';";
-	if (sqlite3_exec(m_pDatabase, update.c_str(), NULL, NULL, &error) != SQLITE_OK)
-	{
-		WALLET_ERROR_F("Failed to update account for user: {}. Error: {}", m_username, error);
-		sqlite3_free(error);
-		throw WALLET_STORE_EXCEPTION("Failed to update account");
-	}
+	std::string update_next_child_cmd = StringUtil::Format(
+		"UPDATE accounts SET next_child_index={} WHERE parent_path='{}';",
+		nextChildPath.GetKeyIndices().back() + 1,
+		parentPath.Format()
+	);
+	m_pDatabase->Execute(update_next_child_cmd);
 
 	return nextChildPath;
 }

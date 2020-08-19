@@ -2,6 +2,7 @@
 
 #include <Config/Config.h>
 #include <Wallet/WalletDB/WalletDB.h>
+#include <Core/Traits/Lockable.h>
 #include <Common/ImportExport.h>
 #include <Common/GrinStr.h>
 

@@ -1,7 +1,9 @@
 #pragma once
 
+#include "SqliteDB.h"
+
+#include <Common/Secure.h>
 #include <Wallet/WalletDB/WalletStore.h>
-#include <libsqlite3/sqlite3.h>
 #include <filesystem.h>
 #include <string>
 #include <unordered_map>
@@ -22,7 +24,7 @@ public:
 private:
 	SqliteStore(const fs::path& walletDirectory) : m_walletDirectory(walletDirectory) { }
 
-	sqlite3* CreateWalletDB(const std::string& username);
+	SqliteDB::Ptr CreateWalletDB(const std::string& username);
 	fs::path GetDBFile(const std::string& username) const;
 
 	const fs::path& m_walletDirectory;

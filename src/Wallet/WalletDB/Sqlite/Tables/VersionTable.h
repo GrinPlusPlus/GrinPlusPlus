@@ -1,14 +1,15 @@
 #pragma once
 
-#include <libsqlite3/sqlite3.h>
+// Forward Declarations
+class SqliteDB;
 
 class VersionTable
 {
 public:
-	static void CreateTable(sqlite3& database);
-	static void UpdateSchema(sqlite3& database, const int previousVersion);
-	static int GetCurrentVersion(sqlite3& database);
+	static void CreateTable(SqliteDB& database);
+	static void UpdateSchema(SqliteDB& database, const int previousVersion);
+	static int GetCurrentVersion(SqliteDB& database);
 
 private:
-	static bool DoesTableExist(sqlite3& database);
+	static bool DoesTableExist(SqliteDB& database);
 };

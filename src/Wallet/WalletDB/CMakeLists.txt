@@ -1,12 +1,12 @@
 set(TARGET_NAME WalletDB)
 
-# Wallet
-
 file(GLOB SOURCE_CODE
     "WalletDBImpl.cpp"
     "WalletSqlite.cpp"
 	"WalletEncryptionUtil.cpp"
-	"Sqlite/*.cpp"
+	"Sqlite/SqliteDB.cpp"
+	"Sqlite/SqliteStore.cpp"
+	"Sqlite/WalletSqlite.cpp"
 	"Sqlite/Tables/MetadataTable.cpp"
 	"Sqlite/Tables/OutputsTable.cpp"
 	"Sqlite/Tables/SlateTable.cpp"

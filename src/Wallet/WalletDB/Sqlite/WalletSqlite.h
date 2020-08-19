@@ -2,22 +2,18 @@
 
 #include "../UserMetadata.h"
 #include "SqliteTransaction.h"
+#include "SqliteDB.h"
 
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Wallet/WalletDB/Models/SlateContextEntity.h>
-#include <libsqlite3/sqlite3.h>
 #include <unordered_map>
 
 class WalletSqlite : public IWalletDB
 {
 public:
-	explicit WalletSqlite(const fs::path& walletDirectory, const std::string& username, sqlite3* pDatabase)
-		: m_walletDirectory(walletDirectory), m_username(username), m_pDatabase(pDatabase), m_pTransaction(nullptr)
-	{
-	
-	}
-
-	virtual ~WalletSqlite() { sqlite3_close(m_pDatabase); }
+	explicit WalletSqlite(const fs::path& walletDirectory, const std::string& username, const SqliteDB::Ptr& pDatabase)
+		: m_walletDirectory(walletDirectory), m_username(username), m_pDatabase(pDatabase), m_pTransaction(nullptr) { }
+	virtual ~WalletSqlite() = default;
 
 	void Commit() final;
 	void Rollback() noexcept final;
@@ -66,6 +62,6 @@ private:
 
 	fs::path m_walletDirectory;
 	std::string m_username;
-	sqlite3* m_pDatabase;
+	SqliteDB::Ptr m_pDatabase;
 	std::unique_ptr<SqliteTransaction> m_pTransaction;
 };

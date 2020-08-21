@@ -3,7 +3,9 @@
 #include <Net/Tor/TorAddressParser.h>
 #include <Net/Tor/TorConnection.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
+#include <cstdlib>
 #include <memory>
 
 #include "TorControl.h"
@@ -28,6 +30,16 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 
 	try
 	{
+		if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
+			LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
+#ifdef _WIN32
+    		system("taskkill /IM tor.exe /F");
+#else
+			system("killall tor");
+#endif
+			ThreadUtil::SleepFor(std::chrono::seconds(5), ShutdownManagerAPI::WasShutdownRequested());
+		}
+
 		LOG_INFO("Initializing Tor");
 		TorConfig config{ pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath };
 		pProcess->m_pControl = TorControl::Create(config);
@@ -37,6 +49,17 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 	{
 		LOG_ERROR_F("Exception thrown: {}", e);
 	}
+}
+
+bool TorProcess::IsPortOpen(const uint16_t port)
+{
+    asio::io_service svc;
+    asio::ip::tcp::acceptor a(svc);
+
+    std::error_code ec;
+    a.open(asio::ip::tcp::v4(), ec) || a.bind({ asio::ip::tcp::v4(), port }, ec);
+
+    return ec != asio::error::address_in_use;
 }
 
 bool TorProcess::RetryInit()

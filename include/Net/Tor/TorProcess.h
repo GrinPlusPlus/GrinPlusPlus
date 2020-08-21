@@ -37,6 +37,7 @@ private:
 		: m_torDataPath(torDataPath), m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr) { }
 
 	static void Thread_Initialize(TorProcess* pProcess);
+	static bool IsPortOpen(const uint16_t port);
 
 	fs::path m_torDataPath;
 	uint16_t m_socksPort;

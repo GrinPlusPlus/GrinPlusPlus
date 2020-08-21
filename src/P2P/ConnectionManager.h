@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <thread>
+#include <optional>
 #include <unordered_map>
 
 class ConnectionManager

@@ -5,7 +5,7 @@
 #include <Wallet/Models/Slate/Slate.h>
 
 // Forward Declarations
-struct SqliteDB;
+class SqliteDB;
 
 class SlateTable
 {

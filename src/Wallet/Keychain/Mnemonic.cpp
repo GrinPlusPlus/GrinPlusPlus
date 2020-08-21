@@ -22,9 +22,9 @@ SecureString Mnemonic::CreateMnemonic(const uint8_t* entropy, const size_t entro
 	for (size_t i = 0; i < entropy_len; i++)
 	{
 		const uint8_t byte = entropy[i];
-		for (uint8_t i = 8; i > 0; i--)
+		for (uint8_t j = 8; j > 0; j--)
 		{
-			uint16_t bit = (byte & (1 << (i - 1))) == 0 ? 0 : 1;
+			uint16_t bit = (byte & (1 << (j - 1))) == 0 ? 0 : 1;
 			wordIndices[loc / 11] |= bit << (10 - (loc % 11));
 			loc += 1;
 		}

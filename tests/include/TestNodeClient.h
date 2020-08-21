@@ -4,6 +4,7 @@
 #include <Wallet/NodeClient.h>
 #include <BlockChain/BlockChain.h>
 #include <Database/Database.h>
+#include <Database/BlockDb.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
 

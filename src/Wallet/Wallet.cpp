@@ -1,124 +1,58 @@
-#include "Wallet.h"
-#include "WalletRefresher.h"
-
+#include <Wallet/Wallet.h>
 #include <Wallet/Keychain/KeyChain.h>
-#include <Wallet/NodeClient.h>
-#include <Common/Logger.h>
-#include <Crypto/CryptoException.h>
-#include <Crypto/Hasher.h>
-#include <Core/Exceptions/WalletException.h>
+#include <Wallet/Models/Slatepack/Armor.h>
 #include <Consensus/Common.h>
-#include <unordered_set>
+#include <Core/Util/FeeUtil.h>
+#include <Crypto/Hasher.h>
+#include <Crypto/Curve25519.h>
 
-Wallet::Wallet(
-	const Config& config,
-	const std::shared_ptr<const INodeClient>& pNodeClient,
-	Locked<IWalletDB> walletDB,
-	const std::string& username,
-	KeyChainPath&& userPath,
-	const SlatepackAddress& address
-)
-	: m_config(config),
-	m_pNodeClient(pNodeClient),
-	m_walletDB(walletDB),
-	m_username(username),
-	m_userPath(std::move(userPath)),
-	m_address(address)
+#include "CancelTx.h"
+#include "WalletTxLoader.h"
+#include "Keychain/Mnemonic.h"
+#include "SlateBuilder/CoinSelection.h"
+
+SecureString Wallet::GetSeedWords() const
 {
-
+	return Mnemonic::CreateMnemonic(m_master_seed.data(), m_master_seed.size());
 }
 
-Locked<Wallet> Wallet::LoadWallet(
-	const Config& config,
-	const SecureVector& masterSeed,
-	const std::shared_ptr<const INodeClient>& pNodeClient,
-	Locked<IWalletDB> walletDB,
-	const std::string& username)
+WalletSummaryDTO Wallet::GetWalletSummary() const
 {
-	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
-
-	ed25519_keypair_t torKey = KeyChain::FromSeed(config, masterSeed).DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
-
-	return Locked<Wallet>(std::make_shared<Wallet>(Wallet{
-		config, pNodeClient, walletDB, username, std::move(userPath), SlatepackAddress(torKey.public_key)
-	}));
-}
-
-WalletSummaryDTO Wallet::GetWalletSummary(const SecureVector& masterSeed)
-{
-	uint64_t awaitingConfirmation = 0;
-	uint64_t immature = 0;
-	uint64_t locked = 0;
-	uint64_t spendable = 0;
-
-	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
-	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputDataEntity& outputData : outputs)
-	{
-		const EOutputStatus status = outputData.GetStatus();
-		if (status == EOutputStatus::LOCKED)
-		{
-			locked += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::SPENDABLE)
-		{
-			spendable += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::IMMATURE)
-		{
-			immature += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::NO_CONFIRMATIONS)
-		{
-			awaitingConfirmation += outputData.GetAmount();
-		}
-	}
-
-	const uint64_t total = awaitingConfirmation + immature + spendable;
-	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
+	WalletBalanceDTO balance = GetBalance();
+	
+	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(m_master_seed);
 	return WalletSummaryDTO(
-		lastConfirmedHeight,
-		m_config.GetWalletConfig().GetMinimumConfirmations(),
-		total,
-		awaitingConfirmation,
-		immature,
-		locked,
-		spendable,
+		m_pConfig->GetWalletConfig().GetMinimumConfirmations(),
+		balance,
 		std::move(transactions)
 	);
 }
 
-WalletBalanceDTO Wallet::GetBalance(const SecureVector& masterSeed)
+WalletBalanceDTO Wallet::GetBalance() const
 {
 	uint64_t awaitingConfirmation = 0;
 	uint64_t immature = 0;
 	uint64_t locked = 0;
 	uint64_t spendable = 0;
 
-	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
-	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
+    auto pWalletDB = m_walletDB.Read();
+	const std::vector<OutputDataEntity> outputs = pWalletDB->GetOutputs(m_master_seed);
 	for (const OutputDataEntity& outputData : outputs)
 	{
 		const EOutputStatus status = outputData.GetStatus();
-		if (status == EOutputStatus::LOCKED)
-		{
+		if (status == EOutputStatus::LOCKED) {
 			locked += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::SPENDABLE)
-		{
+		} else if (status == EOutputStatus::SPENDABLE) {
 			spendable += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::IMMATURE)
-		{
+		} else if (status == EOutputStatus::IMMATURE) {
 			immature += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::NO_CONFIRMATIONS)
-		{
+		} else if (status == EOutputStatus::NO_CONFIRMATIONS) {
 			awaitingConfirmation += outputData.GetAmount();
 		}
 	}
 
 	return WalletBalanceDTO(
+        pWalletDB->GetRefreshBlockHeight(),
 		awaitingConfirmation,
 		immature,
 		locked,
@@ -126,72 +60,158 @@ WalletBalanceDTO Wallet::GetBalance(const SecureVector& masterSeed)
 	);
 }
 
-std::vector<OutputDataEntity> Wallet::RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis)
+std::unique_ptr<WalletTx> Wallet::GetTransactionById(const uint32_t txId) const
 {
-	return WalletRefresher(m_config, m_pNodeClient).Refresh(masterSeed, m_walletDB, fromGenesis);
+	return m_walletDB.Read()->GetTransactionById(m_master_seed, txId);
 }
 
-std::vector<OutputDataEntity> Wallet::GetAllAvailableCoins(const SecureVector& masterSeed)
+std::vector<WalletTxDTO> Wallet::GetTransactions(const ListTxsCriteria& criteria) const
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	return WalletTxLoader().LoadTransactions(m_walletDB.Read().GetShared(), m_master_seed, criteria);
+}
 
-	std::vector<OutputDataEntity> coins;
+std::vector<WalletOutputDTO> Wallet::GetOutputs(const bool includeSpent, const bool includeCanceled) const
+{
+    std::vector<WalletOutputDTO> filtered_outputs;
 
-	std::vector<Commitment> commitments;
-	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputDataEntity& output : outputs)
+	const std::vector<OutputDataEntity> all_outputs = m_walletDB.Read()->GetOutputs(m_master_seed);
+	for (const OutputDataEntity& output_data : all_outputs)
 	{
-		if (output.GetStatus() == EOutputStatus::SPENDABLE)
-		{
-			coins.emplace_back(output);
-		}
+		const EOutputStatus status = output_data.GetStatus();
+        if (status == EOutputStatus::SPENT && !includeSpent) {
+            continue;
+        } else if (status == EOutputStatus::CANCELED && !includeCanceled) {
+            continue;
+        }
+
+        filtered_outputs.push_back(WalletOutputDTO::FromOutputData(output_data));
+    }
+
+    return filtered_outputs;
+}
+
+// void Wallet::CheckForOutputs(const bool fromGenesis)
+// {
+
+// }
+
+std::optional<TorAddress> Wallet::AddTorListener(const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
+{
+	KeyChain keyChain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
+	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
+
+	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey.secret_key, GetListenerPort());
+	if (pTorAddress != nullptr) {
+		SetTorAddress(*pTorAddress);
 	}
 
-	return coins;
+	return GetTorAddress();
 }
 
-OutputDataEntity Wallet::CreateBlindedOutput(
-	const SecureVector& masterSeed,
-	const uint64_t amount,
-	const KeyChainPath& keyChainPath,
-	const uint32_t walletTxId,
-	const EBulletproofType& bulletproofType)
+// //
+// // Deletes the session information.
+// //
+// void Wallet::Logout()
+// {
+
+// }
+
+// //
+// // Validates the password and then deletes the wallet.
+// //
+// void Wallet::DeleteWallet(const SecureString& password)
+// {
+
+// }
+
+// void Wallet::ChangePassword(const SecureString& currentPassword, const SecureString& newPassword)
+// {
+
+// }
+
+FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	// Select inputs using desired selection strategy.
+	const uint8_t totalNumOutputs = criteria.GetNumChangeOutputs() + 1;
+	const uint64_t numKernels = 1;
+	std::vector<OutputDataEntity> all_outputs = m_walletDB.Read()->GetOutputs(m_master_seed);
+    std::vector<OutputDataEntity> available_coins;
+    std::copy_if(
+        all_outputs.cbegin(), all_outputs.cend(),
+        std::back_inserter(available_coins),
+        [](const OutputDataEntity& output_data) { return output_data.GetStatus() == EOutputStatus::SPENDABLE; }
+    );
 
-	SecretKey blindingFactor = keyChain.DerivePrivateKey(keyChainPath, amount);
-	Commitment commitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes()));
-
-	RangeProof rangeProof = keyChain.GenerateRangeProof(keyChainPath, amount, commitment, blindingFactor, bulletproofType);
-
-	TransactionOutput transactionOutput(
-		EOutputFeatures::DEFAULT,
-		std::move(commitment),
-		std::move(rangeProof)
+	std::vector<OutputDataEntity> inputs = CoinSelection().SelectCoinsToSpend(
+		available_coins,
+		criteria.GetAmount(),
+		criteria.GetFeeBase(),
+		criteria.GetSelectionStrategy().GetStrategy(),
+		criteria.GetSelectionStrategy().GetInputs(),
+		totalNumOutputs,
+		numKernels
 	);
-			
-	return OutputDataEntity(
-		KeyChainPath(keyChainPath),
-		std::move(blindingFactor),
-		std::move(transactionOutput),
-		amount,
-		EOutputStatus::NO_CONFIRMATIONS,
-		std::make_optional(walletTxId),
-		std::nullopt
+
+	// Calculate the fee
+	const uint64_t fee = FeeUtil::CalculateFee(
+		criteria.GetFeeBase(),
+		(int64_t)inputs.size(),
+		(int64_t)totalNumOutputs,
+		(int64_t)numKernels
 	);
+
+	std::vector<WalletOutputDTO> inputDTOs;
+    std::transform(
+        inputs.cbegin(), inputs.cend(),
+        std::back_inserter(inputDTOs),
+        [](const OutputDataEntity& input) { return WalletOutputDTO::FromOutputData(input); }
+    );
+
+	return FeeEstimateDTO(fee, std::move(inputDTOs));
 }
 
-BuildCoinbaseResponse Wallet::CreateCoinbase(
-	const SecureVector& masterSeed,
-	const uint64_t fees,
-	const std::optional<KeyChainPath>& keyChainPathOpt)
+// //
+// // Sends coins to the given destination using the specified method. Returns a valid slate if successful.
+// // Exceptions thrown:
+// // * SessionTokenException - If no matching session found, or if the token is invalid.
+// // * InsufficientFundsException - If there are not enough funds ready to spend after calculating and including the fee.
+// //
+// Slate Wallet::Send(const SendCriteria& sendCriteria)
+// {
+
+// }
+
+// //
+// // Receives coins and builds a received slate to return to the sender.
+// //
+// Slate Wallet::Receive(const ReceiveCriteria& receiveCriteria)
+// {
+
+// }
+
+// Slate Wallet::Finalize(const Slate& slate, const std::optional<SlatepackMessage>& slatepackOpt)
+// {
+
+// }
+
+void Wallet::CancelTx(const uint32_t walletTxId)
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+    auto pBatch = m_walletDB.BatchWrite();
+	std::unique_ptr<WalletTx> pWalletTx = pBatch->GetTransactionById(m_master_seed, walletTxId);
+	if (pWalletTx != nullptr) {
+		CancelTx::CancelWalletTx(m_master_seed, pBatch.GetShared(), *pWalletTx);
+        pBatch->Commit();
+	}
+}
+
+BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteria)
+{
+    const KeyChain keyChain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
 
 	auto pDatabase = m_walletDB.BatchWrite();
 
-	const uint64_t amount = Consensus::REWARD + fees;
-	const KeyChainPath keyChainPath = keyChainPathOpt.value_or(
+	const uint64_t amount = Consensus::REWARD + criteria.GetFees();
+	const KeyChainPath keyChainPath = criteria.GetPath().value_or(
 		pDatabase->GetNextChildPath(m_userPath)
 	);
 	SecretKey blindingFactor = keyChain.DerivePrivateKey(keyChainPath, amount);
@@ -208,7 +228,7 @@ BuildCoinbaseResponse Wallet::CreateCoinbase(
 		EBulletproofType::ENHANCED
 	);
 
-	BlindingFactor txOffset(Hash::ValueOf(0));
+	BlindingFactor txOffset;
 	Commitment kernelCommitment = Crypto::AddCommitments(
 		{ commitment },
 		{ Crypto::CommitTransparent(amount) }
@@ -245,32 +265,10 @@ BuildCoinbaseResponse Wallet::CreateCoinbase(
 	);
 }
 
-std::unique_ptr<WalletTx> Wallet::GetTxById(const SecureVector& masterSeed, const uint32_t walletTxId) const
+SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) const
 {
-	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
-	for (WalletTx& walletTx : transactions)
-	{
-		if (walletTx.GetId() == walletTxId)
-		{
-			return std::make_unique<WalletTx>(WalletTx(walletTx));
-		}
-	}
-
-	WALLET_INFO_F("Could not find transaction {}", walletTxId);
-	return std::unique_ptr<WalletTx>(nullptr);
-}
-
-std::unique_ptr<WalletTx> Wallet::GetTxBySlateId(const SecureVector& masterSeed, const uuids::uuid& slateId) const
-{
-	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
-	for (WalletTx& walletTx : transactions)
-	{
-		if (walletTx.GetSlateId().has_value() && walletTx.GetSlateId().value() == slateId)
-		{
-			return std::make_unique<WalletTx>(WalletTx(walletTx));
-		}
-	}
-
-	WALLET_INFO("Could not find transaction " + uuids::to_string(slateId));
-	return std::unique_ptr<WalletTx>(nullptr);
+	KeyChain keychain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
+	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+	
+	return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
 }

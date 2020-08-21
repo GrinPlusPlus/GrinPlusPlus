@@ -1,6 +1,6 @@
 #include "OutputRestorer.h"
-#include <Wallet/Keychain/KeyChain.h>
 
+#include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/WalletUtil.h>
 #include <Consensus/BlockTime.h>
 #include <Consensus/HardForks.h>

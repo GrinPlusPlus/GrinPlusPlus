@@ -3,10 +3,10 @@
 #include <Common/Logger.h>
 #include <Core/Exceptions/WalletException.h>
 
-void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> walletDB, WalletTx& walletTx)
+void CancelTx::CancelWalletTx(const SecureVector& masterSeed, const std::shared_ptr<IWalletDB>& pWalletDB, WalletTx& walletTx)
 {
 	const EWalletTxType type = walletTx.GetType();
-	WALLET_DEBUG_F("Canceling WalletTx ({}) of type ({}).", walletTx.GetId(), WalletTxType::ToString(type));
+	WALLET_DEBUG_F("Canceling WalletTx {} of type {}.", walletTx.GetId(), WalletTxType::ToString(type));
 	if (type == EWalletTxType::RECEIVING_IN_PROGRESS)
 	{
 		walletTx.SetType(EWalletTxType::RECEIVED_CANCELED);
@@ -31,13 +31,11 @@ void CancelTx::CancelWalletTx(const SecureVector& masterSeed, Locked<IWalletDB> 
 		}
 	}
 
-	std::vector<OutputDataEntity> outputs = walletDB.Read()->GetOutputs(masterSeed);
+	std::vector<OutputDataEntity> outputs = pWalletDB->GetOutputs(masterSeed);
 	std::vector<OutputDataEntity> outputsToUpdate = GetOutputsToUpdate(outputs, inputCommitments, walletTx);
 
-	auto pBatch = walletDB.BatchWrite();
-	pBatch->AddOutputs(masterSeed, outputsToUpdate);
-	pBatch->AddTransaction(masterSeed, walletTx);
-	pBatch->Commit();
+	pWalletDB->AddOutputs(masterSeed, outputsToUpdate);
+	pWalletDB->AddTransaction(masterSeed, walletTx);
 }
 
 std::vector<OutputDataEntity> CancelTx::GetOutputsToUpdate(

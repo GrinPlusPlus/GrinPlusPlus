@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Wallet/SessionToken.h>
 #include <Net/Tor/TorProcess.h>
-#include <API/Wallet/Foreign/ForeignServer.h>
 #include <unordered_map>
 #include <optional>
 #include <string>
@@ -10,6 +8,8 @@
 
 // Forward Declarations
 class IWalletManager;
+class SessionToken;
+class KeyChain;
 
 class ForeignController
 {
@@ -26,14 +26,7 @@ public:
 	bool StopListener(const std::string& username);
 
 private:
-	struct Context
-	{
-		Context(ForeignServer::UPtr&& pServer)
-			: m_numReferences(1), m_pServer(std::move(pServer)) { }
-
-		int m_numReferences;
-		ForeignServer::UPtr m_pServer;
-	};
+	struct Context;
 
 	IWalletManager& m_walletManager;
 

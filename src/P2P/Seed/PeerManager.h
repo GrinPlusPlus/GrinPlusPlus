@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Core/Context.h>
 #include <Net/IPAddress.h>
 #include <Net/SocketAddress.h>
 #include <P2P/Peer.h>
@@ -17,10 +16,13 @@
 #include <shared_mutex>
 #include <thread>
 
+// Forward Declarations
+class Context;
+
 class PeerManager
 {
 public:
-	static std::shared_ptr<Locked<PeerManager>> Create(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	static std::shared_ptr<Locked<PeerManager>> Create(const std::shared_ptr<Context>& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 	~PeerManager();
 
 	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
@@ -39,17 +41,17 @@ public:
 	void UnbanPeer(const IPAddress& address);
 
 private:
-	PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
+	PeerManager(const std::shared_ptr<Context>& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 
 	struct PeerEntry
 	{
-		PeerEntry(PeerPtr pPeer)
+		PeerEntry(const PeerPtr& pPeer)
 			: m_peer(pPeer), m_lastAttempt(0)//, m_connected(false), m_dirty(false)
 		{
 
 		}
 
-		PeerEntry(PeerPtr pPeer, const time_t& lastAttempt)
+		PeerEntry(const PeerPtr& pPeer, const time_t& lastAttempt)
 			: m_peer(pPeer), m_lastAttempt(lastAttempt)
 		{
 
@@ -66,7 +68,7 @@ private:
 	void SetTaskId(const uint64_t taskId) noexcept { m_taskId = taskId; }
 	uint64_t m_taskId;
 
-	Context::Ptr m_pContext;
+	std::shared_ptr<Context> m_pContext;
 	std::shared_ptr<Locked<IPeerDB>> m_pPeerDB;
 
 	mutable std::map<IPAddress, PeerEntry> m_peersByAddress;

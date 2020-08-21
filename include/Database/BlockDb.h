@@ -1,13 +1,16 @@
 #pragma once
 
 #include <Core/Models/BlockHeader.h>
-#include <Core/Models/FullBlock.h>
-#include <Core/Models/BlockSums.h>
-#include <Core/Models/OutputLocation.h>
 #include <Core/Models/SpentOutput.h>
 #include <Core/Traits/Batchable.h>
 #include <unordered_map>
 #include <memory>
+
+// Forward Declarations
+class BlockSums;
+class FullBlock;
+class Commitment;
+class OutputLocation;
 
 class IBlockDB : public Traits::IBatchable
 {

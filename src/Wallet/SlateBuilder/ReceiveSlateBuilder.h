@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Wallet.h"
+#include "../WalletImpl.h"
 #include "SigningKeys.h"
 
 #include <Common/Secure.h>
@@ -14,17 +14,17 @@ public:
 		: m_config(config) { }
 
 	Slate AddReceiverData(
-		Locked<Wallet> wallet,
+		Locked<WalletImpl> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
 		const std::optional<SlatepackAddress>& addressOpt
 	) const;
 
 private:
-	bool VerifySlateStatus(std::shared_ptr<Wallet> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
+	bool VerifySlateStatus(std::shared_ptr<WalletImpl> pWallet, const SecureVector& masterSeed, const Slate& slate) const;
 	SlateSignature BuildSignature(Slate& slate, const SigningKeys& signing_keys) const;
 	void UpdatePaymentProof(
-		const std::shared_ptr<Wallet>& pWallet,
+		const std::shared_ptr<WalletImpl>& pWallet,
 		const SecureVector& masterSeed,
 		Slate& receiveSlate
 	) const;

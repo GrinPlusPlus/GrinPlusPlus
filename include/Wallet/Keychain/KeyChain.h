@@ -11,6 +11,7 @@
 #include <Crypto/RangeProof.h>
 #include <Crypto/RewoundProof.h>
 #include <Crypto/BulletproofType.h>
+#include <Crypto/Models/ed25519_keypair.h>
 #include <Crypto/ED25519.h>
 #include <Common/Secure.h>
 #include <vector>

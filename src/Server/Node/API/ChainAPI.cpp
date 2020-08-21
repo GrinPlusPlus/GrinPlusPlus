@@ -6,6 +6,7 @@
 #include <Crypto/Crypto.h>
 #include <json/json.h>
 #include <BlockChain/BlockChain.h>
+#include <Database/BlockDb.h>
 
 int ChainAPI::GetChain_Handler(struct mg_connection* conn, void* pNodeContext)
 {

@@ -2,6 +2,9 @@
 #include "RocksDB/RocksDBFactory.h"
 #include "RocksDB/RocksDB.h"
 
+#include <Core/Models/FullBlock.h>
+#include <Core/Models/BlockSums.h>
+#include <Core/Models/OutputLocation.h>
 #include <Database/DatabaseException.h>
 #include <Common/Logger.h>
 #include <Common/Util/StringUtil.h>

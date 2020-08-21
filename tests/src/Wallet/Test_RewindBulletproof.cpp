@@ -2,7 +2,8 @@
 
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Keychain/KeyGenerator.h>
-#include <Wallet/Wallet.h>
+#include <Crypto/Crypto.h>
+#include <uuid.h>
 
 #include <Config/ConfigLoader.h>
 

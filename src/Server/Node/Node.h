@@ -1,34 +1,34 @@
 #pragma once
 
 #include "NodeRestServer.h"
-#include "NodeClients/DefaultNodeClient.h"
 
-#include <Core/Context.h>
 #include <Config/Config.h>
 #include <Wallet/NodeClient.h>
 #include <memory>
 
 // Forward Declarations
+class Context;
 class NodeRestServer;
+class DefaultNodeClient;
 
 class Node
 {
 public:
-	static std::unique_ptr<Node> Create(const Context::Ptr& pContext);
+	static std::unique_ptr<Node> Create(const std::shared_ptr<Context>& pContext);
 
 	Node(
-		const Context::Ptr& pContext,
+		const std::shared_ptr<Context>& pContext,
 		std::unique_ptr<NodeRestServer>&& pNodeRestServer,
 		std::shared_ptr<DefaultNodeClient> pNodeClient
 	);
 	~Node();
 
-	INodeClientPtr GetNodeClient() { return m_pNodeClient; }
+	std::shared_ptr<INodeClient> GetNodeClient() const;
 
 	void UpdateDisplay(const int secondsRunning);
 
 private:
-	Context::Ptr m_pContext;
+	std::shared_ptr<Context> m_pContext;
 	std::unique_ptr<NodeRestServer> m_pNodeRestServer;
 	std::shared_ptr<DefaultNodeClient> m_pNodeClient;
 };

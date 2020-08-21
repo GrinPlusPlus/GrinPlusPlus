@@ -7,15 +7,18 @@ class WalletBalanceDTO : public Traits::IJsonable
 {
 public:
     WalletBalanceDTO(
+        const uint64_t last_confirmed_height,
         const uint64_t unconfirmed,
         const uint64_t immature,
         const uint64_t locked,
         const uint64_t spendable
-    ) : m_unconfirmed(unconfirmed),
+    ) : m_blockHeight(last_confirmed_height),
+        m_unconfirmed(unconfirmed),
         m_immature(immature),
         m_locked(locked),
         m_spendable(spendable) { }
 
+    uint64_t GetBlockHeight() const noexcept { return m_blockHeight; }
     uint64_t GetTotal() const noexcept { return m_unconfirmed + m_immature + m_spendable; }
     uint64_t GetUnconfirmed() const noexcept { return m_unconfirmed; }
     uint64_t GetImmature() const noexcept { return m_immature; }
@@ -34,6 +37,7 @@ public:
     }
 
 private:
+    uint64_t m_blockHeight;
     uint64_t m_unconfirmed;
     uint64_t m_immature;
     uint64_t m_locked;

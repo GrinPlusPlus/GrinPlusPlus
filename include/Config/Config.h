@@ -15,6 +15,8 @@
 class Config
 {
 public:
+	using CPtr = std::shared_ptr<const Config>;
+
 	static std::shared_ptr<Config> Load(const Json::Value& json, const EEnvironmentType environment)
 	{
 		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);

@@ -23,13 +23,13 @@
 // Forward Declarations
 class INodeClient;
 
-class Wallet
+class WalletImpl
 {
 public:
-	using Ptr = std::shared_ptr<Wallet>;
-	using CPtr = std::shared_ptr<const Wallet>;
+	using Ptr = std::shared_ptr<WalletImpl>;
+	using CPtr = std::shared_ptr<const WalletImpl>;
 
-	static Locked<Wallet> LoadWallet(
+	static Locked<WalletImpl> LoadWallet(
 		const Config& config,
 		const SecureVector& masterSeed,
 		const std::shared_ptr<const INodeClient>& pNodeClient,
@@ -71,7 +71,7 @@ public:
 	);
 
 private:
-	Wallet(
+	WalletImpl(
 		const Config& config,
 		const std::shared_ptr<const INodeClient>& pNodeClient,
 		Locked<IWalletDB> walletDB,

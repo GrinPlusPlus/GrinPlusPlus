@@ -3,7 +3,6 @@
 #include <Common/ImportExport.h>
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
-#include <Database/BlockDb.h>
 #include <Core/Traits/Lockable.h>
 #include <filesystem.h>
 
@@ -12,6 +11,9 @@
 #else
 #define TXHASHSET_API IMPORT
 #endif
+
+// Forward Declarations
+class IBlockDB;
 
 class TXHASHSET_API TxHashSetManager : public Traits::IBatchable
 {

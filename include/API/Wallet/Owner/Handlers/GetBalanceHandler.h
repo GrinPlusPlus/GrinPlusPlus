@@ -23,8 +23,9 @@ public:
 
 		Json::Value tokenJson = JsonUtil::GetRequiredField(request.GetParams().value(), "session_token");
 		SessionToken token = SessionToken::FromBase64(tokenJson.asString());
+		auto wallet = m_pWalletManager->GetWallet(token);
 
-		auto balance = m_pWalletManager->GetBalance(token);
+		auto balance = wallet.Read()->GetBalance();
 
 		return request.BuildResult(balance.ToJSON());
 	}

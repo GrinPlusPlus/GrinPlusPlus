@@ -1,5 +1,6 @@
 #include "WalletRefresher.h"
 #include "OutputRestorer.h"
+#include <Wallet/Keychain/KeyChain.h>
 
 #include <Common/Logger.h>
 #include <Wallet/WalletUtil.h>

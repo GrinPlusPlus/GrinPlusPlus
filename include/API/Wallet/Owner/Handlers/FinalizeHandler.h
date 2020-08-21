@@ -32,7 +32,7 @@ public:
 
 			SlatepackMessage Decrypt(const SessionToken& token, const std::string& armored) const final
 			{
-				return pWalletManager->DecryptSlatepack(token, armored);
+				return pWalletManager->GetWallet(token).Read()->DecryptSlatepack(armored);
 			}
 		};
 
@@ -45,7 +45,7 @@ public:
 			recipients.push_back(criteria.GetSlatepack().value().m_sender);
 		}
 
-		SlatepackAddress address = m_pWalletManager->GetSlatepackAddress(criteria.GetToken());
+		SlatepackAddress address = m_pWalletManager->GetWallet(criteria.GetToken()).Read()->GetSlatepackAddress();
 
 		Json::Value result;
 		result["status"] = "FINALIZED";

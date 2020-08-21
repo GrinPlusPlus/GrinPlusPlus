@@ -1,6 +1,7 @@
 #include "BlockHeaderProcessor.h"
 #include "../Validators/BlockHeaderValidator.h"
 
+#include <Database/BlockDb.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <Common/Logger.h>
@@ -234,8 +235,6 @@ void BlockHeaderProcessor::PrepareSyncChain(Writer<ChainState> pLockedState, con
 		LOG_INFO("Previous header not found on chain.");
 		throw BLOCK_CHAIN_EXCEPTION("Previous header not found.");
 	}
-
-	//pCandidateChain->Rewind(previousHeight);
 }
 
 void BlockHeaderProcessor::RewindMMR(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
@@ -244,30 +243,6 @@ void BlockHeaderProcessor::RewindMMR(Writer<ChainState> pLockedState, const std:
 
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 	pHeaderMMR->Rewind(headers.front()->GetHeight());
-
-	//auto pChainStore = pLockedState->GetChainStore();
-
-	//const uint64_t firstHeight = headers.front()->GetHeight();
-
-	//auto pCommonIndex = pChainStore->FindCommonIndex(EChainType::SYNC, EChainType::CANDIDATE);
-	//if (pCommonIndex->GetHeight() < (firstHeight - 1))
-	//{
-	//	pHeaderMMR->Rewind(pCommonIndex->GetHeight() + 1);
-	//	for (size_t height = pCommonIndex->GetHeight() + 1; height < firstHeight; height++)
-	//	{
-	//		auto pHeader = pLockedState->GetBlockHeaderByHeight(height, EChainType::SYNC);
-	//		if (pHeader == nullptr)
-	//		{
-	//			throw BLOCK_CHAIN_EXCEPTION("Failed to retrieve header");
-	//		}
-
-	//		pHeaderMMR->AddHeader(*pHeader);
-	//	}
-	//}
-	//else
-	//{
-	//	pHeaderMMR->Rewind(firstHeight);
-	//}
 }
 
 void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
@@ -301,30 +276,3 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 		pPreviousHeader = pHeader;
 	}
 }
-
-//void BlockHeaderProcessor::AddSyncHeaders(Writer<ChainState> pLockedState, const std::vector<BlockHeaderPtr>& headers)
-//{
-//	LOG_TRACE("Applying headers to sync chain");
-//
-//	auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
-//	const uint64_t firstHeaderHeight = headers.front()->GetHeight();
-//	const Hash& previousHash = headers.front()->GetPreviousHash();
-//
-//	// Ensure chain is on correct fork.
-//	if (!pSyncChain->IsOnChain(firstHeaderHeight - 1, previousHash))
-//	{
-//		LOG_ERROR("Chain state invalid. Unrecoverable error.");
-//		throw BLOCK_CHAIN_EXCEPTION("Chain state invalid.");
-//	}
-//
-//	// Rewind chain if necessary.
-//	if (pSyncChain->GetTipHash() != previousHash)
-//	{
-//		pSyncChain->Rewind(firstHeaderHeight - 1);
-//	}
-//
-//	for (auto pHeader : headers)
-//	{
-//		pSyncChain->AddBlock(pHeader->GetHash(), pHeader->GetHeight());
-//	}
-//}

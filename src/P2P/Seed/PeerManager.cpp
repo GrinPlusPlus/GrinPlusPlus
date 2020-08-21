@@ -1,5 +1,6 @@
 #include "PeerManager.h"
 
+#include <Core/Context.h>
 #include <P2P/Common.h>
 #include <Common/Util/TimeUtil.h>
 #include <Common/Util/ThreadUtil.h>

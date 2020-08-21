@@ -50,7 +50,9 @@ public:
 
 	SecureVector GetSeed(const SessionToken& token) const;
 	SecureVector GetSeed(const std::string& username, const SecureString& password) const;
+
 	Locked<Wallet> GetWallet(const SessionToken& token) const;
+	Locked<WalletImpl> GetWalletImpl(const SessionToken& token) const;
 
 private:
 	std::unordered_map<uint64_t, std::shared_ptr<LoggedInSession>> m_sessionsById;

@@ -24,7 +24,8 @@ public:
 
 		ListTxsCriteria criteria = ListTxsCriteria::FromJSON(request.GetParams().value());
 
-		const std::vector<WalletTxDTO> txs = m_pWalletManager->GetTransactions(criteria);
+		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
+		const std::vector<WalletTxDTO> txs = wallet.Read()->GetTransactions(criteria);
 
 		Json::Value txsJson;
 		for (const WalletTxDTO& tx : txs)

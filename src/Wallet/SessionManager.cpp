@@ -145,7 +145,7 @@ SessionToken SessionManager::Login(
 	SessionToken token(sessionId, tokenKey);
 
 	auto pWalletDB = m_pWalletDB->OpenWallet(username, seed);
-	Locked<Wallet> wallet = Wallet::LoadWallet(
+	Locked<WalletImpl> walletImpl = WalletImpl::LoadWallet(
 		m_config,
 		seed,
 		m_pNodeClient,
@@ -153,8 +153,19 @@ SessionToken SessionManager::Login(
 		username
 	);
 
+	Locked<Wallet> wallet = std::make_shared<Wallet>(
+		std::make_shared<Config>(m_config),
+		pWalletDB,
+		token,
+		seed,
+		username,
+		KeyChainPath::FromString("m/0/0"),
+		walletImpl.Read()->GetSlatepackAddress()
+	);
+
 	m_sessionsById[sessionId] = std::make_shared<LoggedInSession>(
 		wallet,
+		walletImpl,
 		std::move(encryptedSeedWithCS)
 	);
 
@@ -166,9 +177,10 @@ SessionToken SessionManager::Login(
 		keyChain
 	);
 	wallet.Write()->SetListenerPort(listenerInfo.first);
-	if (listenerInfo.second.has_value())
-	{
+	walletImpl.Write()->SetListenerPort(listenerInfo.first);
+	if (listenerInfo.second.has_value()) {
 		wallet.Write()->SetTorAddress(listenerInfo.second.value());
+		walletImpl.Write()->SetTorAddress(listenerInfo.second.value());
 	}
 
 	return token;
@@ -219,6 +231,17 @@ Locked<Wallet> SessionManager::GetWallet(const SessionToken& token) const
 	if (iter != m_sessionsById.end())
 	{
 		return iter->second->m_wallet;
+	}
+
+	throw SessionTokenException();
+}
+
+Locked<WalletImpl> SessionManager::GetWalletImpl(const SessionToken& token) const
+{
+	auto iter = m_sessionsById.find(token.GetSessionId());
+	if (iter != m_sessionsById.end())
+	{
+		return iter->second->m_walletImpl;
 	}
 
 	throw SessionTokenException();

@@ -165,17 +165,14 @@ std::vector<secp256k1_pedersen_commitment*> Pedersen::ConvertCommitments(const s
 	std::vector<secp256k1_pedersen_commitment*> convertedCommitments(commitments.size(), NULL);
 	for (int i = 0; i < commitments.size(); i++)
 	{
-		const std::vector<unsigned char>& commitmentBytes = commitments[i].GetVec();
-
 		secp256k1_pedersen_commitment* pCommitment = new secp256k1_pedersen_commitment();
-		const int parsed = secp256k1_pedersen_commitment_parse(&context, pCommitment, &commitmentBytes[0]);
+		const int parsed_result = secp256k1_pedersen_commitment_parse(&context, pCommitment, commitments[i].data());
 		convertedCommitments[i] = pCommitment;
 
-		if (parsed != 1)
-		{
-			// TODO: Log failue
+		if (parsed_result != 1) {
 			CleanupCommitments(convertedCommitments);
-			throw CryptoException("secp256k1_pedersen_commitment_parse failed with error: " + std::to_string(parsed));
+			LOG_ERROR_F("secp256k1_pedersen_commitment_parse failed with error {} for commitment {}", parsed_result, commitments[i]);
+			throw CRYPTO_EXCEPTION_F("secp256k1_pedersen_commitment_parse failed with error: {}", parsed_result);
 		}
 	}
 

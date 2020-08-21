@@ -4,6 +4,8 @@
 #include "Pipeline/Pipeline.h"
 #include "Sync/Syncer.h"
 #include "Messages/TransactionKernelMessage.h"
+
+#include <Core/Context.h>
 #include <BlockChain/BlockChain.h>
 
 P2PServer::P2PServer(

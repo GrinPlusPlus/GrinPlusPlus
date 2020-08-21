@@ -4,11 +4,10 @@
 #include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
-#include <Wallet/WalletUtil.h>
 #include <Common/Logger.h>
 
 Slate ReceiveSlateBuilder::AddReceiverData(
-	Locked<Wallet> wallet,
+	Locked<WalletImpl> wallet,
 	const SecureVector& masterSeed,
 	const Slate& send_slate,
 	const std::optional<SlatepackAddress>& addressOpt) const
@@ -82,7 +81,7 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 }
 
 bool ReceiveSlateBuilder::VerifySlateStatus(
-	std::shared_ptr<Wallet> pWallet,
+	std::shared_ptr<WalletImpl> pWallet,
 	const SecureVector& masterSeed,
 	const Slate& slate) const
 {
@@ -136,7 +135,7 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(Slate& slate, const SigningKe
 }
 
 void ReceiveSlateBuilder::UpdatePaymentProof(
-	const std::shared_ptr<Wallet>& pWallet,
+	const std::shared_ptr<WalletImpl>& pWallet,
 	const SecureVector& masterSeed,
 	Slate& receiveSlate) const
 {
@@ -211,8 +210,8 @@ void ReceiveSlateBuilder::UpdateDatabase(
 
 	pBatch->AddTransaction(masterSeed, walletTx);
 
-	receiveSlate.amount = 0;
-	receiveSlate.fee = 0;
+	// receiveSlate.amount = 0;
+	// receiveSlate.fee = 0;
 	receiveSlate.sigs = std::vector<SlateSignature>{ signature };
 	pBatch->SaveSlate(masterSeed, receiveSlate);
 }

@@ -4,6 +4,7 @@
 #include "../ConnectionManager.h"
 #include "../Messages/GetPeerAddressesMessage.h"
 
+#include <Core/Context.h>
 #include <P2P/Capabilities.h>
 #include <Net/SocketAddress.h>
 #include <Net/Socket.h>
@@ -22,7 +23,7 @@ Seeder::~Seeder()
 }
 
 std::unique_ptr<Seeder> Seeder::Create(
-	Context::Ptr pContext,
+	const std::shared_ptr<Context>& pContext,
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
 	const IBlockChain::Ptr& pBlockChain,

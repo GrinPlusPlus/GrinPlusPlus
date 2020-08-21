@@ -1,6 +1,8 @@
 #pragma once
 
 #include <BlockChain/BlockIndex.h>
+#include <Core/Models/BlockHeader.h>
+#include <BlockChain/ChainType.h>
 #include <Core/Traits/Lockable.h>
 #include <Core/File/DataFile.h>
 

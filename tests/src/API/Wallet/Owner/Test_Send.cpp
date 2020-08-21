@@ -41,10 +41,8 @@ TEST_CASE("API: send - Slatepack")
     REQUIRE(response.GetStatus() == SendResponse::EStatus::SENT);
 
     // Unpack slatepack
-    SlatepackMessage decrypted = pWalletManager->DecryptSlatepack(
-        pReceiverWallet->GetToken(),
-        response.GetArmoredSlate()
-    );
+    auto wallet = pWalletManager->GetWallet(pReceiverWallet->GetToken());
+    SlatepackMessage decrypted = wallet.Read()->DecryptSlatepack(response.GetArmoredSlate());
 
     ByteBuffer deserializer(decrypted.m_payload);
     REQUIRE(Slate::Deserialize(deserializer) == response.GetSlate());

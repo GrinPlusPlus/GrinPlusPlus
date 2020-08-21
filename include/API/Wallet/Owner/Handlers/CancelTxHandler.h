@@ -22,8 +22,9 @@ public:
 		}
 
 		CancelTxCriteria criteria = CancelTxCriteria::FromJSON(request.GetParams().value());
+		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
 
-		m_pWalletManager->CancelByTxId(criteria.GetToken(), criteria.GetTxId());
+		wallet.Write()->CancelTx(criteria.GetTxId());
 
 		Json::Value result;
 		result["status"] = "SUCCESS";

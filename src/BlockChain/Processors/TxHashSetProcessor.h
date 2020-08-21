@@ -12,7 +12,6 @@
 // Forward Declarations
 class IBlockChain;
 class BlockHeader;
-class IBlockDB;
 
 class TxHashSetProcessor
 {

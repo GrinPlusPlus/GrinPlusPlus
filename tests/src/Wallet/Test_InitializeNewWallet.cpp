@@ -22,7 +22,7 @@ TEST_CASE("Wallet Creation/Deletion")
 	);
 
 	// Validate seed words
-	SecureString seedWords = pWalletManager->GetSeedWords(response.GetToken());
+	SecureString seedWords = pWalletManager->GetWallet(response.GetToken()).Read()->GetSeedWords();
 	REQUIRE(response.GetSeed() == seedWords);
 
 	// Logout
@@ -50,7 +50,8 @@ TEST_CASE("Wallet Words Length")
 		);
 
 		// Validate seed words
-		SecureString seedWords = pWalletManager->GetSeedWords(response.GetToken());
+		auto wallet = pWalletManager->GetWallet(response.GetToken());
+		SecureString seedWords = wallet.Read()->GetSeedWords();
 		REQUIRE(response.GetSeed() == seedWords);
 		REQUIRE(StringUtil::Split((const std::string&)response.GetSeed(), " ").size() == numWords);
 

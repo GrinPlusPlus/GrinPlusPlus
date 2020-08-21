@@ -1,5 +1,3 @@
-#include "ChainStore.h"
-
 #include <BlockChain/Chain.h>
 #include <Common/Logger.h>
 #include <Core/Exceptions/BlockChainException.h>

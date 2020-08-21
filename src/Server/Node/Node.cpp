@@ -3,6 +3,7 @@
 #include "NodeClients/DefaultNodeClient.h"
 #include "../console.h"
 
+#include <Core/Context.h>
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>
 #include <BlockChain/BlockChain.h>
@@ -43,6 +44,11 @@ std::unique_ptr<Node> Node::Create(const Context::Ptr& pContext)
 		std::move(pNodeRestServer),
 		pNodeClient
 	);
+}
+
+std::shared_ptr<INodeClient> Node::GetNodeClient() const
+{
+	return m_pNodeClient;
 }
 
 void Node::UpdateDisplay(const int secondsRunning)

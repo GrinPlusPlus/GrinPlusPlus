@@ -17,7 +17,8 @@ public:
 			request.GetParams().value_or(Json::Value())
 		);
 
-		BuildCoinbaseResponse response = m_walletManager.BuildCoinbase(criteria);
+		auto wallet = m_walletManager.GetWallet(criteria.GetToken());
+		BuildCoinbaseResponse response = wallet.Write()->BuildCoinbase(criteria);
 
 		return request.BuildResult(response.ToJSON());
 	}

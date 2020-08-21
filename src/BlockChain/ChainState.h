@@ -14,6 +14,7 @@
 #include <Core/Traits/Lockable.h>
 #include <Database/Database.h>
 #include <TxPool/TransactionPool.h>
+#include <Database/BlockDb.h>
 
 class ChainState : public Traits::IBatchable
 {

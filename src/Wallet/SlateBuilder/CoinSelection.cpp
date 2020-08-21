@@ -1,6 +1,6 @@
 #include "CoinSelection.h"
 
-#include <Wallet/WalletUtil.h>
+#include <Core/Util/FeeUtil.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
 #include <Common/Logger.h>
 
@@ -48,7 +48,7 @@ std::vector<OutputDataEntity> CoinSelection::SelectUsingSmallestInputs(
 		amountFound += coin.GetAmount();
 		selectedCoins.push_back(coin);
 
-		const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
+		const uint64_t fee = FeeUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
 		if (amountFound >= (amount + fee))
 		{
 			return selectedCoins;
@@ -73,7 +73,7 @@ std::vector<OutputDataEntity> CoinSelection::SelectUsingAllInputs(
 		amountFound += coin.GetAmount();
 	}
 
-	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)availableCoins.size(), numOutputs, numKernels);
+	const uint64_t fee = FeeUtil::CalculateFee(feeBase, (int64_t)availableCoins.size(), numOutputs, numKernels);
 	if (amount < amount + fee) {
 		return availableCoins;
 	}
@@ -102,7 +102,7 @@ std::vector<OutputDataEntity> CoinSelection::SelectUsingCustomInputs(
 		}
 	}
 
-	const uint64_t fee = WalletUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
+	const uint64_t fee = FeeUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
 	if (amountFound >= (amount + fee))
 	{
 		return selectedCoins;

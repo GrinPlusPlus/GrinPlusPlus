@@ -9,6 +9,7 @@ file(GLOB SOURCE_CODE
 	"Models/Slate/Slate.cpp"
 	"CancelTx.cpp"
 	"Wallet.cpp"
+	"WalletImpl.cpp"
 	"WalletRefresher.cpp"
 	"SessionManager.cpp"
 	"WalletManagerImpl.cpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Wallet.h"
+#include "../WalletImpl.h"
 
 #include <Common/Secure.h>
 #include <Crypto/SecretKey.h>
@@ -10,7 +10,7 @@ class FinalizeSlateBuilder
 {
 public:
 	std::pair<Slate, Transaction> Finalize(
-		Locked<Wallet> wallet,
+		Locked<WalletImpl> wallet,
 		const SecureVector& masterSeed,
 		const Slate& rcvSlate
 	) const;
@@ -35,7 +35,7 @@ private:
 	) const;
 
 	void UpdateDatabase(
-		const Wallet::Ptr& pWallet,
+		const WalletImpl::Ptr& pWallet,
 		const SecureVector& masterSeed,
 		const WalletTx& walletTx,
 		const Slate& finalizeSlate

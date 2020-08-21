@@ -1,14 +1,18 @@
 #include "ForeignController.h"
+
+#include <API/Wallet/Foreign/ForeignServer.h>
+#include <Wallet/SessionToken.h>
 #include <Wallet/Keychain/KeyChain.h>
-
-#include <Common/Logger.h>
 #include <Wallet/WalletManager.h>
-#include <Net/Util/HTTPUtil.h>
-#include <Net/Clients/RPC/RPC.h>
 
-#include <API/Wallet/Foreign/Models/CheckVersionResponse.h>
-#include <API/Wallet/Foreign/Models/ReceiveTxRequest.h>
-#include <API/Wallet/Foreign/Models/ReceiveTxResponse.h>
+struct ForeignController::Context
+{
+	Context(ForeignServer::UPtr&& pServer)
+		: m_numReferences(1), m_pServer(std::move(pServer)) { }
+
+	int m_numReferences;
+	ForeignServer::UPtr m_pServer;
+};
 
 ForeignController::ForeignController(IWalletManager& walletManager)
 	: m_walletManager(walletManager)

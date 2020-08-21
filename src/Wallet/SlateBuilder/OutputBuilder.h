@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Wallet.h"
+#include "../WalletImpl.h"
 
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
@@ -9,7 +9,7 @@ class OutputBuilder
 {
 public:
 	static std::vector<OutputDataEntity> CreateOutputs(
-		std::shared_ptr<Wallet> pWallet,
+		std::shared_ptr<WalletImpl> pWallet,
 		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed, 
 		const uint64_t totalAmount, 

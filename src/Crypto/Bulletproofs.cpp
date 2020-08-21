@@ -3,6 +3,7 @@
 
 #include <secp256k1-zkp/secp256k1_bulletproofs.h>
 #include <Common/Util/FunctionalUtil.h>
+#include <Common/Logger.h>
 #include <Crypto/CSPRNG.h>
 #include <Crypto/CryptoException.h>
 
@@ -50,8 +51,7 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 		}
 	}
 
-	if (commitments.empty())
-	{
+	if (commitments.empty()) {
 		return true;
 	}
 
@@ -70,15 +70,17 @@ bool Bulletproofs::VerifyBulletproofs(const std::vector<std::pair<Commitment, Ra
 
 	Pedersen::CleanupCommitments(commitmentPointers);
 
-	if (result == 1)
-	{
-		for (const Commitment& commitment : commitments)
-		{
-			m_cache.AddToCache(commitment);
-		}
+	if (result != 1) {
+		LOG_ERROR_F("Failed to validate {} rangeproofs", commitments.size());
+		return false;
 	}
 
-	return result == 1;
+	for (const Commitment& commitment : commitments)
+	{
+		m_cache.AddToCache(commitment);
+	}
+
+	return true;
 }
 
 RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretKey& key, const SecretKey& privateNonce, const SecretKey& rewindNonce, const ProofMessage& proofMessage) const
@@ -87,12 +89,11 @@ RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretK
 
 	const SecretKey randomSeed = CSPRNG::GenerateRandom32();
 	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
-	if (randomizeResult != 1)
-	{
+	if (randomizeResult != 1) {
 		throw CryptoException("secp256k1_context_randomize failed with error: " + std::to_string(randomizeResult));
 	}
 
-	std::vector<unsigned char> proofBytes(MAX_PROOF_SIZE, 0);
+	std::vector<uint8_t> proofBytes(MAX_PROOF_SIZE, 0);
 	size_t proofLen = MAX_PROOF_SIZE;
 
 	secp256k1_scratch_space* pScratchSpace = secp256k1_scratch_space_create(m_pContext, SCRATCH_SPACE_SIZE);
@@ -102,7 +103,7 @@ RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretK
 		m_pContext,
 		pScratchSpace,
 		m_pGenerators,
-		&proofBytes[0],
+		proofBytes.data(),
 		&proofLen,
 		NULL,
 		NULL,
@@ -122,13 +123,12 @@ RangeProof Bulletproofs::GenerateRangeProof(const uint64_t amount, const SecretK
 	);
 	secp256k1_scratch_space_destroy(pScratchSpace);
 
-	if (result == 1)
-	{
-		proofBytes.resize(proofLen);
-		return RangeProof(std::move(proofBytes));
+	if (result != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_bulletproof_rangeproof_prove failed with error: {}", result);
 	}
 
-	throw CryptoException("secp256k1_bulletproof_rangeproof_prove failed with error: " + std::to_string(result));
+	proofBytes.resize(proofLen);
+	return RangeProof(std::move(proofBytes));
 }
 
 std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commitment, const RangeProof& rangeProof, const SecretKey& nonce) const
@@ -140,13 +140,13 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 	if (!commitmentPointers.empty())
 	{
 		uint64_t value;
-		std::vector<unsigned char> blindingFactorBytes(32);
-		std::vector<unsigned char> message(20, 0);
+		SecretKey blinding_factor;
+		ProofMessage message;
 
 		int result = secp256k1_bulletproof_rangeproof_rewind(
 			m_pContext,
 			&value,
-			blindingFactorBytes.data(),
+			blinding_factor.data(),
 			rangeProof.GetProofBytes().data(),
 			rangeProof.GetProofBytes().size(),
 			0,
@@ -163,8 +163,8 @@ std::unique_ptr<RewoundProof> Bulletproofs::RewindProof(const Commitment& commit
 		{
 			return std::make_unique<RewoundProof>(RewoundProof(
 				value, 
-				std::make_unique<SecretKey>(SecretKey(std::move(blindingFactorBytes))), 
-				ProofMessage(std::move(message))
+				std::make_unique<SecretKey>(std::move(blinding_factor)), 
+				std::move(message)
 			));
 		}
 	}

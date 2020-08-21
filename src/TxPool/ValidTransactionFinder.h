@@ -2,8 +2,10 @@
 
 #include <Core/Models/Transaction.h>
 #include <Core/Models/BlockHeader.h>
-#include <Database/BlockDb.h>
 #include <PMMR/TxHashSet.h>
+
+// Forward Declarations
+class IBlockDB;
 
 class ValidTransactionFinder
 {

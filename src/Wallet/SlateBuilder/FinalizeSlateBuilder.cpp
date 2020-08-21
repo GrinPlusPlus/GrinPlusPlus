@@ -10,7 +10,7 @@
 // TODO: To help prevent "play" attacks, make sure any outputs provided by the receiver are not already on-chain.
 
 std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(
-	Locked<Wallet> wallet,
+	Locked<WalletImpl> wallet,
 	const SecureVector& masterSeed,
 	const Slate& rcvSlate) const
 {
@@ -318,7 +318,7 @@ bool FinalizeSlateBuilder::VerifyPaymentProofs(
 }
 
 void FinalizeSlateBuilder::UpdateDatabase(
-	const Wallet::Ptr& pWallet,
+	const WalletImpl::Ptr& pWallet,
 	const SecureVector& masterSeed,
 	const WalletTx& walletTx,
 	const Slate& finalizeSlate) const

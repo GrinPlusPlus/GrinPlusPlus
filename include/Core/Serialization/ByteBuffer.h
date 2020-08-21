@@ -226,7 +226,9 @@ public:
 	
 	std::vector<uint8_t> ReadRemainingBytes() noexcept
 	{
-		return ReadVector(GetRemainingSize());
+		size_t prev_index = m_index;
+		m_index += GetRemainingSize();
+		return std::vector<unsigned char>(m_bytes.cbegin() + prev_index, m_bytes.cbegin() + m_index);
 	}
 
 	EProtocolVersion GetProtocolVersion() const noexcept { return m_protocolVersion; }

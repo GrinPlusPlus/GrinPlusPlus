@@ -1,8 +1,6 @@
 #pragma once
 
 #include <Crypto/Hash.h>
-#include <BlockChain/ChainType.h>
-#include <Core/Models/BlockHeader.h>
 
 class BlockIndex
 {

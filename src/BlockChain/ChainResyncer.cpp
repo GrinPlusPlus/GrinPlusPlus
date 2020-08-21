@@ -1,6 +1,7 @@
 #include "ChainResyncer.h"
 
 #include <Common/Logger.h>
+#include <Database/BlockDb.h>
 
 ChainResyncer::ChainResyncer(const std::shared_ptr<Locked<ChainState>>& pChainState)
 	: m_pChainState(pChainState) { }

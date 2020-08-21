@@ -30,7 +30,8 @@ public:
 
 		SendCriteria criteria = SendCriteria::FromJSON(request.GetParams().value());
 
-		SlatepackAddress sender_address = m_pWalletManager->GetSlatepackAddress(criteria.GetToken());
+		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
+		SlatepackAddress sender_address = wallet.Read()->GetSlatepackAddress();
 		std::vector<SlatepackAddress> recipients = GetRecipients(criteria);
 
 		if (!recipients.empty()) {

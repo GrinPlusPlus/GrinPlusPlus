@@ -6,7 +6,6 @@
 
 #include <Common/ImportExport.h>
 #include <Crypto/BigInteger.h>
-#include <Core/Context.h>
 #include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/Peer.h>
@@ -22,6 +21,7 @@
 #endif
 
 // Forward Declarations
+class Context;
 class IBlockChain;
 class IDatabase;
 
@@ -71,7 +71,7 @@ namespace P2PAPI
 	// Creates a new instance of the P2P Server.
 	//
 	P2P_API IP2PServerPtr StartP2PServer(
-		const Context::Ptr& pContext,
+		const std::shared_ptr<Context>& pContext,
 		const std::shared_ptr<IBlockChain>& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 		IDatabasePtr pDatabase,

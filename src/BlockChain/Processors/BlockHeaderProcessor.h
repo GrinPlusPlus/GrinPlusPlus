@@ -53,11 +53,6 @@ private:
 		const std::vector<BlockHeaderPtr>& headers
 	);
 
-	//void AddSyncHeaders(
-	//	Writer<ChainState> pLockedState,
-	//	const std::vector<BlockHeaderPtr>& headers
-	//);
-
 	const Config& m_config;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

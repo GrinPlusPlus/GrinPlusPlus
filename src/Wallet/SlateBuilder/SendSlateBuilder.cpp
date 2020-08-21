@@ -5,7 +5,7 @@
 #include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
-#include <Wallet/WalletUtil.h>
+#include <Core/Util/FeeUtil.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Common/Logger.h>
 #include <Consensus/HardForks.h>
@@ -19,7 +19,7 @@ SendSlateBuilder::SendSlateBuilder(const Config& config, INodeClientConstPtr pNo
 }
 
 Slate SendSlateBuilder::BuildSendSlate(
-	Locked<Wallet> wallet, 
+	Locked<WalletImpl> wallet, 
 	const SecureVector& masterSeed, 
 	const uint64_t amount, 
 	const uint64_t feeBase,
@@ -58,11 +58,11 @@ Slate SendSlateBuilder::BuildSendSlate(
 	);
 
 	// Calculate the fee
-	uint64_t fee = WalletUtil::CalculateFee(
+	uint64_t fee = FeeUtil::CalculateFee(
 		feeBase,
-		inputs.size(),
-		totalNumOutputs,
-		numKernels
+		(int64_t)inputs.size(),
+		(int64_t)totalNumOutputs,
+		(int64_t)numKernels
 	);
 	uint64_t amountToSend = sendEntireBalance ? (inputTotal - fee) : amount;
 	if (numChangeOutputs == 0)
@@ -84,7 +84,7 @@ Slate SendSlateBuilder::BuildSendSlate(
 }
 
 Slate SendSlateBuilder::Build(
-	const std::shared_ptr<Wallet>& pWallet,
+	const std::shared_ptr<WalletImpl>& pWallet,
 	const SecureVector& masterSeed,
 	const uint64_t amountToSend,
 	const uint64_t fee,

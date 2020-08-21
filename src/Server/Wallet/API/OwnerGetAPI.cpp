@@ -32,7 +32,7 @@ int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action
 	{
 		const SessionToken token = SessionTokenUtil::GetSessionToken(*pConnection);
 		Json::Value json;
-		SecureString walletWords = walletManager.GetSeedWords(token);
+		SecureString walletWords = walletManager.GetWallet(token).Read()->GetSeedWords();
 		json["mnemonic"] = (std::string)walletWords;
 		return HTTPUtil::BuildSuccessResponse(pConnection, json.toStyledString());
 	}
@@ -79,7 +79,7 @@ int OwnerGetAPI::GetNodeHeight(mg_connection* pConnection, INodeClient& nodeClie
 // GET /v1/wallet/owner/retrieve_summary_info
 int OwnerGetAPI::RetrieveSummaryInfo(mg_connection* pConnection, IWalletManager& walletManager, const SessionToken& token)
 {
-	WalletSummaryDTO walletSummary = walletManager.GetWalletSummary(token);
+	WalletSummaryDTO walletSummary = walletManager.GetWallet(token).Read()->GetWalletSummary();
 
 	return HTTPUtil::BuildSuccessResponse(pConnection, walletSummary.ToJSON().toStyledString());
 }
@@ -96,12 +96,14 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 
 	ListTxsCriteria criteria(token, std::nullopt, std::nullopt, {});
 
+	auto wallet = walletManager.GetWallet(token);
+
 	if (txIdOpt.has_value())
 	{
 		const uint64_t txId = std::stoull(txIdOpt.value());
 
 		// TODO: Filter in walletManager for better performance
-		const std::vector<WalletTxDTO> transactions = walletManager.GetTransactions(criteria);
+		const std::vector<WalletTxDTO> transactions = wallet.Read()->GetTransactions(criteria);
 		for (const WalletTxDTO& transaction : transactions)
 		{
 			if (transaction.GetId() == txId)
@@ -112,7 +114,7 @@ int OwnerGetAPI::RetrieveTransactions(mg_connection* pConnection, IWalletManager
 	}
 	else
 	{
-		const std::vector<WalletTxDTO> transactions = walletManager.GetTransactions(criteria);
+		const std::vector<WalletTxDTO> transactions = wallet.Read()->GetTransactions(criteria);
 		for (const WalletTxDTO& transaction : transactions)
 		{
 			transactionsJSON.append(transaction.ToJSON());
@@ -133,7 +135,7 @@ int OwnerGetAPI::RetrieveOutputs(mg_connection* pConnection, IWalletManager& wal
 	const bool includeSpent = HTTPUtil::HasQueryParam(pConnection, "show_spent");
 	const bool includeCanceled = HTTPUtil::HasQueryParam(pConnection, "show_canceled");
 
-	const std::vector<WalletOutputDTO> outputs = walletManager.GetOutputs(token, includeSpent, includeCanceled);
+	const std::vector<WalletOutputDTO> outputs = walletManager.GetWallet(token).Read()->GetOutputs(includeSpent, includeCanceled);
 	for (const WalletOutputDTO& output : outputs)
 	{
 		outputsJSON.append(output.ToJSON());

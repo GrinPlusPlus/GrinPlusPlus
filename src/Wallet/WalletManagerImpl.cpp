@@ -8,10 +8,10 @@
 #include "SlateBuilder/CoinSelection.h"
 #include "WalletTxLoader.h"
 
-#include <Wallet/WalletUtil.h>
 #include <Wallet/Exceptions/InvalidMnemonicException.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Core/Exceptions/WalletException.h>
+#include <Core/Util/FeeUtil.h>
 #include <Crypto/CSPRNG.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
@@ -35,6 +35,14 @@ WalletManager::~WalletManager()
 	LOG_INFO("Shutting down wallet manager");
 }
 
+Locked<Wallet> WalletManager::GetWallet(const SessionToken& token)
+{
+	SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
+	m_sessionManager.Read()->GetWalletImpl(token).Write()->RefreshOutputs(masterSeed, false);
+
+	return m_sessionManager.Read()->GetWallet(token);
+}
+
 CreateWalletResponse WalletManager::InitializeNewWallet(
 	const CreateWalletCriteria& criteria,
 	const TorProcess::Ptr& pTorProcess)
@@ -48,7 +56,7 @@ CreateWalletResponse WalletManager::InitializeNewWallet(
 	const size_t entropyBytes = (4 * criteria.GetNumWords()) / 3;
 	const SecureVector walletSeed = CSPRNG::GenerateRandomBytes(entropyBytes);
 	const EncryptedSeed encryptedSeed = SeedEncrypter().EncryptWalletSeed(walletSeed, criteria.GetPassword());
-	SecureString walletWords = Mnemonic::CreateMnemonic((const std::vector<uint8_t>&)walletSeed);
+	SecureString walletWords = Mnemonic::CreateMnemonic(walletSeed.data(), walletSeed.size());
 
 	m_pWalletStore->CreateWallet(criteria.GetUsername(), encryptedSeed);
 
@@ -101,19 +109,13 @@ LoginResponse WalletManager::RestoreFromSeed(
 	}
 }
 
-SecureString WalletManager::GetSeedWords(const SessionToken& token)
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	return Mnemonic::CreateMnemonic((const std::vector<unsigned char>&)masterSeed);
-}
-
 SecureString WalletManager::GetSeedWords(const GetSeedPhraseCriteria& criteria)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(
 		criteria.GetUsername(),
 		criteria.GetPassword()
 	);
-	return Mnemonic::CreateMnemonic((const std::vector<unsigned char>&)masterSeed);
+	return Mnemonic::CreateMnemonic(masterSeed.data(), masterSeed.size());
 }
 
 void WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGenesis)
@@ -121,7 +123,7 @@ void WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 	try
 	{
 		const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-		Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+		Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(token);
 
 		wallet.Write()->RefreshOutputs(masterSeed, fromGenesis);
 	}
@@ -132,26 +134,10 @@ void WalletManager::CheckForOutputs(const SessionToken& token, const bool fromGe
 	}
 }
 
-std::optional<TorAddress> WalletManager::GetTorAddress(const SessionToken& token) const
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	return wallet.Read()->GetTorAddress();
-}
-
-SlatepackAddress WalletManager::GetSlatepackAddress(const SessionToken& token) const
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	return wallet.Read()->GetSlatepackAddress();
-}
-
 std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& token, const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
 
 	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
@@ -160,17 +146,10 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	if (pTorAddress != nullptr)
 	{
 		wallet.Write()->SetTorAddress(*pTorAddress);
+		walletImpl.Write()->SetTorAddress(*pTorAddress);
 	}
 
 	return wallet.Read()->GetTorAddress();
-}
-
-uint16_t WalletManager::GetListenerPort(const SessionToken& token) const
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	return wallet.Read()->GetListenerPort();
 }
 
 std::vector<GrinStr> WalletManager::GetAllAccounts() const
@@ -247,113 +226,10 @@ void WalletManager::ChangePassword(
 	m_pWalletStore->ChangePassword(usernameLower, newSeed);
 }
 
-WalletSummaryDTO WalletManager::GetWalletSummary(const SessionToken& token)
-{
-	try
-	{
-		const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-		Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-		return wallet.Write()->GetWalletSummary(masterSeed);
-	}
-	catch (std::exception& e)
-	{
-		WALLET_ERROR_F("Exception occurred while building wallet summary: {}", e.what());
-		throw WALLET_EXCEPTION(e.what());
-	}
-}
-
-WalletBalanceDTO WalletManager::GetBalance(const SessionToken& token)
-{
-	try
-	{
-		const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-		Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-		return wallet.Write()->GetBalance(masterSeed);
-	}
-	catch (std::exception& e)
-	{
-		WALLET_ERROR_F("Exception occurred while building wallet summary: {}", e.what());
-		throw WALLET_EXCEPTION(e.what());
-	}
-}
-
-std::vector<WalletTxDTO> WalletManager::GetTransactions(const ListTxsCriteria& criteria)
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
-
-	auto pReader = wallet.Read()->GetDatabase().Read();
-	return WalletTxLoader().LoadTransactions(pReader.GetShared(), masterSeed, criteria);
-}
-
-std::vector<WalletOutputDTO> WalletManager::GetOutputs(const SessionToken& token, const bool includeSpent, const bool includeCanceled)
-{
-	std::vector<WalletOutputDTO> outputDTOs;
-
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	std::vector<OutputDataEntity> outputs = wallet.Read()->GetDatabase().Read()->GetOutputs(masterSeed);
-	for (const OutputDataEntity& output : outputs)
-	{
-		if (output.GetStatus() == EOutputStatus::SPENT && !includeSpent)
-		{
-			continue;
-		}
-
-		if (output.GetStatus() == EOutputStatus::CANCELED && !includeCanceled)
-		{
-			continue;
-		}
-
-		outputDTOs.emplace_back(WalletOutputDTO::FromOutputData(output));
-	}
-
-	return outputDTOs;
-}
-
-FeeEstimateDTO WalletManager::EstimateFee(const EstimateFeeCriteria& criteria)
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
-
-	// Select inputs using desired selection strategy.
-	const uint8_t totalNumOutputs = criteria.GetNumChangeOutputs() + 1;
-	const uint64_t numKernels = 1;
-	const std::vector<OutputDataEntity> availableCoins = wallet.Write()->GetAllAvailableCoins(masterSeed);
-	std::vector<OutputDataEntity> inputs = CoinSelection().SelectCoinsToSpend(
-		availableCoins,
-		criteria.GetAmount(),
-		criteria.GetFeeBase(),
-		criteria.GetSelectionStrategy().GetStrategy(),
-		criteria.GetSelectionStrategy().GetInputs(),
-		totalNumOutputs,
-		numKernels
-	);
-
-	// Calculate the fee
-	const uint64_t fee = WalletUtil::CalculateFee(
-		criteria.GetFeeBase(),
-		(int64_t)inputs.size(),
-		totalNumOutputs,
-		numKernels
-	);
-
-	std::vector<WalletOutputDTO> inputDTOs;
-	for (const OutputDataEntity& input : inputs)
-	{
-		inputDTOs.emplace_back(WalletOutputDTO::FromOutputData(input));
-	}
-
-	return FeeEstimateDTO(fee, std::move(inputDTOs));
-}
-
 Slate WalletManager::Send(const SendCriteria& sendCriteria)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(sendCriteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(sendCriteria.GetToken());
+	Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(sendCriteria.GetToken());
 
 	return SendSlateBuilder(m_config, m_pNodeClient).BuildSendSlate(
 		wallet,
@@ -371,7 +247,7 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(receiveCriteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(receiveCriteria.GetToken());
+	Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(receiveCriteria.GetToken());
 
 	return ReceiveSlateBuilder(m_config).AddReceiverData(
 		wallet,
@@ -384,7 +260,7 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const TorProcess::Ptr& pTorProcess)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
+	Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(finalizeCriteria.GetToken());
 
 	auto finalized = FinalizeSlateBuilder().Finalize(
 		wallet,
@@ -443,53 +319,17 @@ bool WalletManager::PostTransaction(
 
 bool WalletManager::RepostTx(const RepostTxCriteria& criteria, const TorProcess::Ptr& pTorProcess)
 {
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
+	Locked<Wallet> wallet = GetWallet(criteria.GetToken());
 
-	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, criteria.GetTxId());
-	if (pWalletTx != nullptr)
-	{
-		if (pWalletTx->GetTransaction().has_value())
-		{
+	auto pWalletTx = wallet.Read()->GetTransactionById(criteria.GetTxId());
+	if (pWalletTx != nullptr) {
+		if (pWalletTx->GetTransaction().has_value()) {
 			PostMethodDTO postMethod(criteria.GetMethod(), criteria.GetGrinJoinAddress());
 			return PostTransaction(pWalletTx->GetTransaction().value(), postMethod, pTorProcess);
 		}
 	}
 
 	return false;
-}
-
-void WalletManager::CancelByTxId(const SessionToken& token, const uint32_t walletTxId)
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	std::unique_ptr<WalletTx> pWalletTx = wallet.Read()->GetDatabase().Read()->GetTransactionById(masterSeed, walletTxId);
-	if (pWalletTx != nullptr)
-	{
-		CancelTx::CancelWalletTx(masterSeed, wallet.Write()->GetDatabase(), *pWalletTx);
-	}
-}
-
-BuildCoinbaseResponse WalletManager::BuildCoinbase(const BuildCoinbaseCriteria& criteria)
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(criteria.GetToken());
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(criteria.GetToken());
-
-	return wallet.Write()->CreateCoinbase(masterSeed, criteria.GetFees(), criteria.GetPath());
-}
-
-SlatepackMessage WalletManager::DecryptSlatepack(
-	const SessionToken& token,
-	const std::string& armoredSlatepack) const
-{
-	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
-	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-
-	KeyChain keychain = KeyChain::FromSeed(m_config, masterSeed);
-	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
-	
-	return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
 }
 
 namespace WalletAPI

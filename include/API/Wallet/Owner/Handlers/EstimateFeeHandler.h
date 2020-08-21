@@ -22,7 +22,9 @@ public:
 		}
 
 		EstimateFeeCriteria criteria = EstimateFeeCriteria::FromJSON(request.GetParams().value());
-		FeeEstimateDTO response = m_pWalletManager->EstimateFee(criteria);
+		
+		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
+		FeeEstimateDTO response = wallet.Read()->EstimateFee(criteria);
 
 		return request.BuildResult(response.ToJSON());
 	}

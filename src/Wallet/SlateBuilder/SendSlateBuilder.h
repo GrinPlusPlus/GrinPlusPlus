@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Wallet.h"
+#include "../WalletImpl.h"
 
 #include <Config/Config.h>
 #include <Crypto/SecretKey.h>
@@ -20,7 +20,7 @@ public:
 	// Creates a slate for sending grins from the provided wallet.
 	//
 	Slate BuildSendSlate(
-		Locked<Wallet> wallet, 
+		Locked<WalletImpl> wallet, 
 		const SecureVector& masterSeed, 
 		const uint64_t amount, 
 		const uint64_t feeBase, 
@@ -32,7 +32,7 @@ public:
 
 private:
 	Slate Build(
-		const std::shared_ptr<Wallet>& pWallet,
+		const std::shared_ptr<WalletImpl>& pWallet,
 		const SecureVector& masterSeed,
 		const uint64_t amountToSend,
 		const uint64_t fee,

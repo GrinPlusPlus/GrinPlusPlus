@@ -30,7 +30,7 @@ public:
     const SessionToken& GetToken() const noexcept { return m_token; }
     uint16_t GetListenerPort() const noexcept { return m_listenerPort; }
     const std::optional<TorAddress>& GetTorAddress() const noexcept { return m_torAddress; }
-    SlatepackAddress GetSlatepackAddress() const { return m_pWalletManager->GetSlatepackAddress(m_token); }
+    SlatepackAddress GetSlatepackAddress() const { return m_pWalletManager->GetWallet(m_token).Read()->GetSlatepackAddress(); }
 
     static TestWallet::Ptr Create(
         const IWalletManagerPtr& pWalletManager,
@@ -43,13 +43,13 @@ public:
 
     Test::Tx CreateCoinbase(const KeyChainPath& path, const uint64_t fees)
     {
-        auto response = m_pWalletManager->BuildCoinbase(
+        auto response = m_pWalletManager->GetWallet(m_token).Write()->BuildCoinbase(
             BuildCoinbaseCriteria(m_token, fees, std::make_optional<KeyChainPath>(path))
         );
 
         auto pTx = std::make_shared<Transaction>(
-            BlindingFactor(Hash::ValueOf(0)),
-            TransactionBody({ {}, { response.GetOutput() }, { response.GetKernel() } })
+            BlindingFactor{},
+            TransactionBody{ {}, { response.GetOutput() }, { response.GetKernel() } }
         );
 
         return Test::Tx{
@@ -66,7 +66,7 @@ public:
 
     std::vector<WalletTxDTO> GetTransactions()
     {
-        return m_pWalletManager->GetTransactions(
+        return m_pWalletManager->GetWallet(m_token).Read()->GetTransactions(
             ListTxsCriteria(m_token, std::nullopt, std::nullopt, {})
         );
     }

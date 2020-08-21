@@ -7,11 +7,8 @@
 class ProofMessage
 {
 public:
-	ProofMessage(CBigInteger<20>&& proofMessageBytes)
-		: m_proofMessageBytes(std::move(proofMessageBytes))
-	{
-
-	}
+	ProofMessage() = default;
+	ProofMessage(CBigInteger<20>&& proofMessageBytes) : m_proofMessageBytes(std::move(proofMessageBytes)) { }
 
 	static ProofMessage FromKeyIndices(const std::vector<uint32_t>& keyIndices, const EBulletproofType& bulletproofType)
 	{

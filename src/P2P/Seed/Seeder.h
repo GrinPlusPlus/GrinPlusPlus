@@ -4,7 +4,6 @@
 #include "../MessageProcessor.h"
 
 #include <Config/Config.h>
-#include <Core/Context.h>
 #include <BlockChain/BlockChain.h>
 #include <P2P/Direction.h>
 #include <cstdint>
@@ -15,6 +14,7 @@
 #include <asio.hpp>
 
 // Forward Declarations
+class Context;
 class Connection;
 class PeerManager;
 class Pipeline;
@@ -23,7 +23,7 @@ class Seeder
 {
 public:
 	static std::unique_ptr<Seeder> Create(
-		Context::Ptr pContext,
+		const std::shared_ptr<Context>& pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		const IBlockChain::Ptr& pBlockChain,
@@ -34,7 +34,7 @@ public:
 
 private:
 	Seeder(
-		Context::Ptr pContext,
+		const std::shared_ptr<Context>& pContext,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		const IBlockChain::Ptr& pBlockChain,
@@ -54,7 +54,7 @@ private:
 
 	ConnectionPtr SeedNewConnection();
 
-	Context::Ptr m_pContext;
+	std::shared_ptr<Context> m_pContext;
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
 	IBlockChain::Ptr m_pBlockChain;

@@ -1,4 +1,5 @@
 #include <Crypto/Hasher.h>
+#include <Crypto/CryptoException.h>
 
 #include <sodium/crypto_generichash_blake2b.h>
 #include <bitcoin/sha256.h>
@@ -18,7 +19,9 @@ Hash Hasher::Blake2b(const uint8_t* input, const size_t len)
 	Hash output;
 
 	int result = crypto_generichash_blake2b(output.data(), output.size(), input, len, nullptr, 0);
-	assert(result == 0);
+	if (result != 0) {
+		throw CRYPTO_EXCEPTION_F("crypto_generichash_blake2b failed with error {}", result);
+	}
 
 	return output;
 }
@@ -33,7 +36,9 @@ Hash Hasher::Blake2b(const std::vector<uint8_t>& key, const uint8_t* input, cons
 	Hash output;
 
 	int result = crypto_generichash_blake2b(output.data(), output.size(), input, len, key.data(), key.size());
-	assert(result == 0);
+	if (result != 0) {
+		throw CRYPTO_EXCEPTION_F("crypto_generichash_blake2b failed with error {}", result);
+	}
 
 	return output;
 }

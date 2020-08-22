@@ -7,6 +7,11 @@
 class KernelSignatureValidator
 {
 public:
+	static bool VerifyKernelSignature(const TransactionKernel& kernel)
+	{
+		return VerifyKernelSignatures(std::vector<TransactionKernel>({ kernel }));
+	}
+
 	// Verify the tx kernels.
 	// No ability to batch verify these right now so just do them individually.
 	static bool VerifyKernelSignatures(const std::vector<TransactionKernel>& kernels)

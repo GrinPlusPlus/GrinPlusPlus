@@ -260,11 +260,9 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const TorProcess::Ptr& pTorProcess)
 {
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
-	Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(finalizeCriteria.GetToken());
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
 
-	auto finalized = FinalizeSlateBuilder().Finalize(
-		wallet,
-		masterSeed,
+	auto finalized = FinalizeSlateBuilder(wallet.Write().GetShared()).Finalize(
 		finalizeCriteria.GetSlate()
 	);
 	if (finalizeCriteria.GetPostMethod().has_value())

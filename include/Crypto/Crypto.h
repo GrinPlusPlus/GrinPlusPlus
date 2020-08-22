@@ -110,7 +110,7 @@ public:
 	// Builds one party's share of a Schnorr signature.
 	// Returns a CompactSignature if successful.
 	//
-	static std::unique_ptr<CompactSignature> CalculatePartialSignature(
+	static CompactSignature CalculatePartialSignature(
 		const SecretKey& secretKey,
 		const SecretKey& secretNonce,
 		const PublicKey& sumPubKeys,

@@ -126,7 +126,7 @@ Commitment Crypto::ToCommitment(const PublicKey& publicKey)
 	return Pedersen::GetInstance().ToCommitment(publicKey);
 }
 
-std::unique_ptr<CompactSignature> Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+CompactSignature Crypto::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	return AggSig::GetInstance().CalculatePartialSignature(secretKey, secretNonce, sumPubKeys, sumPubNonces, message);
 }

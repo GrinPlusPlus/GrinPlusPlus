@@ -109,23 +109,17 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(Slate& slate, const SigningKe
 	// Generate signature
 	slate.sigs.push_back(SlateSignature{ signing_keys.public_key, signing_keys.public_nonce, std::nullopt });
 
-	std::unique_ptr<CompactSignature> pPartialSignature = Crypto::CalculatePartialSignature(
+	CompactSignature partialSignature = Crypto::CalculatePartialSignature(
 		signing_keys.secret_key,
 		signing_keys.secret_nonce,
 		slate.CalculateTotalExcess(),
 		slate.CalculateTotalNonce(),
 		kernelMessage
 	);
-	if (pPartialSignature == nullptr)
-	{
-		WALLET_ERROR_F("Failed to generate signature for slate {}", uuids::to_string(slate.GetId()));
-		throw WALLET_EXCEPTION("Failed to generate signature.");
-	}
 
-	slate.sigs.back().partialOpt = std::make_optional<CompactSignature>(*pPartialSignature);
+	slate.sigs.back().partialOpt = std::make_optional<CompactSignature>(partialSignature);
 
-	if (!SignatureUtil::VerifyPartialSignatures(slate.sigs, kernelMessage))
-	{
+	if (!SignatureUtil::VerifyPartialSignatures(slate.sigs, kernelMessage)) {
 		WALLET_ERROR_F("Failed to verify signature for slate {}", uuids::to_string(slate.GetId()));
 		throw WALLET_EXCEPTION("Failed to verify signatures.");
 	}

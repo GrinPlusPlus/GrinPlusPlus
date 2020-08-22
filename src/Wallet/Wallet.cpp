@@ -1,6 +1,7 @@
 #include <Wallet/Wallet.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Models/Slatepack/Armor.h>
+#include <Core/Exceptions/WalletException.h>
 #include <Consensus/Common.h>
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/Hasher.h>
@@ -65,6 +66,21 @@ std::unique_ptr<WalletTx> Wallet::GetTransactionById(const uint32_t txId) const
 	return m_walletDB.Read()->GetTransactionById(m_master_seed, txId);
 }
 
+WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const
+{
+	std::vector<WalletTx> txs = m_walletDB.Read()->GetTransactions(m_master_seed);
+	for (const WalletTx& tx : txs)
+	{
+		if (tx.GetSlateId().has_value() && tx.GetSlateId().value() == slateId && tx.GetType() == type) {
+			return tx;
+		}
+	}
+
+	const std::string errorMsg = StringUtil::Format("Transaction not found for {}", uuids::to_string(slateId));
+	WALLET_ERROR(errorMsg);
+	throw WALLET_EXCEPTION(errorMsg);
+}
+
 std::vector<WalletTxDTO> Wallet::GetTransactions(const ListTxsCriteria& criteria) const
 {
 	return WalletTxLoader().LoadTransactions(m_walletDB.Read().GetShared(), m_master_seed, criteria);
@@ -90,6 +106,34 @@ std::vector<WalletOutputDTO> Wallet::GetOutputs(const bool includeSpent, const b
     return filtered_outputs;
 }
 
+Slate Wallet::GetSlate(const uuids::uuid& slateId, const SlateStage& stage) const
+{
+	auto pSlate = m_walletDB.Read()->LoadSlate(m_master_seed, slateId, stage);
+	if (pSlate == nullptr) {
+		WALLET_ERROR_F(
+			"Failed to load slate for {}",
+			uuids::to_string(slateId)
+		);
+		throw WALLET_EXCEPTION("Failed to load slate.");
+	}
+
+	return *pSlate;
+}
+
+SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
+{
+	auto pSlateContext = m_walletDB.Read()->LoadSlateContext(m_master_seed, slateId);
+	if (pSlateContext == nullptr) {
+		WALLET_ERROR_F(
+			"Failed to load slate context for {}",
+			uuids::to_string(slateId)
+		);
+		throw WALLET_EXCEPTION("Failed to load slate context.");
+	}
+
+	return *pSlateContext;
+}
+
 // void Wallet::CheckForOutputs(const bool fromGenesis)
 // {
 
@@ -107,27 +151,6 @@ std::optional<TorAddress> Wallet::AddTorListener(const KeyChainPath& path, const
 
 	return GetTorAddress();
 }
-
-// //
-// // Deletes the session information.
-// //
-// void Wallet::Logout()
-// {
-
-// }
-
-// //
-// // Validates the password and then deletes the wallet.
-// //
-// void Wallet::DeleteWallet(const SecureString& password)
-// {
-
-// }
-
-// void Wallet::ChangePassword(const SecureString& currentPassword, const SecureString& newPassword)
-// {
-
-// }
 
 FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
 {

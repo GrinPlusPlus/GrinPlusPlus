@@ -96,52 +96,52 @@ std::unique_ptr<Signature> AggSig::BuildSignature(const SecretKey& secretKey, co
 	return std::make_unique<Signature>(CBigInteger<64>(signature.data));
 }
 
-std::unique_ptr<CompactSignature> AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
+CompactSignature AggSig::CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message)
 {
 	std::lock_guard<std::shared_mutex> writeLock(m_mutex);
 
 	const SecretKey randomSeed = CSPRNG::GenerateRandom32();
-	const int randomizeResult = secp256k1_context_randomize(m_pContext, randomSeed.data());
-    if (randomizeResult != 1)
-    {
-		LOG_ERROR("Context randomization failed");
-        return std::unique_ptr<CompactSignature>(nullptr);
+	const int randomize_result = secp256k1_context_randomize(m_pContext, randomSeed.data());
+    if (randomize_result != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_context_randomize failed with error {}", randomize_result);
     }
 
 	secp256k1_pubkey pubKeyForE;
-	int pubKeyParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, sumPubKeys.data(), sumPubKeys.size());
-
-	secp256k1_pubkey pubNoncesForE;
-	int noncesParsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNoncesForE, sumPubNonces.data(), sumPubNonces.size());
-
-	if (pubKeyParsed == 1 && noncesParsed == 1)
-	{
-		secp256k1_ecdsa_signature signature;
-		const int signedResult = secp256k1_aggsig_sign_single(
-			m_pContext,
-			&signature.data[0],
-			message.data(),
-			secretKey.data(),
-			secretNonce.data(),
-			nullptr,
-			&pubNoncesForE,
-			&pubNoncesForE,
-			&pubKeyForE,
-			randomSeed.data()
-		);
-
-		if (signedResult == 1)
-		{
-			std::vector<unsigned char> signatureBytes(64);
-			const int serializedResult = secp256k1_ecdsa_signature_serialize_compact(m_pContext, signatureBytes.data(), &signature);
-			if (serializedResult == 1)
-			{
-				return std::make_unique<CompactSignature>(CompactSignature(CBigInteger<64>(std::move(signatureBytes))));
-			}
-		}
+	int pubkey_parsed = secp256k1_ec_pubkey_parse(m_pContext, &pubKeyForE, sumPubKeys.data(), sumPubKeys.size());
+	if (pubkey_parsed != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_ec_pubkey_parse failed with error {}", pubkey_parsed);
 	}
 
-	return std::unique_ptr<CompactSignature>(nullptr);
+	secp256k1_pubkey pubNoncesForE;
+	int nonces_parsed = secp256k1_ec_pubkey_parse(m_pContext, &pubNoncesForE, sumPubNonces.data(), sumPubNonces.size());
+	if (nonces_parsed != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_ec_pubkey_parse failed with error {}", nonces_parsed);
+	}
+
+	secp256k1_ecdsa_signature signature;
+	const int signed_result = secp256k1_aggsig_sign_single(
+		m_pContext,
+		&signature.data[0],
+		message.data(),
+		secretKey.data(),
+		secretNonce.data(),
+		nullptr,
+		&pubNoncesForE,
+		&pubNoncesForE,
+		&pubKeyForE,
+		randomSeed.data()
+	);
+	if (signed_result != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_aggsig_sign_single failed with error {}", signed_result);
+	}
+
+	CompactSignature result;
+	const int serialized_result = secp256k1_ecdsa_signature_serialize_compact(m_pContext, result.data(), &signature);
+	if (serialized_result != 1) {
+		throw CRYPTO_EXCEPTION_F("secp256k1_ecdsa_signature_serialize_compact failed with error {}", serialized_result);
+	}
+
+	return result;
 }
 
 bool AggSig::VerifyPartialSignature(const CompactSignature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const

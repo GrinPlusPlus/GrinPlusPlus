@@ -25,8 +25,8 @@ TEST_CASE("AggSig Interaction")
 	PublicKey sumPubNonces = Crypto::AddPublicKeys(std::vector<PublicKey>({ publicNonceSender, publicNonceReceiver }));
 
 	// Generate partial signatures
-	CompactSignature senderPartialSignature = *Crypto::CalculatePartialSignature(secretKeySender, secretNonceSender, sumPubKeys, sumPubNonces, message);
-	CompactSignature receiverPartialSignature = *Crypto::CalculatePartialSignature(secretKeyReceiver, secretNonceReceiver, sumPubKeys, sumPubNonces, message);
+	CompactSignature senderPartialSignature = Crypto::CalculatePartialSignature(secretKeySender, secretNonceSender, sumPubKeys, sumPubNonces, message);
+	CompactSignature receiverPartialSignature = Crypto::CalculatePartialSignature(secretKeyReceiver, secretNonceReceiver, sumPubKeys, sumPubNonces, message);
 
 	// Validate partial signatures
 	const bool senderSigValid = Crypto::VerifyPartialSignature(senderPartialSignature, publicKeySender, sumPubKeys, sumPubNonces, message);

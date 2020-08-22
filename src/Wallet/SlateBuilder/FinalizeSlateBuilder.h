@@ -1,22 +1,25 @@
 #pragma once
 
-#include "../WalletImpl.h"
-
 #include <Common/Secure.h>
 #include <Crypto/SecretKey.h>
 #include <Wallet/Models/Slate/Slate.h>
+#include <Wallet/Wallet.h>
+
+// Forward Declarations
+class Wallet;
 
 class FinalizeSlateBuilder
 {
 public:
+	FinalizeSlateBuilder(const std::shared_ptr<Wallet>& pWallet)
+		: m_pWallet(pWallet) { }
+
 	std::pair<Slate, Transaction> Finalize(
-		Locked<WalletImpl> wallet,
-		const SecureVector& masterSeed,
 		const Slate& rcvSlate
 	) const;
 
 private:
-	bool AddPartialSignature(
+	void AddPartialSignature(
 		const SlateContextEntity& context,
 		Slate& finalizeSlate,
 		const Hash& kernelMessage
@@ -29,15 +32,15 @@ private:
 	) const;
 
 	bool VerifyPaymentProofs(
-		const std::unique_ptr<WalletTx>& pWalletTx,
+		const WalletTx& walletTx,
 		const Slate& finalizeSlate,
 		const Commitment& finalExcess
 	) const;
 
 	void UpdateDatabase(
-		const WalletImpl::Ptr& pWallet,
-		const SecureVector& masterSeed,
 		const WalletTx& walletTx,
 		const Slate& finalizeSlate
 	) const;
+
+	std::shared_ptr<Wallet> m_pWallet;
 };

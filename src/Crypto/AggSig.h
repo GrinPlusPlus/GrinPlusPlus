@@ -25,7 +25,7 @@ public:
 
 	std::unique_ptr<Signature> BuildSignature(const SecretKey& secretKey, const Commitment& commitment, const Hash& message);
 
-	std::unique_ptr<CompactSignature> CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
+	CompactSignature CalculatePartialSignature(const SecretKey& secretKey, const SecretKey& secretNonce, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message);
 	bool VerifyPartialSignature(const CompactSignature& partialSignature, const PublicKey& publicKey, const PublicKey& sumPubKeys, const PublicKey& sumPubNonces, const Hash& message) const;
 
 	std::unique_ptr<Signature> AggregateSignatures(const std::vector<CompactSignature>& signatures, const PublicKey& sumPubNonces) const;

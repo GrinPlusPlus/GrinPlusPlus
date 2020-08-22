@@ -37,6 +37,7 @@ public:
 	const std::string& GetUsername() const noexcept { return m_username; }
 	const KeyChainPath& GetUserPath() const noexcept { return m_userPath; }
 	const SlatepackAddress& GetSlatepackAddress() const noexcept { return m_address; }
+	const SecureVector& GetMasterSeed() const noexcept { return m_master_seed; }
 
 	void SetTorAddress(const TorAddress& address) noexcept { m_torAddressOpt = std::make_optional(address); }
 	std::optional<TorAddress> GetTorAddress() const noexcept { return m_torAddressOpt; }
@@ -47,8 +48,11 @@ public:
 	WalletSummaryDTO GetWalletSummary() const;
 	WalletBalanceDTO GetBalance() const;
 	std::unique_ptr<WalletTx> GetTransactionById(const uint32_t txId) const;
+	WalletTx GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const;
 	std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) const;
 	std::vector<WalletOutputDTO> GetOutputs(const bool includeSpent, const bool includeCanceled) const;
+	Slate GetSlate(const uuids::uuid& slateId, const SlateStage& stage) const;
+	SlateContextEntity GetSlateContext(const uuids::uuid& slateId) const;
 
 	// void CheckForOutputs(const bool fromGenesis);
 
@@ -87,6 +91,8 @@ public:
 	// void DeleteWallet(const SecureString& password);
 
 	// void ChangePassword(const SecureString& currentPassword, const SecureString& newPassword);
+
+	Locked<IWalletDB> GetDatabase() const { return m_walletDB; }
 
 private:
 	Config::CPtr m_pConfig;

@@ -1,12 +1,14 @@
 #pragma once
 
-#include <Wallet/Models/Slate/SlateSignature.h>
+#include <Common/Logger.h>
+#include <Core/Exceptions/WalletException.h>
 #include <Crypto/Crypto.h>
+#include <Wallet/Models/Slate/SlateSignature.h>
 
 class SignatureUtil
 {
 public:
-	static std::unique_ptr<Signature> AggregateSignatures(const Slate& slate)
+	static Signature AggregateSignatures(const Slate& slate)
 	{
 		std::vector<CompactSignature> signatures;
 		std::vector<PublicKey> pubNonces;
@@ -23,7 +25,12 @@ public:
 
 		const PublicKey sumPubNonces = slate.CalculateTotalNonce();
 
-		return Crypto::AggregateSignatures(signatures, sumPubNonces);
+		auto pAggSignature = Crypto::AggregateSignatures(signatures, sumPubNonces);
+		if (pAggSignature == nullptr) {
+			throw WALLET_EXCEPTION_F("Failed to aggregate signatures for {}", slate);
+		}
+
+		return *pAggSignature;
 	}
 
 	static bool VerifyPartialSignatures(const std::vector<SlateSignature>& sigs, const Hash& message)

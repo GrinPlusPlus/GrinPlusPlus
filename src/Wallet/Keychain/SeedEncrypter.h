@@ -13,12 +13,12 @@ public:
 	//
 	// Encrypts the wallet seed using the password and a randomly generated salt.
 	//
-	EncryptedSeed EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password) const;
+	static EncryptedSeed EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password);
 
 	//
 	// Decrypts the wallet seed using the password and salt given.
 	//
 	// Throws KeyChainException if decryption fails.
 	//
-	SecureVector DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const;
+	static SecureVector DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password);
 };

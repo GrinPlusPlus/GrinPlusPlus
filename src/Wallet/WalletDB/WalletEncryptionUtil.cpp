@@ -1,21 +1,21 @@
 #include "WalletEncryptionUtil.h"
 
-#include <Crypto/AES.h>
+#include <Crypto/AES256.h>
 #include <Crypto/Hasher.h>
 #include <Crypto/CSPRNG.h>
 
 static const uint8_t ENCRYPTION_FORMAT = 0;
 
-std::vector<unsigned char> WalletEncryptionUtil::Encrypt(
+std::vector<uint8_t> WalletEncryptionUtil::Encrypt(
 	const SecureVector& masterSeed,
 	const std::string& dataType,
 	const SecureVector& bytes)
 {
-	const CBigInteger<32> randomNumber = CSPRNG::GenerateRandom32();
-	const CBigInteger<16> iv = CBigInteger<16>(&randomNumber[0]);
+	const SecureVector randomNumber = CSPRNG::GenerateRandomBytes(16);
+	const CBigInteger<16> iv = CBigInteger<16>(randomNumber.data());
 	const SecretKey key = WalletEncryptionUtil::CreateSecureKey(masterSeed, dataType);
 
-	const std::vector<unsigned char> encryptedBytes = AES::AES256_Encrypt(bytes, key, iv);
+	const std::vector<uint8_t> encryptedBytes = AES256::Encrypt(bytes, key, iv);
 
 	Serializer serializer;
 	serializer.Append<uint8_t>(ENCRYPTION_FORMAT);
@@ -27,13 +27,12 @@ std::vector<unsigned char> WalletEncryptionUtil::Encrypt(
 SecureVector WalletEncryptionUtil::Decrypt(
 	const SecureVector& masterSeed,
 	const std::string& dataType,
-	const std::vector<unsigned char>& encrypted)
+	const std::vector<uint8_t>& encrypted)
 {
 	ByteBuffer byteBuffer(encrypted);
 
 	const uint8_t formatVersion = byteBuffer.ReadU8();
-	if (formatVersion != ENCRYPTION_FORMAT)
-	{
+	if (formatVersion != ENCRYPTION_FORMAT) {
 		throw DESERIALIZATION_EXCEPTION_F(
 			"Expected format {}, but was {}",
 			ENCRYPTION_FORMAT,
@@ -42,18 +41,18 @@ SecureVector WalletEncryptionUtil::Decrypt(
 	}
 
 	const CBigInteger<16> iv = byteBuffer.ReadBigInteger<16>();
-	const std::vector<unsigned char> encryptedBytes =
+	const std::vector<uint8_t> encryptedBytes =
 		byteBuffer.ReadVector(byteBuffer.GetRemainingSize());
 	const SecretKey key = WalletEncryptionUtil::CreateSecureKey(masterSeed, dataType);
 
-	return AES::AES256_Decrypt(encryptedBytes, key, iv);
+	return AES256::Decrypt(encryptedBytes, key, iv);
 }
 
 SecretKey WalletEncryptionUtil::CreateSecureKey(
 	const SecureVector& masterSeed,
 	const std::string& dataType)
 {
-	SecureVector seedWithNonce(masterSeed.data(), masterSeed.data() + masterSeed.size());
+	SecureVector seedWithNonce(masterSeed.cbegin(), masterSeed.cend());
 
 	Serializer nonceSerializer;
 	nonceSerializer.AppendVarStr(dataType);
@@ -63,5 +62,5 @@ SecretKey WalletEncryptionUtil::CreateSecureKey(
 		nonceSerializer.GetBytes().end()
 	);
 
-	return Hasher::Blake2b((const std::vector<unsigned char>&)seedWithNonce);
+	return Hasher::Blake2b(seedWithNonce.data(), seedWithNonce.size());
 }

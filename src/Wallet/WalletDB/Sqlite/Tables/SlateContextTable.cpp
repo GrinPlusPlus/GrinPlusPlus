@@ -2,7 +2,7 @@
 
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
-#include <Crypto/AES.h>
+#include <Crypto/AES256.h>
 #include <Crypto/Hasher.h>
 #include <Wallet/WalletDB/WalletStoreException.h>
 
@@ -80,7 +80,7 @@ std::vector<unsigned char> SlateContextTable::Encrypt(
 	Serializer serializer;
 	slateContext.Serialize(serializer);
 	const SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	std::vector<uint8_t> encrypted = AES::AES256_Encrypt(serializer.GetSecureBytes(), aesKey, iv);
+	std::vector<uint8_t> encrypted = AES256::Encrypt(serializer.GetSecureBytes(), aesKey, iv);
 
 	return encrypted;
 }
@@ -92,7 +92,7 @@ SlateContextEntity SlateContextTable::Decrypt(
 	const std::vector<unsigned char>& encrypted)
 {
 	const SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	SecureVector decrypted = AES::AES256_Decrypt(encrypted, aesKey, iv);
+	SecureVector decrypted = AES256::Decrypt(encrypted, aesKey, iv);
 
 	ByteBuffer byteBuffer(std::vector<unsigned char>{ decrypted.begin(), decrypted.end() });
 	return SlateContextEntity::Deserialize(byteBuffer);

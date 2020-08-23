@@ -57,7 +57,7 @@ bool TorProcess::IsPortOpen(const uint16_t port)
     asio::ip::tcp::acceptor a(svc);
 
     std::error_code ec;
-    a.open(asio::ip::tcp::v4(), ec) || a.bind({ asio::ip::tcp::v4(), port }, ec);
+    a.open(asio::ip::tcp::v4(), ec) || a.bind(asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), port), ec);
 
     return ec != asio::error::address_in_use;
 }

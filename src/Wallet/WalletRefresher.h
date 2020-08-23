@@ -17,7 +17,8 @@ class Wallet;
 class WalletRefresher
 {
 public:
-	WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient);
+	WalletRefresher(const Config& config, const INodeClientConstPtr& pNodeClient)
+		: m_config(config), m_pNodeClient(pNodeClient) { }
 
 	std::vector<OutputDataEntity> Refresh(
 		const SecureVector& masterSeed,

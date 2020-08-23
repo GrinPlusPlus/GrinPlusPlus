@@ -2,7 +2,7 @@
 #include "../SqliteDB.h"
 
 #include <Common/Util/StringUtil.h>
-#include <Crypto/AES.h>
+#include <Crypto/AES256.h>
 #include <Crypto/CSPRNG.h>
 #include <Crypto/Hasher.h>
 #include <Common/Logger.h>
@@ -88,9 +88,9 @@ std::vector<uint8_t> SlateTable::Encrypt(
 	// Encrypt slate
 	Serializer serializer;
 	slate.Serialize(serializer);
-	std::vector<uint8_t> encryptedSlate = AES::AES256_Encrypt(serializer.GetSecureBytes(), DeriveAESKey(masterSeed, slate.slateId), iv);
+	SecretKey aes_key = DeriveAESKey(masterSeed, slate.slateId);
 
-	return encryptedSlate;
+	return AES256::Encrypt(serializer.GetSecureBytes(), aes_key, iv);
 }
 
 Slate SlateTable::Decrypt(
@@ -100,7 +100,7 @@ Slate SlateTable::Decrypt(
 	const std::vector<uint8_t>& encrypted)
 {
 	SecretKey aesKey = DeriveAESKey(masterSeed, slateId);
-	SecureVector decrypted = AES::AES256_Decrypt(encrypted, aesKey, iv);
+	SecureVector decrypted = AES256::Decrypt(encrypted, aesKey, iv);
 
 	ByteBuffer byteBuffer(std::vector<uint8_t>{ decrypted.data(), decrypted.data() + decrypted.size() });
 	return Slate::Deserialize(byteBuffer);

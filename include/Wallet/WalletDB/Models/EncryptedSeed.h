@@ -10,7 +10,7 @@ static const uint8_t ENCRYPTED_SEED_FORMAT = 1;
 class EncryptedSeed
 {
 public:
-	EncryptedSeed(CBigInteger<16>&& iv, CBigInteger<8>&& salt, std::vector<unsigned char>&& encryptedSeedBytes, ScryptParameters&& scryptParameters)
+	EncryptedSeed(CBigInteger<16>&& iv, CBigInteger<8>&& salt, std::vector<uint8_t>&& encryptedSeedBytes, ScryptParameters&& scryptParameters)
 		: m_iv(std::move(iv)), m_salt(std::move(salt)), m_encryptedSeedBytes(std::move(encryptedSeedBytes)), m_scryptParameters(std::move(scryptParameters))
 	{
 

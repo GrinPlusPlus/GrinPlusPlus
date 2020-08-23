@@ -74,9 +74,10 @@ public:
 	//
 	//
 	static Hash HMAC_SHA256(
-		const std::vector<uint8_t>& key,
+		const uint8_t* key,
+		const size_t key_len,
 		const uint8_t* data,
-		const size_t len
+		const size_t data_len
 	);
 
 	//

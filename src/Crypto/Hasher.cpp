@@ -87,14 +87,14 @@ CBigInteger<20> Hasher::RipeMD160(const uint8_t* input, const size_t len)
 
 Hash Hasher::HMAC_SHA256(const std::vector<uint8_t>& key, const std::vector<uint8_t>& input)
 {
-    return HMAC_SHA256(key, input.data(), input.size());
+    return HMAC_SHA256(key.data(), key.size(), input.data(), input.size());
 }
 
-Hash Hasher::HMAC_SHA256(const std::vector<uint8_t>& key, const uint8_t* input, const size_t len)
+Hash Hasher::HMAC_SHA256(const uint8_t* key, const size_t key_len, const uint8_t* data, const size_t data_len)
 {
     Hash result;
 
-	CHMAC_SHA256(key.data(), key.size()).Write(input, len).Finalize(result.data());
+	CHMAC_SHA256(key, key_len).Write(data, data_len).Finalize(result.data());
 
 	return result;
 }

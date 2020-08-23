@@ -4,8 +4,6 @@
 #include <Wallet/Wallet.h>
 
 #include <Common/Secure.h>
-#include <vector>
-#include <mutex>
 
 struct LoggedInSession
 {

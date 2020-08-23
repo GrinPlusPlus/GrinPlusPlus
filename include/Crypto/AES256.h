@@ -4,13 +4,13 @@
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
 
-class AES
+class AES256
 {
 public:
 	//
 	// Encrypts the input with AES256 using the given key.
 	//
-	static std::vector<uint8_t> AES256_Encrypt(
+	static std::vector<uint8_t> Encrypt(
 		const SecureVector& input,
 		const SecretKey& key,
 		const CBigInteger<16>& iv
@@ -19,7 +19,7 @@ public:
 	//
 	// Decrypts the input with AES256 using the given key.
 	//
-	static SecureVector AES256_Decrypt(
+	static SecureVector Decrypt(
 		const std::vector<uint8_t>& ciphertext,
 		const SecretKey& key,
 		const CBigInteger<16>& iv

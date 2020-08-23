@@ -8,12 +8,6 @@
 #include <Wallet/WalletDB/WalletDB.h>
 #include <unordered_map>
 
-WalletRefresher::WalletRefresher(const Config& config, INodeClientConstPtr pNodeClient)
-	: m_config(config), m_pNodeClient(pNodeClient)
-{
-
-}
-
 // TODO: Rewrite this && use cache - Shouldn't refresh when block height = same
 // 0. Initial login after upgrade - for every output, find matching WalletTx and update OutputDataEntity TxId. If none found, create new WalletTx.
 //

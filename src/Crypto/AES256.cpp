@@ -1,9 +1,9 @@
-#include <Crypto/AES.h>
+#include <Crypto/AES256.h>
 
 #include <bitcoin/aes.h>
 #include <Crypto/CryptoException.h>
 
-std::vector<uint8_t> AES::AES256_Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv)
+std::vector<uint8_t> AES256::Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv)
 {   
 	std::vector<uint8_t> ciphertext;
 
@@ -21,7 +21,7 @@ std::vector<uint8_t> AES::AES256_Encrypt(const SecureVector& input, const Secret
 	return ciphertext ;
 }
 
-SecureVector AES::AES256_Decrypt(const std::vector<uint8_t>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv)
+SecureVector AES256::Decrypt(const std::vector<uint8_t>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv)
 {    
 	SecureVector plaintext;
 

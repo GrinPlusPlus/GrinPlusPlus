@@ -1,28 +1,40 @@
 #include "SeedEncrypter.h"
 
 #include <Wallet/Exceptions/KeyChainException.h>
-#include <Crypto/AES.h>
+#include <Crypto/AES256.h>
 #include <Crypto/KDF.h>
 #include <Crypto/Hasher.h>
 #include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 
-SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password) const
+SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed, const SecureString& password)
 {
 	try
 	{
 		WALLET_INFO("Decrypting wallet seed");
-		SecretKey passwordHash = KDF::PBKDF(password, encryptedSeed.GetSalt().GetData(), encryptedSeed.GetScryptParameters());
+		SecretKey passwordHash = KDF::PBKDF(
+			password,
+			encryptedSeed.GetSalt().GetData(),
+			encryptedSeed.GetScryptParameters()
+		);
 
-		const SecureVector decrypted = AES::AES256_Decrypt(encryptedSeed.GetEncryptedSeedBytes(), passwordHash, encryptedSeed.GetIV());
+		const SecureVector decrypted = AES256::Decrypt(
+			encryptedSeed.GetEncryptedSeedBytes(),
+			passwordHash,
+			encryptedSeed.GetIV()
+		);
 
 		SecureVector walletSeed(decrypted.begin(), decrypted.begin() + decrypted.size() - 32);
 
-		const CBigInteger<32> hash256 = Hasher::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetVec());
-		const CBigInteger<32> hash256Check(&decrypted[walletSeed.size()]);
+		Hash hash256 = Hasher::HMAC_SHA256(
+			walletSeed.data(),
+			walletSeed.size(),
+			passwordHash.data(),
+			passwordHash.size()
+		);
+		Hash hash256Check(decrypted.data() + walletSeed.size());
 
-		if (hash256 == hash256Check)
-		{
+		if (hash256 == hash256Check) {
 			return walletSeed;
 		}
 	}
@@ -34,25 +46,28 @@ SecureVector SeedEncrypter::DecryptWalletSeed(const EncryptedSeed& encryptedSeed
 	throw KEYCHAIN_EXCEPTION("Failed to decrypt seed.");
 }
 
-EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password) const
+EncryptedSeed SeedEncrypter::EncryptWalletSeed(const SecureVector& walletSeed, const SecureString& password)
 {
 	WALLET_INFO("Encrypting wallet seed");
 
-	CBigInteger<32> randomNumber = CSPRNG::GenerateRandom32();
-	CBigInteger<16> iv = CBigInteger<16>(&randomNumber.GetData()[0]);
-	CBigInteger<8> salt(std::vector<unsigned char>(randomNumber.GetData().cbegin() + 16, randomNumber.GetData().cbegin() + 24));
+	CBigInteger<16> iv(CSPRNG::GenerateRandomBytes(16).data());
+	CBigInteger<8> salt(CSPRNG::GenerateRandomBytes(8).data());
 
 	ScryptParameters parameters(32768, 8, 1);
 	SecretKey passwordHash = KDF::PBKDF(password, salt.GetData(), parameters);
 
-	const CBigInteger<32> hash256 = Hasher::HMAC_SHA256((const std::vector<unsigned char>&)walletSeed, passwordHash.GetVec());
-	const std::vector<unsigned char>& hash256Bytes = hash256.GetData();
+	Hash hash256 = Hasher::HMAC_SHA256(
+		walletSeed.data(),
+		walletSeed.size(),
+		passwordHash.data(),
+		passwordHash.size()
+	);
 
 	SecureVector seedPlusHash;
 	seedPlusHash.insert(seedPlusHash.begin(), walletSeed.cbegin(), walletSeed.cend());
-	seedPlusHash.insert(seedPlusHash.end(), hash256Bytes.cbegin(), hash256Bytes.cend());
+	seedPlusHash.insert(seedPlusHash.end(), hash256.GetData().cbegin(), hash256.GetData().cend());
 
-	std::vector<unsigned char> encrypted = AES::AES256_Encrypt(seedPlusHash, passwordHash, iv);
+	std::vector<uint8_t> encrypted = AES256::Encrypt(seedPlusHash, passwordHash, iv);
 
 	return EncryptedSeed(std::move(iv), std::move(salt), std::move(encrypted), std::move(parameters));
 }

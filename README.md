@@ -1,6 +1,6 @@
 ## A Lightning-Fast C++ Implementation of Grin(Mimblewimble)
 
-![Grin++](https://github.com/GrinPlusPlus/GrinPlusPlus/blob/master/Logo.png)
+![Grin++](https://grinplusplus.github.io/banner.png)
 
 Website: https://grinplusplus.github.io/
 

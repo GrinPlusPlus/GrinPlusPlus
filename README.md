@@ -1,5 +1,3 @@
-## A Lightning-Fast C++ Implementation of Grin(Mimblewimble)
-
 ![Grin++](https://grinplusplus.github.io/banner.png)
 
 Website: https://grinplusplus.github.io/

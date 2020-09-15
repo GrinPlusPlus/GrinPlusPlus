@@ -11,5 +11,16 @@ Wiki: https://github.com/GrinPlusPlus/GrinPlusPlus/wiki
 ### Project Status
 The node and wallet have been released on Mainnet for 64-bit Windows & Mac OS X beta-testing!
 
-### Build Instruction
-See [BUILD.md](BUILD.md).
+## Build Instruction
+
+### Linux ARM64
+
+```
+$ docker build -t grinpp-arm64 .
+$ docker create -ti --name dummy grinpp-arm64 bash
+$ docker cp dummy:/work/bin/Release output
+$ cd output
+$ mv Release linux-arm64
+```
+
+\* The folder called `linux-arm64` should contain statically compiled binary called **`GrinNode`** and a `tor` folder inside with a statically compiled tor **`tor`** binary.

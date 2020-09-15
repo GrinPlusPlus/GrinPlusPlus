@@ -389,7 +389,7 @@ else ()
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVX512FINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -mavx512f)
     #else ()
-        target_compile_options(${LIBRARY_NAME} PRIVATE -mno-avx512f)
+        #target_compile_options(${LIBRARY_NAME} PRIVATE -mno-avx512f)
     #endif ()
 
     check_c_source_runs(

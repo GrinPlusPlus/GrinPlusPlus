@@ -53,11 +53,11 @@ else()
     
     include_directories(${LIBUUID_INCLUDE_DIRS})
 
-	#find_package(Libuuid REQUIRED NO_MODULE)
-	#if (NOT LIBUUID_FOUND)
-	#	message(FATAL_ERROR
-    #   "You might need to run 'sudo apt-get install uuid-dev' or similar")
-	#endif()
+	find_package(Libuuid REQUIRED NO_MODULE)
+	if (NOT LIBUUID_FOUND)
+		message(FATAL_ERROR
+       "You might need to run 'sudo apt-get install uuid-dev' or similar")
+	endif()
 	target_link_libraries(test_uuid ${LIBUUID_LIBRARY})
 endif()
 

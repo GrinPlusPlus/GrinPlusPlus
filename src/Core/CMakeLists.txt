@@ -6,18 +6,18 @@ file(GLOB SOURCE_CODE
     "File/AppendOnlyFile.cpp"
     "Models/*.cpp"
     "Serialization/Base58.cpp"
-    "Traits/Serializable.cpp"
-	"Validation/TransactionValidator.cpp"
-	"Validation/TxBodyValidator.cpp"
+    "Traits/*.cpp"
+    "Validation/*.cpp"
 )
 
 if (WIN32)
     set(OS_SPECIFIC_LIBS "")
     set(OS_SPECIFIC_FILES "File/MappedFile_Win.cpp")
 else(WIN32)
-    find_library(OS_SPECIFIC_LIBS pthread)
+    set (THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package (Threads REQUIRED)
     set(OS_SPECIFIC_FILES "File/MappedFile_Nix.cpp")
 endif(WIN32)
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE} ${OS_SPECIFIC_FILES})
-target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp roaring::roaring bitcoin mio::mio)
+target_link_libraries(${TARGET_NAME} Threads::Threads Crypto jsoncpp roaring::roaring bitcoin mio::mio)

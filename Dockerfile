@@ -17,13 +17,14 @@ RUN /vcpkg/vcpkg install --overlay-ports=/work/vcpkg/custom_ports --triplet arm6
     /vcpkg/vcpkg install --triplet arm64-linux --debug fmt --debug  && \
     /vcpkg/vcpkg install --overlay-ports=/work/vcpkg/custom_ports --triplet arm64-linux --debug secp256k1-zkp && \
     /vcpkg/vcpkg install --triplet arm64-linux --debug mio --debug && \
-    /vcpkg/vcpkg install --overlay-ports=/work/vcpkg/custom_ports --triplet arm64-linux --debug libuuid && \
+    /vcpkg/vcpkg install --triplet arm64-linux --debug libuuid && \
+    /vcpkg/vcpkg integrate install && \
     rm -Rf /work/build && \
     mkdir /work/build && \
     cmake -S /work -B /work/build -G Ninja -D CMAKE_BUILD_TYPE=Release -D GRINPP_TESTS=OFF -D CMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=arm64-linux && \
     cmake --build /work/build && \
-    ls -lh /work/bin/Release/GrinNode && \
-    mkdir /static-tor/ && \
+    ls -lh /work/bin/Release/GrinNode
+RUN mkdir /static-tor/ && \
     cd /static-tor/ && \
     curl -fsSL https://zlib.net/zlib-1.2.11.tar.gz | tar zxf - &&  \
     cd /static-tor/zlib-1.2.11 &&  \
@@ -40,7 +41,7 @@ RUN /vcpkg/vcpkg install --overlay-ports=/work/vcpkg/custom_ports --triplet arm6
     cd /static-tor/ && \
     curl -fsSL https://github.com/openssl/openssl/archive/OpenSSL_1_0_2u.tar.gz | tar zxf - &&  \
     cd /static-tor/openssl-OpenSSL_1_0_2u &&  \
-    CROSS_COMPILE=\"\" ./Configure linux-aarch64 --prefix=/static-tor/openssl-OpenSSL_1_0_2u/dist no-shared no-dso no-zlib && \
+    CROSS_COMPILE=\"\" ./Configure linux-armv4 -march=armv8-a --prefix=/static-tor/openssl-OpenSSL_1_0_2u/dist no-asm no-shared no-dso no-zlib && \
     make && \
     make install && \
     cd /static-tor/ && \
@@ -53,7 +54,7 @@ RUN /vcpkg/vcpkg install --overlay-ports=/work/vcpkg/custom_ports --triplet arm6
     curl -fsSL https://github.com/torproject/tor/archive/tor-0.4.3.6.tar.gz | tar zxf - &&  \
     cd /static-tor/tor-tor-0.4.3.6 &&  \
     ./autogen.sh &&  \
-    ./configure --prefix=/static-tor/tor-tor-0.4.3.6/bin --enable-static-tor --disable-gcc-hardening --disable-system-torrc --disable-asciidoc --disable-systemd --disable-lzma --disable-seccomp \
+    ./configure --prefix=/static-tor/tor-tor-0.4.3.6/bin --enable-static-tor --disable-gcc-hardening --disable-system-torrc --disable-asciidoc --disable-systemd --disable-lzma --disable-seccomp --disable-module-relay --disable-manpage --disable-asciidoc --disable-html-manual --disable-unittests \
                 --enable-static-openssl --with-openssl-dir=/static-tor/openssl-OpenSSL_1_0_2u/dist \
                 --enable-static-libevent --with-libevent-dir=/static-tor/libevent-2.1.12-stable/dist \
                 --enable-static-zlib --with-zlib-dir=/static-tor/zlib-1.2.11/dist && \

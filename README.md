@@ -16,8 +16,8 @@ The node and wallet have been released on Mainnet for 64-bit Windows & Mac OS X 
 ### Linux ARM64
 
 ```
-$ docker build -t grinpp-arm64 .
-$ docker create -ti --name dummy grinpp-arm64 bash
+$ docker build -t grinpp-linux-arm64 .
+$ docker create -ti --name dummy grinpp-linux-arm64 /bin/bash
 $ docker cp dummy:/work/bin/Release output
 $ cd output
 $ mv Release linux-arm64

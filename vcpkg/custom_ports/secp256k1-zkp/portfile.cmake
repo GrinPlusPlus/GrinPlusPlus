@@ -4,9 +4,9 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO davidtavarez/secp256k1-zkp
-    REF master
-    SHA512 175a65dcc8f2801256d6a5689cce1b7e17531fb6bccb34fd6d2c569c73abbcb1126cf4df65fc0f435fdf2804352ccc8f485dde42f5795a9f1e036359a915524c
+    REPO mimblewimble/secp256k1-zkp
+    REF 5b39fbf7f1e16e126404791923511723c4c0876d
+    SHA512 a83b4da2e8e0325cdbda26384ed43d1d4e104c48788fa2a7443786e74dae743c138a2d345d61b991579b61974057e37c6ebff7232140ccd1112f5e3877d8e287
 )
 
 if(WIN32)

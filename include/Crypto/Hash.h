@@ -8,13 +8,13 @@ typedef CBigInteger<32> Hash;
 
 //static constexpr Hash ZERO_HASH = { Hash::ValueOf(0) };
 static constexpr int HASH_SIZE = 32;
-
+static constexpr int SHORT_HASH_SIZE = 6;
 
 class HASH
 {
 public:
 	static inline const Hash ZERO = Hash::ValueOf(0);
-	static std::string ShortHash(const Hash& hash) { return HexUtil::ConvertToHex(hash.GetData(), 6); }
+	static std::string ShortHash(const Hash& hash) { return HexUtil::ConvertToHex(hash.GetData(), SHORT_HASH_SIZE); }
 };
 
 #define ZERO_HASH HASH::ZERO

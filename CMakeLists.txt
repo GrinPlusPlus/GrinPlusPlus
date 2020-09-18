@@ -129,4 +129,7 @@ if(GRINPP_TESTS)
     add_subdirectory(tests)
 endif()
 
-add_subdirectory(tools)
+option(GRINPP_TOOLS "Build tools" true)
+if(GRINPP_TOOLS)
+    add_subdirectory(tools)
+endif()

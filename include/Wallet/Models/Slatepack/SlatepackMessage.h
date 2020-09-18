@@ -123,7 +123,7 @@ struct SlatepackMessage
         serializer.Append<uint8_t>((uint8_t)m_mode);
 
         uint16_t opt_flags = 0x00;
-        if (m_mode == EMode::PLAINTEXT) {
+        if (m_mode == EMode::PLAINTEXT && !m_sender.IsNull()) {
             opt_flags |= 0x01; // Sender
         }
 

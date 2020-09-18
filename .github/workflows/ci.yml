@@ -18,7 +18,9 @@ jobs:
             vcpkg_triplet: x64-osx-grinpp
             cmake_generator: Ninja
             cmake_platform_args: ''
-            output_file: 'backend/bin/Release/GrinNode'
+            output_files: |
+                backend/bin/Release/GrinNode
+                backend/bin/Release/slate_tool
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
             os: ubuntu-16.04
@@ -28,7 +30,9 @@ jobs:
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
-            output_file: 'backend/bin/Release/GrinNode'
+            output_files: |
+                backend/bin/Release/GrinNode
+                backend/bin/Release/slate_tool
             release_command: 'npm run clean_build:nix && npm run release'
           - name: windows
             os: windows-2019
@@ -36,7 +40,9 @@ jobs:
             vcpkg_triplet: x64-windows-static
             cmake_generator: 'VS16Win64'
             cmake_platform_args: ''
-            output_file: 'backend/bin/Release/Release/GrinNode.exe'
+            output_files: |
+                backend/bin/Release/Release/GrinNode.exe
+                backend/bin/Release/Release/slate_tool.exe
             release_command: 'npm run clean_build:win && npm run release'
 
     steps:
@@ -107,7 +113,7 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}    
         with:
           name: GrinNode_${{ runner.os }}_${{ env.GITHUB_RUN_ID }}
-          path: ${{ matrix.output_file }}
+          path: ${{ matrix.output_files }}
       - name: Build UI (windows)
         working-directory: frontend
         if: runner.os == 'windows' && startsWith(github.ref, 'refs/tags/')

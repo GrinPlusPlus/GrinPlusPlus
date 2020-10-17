@@ -14,13 +14,9 @@ endif()
 project(GRIN_PLUS_PLUS)
 
 set(CMAKE_CXX_STANDARD 17)
+set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]") #Case insensitive match
-    message(FATAL_ERROR "Clang not supported")
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17 -stdlib=libc++ -fno-aligned-allocation")
-endif()
-
+  
 if(MSVC)
     message("Setting flags for Visual Studio C++")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
@@ -57,8 +53,14 @@ endforeach()
     SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /OPT:REF /INCREMENTAL:NO")
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-deprecated-copy -Wno-pessimizing-move")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-deprecated -Wno-pessimizing-move")
   SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+  
+  if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]") #Case insensitive match
+    #message(FATAL_ERROR "Clang not supported")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE -fPIC -std=c++17 -stdlib=libc++ -lc++abi -fno-aligned-allocation")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -stdlib=libc++ -lc")
+  endif()
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -133,3 +135,5 @@ if(GRINPP_TOOLS)
 endif()
 
 target_link_libraries(${TARGET_NAME} stdc++fs)
+
+

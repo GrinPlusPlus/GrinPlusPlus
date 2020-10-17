@@ -97,7 +97,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 add_definitions(-DUNICODE)
 
-find_package(libuuid REQUIRED)
+find_package(uuid REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(RocksDB CONFIG REQUIRED)
 find_package(civetweb CONFIG REQUIRED)
@@ -129,8 +129,7 @@ endif()
 
 option(GRINPP_TOOLS "Build tools" true)
 if(GRINPP_TOOLS)
-  add_subdirectory(tools)
+    add_subdirectory(tools)
 endif()
 
 target_link_libraries(${TARGET_NAME} stdc++fs)
-target_link_libraries(${TARGET_NAME} -static-libgcc -static-libstdc++)

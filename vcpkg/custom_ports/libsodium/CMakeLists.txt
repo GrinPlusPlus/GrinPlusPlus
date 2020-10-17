@@ -203,14 +203,14 @@ else ()
     sodium_check_func(mlock HAVE_MLOCK)
     sodium_check_func(madvise HAVE_MADVISE)
     sodium_check_func(mprotect HAVE_MPROTECT)
-    sodium_check_func(memset_s HAVE_MEMSET_S)
-    sodium_check_func(explicit_bzero HAVE_EXPLICIT_BZERO)
-    sodium_check_func(explicit_memset HAVE_EXPLICIT_MEMSET)
+    # sodium_check_func(memset_s HAVE_MEMSET_S)
+    # sodium_check_func(explicit_bzero HAVE_EXPLICIT_BZERO)
+    # sodium_check_func(explicit_memset HAVE_EXPLICIT_MEMSET)
     sodium_check_func(nanosleep HAVE_NANOSLEEP)
     sodium_check_func(posix_memalign HAVE_POSIX_MEMALIGN)
     sodium_check_func(getpid HAVE_GETPID)
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #pragma GCC target(\"mmx\")
         #include <mmintrin.h>
@@ -220,14 +220,14 @@ else ()
         }
         "
         HAVE_MMINTRIN_H
-    )
+    )]]
 
     if (HAVE_MMINTRIN_H)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_MMINTRIN_H=1)
         target_compile_options(${LIBRARY_NAME} PRIVATE -mmmx)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #pragma GCC target(\"sse2\")
         #ifndef __SSE2__
@@ -241,14 +241,14 @@ else ()
         }
         "
         HAVE_EMMINTRIN_H
-    )
+    )]]
 
     if (HAVE_EMMINTRIN_H)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_EMMINTRIN_H=1)
         target_compile_options(${LIBRARY_NAME} PRIVATE -msse2)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #pragma GCC target(\"sse3\")
         #include <pmmintrin.h>
@@ -257,14 +257,14 @@ else ()
         }
         "
         HAVE_PMMINTRIN_H
-    )
+    )]]
 
     if (HAVE_PMMINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_PMMINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -msse3)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #pragma GCC target(\"ssse3\")
         #include <tmmintrin.h>
@@ -273,14 +273,14 @@ else ()
         }
         "
         HAVE_TMMINTRIN_H
-    )
+    )]]
 
     if (HAVE_TMMINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_TMMINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -mssse3)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #pragma GCC target(\"sse4.1\")
         #include <smmintrin.h>
@@ -289,47 +289,47 @@ else ()
         }
         "
         HAVE_SMMINTRIN_H
-    )
+    )]]
 
     if (HAVE_SMMINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_SMMINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -msse4.1)
     endif ()
 
-    check_c_source_runs(
-        "
-        #ifdef __native_client__
-        # error NativeClient detected - Avoiding AVX opcodes
-        #endif
-        #pragma GCC target(\"avx\")
-        #include <immintrin.h>
-        int main(void) {
-          _mm256_zeroall();
-        }
-        "
-        HAVE_AVXINTRIN_H
-    )
+    #check_c_source_runs(
+    #    "
+    #    #ifdef __native_client__
+    #    # error NativeClient detected - Avoiding AVX opcodes
+    #    #endif
+    #    #pragma GCC target(\"avx\")
+    #    #include <immintrin.h>
+    #    int main(void) {
+    #      _mm256_zeroall();
+    #    }
+    #    "
+    #    HAVE_AVXINTRIN_H
+    #)
 
     if (HAVE_AVXINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVXINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -mavx)
     endif ()
 
-    check_c_source_runs(
-        "
-        #ifdef __native_client__
-        # error NativeClient detected - Avoiding AVX2 opcodes
-        #endif
-        #pragma GCC target(\"avx2\")
-        #include <immintrin.h>
-        int main(void) {
-          __m256 x = _mm256_set1_ps(3.14);
-          __m256 y = _mm256_permutevar8x32_ps(x, _mm256_set1_epi32(42));
-          return _mm256_movemask_ps(_mm256_cmp_ps(x, y, _CMP_NEQ_OQ));
-        }
-        "
-        HAVE_AVX2INTRIN_H
-    )
+    #check_c_source_runs(
+    #    "
+    #    #ifdef __native_client__
+    #    # error NativeClient detected - Avoiding AVX2 opcodes
+    #    #endif
+    #    #pragma GCC target(\"avx2\")
+    #    #include <immintrin.h>
+    #    int main(void) {
+    #      __m256 x = _mm256_set1_ps(3.14);
+    #      __m256 y = _mm256_permutevar8x32_ps(x, _mm256_set1_epi32(42));
+    #      return _mm256_movemask_ps(_mm256_cmp_ps(x, y, _CMP_NEQ_OQ));
+    #    }
+    #    "
+    #    HAVE_AVX2INTRIN_H
+    #)
 
     if (HAVE_AVX2INTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVX2INTRIN_H=1)
@@ -357,7 +357,7 @@ else ()
         endif ()
     endif ()
 
-    check_c_source_runs(
+    #[[ check_c_source_runs(
         "
         #ifdef __native_client__
         # error NativeClient detected - Avoiding AVX512F opcodes
@@ -383,7 +383,7 @@ else ()
         }
         "
         HAVE_AVX512FINTRIN_H
-    )
+    )]]
 
     #if (HAVE_AVX512FINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVX512FINTRIN_H=1)
@@ -392,7 +392,7 @@ else ()
         #target_compile_options(${LIBRARY_NAME} PRIVATE -mno-avx512f)
     #endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #ifdef __native_client__
         # error NativeClient detected - Avoiding AESNI opcodes
@@ -407,14 +407,14 @@ else ()
         }
         "
         HAVE_WMMINTRIN_H
-    )
+    )]]
 
     if (HAVE_WMMINTRIN_H)
         #target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_WMMINTRIN_H=1)
         #target_compile_options(${LIBRARY_NAME} PRIVATE -maes -mpclmul)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #ifdef __native_client__
         # error NativeClient detected - Avoiding RDRAND opcodes
@@ -428,14 +428,14 @@ else ()
         }
         "
         HAVE_RDRAND
-    )
+    )]]
 
     if (HAVE_RDRAND)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_RDRAND=1)
         target_compile_options(${LIBRARY_NAME} PRIVATE -mrdrnd)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #include <intrin.h>
 
@@ -444,13 +444,13 @@ else ()
         }
         "
         HAVE__XGETBV
-    )
+    )]]
 
     if (HAVE__XGETBV)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE__XGETBV=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         int main(void) {
           int a = 42;
@@ -459,13 +459,13 @@ else ()
         }
         "
         HAVE_INLINE_ASM
-    )
+    )]]
 
     if (HAVE_INLINE_ASM)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_INLINE_ASM=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         int main(void) {
         #if defined(__amd64) || defined(__amd64__) || defined(__x86_64__)
@@ -486,13 +486,13 @@ else ()
         }
         "
         HAVE_AMD64_ASM
-    )
+    )]]
 
     if (HAVE_AMD64_ASM)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AMD64_ASM=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         int main(void) {
         #if defined(__amd64) || defined(__amd64__) || defined(__x86_64__)
@@ -507,51 +507,51 @@ else ()
         }
         "
         HAVE_AVX_ASM
-    )
+    )]]
 
-    if (HAVE_AVX_ASM)
-        target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVX_ASM=1)
-    endif ()
+    #if (HAVE_AVX_ASM)
+    #    target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_AVX_ASM=1)
+    #endif ()
 
-    check_c_source_runs(
-        "
-        #if !defined(__clang__) && !defined(__GNUC__) && !defined(__SIZEOF_INT128__)
-        # error mode(TI) is a gcc extension, and __int128 is not available
-        #endif
-        #if defined(__clang__) && !defined(__x86_64__) && !defined(__aarch64__)
-        # error clang does not properly handle the 128-bit type on 32-bit systems
-        #endif
-        #ifndef NATIVE_LITTLE_ENDIAN
-        # error libsodium currently expects a little endian CPU for the 128-bit type
-        #endif
-        #ifdef __EMSCRIPTEN__
-        # error emscripten currently doesn't support some operations on integers larger than 64 bits
-        #endif
-        #include <stddef.h>
-        #include <stdint.h>
-        #if defined(__SIZEOF_INT128__)
-        typedef unsigned __int128 uint128_t;
-        #else
-        typedef unsigned uint128_t __attribute__((mode(TI)));
-        #endif
-        void fcontract(uint128_t *t) {
-          *t += 0x8000000000000 - 1;
-          *t *= *t;
-          *t >>= 84;
-        }
+    #check_c_source_runs(
+    #    "
+    #    #if !defined(__clang__) && !defined(__GNUC__) && !defined(__SIZEOF_INT128__)
+    #    # error mode(TI) is a gcc extension, and __int128 is not available
+    #    #endif
+    #    #if defined(__clang__) && !defined(__x86_64__) && !defined(__aarch64__)
+    #    # error clang does not properly handle the 128-bit type on 32-bit systems
+    #    #endif
+    #    #ifndef NATIVE_LITTLE_ENDIAN
+    #    # error libsodium currently expects a little endian CPU for the 128-bit type
+    #    #endif
+    #    #ifdef __EMSCRIPTEN__
+    #    # error emscripten currently doesn't support some operations on integers larger than 64 bits
+    #    #endif
+    #    #include <stddef.h>
+    #    #include <stdint.h>
+    #    #if defined(__SIZEOF_INT128__)
+    #    typedef unsigned __int128 uint128_t;
+    #    #else
+    #    typedef unsigned uint128_t __attribute__((mode(TI)));
+    #    #endif
+    #    void fcontract(uint128_t *t) {
+    #      *t += 0x8000000000000 - 1;
+    #      *t *= *t;
+    #      *t >>= 84;
+    #    }
+    #
+    #    int main(void) {
+    #      (void) fcontract;
+    #    }
+    #    "
+    #    HAVE_TI_MODE
+    #)
 
-        int main(void) {
-          (void) fcontract;
-        }
-        "
-        HAVE_TI_MODE
-    )
+    #if (HAVE_TI_MODE)
+    #    target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_TI_MODE=1)
+    #endif ()
 
-    if (HAVE_TI_MODE)
-        target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_TI_MODE=1)
-    endif ()
-
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         int main(void) {
           unsigned int cpu_info[4];
@@ -562,13 +562,13 @@ else ()
         }
         "
         HAVE_CPUID
-    )
+    )]]
 
     if (HAVE_CPUID)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_CPUID=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #if !defined(__ELF__) && !defined(__APPLE_CC__)
         # error Support for weak symbols may not be available
@@ -578,13 +578,13 @@ else ()
         int main(void) {}
         "
         HAVE_WEAK_SYMBOLS
-    )
+    )]]
 
     if (HAVE_WEAK_SYMBOLS)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_WEAK_SYMBOLS=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         int main(void) {
           static volatile int _sodium_lock;
@@ -593,13 +593,13 @@ else ()
         }
         "
         HAVE_ATOMIC_OPS
-    )
+    )]]
 
     if (HAVE_ATOMIC_OPS)
         target_compile_definitions(${LIBRARY_NAME} PRIVATE HAVE_ATOMIC_OPS=1)
     endif ()
 
-    check_c_source_runs(
+    #[[check_c_source_runs(
         "
         #include <limits.h>
         #include <stdint.h>
@@ -609,7 +609,7 @@ else ()
         }
         "
         STDC_LIMIT_MACROS_REQUIRED
-    )
+    )]]
 
     if (STDC_LIMIT_MACROS_REQUIRED)
         target_compile_definitions(${LIBRARY_NAME}

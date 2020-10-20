@@ -6,7 +6,10 @@
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)
 	: m_inputs(std::move(inputs)), m_outputs(std::move(outputs)), m_kernels(std::move(kernels))
 {
-
+	// TODO: Figure out why this is necessary. We're apparently missing a sort when creating transactions in the wallet.
+	std::sort(m_inputs.begin(), m_inputs.end(), SortInputsByHash);
+	std::sort(m_outputs.begin(), m_outputs.end(), SortOutputsByHash);
+	std::sort(m_kernels.begin(), m_kernels.end(), SortKernelsByHash);
 }
 
 void TransactionBody::Serialize(Serializer& serializer) const

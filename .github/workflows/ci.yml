@@ -90,6 +90,11 @@ jobs:
           vcpkgArguments: '--debug --overlay-ports=${{ github.workspace }}/backend/vcpkg/custom_ports --overlay-triplets=${{ github.workspace }}/backend/vcpkg/custom_triplets --triplet ${{ matrix.vcpkg_triplet }} @${{ github.workspace }}/backend/vcpkg/packages.txt'
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
+      - name: Print Error Logs
+        if: runner.os == 'windows' &&  ${{ always() }}
+        run: |
+          type D:\a\GrinPlusPlus\GrinPlusPlus\vcpkg\buildtrees\secp256k1-zkp\install-x64-windows-static-dbg-out.log
+          type D:\a\GrinPlusPlus\GrinPlusPlus\vcpkg\buildtrees\secp256k1-zkp\install-x64-windows-static-dbg-err.log
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:

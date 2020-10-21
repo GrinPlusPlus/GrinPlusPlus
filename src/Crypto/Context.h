@@ -6,6 +6,8 @@
 #include <Crypto/SecretKey.h>
 #include <Crypto/CryptoException.h>
 
+namespace secp256k1 {
+
 class Context
 {
 public:
@@ -41,3 +43,5 @@ private:
     secp256k1_context* m_pContext;
     secp256k1_bulletproof_generators* m_pGenerators;
 };
+
+}

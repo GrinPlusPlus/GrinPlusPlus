@@ -14,7 +14,7 @@
 #pragma comment(lib, "crypt32")
 #endif
 
-Locked<Context> SECP256K1_CONTEXT(std::make_shared<Context>());
+Locked<secp256k1::Context> SECP256K1_CONTEXT(std::make_shared<secp256k1::Context>());
 
 Commitment Crypto::CommitTransparent(const uint64_t value)
 {

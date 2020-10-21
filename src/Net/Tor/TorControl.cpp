@@ -2,15 +2,26 @@
 #include "TorControlClient.h"
 
 #include <Net/Tor/TorException.h>
+#include <Net/Tor/TorAddressParser.h>
 #include <Common/Util/StringUtil.h>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <Crypto/ED25519.h>
 #include <filesystem.h>
 
-TorControl::TorControl(const TorConfig& config, std::shared_ptr<TorControlClient> pClient, ChildProcess::UCPtr&& pProcess)
-	: m_torConfig(config), m_pClient(pClient), m_pProcess(std::move(pProcess))
+TorControl::TorControl(const TorConfig& config, std::unique_ptr<TorControlClient>&& pClient, ChildProcess::UCPtr&& pProcess)
+	: m_torConfig(config), m_pClient(std::move(pClient)), m_pProcess(std::move(pProcess))
 {
 
+}
+
+TorControl::~TorControl()
+{
+	if (m_pClient != nullptr) {
+		try
+		{
+			m_pClient->Invoke("SIGNAL DUMP\n");
+		} catch (std::exception&) { }
+	}
 }
 
 std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexcept
@@ -44,8 +55,7 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 			"-f", torrcPath,
 			"--ignore-missing-torrc"
 		});
-
-		// TODO: Determine if process is already running.
+		
 		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);
 		if (pProcess == nullptr) {
 			// Fallback to tor on path
@@ -53,20 +63,9 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 			pProcess = ChildProcess::Create(args);
 		}
 
-		std::shared_ptr<TorControlClient> pClient = std::shared_ptr<TorControlClient>(new TorControlClient());
-
-		bool connected = false;
-		auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
-		while (!connected && std::chrono::system_clock::now() < timeout)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-			// Open control socket
-			connected = pClient->Connect(SocketAddress("127.0.0.1", torConfig.GetControlPort()));
-		}
-
-		if (connected && Authenticate(pClient, torConfig.GetControlPassword())) {
-			return std::unique_ptr<TorControl>(new TorControl(torConfig, pClient, std::move(pProcess)));
+		auto pClient = TorControlClient::Connect(torConfig.GetControlPort(), torConfig.GetControlPassword());
+		if (pClient != nullptr) {
+			return std::make_unique<TorControl>(torConfig, std::move(pClient), std::move(pProcess));
 		}
 	}
 	catch (std::exception& e)
@@ -77,40 +76,35 @@ std::shared_ptr<TorControl> TorControl::Create(const TorConfig& torConfig) noexc
 	return nullptr;
 }
 
-bool TorControl::Authenticate(const std::shared_ptr<TorControlClient>& pClient, const std::string& password)
-{
-	std::string command = StringUtil::Format("AUTHENTICATE \"{}\"\n", password);
-
-	try
-	{
-		pClient->Invoke(command);
-		return true;
-	}
-	catch (TorException&)
-	{
-		return false;
-	}
-}
-
 std::string TorControl::AddOnion(const ed25519_secret_key_t& secretKey, const uint16_t externalPort, const uint16_t internalPort)
 {
+	TorAddress tor_address = TorAddressParser::FromPubKey(ED25519::CalculatePubKey(secretKey));
+	std::vector<std::string> hidden_services = QueryHiddenServices();
+	for (const std::string& service : hidden_services)
+	{
+		if (service == tor_address.ToString()) {
+			LOG_INFO_F("Hidden service already running for onion address {}", tor_address.ToString());
+			return service;
+		}
+	}
+
 	// "ED25519-V3" key is the Base64 encoding of the concatenation of
 	// the 32-byte ed25519 secret scalar in little-endian
 	// and the 32-byte ed25519 PRF secret.
 	std::string serializedKey = cppcodec::base64_rfc4648::encode(ED25519::CalculateTorKey(secretKey).GetVec());
 
-	return AddOnion(serializedKey, externalPort, internalPort);
-}
-
-std::string TorControl::AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort)
-{
 	// ADD_ONION ED25519-V3:<SERIALIZED_KEY> PORT=External,Internal
-	std::string command = StringUtil::Format("ADD_ONION ED25519-V3:{} Flags=DiscardPK Port={},{}\n", serializedKey, externalPort, internalPort);
+	std::string command = StringUtil::Format(
+		"ADD_ONION ED25519-V3:{} Flags=DiscardPK,Detach Port={},{}\n",
+		serializedKey,
+		externalPort,
+		internalPort
+	);
 
 	std::vector<std::string> response = m_pClient->Invoke(command);
-	for (std::string& line : response)
+	for (GrinStr line : response)
 	{
-		if (StringUtil::StartsWith(line, "250-ServiceID=")) {
+		if (line.StartsWith("250-ServiceID=")) {
 			const size_t prefix = std::string("250-ServiceID=").size();
 			return line.substr(prefix);
 		}
@@ -125,5 +119,58 @@ bool TorControl::DelOnion(const TorAddress& torAddress)
 	std::string command = StringUtil::Format("DEL_ONION {}\n", torAddress.ToString());
 
 	m_pClient->Invoke(command);
+
 	return true;
+}
+
+bool TorControl::CheckHeartbeat()
+{
+	// 250-status/bootstrap-phase=NOTICE BOOTSTRAP PROGRESS=100 TAG=done SUMMARY="Done"
+
+	// GETINFO status/clients-seen
+	// GETINFO current-time/local
+
+	try
+	{
+		m_pClient->Invoke("SIGNAL DUMP\n");
+		m_pClient->Invoke("SIGNAL HEARTBEAT\n");
+	}
+	catch (std::exception&)
+	{
+		return false;
+	}
+
+	// SIGNAL HEARTBEAT
+	//std::string command = "GETINFO onions/detached\n";
+	return true;
+}
+
+std::vector<std::string> TorControl::QueryHiddenServices()
+{
+	// GETINFO onions/detached
+	std::string command = "GETINFO onions/detached\n";
+
+	std::vector<std::string> response = m_pClient->Invoke(command);
+	
+	std::vector<std::string> addresses;
+	bool listing_addresses = false;
+	for (GrinStr line : response)
+	{
+		if (line.Trim() == "250 OK" || line.Trim() == ".") {
+			break;
+		} else if (line.StartsWith("250+onions/detached=")) {
+			listing_addresses = true;
+
+			if (line.Trim() != "250+onions/detached=") {
+				auto parts = line.Split("250+onions/detached=");
+				if (parts.size() == 2) {
+					addresses.push_back(parts[1].Trim());
+				}
+			}
+		} else if (listing_addresses) {
+			addresses.push_back(line.Trim());
+		}
+	}
+
+	return addresses;
 }

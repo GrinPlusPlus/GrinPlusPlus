@@ -4,6 +4,7 @@ file(GLOB SOURCE_CODE
 	"TorAddressParser.cpp"
 	"TorProcess.cpp"
     "TorControl.cpp"
+    "TorControlClient.cpp"
 	"TorConnection.cpp"
 )
 

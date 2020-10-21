@@ -38,7 +38,7 @@ public:
 		Roaring snapshotBitmap = m_pBitmap->ToRoaring();
 
 		const size_t numBytes = snapshotBitmap.getSizeInBytes();
-		std::vector<unsigned char> bytes(numBytes);
+		std::vector<uint8_t> bytes(numBytes);
 		const size_t bytesWritten = snapshotBitmap.write((char*)bytes.data());
 		if (bytesWritten != numBytes)
 		{
@@ -71,11 +71,8 @@ public:
 	}
 
 private:
-	LeafSet(const fs::path& path, std::shared_ptr<BitmapFile> pBitmap)
-		: m_path(path), m_pBitmap(pBitmap)
-	{
-
-	}
+	LeafSet(const fs::path& path, const std::shared_ptr<BitmapFile>& pBitmap)
+		: m_path(path), m_pBitmap(pBitmap) { }
 
 	fs::path m_path;
 	std::shared_ptr<BitmapFile> m_pBitmap;

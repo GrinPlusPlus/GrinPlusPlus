@@ -11,26 +11,23 @@ class TorControlClient;
 class TorControl
 {
 public:
-	~TorControl() = default;
+	TorControl(
+		const TorConfig& torConfig,
+		std::unique_ptr<TorControlClient>&& pClient,
+		ChildProcess::UCPtr&& pProcess
+	);
+	~TorControl();
 
 	static std::shared_ptr<TorControl> Create(const TorConfig& torConfig) noexcept;
 
 	std::string AddOnion(const ed25519_secret_key_t& secretKey, const uint16_t externalPort, const uint16_t internalPort);
-	std::string AddOnion(const std::string& serializedKey, const uint16_t externalPort, const uint16_t internalPort);
 	bool DelOnion(const TorAddress& torAddress);
 
-	// TODO: Add GETINFO
+	bool CheckHeartbeat();
+	std::vector<std::string> QueryHiddenServices();
 
 private:
-	TorControl(
-		const TorConfig& torConfig,
-		std::shared_ptr<TorControlClient> pClient,
-		ChildProcess::UCPtr&& pProcess
-	);
-
-	static bool Authenticate(const std::shared_ptr<TorControlClient>& pClient, const std::string& password);
-
 	const TorConfig& m_torConfig;
-	std::shared_ptr<TorControlClient> m_pClient;
+	std::unique_ptr<TorControlClient> m_pClient;
 	ChildProcess::UCPtr m_pProcess;
 };

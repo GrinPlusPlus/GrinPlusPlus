@@ -70,7 +70,11 @@ void ChainState::UpdateSyncStatus(SyncStatus& syncStatus) const
 	auto pConfirmedHead = GetBlockDB()->GetBlockHeader(confirmedHeadHash);
 	if (pConfirmedHead != nullptr)
 	{
-		syncStatus.UpdateBlockStatus(pConfirmedHead->GetHeight(), pConfirmedHead->GetTotalDifficulty());
+		syncStatus.UpdateBlockStatus(
+			pConfirmedHead->GetHeight(),
+			pConfirmedHead->GetTotalDifficulty(),
+			pConfirmedHead->GetTimestamp()
+		);
 	}
 }
 

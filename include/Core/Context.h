@@ -18,7 +18,12 @@ public:
         const TorProcess::Ptr& pTorProcess
     ) : m_pConfig(pConfig), m_pScheduler(pScheduler), m_pTorProcess(pTorProcess) { }
 
-    ~Context() { LOG_INFO("Deleting node context"); }
+    ~Context() {
+        LOG_INFO("Deleting node context");
+        m_pScheduler.reset();
+        m_pTorProcess.reset();
+        m_pConfig.reset();
+    }
 
     static Context::Ptr Create(const ConfigPtr& pConfig)
     {

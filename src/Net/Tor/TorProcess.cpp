@@ -26,28 +26,57 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	std::unique_lock<std::mutex> lock(pProcess->m_mutex);
-
-	try
+	while (!ShutdownManagerAPI::WasShutdownRequested())
 	{
-		if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
-			LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
+		try
+		{
+			std::unique_lock<std::mutex> lock(pProcess->m_mutex);
+			if (pProcess->m_pControl != nullptr) {
+				if (!pProcess->m_pControl->CheckHeartbeat()) {
+					LOG_WARNING("Tor heartbeat failed. Killing process and reinitializing.");
+					pProcess->m_pControl.reset();
+					continue;
+				}
+
+				lock.unlock();
+				ThreadUtil::SleepFor(std::chrono::seconds(30), ShutdownManagerAPI::WasShutdownRequested());
+				continue;
+			}
+
+			if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
+				LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
 #ifdef _WIN32
-    		system("taskkill /IM tor.exe /F");
+				system("taskkill /IM tor.exe /F");
 #else
-			system("killall tor");
+				system("killall tor");
 #endif
-			ThreadUtil::SleepFor(std::chrono::seconds(5), ShutdownManagerAPI::WasShutdownRequested());
-		}
+				ThreadUtil::SleepFor(std::chrono::seconds(5), ShutdownManagerAPI::WasShutdownRequested());
+			}
 
-		LOG_INFO("Initializing Tor");
-		TorConfig config{ pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath };
-		pProcess->m_pControl = TorControl::Create(config);
-		LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
-	}
-	catch (const std::exception& e)
-	{
-		LOG_ERROR_F("Exception thrown: {}", e);
+			LOG_INFO("Initializing Tor");
+			TorConfig config{ pProcess->m_socksPort, pProcess->m_controlPort, pProcess->m_torDataPath };
+			pProcess->m_pControl = TorControl::Create(config);
+			LOG_INFO_F("Tor Initialized: {}", pProcess->m_pControl != nullptr);
+
+			auto addresses_to_add = pProcess->m_activeServices;
+			lock.unlock();
+			if (pProcess->m_pControl != nullptr) {
+				for (auto iter = addresses_to_add.cbegin(); iter != addresses_to_add.cend(); iter++)
+				{
+					auto pTorAddress = pProcess->AddListener(iter->second.first, iter->second.second);
+					if (pTorAddress != nullptr) {
+						LOG_INFO_F("Re-added onion address {}", iter->first);
+					} else {
+						LOG_INFO_F("Failed to re-add onion address {}", iter->first);
+					}
+				}
+			}
+		}
+		catch (const std::exception& e)
+		{
+			LOG_ERROR_F("Exception thrown: {}", e);
+			ThreadUtil::SleepFor(std::chrono::seconds(30), ShutdownManagerAPI::WasShutdownRequested());
+		}
 	}
 }
 
@@ -68,9 +97,10 @@ bool TorProcess::RetryInit()
 
 	if (m_pControl == nullptr) {
 		m_pControl = TorControl::Create(TorConfig{ m_socksPort, m_controlPort, m_torDataPath });
+		return m_pControl != nullptr;
 	}
 
-	return m_pControl != nullptr;
+	return false;
 }
 
 std::shared_ptr<TorAddress> TorProcess::AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber)
@@ -86,32 +116,7 @@ std::shared_ptr<TorAddress> TorProcess::AddListener(const ed25519_secret_key_t& 
 				if (!torAddress.has_value()) {
 					LOG_ERROR_F("Failed to parse listener address: {}", address);
 				} else {
-					return std::make_shared<TorAddress>(torAddress.value());
-				}
-			}
-		}
-	}
-	catch (const TorException& e)
-	{
-		LOG_ERROR_F("Failed to add listener: {}", e.what());
-	}
-
-	return nullptr;
-}
-
-std::shared_ptr<TorAddress> TorProcess::AddListener(const std::string& serializedKey, const uint16_t portNumber)
-{
-	std::unique_lock<std::mutex> lock(m_mutex);
-
-	try
-	{
-		if (m_pControl != nullptr) {
-			const std::string address = m_pControl->AddOnion(serializedKey, 80, portNumber);
-			if (!address.empty()) {
-				std::optional<TorAddress> torAddress = TorAddressParser::Parse(address);
-				if (!torAddress.has_value()) {
-					LOG_ERROR_F("Failed to parse listener address: {}", address);
-				} else {
+					m_activeServices.insert({ address, { secretKey, portNumber } });
 					return std::make_shared<TorAddress>(torAddress.value());
 				}
 			}
@@ -131,6 +136,11 @@ bool TorProcess::RemoveListener(const TorAddress& torAddress)
 
 	try
 	{
+		auto iter = m_activeServices.find(torAddress.ToString());
+		if (iter != m_activeServices.end()) {
+			m_activeServices.erase(iter);
+		}
+
 		if (m_pControl != nullptr) {
 			return m_pControl->DelOnion(torAddress);
 		}

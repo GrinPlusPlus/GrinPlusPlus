@@ -5,6 +5,7 @@
 
 #include <thread>
 #include <mutex>
+#include <map>
 
 // Forward Declarations
 class TorControl;
@@ -24,12 +25,10 @@ public:
 	) noexcept;
 
 	std::shared_ptr<TorAddress> AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber);
-	std::shared_ptr<TorAddress> AddListener(const std::string& serializedKey, const uint16_t portNumber);
 	bool RemoveListener(const TorAddress& torAddress);
 
 	std::shared_ptr<TorConnection> Connect(const TorAddress& address);
 
-	// Returns true if TorControl connection is established.
 	bool RetryInit();
 
 private:
@@ -43,6 +42,7 @@ private:
 	uint16_t m_socksPort;
 	uint16_t m_controlPort;
 	std::shared_ptr<TorControl> m_pControl;
+	std::map<std::string, std::pair<ed25519_secret_key_t, uint16_t>> m_activeServices;
 
 	std::mutex m_mutex;
 	std::thread m_initThread;

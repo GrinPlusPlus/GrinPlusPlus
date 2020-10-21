@@ -27,6 +27,7 @@ public:
 		m_headerDifficulty(0),
 		m_blockHeight(0),
 		m_blockDifficulty(0),
+		m_lastBlockTime(0),
 		m_txHashSetDownloaded(0),
 		m_txHashSetTotalSize(0),
 		m_txHashSetProcessingStatus(0)
@@ -42,6 +43,7 @@ public:
 		m_headerDifficulty(other.m_headerDifficulty.load()),
 		m_blockHeight(other.m_blockHeight.load()),
 		m_blockDifficulty(other.m_blockDifficulty.load()),
+		m_lastBlockTime(other.m_lastBlockTime.load()),
 		m_txHashSetDownloaded(other.m_txHashSetDownloaded.load()),
 		m_txHashSetTotalSize(other.m_txHashSetTotalSize.load()),
 		m_txHashSetProcessingStatus(other.m_txHashSetProcessingStatus.load())
@@ -58,6 +60,7 @@ public:
 	uint64_t GetHeaderDifficulty() const { return m_headerDifficulty; }
 	uint64_t GetBlockHeight() const { return m_blockHeight; }
 	uint64_t GetBlockDifficulty() const { return m_blockDifficulty; }
+	time_t GetLastBlockTime() const noexcept { return m_lastBlockTime; }
 	uint64_t GetDownloaded() const { return m_txHashSetDownloaded; }
 	uint64_t GetDownloadSize() const { return m_txHashSetTotalSize; }
 	uint8_t GetProcessingStatus() const { return m_txHashSetProcessingStatus; }
@@ -77,10 +80,11 @@ public:
 		m_headerDifficulty = headerDifficulty;
 	}
 
-	void UpdateBlockStatus(const uint64_t blockHeight, const uint64_t blockDifficulty)
+	void UpdateBlockStatus(const uint64_t blockHeight, const uint64_t blockDifficulty, const time_t lastBlockTime)
 	{
 		m_blockHeight = blockHeight;
 		m_blockDifficulty = blockDifficulty;
+		m_lastBlockTime = lastBlockTime;
 	}
 
 	void UpdateDownloaded(const uint64_t downloaded) { m_txHashSetDownloaded = downloaded; }
@@ -96,6 +100,7 @@ private:
 	std::atomic<uint64_t> m_headerDifficulty;
 	std::atomic<uint64_t> m_blockHeight;
 	std::atomic<uint64_t> m_blockDifficulty;
+	std::atomic<time_t> m_lastBlockTime;
 	std::atomic<uint64_t> m_txHashSetDownloaded;
 	std::atomic<uint64_t> m_txHashSetTotalSize;
 	std::atomic<uint8_t> m_txHashSetProcessingStatus;

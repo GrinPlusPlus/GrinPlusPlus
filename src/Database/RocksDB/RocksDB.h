@@ -58,7 +58,7 @@ public:
 		}
 		else if (status.IsNotFound())
 		{
-			LOG_TRACE_F("Item not found with key {} in table {}", key.ToString(true), table);
+			//LOG_TRACE_F("Item not found with key {} in table {}", key.ToString(true), table);
 			return nullptr;
 		}
 		else

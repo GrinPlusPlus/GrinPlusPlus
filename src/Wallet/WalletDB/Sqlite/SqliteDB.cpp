@@ -63,10 +63,6 @@ SqliteDB::~SqliteDB()
 
 SqliteDB::Ptr SqliteDB::Open(const fs::path& db_path, const std::string& username)
 {
-	if (!FileUtil::Exists(db_path)) {
-		throw WALLET_STORE_EXCEPTION("Wallet does not exist.");
-	}
-
 	sqlite3* pDatabase = nullptr;
 
     if (sqlite3_open(db_path.u8string().c_str(), &pDatabase) != SQLITE_OK) {

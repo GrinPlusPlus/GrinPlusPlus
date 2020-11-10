@@ -203,47 +203,56 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
     const uint16_t maxPeers,
     const bool connectingToPeer) const
 {
-    const size_t numPeers = m_peersByAddress.size();
-    if (numPeers == 0) {
-        return {};
-    }
+	const size_t numPeers = m_peersByAddress.size();
+	if (numPeers == 0)
+	{
+		return {};
+	}
 
-    std::vector<PeerPtr> peersFound;
-    const time_t currentTime = TimeUtil::Now();
-    const time_t maxBanTime = std::chrono::system_clock::to_time_t(
-        std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW)
-    );
+	std::vector<PeerPtr> peersFound;
+	const time_t currentTime = TimeUtil::Now();
+	const time_t maxBanTime = std::chrono::system_clock::to_time_t(
+		std::chrono::system_clock::now() - std::chrono::seconds(P2P::BAN_WINDOW)
+	);
+	
+	auto iter = m_peersByAddress.begin();
+	std::advance(iter, CSPRNG::GenerateRandom(0, numPeers));
 
-    auto iter = m_peersByAddress.begin();
-    std::advance(iter, CSPRNG::GenerateRandom(0, numPeers));
+	for (size_t i = 0; i < numPeers; i++)
+	{
+		if (iter == m_peersByAddress.end())
+		{
+			iter = m_peersByAddress.begin();
+		}
 
-    for (size_t i = 0; i < numPeers; i++) {
-        if (iter == m_peersByAddress.end()) {
-            iter = m_peersByAddress.begin();
-        }
+		PeerEntry& peerEntry = iter->second;
+		const PeerPtr& peer = peerEntry.m_peer;
 
-        PeerEntry& peerEntry = iter->second;
-        const PeerPtr& peer = peerEntry.m_peer;
+		if (connectingToPeer && peer->GetLastBanTime() > maxBanTime)
+		{
+			continue;
+		}
 
-        if (connectingToPeer && peer->GetLastBanTime() > maxBanTime) {
-            continue;
-        }
+		const bool hasCapability = peer->GetCapabilities().HasCapability(preferredCapability);
+		if (hasCapability)
+		{
+			if (!connectingToPeer || (!peerEntry.m_peer->IsConnected() && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW))
+			{
+				if (connectingToPeer)
+				{
+					peerEntry.m_lastAttempt = currentTime;
+				}
 
-        if (peer->GetCapabilities().HasCapability(preferredCapability)) {
-            if (!connectingToPeer) {
-                peersFound.push_back(peer);
-            } else if (!peer->IsConnected() && std::difftime(currentTime, peerEntry.m_lastAttempt) > P2P::RETRY_WINDOW) {
-                peerEntry.m_lastAttempt = currentTime;
-                peersFound.push_back(peer);
-            }
+				peersFound.push_back(peer);
+				if (peersFound.size() == maxPeers)
+				{
+					return peersFound;
+				}
+			}
+		}
+		
+		iter++;
+	}
 
-            if (peersFound.size() == maxPeers) {
-                return peersFound;
-            }
-        }
-
-        iter++;
-    }
-
-    return peersFound;
+	return peersFound;
 }

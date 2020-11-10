@@ -99,7 +99,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 add_definitions(-DUNICODE)
 
-find_package(uuid REQUIRED)
+find_package(libuuid REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(RocksDB CONFIG REQUIRED)
 find_package(civetweb CONFIG REQUIRED)

@@ -273,7 +273,6 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
 
 	for (size_t i = 0; i < numPeers; i++)
 	{
-		iter++;
 		if (iter == m_peersByAddress.end())
 		{
 			iter = m_peersByAddress.begin();
@@ -304,6 +303,8 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
 				}
 			}
 		}
+
+		iter++;
 	}
 
 	return peersFound;

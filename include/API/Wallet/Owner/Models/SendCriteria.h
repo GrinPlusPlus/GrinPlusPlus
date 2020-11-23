@@ -12,7 +12,7 @@ class SendCriteria
 public:
 	SendCriteria(
 		const SessionToken& token,
-		const uint64_t amount,
+		const std::optional<uint64_t>& amount,
 		const uint64_t feeBase,
 		const uint8_t numOutputs,
 		const SelectionStrategyDTO& selectionStrategy,
@@ -32,7 +32,11 @@ public:
 	{
 		Json::Value json;
 		json["session_token"] = m_token.ToBase64();
-		json["amount"] = m_amount;
+
+		if (m_amount.has_value()) {
+			json["amount"] = m_amount.value();
+		}
+
 		json["fee_base"] = m_feeBase;
 		json["change_outputs"] = m_numOutputs;
 		json["selection_strategy"] = m_selectionStrategy.ToJSON();
@@ -51,7 +55,7 @@ public:
 	static SendCriteria FromJSON(const Json::Value& json)
 	{
 		const SessionToken token = SessionToken::FromBase64(JsonUtil::GetRequiredString(json, "session_token"));
-		const uint64_t amount = JsonUtil::GetRequiredUInt64(json, "amount");
+		std::optional<uint64_t> amountOpt = JsonUtil::GetUInt64Opt(json, "amount");
 		const uint64_t feeBase = JsonUtil::GetRequiredUInt64(json, "fee_base");
 		const uint8_t numOutputs = (uint8_t)json.get("change_outputs", Json::Value(1)).asUInt();
 		const Json::Value selectionStrategyJSON = JsonUtil::GetRequiredField(json, "selection_strategy");
@@ -67,7 +71,7 @@ public:
 
 		return SendCriteria(
 			token,
-			amount,
+			amountOpt,
 			feeBase,
 			numOutputs,
 			selectionStrategy,
@@ -80,7 +84,7 @@ public:
 	// Getters
 	//
 	const SessionToken& GetToken() const { return m_token; }
-	uint64_t GetAmount() const { return m_amount; }
+	std::optional<uint64_t> GetAmount() const { return m_amount; }
 	uint64_t GetFeeBase() const { return m_feeBase; }
 	uint8_t GetNumOutputs() const { return m_numOutputs; }
 	const SelectionStrategyDTO& GetSelectionStrategy() const { return m_selectionStrategy; }
@@ -95,7 +99,7 @@ public:
 
 private:
 	SessionToken m_token;
-	uint64_t m_amount;
+	std::optional<uint64_t> m_amount;
 	uint64_t m_feeBase;
 	uint8_t m_numOutputs;
 	SelectionStrategyDTO m_selectionStrategy;

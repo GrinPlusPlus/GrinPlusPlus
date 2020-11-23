@@ -234,10 +234,10 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 	return SendSlateBuilder(m_config, m_pNodeClient).BuildSendSlate(
 		wallet,
 		masterSeed,
-		sendCriteria.GetAmount(),
+		sendCriteria.GetAmount().value_or(0),
 		sendCriteria.GetFeeBase(),
 		sendCriteria.GetNumOutputs(),
-		false, // TODO: Implement
+		!sendCriteria.GetAmount().has_value(), // TODO: Implement
 		sendCriteria.GetAddress(),
 		sendCriteria.GetSelectionStrategy(),
 		sendCriteria.GetSlateVersion()

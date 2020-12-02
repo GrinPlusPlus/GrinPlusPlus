@@ -1,10 +1,11 @@
 #include "BlockProcessor.h"
 #include "BlockHeaderProcessor.h"
 #include "../Validators/BlockValidator.h"
-#include "../Validators/ContextualBlockValidator.h"
 
+#include <Consensus/Common.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <Core/Exceptions/BadDataException.h>
+#include <Core/Validation/KernelSumValidator.h>
 #include <Consensus/BlockTime.h>
 #include <Common/Logger.h>
 #include <Common/Util/HexUtil.h>
@@ -23,8 +24,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 	const uint64_t horizonHeight = Consensus::GetHorizonHeight(candidateHeight);
 
 	BlockHeaderPtr pHeader = block.GetHeader();
-	if (pHeader->GetHeight() <= horizonHeight)
-	{
+	if (pHeader->GetHeight() <= horizonHeight) {
 		LOG_WARNING("Can't process blocks beyond horizon.");
 		throw BAD_DATA_EXCEPTION("Can't process blocks beyond horizon.");
 	}
@@ -39,8 +39,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 		BlockValidator::VerifySelfConsistent(block);
 
 		const EBlockChainStatus returnStatus = ProcessBlockInternal(block);
-		if (returnStatus == EBlockChainStatus::SUCCESS)
-		{
+		if (returnStatus == EBlockChainStatus::SUCCESS) {
 			LOG_DEBUG_F("Block {} successfully processed.", *pHeader);
 		}
 
@@ -58,25 +57,21 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 	auto pConfirmedChain = pChainStore->GetConfirmedChain();
 
 	// 1. Check if already part of confirmed chain
-	if (pConfirmedChain->IsOnChain(block.GetHeader()))
-	{
+	if (pConfirmedChain->IsOnChain(block.GetHeader())) {
 		LOG_TRACE_F("Block {} already part of confirmed chain.", block);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
 	// 2. Check if block has already been processed.
-	if (pBatch->GetBlockDB()->GetBlock(block.GetHash()) != nullptr)
-	{
+	if (pBatch->GetBlockDB()->GetBlock(block.GetHash()) != nullptr) {
 		LOG_TRACE_F("Block {} already processed.", block);
 		return EBlockChainStatus::ALREADY_EXISTS;
 	}
 
 	// 3. Orphan if block should be processed as an orphan
 	const BlockProcessingInfo info = DetermineBlockStatus(block, pBatch);
-	if (info.status == EBlockStatus::ORPHAN)
-	{
-		if (pOrphanPool->IsOrphan(block.GetHeight(), block.GetHash()))
-		{
+	if (info.status == EBlockStatus::ORPHAN) {
+		if (pOrphanPool->IsOrphan(block.GetHeight(), block.GetHash())) {
 			LOG_TRACE_F("Block {} already processed as an orphan.", block);
 			return EBlockChainStatus::ALREADY_EXISTS;
 		}
@@ -85,21 +80,18 @@ EBlockChainStatus BlockProcessor::ProcessBlockInternal(const FullBlock& block)
 
 		return EBlockChainStatus::ORPHANED;
 	}
-	else if (info.status == EBlockStatus::REORG)
-	{
+
+	if (info.status == EBlockStatus::REORG) {
 		HandleReorg(pBatch, info.reorgBlocks);
-		return EBlockChainStatus::SUCCESS;
-	}
-	else
-	{
+	} else {
 		assert(info.status == EBlockStatus::NEXT_BLOCK);
 
 		ValidateAndAddBlock(block, pBatch);
 		pConfirmedChain->AddBlock(block.GetHash(), block.GetHeight());
 		pBatch->Commit();
-
-		return EBlockChainStatus::SUCCESS;
 	}
+
+	return EBlockChainStatus::SUCCESS;
 }
 
 BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pBatch)
@@ -110,14 +102,12 @@ BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const F
 	auto pConfirmedChain = pChainStore->GetConfirmedChain();
 
 	auto pStoreHeader = pBlockDB->GetBlockHeader(block.GetHash());
-	if (pStoreHeader == nullptr)
-	{
+	if (pStoreHeader == nullptr) {
 		LOG_TRACE_F("Header has not yet been validated. Treating {} as orphan.", block);
 		return { EBlockStatus::ORPHAN, {} };
 	}
 
-	if (pConfirmedChain->GetTipHash() == block.GetPreviousHash())
-	{
+	if (pConfirmedChain->GetTipHash() == block.GetPreviousHash()) {
 		LOG_TRACE_F("Block {} is the next block. Processing it now.", block);
 		return { EBlockStatus::NEXT_BLOCK, {} };
 	}
@@ -129,13 +119,11 @@ BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const F
 	{
 		Hash previousHash = pForkBlock->GetPreviousHash();
 		pForkBlock = pOrphanPool->GetOrphanBlock(pForkBlock->GetHeight() - 1, previousHash);
-		if (pForkBlock == nullptr)
-		{
+		if (pForkBlock == nullptr) {
 			pForkBlock = pBlockDB->GetBlock(previousHash);
 		}
 
-		if (pForkBlock == nullptr)
-		{
+		if (pForkBlock == nullptr) {
 			LOG_TRACE_F("Mising previous block. Treating {} as orphan.", block);
 			return { EBlockStatus::ORPHAN, {} };
 		}
@@ -145,8 +133,7 @@ BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const F
 
 	std::reverse(reorgBlocks.begin(), reorgBlocks.end());
 
-	if (pConfirmedChain->GetHeight() >= reorgBlocks.front()->GetHeight())
-	{
+	if (pConfirmedChain->GetHeight() >= reorgBlocks.front()->GetHeight()) {
 		LOG_WARNING_F("Fork detected at height {}.", reorgBlocks.front()->GetHeight());
 	}
 
@@ -158,16 +145,14 @@ void BlockProcessor::HandleReorg(Writer<ChainState> pBatch, const std::vector<Fu
 	const uint64_t totalDifficulty = pBatch->GetTotalDifficulty(EChainType::CONFIRMED);
 
 	auto pTxHashSet = pBatch->GetTxHashSetManager()->GetTxHashSet();
-	if (pTxHashSet == nullptr)
-	{
+	if (pTxHashSet == nullptr) {
 		LOG_ERROR("TxHashSet is null. Still syncing?");
 		throw BLOCK_CHAIN_EXCEPTION("TxHashSet is null");
 	}
 
 	auto pBlockDB = pBatch->GetBlockDB();
 	auto pCommonHeader = pBlockDB->GetBlockHeader(reorgBlocks.front()->GetPreviousHash());
-	if (pCommonHeader == nullptr)
-	{
+	if (pCommonHeader == nullptr) {
 		LOG_ERROR_F("Failed to find header {}", reorgBlocks.front()->GetPreviousHash());
 		throw BLOCK_CHAIN_EXCEPTION("Failed to find header.");
 	}
@@ -216,19 +201,35 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 
 	const Hash& previousHash = block.GetPreviousHash();
 	auto pPreviousHeader = pBlockDB->GetBlockHeader(previousHash);
-	if (pPreviousHeader == nullptr)
-	{
+	if (pPreviousHeader == nullptr) {
 		LOG_ERROR_F("Failed to find header {}", previousHash);
 		throw BLOCK_CHAIN_EXCEPTION("Previous header not found.");
 	}
 
-	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBlockDB, block))
-	{
+	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBlockDB, block)) {
 		LOG_ERROR_F("Failed to apply block {} to the TxHashSet", block);
 		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
 	}
 
-	BlockSums blockSums = ContextualBlockValidator(m_config, pBlockDB, pTxHashSet).ValidateBlock(block);
+	BlockValidator::VerifySelfConsistent(block);
+
+	if (!pTxHashSet->ValidateRoots(*block.GetHeader())) {
+		LOG_ERROR_F("Failed to validate TxHashSet roots for block {}", block);
+		throw BAD_DATA_EXCEPTION("Failed to validate TxHashSet roots.");
+	}
+
+	std::unique_ptr<BlockSums> pPreviousBlockSums = pBlockDB->GetBlockSums(previousHash);
+	if (pPreviousBlockSums == nullptr) {
+		LOG_WARNING_F("Failed to retrieve block sums for block {}", previousHash);
+		throw BLOCK_CHAIN_EXCEPTION("Failed to retrieve block sums.");
+	}
+
+	BlockSums blockSums = KernelSumValidator::ValidateKernelSums(
+		block.GetTransactionBody(),
+		0 - Consensus::REWARD,
+		block.GetTotalKernelOffset(),
+		std::make_optional(*pPreviousBlockSums)
+	);
 
 	pBlockDB->RemoveOutputPositions(block.GetInputCommitments());
 	pBlockDB->AddBlockSums(block.GetHash(), blockSums);

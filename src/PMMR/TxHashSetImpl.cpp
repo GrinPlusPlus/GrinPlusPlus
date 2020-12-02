@@ -40,23 +40,19 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 	{
 		const Commitment& commitment = input.GetCommitment();
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(commitment);
-		if (pOutputPosition == nullptr)
-		{
+		if (pOutputPosition == nullptr) {
 			return false;
 		}
 
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
-		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures())
-		{
+		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures()) {
 			LOG_DEBUG_F("Output ({}) not found at mmrIndex ({})",  commitment, pOutputPosition->GetMMRIndex());
 			return false;
 		}
 
-		if (input.GetFeatures() == EOutputFeatures::COINBASE_OUTPUT)
-		{
-			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight)
-			{
-				LOG_INFO_F("Coinbase ({}) not mature", transaction);
+		if (input.IsCoinbase()) {
+			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight) {
+				LOG_INFO_F("Coinbase {} not mature", input.GetCommitment());
 				return false;
 			}
 		}
@@ -66,8 +62,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 	for (const TransactionOutput& output : transaction.GetOutputs())
 	{
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(output.GetCommitment());
-		if (pOutputPosition != nullptr)
-		{
+		if (pOutputPosition != nullptr) {
 			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
 			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 			{
@@ -102,6 +97,12 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& block)
 {
+	// Validate inputs
+	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(
+		m_config.GetEnvironment().GetType(),
+		block.GetHeight()
+	);
+
 	Roaring blockInputBitmap;
 
 	// Prune inputs
@@ -112,10 +113,16 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	{
 		const Commitment& commitment = input.GetCommitment();
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(commitment);
-		if (pOutputPosition == nullptr)
-		{
-			LOG_WARNING_F("Output position not found for commitment ({}) in block ({})", commitment, block);
+		if (pOutputPosition == nullptr) {
+			LOG_WARNING_F("Output position not found for commitment {} in block {}", commitment, block);
 			return false;
+		}
+
+		if (input.IsCoinbase()) {
+			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight) {
+				LOG_WARNING_F("Coinbase {} not mature", input.GetCommitment());
+				return false;
+			}
 		}
 
 		spentPositions.push_back(SpentOutput(commitment, *pOutputPosition));
@@ -131,8 +138,7 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 	for (const TransactionOutput& output : block.GetOutputs())
 	{
 		std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(output.GetCommitment());
-		if (pOutputPosition != nullptr && m_pOutputPMMR->IsUnpruned(pOutputPosition->GetMMRIndex()))
-		{
+		if (pOutputPosition != nullptr && m_pOutputPMMR->IsUnpruned(pOutputPosition->GetMMRIndex())) {
 			LOG_ERROR_F("Output {} already exists at position {} and height {}",
 				output,
 				pOutputPosition->GetMMRIndex(),

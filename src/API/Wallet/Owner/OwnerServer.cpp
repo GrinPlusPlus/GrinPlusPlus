@@ -18,6 +18,7 @@
 #include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
 #include <API/Wallet/Owner/Handlers/RepostTxHandler.h>
 #include <API/Wallet/Owner/Handlers/EstimateFeeHandler.h>
+#include <API/Wallet/Owner/Handlers/ScanForOutputsHandler.h>
 
 OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {
@@ -310,6 +311,8 @@ OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const 
         }
     */
     pServer->AddMethod("estimate_fee", std::shared_ptr<RPCMethod>((RPCMethod*)new EstimateFeeHandler(pWalletManager)));
+
+    pServer->AddMethod("scan_for_outputs", std::shared_ptr<RPCMethod>((RPCMethod*)new ScanForOutputsHandler(pWalletManager)));
 
     // TODO: Add the following APIs: 
     // authenticate - Simply validates the password - useful for confirming password before sending funds

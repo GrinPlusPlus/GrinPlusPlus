@@ -14,9 +14,9 @@ namespace Traits
 		//
 		virtual void Serialize(Serializer& serializer) const = 0;
 
-		std::vector<unsigned char> Serialized() const
+		std::vector<unsigned char> Serialized(const EProtocolVersion version = ProtocolVersion::Local()) const
 		{
-			Serializer serializer;
+			Serializer serializer(version);
 			Serialize(serializer);
 			return serializer.GetBytes();
 		}

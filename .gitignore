@@ -298,6 +298,7 @@ __pycache__/
 *.tlog
 *.lastbuildstate
 bin/
+out/
 #lib/
 *.dat
 *.html

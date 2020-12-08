@@ -218,7 +218,7 @@ WalletTx SendSlateBuilder::BuildWalletTx(
 	std::transform(
 		inputs.cbegin(), inputs.cend(),
 		std::back_inserter(txInputs),
-		[](const OutputDataEntity& input) { return TransactionInput{ input.GetFeatures(), input.GetCommitment() }; }
+		[](const OutputDataEntity& input) { return TransactionInput{ input.GetCommitment() }; }
 	);
 
 	std::vector<TransactionOutput> txOutputs;

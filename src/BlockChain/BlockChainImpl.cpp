@@ -7,6 +7,7 @@
 #include "Processors/TxHashSetProcessor.h"
 #include "Processors/BlockProcessor.h"
 #include "ChainResyncer.h"
+#include "CoinView.h"
 
 #include <GrinVersion.h>
 #include <Common/Logger.h>
@@ -16,6 +17,9 @@
 #include <Consensus/BlockTime.h>
 #include <filesystem.h>
 #include <algorithm>
+
+// TODO: TEMP CODE - Remove after HF
+static ICoinView::CPtr COIN_VIEW = nullptr;
 
 BlockChain::BlockChain(
 	const Config& config,
@@ -69,33 +73,36 @@ std::shared_ptr<BlockChain> BlockChain::Create(
 			else
 			{
 				pTxHashSet->Compact();
+				// TODO: Prune database
 			}
 
 			pBatch->Commit();
 		}
 	}
 
-	const auto versionPath = config.GetDataDirectory() / "NODE" / "version.txt";
-	std::vector<uint8_t> versionData;
-	if (!FileUtil::ReadFile(versionPath, versionData))
-	{
+	const uint8_t db_version = pDatabase->Read()->GetVersion();
+	if (db_version < 2) {
 		LOG_WARNING_F("Updating chain for version {}", GRINPP_VERSION);
-		auto pBlockDB = pDatabase->Write();
-		pBlockDB->ClearOutputPositions();
+		pDatabase->Write()->ClearOutputPositions();
 
+		auto pBlockDB = pDatabase->Write();
 		auto pTxHashSetReader = pTxHashSetManager->Read();
-		if (pTxHashSetReader->GetTxHashSet() != nullptr)
-		{
+		if (pTxHashSetReader->GetTxHashSet() != nullptr) {
 			pTxHashSetReader->GetTxHashSet()->SaveOutputPositions(
 				pChainStore->Read()->GetCandidateChain(),
 				pBlockDB.GetShared()
 			);
 		}
-
-		pBlockDB->Commit();
-
-		FileUtil::WriteTextToFile(versionPath, GRINPP_VERSION);
+		pBlockDB->SetVersion(2);
 	}
+
+	if (db_version < 3) {
+		LOG_WARNING_F("Migrating blocks to v3 for Grin++ {}", GRINPP_VERSION);
+		pDatabase->Write()->MigrateBlocks();
+		pDatabase->Write()->SetVersion(3);
+	}
+
+	COIN_VIEW = std::make_shared<CoinView>(*pChainState);
 
 	return std::shared_ptr<BlockChain>(new BlockChain(
 		config,
@@ -429,4 +436,10 @@ namespace BlockChainAPI
 		// It would also be a good idea to re-validate the MMRs on load.
 		return BlockChain::Create(config, pDatabase, pTxHashSetManager, pTransactionPool, pHeaderMMR);
 	}
+}
+
+// TODO: TEMP CODE - Remove after HF
+ICoinView::CPtr GetCoinView()
+{
+	return COIN_VIEW;
 }

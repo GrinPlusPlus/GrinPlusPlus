@@ -6,6 +6,7 @@
 
 #include <Common/ImportExport.h>
 #include <BlockChain/BlockChainStatus.h>
+#include <BlockChain/ICoinView.h>
 #include <TxPool/PoolType.h>
 #include <P2P/SyncStatus.h>
 #include <Core/Models/DTOs/BlockWithOutputs.h>

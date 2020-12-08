@@ -257,7 +257,7 @@ void ChainState::Rollback() noexcept
 	}
 }
 
-void ChainState::OnInitWrite()
+void ChainState::OnInitWrite(const bool /*batch*/)
 {
 	m_chainStoreWriter.Clear();
 	m_blockDBWriter.Clear();

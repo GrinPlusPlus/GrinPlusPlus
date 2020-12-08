@@ -86,7 +86,7 @@ public:
 	uint64_t GetTotalDifficulty() const { return m_connectedPeer.GetTotalDifficulty(); }
 	uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
 	Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer()->GetCapabilities(); }
-	EProtocolVersion GetProtocolVersion() const noexcept { return GetPeer()->GetVersion() > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1; }
+	EProtocolVersion GetProtocolVersion() const noexcept { return ProtocolVersion::ToEnum(GetPeer()->GetVersion()); }
 	void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height) { m_connectedPeer.UpdateTotals(totalDifficulty, height); }
 
 	std::string Format() const final { return "Connection{" + GetIPAddress().Format() + "}"; }

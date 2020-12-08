@@ -17,7 +17,7 @@ bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, c
 {
 	try
 	{
-		LOG_TRACE_F("Performing handshake with ({}) - {}", socket, (direction == EDirection::INBOUND ? "inbound" : "outbound"));
+		LOG_TRACE_F("Performing handshake with {} - {}", socket, (direction == EDirection::INBOUND ? "inbound" : "outbound"));
 
 		if (direction == EDirection::OUTBOUND)
 		{
@@ -70,21 +70,21 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
 				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
 
-				LOG_DEBUG_F("Ban message received from ({}) with reason ({})", socket, std::to_string(banReasonMessage.GetBanReason()));
+				LOG_DEBUG_F("Ban message received from {} with reason {}", socket, std::to_string(banReasonMessage.GetBanReason()));
 				return false;
 			}
 			else
 			{
-				LOG_DEBUG_F("Expected shake from ({}) but received ({}).", socket, MessageTypes::ToString(messageType));
+				LOG_DEBUG_F("Expected shake from {} but received {}.", socket, MessageTypes::ToString(messageType));
 				return false;
 			}
 		}
 
-		LOG_TRACE_F("Shake message not received from ({})", socket);
+		LOG_TRACE_F("Shake message not received from {}", socket);
 		return false;
 	}
 
-	LOG_DEBUG_F("Hand message not sent to ({})", socket);
+	LOG_DEBUG_F("Hand message not sent to {}", socket);
 	return false;
 }
 
@@ -115,27 +115,27 @@ bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connected
 				}
 				else
 				{
-					LOG_DEBUG_F("Failed to transmit shake message to ({})", socket);
+					LOG_DEBUG_F("Failed to transmit shake message to {}", socket);
 					return false;
 				}
 			}
 			else if (handMessage.GetNonce() == NONCE)
 			{
-				LOG_DEBUG_F("Connected to self ({}). Nonce: {}", socket, NONCE);
+				LOG_DEBUG_F("Connected to self {}. Nonce: {}", socket, NONCE);
 			}
 			else
 			{
-				LOG_DEBUG_F("Already connected to ({})", connectedPeer);
+				LOG_DEBUG_F("Already connected to {}", connectedPeer);
 			}
 		}
 		else
 		{
-			LOG_DEBUG_F("First message from ({}) was of type ({})", socket, MessageTypes::ToString(pReceivedMessage->GetMessageHeader().GetMessageType()));
+			LOG_DEBUG_F("First message from {} was of type {}", socket, MessageTypes::ToString(pReceivedMessage->GetMessageHeader().GetMessageType()));
 			return false;
 		}
 	}
 
-	LOG_TRACE_F("Unable to connect to ({}).", socket);
+	LOG_TRACE_F("Unable to connect to {}.", socket);
 	return false;
 }
 
@@ -157,7 +157,7 @@ bool HandShake::TransmitHandMessage(Socket& socket) const
 
 	std::vector<uint8_t> serialized_message = handMessage.Serialize(
 		m_config.GetEnvironment(),
-		EProtocolVersion::V2
+		ProtocolVersion::Local()
 	);
 
 	return socket.Send(serialized_message, true);
@@ -173,7 +173,7 @@ bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVers
 
 	std::vector<uint8_t> serialized_message = shakeMessage.Serialize(
 		m_config.GetEnvironment(),
-		protocolVersion > 1 ? EProtocolVersion::V2 : EProtocolVersion::V1
+		ProtocolVersion::ToEnum(protocolVersion)
 	);
 
 	return socket.Send(serialized_message, true);

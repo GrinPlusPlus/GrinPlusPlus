@@ -60,11 +60,11 @@ void ChainStore::Rollback() noexcept
 	m_pConfirmedChain->Rollback();
 }
 
-void ChainStore::OnInitWrite()
+void ChainStore::OnInitWrite(const bool batch)
 {
-	//m_pSyncChain->OnInitWrite();
-	m_pCandidateChain->OnInitWrite();
-	m_pConfirmedChain->OnInitWrite();
+	//m_pSyncChain->OnInitWrite(batch);
+	m_pCandidateChain->OnInitWrite(batch);
+	m_pConfirmedChain->OnInitWrite(batch);
 }
 
 void ChainStore::OnEndWrite()

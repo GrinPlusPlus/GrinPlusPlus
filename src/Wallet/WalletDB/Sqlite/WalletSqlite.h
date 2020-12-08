@@ -17,7 +17,7 @@ public:
 
 	void Commit() final;
 	void Rollback() noexcept final;
-	void OnInitWrite() final;
+	void OnInitWrite(const bool /*batch*/) final;
 	void OnEndWrite() final;
 
 	KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) final;

@@ -25,19 +25,32 @@ public:
 
 	virtual ~RocksDB()
 	{
+		m_pTransaction.reset();
+
 		for (RocksDBTable& table : m_tables)
 		{
 			table.CloseHandle();
 		}
 
+		m_pTransactionDB->GetBaseDB()->Close();
 		m_pTransactionDB.reset();
 	}
 
 	bool IsTransactional() const noexcept { return m_pTransaction != nullptr; }
 
+	std::unique_ptr<rocksdb::Iterator> GetIterator(const RocksDBTable& table) const
+	{
+		return std::unique_ptr<rocksdb::Iterator>(m_pTransactionDB->NewIterator(rocksdb::ReadOptions(), table.GetHandle()));
+	}
+
+	std::unique_ptr<rocksdb::Iterator> GetIterator(const std::string& tableName) const
+	{
+		return GetIterator(GetTable(tableName));
+	}
+
 	template<typename T,
 		typename SFINAE = typename std::enable_if_t<std::is_base_of_v<Traits::ISerializable, T>>>
-	std::unique_ptr<T> Get(const RocksDBTable& table, const rocksdb::Slice& key) const
+	std::unique_ptr<T> Get(const RocksDBTable& table, const rocksdb::Slice& key, const EProtocolVersion protocol = ProtocolVersion::Local()) const
 	{
 		rocksdb::Status status;
 		std::string itemStr;
@@ -53,7 +66,7 @@ public:
 		if (status.ok())
 		{
 			std::vector<unsigned char> data(itemStr.data(), itemStr.data() + itemStr.size());
-			ByteBuffer byteBuffer(std::move(data));
+			ByteBuffer byteBuffer(std::move(data), protocol);
 			return std::make_unique<T>(T::Deserialize(byteBuffer));
 		}
 		else if (status.IsNotFound())
@@ -76,9 +89,9 @@ public:
 
 	template<typename T,
 		typename SFINAE = typename std::enable_if_t<std::is_base_of_v<Traits::ISerializable, T>>>
-	std::unique_ptr<T> Get(const std::string& tableName, const rocksdb::Slice& key) const
+	std::unique_ptr<T> Get(const std::string& tableName, const rocksdb::Slice& key, const EProtocolVersion protocol = ProtocolVersion::Local()) const
 	{
-		return Get<T>(GetTable(tableName), key);
+		return Get<T>(GetTable(tableName), key, protocol);
 	}
 
 	template<typename T,
@@ -159,6 +172,10 @@ public:
 				LOG_ERROR(errorMessage);
 				throw DATABASE_EXCEPTION(errorMessage);
 			}
+		}
+
+		if (pTempTransaction != nullptr) {
+			pTempTransaction->Commit();
 		}
 	}
 
@@ -263,13 +280,13 @@ public:
 
 	void Commit() final
 	{
-		assert(m_pTransaction != nullptr);
-
-		const rocksdb::Status status = m_pTransaction->Commit();
-		if (!status.ok())
-		{
-			LOG_ERROR_F("Transaction::Commit failed with error {}", status.getState());
-			throw DATABASE_EXCEPTION_F("Transaction::Commit Failed with error {}", status.getState());
+		//assert(m_pTransaction != nullptr);
+		if (m_pTransaction != nullptr) {
+			const rocksdb::Status status = m_pTransaction->Commit();
+			if (!status.ok()) {
+				LOG_ERROR_F("Transaction::Commit failed with error {}", status.getState());
+				throw DATABASE_EXCEPTION_F("Transaction::Commit Failed with error {}", status.getState());
+			}
 		}
 	}
 
@@ -284,11 +301,13 @@ public:
 		}
 	}
 
-	void OnInitWrite() final
+	void OnInitWrite(const bool batch) final
 	{
-		m_pTransaction = std::shared_ptr<rocksdb::Transaction>(
-			m_pTransactionDB->BeginTransaction(rocksdb::WriteOptions())
-		);
+		if (batch) {
+			m_pTransaction = std::unique_ptr<rocksdb::Transaction>(
+				m_pTransactionDB->BeginTransaction(rocksdb::WriteOptions())
+			);
+		}
 	}
 
 	void OnEndWrite() final
@@ -314,5 +333,5 @@ private:
 	std::shared_ptr<rocksdb::OptimisticTransactionDB> m_pTransactionDB;
 	std::vector<RocksDBTable> m_tables;
 
-	std::shared_ptr<rocksdb::Transaction> m_pTransaction;
+	std::unique_ptr<rocksdb::Transaction> m_pTransaction;
 };

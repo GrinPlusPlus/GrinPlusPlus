@@ -45,12 +45,12 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 		}
 
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
-		if (pOutput == nullptr || pOutput->GetCommitment() != commitment || pOutput->GetFeatures() != input.GetFeatures()) {
+		if (pOutput == nullptr || pOutput->GetCommitment() != commitment) {
 			LOG_DEBUG_F("Output ({}) not found at mmrIndex ({})",  commitment, pOutputPosition->GetMMRIndex());
 			return false;
 		}
 
-		if (input.IsCoinbase()) {
+		if (pOutput->IsCoinbase()) {
 			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight) {
 				LOG_INFO_F("Coinbase {} not mature", input.GetCommitment());
 				return false;
@@ -118,7 +118,10 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 			return false;
 		}
 
-		if (input.IsCoinbase()) {
+		auto pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetMMRIndex());
+		assert(pOutput != nullptr);
+
+		if (pOutput->IsCoinbase()) {
 			if (pOutputPosition->GetBlockHeight() > maximumBlockHeight) {
 				LOG_WARNING_F("Coinbase {} not mature", input.GetCommitment());
 				return false;
@@ -310,7 +313,7 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 			std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(pOutput->GetCommitment());
 			if (pRangeProof == nullptr || pOutputPosition == nullptr || pOutputPosition->GetMMRIndex() != mmrIndex)
 			{
-				throw TXHASHSET_EXCEPTION(StringUtil::Format("Failed to build OutputDTO at index {}", mmrIndex));
+				throw TXHASHSET_EXCEPTION_F("Failed to build OutputDTO at index {}", mmrIndex);
 			}
 
 			outputs.emplace_back(OutputDTO(false, *pOutput, *pOutputPosition, *pRangeProof));
@@ -344,6 +347,17 @@ std::vector<OutputDTO> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBl
 	return outputs;
 }
 
+OutputDTO TxHashSet::GetOutput(const OutputLocation& location) const
+{
+	std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(location.GetMMRIndex());
+	std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetAt(location.GetMMRIndex());
+	if (pOutput == nullptr || pRangeProof == nullptr) {
+		throw TXHASHSET_EXCEPTION_F("Output not found at mmr index {}", location.GetMMRIndex());
+	}
+
+	return OutputDTO(false, *pOutput, location, *pRangeProof);
+}
+
 void TxHashSet::Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& header)
 {
 	std::vector<uint64_t> leavesToAdd;
@@ -352,7 +366,7 @@ void TxHashSet::Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& he
 		auto pBlock = pBlockDB->GetBlock(m_pBlockHeader->GetHash());
 		if (pBlock == nullptr)
 		{
-			throw TXHASHSET_EXCEPTION(StringUtil::Format("Block not found for {}", *m_pBlockHeader));
+			throw TXHASHSET_EXCEPTION_F("Block not found for {}", *m_pBlockHeader);
 		}
 
 		std::unordered_map<Commitment, OutputLocation> spentOutputs = pBlockDB->GetSpentPositions(m_pBlockHeader->GetHash());
@@ -364,7 +378,7 @@ void TxHashSet::Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& he
 			auto iter = spentOutputs.find(input.GetCommitment());
 			if (iter == spentOutputs.end())
 			{
-				throw TXHASHSET_EXCEPTION(StringUtil::Format("Spent output not found for {}", input.GetCommitment()));
+				throw TXHASHSET_EXCEPTION_F("Spent output not found for {}", input.GetCommitment());
 			}
 
 			pBlockDB->AddOutputPosition(input.GetCommitment(), iter->second);

@@ -3,6 +3,7 @@
 #include <thread>
 #include <unordered_map>
 #include <shared_mutex>
+#include <iostream>
 
 class ThreadManager
 {
@@ -31,9 +32,13 @@ std::string ThreadManager::GetCurrentThreadName() const
 
 	std::thread::id threadId = std::this_thread::get_id();
 
-	if (m_threadNamesById.find(threadId) != m_threadNamesById.end())
-	{
-		return m_threadNamesById.find(threadId)->second;
+	try {
+		if (m_threadNamesById.find(threadId) != m_threadNamesById.end()) {
+			return m_threadNamesById.find(threadId)->second;
+		}
+	}
+	catch (std::exception& e) {
+		std::cout << "Exception thrown in GetCurrentThreadName() - " << e.what() << std::endl;
 	}
 
 	std::stringstream ss;

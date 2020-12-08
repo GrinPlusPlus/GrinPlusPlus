@@ -29,7 +29,7 @@ void WalletSqlite::Rollback() noexcept
 	SetDirty(false);
 }
 
-void WalletSqlite::OnInitWrite()
+void WalletSqlite::OnInitWrite(const bool /*batch*/)
 {
 	m_pTransaction = std::make_unique<SqliteTransaction>(m_pDatabase);
 	m_pTransaction->Begin();

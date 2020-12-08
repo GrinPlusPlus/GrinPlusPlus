@@ -117,6 +117,11 @@ public:
 		const uint64_t lastIndex
 	) const = 0;
 
+	//
+	// Get Output by OutputLocation
+	//
+	virtual OutputDTO GetOutput(const OutputLocation& location) const = 0;
+
 	virtual BlockHeaderPtr GetFlushedBlockHeader() const noexcept = 0;
 
 

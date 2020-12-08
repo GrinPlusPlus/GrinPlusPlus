@@ -35,6 +35,7 @@ public:
 	std::vector<Hash> GetLastRangeProofHashes(const uint64_t numberOfRangeProofs) const final;
 	OutputRange GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t maxNumOutputs) const final;
 	std::vector<OutputDTO> GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const final;
+	OutputDTO GetOutput(const OutputLocation& location) const final;
 
 	void Rewind(std::shared_ptr<IBlockDB> pBlockDB, const BlockHeader& header) final;
 	void Commit() final;

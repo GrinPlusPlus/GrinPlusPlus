@@ -9,7 +9,7 @@
 
 MappedFile::~MappedFile()
 {
-	LOG_TRACE_F("Closing File: {}", m_path);
+	//LOG_TRACE_F("Closing File: {}", m_path);
 
 	Unmap();
 

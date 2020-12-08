@@ -108,7 +108,7 @@ class Writer : public Reader<T>
 				m_pMutex->lock();
 			}
 
-			OnInitWrite();
+			OnInitWrite(batched);
 		}
 
 		~InnerWriter()
@@ -160,13 +160,13 @@ class Writer : public Reader<T>
 			}
 		}
 
-		void OnInitWrite()
+		void OnInitWrite(const bool batch)
 		{
 			Traits::IBatchable* pBatchable = GetBatchable(m_pObject);
 			if (pBatchable != nullptr)
 			{
 				pBatchable->SetDirty(true);
-				pBatchable->OnInitWrite();
+				pBatchable->OnInitWrite(batch);
 			}
 		}
 

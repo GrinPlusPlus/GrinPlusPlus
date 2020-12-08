@@ -20,8 +20,13 @@ public:
 
 	void Commit() final;
 	void Rollback() noexcept final;
-	void OnInitWrite() final;
+	void OnInitWrite(const bool batch) final;
 	void OnEndWrite() final;
+
+	uint8_t GetVersion() const final;
+	void SetVersion(const uint8_t version) final;
+
+	void MigrateBlocks() final;
 
 	BlockHeaderPtr GetBlockHeader(const Hash& hash) const final;
 

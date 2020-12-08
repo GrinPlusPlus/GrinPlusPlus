@@ -7,4 +7,4 @@ file(GLOB SOURCE_CODE
 )
 
 add_executable(${TARGET_NAME} ${SOURCE_CODE})
-target_link_libraries(${TARGET_NAME} Core TestUtil Wallet)
+target_link_libraries(${TARGET_NAME} Core TestUtil Wallet BlockChain)

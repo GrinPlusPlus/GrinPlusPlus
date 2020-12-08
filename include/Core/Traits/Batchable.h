@@ -19,7 +19,7 @@ namespace Traits
 		virtual void Rollback() noexcept = 0;
 
 		// This can be overridden
-		virtual void OnInitWrite() { }
+		virtual void OnInitWrite(const bool /*batch*/) { }
 
 		// This can be overridden
 		virtual void OnEndWrite() { }

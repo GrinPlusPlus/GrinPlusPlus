@@ -120,7 +120,7 @@ void Chain::Rollback() noexcept
 	SetDirty(false);
 }
 
-void Chain::OnInitWrite()
+void Chain::OnInitWrite(const bool /*batch*/)
 {
 	SetDirty(false);
 	m_dataFileWriter = m_dataFile.BatchWrite();

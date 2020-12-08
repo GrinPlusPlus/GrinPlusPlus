@@ -24,7 +24,7 @@ private:
 
 	std::shared_ptr<Locked<HashFile>> m_pLockedHashFile;
 
-	void OnInitWrite() final
+	void OnInitWrite(const bool /*batch*/) final
 	{
 		SetDirty(false);
 

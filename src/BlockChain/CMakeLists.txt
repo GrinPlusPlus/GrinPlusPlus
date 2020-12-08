@@ -1,7 +1,14 @@
 set(TARGET_NAME BlockChain)
 
 file(GLOB SOURCE_CODE
-    "*.cpp"
+    "BlockChainImpl.cpp"
+    "BlockHydrator.cpp"
+    "Chain.cpp"
+    "ChainResyncer.cpp"
+    "ChainState.cpp"
+    "ChainStore.cpp"
+    "CoinView.cpp"
+    "CompactBlockFactory.cpp"
 	"Processors/*.cpp"
 	"Validators/*.cpp"
 	"OrphanPool/OrphanPool.cpp"

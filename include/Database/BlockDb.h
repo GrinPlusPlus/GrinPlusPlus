@@ -17,6 +17,23 @@ class IBlockDB : public Traits::IBatchable
 public:
 	virtual ~IBlockDB() = default;
 
+	/// <summary>
+	/// Looks up the current serialization format version of the DB.
+	/// </summary>
+	/// <returns>The current DB format version.</returns>
+	virtual uint8_t GetVersion() const = 0;
+
+	/// <summary>
+	/// Updates the DB serialization format version.
+	/// </summary>
+	/// <param name="version">The new version.</param>
+	virtual void SetVersion(const uint8_t version) = 0;
+
+	/// <summary>
+	/// Updates FullBlock entries to the latest serialization format.
+	/// </summary>
+	virtual void MigrateBlocks() = 0;
+
 	virtual BlockHeaderPtr GetBlockHeader(const Hash& hash) const = 0;
 
 	virtual void AddBlockHeader(BlockHeaderPtr pBlockHeader) = 0;

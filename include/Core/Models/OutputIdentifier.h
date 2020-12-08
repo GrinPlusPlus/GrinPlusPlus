@@ -43,6 +43,8 @@ public:
 	EOutputFeatures GetFeatures() const { return m_features; }
 	const Commitment& GetCommitment() const { return m_commitment; }
 
+	bool IsCoinbase() const noexcept { return (m_features & EOutputFeatures::COINBASE_OUTPUT) == EOutputFeatures::COINBASE_OUTPUT; }
+
 	//
 	// Serialization/Deserialization
 	//

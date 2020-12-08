@@ -2,6 +2,7 @@
 
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
+#include <Crypto/Hasher.h>
 
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)
 	: m_inputs(std::move(inputs)), m_outputs(std::move(outputs)), m_kernels(std::move(kernels))
@@ -12,11 +13,30 @@ TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::ve
 	std::sort(m_kernels.begin(), m_kernels.end(), SortKernelsByHash);
 }
 
+// TODO: TEMP CODE - Remove after HF
+static struct
+{
+	bool operator()(const TransactionInput& a, const TransactionInput& b) const
+	{
+		Serializer a_serializer(EProtocolVersion::V2);
+		a.Serialize(a_serializer);
+
+		Serializer b_serializer(EProtocolVersion::V2);
+		b.Serialize(b_serializer);
+		return Hasher::Blake2b(a_serializer.GetBytes()) < Hasher::Blake2b(b_serializer.GetBytes());
+	}
+} SortInputsByHashV2;
+
 void TransactionBody::Serialize(Serializer& serializer) const
 {
 	serializer.Append<uint64_t>(m_inputs.size());
 	serializer.Append<uint64_t>(m_outputs.size());
 	serializer.Append<uint64_t>(m_kernels.size());
+
+	std::vector<TransactionInput> sorted_inputs = m_inputs;
+	if (serializer.GetProtocolVersion() < EProtocolVersion::V3) {
+		std::sort(sorted_inputs.begin(), sorted_inputs.end(), SortInputsByHashV2);
+	}
 
 	// Serialize Inputs
 	for (const auto& input : m_inputs)

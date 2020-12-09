@@ -109,7 +109,9 @@ SessionToken SessionManager::Login(
 		SecureVector decryptedSeed = SeedEncrypter().DecryptWalletSeed(seed, password);
 
 		WALLET_INFO("Valid password provided. Logging in now.");
+		WALLET_INFO("Calling m_pWalletDB->OpenWallet");
 		m_pWalletDB->OpenWallet(username, decryptedSeed);
+		WALLET_INFO("Returning Login");
 		return Login(pTorProcess, username, decryptedSeed);
 	}
 	catch (std::exception&)
@@ -124,6 +126,7 @@ SessionToken SessionManager::Login(
 	const std::string& username,
 	const SecureVector& seed)
 {
+	WALLET_INFO("Getting seed...");
 	Hash hash = Hasher::SHA256((const std::vector<unsigned char>&)seed);
 	std::vector<unsigned char> checksum(
 		hash.GetData().cbegin(),
@@ -143,7 +146,11 @@ SessionToken SessionManager::Login(
 	const uint64_t sessionId = m_nextSessionId++;
 	SessionToken token(sessionId, tokenKey);
 
+	WALLET_INFO("Opening wallet...");
 	auto pWalletDB = m_pWalletDB->OpenWallet(username, seed);
+	WALLET_INFO("Wallet opened.");
+
+	WALLET_INFO("Loading wallet...");
 	Locked<WalletImpl> walletImpl = WalletImpl::LoadWallet(
 		m_config,
 		seed,
@@ -151,6 +158,7 @@ SessionToken SessionManager::Login(
 		pWalletDB,
 		username
 	);
+	WALLET_INFO("Wallet loaded.");
 
 	Locked<Wallet> wallet = std::make_shared<Wallet>(
 		pWalletDB,
@@ -166,21 +174,27 @@ SessionToken SessionManager::Login(
 		walletImpl,
 		std::move(encryptedSeedWithCS)
 	);
-
-	KeyChain keyChain = KeyChain::FromSeed(seed);
+	WALLET_INFO("KeyChain from seed...");
+	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
+	WALLET_INFO("Getting listener...");
 	auto listenerInfo = m_pForeignController->StartListener(
 		pTorProcess,
 		username,
 		token,
 		keyChain
 	);
+	WALLET_INFO("Setting listener port...");
 	wallet.Write()->SetListenerPort(listenerInfo.first);
 	walletImpl.Write()->SetListenerPort(listenerInfo.first);
+	WALLET_INFO("Listener port set.");
 	if (listenerInfo.second.has_value()) {
+		WALLET_INFO("Setting Tor Address...");
 		wallet.Write()->SetTorAddress(listenerInfo.second.value());
 		walletImpl.Write()->SetTorAddress(listenerInfo.second.value());
+		WALLET_INFO("Tor Address set.");
 	}
 
+	WALLET_INFO("Returning TOKEN.");
 	return token;
 }
 

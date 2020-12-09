@@ -1,4 +1,4 @@
-set(TARGET_NAME GrinNode)
+set(TARGET_NAME libgrin.so)
 
 file(GLOB SOURCE_CODE
 	"Main.cpp"

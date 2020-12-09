@@ -34,8 +34,10 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 	const SessionToken& token,
 	const KeyChain& keyChain)
 {
+	WALLET_INFO("Starting a listener...");
 	std::unique_lock<std::mutex> lock(m_contextsMutex);
 
+	WALLET_INFO("Getting user for listener...");
 	auto iter = m_contextsByUsername.find(username);
 	if (iter != m_contextsByUsername.end())
 	{
@@ -46,6 +48,7 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		);
 	}
 
+	WALLET_INFO("Trying to create the ForeignServer...");
 	auto pServer = ForeignServer::Create(
 		keyChain,
 		pTorProcess,
@@ -53,10 +56,14 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		token
 	);
 
+	WALLET_INFO_F("ForeignServer created on port: '{}'...", pServer->GetPortNumber());
+	WALLET_INFO_F("ForeignServer created with address: '{}'...", pServer->GetTorAddress()->GetPublicKey());
+
 	auto response = std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());
 
 	m_contextsByUsername[username] = std::make_unique<Context>(std::move(pServer));
 
+	WALLET_INFO("Returning from ForeignController::StartListener");
 	return response;
 }
 

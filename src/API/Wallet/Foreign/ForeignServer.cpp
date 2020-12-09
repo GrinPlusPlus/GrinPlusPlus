@@ -13,6 +13,7 @@ ForeignServer::UPtr ForeignServer::Create(
     IWalletManager& walletManager,
     const SessionToken& token)
 {
+    WALLET_INFO("Binding /v2/foreign ... ");
     RPCServerPtr pServer = RPCServer::Create(
         EServerType::PUBLIC,
         std::nullopt,
@@ -20,6 +21,7 @@ ForeignServer::UPtr ForeignServer::Create(
         LoggerAPI::LogFile::WALLET
     );
 
+    WALLET_INFO("adding receive_tx method ... ");
     /*
         Request:
         {
@@ -172,8 +174,10 @@ ForeignServer::UPtr ForeignServer::Create(
     */
     pServer->AddMethod("receive_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveTxHandler(walletManager, token)));
 
+    WALLET_INFO("adding finalize_tx method ... ");
     pServer->AddMethod("finalize_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeTxHandler(walletManager, token, pTorProcess)));
 
+    WALLET_INFO("adding check_version method ... ");
     /*
         Request:
         {
@@ -199,6 +203,7 @@ ForeignServer::UPtr ForeignServer::Create(
     */
     pServer->AddMethod("check_version", std::shared_ptr<RPCMethod>((RPCMethod*)new CheckVersionHandler()));
 
+    WALLET_INFO("adding build_coinbase method ... ");
     /*
         Request:
         {
@@ -239,10 +244,13 @@ ForeignServer::UPtr ForeignServer::Create(
     */
     pServer->AddMethod("build_coinbase", std::shared_ptr<RPCMethod>((RPCMethod*)new BuildCoinbaseHandler(walletManager)));
 
+    WALLET_INFO("adding tor listener ... ");
     std::optional<TorAddress> addressOpt = AddTorListener(keyChain, pTorProcess, pServer->GetPortNumber());
 
+    WALLET_INFO("adding status listener ... ");
     pServer->GetServer()->AddListener("/status", StatusListener, nullptr);
 
+    WALLET_INFO("Up and running /v2/foreign ... ");
     return std::make_unique<ForeignServer>(pTorProcess, pServer, addressOpt);
 }
 

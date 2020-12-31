@@ -12,7 +12,7 @@ public:
 	//
 	// Constructors
 	//
-	Fee() = default;
+	Fee() : m_shift(0), m_fee(0) { }
 	Fee(const Fee& fee) = default;
 	Fee(Fee&& fee) noexcept = default;
 	Fee(const uint8_t shift, const uint64_t fee)

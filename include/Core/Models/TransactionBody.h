@@ -12,6 +12,7 @@
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Models/TransactionKernel.h>
 #include <json/json.h>
+#include <numeric>
 
 ////////////////////////////////////////
 // TRANSACTION BODY
@@ -44,6 +45,28 @@ public:
 	const std::vector<TransactionInput>& GetInputs() const { return m_inputs; }
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
+
+	uint64_t CalcFee() const noexcept
+	{
+		return std::accumulate(
+			m_kernels.cbegin(), m_kernels.cend(), (uint64_t)0,
+			[](uint64_t sum, const TransactionKernel& kernel) { return sum + kernel.GetFee(); }
+		);
+	}
+
+	uint8_t GetFeeShift() const noexcept
+	{
+		uint8_t fee_shift = 0;
+		for (const auto& kernel : m_kernels) {
+			if (kernel.GetFeeShift() > fee_shift) {
+				fee_shift = kernel.GetFeeShift();
+			}
+		}
+
+		return fee_shift;
+	}
+
+	uint64_t CalcWeight(const uint64_t block_height) const noexcept;
 
 	//
 	// Serialization/Deserialization

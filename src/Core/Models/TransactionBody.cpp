@@ -2,6 +2,9 @@
 
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
+#include <Core/Global.h>
+#include <Consensus/BlockWeight.h>
+#include <Consensus/HardForks.h>
 #include <Crypto/Hasher.h>
 
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)
@@ -150,4 +153,17 @@ TransactionBody TransactionBody::FromJSON(const Json::Value& transactionBodyJSON
 	std::sort(kernels.begin(), kernels.end(), SortKernelsByHash);
 
 	return TransactionBody(std::move(inputs), std::move(outputs), std::move(kernels));
+}
+
+uint64_t TransactionBody::CalcWeight(const uint64_t block_height) const noexcept
+{
+	size_t num_inputs = GetInputs().size();
+	size_t num_outputs = GetOutputs().size();
+	size_t num_kernels = GetKernels().size();
+
+	if (Consensus::GetHeaderVersion(Global::GetEnv(), block_height) < 5) {
+		return Consensus::CalculateWeightV4(num_inputs, num_outputs, num_kernels);
+	} else {
+		return Consensus::CalculateWeightV5(num_inputs, num_outputs, num_kernels);
+	}
 }

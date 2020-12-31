@@ -25,7 +25,7 @@ public:
 		const std::optional<uint64_t>& confirmationHeightOpt,
 		const uint64_t amountCredited,
 		const uint64_t amountDebited,
-		const std::optional<uint64_t>& feeOpt,
+		const std::optional<Fee>& feeOpt,
 		const std::optional<Transaction>& transactionOpt,
 		const std::optional<SlatePaymentProof>& paymentProofOpt
 	)	
@@ -56,7 +56,7 @@ public:
 	const std::optional<uint64_t>& GetConfirmationHeight() const { return m_confirmedHeightOpt; }
 	uint64_t GetAmountCredited() const { return m_amountCredited; }
 	uint64_t GetAmountDebited() const { return m_amountDebited; }
-	std::optional<uint64_t> GetFee() const { return m_feeOpt; }
+	std::optional<Fee> GetFee() const { return m_feeOpt; }
 	const std::optional<Transaction>& GetTransaction() const { return m_transactionOpt; }
 	const std::optional<SlatePaymentProof>& GetPaymentProof() const { return m_paymentProofOpt; }
 
@@ -81,7 +81,7 @@ public:
 		if (m_feeOpt.has_value())
 		{
 			serializer.Append<uint8_t>(1);
-			serializer.Append<uint64_t>(m_feeOpt.value());
+			m_feeOpt.value().Serialize(serializer);
 		}
 		else
 		{
@@ -166,10 +166,10 @@ public:
 		const uint64_t amountCredited = byteBuffer.ReadU64();
 		const uint64_t amountDebited = byteBuffer.ReadU64();
 
-		std::optional<uint64_t> feeOpt = std::nullopt;
+		std::optional<Fee> feeOpt = std::nullopt;
 		if (byteBuffer.ReadU8() == 1)
 		{
-			feeOpt = std::make_optional(byteBuffer.ReadU64());
+			feeOpt = std::make_optional(Fee::Deserialize(byteBuffer));
 		}
 
 		// Payment proofs added in version 3
@@ -216,7 +216,7 @@ private:
 	std::optional<uint64_t> m_confirmedHeightOpt;
 	uint64_t m_amountCredited;
 	uint64_t m_amountDebited;
-	std::optional<uint64_t> m_feeOpt;
+	std::optional<Fee> m_feeOpt;
 	std::optional<Transaction> m_transactionOpt;
 	std::optional<SlatePaymentProof> m_paymentProofOpt;
 };

@@ -26,6 +26,42 @@ DifficultyCalculator::DifficultyCalculator(std::shared_ptr<const IBlockDB> pBloc
 // an adjustment on the deviation against the ideal value.
 HeaderInfo DifficultyCalculator::CalculateNextDifficulty(const BlockHeader& header) const
 {
+	if (header.GetVersion() < 5) {
+		return NextDMA(header);
+	} else {
+		return NextWTEMA(header);
+	}
+}
+
+HeaderInfo DifficultyCalculator::NextWTEMA(const BlockHeader& header) const
+{
+	// last two headers
+	auto pLastHeader = m_pBlockDB->GetBlockHeader(header.GetPreviousHash());
+	if (pLastHeader == nullptr) {
+		throw std::runtime_error("Last header not found");
+	}
+
+	auto pPrevHeader = m_pBlockDB->GetBlockHeader(pLastHeader->GetPreviousHash());
+	if (pPrevHeader == nullptr) {
+		throw std::runtime_error("Previous header not found");
+	}
+
+	const uint64_t last_block_time = pLastHeader->GetTimestamp() - pPrevHeader->GetTimestamp();
+	const uint64_t last_diff = pLastHeader->GetTotalDifficulty();
+
+	// wtema difficulty update
+	const uint64_t next_diff = last_diff * WTEMA_HALF_LIFE / (WTEMA_HALF_LIFE - BLOCK_TIME_SEC + last_block_time);
+
+	// minimum difficulty at graph_weight(32) ensures difficulty increase on 59s block
+	// since 16384 * WTEMA_HALF_LIFE / (WTEMA_HALF_LIFE - 1) > 16384
+	const uint64_t difficulty = (std::max)(MIN_WTEMA_DIFFICULTY, next_diff);
+
+	return HeaderInfo::FromDiffAndScaling(difficulty, 0);
+}
+
+HeaderInfo DifficultyCalculator::NextDMA(const BlockHeader& header) const
+{
+
 	// Create vector of difficulty data running from earliest
 	// to latest, and pad with simulated pre-genesis data to allow earlier
 	// adjustment if there isn't enough window data length will be
@@ -41,18 +77,17 @@ HeaderInfo DifficultyCalculator::CalculateNextDifficulty(const BlockHeader& head
 
 	// Get the difficulty sum of the last DIFFICULTY_ADJUST_WINDOW elements
 	uint64_t difficultySum = 0;
-	for (const HeaderInfo& headerInfo : difficultyDataSkipFirst)
-	{
+	for (const HeaderInfo& headerInfo : difficultyDataSkipFirst) {
 		difficultySum += headerInfo.GetDifficulty();
 	}
 
-	const uint64_t actual = Damp(ts_delta, BLOCK_TIME_WINDOW, DAMP_FACTOR);
+	const uint64_t actual = Damp(ts_delta, BLOCK_TIME_WINDOW, DMA_DAMP_FACTOR);
 
 	// adjust time delta toward goal subject to dampening and clamping
 	const uint64_t adj_ts = Clamp(actual, BLOCK_TIME_WINDOW, CLAMP_FACTOR);
 
 	// minimum difficulty avoids getting stuck due to dampening
-	const uint64_t difficulty = (std::max)(MIN_DIFFICULTY, difficultySum * BLOCK_TIME_SEC / adj_ts);
+	const uint64_t difficulty = (std::max)(MIN_DMA_DIFFICULTY, difficultySum * BLOCK_TIME_SEC / adj_ts);
 
 	return HeaderInfo::FromDiffAndScaling(difficulty, sec_pow_scaling);
 }

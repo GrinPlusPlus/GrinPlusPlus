@@ -42,7 +42,7 @@ public:
 	std::optional<SlateFeatureArgs> featureArgsOpt;
 	BlindingFactor offset;
 	uint64_t amount;
-	uint64_t fee;
+	Fee fee;
 	std::vector<SlateSignature> sigs;
 	std::vector<SlateCommitment> commitments;
 	std::optional<SlatePaymentProof> proofOpt;
@@ -51,14 +51,14 @@ public:
 		: slateId{ uuid },
 		stage{ ESlateStage::STANDARD_SENT },
 		version{ 4 },
-		blockVersion{ 4 },
+		blockVersion{ 5 },
 		numParticipants{ 2 },
 		ttl{ 0 },
 		kernelFeatures{ EKernelFeatures::DEFAULT_KERNEL },
 		featureArgsOpt{ std::nullopt },
 		offset{},
 		amount{ 0 },
-		fee{ 0 },
+		fee{},
 		sigs{},
 		commitments{},
 		proofOpt{ std::nullopt }
@@ -85,7 +85,7 @@ public:
 
 	const uuids::uuid& GetId() const noexcept { return slateId; }
 	uint64_t GetAmount() const noexcept { return amount; }
-	uint64_t GetFee() const { return fee; }
+	Fee GetFee() const { return fee; }
 	uint64_t GetLockHeight() const noexcept { return featureArgsOpt.has_value() ? featureArgsOpt.value().lockHeightOpt.value_or(0) : 0; }
 	std::optional<SlatePaymentProof>& GetPaymentProof() noexcept { return proofOpt; }
 	const std::optional<SlatePaymentProof>& GetPaymentProof() const noexcept { return proofOpt; }

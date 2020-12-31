@@ -27,7 +27,7 @@ public:
 
         TransactionKernel kernel = BuildKernel(
             EKernelFeatures::COINBASE_KERNEL,
-            0,
+            Fee(),
             Crypto::AddBlindingFactors({ txOutput.first }, { txOffset }),
             kernelCommitment
         );
@@ -41,7 +41,7 @@ public:
     }
 
     Transaction BuildTx(
-        const uint64_t fee,
+        const Fee& fee,
         const std::vector<Test::Input>& inputs,
         const std::vector<Test::Output>& outputs)
     {
@@ -101,7 +101,7 @@ private:
 
     TransactionKernel BuildKernel(
         const EKernelFeatures features,
-        const uint64_t fee,
+        const Fee& fee,
         const BlindingFactor& blind,
         const Commitment& commit)
     {
@@ -110,7 +110,7 @@ private:
 
         if (features != EKernelFeatures::COINBASE_KERNEL)
         {
-            serializer.Append<uint64_t>((uint64_t)fee);
+            fee.Serialize(serializer);
         }
 
         auto pSignature = Crypto::BuildCoinbaseSignature(

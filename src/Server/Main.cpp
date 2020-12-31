@@ -6,6 +6,7 @@
 
 #include <GrinVersion.h>
 #include <Core/Context.h>
+#include <Core/Global.h>
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
 #include <Common/ShutdownManager.h>
@@ -93,15 +94,18 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	LOG_INFO_F("Starting Grin++ v{}", GRINPP_VERSION);
 
 	Context::Ptr pContext = nullptr;
+
 	try
 	{
 		pContext = Context::Create(pConfig);
+		Global::Init(pContext);
 	}
 	catch (std::exception& e)
 	{
-		IO::Err("Failed to create context", e);
+		IO::Err("Failed to initialize global context", e);
 		throw;
 	}
+
 
 	std::unique_ptr<Node> pNode = nullptr;
 	INodeClientPtr pNodeClient = nullptr;
@@ -154,4 +158,5 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	}
 
 	LOG_INFO_F("Closing Grin++ v{}", GRINPP_VERSION);
+	Global::Shutdown();
 }

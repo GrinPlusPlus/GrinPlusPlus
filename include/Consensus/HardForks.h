@@ -15,9 +15,10 @@ namespace Consensus
 	static constexpr uint64_t HARD_FORK_INTERVAL = YEAR_HEIGHT / 2;
 
 	// Floonet-only hardforks
-	static const uint64_t FLOONET_FIRST_HARD_FORK = 185040;
-	static const uint64_t FLOONET_SECOND_HARD_FORK = 298080;
-	static const uint64_t FLOONET_THIRD_HARD_FORK = 552960;
+	static const uint64_t FLOONET_FIRST_HARD_FORK = 185'040;
+	static const uint64_t FLOONET_SECOND_HARD_FORK = 298'080;
+	static const uint64_t FLOONET_THIRD_HARD_FORK = 552'960;
+	static const uint64_t FLOONET_FOURTH_HARD_FORK = 642'240;
 
 	static uint16_t GetHeaderVersion(const EEnvironmentType& environment, const uint64_t height)
 	{
@@ -35,7 +36,7 @@ namespace Consensus
 			{
 				return 3;
 			}
-			else if (height < 4 * HARD_FORK_INTERVAL)
+			else if (height < FLOONET_FOURTH_HARD_FORK)
 			{
 				return 4;
 			}
@@ -60,6 +61,6 @@ namespace Consensus
 			}
 		}
 
-		throw std::exception();
+		return 5;
 	}
 }

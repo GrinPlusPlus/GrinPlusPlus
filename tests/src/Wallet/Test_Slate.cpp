@@ -23,7 +23,7 @@ TEST_CASE("Slate - Binary")
     REQUIRE(!slate.featureArgsOpt.has_value());
     REQUIRE(slate.offset == Hash::FromHex("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"));
     REQUIRE(slate.amount == 234324899824);
-    REQUIRE(slate.fee == 0);
+    REQUIRE(slate.fee == Fee());
     REQUIRE(slate.sigs.size() == 3);
     // TODO: sigs
 

@@ -197,7 +197,7 @@ void ReceiveSlateBuilder::UpdateDatabase(
 		std::nullopt,
 		receiveSlate.amount,
 		0,
-		std::make_optional<uint64_t>(receiveSlate.fee),
+		std::make_optional<Fee>(receiveSlate.fee),
 		std::nullopt,
 		receiveSlate.GetPaymentProof()
 	);

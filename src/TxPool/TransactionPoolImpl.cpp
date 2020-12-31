@@ -24,6 +24,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	const BlockHeader& lastConfirmedBlock)
 {
 	std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+	const uint64_t next_block_height = lastConfirmedBlock.GetHeight() + 1;
 
 	if (poolType == EPoolType::MEMPOOL && m_memPool.ContainsTransaction(*pTransaction))
 	{
@@ -32,8 +33,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 
 	// Verify fee meets minimum
-	const uint64_t feeBase = 1000000; // TODO: Read from config.
-	if (FeeUtil::CalculateMinimumFee(feeBase, *pTransaction) > FeeUtil::CalculateActualFee(*pTransaction))
+	if (pTransaction->FeeMeetsMinimum(next_block_height))
 	{
 		LOG_WARNING_F("Fee too low for transaction ({})", *pTransaction);
 		return EAddTransactionStatus::LOW_FEE;
@@ -42,7 +42,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	// Verify lock time
 	for (const TransactionKernel& kernel : pTransaction->GetKernels())
 	{
-		if (kernel.GetLockHeight() > (lastConfirmedBlock.GetHeight() + 1))
+		if (kernel.GetLockHeight() > next_block_height)
 		{
 			LOG_INFO_F("Invalid lock height ({})", *pTransaction);
 			return EAddTransactionStatus::NOT_ADDED;
@@ -51,7 +51,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 
 	try
 	{
-		TransactionValidator().Validate(*pTransaction);
+		TransactionValidator().Validate(*pTransaction, next_block_height);
 	}
 	catch (std::exception& e)
 	{

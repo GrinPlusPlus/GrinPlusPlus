@@ -44,7 +44,8 @@ bool ValidTransactionFinder::IsValidTransaction(
 {
 	try
 	{
-		TransactionValidator().Validate(*pTransaction);
+		const uint64_t next_block_height = pTxHashSet->GetFlushedBlockHeader()->GetHeight() + 1;
+		TransactionValidator().Validate(*pTransaction, next_block_height);
 
 		// Validate the tx against current chain state.
 		// Check all inputs are in the current UTXO set.

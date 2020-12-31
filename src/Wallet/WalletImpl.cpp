@@ -199,7 +199,7 @@ BuildCoinbaseResponse WalletImpl::CreateCoinbase(
 	);
 	TransactionKernel kernel(
 		EKernelFeatures::COINBASE_KERNEL,
-		0,
+		Fee(),
 		0,
 		std::move(kernelCommitment),
 		Signature(*pSignature)

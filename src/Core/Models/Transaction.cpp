@@ -1,8 +1,11 @@
 #include <Core/Models/Transaction.h>
 
 #include <Crypto/Hasher.h>
+#include <Core/Global.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
+#include <Consensus/BlockWeight.h>
+#include <Consensus/HardForks.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
 	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody)) { }
@@ -72,4 +75,12 @@ const Hash& Transaction::GetHash() const
 	}
 
 	return m_hash;
+}
+
+bool Transaction::FeeMeetsMinimum(const uint64_t block_height) const noexcept
+{
+	uint64_t fee_base = Global::GetConfig().GetFeeBase();
+	uint64_t min_fee = fee_base * m_transactionBody.CalcWeight(block_height);
+
+	return CalcFee() >= (min_fee << GetFeeShift());
 }

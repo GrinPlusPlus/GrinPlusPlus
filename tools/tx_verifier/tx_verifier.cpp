@@ -4,6 +4,7 @@
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Validation/TransactionValidator.h>
+#include <Consensus/HardForks.h>
 
 #include "../../src/P2P/Messages/TransactionMessage.h"
 
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        TransactionValidator().Validate(*pTransaction);
+        TransactionValidator().Validate(*pTransaction, (Consensus::HARD_FORK_INTERVAL * 4));
     }
     catch (std::exception& e)
     {

@@ -2,22 +2,38 @@
 #include <Core/Validation/TransactionBodyValidator.h>
 
 #include <Common/Util/HexUtil.h>
+#include <Consensus/BlockWeight.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Logger.h>
 #include <algorithm>
 #include <numeric>
 
 // See: https://github.com/mimblewimble/docs/wiki/Validation-logic
-void TransactionValidator::Validate(const Transaction& transaction) const
+void TransactionValidator::Validate(const Transaction& transaction, const uint64_t block_height) const
 {
+	// Verify the transaction does not exceed the max weight
+	ValidateWeight(transaction.GetBody(), block_height);
+
 	// Validate the "transaction body"
-	TransactionBodyValidator().Validate(transaction.GetBody(), true);
+	TransactionBodyValidator().Validate(transaction.GetBody());
 
 	// Verify no output or kernel includes invalid features (coinbase)
 	ValidateFeatures(transaction.GetBody());
 
 	// Verify the big "sum": all inputs plus reward+fee, all output commitments, all kernels plus the kernel excess
 	ValidateKernelSums(transaction);
+}
+
+void TransactionValidator::ValidateWeight(const TransactionBody& body, const uint64_t block_height) const
+{
+	uint64_t weight = body.CalcWeight(block_height);
+
+	// Reserve enough space for a coinbase output and kernel
+	uint64_t reserve_weight = (Consensus::BLOCK_OUTPUT_WEIGHT + Consensus::BLOCK_KERNEL_WEIGHT);
+
+	if ((weight + reserve_weight) > Consensus::MAX_BLOCK_WEIGHT) {
+		throw BAD_DATA_EXCEPTION("Transaction exceeds maximum weight");
+	}
 }
 
 void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBody) const

@@ -50,6 +50,7 @@ public:
 	const TorConfig& GetTorConfig() const noexcept { return m_torConfig; }
 
 	uint16_t GetP2PPort() const noexcept { return m_environment.GetP2PPort(); }
+	uint64_t GetFeeBase() const noexcept { return m_nodeConfig.GetFeeBase(); }
 
 private:
 	Config(const Json::Value& json, const EEnvironmentType environment, const fs::path& dataPath)

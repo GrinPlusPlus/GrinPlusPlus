@@ -97,7 +97,7 @@ namespace Genesis
 			({
 				TransactionKernel(
 					EKernelFeatures::COINBASE_KERNEL,
-					0, /* fee */
+					Fee(), /* fee */
 					0, /* lock_height */
 					Commitment(CBigInteger<33>::FromHex("08df2f1d996cee37715d9ac0a0f3b13aae508d1101945acb8044954aee30960be9")),
 					Signature(
@@ -196,7 +196,7 @@ namespace Genesis
 			({
 				TransactionKernel(
 					EKernelFeatures::COINBASE_KERNEL,
-					0, /* fee */
+					Fee(), /* fee */
 					0, /* lock_height */
 					Commitment(CBigInteger<33>::FromHex("096385d86c5cfda718aa0b7295be0adf7e5ac051edfe130593a2a257f09f78a3b1")),
 					Signature(

@@ -27,8 +27,11 @@ public:
 
 		JsonUtil::AddOptionalField(transactionJSON, "address", m_walletTx.GetAddress());
 		JsonUtil::AddOptionalField(transactionJSON, "slate_message", m_walletTx.GetSlateMessage());
-		JsonUtil::AddOptionalField(transactionJSON, "fee", m_walletTx.GetFee());
 		JsonUtil::AddOptionalField(transactionJSON, "confirmed_height", m_walletTx.GetConfirmationHeight());
+
+		if (m_walletTx.GetFee().has_value()) {
+			transactionJSON["fee"] = m_walletTx.GetFee().value().ToJSON();
+		}
 
 		if (m_walletTx.GetSlateId().has_value()) {
 			transactionJSON["slate_id"] = uuids::to_string(m_walletTx.GetSlateId().value());

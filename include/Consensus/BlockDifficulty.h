@@ -29,7 +29,7 @@ namespace Consensus
 	static const uint64_t CLAMP_FACTOR = 2;
 
 	// Dampening factor to use for difficulty adjustment
-	static const uint64_t DAMP_FACTOR = 3;
+	static const uint64_t DMA_DAMP_FACTOR = 3;
 
 	// Dampening factor to use for AR scale calculation.
 	static const uint64_t AR_SCALE_DAMP_FACTOR = 13;
@@ -40,7 +40,7 @@ namespace Consensus
 
 	// Minimum difficulty, enforced in diff retargetting
 	// avoids getting stuck when trying to increase difficulty subject to dampening
-	static const uint64_t MIN_DIFFICULTY = DAMP_FACTOR;
+	static const uint64_t MIN_DMA_DIFFICULTY = DMA_DAMP_FACTOR;
 
 	// Compute weight of a graph as number of siphash bits defining the graph
 	// Must be made dependent on height to phase out smaller size over the years
@@ -84,4 +84,8 @@ namespace Consensus
 	{
 		return (((uint64_t)2) << (edgeBits - BASE_EDGE_BITS)) * edgeBits;
 	}
+	/// minimum solution difficulty after HardFork4 when PoW becomes primary only Cuckatoo32+
+	static constexpr uint64_t C32_GRAPH_WEIGHT = (((uint64_t)2) << ((uint64_t)(32 - BASE_EDGE_BITS))) * 32; // 16384
+
+	static constexpr uint64_t MIN_WTEMA_DIFFICULTY = C32_GRAPH_WEIGHT;
 }

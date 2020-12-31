@@ -7,12 +7,13 @@
 
 // Forward Declarations
 class Wallet;
+class INodeClient;
 
 class FinalizeSlateBuilder
 {
 public:
-	FinalizeSlateBuilder(const std::shared_ptr<Wallet>& pWallet)
-		: m_pWallet(pWallet) { }
+	FinalizeSlateBuilder(const std::shared_ptr<Wallet>& pWallet, const std::shared_ptr<const INodeClient>& pNode)
+		: m_pWallet(pWallet), m_pNode(pNode) { }
 
 	std::pair<Slate, Transaction> Finalize(
 		const Slate& rcvSlate
@@ -43,4 +44,5 @@ private:
 	) const;
 
 	std::shared_ptr<Wallet> m_pWallet;
+	std::shared_ptr<const INodeClient> m_pNode;
 };

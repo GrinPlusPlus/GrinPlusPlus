@@ -5,6 +5,7 @@
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Validation/TransactionBodyValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
+#include <Consensus/BlockWeight.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>
@@ -21,8 +22,9 @@ void BlockValidator::VerifySelfConsistent(const FullBlock& block)
 	}
 
 	// TODO - NRD: Verify kernel variants
-	VerifyBody(block);
+	VerifyWeight(block);
 	VerifyKernelLockHeights(block);
+	VerifyBody(block);
 	VerifyCoinbase(block);
 
 	block.MarkAsValidated();
@@ -32,12 +34,20 @@ void BlockValidator::VerifyBody(const FullBlock& block)
 {
 	try
 	{
-		TransactionBodyValidator().Validate(block.GetTransactionBody(), false);
+		TransactionBodyValidator().Validate(block.GetTransactionBody());
 	}
 	catch (std::exception& e)
 	{
 		LOG_ERROR_F("Transaction body for block {} failed with error: {}", block, e.what());
 		throw BAD_DATA_EXCEPTION("Failed to validate transaction body");
+	}
+}
+
+void BlockValidator::VerifyWeight(const FullBlock& block)
+{
+	if (block.CalcWeight() > Consensus::MAX_BLOCK_WEIGHT) {
+		LOG_ERROR_F("Block {} exceeds maximum weight", block);
+		throw BAD_DATA_EXCEPTION("Block exceeds maximum weight");
 	}
 }
 
@@ -86,12 +96,7 @@ void BlockValidator::VerifyCoinbase(const FullBlock& block)
 	);
 
 	// Calculate Block Reward
-	const uint64_t reward = std::accumulate(
-		blockKernels.cbegin(),
-		blockKernels.cend(),
-		Consensus::REWARD,
-		[](uint64_t reward, const TransactionKernel& kernel) { return reward + kernel.GetFee(); }
-	);
+	const uint64_t reward = Consensus::REWARD + block.GetTotalFees();
 
 	// Verify the kernel sum equals the output sum accounting for block fees.
 	const std::vector<Commitment> overCommitment({ Crypto::CommitTransparent(reward) });

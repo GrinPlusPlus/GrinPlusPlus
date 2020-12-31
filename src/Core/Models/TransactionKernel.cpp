@@ -6,7 +6,7 @@
 #include <Crypto/Hasher.h>
 #include <Consensus/BlockTime.h>
 
-TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
+TransactionKernel::TransactionKernel(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
 	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(std::move(excessCommitment)), m_excessSignature(std::move(excessSignature))
 {
 		Serializer serializer{ EProtocolVersion::V1 };
@@ -14,7 +14,7 @@ TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint6
 		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }
 
-TransactionKernel::TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig)
+TransactionKernel::TransactionKernel(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig)
 	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(excessCom), m_excessSignature(excessSig)
 {
 		Serializer serializer{ EProtocolVersion::V1 };
@@ -30,16 +30,16 @@ void TransactionKernel::Serialize(Serializer& serializer) const
 		switch (GetFeatures())
 		{
 			case EKernelFeatures::DEFAULT_KERNEL:
-				serializer.Append<uint64_t>(GetFee());
+				m_fee.Serialize(serializer);
 				break;
 			case EKernelFeatures::COINBASE_KERNEL:
 				break;
 			case EKernelFeatures::HEIGHT_LOCKED:
-				serializer.Append<uint64_t>(GetFee());
+				m_fee.Serialize(serializer);
 				serializer.Append<uint64_t>(GetLockHeight());
 				break;
 			case EKernelFeatures::NO_RECENT_DUPLICATE:
-				serializer.Append<uint64_t>(GetFee());
+				m_fee.Serialize(serializer);
 				serializer.Append<uint16_t>((uint16_t)GetLockHeight());
 				break;
 		}
@@ -50,7 +50,7 @@ void TransactionKernel::Serialize(Serializer& serializer) const
 	else
 	{
 		serializer.Append<uint8_t>((uint8_t)m_features);
-		serializer.Append<uint64_t>(m_fee);
+		m_fee.Serialize(serializer);
 		serializer.Append<uint64_t>(m_lockHeight);
 		m_excessCommitment.Serialize(serializer);
 		m_excessSignature.Serialize(serializer);
@@ -62,13 +62,13 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 	// Read KernelFeatures (1 byte)
 	const EKernelFeatures features = (EKernelFeatures)byteBuffer.ReadU8();
 
-	uint64_t fee = 0;
+	Fee fee;
 	uint64_t lockHeight = 0;
 	if (byteBuffer.GetProtocolVersion() == EProtocolVersion::V2)
 	{
 		if (features != EKernelFeatures::COINBASE_KERNEL)
 		{
-			fee = byteBuffer.ReadU64();
+			fee = Fee::Deserialize(byteBuffer);
 		}
 
 		if (features == EKernelFeatures::HEIGHT_LOCKED)
@@ -82,7 +82,7 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 	}
 	else
 	{
-		fee = byteBuffer.ReadU64();
+		fee = Fee::Deserialize(byteBuffer);
 		lockHeight = byteBuffer.ReadU64();
 	}
 
@@ -112,7 +112,7 @@ Json::Value TransactionKernel::ToJSON() const
 	Json::Value features_attrs_json;
 
 	if (m_features != EKernelFeatures::COINBASE_KERNEL) {
-		features_attrs_json["fee"] = GetFee();
+		features_attrs_json["fee"] = m_fee.ToJSON();
 	}
 
 	if (m_features == EKernelFeatures::HEIGHT_LOCKED) {
@@ -135,7 +135,12 @@ TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKern
 
 	Json::Value feature_json = features_json.get(feature_str, Json::nullValue);
 
-	uint64_t fee = JsonUtil::GetUInt64Opt(feature_json, "fee").value_or(0);
+	Fee fee;
+	auto fee_json_opt = JsonUtil::GetOptionalField(feature_json, "fee");
+	if (fee_json_opt.has_value()) {
+		fee = Fee::FromJSON(fee_json_opt.value());
+	}
+
 	uint64_t lockHeight = JsonUtil::GetUInt64Opt(feature_json, "lock_height").value_or(0);
 
 	Commitment excessCommitment = JsonUtil::GetCommitment(transactionKernelJSON, "excess");
@@ -152,14 +157,14 @@ TransactionKernel TransactionKernel::FromJSON(const Json::Value& transactionKern
 	return TransactionKernel(features, fee, lockHeight, std::move(excessCommitment), std::move(excessSignature));
 }
 
-Hash TransactionKernel::GetSignatureMessage(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight)
+Hash TransactionKernel::GetSignatureMessage(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight)
 {
 	Serializer serializer;
 	serializer.Append<uint8_t>((uint8_t)features);
 
 	if (features != EKernelFeatures::COINBASE_KERNEL)
 	{
-		serializer.Append<uint64_t>(fee);
+		fee.Serialize(serializer);
 	}
 
 	if (features == EKernelFeatures::HEIGHT_LOCKED)

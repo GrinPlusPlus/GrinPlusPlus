@@ -262,7 +262,7 @@ Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const To
 	const SecureVector masterSeed = m_sessionManager.Read()->GetSeed(finalizeCriteria.GetToken());
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(finalizeCriteria.GetToken());
 
-	auto finalized = FinalizeSlateBuilder(wallet.Write().GetShared()).Finalize(
+	auto finalized = FinalizeSlateBuilder(wallet.Write().GetShared(), m_pNodeClient).Finalize(
 		finalizeCriteria.GetSlate()
 	);
 	if (finalizeCriteria.GetPostMethod().has_value())

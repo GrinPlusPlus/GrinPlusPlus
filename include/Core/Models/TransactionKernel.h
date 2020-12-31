@@ -9,6 +9,7 @@
 #include <Core/Traits/Hashable.h>
 #include <Crypto/Hash.h>
 #include <Core/Models/Features.h>
+#include <Core/Models/Fee.h>
 #include <Crypto/Commitment.h>
 #include <Crypto/Signature.h>
 #include <Core/Serialization/ByteBuffer.h>
@@ -24,8 +25,8 @@ public:
 	//
 	// Constructors
 	//
-	TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature);
-	TransactionKernel(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig);
+	TransactionKernel(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature);
+	TransactionKernel(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight, const Commitment& excessCom, const Signature& excessSig);
 	TransactionKernel(const TransactionKernel& transactionKernel) = default;
 	TransactionKernel(TransactionKernel&& transactionKernel) noexcept = default;
 	TransactionKernel() = default;
@@ -48,13 +49,14 @@ public:
 	// Getters
 	//
 	EKernelFeatures GetFeatures() const { return m_features; }
-	uint64_t GetFee() const { return m_fee; }
+	uint64_t GetFee() const { return m_fee.GetFee(); }
+	uint8_t GetFeeShift() const noexcept { return m_fee.GetShift(); }
 	uint64_t GetLockHeight() const { return m_lockHeight; }
 	const Commitment& GetExcessCommitment() const { return m_excessCommitment; }
 	const Signature& GetExcessSignature() const { return m_excessSignature; }
 	bool IsCoinbase() const { return (m_features & EKernelFeatures::COINBASE_KERNEL) == EKernelFeatures::COINBASE_KERNEL; }
 	Hash GetSignatureMessage() const;
-	static Hash GetSignatureMessage(const EKernelFeatures features, const uint64_t fee, const uint64_t lockHeight);
+	static Hash GetSignatureMessage(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight);
 
 	//
 	// Serialization/Deserialization
@@ -75,7 +77,7 @@ private:
 	EKernelFeatures m_features;
 
 	// Fee originally included in the transaction this proof is for.
-	uint64_t m_fee;
+	Fee m_fee;
 
 	// This kernel is not valid earlier than m_lockHeight blocks
 	// The max m_lockHeight of all *inputs* to this transaction

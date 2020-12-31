@@ -144,7 +144,7 @@ Slate SendSlateBuilder::Build(
 	slate.version = slateVersion;
 	slate.blockVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetType(), blockHeight);
 	slate.amount = amountToSend;
-	slate.fee = fee;
+	slate.fee = Fee::From(fee);
 	slate.proofOpt = proofOpt;
 	slate.kernelFeatures = EKernelFeatures::DEFAULT_KERNEL;
 	slate.sigs.push_back(SlateSignature{

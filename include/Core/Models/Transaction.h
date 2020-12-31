@@ -15,6 +15,7 @@
 #include <json/json.h>
 #include <mutex>
 #include <memory>
+#include <numeric>
 
 ////////////////////////////////////////
 // TRANSACTION
@@ -52,6 +53,11 @@ public:
 	const std::vector<TransactionInput>& GetInputs() const { return m_transactionBody.GetInputs(); }
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_transactionBody.GetOutputs(); }
 	const std::vector<TransactionKernel>& GetKernels() const { return m_transactionBody.GetKernels(); }
+
+	uint64_t CalcFee() const noexcept { return m_transactionBody.CalcFee(); }
+	uint8_t GetFeeShift() const noexcept { return m_transactionBody.GetFeeShift(); }
+
+	bool FeeMeetsMinimum(const uint64_t block_height) const noexcept;
 
 	//
 	// Serialization/Deserialization

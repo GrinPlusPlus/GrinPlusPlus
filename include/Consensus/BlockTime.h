@@ -21,13 +21,6 @@ namespace Consensus
 	// (adjusting the reward accordingly).
 	static const uint64_t BLOCK_TIME_SEC = 60;
 
-	// Refuse blocks more than 12 block intervals in the future.
-	static int64_t GetMaxBlockTime(const std::chrono::time_point<std::chrono::system_clock>& currentTime)
-	{
-		auto maxBlockTime = currentTime + std::chrono::seconds(12 * Consensus::BLOCK_TIME_SEC);
-		return maxBlockTime.time_since_epoch().count();
-	}
-
 	// Nominal height for standard time intervals, hour is 60 blocks
 	static constexpr uint64_t HOUR_HEIGHT = 3600 / BLOCK_TIME_SEC;
 
@@ -91,4 +84,17 @@ namespace Consensus
 
 	// Minimum size time window used for difficulty adjustments
 	static constexpr uint64_t LOWER_TIME_BOUND = BLOCK_TIME_WINDOW / 2;
+
+	/// default Future Time Limit (FTL) of 5 minutes
+	static constexpr uint64_t DEFAULT_FUTURE_TIME_LIMIT_SEC = 5 * BLOCK_TIME_SEC;
+
+	// Refuse blocks more than 12 block intervals in the future.
+	static int64_t GetMaxBlockTime(const std::chrono::time_point<std::chrono::system_clock>& currentTime)
+	{
+		auto maxBlockTime = currentTime + std::chrono::seconds(DEFAULT_FUTURE_TIME_LIMIT_SEC);
+		return maxBlockTime.time_since_epoch().count();
+	}
+
+	/// Difficulty adjustment half life (actually, 60s * number of 0s-blocks to raise diff by factor e) is 4 hours
+	static constexpr uint64_t WTEMA_HALF_LIFE = 4 * 3600;
 }

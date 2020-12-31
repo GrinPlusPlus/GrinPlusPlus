@@ -1,6 +1,7 @@
 set(TARGET_NAME Core)
 
 file(GLOB SOURCE_CODE
+    "Global.cpp"
     "File/AppendOnlyFile.cpp"
     "Models/*.cpp"
     "Serialization/Base58.cpp"

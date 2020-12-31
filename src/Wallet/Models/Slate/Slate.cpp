@@ -179,7 +179,7 @@ void Slate::Serialize(Serializer& serializer) const
 	OptionalFieldStatus fieldStatus;
 	fieldStatus.include_num_parts = (numParticipants != 2);
 	fieldStatus.include_amt = (amount != 0);
-	fieldStatus.include_fee = (fee != 0);
+	fieldStatus.include_fee = (fee != Fee());
 	fieldStatus.include_feat = (kernelFeatures != EKernelFeatures::DEFAULT_KERNEL);
 	fieldStatus.include_ttl = (ttl != 0);
 	serializer.Append<uint8_t>(fieldStatus.ToByte());
@@ -193,7 +193,7 @@ void Slate::Serialize(Serializer& serializer) const
 	}
 
 	if (fieldStatus.include_fee) {
-		serializer.Append<uint64_t>(fee);
+		fee.Serialize(serializer);
 	}
 
 	if (fieldStatus.include_feat) {
@@ -258,7 +258,7 @@ Slate Slate::Deserialize(ByteBuffer& byteBuffer)
 	}
 
 	if (fieldStatus.include_fee) {
-		slate.fee = byteBuffer.ReadU64();
+		slate.fee = Fee::Deserialize(byteBuffer);
 	}
 
 	if (fieldStatus.include_feat) {
@@ -316,8 +316,8 @@ Json::Value Slate::ToJSON() const
 		json["num_parts"] = std::to_string(numParticipants);
 	}
 
-	if (fee != 0) {
-		json["fee"] = std::to_string(fee);
+	if (fee != Fee{}) {
+		json["fee"] = fee.ToJSON();
 	}
 
 	if (amount != 0) {
@@ -379,7 +379,12 @@ Slate Slate::FromJSON(const Json::Value& json)
 	slate.offset = JsonUtil::GetBlindingFactorOpt(json, "off").value_or(BlindingFactor{});
 
 	slate.numParticipants = JsonUtil::GetUInt8Opt(json, "num_parts").value_or(2);
-	slate.fee = JsonUtil::GetUInt64Opt(json, "fee").value_or(0);
+
+	auto fee_json_opt = JsonUtil::GetOptionalField(json, "fee");
+	if (fee_json_opt.has_value()) {
+		slate.fee = Fee::FromJSON(fee_json_opt.value());
+	}
+
 	slate.amount = JsonUtil::GetUInt64Opt(json, "amt").value_or(0);
 	slate.kernelFeatures = (EKernelFeatures)JsonUtil::GetUInt8Opt(json, "feat").value_or(0);
 	// TODO: Feat args

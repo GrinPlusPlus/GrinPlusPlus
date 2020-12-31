@@ -6,6 +6,7 @@
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/TransactionValidator.h>
+#include <Wallet/NodeClient.h>
 #include <Wallet/Wallet.h>
 
 // TODO: To help prevent "play" attacks, make sure any outputs provided by the receiver are not already on-chain.
@@ -183,9 +184,11 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		kernel,
 		finalizeSlate.offset
 	);
+
 	try
 	{
-		TransactionValidator().Validate(transaction); // TODO: Check if inputs unspent(txHashSet->Validate())?
+		const uint64_t block_height = m_pNode->GetChainHeight() + 1;
+		TransactionValidator().Validate(transaction, block_height); // TODO: Check if inputs unspent(txHashSet->Validate())?
 	}
 	catch (std::exception& e)
 	{

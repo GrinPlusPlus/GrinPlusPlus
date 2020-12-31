@@ -11,40 +11,24 @@
 
 // Validates all relevant parts of a transaction body. 
 // Checks the excess value against the signature as well as range proofs for each output.
-void TransactionBodyValidator::Validate(const TransactionBody& transactionBody, const bool withReward)
+void TransactionBodyValidator::Validate(const TransactionBody& body)
 {
-	ValidateWeight(transactionBody, withReward);
-	VerifySorted(transactionBody);
-	VerifyCutThrough(transactionBody);
-	VerifyRangeProofs(transactionBody.GetOutputs());
+	VerifySorted(body);
+	VerifyCutThrough(body);
+	VerifyRangeProofs(body.GetOutputs());
 	
-	if (!KernelSignatureValidator::VerifyKernelSignatures(transactionBody.GetKernels()))
+	if (!KernelSignatureValidator::VerifyKernelSignatures(body.GetKernels()))
 	{
 		throw BAD_DATA_EXCEPTION("Kernel signatures invalid");
 	}
 }
 
-// Verify the body is not too big in terms of number of inputs|outputs|kernels.
-void TransactionBodyValidator::ValidateWeight(const TransactionBody& transactionBody, const bool withReward)
-{
-	// If with reward check the body as if it was a block, with an additional output and kernel for reward.
-	const uint32_t reserve = withReward ? 1 : 0;
-	const uint32_t blockInputWeight = ((uint32_t)transactionBody.GetInputs().size() * Consensus::BLOCK_INPUT_WEIGHT);
-	const uint32_t blockOutputWeight = (((uint32_t)transactionBody.GetOutputs().size() + reserve) * Consensus::BLOCK_OUTPUT_WEIGHT);
-	const uint32_t blockKernelWeight = (((uint32_t)transactionBody.GetKernels().size() + reserve) * Consensus::BLOCK_KERNEL_WEIGHT);
-
-	if ((blockInputWeight + blockOutputWeight + blockKernelWeight) > Consensus::MAX_BLOCK_WEIGHT)
-	{
-		throw BAD_DATA_EXCEPTION("Block weight invalid");
-	}
-}
-
-void TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBody)
+void TransactionBodyValidator::VerifySorted(const TransactionBody& body)
 {
 	// TODO: Check for duplicates?
-	const bool sorted = Consensus::IsSorted(transactionBody.GetInputs())
-		&& Consensus::IsSorted(transactionBody.GetOutputs())
-		&& Consensus::IsSorted(transactionBody.GetKernels());
+	const bool sorted = Consensus::IsSorted(body.GetInputs())
+		&& Consensus::IsSorted(body.GetOutputs())
+		&& Consensus::IsSorted(body.GetKernels());
 	if (!sorted)
 	{
 		throw BAD_DATA_EXCEPTION("Inputs, outputs, and/or kernels not sorted.");
@@ -52,10 +36,10 @@ void TransactionBodyValidator::VerifySorted(const TransactionBody& transactionBo
 }
 
 // Verify that no input is spending an output from the same block.
-void TransactionBodyValidator::VerifyCutThrough(const TransactionBody& transactionBody)
+void TransactionBodyValidator::VerifyCutThrough(const TransactionBody& body)
 {
-	const std::vector<TransactionOutput>& outputs = transactionBody.GetOutputs();
-	const std::vector<TransactionInput>& inputs = transactionBody.GetInputs();
+	const std::vector<TransactionOutput>& outputs = body.GetOutputs();
+	const std::vector<TransactionInput>& inputs = body.GetInputs();
 
 	// Create set with output commitments
 	std::set<Commitment> commitments;

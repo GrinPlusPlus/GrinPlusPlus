@@ -33,7 +33,8 @@ public:
 			fluff = params[1].asBool();
 		}
 
-		TransactionValidator().Validate(*pTransaction);
+		const uint64_t block_height = m_pBlockChain->GetHeight(EChainType::CONFIRMED);
+		TransactionValidator().Validate(*pTransaction, block_height);
 
 		EBlockChainStatus status = m_pBlockChain->AddTransaction(
 			pTransaction,

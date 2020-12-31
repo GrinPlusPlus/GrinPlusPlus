@@ -153,7 +153,12 @@ void Pool::ReconcileBlock(std::shared_ptr<const IBlockDB> pBlockDB, ITxHashSetCo
 
 	m_transactions.clear();
 
-	std::vector<TransactionPtr> validTransactions = ValidTransactionFinder::FindValidTransactions(pBlockDB, pTxHashSet, filteredTransactions, pMemPoolAggTx);
+	std::vector<TransactionPtr> validTransactions = ValidTransactionFinder::FindValidTransactions(
+		pBlockDB,
+		pTxHashSet,
+		filteredTransactions,
+		pMemPoolAggTx
+	);
 	for (auto& pTransaction : validTransactions)
 	{
 		const TxPoolEntry& txPoolEntry = filteredEntriesByHash.at(pTransaction->GetHash());

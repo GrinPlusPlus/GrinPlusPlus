@@ -20,6 +20,7 @@ public:
 	const fs::path& GetChainPath() const { return m_chainPath; }
 	const fs::path& GetDatabasePath() const { return m_databasePath; }
 	const fs::path& GetTxHashSetPath() const { return m_txHashSetPath; }
+	const uint64_t GetFeeBase() const noexcept { return 1000000; } // TODO: Read from config.
 
 	//
 	// Constructor

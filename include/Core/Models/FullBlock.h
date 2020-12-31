@@ -80,13 +80,8 @@ public:
 		return commitments;
 	}
 
-	uint64_t GetTotalFees() const noexcept
-	{
-		return std::accumulate(
-			GetKernels().cbegin(), GetKernels().cend(), (uint64_t)0,
-			[](uint64_t reward, const TransactionKernel& kernel) { return reward + kernel.GetFee(); }
-		);
-	}
+	uint64_t GetTotalFees() const noexcept { return m_transactionBody.CalcFee(); }
+	uint64_t CalcWeight() const noexcept { return m_transactionBody.CalcWeight(GetHeight()); }
 
 	uint64_t GetHeight() const noexcept { return m_pBlockHeader->GetHeight(); }
 	const Hash& GetPreviousHash() const noexcept { return m_pBlockHeader->GetPreviousHash(); }

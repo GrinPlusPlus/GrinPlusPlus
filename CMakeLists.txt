@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-SET(CMAKE_BUILD_TYPE RelWithDebInfo)
+if(MSVC)
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo)
+else()
+    SET(CMAKE_BUILD_TYPE Release)
+endif()
 
 if(APPLE)
     set(CMAKE_INSTALL_NAME_DIR "@executable_path")

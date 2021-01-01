@@ -21,6 +21,7 @@ jobs:
             output_files: |
                 backend/bin/Release/GrinNode
                 backend/bin/Release/slate_tool
+                backend/bin/Release/tx_verifier
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
             os: ubuntu-16.04
@@ -33,6 +34,7 @@ jobs:
             output_files: |
                 backend/bin/Release/GrinNode
                 backend/bin/Release/slate_tool
+                backend/bin/Release/tx_verifier
             release_command: 'npm run clean_build:nix && npm run release'
           - name: windows
             os: windows-2019
@@ -44,10 +46,6 @@ jobs:
                 backend/bin/Release/Release/GrinNode.exe
                 backend/bin/Release/Release/slate_tool.exe
                 backend/bin/Release/Release/tx_verifier.exe
-                backend/bin/Release/GrinNode.exe
-                backend/bin/Release/RelWithDebInfo/GrinNode.exe
-                backend/bin/RelWithDebInfo/RelWithDebInfo/GrinNode.exe
-                backend/bin/RelWithDebInfo/Release/GrinNode.exe
             release_command: 'npm run clean_build:win && npm run release'
 
     steps:

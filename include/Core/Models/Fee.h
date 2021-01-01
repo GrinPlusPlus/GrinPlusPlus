@@ -64,9 +64,14 @@ public:
 
 	static Fee FromJSON(const Json::Value& json)
 	{
-		uint8_t shift = JsonUtil::GetRequiredUInt8(json, "shift");
-		uint64_t fee = JsonUtil::GetRequiredUInt64(json, "fee");
-		return Fee(shift, fee);
+		if (json.isObject()) {
+			uint8_t shift = JsonUtil::GetRequiredUInt8(json, "shift");
+			uint64_t fee = JsonUtil::GetRequiredUInt64(json, "fee");
+			return Fee(shift, fee);
+		} else {
+			uint64_t fee = json.asUInt64();
+			return Fee::From(fee);
+		}
 	}
 
 private:

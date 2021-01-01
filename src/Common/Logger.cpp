@@ -1,9 +1,10 @@
-#include <Common/ThreadManager.h>
-
 #include <spdlog/spdlog.h>
 #include <Common/Logger.h>
 #include <Common/Util/FileUtil.h>
+#include <shared_mutex>
+#include <sstream>
 #include <fstream>
+#include <iostream>
 #include <memory>
 
 class Logger
@@ -18,11 +19,16 @@ public:
 	void StopLogger();
 	void Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
+	void SetThreadName(const std::string& thread_name);
 
 private:
 	Logger() = default;
 
 	std::shared_ptr<spdlog::logger> GetLogger(const LoggerAPI::LogFile file);
+	std::string GetThreadName() const;
+
+	mutable std::shared_mutex m_threadNamesMutex;
+	std::unordered_map<std::thread::id, std::string> m_threadNamesById;
 
 	std::shared_ptr<spdlog::logger> m_pNodeLogger;
 	std::shared_ptr<spdlog::logger> m_pWalletLogger;
@@ -37,6 +43,10 @@ Logger& Logger::GetInstance()
 void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::level_enum& logLevel)
 {
 	FileUtil::CreateDirectories(logDirectory);
+
+	std::unique_lock<std::shared_mutex> thread_lock(m_threadNamesMutex);
+	m_threadNamesById.clear();
+	thread_lock.unlock();
 
 	if (m_pNodeLogger == nullptr)
 	{
@@ -78,19 +88,11 @@ void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum 
 		size_t newlinePos = eventTextClean.find("\n");
 		while (newlinePos != std::string::npos)
 		{
-			//if (eventTextClean.size() > newlinePos + 2)
-			//{
-			//	eventTextClean.erase(newlinePos, 2);
-			//}
-			//else
-			{
-				eventTextClean.erase(newlinePos, 1);
-			}
-
+			eventTextClean.erase(newlinePos, 1);
 			newlinePos = eventTextClean.find("\n");
 		}
 
-		const std::string threadName = ThreadManagerAPI::GetCurrentThreadName();
+		std::string threadName = GetThreadName();
 		if (!threadName.empty())
 		{
 			eventTextClean = threadName + " " + eventTextClean;
@@ -113,6 +115,15 @@ void Logger::Flush()
 	}
 }
 
+void Logger::SetThreadName(const std::string& thread_name)
+{
+	std::unique_lock<std::shared_mutex> lockGuard(m_threadNamesMutex);
+
+	std::stringstream ss;
+	ss << "[" << thread_name << ":" << std::this_thread::get_id() << "]";
+	m_threadNamesById[std::this_thread::get_id()] = ss.str();
+}
+
 std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
 {
 	if (file == LoggerAPI::LogFile::WALLET)
@@ -123,6 +134,26 @@ std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
 	{
 		return m_pNodeLogger;
 	}
+}
+
+std::string Logger::GetThreadName() const
+{
+	std::shared_lock<std::shared_mutex> readLock(m_threadNamesMutex);
+
+	std::thread::id thread_id = std::this_thread::get_id();
+
+	try {
+		if (m_threadNamesById.find(thread_id) != m_threadNamesById.end()) {
+			return m_threadNamesById.find(thread_id)->second;
+		}
+	}
+	catch (std::exception& e) {
+		std::cout << "Exception thrown in GetThreadName() - " << e.what() << std::endl;
+	}
+
+	std::stringstream ss;
+	ss << "[THREAD:" << thread_id << "]";
+	return ss.str();
 }
 
 namespace LoggerAPI
@@ -157,6 +188,11 @@ namespace LoggerAPI
 	LOGGER_API void Shutdown()
 	{
 		Logger::GetInstance().StopLogger();
+	}
+
+	LOGGER_API void SetThreadName(const std::string& thread_name)
+	{
+		Logger::GetInstance().SetThreadName(thread_name);
 	}
 
 	LOGGER_API void LogTrace(const std::string& message)

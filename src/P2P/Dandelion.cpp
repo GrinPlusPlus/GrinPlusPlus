@@ -7,7 +7,6 @@
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Crypto/CSPRNG.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 
 Dandelion::Dandelion(
@@ -65,7 +64,7 @@ std::shared_ptr<Dandelion> Dandelion::Create(
 // In that case  the transaction will be sent in fluff phase (to multiple peers) instead of sending only to the peer relay.
 void Dandelion::Thread_Monitor(Dandelion& dandelion)
 {
-	ThreadManagerAPI::SetCurrentThreadName("DANDELION");
+	LoggerAPI::SetThreadName("DANDELION");
 	LOG_DEBUG("BEGIN");
 
 	const DandelionConfig& config = dandelion.m_config.GetNodeConfig().GetDandelion();

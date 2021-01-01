@@ -8,7 +8,6 @@
 
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <thread>
 #include <chrono>
@@ -43,7 +42,6 @@ Connection::Ptr Connection::CreateInbound(
 		pMessageProcessor
 	);
 	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
-	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
 	return pConnection;
 }
 
@@ -70,7 +68,6 @@ Connection::Ptr Connection::CreateOutbound(
 	);
 
 	pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
-	ThreadManagerAPI::SetThreadName(pConnection->m_connectionThread.get_id(), "PEER");
 	return pConnection;
 }
 
@@ -101,6 +98,8 @@ bool Connection::ExceedsRateLimit() const
 //
 void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnection)
 {
+	LoggerAPI::SetThreadName("PEER");
+
 	try
 	{
 		pConnection->Connect();

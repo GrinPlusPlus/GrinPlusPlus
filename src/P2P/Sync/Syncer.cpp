@@ -5,7 +5,6 @@
 
 #include <BlockChain/BlockChain.h>
 #include <P2P/SyncStatus.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
@@ -50,7 +49,7 @@ std::shared_ptr<Syncer> Syncer::Create(
 
 void Syncer::Thread_Sync(Syncer& syncer)
 {
-	ThreadManagerAPI::SetCurrentThreadName("SYNC");
+	LoggerAPI::SetThreadName("SYNC");
 	LOG_DEBUG("BEGIN");
 
 	HeaderSyncer headerSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain);

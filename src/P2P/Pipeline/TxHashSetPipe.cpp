@@ -7,7 +7,6 @@
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Common/ShutdownManager.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <BlockChain/BlockChain.h>
 
@@ -123,7 +122,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPe
 {
 	try
 	{
-		ThreadManagerAPI::SetCurrentThreadName("TXHASHSET_PIPE");
+		LoggerAPI::SetThreadName("TXHASHSET_PIPE");
 		LOG_TRACE("BEGIN");
 
 		SyncStatusPtr pSyncStatus = pipeline.m_pSyncStatus;

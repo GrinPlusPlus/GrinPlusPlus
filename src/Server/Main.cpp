@@ -10,7 +10,6 @@
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
 #include <Common/ShutdownManager.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
@@ -27,7 +26,7 @@ void Run(const ConfigPtr& pConfig, const Options& options);
 
 int main(int argc, char* argv[])
 {
-	ThreadManagerAPI::SetCurrentThreadName("MAIN");
+	LoggerAPI::SetThreadName("MAIN");
 
 	Options opt = ParseOptions(argc, argv);
 	if (opt.help)

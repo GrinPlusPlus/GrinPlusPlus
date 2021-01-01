@@ -8,7 +8,6 @@
 #include <thread>
 #include <chrono>
 #include <Common/ShutdownManager.h>
-#include <Common/ThreadManager.h>
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>

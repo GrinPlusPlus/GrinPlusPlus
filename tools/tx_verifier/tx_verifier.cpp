@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <Common/Util/FileUtil.h>
+#include <Core/Global.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Validation/TransactionValidator.h>
@@ -15,6 +16,8 @@ int main(int argc, char* argv[])
         std::cout << "Usage: tx_verifier <tx.json>" << std::endl;
         return -1;
     }
+
+    Global::Init(Context::Create(Config::Default(EEnvironmentType::MAINNET)));
 
     std::vector<uint8_t> bytes;
     if (!FileUtil::ReadFile(argv[1], bytes)) {

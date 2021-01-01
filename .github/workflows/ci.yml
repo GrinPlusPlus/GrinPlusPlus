@@ -43,6 +43,7 @@ jobs:
             output_files: |
                 backend/bin/Release/Release/GrinNode.exe
                 backend/bin/Release/Release/slate_tool.exe
+                backend/bin/Release/Release/tx_verifier.exe
                 backend/bin/Release/GrinNode.exe
                 backend/bin/Release/RelWithDebInfo/GrinNode.exe
                 backend/bin/RelWithDebInfo/RelWithDebInfo/GrinNode.exe

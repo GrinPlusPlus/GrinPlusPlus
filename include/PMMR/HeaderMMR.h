@@ -4,17 +4,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Crypto/Hash.h>
 #include <Core/Traits/Batchable.h>
 #include <Core/Traits/Lockable.h>
 #include <vector>
 
-#ifdef MW_PMMR
-#define PMMR_API EXPORT
-#else
-#define PMMR_API IMPORT
-#endif
+#define PMMR_API
 
 // Forward Declarations
 class Config;

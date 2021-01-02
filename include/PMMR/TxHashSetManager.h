@@ -1,16 +1,11 @@
 #pragma once
 
-#include <Common/ImportExport.h>
 #include <PMMR/TxHashSet.h>
 #include <Config/Config.h>
 #include <Core/Traits/Lockable.h>
 #include <filesystem.h>
 
-#ifdef MW_PMMR
-#define TXHASHSET_API EXPORT
-#else
-#define TXHASHSET_API IMPORT
-#endif
+#define TXHASHSET_API
 
 // Forward Declarations
 class IBlockDB;

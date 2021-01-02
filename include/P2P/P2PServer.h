@@ -4,7 +4,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Crypto/BigInteger.h>
 #include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
@@ -14,11 +13,7 @@
 #include <Database/Database.h>
 #include <optional>
 
-#ifdef MW_P2P
-#define P2P_API EXPORT
-#else
-#define P2P_API IMPORT
-#endif
+#define P2P_API
 
 // Forward Declarations
 class Context;

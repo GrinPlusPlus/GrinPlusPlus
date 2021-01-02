@@ -4,16 +4,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Config/Config.h>
 #include <Core/Models/BlockHeader.h>
 #include <Database/BlockDb.h>
 
-#ifdef MW_POW
-#define POW_API EXPORT
-#else
-#define POW_API IMPORT
-#endif
+#define POW_API
 
 //
 // Entrypoint for the PoW module.

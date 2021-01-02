@@ -10,12 +10,12 @@ class ThreadUtil
 {
 public:
 	//
-	// Sleeps for the given number of milliseconds. Checks bool in given interval, and breaks early if the passed in bool gets set to true.
+	// Sleeps for the given number of milliseconds. Checks bool in given interval, and breaks early if the passed in bool gets set to false.
 	//
-	static void SleepFor(const std::chrono::milliseconds& millisToSleep, const std::chrono::milliseconds& checkInterval, const std::atomic_bool& terminate)
+	static void SleepFor(const std::chrono::milliseconds& millisToSleep, const std::chrono::milliseconds& checkInterval, const std::atomic_bool& keep_running)
 	{
 		std::chrono::time_point wakeTime = std::chrono::system_clock::now() + millisToSleep;
-		while (!terminate)
+		while (keep_running)
 		{
 			if (std::chrono::system_clock::now() >= wakeTime)
 			{
@@ -27,15 +27,15 @@ public:
 	}
 
 	//
-	// Sleeps for the given duration. Checks bool every 5ms, and breaks early if it gets set to true.
+	// Sleeps for the given duration. Checks bool every 5ms, and breaks early if it gets set to false.
 	//
 	template<class _Rep, class _Period> inline
-	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration, const std::atomic_bool& terminate)
+	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration, const std::atomic_bool& keep_running)
 	{
 		return SleepFor(
 			std::chrono::duration_cast<std::chrono::milliseconds>(duration),
 			std::chrono::milliseconds(5),
-			terminate
+			keep_running
 		);
 	}
 

@@ -1,12 +1,10 @@
 #include <Core/Models/TransactionInput.h>
 
+#include <Core/Global.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 #include <Crypto/Hasher.h>
 #include <BlockChain/ICoinView.h>
-
-// TODO: TEMP CODE - Remove after HF
-extern ICoinView::CPtr GetCoinView();
 
 TransactionInput::TransactionInput(Commitment&& commitment)
 	: m_commitment(std::move(commitment))
@@ -19,7 +17,7 @@ TransactionInput::TransactionInput(Commitment&& commitment)
 void TransactionInput::Serialize(Serializer& serializer) const
 {
 	if (serializer.GetProtocolVersion() < EProtocolVersion::V3) {
-		EOutputFeatures features = GetCoinView()->GetOutputType(m_commitment);
+		EOutputFeatures features = Global::GetCoinView()->GetOutputType(m_commitment);
 		serializer.Append<uint8_t>((uint8_t)features);
 	}
 

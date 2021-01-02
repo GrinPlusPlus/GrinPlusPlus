@@ -1,7 +1,6 @@
 #include "BlockHydrator.h"
 
 #include <Core/Util/TransactionUtil.h>
-#include <Core/Validation/CutThroughVerifier.h>
 #include <unordered_set>
 
 BlockHydrator::BlockHydrator(std::shared_ptr<const ITransactionPool> pTransactionPool)

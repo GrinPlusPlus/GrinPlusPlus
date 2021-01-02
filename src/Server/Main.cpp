@@ -9,7 +9,6 @@
 #include <Core/Global.h>
 #include <Wallet/WalletManager.h>
 #include <Config/ConfigLoader.h>
-#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
@@ -83,8 +82,6 @@ ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
 		throw;
 	}
 
-	ShutdownManagerAPI::RegisterHandlers();
-
 	return pConfig;
 }
 
@@ -135,7 +132,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	system_clock::time_point startTime = system_clock::now();
 	while (true)
 	{
-		if (ShutdownManagerAPI::WasShutdownRequested())
+		if (!Global::IsRunning())
 		{
 			if (!options.headless)
 			{
@@ -153,9 +150,8 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 			pNode->UpdateDisplay(secondsRunning);
 		}
 
-		ThreadUtil::SleepFor(seconds(1), ShutdownManagerAPI::WasShutdownRequested());
+		ThreadUtil::SleepFor(seconds(1), Global::IsRunning());
 	}
 
 	LOG_INFO_F("Closing Grin++ v{}", GRINPP_VERSION);
-	Global::Shutdown();
 }

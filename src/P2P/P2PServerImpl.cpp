@@ -177,7 +177,7 @@ void P2PServer::BroadcastTransaction(const TransactionPtr& pTransaction)
 
 namespace P2PAPI
 {
-	EXPORT std::shared_ptr<IP2PServer> StartP2PServer(
+	std::shared_ptr<IP2PServer> StartP2PServer(
 		const Context::Ptr& pContext,
 		const IBlockChain::Ptr& pBlockChain,
 		std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,

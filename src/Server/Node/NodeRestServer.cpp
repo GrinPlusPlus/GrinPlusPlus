@@ -9,12 +9,12 @@
 #include "API/TxHashSetAPI.h"
 
 #include <Common/Logger.h>
-#include <Common/ShutdownManager.h>
+#include <Core/Global.h>
 #include <Net/Util/HTTPUtil.h>
 
 static int Shutdown_Handler(struct mg_connection* conn, void*)
 {
-	ShutdownManagerAPI::Shutdown();
+	Global::Shutdown();
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 

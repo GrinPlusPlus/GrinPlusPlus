@@ -1,12 +1,7 @@
 #pragma once
 
-#include <Core/Global.h>
-#include <Core/Models/Transaction.h>
 #include <Consensus/HardForks.h>
 #include <Consensus/BlockWeight.h>
-
-#include <algorithm>
-#include <cstdint>
 
 class FeeUtil
 {

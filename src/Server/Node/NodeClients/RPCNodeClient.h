@@ -2,7 +2,7 @@
 
 #include <Wallet/NodeClient.h>
 #include <Net/Connections/HttpConnection.h>
-#include <Common/Exceptions/UnimplementedException.h>
+#include <Core/Exceptions/UnimplementedException.h>
 #include <Common/Macros.h>
 #include <memory>
 

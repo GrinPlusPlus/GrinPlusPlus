@@ -7,11 +7,11 @@
 
 #include <thread>
 #include <chrono>
-#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Core/Global.h>
 #include <Crypto/CSPRNG.h>
 
 ConnectionManager::ConnectionManager()
@@ -296,7 +296,7 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 
 void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 {
-	while (!ShutdownManagerAPI::WasShutdownRequested()) 
+	while (Global::IsRunning())
 	{
 		std::unique_ptr<MessageToBroadcast> pBroadcastMessage = connectionManager.m_sendQueue.copy_front();
 		if (pBroadcastMessage != nullptr)
@@ -316,7 +316,7 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 		}
 		else
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(100), ShutdownManagerAPI::WasShutdownRequested());
+			ThreadUtil::SleepFor(std::chrono::milliseconds(100), Global::IsRunning());
 		}
 	}
 }

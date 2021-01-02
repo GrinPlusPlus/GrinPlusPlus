@@ -59,6 +59,7 @@ void Logger::StartLogger(const fs::path& logDirectory, const spdlog::level::leve
 			m_pNodeLogger->set_level(logLevel);
 		}
 	}
+
 	if (m_pWalletLogger == nullptr)
 	{
 		const fs::path logPath = logDirectory / "Wallet.log";

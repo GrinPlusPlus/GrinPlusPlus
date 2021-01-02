@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Exceptions/UnimplementedException.h>
+#include <Core/Exceptions/UnimplementedException.h>
 #include <Core/Traits/Batchable.h>
 #include <memory>
 #include <shared_mutex>

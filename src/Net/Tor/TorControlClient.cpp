@@ -1,7 +1,7 @@
 #include "TorControlClient.h"
 
 #include <Common/Util/ThreadUtil.h>
-#include <Common/ShutdownManager.h>
+#include <Core/Global.h>
 #include <regex>
 
 TorControlClient::UPtr TorControlClient::Connect(const uint16_t control_port, const std::string& password)
@@ -28,7 +28,7 @@ TorControlClient::UPtr TorControlClient::Connect(const uint16_t control_port, co
 		pClient->Invoke(auth_command);
 
 		for (int i = 0; i < 10; i++) {
-			ThreadUtil::SleepFor(std::chrono::seconds(2), ShutdownManagerAPI::WasShutdownRequested());
+			ThreadUtil::SleepFor(std::chrono::seconds(2), Global::IsRunning());
 			if (pClient->IsBootstrapped()) {
 				return pClient;
 			}

@@ -6,8 +6,8 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
+#include <Core/Global.h>
 #include <BlockChain/BlockChain.h>
 
 #include <filesystem.h>
@@ -75,7 +75,7 @@ void TxHashSetPipe::ReceiveTxHashSet(Connection& connection, const TxHashSetArch
 			const int bytesToRead = (std::min)((int)(txHashSetArchiveMessage.GetZippedSize() - bytesReceived), BUFFER_SIZE);
 
 			const bool received = pSocket->Receive(bytesToRead, false, Socket::BLOCKING, buffer);
-			if (!received || ShutdownManagerAPI::WasShutdownRequested())
+			if (!received || !Global::IsRunning())
 			{
 				LOG_ERROR("Transmission ended abruptly");
 				fout.close();

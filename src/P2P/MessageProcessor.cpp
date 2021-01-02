@@ -31,12 +31,12 @@
 #include <Core/File/FileRemover.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Exceptions/BlockChainException.h>
+#include <Core/Global.h>
 #include <P2P/Common.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <BlockChain/BlockChain.h>
-#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
 #include <thread>
 #include <fstream>
@@ -405,7 +405,7 @@ void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequ
 			const std::vector<unsigned char> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
 			const bool sent = pSocket->Send(bytesToSend, false);
 
-			if (!sent || ShutdownManagerAPI::WasShutdownRequested()) {
+			if (!sent || !Global::IsRunning()) {
 				LOG_ERROR("Transmission ended abruptly");
 				file.close();
 				FileUtil::RemoveFile(zipFilePath);

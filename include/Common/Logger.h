@@ -1,14 +1,9 @@
 #pragma once
 
-#include <Common/ImportExport.h>
 #include <Common/Util/StringUtil.h>
 #include <string>
 
-#ifdef MW_INFRASTRUCTURE
-#define LOGGER_API EXPORT
-#else
-#define LOGGER_API IMPORT
-#endif
+#define LOGGER_API
 
 namespace LoggerAPI
 {

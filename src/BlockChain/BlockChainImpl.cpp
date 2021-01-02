@@ -11,15 +11,13 @@
 
 #include <GrinVersion.h>
 #include <Common/Logger.h>
+#include <Core/Global.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSet.h>
 #include <Consensus/BlockTime.h>
 #include <filesystem.h>
 #include <algorithm>
-
-// TODO: TEMP CODE - Remove after HF
-static ICoinView::CPtr COIN_VIEW = nullptr;
 
 BlockChain::BlockChain(
 	const Config& config,
@@ -102,7 +100,7 @@ std::shared_ptr<BlockChain> BlockChain::Create(
 		pDatabase->Write()->SetVersion(3);
 	}
 
-	COIN_VIEW = std::make_shared<CoinView>(*pChainState);
+	Global::SetCoinView(std::make_shared<CoinView>(*pChainState));
 
 	return std::shared_ptr<BlockChain>(new BlockChain(
 		config,
@@ -436,10 +434,4 @@ namespace BlockChainAPI
 		// It would also be a good idea to re-validate the MMRs on load.
 		return BlockChain::Create(config, pDatabase, pTxHashSetManager, pTransactionPool, pHeaderMMR);
 	}
-}
-
-// TODO: TEMP CODE - Remove after HF
-ICoinView::CPtr GetCoinView()
-{
-	return COIN_VIEW;
 }

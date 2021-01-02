@@ -4,16 +4,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Common/Secure.h>
 #include <Crypto/BigInteger.h>
 #include <vector>
 
-#ifdef MW_CRYPTO
-#define CRYPTO_API EXPORT
-#else
-#define CRYPTO_API IMPORT
-#endif
+#define CRYPTO_API
 
 //
 // A wrapper around a third-party CSPRNG random number generator to generate cryptographically-secure random numbers.

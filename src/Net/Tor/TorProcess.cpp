@@ -3,8 +3,8 @@
 #include <Net/Tor/TorAddressParser.h>
 #include <Net/Tor/TorConnection.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Common/ShutdownManager.h>
 #include <Common/Logger.h>
+#include <Core/Global.h>
 #include <cstdlib>
 #include <memory>
 
@@ -26,7 +26,7 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	while (!ShutdownManagerAPI::WasShutdownRequested())
+	while (Global::IsRunning())
 	{
 		try
 		{
@@ -39,7 +39,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				}
 
 				lock.unlock();
-				ThreadUtil::SleepFor(std::chrono::seconds(30), ShutdownManagerAPI::WasShutdownRequested());
+				ThreadUtil::SleepFor(std::chrono::seconds(30), Global::IsRunning());
 				continue;
 			}
 
@@ -50,7 +50,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 #else
 				system("killall tor");
 #endif
-				ThreadUtil::SleepFor(std::chrono::seconds(5), ShutdownManagerAPI::WasShutdownRequested());
+				ThreadUtil::SleepFor(std::chrono::seconds(5), Global::IsRunning());
 			}
 
 			LOG_INFO("Initializing Tor");
@@ -75,7 +75,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 		catch (const std::exception& e)
 		{
 			LOG_ERROR_F("Exception thrown: {}", e);
-			ThreadUtil::SleepFor(std::chrono::seconds(30), ShutdownManagerAPI::WasShutdownRequested());
+			ThreadUtil::SleepFor(std::chrono::seconds(30), Global::IsRunning());
 		}
 	}
 }

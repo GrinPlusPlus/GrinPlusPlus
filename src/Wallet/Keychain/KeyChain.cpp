@@ -7,7 +7,7 @@
 #include <Crypto/Crypto.h>
 #include <Crypto/Hasher.h>
 #include <Wallet/Exceptions/KeyChainException.h>
-#include <Common/Exceptions/UnimplementedException.h>
+#include <Core/Exceptions/UnimplementedException.h>
 #include <Common/Util/VectorUtil.h>
 
 KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce)

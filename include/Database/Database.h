@@ -4,7 +4,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Common/ImportExport.h>
 #include <Core/Traits/Lockable.h>
 
 // Forward Declarations
@@ -12,11 +11,7 @@ class Config;
 class IBlockDB;
 class IPeerDB;
 
-#ifdef MW_DATABASE
-#define DATABASE_API EXPORT
-#else
-#define DATABASE_API IMPORT
-#endif
+#define DATABASE_API
 
 //
 // Entrypoint for the Database module.

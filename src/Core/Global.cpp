@@ -1,41 +1,77 @@
 #include <Core/Global.h>
 
+#include <csignal>
 #include <cassert>
 
-static Context::Ptr GLOBAL_CONTEXT = nullptr;
+static std::weak_ptr<Context> GLOBAL_CONTEXT;
+static std::atomic_bool RUNNING = false;
+static std::shared_ptr<const ICoinView> COIN_VIEW;
+
+static void SigIntHandler(int signum)
+{
+	printf("\n\n%d signal received\n\n", signum);
+	Global::Shutdown();
+}
 
 void Global::Init(const Context::Ptr& pContext)
 {
 	GLOBAL_CONTEXT = pContext;
+	RUNNING = true;
+
+	signal(SIGINT, SigIntHandler);
+	signal(SIGTERM, SigIntHandler);
+	signal(SIGABRT, SigIntHandler);
+	signal(9, SigIntHandler);
+}
+
+const std::atomic_bool& Global::IsRunning()
+{
+	return RUNNING;
 }
 
 void Global::Shutdown()
 {
-	GLOBAL_CONTEXT.reset();
+	RUNNING = false;
 }
 
 const Config& Global::GetConfig()
 {
-	assert(GLOBAL_CONTEXT != nullptr);
-
-	return GLOBAL_CONTEXT->GetConfig();
+	return LockContext()->GetConfig();
 }
 
 Context::Ptr Global::GetContext()
 {
-	return GLOBAL_CONTEXT;
+	return GLOBAL_CONTEXT.lock();
 }
 
 const Environment& Global::GetEnvVars()
 {
-	assert(GLOBAL_CONTEXT != nullptr);
-
-	return GLOBAL_CONTEXT->GetConfig().GetEnvironment();
+	return LockContext()->GetConfig().GetEnvironment();
 }
 
 EEnvironmentType Global::GetEnv()
 {
+	return LockContext()->GetConfig().GetEnvironment().GetType();
+}
+
+void Global::SetCoinView(const std::shared_ptr<const ICoinView>& pCoinView)
+{
+	COIN_VIEW = pCoinView;
+}
+
+std::shared_ptr<const ICoinView> Global::GetCoinView()
+{
+	return COIN_VIEW;
+}
+
+Context::Ptr Global::LockContext()
+{
 	assert(GLOBAL_CONTEXT != nullptr);
 
-	return GLOBAL_CONTEXT->GetConfig().GetEnvironment().GetType();
+	auto pContext = GLOBAL_CONTEXT.lock();
+	if (pContext == nullptr) {
+		throw std::runtime_error("Failed to obtain global context.");
+	}
+
+	return pContext;
 }

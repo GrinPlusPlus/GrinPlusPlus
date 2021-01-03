@@ -17,7 +17,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    Global::Init(Context::Create(Config::Default(EEnvironmentType::MAINNET)));
+    auto pContext = Context::Create(Config::Default(EEnvironmentType::MAINNET));
+    Global::Init(pContext);
 
     std::vector<uint8_t> bytes;
     if (!FileUtil::ReadFile(argv[1], bytes)) {

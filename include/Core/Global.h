@@ -1,12 +1,14 @@
 #pragma once
 
-#include <Core/Context.h>
-#include <Config/Config.h>
+#include <Config/EnvironmentType.h>
 #include <atomic>
 #include <memory>
 
 // Forward Declarations
+class Context;
+class Config;
 class ICoinView;
+class Environment;
 
 class Global
 {
@@ -15,12 +17,12 @@ public:
     /// Initializes global context.
     /// </summary>
     /// <param name="pContext"></param>
-    static void Init(const Context::Ptr& pContext);
+    static void Init(const std::shared_ptr<Context>& pContext);
     static const std::atomic_bool& IsRunning();
     static void Shutdown();
     
     static const Config& GetConfig();
-    static Context::Ptr GetContext();
+    static std::shared_ptr<Context> GetContext();
     static const Environment& GetEnvVars();
     static EEnvironmentType GetEnv();
 
@@ -28,5 +30,5 @@ public:
     static std::shared_ptr<const ICoinView> GetCoinView();
 
 private:
-    static Context::Ptr LockContext();
+    static std::shared_ptr<Context> LockContext();
 };

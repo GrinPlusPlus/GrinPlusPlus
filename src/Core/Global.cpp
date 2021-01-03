@@ -1,4 +1,6 @@
 #include <Core/Global.h>
+#include <Core/Context.h>
+#include <Config/Config.h>
 
 #include <csignal>
 #include <cassert>

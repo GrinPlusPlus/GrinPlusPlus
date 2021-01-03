@@ -34,11 +34,7 @@ public:
 			{
 				thread.join();
 			}
-		}
-		catch (...)
-		{
-
-		}
+		} catch (...) { }
 	}
 
 	static void JoinAll(std::vector<std::thread>& threads)

@@ -2,6 +2,7 @@
 #include "DifficultyLoader.h"
 
 #include <Consensus/BlockDifficulty.h>
+#include <Core/Global.h>
 
 using namespace Consensus;
 
@@ -47,14 +48,14 @@ HeaderInfo DifficultyCalculator::NextWTEMA(const BlockHeader& header) const
 	}
 
 	const uint64_t last_block_time = pLastHeader->GetTimestamp() - pPrevHeader->GetTimestamp();
-	const uint64_t last_diff = pLastHeader->GetTotalDifficulty();
+	const uint64_t last_diff = pLastHeader->GetTotalDifficulty() - pPrevHeader->GetTotalDifficulty();
 
 	// wtema difficulty update
 	const uint64_t next_diff = last_diff * WTEMA_HALF_LIFE / (WTEMA_HALF_LIFE - BLOCK_TIME_SEC + last_block_time);
 
 	// minimum difficulty at graph_weight(32) ensures difficulty increase on 59s block
 	// since 16384 * WTEMA_HALF_LIFE / (WTEMA_HALF_LIFE - 1) > 16384
-	const uint64_t difficulty = (std::max)(MIN_WTEMA_DIFFICULTY, next_diff);
+	const uint64_t difficulty = (std::max)(min_wtema_graph_weight(), next_diff);
 
 	return HeaderInfo::FromDiffAndScaling(difficulty, 0);
 }

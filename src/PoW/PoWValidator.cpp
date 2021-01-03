@@ -26,10 +26,11 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
 		return false;
 	}
 
+	const uint64_t max_difficulty = GetMaximumDifficulty(header);
 	const uint64_t targetDifficulty = header.GetTotalDifficulty() - previousHeader.GetTotalDifficulty();
-	if (GetMaximumDifficulty(header) < targetDifficulty)
+	if (max_difficulty < targetDifficulty)
 	{
-		LOG_WARNING_F("Target difficulty too high for block {}", header);
+		LOG_WARNING_F("Target difficulty {} too high for block {}. Max: {}", targetDifficulty, header, max_difficulty);
 		return false;
 	}
 

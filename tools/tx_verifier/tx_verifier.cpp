@@ -2,6 +2,7 @@
 
 #include <Common/Util/FileUtil.h>
 #include <Core/Global.h>
+#include <Core/Context.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Validation/TransactionValidator.h>

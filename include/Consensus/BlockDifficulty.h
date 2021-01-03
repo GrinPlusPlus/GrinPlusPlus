@@ -5,9 +5,10 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cstdint>
+#include <algorithm>
 
 #include <Consensus/BlockTime.h>
-#include <algorithm>
+#include <Core/Global.h>
 
 // See: https://github.com/mimblewimble/grin/blob/master/core/src/consensus.rs
 namespace Consensus
@@ -87,5 +88,13 @@ namespace Consensus
 	/// minimum solution difficulty after HardFork4 when PoW becomes primary only Cuckatoo32+
 	static constexpr uint64_t C32_GRAPH_WEIGHT = (((uint64_t)2) << ((uint64_t)(32 - BASE_EDGE_BITS))) * 32; // 16384
 
-	static constexpr uint64_t MIN_WTEMA_DIFFICULTY = C32_GRAPH_WEIGHT;
+	static uint64_t min_wtema_graph_weight()
+	{
+		const EEnvironmentType env = Global::GetEnv();
+		if (env == EEnvironmentType::MAINNET) {
+			return C32_GRAPH_WEIGHT;
+		} else {
+			return GraphWeight(0, SECOND_POW_EDGE_BITS);
+		}
+	}
 }

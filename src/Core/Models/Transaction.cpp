@@ -4,6 +4,7 @@
 #include <Core/Global.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
+#include <Config/Config.h>
 #include <Consensus/BlockWeight.h>
 #include <Consensus/HardForks.h>
 

@@ -66,7 +66,7 @@ public:
 	}
 
 private:
-	Reader(std::shared_ptr<InnerReader<T>> pReader)
+	Reader(const std::shared_ptr<InnerReader<T>>& pReader)
 		: m_pReader(pReader)
 	{
 
@@ -78,7 +78,7 @@ private:
 class MutexUnlocker
 {
 public:
-	MutexUnlocker(std::shared_ptr<std::shared_mutex> pMutex)
+	MutexUnlocker(const std::shared_ptr<std::shared_mutex>& pMutex)
 		: m_pMutex(pMutex)
 	{
 

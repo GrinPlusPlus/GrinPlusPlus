@@ -72,7 +72,7 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 	{
 		// This is the patience timer, we loop every n secs.
 		const uint8_t patience = config.GetPatienceSeconds();
-		ThreadUtil::SleepFor(std::chrono::seconds(patience), dandelion.m_terminate);
+		ThreadUtil::SleepFor(std::chrono::seconds(patience));
 
 		try
 		{

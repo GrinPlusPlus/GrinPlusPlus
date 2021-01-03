@@ -200,7 +200,7 @@ void Connection::Run()
 					break;
 				}
 
-				ThreadUtil::SleepFor(std::chrono::milliseconds(5), m_terminate);
+				ThreadUtil::SleepFor(std::chrono::milliseconds(5));
 			}
 		}
 		catch (const DeserializationException&)

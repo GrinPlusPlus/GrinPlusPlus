@@ -316,7 +316,7 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 		}
 		else
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(100), Global::IsRunning());
+			ThreadUtil::SleepFor(std::chrono::milliseconds(100));
 		}
 	}
 }

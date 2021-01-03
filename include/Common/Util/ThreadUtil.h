@@ -5,38 +5,25 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <Core/Global.h>
 
 class ThreadUtil
 {
 public:
 	//
-	// Sleeps for the given number of milliseconds. Checks bool in given interval, and breaks early if the passed in bool gets set to false.
+	// Sleeps for the given duration. Checks every 5ms to make sure node is being shutdown, and breaks if it is.
 	//
-	static void SleepFor(const std::chrono::milliseconds& millisToSleep, const std::chrono::milliseconds& checkInterval, const std::atomic_bool& keep_running)
+	template<class _Rep, class _Period> inline
+	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration)
 	{
-		std::chrono::time_point wakeTime = std::chrono::system_clock::now() + millisToSleep;
-		while (keep_running)
-		{
-			if (std::chrono::system_clock::now() >= wakeTime)
-			{
+		std::chrono::time_point wakeTime = std::chrono::system_clock::now() + duration;
+		while (Global::IsRunning()) {
+			if (std::chrono::system_clock::now() >= wakeTime) {
 				break;
 			}
 
-			std::this_thread::sleep_for(checkInterval);
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		}
-	}
-
-	//
-	// Sleeps for the given duration. Checks bool every 5ms, and breaks early if it gets set to false.
-	//
-	template<class _Rep, class _Period> inline
-	static void SleepFor(const std::chrono::duration<_Rep, _Period>& duration, const std::atomic_bool& keep_running)
-	{
-		return SleepFor(
-			std::chrono::duration_cast<std::chrono::milliseconds>(duration),
-			std::chrono::milliseconds(5),
-			keep_running
-		);
 	}
 
 	static void Join(std::thread& thread)

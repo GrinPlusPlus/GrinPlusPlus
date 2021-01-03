@@ -57,7 +57,7 @@ void BlockPipe::Thread_ProcessNewBlocks(BlockPipe& pipeline)
 		}
 		else
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5));
 		}
 	}
 
@@ -90,7 +90,7 @@ void BlockPipe::Thread_PostProcessBlocks(BlockPipe& pipeline)
 	{
 		if (!pipeline.m_pBlockChain->ProcessNextOrphanBlock())
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5));
 		}
 	}
 

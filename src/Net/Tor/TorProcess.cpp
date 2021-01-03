@@ -39,7 +39,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				}
 
 				lock.unlock();
-				ThreadUtil::SleepFor(std::chrono::seconds(30), Global::IsRunning());
+				ThreadUtil::SleepFor(std::chrono::seconds(30));
 				continue;
 			}
 
@@ -50,7 +50,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 #else
 				system("killall tor");
 #endif
-				ThreadUtil::SleepFor(std::chrono::seconds(5), Global::IsRunning());
+				ThreadUtil::SleepFor(std::chrono::seconds(5));
 			}
 
 			LOG_INFO("Initializing Tor");
@@ -75,7 +75,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 		catch (const std::exception& e)
 		{
 			LOG_ERROR_F("Exception thrown: {}", e);
-			ThreadUtil::SleepFor(std::chrono::seconds(30), Global::IsRunning());
+			ThreadUtil::SleepFor(std::chrono::seconds(30));
 		}
 	}
 }

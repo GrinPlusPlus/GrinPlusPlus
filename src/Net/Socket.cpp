@@ -71,7 +71,7 @@ bool Socket::Connect(std::shared_ptr<asio::io_context> pContext)
 	auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
 	while (!m_errorCode && !m_socketOpen && std::chrono::system_clock::now() < timeout)
 	{
-		ThreadUtil::SleepFor(std::chrono::milliseconds(10), false);
+		ThreadUtil::SleepFor(std::chrono::milliseconds(10));
 	}
 
 	return m_socketOpen;
@@ -296,7 +296,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
 				return false;
 			}
 
-			ThreadUtil::SleepFor(std::chrono::milliseconds(5), false);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(5));
 			hasReceivedData = HasReceivedData();
 		}
 	}

@@ -3,7 +3,11 @@
 #include <csignal>
 #include <cassert>
 
+// A reference to SHARED_CONTEXT is kept until Shutdown() to make sure it doesn't get cleaned up.
+static std::shared_ptr<Context> SHARED_CONTEXT;
+
 static std::weak_ptr<Context> GLOBAL_CONTEXT;
+
 static std::atomic_bool RUNNING = false;
 static std::shared_ptr<const ICoinView> COIN_VIEW;
 
@@ -15,6 +19,7 @@ static void SigIntHandler(int signum)
 
 void Global::Init(const Context::Ptr& pContext)
 {
+	SHARED_CONTEXT = pContext;
 	GLOBAL_CONTEXT = pContext;
 	RUNNING = true;
 
@@ -32,6 +37,7 @@ const std::atomic_bool& Global::IsRunning()
 void Global::Shutdown()
 {
 	RUNNING = false;
+	SHARED_CONTEXT.reset();
 }
 
 const Config& Global::GetConfig()

@@ -86,7 +86,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 			LOG_WARNING_F("Exception thrown: {}", e.what());
 		}
 
-		ThreadUtil::SleepFor(std::chrono::milliseconds(100), seeder.m_terminate);
+		ThreadUtil::SleepFor(std::chrono::milliseconds(100));
 	}
 
 	LOG_TRACE("END");
@@ -134,7 +134,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
 				}
 				else
 				{
-					ThreadUtil::SleepFor(std::chrono::milliseconds(10), seeder.m_terminate);
+					ThreadUtil::SleepFor(std::chrono::milliseconds(10));
 				}
 			}
 

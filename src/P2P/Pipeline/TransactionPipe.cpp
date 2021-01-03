@@ -63,7 +63,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 			}
 			else
 			{
-				ThreadUtil::SleepFor(std::chrono::milliseconds(5), pipeline.m_terminate);
+				ThreadUtil::SleepFor(std::chrono::milliseconds(5));
 			}
 		}
 		catch (std::exception& e)

@@ -61,7 +61,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	{
 		try
 		{
-			ThreadUtil::SleepFor(std::chrono::milliseconds(10), syncer.m_terminate);
+			ThreadUtil::SleepFor(std::chrono::milliseconds(10));
 			syncer.UpdateSyncStatus();
 
 			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= MINIMUM_NUM_PEERS)

@@ -4,11 +4,11 @@
 #include "CoinSelection.h"
 #include "SlateUtil.h"
 
+#include <Consensus.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Util/FeeUtil.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <Common/Logger.h>
-#include <Consensus/HardForks.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Crypto/ED25519.h>
 

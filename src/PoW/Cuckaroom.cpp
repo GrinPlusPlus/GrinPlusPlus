@@ -40,10 +40,10 @@ uint64_t cuckaroom_sipblock(siphash_keys& keys, const word_t edge, uint64_t* buf
 int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys)
 {
 	word_t xorfrom = 0, xorto = 0;
-	u64 sips[EDGE_BLOCK_SIZE];
+	uint64_t sips[EDGE_BLOCK_SIZE];
 	word_t from[PROOFSIZE], to[PROOFSIZE], visited[PROOFSIZE];
 
-	for (u32 n = 0; n < PROOFSIZE; n++)
+	for (uint32_t n = 0; n < PROOFSIZE; n++)
 	{
 		if (edges[n] > EDGEMASK) {
 			return POW_TOO_BIG;
@@ -53,7 +53,7 @@ int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys)
 			return POW_TOO_SMALL;
 		}
 
-		u64 edge = cuckaroom_sipblock(keys, edges[n], sips);
+		uint64_t edge = cuckaroom_sipblock(keys, edges[n], sips);
 		xorfrom ^= from[n] = edge & EDGEMASK;
 		xorto ^= to[n] = (edge >> 32) & EDGEMASK;
 		visited[n] = false;
@@ -64,12 +64,12 @@ int verify_cuckaroom(const word_t edges[PROOFSIZE], siphash_keys& keys)
 		return POW_NON_MATCHING;
 	}
 
-	u32 n = 0, i = 0;
+	uint32_t n = 0, i = 0;
 	do {                        // follow cycle
 		if (visited[i])
 			return POW_BRANCH;
 		visited[i] = true;
-		u32 nexti;
+		uint32_t nexti;
 		for (nexti = 0; from[nexti] != to[i]; ) // find outgoing edge meeting incoming edge i
 			if (++nexti == PROOFSIZE)
 				return POW_DEAD_END;

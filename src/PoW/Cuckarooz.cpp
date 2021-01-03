@@ -38,10 +38,10 @@ uint64_t cuckarooz_sipblock(siphash_keys& keys, const word_t edge, uint64_t* buf
 int verify_cuckarooz(const word_t edges[PROOFSIZE], siphash_keys& keys)
 {
     word_t xoruv = 0;
-    u64 sips[EDGE_BLOCK_SIZE];
+    uint64_t sips[EDGE_BLOCK_SIZE];
     word_t uv[2 * PROOFSIZE];
 
-    for (u32 n = 0; n < PROOFSIZE; n++)
+    for (uint32_t n = 0; n < PROOFSIZE; n++)
     {
         if (edges[n] > EDGEMASK) {
             return POW_TOO_BIG;
@@ -51,7 +51,7 @@ int verify_cuckarooz(const word_t edges[PROOFSIZE], siphash_keys& keys)
             return POW_TOO_SMALL;
         }
 
-        u64 edge = cuckarooz_sipblock(keys, edges[n], sips);
+        uint64_t edge = cuckarooz_sipblock(keys, edges[n], sips);
         xoruv ^= uv[2 * n] = edge & NODEMASK;
         xoruv ^= uv[2 * n + 1] = (edge >> 32) & NODEMASK;
     }
@@ -61,10 +61,10 @@ int verify_cuckarooz(const word_t edges[PROOFSIZE], siphash_keys& keys)
         return POW_NON_MATCHING;
     }
 
-    u32 n = 0, i = 0, j;
+    uint32_t n = 0, i = 0, j;
     do // follow cycle
     {
-        for (u32 k = j = i; (k = (k + 1) % (2 * PROOFSIZE)) != i; )
+        for (uint32_t k = j = i; (k = (k + 1) % (2 * PROOFSIZE)) != i; )
         {
             if (uv[k] == uv[i]) { // find other edge endpoint identical to one at i
                 if (j != i) {

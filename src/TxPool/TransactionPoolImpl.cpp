@@ -1,9 +1,9 @@
 #include "TransactionPoolImpl.h"
 #include "ValidTransactionFinder.h"
 
+#include <Consensus.h>
 #include <Core/Util/TransactionUtil.h>
 #include <Database/BlockDb.h>
-#include <Consensus/BlockTime.h>
 #include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 #include <Core/Util/FeeUtil.h>

@@ -5,9 +5,9 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
+#include <Consensus.h>
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
-#include <Consensus/Common.h>
 #include <Common/Util/HexUtil.h>
 #include <Common/Logger.h>
 #include <BlockChain/BlockChain.h>

@@ -1,13 +1,13 @@
 #include "WalletImpl.h"
 #include "WalletRefresher.h"
 
+#include <Consensus.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/NodeClient.h>
 #include <Common/Logger.h>
 #include <Crypto/CryptoException.h>
 #include <Crypto/Hasher.h>
 #include <Core/Exceptions/WalletException.h>
-#include <Consensus/Common.h>
 #include <unordered_set>
 
 WalletImpl::WalletImpl(

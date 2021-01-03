@@ -4,7 +4,7 @@
 #include <Crypto/Hasher.h>
 
 // generate edge endpoint in cuck(at)oo graph without partition bit
-word_t sipnode(siphash_keys* keys, word_t edge, u32 uorv, const word_t edgeMask)
+word_t sipnode(siphash_keys* keys, word_t edge, uint32_t uorv, const word_t edgeMask)
 {
     siphash_state v(*keys);
     v.hash24(2 * edge + uorv);
@@ -23,7 +23,7 @@ int verify_cuckatoo(const word_t edges[PROOFSIZE], siphash_keys* keys, const uin
     // used to mask siphash output
     const word_t edgeMask = ((word_t)numEdges - 1);
 
-    for (u32 n = 0; n < PROOFSIZE; n++)
+    for (uint32_t n = 0; n < PROOFSIZE; n++)
     {
         if (edges[n] > edgeMask) {
             return POW_TOO_BIG;
@@ -42,11 +42,11 @@ int verify_cuckatoo(const word_t edges[PROOFSIZE], siphash_keys* keys, const uin
         return POW_NON_MATCHING;
     }
 
-    u32 n = 0, i = 0, j;
+    uint32_t n = 0, i = 0, j;
     do
     {
         // follow cycle
-        for (u32 k = j = i; (k = (k + 2) % (2 * PROOFSIZE)) != i; )
+        for (uint32_t k = j = i; (k = (k + 2) % (2 * PROOFSIZE)) != i; )
         {
             if (uvs[k] >> 1 == uvs[i] >> 1) {
                 // find other edge endpoint matching one at i

@@ -18,19 +18,19 @@
 int verify_cuckarood(const word_t edges[PROOFSIZE], siphash_keys& keys)
 {
     word_t xor0 = 0, xor1 = 0;
-    u64 sips[EDGE_BLOCK_SIZE];
+    uint64_t sips[EDGE_BLOCK_SIZE];
     word_t uvs[2 * PROOFSIZE];
-    u32 ndir[2] = { 0, 0 };
+    uint32_t ndir[2] = { 0, 0 };
 
-    for (u32 n = 0; n < PROOFSIZE; n++) {
-        u32 dir = edges[n] & 1;
+    for (uint32_t n = 0; n < PROOFSIZE; n++) {
+        uint32_t dir = edges[n] & 1;
         if (ndir[dir] >= PROOFSIZE / 2)
             return POW_UNBALANCED;
         if (edges[n] >= NEDGES2)
             return POW_TOO_BIG;
         if (n && edges[n] <= edges[n - 1])
             return POW_TOO_SMALL;
-        u64 edge = sipblock<25>(keys, edges[n], sips);
+        uint64_t edge = sipblock<25>(keys, edges[n], sips);
         xor0 ^= uvs[4 * ndir[dir] + 2 * dir] = edge & NODE1MASK;
         // printf("%2d %8x\t", 4 * ndir[dir] + 2 * dir , edge        & NODE1MASK);
         xor1 ^= uvs[4 * ndir[dir] + 2 * dir + 1] = (edge >> 32) & NODE1MASK;
@@ -39,9 +39,9 @@ int verify_cuckarood(const word_t edges[PROOFSIZE], siphash_keys& keys)
     }
     if (xor0 | xor1)              // optional check for obviously bad proofs
         return POW_NON_MATCHING;
-    u32 n = 0, i = 0, j;
+    uint32_t n = 0, i = 0, j;
     do {                        // follow cycle
-        for (u32 k = ((j = i) % 4) ^ 2; k < 2 * PROOFSIZE; k += 4) {
+        for (uint32_t k = ((j = i) % 4) ^ 2; k < 2 * PROOFSIZE; k += 4) {
             if (uvs[k] == uvs[i]) { // find reverse direction edge endpoint identical to one at i
                 if (j != i)           // already found one before
                     return POW_BRANCH;

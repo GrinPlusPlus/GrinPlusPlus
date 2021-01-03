@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <Consensus.h>
 #include <Crypto/Hash.h>
 #include <Crypto/BigInteger.h>
-#include <Consensus/BlockDifficulty.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 

@@ -1,7 +1,7 @@
 #include "StateSyncer.h"
 #include "../Messages/TxHashSetRequestMessage.h"
 
-#include <Consensus/BlockTime.h>
+#include <Consensus.h>
 #include <Common/Logger.h>
 #include <Core/Global.h>
 

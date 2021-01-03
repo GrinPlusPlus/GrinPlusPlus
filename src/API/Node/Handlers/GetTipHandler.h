@@ -1,9 +1,9 @@
 #pragma once
 
+#include <Consensus.h>
 #include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <Consensus/HardForks.h>
 #include <optional>
 
 class GetTipHandler : public RPCMethod

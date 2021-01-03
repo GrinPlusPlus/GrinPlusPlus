@@ -1,10 +1,10 @@
 #include <Core/Models/TransactionKernel.h>
 
+#include <Consensus.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/Hasher.h>
-#include <Consensus/BlockTime.h>
 
 TransactionKernel::TransactionKernel(const EKernelFeatures features, const Fee& fee, const uint64_t lockHeight, Commitment&& excessCommitment, Signature&& excessSignature)
 	: m_features(features), m_fee(fee), m_lockHeight(lockHeight), m_excessCommitment(std::move(excessCommitment)), m_excessSignature(std::move(excessSignature))

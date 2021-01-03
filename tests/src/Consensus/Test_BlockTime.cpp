@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
-#include <Consensus/BlockTime.h>
+#include <Consensus.h>
+
 using namespace Consensus;
 
 TEST_CASE("Consensus::GetMaxBlockTime")

@@ -1,8 +1,8 @@
 #include <Core/Validation/TransactionValidator.h>
 #include <Core/Validation/TransactionBodyValidator.h>
 
+#include <Consensus.h>
 #include <Common/Util/HexUtil.h>
-#include <Consensus/BlockWeight.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Logger.h>
 #include <algorithm>
@@ -29,7 +29,7 @@ void TransactionValidator::ValidateWeight(const TransactionBody& body, const uin
 	uint64_t weight = body.CalcWeight(block_height);
 
 	// Reserve enough space for a coinbase output and kernel
-	uint64_t reserve_weight = (Consensus::BLOCK_OUTPUT_WEIGHT + Consensus::BLOCK_KERNEL_WEIGHT);
+	uint64_t reserve_weight = (Consensus::OUTPUT_WEIGHT + Consensus::KERNEL_WEIGHT);
 
 	if ((weight + reserve_weight) > Consensus::MAX_BLOCK_WEIGHT) {
 		throw BAD_DATA_EXCEPTION("Transaction exceeds maximum weight");

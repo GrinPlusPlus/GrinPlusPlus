@@ -3,11 +3,11 @@
 #include "NodeClients/DefaultNodeClient.h"
 #include "../console.h"
 
+#include <Consensus.h>
 #include <Core/Context.h>
 #include <P2P/P2PServer.h>
 #include <Config/Config.h>
 #include <BlockChain/BlockChain.h>
-#include <Consensus/BlockDifficulty.h>
 #include <Database/Database.h>
 #include <Common/Logger.h>
 #include <PMMR/TxHashSetManager.h>

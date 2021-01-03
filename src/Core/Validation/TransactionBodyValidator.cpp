@@ -1,9 +1,8 @@
 #include <Core/Validation/TransactionBodyValidator.h>
 
+#include <Consensus.h>
 #include <Core/Validation/KernelSignatureValidator.h>
 #include <Core/Exceptions/BadDataException.h>
-#include <Consensus/BlockWeight.h>
-#include <Consensus/Sorting.h>
 #include <Common/Logger.h>
 #include <Common/Util/HexUtil.h>
 #include <Crypto/Crypto.h>

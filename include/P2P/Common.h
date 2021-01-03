@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-#include <Consensus/BlockWeight.h>
+#include <Consensus.h>
 #include <GrinVersion.h>
 
 namespace P2P
@@ -18,7 +18,7 @@ namespace P2P
 	static const uint64_t HEADER_LENGTH = 11;
 
 	// Max theoretical size of a block filled with outputs.
-	static const uint64_t MAX_BLOCK_SIZE = ((Consensus::MAX_BLOCK_WEIGHT / Consensus::BLOCK_OUTPUT_WEIGHT) * 708);
+	static const uint64_t MAX_BLOCK_SIZE = ((Consensus::MAX_BLOCK_WEIGHT / Consensus::OUTPUT_WEIGHT) * 708);
 
 	// Maximum number of block headers a peer should ever send
 	static const uint32_t MAX_BLOCK_HEADERS = 512;

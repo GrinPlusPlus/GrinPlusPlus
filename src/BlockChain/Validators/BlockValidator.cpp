@@ -1,13 +1,12 @@
 #include "BlockValidator.h"
 
+#include <Consensus.h>
 #include <Crypto/Crypto.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Validation/TransactionBodyValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
-#include <Consensus/BlockWeight.h>
 #include <Common/Util/FunctionalUtil.h>
-#include <Consensus/Common.h>
 #include <PMMR/TxHashSet.h>
 #include <algorithm>
 

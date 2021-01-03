@@ -7,8 +7,8 @@
 #include <TestWallet.h>
 #include <TxBuilder.h>
 
+#include <Consensus.h>
 #include <Common/Util/TimeUtil.h>
-#include <Consensus/Common.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Util/TransactionUtil.h>
 #include <PMMR/Common/MMRUtil.h>

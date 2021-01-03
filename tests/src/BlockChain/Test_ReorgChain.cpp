@@ -6,6 +6,7 @@
 #include <TxBuilder.h>
 #include <TestHelper.h>
 
+#include <Consensus.h>
 #include <BlockChain/BlockChain.h>
 #include <Database/Database.h>
 #include <Database/BlockDb.h>
@@ -13,7 +14,6 @@
 #include <TxPool/TransactionPool.h>
 #include <Core/Validation/TransactionValidator.h>
 #include <Core/File/FileRemover.h>
-#include <Consensus/Common.h>
 #include <Core/Util/TransactionUtil.h>
 
 //

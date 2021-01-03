@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <Consensus/BlockDifficulty.h>
+#include <Consensus.h>
 
 using namespace Consensus;
 

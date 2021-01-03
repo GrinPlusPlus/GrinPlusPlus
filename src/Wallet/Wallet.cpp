@@ -1,8 +1,8 @@
 #include <Wallet/Wallet.h>
+#include <Consensus.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Models/Slatepack/Armor.h>
 #include <Core/Exceptions/WalletException.h>
-#include <Consensus/Common.h>
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/Hasher.h>
 #include <Crypto/Curve25519.h>

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Consensus.h>
 #include <Wallet/WalletManager.h>
 #include <Models/TxModels.h>
-#include <Consensus/Common.h>
 
 class TestWallet
 {

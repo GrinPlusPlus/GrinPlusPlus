@@ -16,7 +16,7 @@ int verify_cuckaroo(const uint64_t edges[PROOFSIZE], siphash_keys& keys, const u
     // used to mask siphash output
     const uint64_t edgeMask = ((uint64_t)numEdges - 1);
 
-    for (u32 n = 0; n < PROOFSIZE; n++)
+    for (uint32_t n = 0; n < PROOFSIZE; n++)
     {
         if (edges[n] > edgeMask) {
             return POW_TOO_BIG;
@@ -36,10 +36,10 @@ int verify_cuckaroo(const uint64_t edges[PROOFSIZE], siphash_keys& keys, const u
         return POW_NON_MATCHING;
     }
 
-    u32 n = 0, i = 0, j;
+    uint32_t n = 0, i = 0, j;
     do // follow cycle
     {
-        for (u32 k = j = i; (k = (k + 2) % (2 * PROOFSIZE)) != i; )
+        for (uint32_t k = j = i; (k = (k + 2) % (2 * PROOFSIZE)) != i; )
         {
             if (uvs[k] == uvs[i]) { // find other edge endpoint identical to one at i
                 if (j != i) {

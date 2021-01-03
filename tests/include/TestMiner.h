@@ -4,6 +4,7 @@
 #include "TxBuilder.h"
 #include <Models/MinedBlock.h>
 
+#include <Consensus.h>
 #include <Config/Config.h>
 #include <BlockChain/BlockChain.h>
 #include <PMMR/HeaderMMR.h>
@@ -12,7 +13,6 @@
 #include <Common/Util/TimeUtil.h>
 #include <Crypto/CSPRNG.h>
 #include <Wallet/Keychain/KeyChain.h>
-#include <Consensus/Common.h>
 
 class TestMiner
 {

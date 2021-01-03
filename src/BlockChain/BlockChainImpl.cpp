@@ -9,13 +9,13 @@
 #include "ChainResyncer.h"
 #include "CoinView.h"
 
+#include <Consensus.h>
 #include <GrinVersion.h>
 #include <Common/Logger.h>
 #include <Core/Global.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Config/Config.h>
 #include <PMMR/TxHashSet.h>
-#include <Consensus/BlockTime.h>
 #include <filesystem.h>
 #include <algorithm>
 

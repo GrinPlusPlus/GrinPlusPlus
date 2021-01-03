@@ -1,12 +1,11 @@
 #include <Core/Models/Transaction.h>
 
+#include <Consensus.h>
 #include <Crypto/Hasher.h>
 #include <Core/Global.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 #include <Config/Config.h>
-#include <Consensus/BlockWeight.h>
-#include <Consensus/HardForks.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
 	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody)) { }

@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <Consensus/HardForks.h>
+#include <Consensus.h>
 
 using namespace Consensus;
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Consensus/BlockDifficulty.h>
-#include <cstdint>
+#include <Consensus.h>
 
 // Minimal header information required for the Difficulty calculation to take place.
 struct HeaderInfo
@@ -25,10 +24,10 @@ public:
 		return HeaderInfo(1, difficulty, (uint32_t)secondaryScaling, true);
 	}
 
-	inline uint64_t GetTimestamp() const { return m_timestamp; }
-	inline uint64_t GetDifficulty() const { return m_difficulty; }
-	inline uint32_t GetSecondaryScaling() const { return m_secondaryScaling; }
-	inline bool IsSecondary() const { return m_secondary; }
+	uint64_t GetTimestamp() const noexcept { return m_timestamp; }
+	uint64_t GetDifficulty() const noexcept { return m_difficulty; }
+	uint32_t GetSecondaryScaling() const noexcept { return m_secondaryScaling; }
+	bool IsSecondary() const noexcept { return m_secondary; }
 
 private:
 	// Timestamp of the header, 1 when not used (returned info)

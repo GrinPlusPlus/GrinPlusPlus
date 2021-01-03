@@ -1,9 +1,7 @@
 #include "BlockHeaderValidator.h"
 
+#include <Consensus.h>
 #include <Common/Util/HexUtil.h>
-#include <Consensus/BlockDifficulty.h>
-#include <Consensus/BlockTime.h>
-#include <Consensus/HardForks.h>
 #include <Common/Logger.h>
 #include <PoW/PoWManager.h>
 #include <PMMR/HeaderMMR.h>

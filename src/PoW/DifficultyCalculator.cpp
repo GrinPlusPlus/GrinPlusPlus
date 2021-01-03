@@ -1,7 +1,7 @@
 #include "DifficultyCalculator.h"
 #include "DifficultyLoader.h"
 
-#include <Consensus/BlockDifficulty.h>
+#include <Consensus.h>
 #include <Core/Global.h>
 
 using namespace Consensus;
@@ -62,7 +62,6 @@ HeaderInfo DifficultyCalculator::NextWTEMA(const BlockHeader& header) const
 
 HeaderInfo DifficultyCalculator::NextDMA(const BlockHeader& header) const
 {
-
 	// Create vector of difficulty data running from earliest
 	// to latest, and pad with simulated pre-genesis data to allow earlier
 	// adjustment if there isn't enough window data length will be

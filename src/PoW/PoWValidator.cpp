@@ -8,8 +8,7 @@
 #include "Cuckarooz.h"
 #include "Cuckatoo.h"
 
-#include <Consensus/BlockTime.h>
-#include <Consensus/BlockDifficulty.h>
+#include <Consensus.h>
 
 PoWValidator::PoWValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB)
 	: m_config(config), m_pBlockDB(pBlockDB)

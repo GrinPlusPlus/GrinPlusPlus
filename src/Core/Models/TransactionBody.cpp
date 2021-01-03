@@ -1,10 +1,9 @@
 #include <Core/Models/TransactionBody.h>
 
+#include <Consensus.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Global.h>
-#include <Consensus/BlockWeight.h>
-#include <Consensus/HardForks.h>
 #include <Crypto/Hasher.h>
 
 TransactionBody::TransactionBody(std::vector<TransactionInput>&& inputs, std::vector<TransactionOutput>&& outputs, std::vector<TransactionKernel>&& kernels)

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Consensus/HardForks.h>
-#include <Consensus/BlockWeight.h>
+#include <Consensus.h>
 
 class FeeUtil
 {

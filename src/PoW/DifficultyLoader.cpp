@@ -1,6 +1,6 @@
 #include "DifficultyLoader.h"
 
-#include <Consensus/BlockDifficulty.h>
+#include <Consensus.h>
 
 DifficultyLoader::DifficultyLoader(std::shared_ptr<const IBlockDB> pBlockDB)
 	: m_pBlockDB(pBlockDB)

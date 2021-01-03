@@ -1,6 +1,6 @@
 #include "ChainState.h"
 
-#include <Consensus/BlockTime.h>
+#include <Consensus.h>
 #include <Database/BlockDb.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>

@@ -1,12 +1,12 @@
 #include <iostream>
 
+#include <Consensus.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Global.h>
 #include <Core/Context.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Validation/TransactionValidator.h>
-#include <Consensus/HardForks.h>
 
 #include "../../src/P2P/Messages/TransactionMessage.h"
 

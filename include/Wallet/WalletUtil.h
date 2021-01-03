@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Models/Features.h>
-#include <Consensus/BlockTime.h>
+#include <Consensus.h>
 #include <cstdint>
 
 class WalletUtil

@@ -3,22 +3,22 @@
 #include <Net/Tor/TorProcess.h>
 
 // APIs
-#include <API/Wallet/Owner/Handlers/CreateWalletHandler.h>
-#include <API/Wallet/Owner/Handlers/RestoreWalletHandler.h>
-#include <API/Wallet/Owner/Handlers/LoginHandler.h>
-#include <API/Wallet/Owner/Handlers/LogoutHandler.h>
-#include <API/Wallet/Owner/Handlers/SendHandler.h>
-#include <API/Wallet/Owner/Handlers/ReceiveHandler.h>
-#include <API/Wallet/Owner/Handlers/FinalizeHandler.h>
-#include <API/Wallet/Owner/Handlers/RetryTorHandler.h>
-#include <API/Wallet/Owner/Handlers/DeleteWalletHandler.h>
-#include <API/Wallet/Owner/Handlers/GetWalletSeedHandler.h>
-#include <API/Wallet/Owner/Handlers/CancelTxHandler.h>
-#include <API/Wallet/Owner/Handlers/GetBalanceHandler.h>
-#include <API/Wallet/Owner/Handlers/ListTxsHandler.h>
-#include <API/Wallet/Owner/Handlers/RepostTxHandler.h>
-#include <API/Wallet/Owner/Handlers/EstimateFeeHandler.h>
-#include <API/Wallet/Owner/Handlers/ScanForOutputsHandler.h>
+#include "Handlers/CreateWalletHandler.h"
+#include "Handlers/RestoreWalletHandler.h"
+#include "Handlers/LoginHandler.h"
+#include "Handlers/LogoutHandler.h"
+#include "Handlers/SendHandler.h"
+#include "Handlers/ReceiveHandler.h"
+#include "Handlers/FinalizeHandler.h"
+#include "Handlers/RetryTorHandler.h"
+#include "Handlers/DeleteWalletHandler.h"
+#include "Handlers/GetWalletSeedHandler.h"
+#include "Handlers/CancelTxHandler.h"
+#include "Handlers/GetBalanceHandler.h"
+#include "Handlers/ListTxsHandler.h"
+#include "Handlers/RepostTxHandler.h"
+#include "Handlers/EstimateFeeHandler.h"
+#include "Handlers/ScanForOutputsHandler.h"
 
 OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {

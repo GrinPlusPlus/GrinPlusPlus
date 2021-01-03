@@ -2,10 +2,10 @@
 
 #include <Wallet/WalletManager.h>
 #include <Wallet/Keychain/KeyChain.h>
-#include <API/Wallet/Foreign/Handlers/ReceiveTxHandler.h>
-#include <API/Wallet/Foreign/Handlers/FinalizeTxHandler.h>
-#include <API/Wallet/Foreign/Handlers/CheckVersionHandler.h>
-#include <API/Wallet/Foreign/Handlers/BuildCoinbaseHandler.h>
+#include "Handlers/ReceiveTxHandler.h"
+#include "Handlers/FinalizeTxHandler.h"
+#include "Handlers/CheckVersionHandler.h"
+#include "Handlers/BuildCoinbaseHandler.h"
 
 ForeignServer::UPtr ForeignServer::Create(
     const KeyChain& keyChain,

@@ -1,10 +1,10 @@
 #include <API/Node/NodeServer.h>
 
-#include <API/Node/Handlers/GetHeaderHandler.h>
-#include <API/Node/Handlers/GetBlockHandler.h>
-#include <API/Node/Handlers/GetVersionHandler.h>
-#include <API/Node/Handlers/GetTipHandler.h>
-#include <API/Node/Handlers/PushTransactionHandler.h>
+#include "Handlers/GetHeaderHandler.h"
+#include "Handlers/GetBlockHandler.h"
+#include "Handlers/GetVersionHandler.h"
+#include "Handlers/GetTipHandler.h"
+#include "Handlers/PushTransactionHandler.h"
 
 NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain::Ptr& pBlockChain, const IP2PServerPtr& pP2PServer)
 {

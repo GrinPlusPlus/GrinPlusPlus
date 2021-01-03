@@ -4,7 +4,7 @@
 #include <P2P/Common.h>
 #include <Common/Util/TimeUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Common/Logger.h>
 #include <Crypto/CSPRNG.h>
 

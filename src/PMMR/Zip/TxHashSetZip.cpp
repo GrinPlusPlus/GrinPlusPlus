@@ -43,7 +43,7 @@ void TxHashSetZip::ExtractKernelFolder(const ZipFile& zipFile) const
 {
 	std::error_code ec;
 
-	const fs::path kernelPath = m_config.GetNodeConfig().GetTxHashSetPath() / "kernel";
+	const fs::path kernelPath = m_config.GetTxHashSetPath() / "kernel";
 	const bool exists = fs::exists(kernelPath, ec);
 	if (ec)
 	{
@@ -82,7 +82,7 @@ void TxHashSetZip::ExtractFolder(const ZipFile& zipFile, const std::string& fold
 {
 	std::error_code ec;
 
-	const fs::path dir = m_config.GetNodeConfig().GetTxHashSetPath() / folderName;
+	const fs::path dir = m_config.GetTxHashSetPath() / folderName;
 	const bool exists = fs::exists(dir, ec);
 	if (ec)
 	{

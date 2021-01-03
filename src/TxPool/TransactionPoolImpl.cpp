@@ -2,6 +2,7 @@
 #include "ValidTransactionFinder.h"
 
 #include <Consensus.h>
+#include <Core/Global.h>
 #include <Core/Util/TransactionUtil.h>
 #include <Database/BlockDb.h>
 #include <Crypto/CSPRNG.h>
@@ -74,7 +75,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	else if (poolType == EPoolType::STEMPOOL)
 	{
 		const uint8_t random = (uint8_t)CSPRNG::GenerateRandom(0, 100);
-		if (random <= m_config.GetNodeConfig().GetDandelion().GetStemProbability())
+		if (random <= Global::GetConfig().GetStemProbability())
 		{
 			LOG_INFO_F("Stemming transaction ({})", *pTransaction);
 			m_stemPool.AddTransaction(pTransaction, EDandelionStatus::TO_STEM);
@@ -189,7 +190,7 @@ std::vector<TransactionPtr> TransactionPool::GetExpiredTransactions() const
 {
 	std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
-	const uint16_t embargoSeconds = m_config.GetNodeConfig().GetDandelion().GetEmbargoSeconds() + (uint16_t)CSPRNG::GenerateRandom(0, 30);
+	const uint16_t embargoSeconds = Global::GetConfig().GetEmbargoSeconds() + (uint16_t)CSPRNG::GenerateRandom(0, 30);
 	return m_stemPool.GetExpiredTransactions(embargoSeconds);
 }
 

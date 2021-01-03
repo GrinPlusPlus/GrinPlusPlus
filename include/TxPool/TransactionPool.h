@@ -10,7 +10,7 @@
 #include <Core/Models/ShortId.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockHeader.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <PMMR/TxHashSetManager.h>
 #include <Crypto/Hash.h>
 #include <vector>

@@ -4,7 +4,7 @@
 #include <Core/Models/BlockSums.h>
 #include <Database/BlockDb.h>
 #include <Core/Traits/Lockable.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <PMMR/TxHashSet.h>
 #include <memory>
 

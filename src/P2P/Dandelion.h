@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <BlockChain/BlockChain.h>
 #include <TxPool/TransactionPool.h>
 #include <P2P/Peer.h>

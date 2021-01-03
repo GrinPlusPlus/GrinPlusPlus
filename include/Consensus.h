@@ -127,13 +127,18 @@ namespace Consensus
 	// set to nominal number of block in one day (1440 with 1-minute blocks)
 	static constexpr uint64_t COINBASE_MATURITY = (24 * 60 * 60) / BLOCK_TIME_SEC;
 
-	static uint64_t GetMaxCoinbaseHeight(const EEnvironmentType environment, const uint64_t blockHeight)
+	static uint64_t GetMaxCoinbaseHeight(const Environment environment, const uint64_t blockHeight)
 	{
-		if (environment == EEnvironmentType::AUTOMATED_TESTING) {
+		if (environment == Environment::AUTOMATED_TESTING) {
 			return (std::max)(blockHeight, (uint64_t)25) - (uint64_t)25;
 		}
 
 		return (std::max)(blockHeight, Consensus::COINBASE_MATURITY) - Consensus::COINBASE_MATURITY;
+	}
+
+	static uint64_t GetMaxCoinbaseHeight(const uint64_t block_height)
+	{
+		return GetMaxCoinbaseHeight(Global::GetEnv(), block_height);
 	}
 
 	// Default number of blocks in the past when cross-block cut-through will start
@@ -271,8 +276,8 @@ namespace Consensus
 
 	static uint64_t min_wtema_graph_weight()
 	{
-		const EEnvironmentType env = Global::GetEnv();
-		if (env == EEnvironmentType::MAINNET) {
+		const Environment env = Global::GetEnv();
+		if (env == Environment::MAINNET) {
 			return C32_GRAPH_WEIGHT;
 		} else {
 			return GraphWeight(0, SECOND_POW_EDGE_BITS);
@@ -295,9 +300,9 @@ namespace Consensus
 	static const uint64_t FLOONET_THIRD_HARD_FORK = 552'960;
 	static const uint64_t FLOONET_FOURTH_HARD_FORK = 642'240;
 
-	static uint16_t GetHeaderVersion(const EEnvironmentType& environment, const uint64_t height)
+	static uint16_t GetHeaderVersion(const Environment& environment, const uint64_t height)
 	{
-		if (environment == EEnvironmentType::FLOONET) {
+		if (environment == Environment::FLOONET) {
 			if (height < FLOONET_FIRST_HARD_FORK) {
 				return 1;
 			} else if (height < FLOONET_SECOND_HARD_FORK) {
@@ -320,5 +325,10 @@ namespace Consensus
 		}
 
 		return 5;
+	}
+
+	static uint16_t GetHeaderVersion(const uint64_t height)
+	{
+		return GetHeaderVersion(Global::GetEnv(), height);
 	}
 }

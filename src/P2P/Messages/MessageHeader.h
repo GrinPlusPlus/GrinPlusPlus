@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <cstdint>
-#include <Config/Config.h>
+#include <Core/Global.h>
 #include <Core/Serialization/ByteBuffer.h>
 
 class MessageHeader
@@ -43,11 +43,12 @@ public:
 	//
 	// Deserialization
 	//
-	static MessageHeader Deserialize(const Environment& environment, ByteBuffer& byteBuffer)
+	static MessageHeader Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint8_t magicByte1 = byteBuffer.ReadU8();
 		const uint8_t magicByte2 = byteBuffer.ReadU8();
-		if (magicByte1 != environment.GetMagicBytes()[0] || magicByte2 != environment.GetMagicBytes()[1]) {
+		const std::vector<uint8_t>& magic_bytes = Global::GetMagicBytes();
+		if (magicByte1 != magic_bytes[0] || magicByte2 != magic_bytes[1]) {
 			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Bad magic bytes.");
 		}
 

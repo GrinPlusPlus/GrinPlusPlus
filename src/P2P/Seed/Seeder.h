@@ -3,7 +3,7 @@
 #include "../ConnectionManager.h"
 #include "../MessageProcessor.h"
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <BlockChain/BlockChain.h>
 #include <P2P/Direction.h>
 #include <cstdint>

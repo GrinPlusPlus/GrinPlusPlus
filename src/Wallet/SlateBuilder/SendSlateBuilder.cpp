@@ -142,7 +142,7 @@ Slate SendSlateBuilder::Build(
 
 	Slate slate;
 	slate.version = slateVersion;
-	slate.blockVersion = Consensus::GetHeaderVersion(m_config.GetEnvironment().GetType(), blockHeight);
+	slate.blockVersion = Consensus::GetHeaderVersion(blockHeight);
 	slate.amount = amountToSend;
 	slate.fee = Fee::From(fee);
 	slate.proofOpt = proofOpt;

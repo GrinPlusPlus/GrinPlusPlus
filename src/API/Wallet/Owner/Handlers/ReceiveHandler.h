@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/WalletManager.h>
 #include <Wallet/Models/Slatepack/Armor.h>
 #include <Net/Clients/RPC/RPC.h>

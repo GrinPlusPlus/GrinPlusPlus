@@ -9,7 +9,7 @@
 
 #include <P2P/P2PServer.h>
 #include <Database/Database.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <TxPool/TransactionPool.h>
 
 class P2PServer : public IP2PServer

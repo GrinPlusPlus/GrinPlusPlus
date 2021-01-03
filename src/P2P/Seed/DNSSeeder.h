@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Net/SocketAddress.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 
 #include <vector>
 #include <string>

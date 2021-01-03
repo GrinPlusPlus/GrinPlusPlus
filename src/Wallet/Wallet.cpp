@@ -23,7 +23,7 @@ WalletSummaryDTO Wallet::GetWalletSummary() const
 	
 	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(m_master_seed);
 	return WalletSummaryDTO(
-		m_pConfig->GetWalletConfig().GetMinimumConfirmations(),
+		m_pConfig->GetMinimumConfirmations(),
 		balance,
 		std::move(transactions)
 	);

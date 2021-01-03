@@ -136,7 +136,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 				peers.cbegin(),
 				peers.cend(),
 				std::back_inserter(socketAddresses),
-				[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), this->m_config.GetEnvironment().GetP2PPort()); }
+				[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), Global::GetConfig().GetP2PPort()); }
 			);
 
 			LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), connection);

@@ -34,7 +34,7 @@ std::unique_ptr<WalletRestServer> WalletRestServer::Create(
 	const std::shared_ptr<INodeClient>& pNodeClient,
 	const TorProcess::Ptr& pTorProcess)
 {
-	const uint32_t ownerPort = config.GetWalletConfig().GetOwnerPort();
+	const uint32_t ownerPort = config.GetOwnerPort();
 	const std::string listeningPorts = StringUtil::Format("127.0.0.1:{}", ownerPort);
 	const char* pOwnerOptions[] = {
 		"num_threads", "5",

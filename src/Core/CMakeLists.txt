@@ -1,6 +1,7 @@
 set(TARGET_NAME Core)
 
 file(GLOB SOURCE_CODE
+    "Config.cpp"
     "Global.cpp"
     "File/AppendOnlyFile.cpp"
     "Models/*.cpp"

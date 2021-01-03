@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Traits/Lockable.h>
 #include <BlockChain/Chain.h>
 

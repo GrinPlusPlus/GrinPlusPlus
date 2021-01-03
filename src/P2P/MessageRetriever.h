@@ -3,7 +3,7 @@
 #include "Messages/RawMessage.h"
 
 #include <Net/Socket.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <memory>
 #include <vector>
 #include <string>

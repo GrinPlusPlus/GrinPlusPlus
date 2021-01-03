@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Database/BlockDb.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <caches/Cache.h>
 #include <mutex>
 #include <set>

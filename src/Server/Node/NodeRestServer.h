@@ -1,7 +1,7 @@
 #pragma once
 
 #include "NodeContext.h"
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <API/Node/NodeServer.h>
 
 class NodeRestServer

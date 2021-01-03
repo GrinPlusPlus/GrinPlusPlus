@@ -3,7 +3,8 @@
 #include "MessageTypes.h"
 
 #include <P2P/Common.h>
-#include <Config/Config.h>
+#include <Core/Global.h>
+#include <Core/Config.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
@@ -16,10 +17,10 @@ public:
 	virtual MessageTypes::EMessageType GetMessageType() const = 0;
 	virtual void SerializeBody(Serializer& serializer) const = 0;
 
-	std::vector<uint8_t> Serialize(const Environment& environment, const EProtocolVersion protocolVersion) const
+	std::vector<uint8_t> Serialize(const EProtocolVersion protocolVersion) const
 	{
 		Serializer serializer(protocolVersion);
-		serializer.AppendByteVector(environment.GetMagicBytes());
+		serializer.AppendByteVector(Global::GetConfig().GetMagicBytes());
 		serializer.Append<uint8_t>((uint8_t)GetMessageType());
 
 		Serializer bodySerializer(protocolVersion);

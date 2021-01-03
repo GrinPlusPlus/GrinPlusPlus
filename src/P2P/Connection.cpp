@@ -239,10 +239,7 @@ void Connection::Run()
 
 bool Connection::SendMsg(const IMessage& message)
 {
-	std::vector<uint8_t> serialized_message = message.Serialize(
-		m_config.GetEnvironment(),
-		GetProtocolVersion()
-	);
+	std::vector<uint8_t> serialized_message = message.Serialize(GetProtocolVersion());
 	if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {
 		LOG_TRACE_F(
 			"Sending {}b '{}' message to {}",

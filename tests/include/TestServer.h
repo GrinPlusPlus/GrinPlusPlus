@@ -77,8 +77,8 @@ public:
 	}
 
 	const ConfigPtr& GetConfig() const noexcept { return m_pConfig; }
-	const FullBlock& GetGenesisBlock() const noexcept { return m_pConfig->GetEnvironment().GetGenesisBlock(); }
-	const BlockHeaderPtr& GetGenesisHeader() const noexcept { return m_pConfig->GetEnvironment().GetGenesisHeader(); }
+	const FullBlock& GetGenesisBlock() const noexcept { return Global::GetGenesisBlock(); }
+	const BlockHeaderPtr& GetGenesisHeader() const noexcept { return Global::GetGenesisHeader(); }
 
 	const IDatabasePtr& GetDatabase() const noexcept { return m_pDatabase; }
 	const std::shared_ptr<Locked<TxHashSetManager>>& GetTxHashSetManager() const noexcept { return m_pTxHashSetManager; }

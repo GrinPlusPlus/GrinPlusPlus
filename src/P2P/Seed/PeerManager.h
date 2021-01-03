@@ -6,7 +6,7 @@
 #include <P2P/Capabilities.h>
 #include <P2P/BanReason.h>
 #include <Database/PeerDB.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Traits/Lockable.h>
 
 #include <optional>

@@ -5,7 +5,7 @@
 #include "RangeProofPMMR.h"
 
 #include <PMMR/TxHashSet.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <shared_mutex>
 #include <string>
 

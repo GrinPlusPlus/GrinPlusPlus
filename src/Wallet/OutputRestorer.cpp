@@ -54,7 +54,7 @@ std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDT
 	EBulletproofType type = EBulletproofType::ORIGINAL;
 	std::unique_ptr<RewoundProof> pRewoundProof = nullptr;
 	const uint64_t outputBlockHeight = output.GetLocation().GetBlockHeight();
-	if (Consensus::GetHeaderVersion(m_config.GetEnvironment().GetType(), ((std::max)(outputBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
+	if (Consensus::GetHeaderVersion(((std::max)(outputBlockHeight, 2 * Consensus::WEEK_HEIGHT) - (2 * Consensus::WEEK_HEIGHT))) == 1)
 	{
 		pRewoundProof = m_keyChain.RewindRangeProof(output.GetIdentifier().GetCommitment(), output.GetRangeProof(), EBulletproofType::ORIGINAL);
 	}
@@ -116,9 +116,9 @@ EOutputStatus OutputRestorer::DetermineStatus(const OutputDTO& output, const uin
 
 	const EOutputFeatures features = output.GetIdentifier().GetFeatures();
 	const uint64_t outputBlockHeight = output.GetLocation().GetBlockHeight();
-	const uint32_t minimumConfirmations = m_config.GetWalletConfig().GetMinimumConfirmations();
+	const uint32_t minimumConfirmations = m_config.GetMinimumConfirmations();
 
-	if (WalletUtil::IsOutputImmature(m_config.GetEnvironment().GetType(), features, outputBlockHeight, currentBlockHeight, minimumConfirmations))
+	if (WalletUtil::IsOutputImmature(features, outputBlockHeight, currentBlockHeight, minimumConfirmations))
 	{
 		return EOutputStatus::IMMATURE;
 	}

@@ -21,9 +21,9 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::Open(BlockHeaderPtr pConfirmedTip,
 {
 	Close();
 
-	std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath(), genesisBlock);
-	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath(), genesisBlock);
-	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetNodeConfig().GetTxHashSetPath(), genesisBlock);
+	std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(m_config.GetTxHashSetPath(), genesisBlock);
+	std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(m_config.GetTxHashSetPath(), genesisBlock);
+	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(m_config.GetTxHashSetPath(), genesisBlock);
 
 	m_pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(m_config, pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
 
@@ -34,8 +34,8 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 {
 	FileRemover fileRemover(zipFilePath);
 
-	const fs::path& txHashSetPath = config.GetNodeConfig().GetTxHashSetPath();
-	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
+	const fs::path& txHashSetPath = config.GetTxHashSetPath();
+	const FullBlock& genesisBlock = Global::GetGenesisBlock();
 	const TxHashSetZip zip(config);
 
 	try
@@ -110,13 +110,13 @@ fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<IBlockDB> pBlockDB, Bloc
 
 		{
 			// Copy to Snapshots/Hash // TODO: If already exists, just use that.
-			FileUtil::CopyDirectory(m_config.GetNodeConfig().GetTxHashSetPath(), snapshotDir);
+			FileUtil::CopyDirectory(m_config.GetTxHashSetPath(), snapshotDir);
 
 			pFlushedHeader = m_pTxHashSet->GetFlushedBlockHeader();
 		}
 
 		{
-			const FullBlock& genesisBlock = m_config.GetEnvironment().GetGenesisBlock();
+			const FullBlock& genesisBlock = Global::GetGenesisBlock();
 
 			// Load Snapshot TxHashSet
 			auto pKernelMMR = KernelMMR::Load(snapshotDir, genesisBlock);

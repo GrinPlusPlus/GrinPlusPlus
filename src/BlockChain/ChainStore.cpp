@@ -16,7 +16,7 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	LOG_TRACE("Loading Chain");
 	std::shared_ptr<BlockIndexAllocator> pAllocator = std::make_shared<BlockIndexAllocator>();
 
-	const auto& chainPath = config.GetNodeConfig().GetChainPath();
+	const auto& chainPath = config.GetChainPath();
 	std::shared_ptr<Chain> pConfirmedChain = Chain::Load(pAllocator, EChainType::CONFIRMED, chainPath / "confirmed.chain", pGenesisIndex);
 	if (pConfirmedChain == nullptr)
 	{

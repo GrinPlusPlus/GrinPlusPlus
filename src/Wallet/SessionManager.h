@@ -5,7 +5,7 @@
 
 #include <Crypto/SecretKey.h>
 #include <Common/Secure.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Net/Tor/TorProcess.h>
 #include <Wallet/SessionToken.h>
 #include <memory>

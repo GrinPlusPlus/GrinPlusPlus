@@ -1,13 +1,15 @@
 #include <Core/Global.h>
 #include <Core/Context.h>
-#include <Config/Config.h>
+#include <Core/Genesis.h>
+#include <Core/Config.h>
 
 #include <csignal>
 #include <cassert>
 
-// A reference to SHARED_CONTEXT is kept until Shutdown() to make sure it doesn't get cleaned up.
+// A strong reference to SHARED_CONTEXT is kept until Shutdown() to make sure it doesn't get cleaned up.
 static std::shared_ptr<Context> SHARED_CONTEXT;
 
+// A weak reference is held to the context even after Shutdown(), so use this to access the context.
 static std::weak_ptr<Context> GLOBAL_CONTEXT;
 
 static std::atomic_bool RUNNING = false;
@@ -52,14 +54,34 @@ Context::Ptr Global::GetContext()
 	return GLOBAL_CONTEXT.lock();
 }
 
-const Environment& Global::GetEnvVars()
+Environment Global::GetEnv()
 {
-	return LockContext()->GetConfig().GetEnvironment();
+	return LockContext()->GetEnvironment();
 }
 
-EEnvironmentType Global::GetEnv()
+const std::vector<uint8_t>& Global::GetMagicBytes()
 {
-	return LockContext()->GetConfig().GetEnvironment().GetType();
+	return LockContext()->GetConfig().GetMagicBytes();
+}
+
+const FullBlock& Global::GetGenesisBlock()
+{
+	const Environment env = GetEnv();
+	if (env == Environment::MAINNET) {
+		return Genesis::MAINNET_GENESIS;
+	} else {
+		return Genesis::FLOONET_GENESIS;
+	}
+}
+
+const std::shared_ptr<const BlockHeader>& Global::GetGenesisHeader()
+{
+	return GetGenesisBlock().GetHeader();
+}
+
+const Hash& Global::GetGenesisHash()
+{
+	return GetGenesisBlock().GetHash();
 }
 
 void Global::SetCoinView(const std::shared_ptr<const ICoinView>& pCoinView)

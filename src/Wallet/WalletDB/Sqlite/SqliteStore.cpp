@@ -17,7 +17,7 @@ static const uint8_t ENCRYPTION_FORMAT = 0;
 
 std::shared_ptr<SqliteStore> SqliteStore::Open(const Config& config)
 {
-	return std::make_shared<SqliteStore>(SqliteStore(config.GetWalletConfig().GetWalletDirectory()));
+	return std::make_shared<SqliteStore>(SqliteStore(config.GetWalletPath()));
 }
 
 fs::path SqliteStore::GetDBFile(const std::string& username) const

@@ -3,7 +3,7 @@
 #include <Common/Secure.h>
 #include <optional>
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <API/Wallet/Owner/Models/SendCriteria.h>
 #include <API/Wallet/Owner/Models/ReceiveCriteria.h>
 #include <API/Wallet/Owner/Models/FinalizeCriteria.h>

@@ -1,6 +1,7 @@
 #include <PoW/PoWManager.h>
 
 #include "PoWValidator.h"
+#include <Core/Global.h>
 
 PoWManager::PoWManager(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB)
 	: m_config(config), m_pBlockDB(pBlockDB)
@@ -10,7 +11,7 @@ PoWManager::PoWManager(const Config& config, std::shared_ptr<const IBlockDB> pBl
 
 bool PoWManager::IsPoWValid(const BlockHeader& header, const BlockHeader& previousHeader) const
 {
-	if (m_config.GetEnvironment().IsAutomatedTesting())
+	if (Global::IsAutomatedTesting())
 	{
 		return true;
 	}

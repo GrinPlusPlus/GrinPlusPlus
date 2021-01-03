@@ -50,7 +50,7 @@ WalletSummaryDTO WalletImpl::GetWalletSummary(const SecureVector& masterSeed)
 	
 	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(masterSeed);
 	return WalletSummaryDTO(
-		m_config.GetWalletConfig().GetMinimumConfirmations(),
+		m_config.GetMinimumConfirmations(),
 		balance,
 		std::move(transactions)
 	);

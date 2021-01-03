@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <Config/Genesis.h>
+#include <Core/Genesis.h>
 #include <Crypto/Hasher.h>
 
 TEST_CASE("Mainnet Genesis")

@@ -4,7 +4,6 @@
 #include <TorProcessManager.h>
 
 #include <Wallet/WalletManager.h>
-#include <Config/ConfigLoader.h>
 #include <uuid.h>
 
 TEST_CASE("Wallet Creation/Deletion")

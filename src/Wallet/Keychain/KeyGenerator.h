@@ -3,7 +3,7 @@
 #include <Wallet/PrivateExtKey.h>
 
 #include <Common/Secure.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 
 //
 // For specifications on generating the master key for HD wallets, see https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Master_key_generation.

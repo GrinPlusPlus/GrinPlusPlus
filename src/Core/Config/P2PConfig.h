@@ -1,8 +1,10 @@
 #pragma once
 
+#include "ConfigProps.h"
+
 #include <cstdint>
 #include <json/json.h>
-#include <Config/ConfigProps.h>
+#include <Core/Enums/Environment.h>
 
 class P2PConfig
 {
@@ -10,14 +12,24 @@ public:
 	//
 	// Getters
 	//
-	int GetMaxConnections() const { return m_maxConnections; }
-	int GetMinConnections() const { return m_minConnections; }
+	int GetMaxConnections() const noexcept { return m_maxConnections; }
+	int GetMinConnections() const noexcept { return m_minConnections; }
+	uint16_t GetP2PPort() const noexcept { return m_port; }
+	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
 
 	//
 	// Constructor
 	//
-	P2PConfig(const Json::Value& json)
+	P2PConfig(const Environment env, const Json::Value& json)
 	{
+		if (env == Environment::MAINNET) {
+			m_port = 3414;
+			m_magicBytes = { 97, 61 };
+		} else {
+			m_port = 13414;
+			m_magicBytes = { 83, 59 };
+		}
+
 		m_maxConnections = 50;
 		m_minConnections = 15;
 
@@ -40,4 +52,6 @@ public:
 private:
 	int m_maxConnections;
 	int m_minConnections;
+	uint16_t m_port;
+	std::vector<uint8_t> m_magicBytes;
 };

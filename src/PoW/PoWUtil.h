@@ -2,7 +2,7 @@
 
 #include "PoWType.h"
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <cstdint>
 
 class PoWUtil

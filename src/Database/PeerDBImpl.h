@@ -5,7 +5,7 @@
 #include <rocksdb/options.h>
 
 #include <Database/PeerDB.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <mutex>
 
 using namespace rocksdb;

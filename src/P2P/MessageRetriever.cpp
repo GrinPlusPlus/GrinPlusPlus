@@ -18,7 +18,7 @@ std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
 	}
 
 	ByteBuffer byteBuffer(std::move(headerBuffer));
-	MessageHeader messageHeader = MessageHeader::Deserialize(m_config.GetEnvironment(), byteBuffer);
+	MessageHeader messageHeader = MessageHeader::Deserialize(byteBuffer);
 
 	const auto type = messageHeader.GetMessageType();
 	if (type != MessageTypes::Ping && type != MessageTypes::Pong) {

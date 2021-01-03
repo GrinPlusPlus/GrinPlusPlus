@@ -2,7 +2,7 @@
 
 #include "../ChainState.h"
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Models/FullBlock.h>
 #include <BlockChain/BlockChainStatus.h>
 

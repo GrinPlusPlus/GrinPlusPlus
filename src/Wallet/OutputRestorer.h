@@ -3,7 +3,7 @@
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Models/DTOs/OutputDTO.h>
 
 // Forward Declarations

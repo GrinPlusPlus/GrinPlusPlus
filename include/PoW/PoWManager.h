@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Models/BlockHeader.h>
 #include <Database/BlockDb.h>
 

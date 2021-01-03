@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Config/Config.h>
 #include <Core/Validation/TransactionValidator.h>
 #include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>

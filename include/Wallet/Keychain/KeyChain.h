@@ -5,7 +5,7 @@
 #include <Wallet/PublicExtKey.h>
 #include <Wallet/KeyChainPath.h>
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/RangeProof.h>

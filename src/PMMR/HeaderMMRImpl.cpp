@@ -4,7 +4,7 @@
 
 #include <Common/Logger.h>
 #include <Core/Serialization/Serializer.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 
 HeaderMMR::HeaderMMR(std::shared_ptr<Locked<HashFile>> pHashFile)
 	: m_pLockedHashFile(pHashFile)
@@ -83,7 +83,7 @@ namespace HeaderMMRAPI
 {
 	PMMR_API std::shared_ptr<Locked<IHeaderMMR>> OpenHeaderMMR(const Config& config)
 	{
-		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetNodeConfig().GetChainPath() / "header_mmr.bin");
+		std::shared_ptr<IHeaderMMR> pHeaderMMR = HeaderMMR::Load(config.GetChainPath() / "header_mmr.bin");
 		return std::make_shared<Locked<IHeaderMMR>>(pHeaderMMR);
 	}
 }

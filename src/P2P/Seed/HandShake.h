@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/ConnectedPeer.h>
 

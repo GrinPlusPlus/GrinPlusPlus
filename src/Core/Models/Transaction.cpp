@@ -5,7 +5,7 @@
 #include <Core/Global.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Util/JsonUtil.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 
 Transaction::Transaction(BlindingFactor&& offset, TransactionBody&& transactionBody)
 	: m_offset(std::move(offset)), m_transactionBody(std::move(transactionBody)) { }

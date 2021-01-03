@@ -7,7 +7,7 @@
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <P2P/SyncStatus.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <atomic>
 #include <queue>
 

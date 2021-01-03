@@ -2,7 +2,7 @@
 
 #include "NodeRestServer.h"
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/NodeClient.h>
 #include <memory>
 

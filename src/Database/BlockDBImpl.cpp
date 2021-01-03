@@ -16,7 +16,7 @@ using namespace rocksdb;
 
 std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 {
-	fs::path dbPath = config.GetNodeConfig().GetDatabasePath() / "CHAIN/";
+	fs::path dbPath = config.GetDatabasePath() / "CHAIN/";
 
 	ColumnFamilyDescriptor BLOCK_COLUMN = ColumnFamilyDescriptor("BLOCK", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 	ColumnFamilyDescriptor HEADER_COLUMN = ColumnFamilyDescriptor("HEADER", *ColumnFamilyOptions().OptimizeForPointLookup(1024));

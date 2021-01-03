@@ -5,11 +5,11 @@
 #include <Crypto/Crypto.h>
 #include <uuid.h>
 
-#include <Config/ConfigLoader.h>
+#include <Core/Config.h>
 
 TEST_CASE("REWIND_BULLETPROOF_ORIGINAL")
 {
-	ConfigPtr pConfig = ConfigLoader().Load(EEnvironmentType::MAINNET);
+	ConfigPtr pConfig = Config::Load(Environment::AUTOMATED_TESTING);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
 	const CBigInteger<32> masterSeed = CSPRNG::GenerateRandom32();
@@ -32,7 +32,7 @@ TEST_CASE("REWIND_BULLETPROOF_ORIGINAL")
 
 TEST_CASE("REWIND_BULLETPROOF_ENHANCED")
 {
-	ConfigPtr pConfig = ConfigLoader().Load(EEnvironmentType::MAINNET);
+	ConfigPtr pConfig = Config::Load(Environment::AUTOMATED_TESTING);
 
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
 	const CBigInteger<32> masterSeed = CSPRNG::GenerateRandom32();

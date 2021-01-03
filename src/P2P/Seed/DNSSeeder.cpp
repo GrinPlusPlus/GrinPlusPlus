@@ -1,6 +1,7 @@
 #include "DNSSeeder.h"
 
 #include <Common/Logger.h>
+#include <Core/Global.h>
 #include <asio.hpp>
 
 DNSSeeder::DNSSeeder(const Config& config)
@@ -14,7 +15,7 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 	std::vector<SocketAddress> addresses;
 
 	std::vector<std::string> dnsSeeds;
-	if (m_config.GetEnvironment().IsMainnet())
+	if (Global::IsMainnet())
 	{
 		dnsSeeds = {
 			"mainnet.seed.grin-tech.org",		// igno.peverell@protonmail.com
@@ -43,10 +44,10 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 		for (const IPAddress ipAddress : ipAddresses)
 		{
 			LOG_TRACE_F("IP Address: {}", ipAddress);
-			addresses.emplace_back(SocketAddress(ipAddress, m_config.GetEnvironment().GetP2PPort()));
+			addresses.emplace_back(SocketAddress(ipAddress, Global::GetConfig().GetP2PPort()));
 		}
 
-		if (!m_config.GetEnvironment().IsMainnet())
+		if (Global::IsTestnet())
 		{
 			addresses.emplace_back(SocketAddress("100.26.68.39", 13414));
 		}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Models/BlockHeader.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Database/BlockDb.h>
 
 class PoWValidator

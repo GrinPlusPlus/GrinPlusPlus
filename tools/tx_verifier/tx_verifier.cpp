@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    auto pContext = Context::Create(Config::Default(EEnvironmentType::MAINNET));
+    auto pContext = Context::Create(Environment::MAINNET, Config::Default(Environment::MAINNET));
     Global::Init(pContext);
 
     std::vector<uint8_t> bytes;
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
     std::cout << "Transaction is valid" << std::endl;
 
-    bytes = TransactionMessage(std::make_shared<Transaction>(*pTransaction)).Serialize(Environment(EEnvironmentType::MAINNET), EProtocolVersion::V2);
+    bytes = TransactionMessage(std::make_shared<Transaction>(*pTransaction)).Serialize(EProtocolVersion::V2);
     std::cout << HexUtil::ConvertToHex(bytes) << std::endl;
 
 

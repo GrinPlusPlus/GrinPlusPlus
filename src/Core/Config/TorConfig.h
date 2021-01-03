@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/ConfigProps.h>
+#include "ConfigProps.h"
 
 #include <json/json.h>
 #include <cstdint>

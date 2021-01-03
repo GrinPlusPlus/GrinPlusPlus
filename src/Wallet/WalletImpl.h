@@ -5,7 +5,7 @@
 #include <uuid.h>
 #include <optional>
 #include <Common/Secure.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/Enums/SelectionStrategy.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/Models/DTOs/WalletBalanceDTO.h>

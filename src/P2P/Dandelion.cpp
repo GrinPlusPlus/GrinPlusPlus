@@ -4,10 +4,11 @@
 #include "Messages/TransactionMessage.h"
 #include "Messages/StemTransactionMessage.h"
 
+#include <Core/Global.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
-#include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
+#include <Crypto/CSPRNG.h>
 
 Dandelion::Dandelion(
 	const Config& config,
@@ -67,11 +68,10 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 	LoggerAPI::SetThreadName("DANDELION");
 	LOG_DEBUG("BEGIN");
 
-	const DandelionConfig& config = dandelion.m_config.GetNodeConfig().GetDandelion();
 	while (!dandelion.m_terminate)
 	{
 		// This is the patience timer, we loop every n secs.
-		const uint8_t patience = config.GetPatienceSeconds();
+		const uint8_t patience = Global::GetConfig().GetPatienceSeconds();
 		ThreadUtil::SleepFor(std::chrono::seconds(patience));
 
 		try
@@ -117,7 +117,7 @@ bool Dandelion::ProcessStemPhase()
 			return false;
 		}
 
-		const uint16_t relaySeconds = m_config.GetNodeConfig().GetDandelion().GetRelaySeconds();
+		const uint16_t relaySeconds = Global::GetConfig().GetRelaySeconds();
 		m_relayExpirationTime = std::chrono::system_clock::now() + std::chrono::seconds(relaySeconds);
 		const size_t index = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
 		m_relayPeer = mostWorkPeers[index];

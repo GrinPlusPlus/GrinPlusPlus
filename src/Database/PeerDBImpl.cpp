@@ -32,7 +32,7 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 	options.compression = kNoCompression;
 
 	// open DB
-	const fs::path dbPath = config.GetNodeConfig().GetDatabasePath() / "PEERS";
+	const fs::path dbPath = config.GetDatabasePath() / "PEERS";
 	fs::create_directories(dbPath);
 
 	DB* pDatabase = nullptr;

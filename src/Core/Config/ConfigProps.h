@@ -45,7 +45,6 @@ namespace ConfigProps
 	{
 		static const std::string WALLET = "WALLET";
 
-		static const std::string DATABASE = "DATABASE";
 		static const std::string MIN_CONFIRMATIONS = "MIN_CONFIRMATIONS";
 	}
 

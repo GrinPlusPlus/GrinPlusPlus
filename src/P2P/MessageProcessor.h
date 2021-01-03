@@ -5,7 +5,7 @@
 
 #include <BlockChain/BlockChain.h>
 #include <P2P/ConnectedPeer.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <memory>
 
 // Forward Declarations

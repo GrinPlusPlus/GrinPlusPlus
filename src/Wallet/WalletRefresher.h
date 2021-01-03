@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>

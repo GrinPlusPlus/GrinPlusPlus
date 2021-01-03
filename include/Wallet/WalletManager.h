@@ -5,7 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/Compat.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/SessionToken.h>
 #include <Wallet/Enums/SelectionStrategy.h>

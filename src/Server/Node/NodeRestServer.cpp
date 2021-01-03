@@ -20,7 +20,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 
 NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
 {
-	const uint16_t port = config.GetServerConfig().GetRestAPIPort();
+	const uint16_t port = config.GetRestAPIPort();
 	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
 	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
 

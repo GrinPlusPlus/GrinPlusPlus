@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Config/Config.h>
 #include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>

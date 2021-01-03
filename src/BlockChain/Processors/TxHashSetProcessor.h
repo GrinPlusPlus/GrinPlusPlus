@@ -3,7 +3,7 @@
 #include "../ChainState.h"
 
 #include <PMMR/TxHashSet.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Crypto/Hash.h>
 #include <P2P/SyncStatus.h>
 #include <filesystem.h>

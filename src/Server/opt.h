@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/EnvironmentType.h>
+#include <Core/Enums/Environment.h>
 #include <Net/SocketAddress.h>
 #include <klib/ketopt.h>
 #include <iostream>
@@ -10,7 +10,7 @@ struct Options
 {
 	bool help;
 	bool headless;
-	EEnvironmentType environment;
+	Environment environment;
 	bool include_wallet;
 	std::optional<std::pair<std::string, uint16_t>> shared_node;
 };
@@ -29,7 +29,7 @@ static Options ParseOptions(int argc, char* argv[])
 	Options options{
 		false,
 		false,
-		EEnvironmentType::MAINNET,
+		Environment::MAINNET,
 		true,
 		std::nullopt
 	};
@@ -38,7 +38,7 @@ static Options ParseOptions(int argc, char* argv[])
 	int c;
 	while ((c = ketopt(&opt, argc, argv, 1, "xy:", longopts)) >= 0) {
 		if (c == 301) options.help = true;
-		else if (c == 302) options.environment = EEnvironmentType::FLOONET;
+		else if (c == 302) options.environment = Environment::FLOONET;
 		else if (c == 303) options.headless = true;
 		else if (c == 304) options.include_wallet = false;
 		else if (c == 305)

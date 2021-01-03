@@ -1,7 +1,7 @@
 #pragma once
 
 #include <PMMR/TxHashSet.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Core/Traits/Lockable.h>
 #include <filesystem.h>
 

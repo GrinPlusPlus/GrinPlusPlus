@@ -14,7 +14,7 @@
 #include <Common/Logger.h>
 #include <Core/Global.h>
 #include <Core/Exceptions/BadDataException.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <PMMR/TxHashSet.h>
 #include <filesystem.h>
 #include <algorithm>
@@ -43,7 +43,7 @@ std::shared_ptr<BlockChain> BlockChain::Create(
 	std::shared_ptr<ITransactionPool> pTransactionPool,
 	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
 {
-	const FullBlock& genesisBlock = config.GetEnvironment().GetGenesisBlock();
+	const FullBlock& genesisBlock = Global::GetGenesisBlock();
 	auto pGenesisIndex = std::make_shared<BlockIndex>(genesisBlock.GetHash(), 0);
 
 	auto pChainStore = ChainStore::Load(config, pGenesisIndex);

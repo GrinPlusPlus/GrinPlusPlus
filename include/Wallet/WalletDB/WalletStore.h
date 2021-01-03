@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Core/Traits/Lockable.h>
 #include <Common/GrinStr.h>

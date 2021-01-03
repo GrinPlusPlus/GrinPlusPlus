@@ -8,7 +8,7 @@
 #include <Core/Context.h>
 #include <Core/Global.h>
 #include <Wallet/WalletManager.h>
-#include <Config/ConfigLoader.h>
+#include <Core/Config.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
 
@@ -20,7 +20,7 @@
 
 using namespace std::chrono;
 
-ConfigPtr Initialize(const EEnvironmentType environment, const bool headless);
+ConfigPtr Initialize(const Environment environment, const bool headless);
 void Run(const ConfigPtr& pConfig, const Options& options);
 
 int main(int argc, char* argv[])
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
+ConfigPtr Initialize(const Environment environment, const bool headless)
 {
 	if (!headless)
 	{
@@ -64,7 +64,7 @@ ConfigPtr Initialize(const EEnvironmentType environment, const bool headless)
 	ConfigPtr pConfig = nullptr;
 	try
 	{
-		pConfig = ConfigLoader::Load(environment);
+		pConfig = Config::Load(environment);
 	}
 	catch (std::exception& e)
 	{
@@ -93,7 +93,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 
 	try
 	{
-		pContext = Context::Create(pConfig);
+		pContext = Context::Create(options.environment, pConfig);
 		Global::Init(pContext);
 	}
 	catch (std::exception& e)

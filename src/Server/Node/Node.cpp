@@ -6,7 +6,7 @@
 #include <Consensus.h>
 #include <Core/Context.h>
 #include <P2P/P2PServer.h>
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <BlockChain/BlockChain.h>
 #include <Database/Database.h>
 #include <Common/Logger.h>

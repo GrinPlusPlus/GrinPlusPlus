@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Config/Config.h>
+#include <Core/Config.h>
 #include <Common/Secure.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/Util/JsonUtil.h>

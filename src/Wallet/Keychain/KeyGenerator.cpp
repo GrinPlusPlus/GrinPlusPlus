@@ -22,7 +22,7 @@ PrivateExtKey KeyGenerator::GenerateMasterKey(const SecureVector& seed) const
 
 	CBigInteger<32> masterChainCode(&hash[32]);
 
-	return PrivateExtKey::Create(m_config.GetWalletConfig().GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
+	return PrivateExtKey::Create(m_config.GetPrivateKeyVersion(), 0, 0, 0, std::move(masterChainCode), std::move(masterSecretKey));
 }
 
 PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentExtendedKey, const uint32_t childKeyIndex) const
@@ -69,7 +69,7 @@ PrivateExtKey KeyGenerator::GenerateChildPrivateKey(const PrivateExtKey& parentE
 	CBigInteger<32> childChainCode(std::vector<uint8_t>{ hmacSha512Vector.cbegin() + 32, hmacSha512Vector.cbegin() + 64 });
 
 	return PrivateExtKey::Create(
-		m_config.GetWalletConfig().GetPrivateKeyVersion(),
+		m_config.GetPrivateKeyVersion(),
 		parentExtendedKey.GetDepth() + 1,
 		parentFingerprint, childKeyIndex,
 		std::move(childChainCode),

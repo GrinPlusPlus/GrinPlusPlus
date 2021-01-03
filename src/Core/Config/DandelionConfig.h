@@ -1,8 +1,9 @@
 #pragma once
 
+#include "ConfigProps.h"
+
 #include <cstdint>
 #include <json/json.h>
-#include <Config/ConfigProps.h>
 
 class DandelionConfig
 {

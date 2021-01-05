@@ -330,3 +330,5 @@ cmake_install.cmake
 
 .vscode/
 CMakeSettings.json
+
+output/

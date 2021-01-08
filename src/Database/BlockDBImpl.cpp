@@ -2,6 +2,7 @@
 #include "RocksDB/RocksDBFactory.h"
 #include "RocksDB/RocksDB.h"
 
+#include <BlockChain/Chain.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/OutputLocation.h>
@@ -88,26 +89,49 @@ void BlockDB::SetVersion(const uint8_t version)
 
 void BlockDB::MigrateBlocks()
 {
-	std::vector<FullBlock> blocks;
+	//std::vector<FullBlock> blocks;
 
+	//auto iter = m_pRocksDB->GetIterator("BLOCK");
+	//for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+	//	rocksdb::Slice key = iter->key();
+	//	try {
+	//		auto pBlock = m_pRocksDB->Get<FullBlock>("BLOCK", key, EProtocolVersion::V1);
+	//		blocks.push_back(std::move(*pBlock));
+	//	}
+	//	catch (std::exception& e) {
+	//		LOG_DEBUG_F("Failed to migrate block {}. Error: {}", key.data(), e.what());
+	//	}
+	//}
+
+	//for (const FullBlock& block : blocks)
+	//{
+	//	const Hash& hash = block.GetHash();
+	//	rocksdb::Slice key((const char*)hash.data(), hash.size());
+	//	m_pRocksDB->Put("BLOCK", DBEntry(key, block));
+	//}
+}
+
+void BlockDB::Compact(const std::shared_ptr<const Chain>& pChain)
+{
+	std::vector<std::string> blocks_to_remove;
+
+	const uint64_t horizon = Consensus::GetHorizonHeight(pChain->GetHeight());
 	auto iter = m_pRocksDB->GetIterator("BLOCK");
 	for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
 		rocksdb::Slice key = iter->key();
 		try {
-			auto pBlock = m_pRocksDB->Get<FullBlock>("BLOCK", key, EProtocolVersion::V1);
-			blocks.push_back(std::move(*pBlock));
+			auto pBlock = m_pRocksDB->Get<FullBlock>("BLOCK", key);
+			if (pBlock->GetHeight() < horizon) {
+				blocks_to_remove.push_back(key.ToString());
+			}
 		}
 		catch (std::exception& e) {
-			LOG_DEBUG_F("Failed to migrate block {}. Error: {}", key.data(), e.what());
+			LOG_DEBUG_F("Failed to deserialize block {}. Error: {}", key.ToString(true), e.what());
+			blocks_to_remove.push_back(key.ToString());
 		}
 	}
 
-	for (const FullBlock& block : blocks)
-	{
-		const Hash& hash = block.GetHash();
-		rocksdb::Slice key((const char*)hash.data(), hash.size());
-		m_pRocksDB->Put("BLOCK", DBEntry(key, block));
-	}
+	m_pRocksDB->Delete("BLOCK", blocks_to_remove);
 }
 
 BlockHeaderPtr BlockDB::GetBlockHeader(const Hash& hash) const

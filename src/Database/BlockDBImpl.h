@@ -27,6 +27,7 @@ public:
 	void SetVersion(const uint8_t version) final;
 
 	void MigrateBlocks() final;
+	void Compact(const std::shared_ptr<const Chain>& pChain) final;
 
 	BlockHeaderPtr GetBlockHeader(const Hash& hash) const final;
 

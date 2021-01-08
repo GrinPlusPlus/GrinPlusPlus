@@ -11,6 +11,7 @@ class BlockSums;
 class FullBlock;
 class Commitment;
 class OutputLocation;
+class Chain;
 
 class IBlockDB : public Traits::IBatchable
 {
@@ -33,6 +34,12 @@ public:
 	/// Updates FullBlock entries to the latest serialization format.
 	/// </summary>
 	virtual void MigrateBlocks() = 0;
+
+	/// <summary>
+	/// Removes all blocks beyond the horizon.
+	/// </summary>
+	/// <param name="pChain"></param>
+	virtual void Compact(const std::shared_ptr<const Chain>& pChain) = 0;
 
 	virtual BlockHeaderPtr GetBlockHeader(const Hash& hash) const = 0;
 

@@ -50,7 +50,7 @@ public:
 
 	template<typename T,
 		typename SFINAE = typename std::enable_if_t<std::is_base_of_v<Traits::ISerializable, T>>>
-	std::unique_ptr<T> Get(const RocksDBTable& table, const rocksdb::Slice& key, const EProtocolVersion protocol = ProtocolVersion::Local()) const
+	std::unique_ptr<T> Get(const RocksDBTable& table, const rocksdb::Slice& key, const EProtocolVersion protocol = EProtocolVersion::V1) const
 	{
 		rocksdb::Status status;
 		std::string itemStr;
@@ -89,7 +89,7 @@ public:
 
 	template<typename T,
 		typename SFINAE = typename std::enable_if_t<std::is_base_of_v<Traits::ISerializable, T>>>
-	std::unique_ptr<T> Get(const std::string& tableName, const rocksdb::Slice& key, const EProtocolVersion protocol = ProtocolVersion::Local()) const
+	std::unique_ptr<T> Get(const std::string& tableName, const rocksdb::Slice& key, const EProtocolVersion protocol = EProtocolVersion::V1) const
 	{
 		return Get<T>(GetTable(tableName), key, protocol);
 	}

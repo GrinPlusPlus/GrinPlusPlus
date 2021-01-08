@@ -6,8 +6,8 @@
 #include <Crypto/Hasher.h>
 #include <BlockChain/ICoinView.h>
 
-TransactionInput::TransactionInput(Commitment&& commitment)
-	: m_commitment(std::move(commitment))
+TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
+	: m_features(features), m_commitment(std::move(commitment))
 {
 		Serializer serializer(ProtocolVersion::Local()); // TODO: Need to fix sort for V2 peers
 		Serialize(serializer);
@@ -17,8 +17,7 @@ TransactionInput::TransactionInput(Commitment&& commitment)
 void TransactionInput::Serialize(Serializer& serializer) const
 {
 	if (serializer.GetProtocolVersion() < EProtocolVersion::V3) {
-		EOutputFeatures features = Global::GetCoinView()->GetOutputType(m_commitment);
-		serializer.Append<uint8_t>((uint8_t)features);
+		serializer.Append<uint8_t>((uint8_t)m_features);
 	}
 
 	m_commitment.Serialize(serializer);
@@ -26,24 +25,28 @@ void TransactionInput::Serialize(Serializer& serializer) const
 
 TransactionInput TransactionInput::Deserialize(ByteBuffer& byteBuffer)
 {
-	if (byteBuffer.GetProtocolVersion() < EProtocolVersion::V3) {
-		byteBuffer.ReadU8(); // Ignore features byte
+	if (byteBuffer.GetProtocolVersion() >= EProtocolVersion::V3) {
+		Commitment commitment = Commitment::Deserialize(byteBuffer);
+		EOutputFeatures features = Global::GetCoinView()->GetOutputType(commitment);
+		return TransactionInput(features, std::move(commitment));
+	} else {
+		EOutputFeatures features = (EOutputFeatures)byteBuffer.ReadU8();
+		Commitment commitment = Commitment::Deserialize(byteBuffer);
+		return TransactionInput(features, std::move(commitment));
 	}
-
-	Commitment commitment = Commitment::Deserialize(byteBuffer);
-
-	return TransactionInput(std::move(commitment));
 }
 
 Json::Value TransactionInput::ToJSON() const
 {
 	Json::Value inputNode;
+	inputNode["features"] = OutputFeatures::ToString(m_features);
 	inputNode["commit"] = JsonUtil::ConvertToJSON(GetCommitment());
 	return inputNode;
 }
 
 TransactionInput TransactionInput::FromJSON(const Json::Value& transactionInputJSON)
 {
+	EOutputFeatures features = OutputFeatures::FromString(JsonUtil::GetRequiredString(transactionInputJSON, "features"));
 	Commitment commitment = JsonUtil::GetCommitment(transactionInputJSON, "commit");
-	return TransactionInput(std::move(commitment));
+	return TransactionInput(features, std::move(commitment));
 }

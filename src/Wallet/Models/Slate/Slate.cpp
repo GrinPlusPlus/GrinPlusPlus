@@ -66,7 +66,7 @@ std::vector<TransactionInput> Slate::GetInputs() const noexcept
 	for (const SlateCommitment& com : commitments)
 	{
 		if (!com.proofOpt.has_value()) {
-			inputs.push_back(TransactionInput{ com.commitment });
+			inputs.push_back(TransactionInput{ com.features, com.commitment });
 		}
 	}
 

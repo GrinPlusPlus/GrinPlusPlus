@@ -361,7 +361,7 @@ TEST_CASE("Reorg Chain")
 	// Create a transaction that spends the coinbase from block 1
 	TransactionOutput outputToSpend = minedChain[1].block.GetOutputs().front();
 	Test::Input input({
-		{ outputToSpend.GetCommitment() },
+		{ outputToSpend.GetFeatures(), outputToSpend.GetCommitment() },
 		minedChain[1].coinbasePath.value(),
 		minedChain[1].coinbaseAmount
 	});

@@ -22,9 +22,9 @@ public:
 	//
 	// Constructors
 	//
-	TransactionInput(Commitment&& commitment);
-	TransactionInput(const Commitment& commitment)
-		: TransactionInput(Commitment(commitment)) {  }
+	TransactionInput(const EOutputFeatures features, Commitment&& commitment);
+	TransactionInput(const EOutputFeatures features, const Commitment& commitment)
+		: TransactionInput(features, Commitment(commitment)) {  }
 	TransactionInput(const TransactionInput& input) = default;
 	TransactionInput(TransactionInput&& input) noexcept = default;
 	TransactionInput() = default;
@@ -40,11 +40,12 @@ public:
 	TransactionInput& operator=(const TransactionInput& rhs) = default;
 	TransactionInput& operator=(TransactionInput&& rhs) noexcept = default;
 	bool operator<(const TransactionInput& rhs) const { return GetCommitment() < rhs.GetCommitment(); }
-	bool operator==(const TransactionInput& rhs) const { return GetCommitment() == rhs.GetCommitment(); }
+	bool operator==(const TransactionInput& rhs) const { return GetFeatures() == rhs.GetFeatures() && GetCommitment() == rhs.GetCommitment(); }
 
 	//
 	// Getters
 	//
+	EOutputFeatures GetFeatures() const { return m_features; }
 	const Commitment& GetCommitment() const final { return m_commitment; }
 
 	//
@@ -61,6 +62,8 @@ public:
 	const Hash& GetHash() const final { return m_hash; }
 
 private:
+	EOutputFeatures m_features;
+
 	// The commit referencing the output being spent.
 	Commitment m_commitment;
 

@@ -154,6 +154,8 @@ bool TxHashSet::ApplyBlock(std::shared_ptr<IBlockDB> pBlockDB, const FullBlock& 
 		pBlockDB->AddOutputPosition(output.GetCommitment(), OutputLocation(mmrIndex, blockHeight));
 	}
 
+	pBlockDB->RemoveOutputPositions(block.GetInputCommitments());
+
 	// Append new kernels
 	for (const TransactionKernel& kernel : block.GetKernels())
 	{
@@ -227,11 +229,11 @@ TxHashSetRoots TxHashSet::GetRoots(const std::shared_ptr<const IBlockDB>& pBlock
 		m_pRangeProofPMMR->Append(output.GetRangeProof());
 	}
 
-	const uint64_t numKernels = (MMRUtil::GetLeafIndex(m_pBlockHeader->GetKernelMMRSize())) + body.GetKernels().size();
+	const uint64_t numKernels = MMRUtil::GetLeafIndex(m_pBlockHeader->GetKernelMMRSize()) + body.GetKernels().size();
 	const uint64_t kernelSize = MMRUtil::GetPMMRIndex(numKernels);
 	const auto kernelRoot = m_pKernelMMR->Root(kernelSize);
 
-	const uint64_t numOutputs = (MMRUtil::GetLeafIndex(m_pBlockHeader->GetOutputMMRSize())) + body.GetOutputs().size();
+	const uint64_t numOutputs = MMRUtil::GetLeafIndex(m_pBlockHeader->GetOutputMMRSize()) + body.GetOutputs().size();
 	const uint64_t outputSize = MMRUtil::GetPMMRIndex(numOutputs);
 	const auto outputRoot = m_pOutputPMMR->Root(outputSize);
 	const auto rangeProofRoot = m_pRangeProofPMMR->Root(outputSize);

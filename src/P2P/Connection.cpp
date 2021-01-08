@@ -110,7 +110,7 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 			pConnection->m_pSocket->CloseSocket();
 		}
 
-        LOG_ERROR_F("Exception caught: {}", e);
+        LOG_ERROR_F("Failed to connect: {}", e);
         pConnection->m_terminate = true;
 		ThreadUtil::Detach(pConnection->m_connectionThread);
 		return;

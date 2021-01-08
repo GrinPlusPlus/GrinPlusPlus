@@ -230,7 +230,6 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 		std::make_optional(*pPreviousBlockSums)
 	);
 
-	pBlockDB->RemoveOutputPositions(block.GetInputCommitments());
 	pBlockDB->AddBlockSums(block.GetHash(), blockSums);
 	pBlockDB->AddBlock(block);
 	pOrphanPool->RemoveOrphan(block.GetHeight(), block.GetHash());

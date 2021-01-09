@@ -13,6 +13,7 @@ class Config;
 class ICoinView;
 class FullBlock;
 class BlockHeader;
+class TorProcess;
 
 class Global
 {
@@ -27,6 +28,7 @@ public:
     
     static const Config& GetConfig();
     static std::shared_ptr<Context> GetContext();
+    static std::shared_ptr<TorProcess> GetTorProcess();
 
     //
     // Environment

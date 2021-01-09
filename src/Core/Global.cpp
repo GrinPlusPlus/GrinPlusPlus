@@ -14,6 +14,7 @@ static std::weak_ptr<Context> GLOBAL_CONTEXT;
 
 static std::atomic_bool RUNNING = false;
 static std::shared_ptr<const ICoinView> COIN_VIEW;
+static TorProcess::Ptr TOR_PROCESS;
 
 static void SigIntHandler(int signum)
 {
@@ -26,6 +27,13 @@ void Global::Init(const Context::Ptr& pContext)
 	SHARED_CONTEXT = pContext;
 	GLOBAL_CONTEXT = pContext;
 	RUNNING = true;
+
+	const Config& config = pContext->GetConfig();
+	TOR_PROCESS = TorProcess::Initialize(
+		config.GetTorDataPath(),
+		config.GetSocksPort(),
+		config.GetControlPort()
+	);
 
 	signal(SIGINT, SigIntHandler);
 	signal(SIGTERM, SigIntHandler);
@@ -41,6 +49,7 @@ const std::atomic_bool& Global::IsRunning()
 void Global::Shutdown()
 {
 	RUNNING = false;
+	TOR_PROCESS.reset();
 	SHARED_CONTEXT.reset();
 }
 
@@ -52,6 +61,11 @@ const Config& Global::GetConfig()
 Context::Ptr Global::GetContext()
 {
 	return GLOBAL_CONTEXT.lock();
+}
+
+TorProcess::Ptr Global::GetTorProcess()
+{
+	return TOR_PROCESS;
 }
 
 Environment Global::GetEnv()

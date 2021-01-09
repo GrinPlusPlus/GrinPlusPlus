@@ -12,6 +12,7 @@
 
 TorProcess::~TorProcess()
 {
+	m_shutdown = true;
 	LOG_INFO("Terminating tor process");
 	ThreadUtil::Join(m_initThread);
 }
@@ -26,7 +27,7 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	while (Global::IsRunning())
+	while (!pProcess->m_shutdown)
 	{
 		try
 		{

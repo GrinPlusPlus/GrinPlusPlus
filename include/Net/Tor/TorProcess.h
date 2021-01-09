@@ -3,6 +3,7 @@
 #include <Crypto/Models/ed25519_secret_key.h>
 #include <Net/Tor/TorAddress.h>
 
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <map>
@@ -33,7 +34,7 @@ public:
 
 private:
 	TorProcess(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort)
-		: m_torDataPath(torDataPath), m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr) { }
+		: m_torDataPath(torDataPath), m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr), m_shutdown(false) { }
 
 	static void Thread_Initialize(TorProcess* pProcess);
 	static bool IsPortOpen(const uint16_t port);
@@ -44,6 +45,7 @@ private:
 	std::shared_ptr<TorControl> m_pControl;
 	std::map<std::string, std::pair<ed25519_secret_key_t, uint16_t>> m_activeServices;
 
+	std::atomic_bool m_shutdown;
 	std::mutex m_mutex;
 	std::thread m_initThread;
 };

@@ -124,7 +124,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	{
 		pWallet = WalletDaemon::Create(
 			pContext->GetConfig(),
-			pContext->GetTorProcess(),
+			Global::GetTorProcess(),
 			pNodeClient
 		);
 	}

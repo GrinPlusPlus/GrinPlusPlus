@@ -165,15 +165,19 @@ FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
         [](const OutputDataEntity& output_data) { return output_data.GetStatus() == EOutputStatus::SPENDABLE; }
     );
 
-	std::vector<OutputDataEntity> inputs = CoinSelection().SelectCoinsToSpend(
-		available_coins,
-		criteria.GetAmount(),
-		criteria.GetFeeBase(),
-		criteria.GetSelectionStrategy().GetStrategy(),
-		criteria.GetSelectionStrategy().GetInputs(),
-		totalNumOutputs,
-		numKernels
-	);
+	std::vector<OutputDataEntity> inputs = available_coins;
+	
+	if (!criteria.SendEntireBalance()) {
+		inputs = CoinSelection().SelectCoinsToSpend(
+			available_coins,
+			criteria.GetAmount(),
+			criteria.GetFeeBase(),
+			criteria.GetSelectionStrategy().GetStrategy(),
+			criteria.GetSelectionStrategy().GetInputs(),
+			totalNumOutputs,
+			numKernels
+		);
+	}
 
 	// Calculate the fee
 	const uint64_t fee = FeeUtil::CalculateFee(
@@ -234,7 +238,7 @@ BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteri
 	auto pDatabase = m_walletDB.BatchWrite();
 
 	const uint64_t amount = Consensus::REWARD + criteria.GetFees();
-	const KeyChainPath keyChainPath = criteria.GetPath().value_or(
+	KeyChainPath keyChainPath = criteria.GetPath().value_or(
 		pDatabase->GetNextChildPath(m_userPath)
 	);
 	SecretKey blindingFactor = keyChain.DerivePrivateKey(keyChainPath, amount);

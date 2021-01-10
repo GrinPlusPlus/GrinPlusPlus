@@ -32,7 +32,7 @@ public:
 		Json::Value transactionsJSON;
 		for (const WalletTx& transaction : m_transactions)
 		{
-			transactionsJSON.append(WalletTxDTO(transaction, {}, {}).ToJSON());
+			transactionsJSON.append(WalletTxDTO(transaction, {}, {}, {}, "").ToJSON());
 		}
 		summaryJSON["transactions"] = transactionsJSON;
 

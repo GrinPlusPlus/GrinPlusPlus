@@ -24,9 +24,11 @@ public:
         bool Step();
         void Finalize();
 
+        bool IsColumnNull(const int col) const;
         int GetColumnInt(const int col) const;
         int64_t GetColumnInt64(const int col) const;
         std::vector<uint8_t> GetColumnBytes(const int col) const;
+        std::string GetColumnString(const int col) const;
 
     private:
         sqlite3* m_pDatabase;

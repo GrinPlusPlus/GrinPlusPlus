@@ -20,10 +20,22 @@ public:
 		const SlateStage& stage
 	);
 
+	static std::pair<std::unique_ptr<Slate>, std::string> LoadLatestSlate(
+		SqliteDB& database,
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId
+	);
+
+	static std::string LoadArmoredSlatepack(
+		SqliteDB& database,
+		const uuids::uuid& slateId
+	);
+
 	static void SaveSlate(
 		SqliteDB& database,
 		const SecureVector& masterSeed,
-		const Slate& slate
+		const Slate& slate,
+		const std::string& slatepack_message
 	);
 
 private:

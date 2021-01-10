@@ -25,10 +25,16 @@ public:
 		const uuids::uuid& slateId,
 		const SlateStage& stage
 	) const = 0;
+	virtual std::pair<std::unique_ptr<Slate>, std::string> LoadLatestSlate(
+		const SecureVector& masterSeed,
+		const uuids::uuid& slateId
+	) const = 0;
+	virtual std::string LoadArmoredSlatepack(const uuids::uuid& slateId) const = 0;
 
 	virtual void SaveSlate(
 		const SecureVector& masterSeed,
-		const Slate& slate
+		const Slate& slate,
+		const std::string& slatepack_message
 	) = 0;
 
 	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;

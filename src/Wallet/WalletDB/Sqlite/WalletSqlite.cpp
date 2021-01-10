@@ -70,9 +70,19 @@ std::unique_ptr<Slate> WalletSqlite::LoadSlate(const SecureVector& masterSeed, c
 	return SlateTable::LoadSlate(*m_pDatabase, masterSeed, slateId, stage);
 }
 
-void WalletSqlite::SaveSlate(const SecureVector& masterSeed, const Slate& slate)
+std::pair<std::unique_ptr<Slate>, std::string> WalletSqlite::LoadLatestSlate(const SecureVector& masterSeed, const uuids::uuid& slateId) const
 {
-	SlateTable::SaveSlate(*m_pDatabase, masterSeed, slate);
+	return SlateTable::LoadLatestSlate(*m_pDatabase, masterSeed, slateId);
+}
+
+std::string WalletSqlite::LoadArmoredSlatepack(const uuids::uuid& slateId) const
+{
+	return SlateTable::LoadArmoredSlatepack(*m_pDatabase, slateId);
+}
+
+void WalletSqlite::SaveSlate(const SecureVector& masterSeed, const Slate& slate, const std::string& slatepack_message)
+{
+	SlateTable::SaveSlate(*m_pDatabase, masterSeed, slate, slatepack_message);
 }
 
 std::unique_ptr<SlateContextEntity> WalletSqlite::LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const

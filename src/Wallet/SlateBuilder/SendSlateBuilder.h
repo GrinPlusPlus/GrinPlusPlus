@@ -28,7 +28,9 @@ public:
 		const bool sendEntireBalance,
 		const std::optional<std::string>& addressOpt,
 		const SelectionStrategyDTO& strategy,
-		const uint16_t slateVersion) const;
+		const uint16_t slateVersion,
+		const std::vector<SlatepackAddress>& recipients
+	) const;
 
 private:
 	Slate Build(
@@ -39,7 +41,8 @@ private:
 		const uint8_t numChangeOutputs,
 		std::vector<OutputDataEntity>& inputs,
 		const std::optional<std::string>& addressOpt,
-		const uint16_t slateVersion
+		const uint16_t slateVersion,
+		const std::vector<SlatepackAddress>& recipients
 	) const;
 
 	WalletTx BuildWalletTx(
@@ -59,7 +62,8 @@ private:
 		const SlateContextEntity& context,
 		const std::vector<OutputDataEntity>& changeOutputs,
 		std::vector<OutputDataEntity>& coinsToLock,
-		const WalletTx& walletTx
+		const WalletTx& walletTx,
+		const std::string& armored_slatepack
 	) const;
 
 	const Config& m_config;

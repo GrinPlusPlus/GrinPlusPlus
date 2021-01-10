@@ -17,7 +17,8 @@ public:
 		Locked<WalletImpl> wallet,
 		const SecureVector& masterSeed,
 		const Slate& slate,
-		const std::optional<SlatepackAddress>& addressOpt
+		const std::optional<SlatepackAddress>& addressOpt,
+		const std::vector<SlatepackAddress>& recipients
 	) const;
 
 private:
@@ -31,11 +32,11 @@ private:
 	void UpdateDatabase(
 		std::shared_ptr<IWalletDB> pBatch,
 		const SecureVector& masterSeed,
-		Slate& receiveSlate,
-		const SlateSignature& signature,
+		const Slate& receiveSlate,
 		const OutputDataEntity& outputData,
 		const uint32_t walletTxId,
-		const std::optional<SlatepackAddress>& addressOpt
+		const std::optional<SlatepackAddress>& addressOpt,
+		const std::string& armored_slatepack
 	) const;
 
 	const Config& m_config;

@@ -15,13 +15,19 @@ std::vector<WalletTxDTO> WalletTxLoader::LoadTransactions(
 	std::transform(
 		walletTransactions.cbegin(), walletTransactions.cend(),
 		std::back_inserter(walletTxDTOs),
-		[this, &outputs](const WalletTx& walletTx) { return ToDTO(outputs, walletTx); }
+		[this, &pWalletDB, &masterSeed, &outputs](const WalletTx& walletTx) {
+			return ToDTO(pWalletDB, masterSeed, outputs, walletTx);
+		}
 	);
 
 	return walletTxDTOs;
 }
 
-WalletTxDTO WalletTxLoader::ToDTO(const std::vector<OutputDataEntity>& outputs, const WalletTx& walletTx) const
+WalletTxDTO WalletTxLoader::ToDTO(
+	const std::shared_ptr<const IWalletDB>& pWalletDB,
+	const SecureVector& masterSeed,
+	const std::vector<OutputDataEntity>& outputs,
+	const WalletTx& walletTx) const
 {
 	std::vector<Commitment> kernels;
 	auto txOpt = walletTx.GetTransaction();
@@ -46,7 +52,19 @@ WalletTxDTO WalletTxLoader::ToDTO(const std::vector<OutputDataEntity>& outputs, 
 		[](const OutputDataEntity& output) { return WalletOutputDTO::FromOutputData(output); }
 	);
 
-	return WalletTxDTO{ walletTx, kernels, outputDTOs };
+	std::optional<Slate> slate = std::nullopt;
+
+	std::string armored_slatepack;
+	if (walletTx.GetSlateId().has_value()) {
+		auto latest_slate = pWalletDB->LoadLatestSlate(masterSeed, walletTx.GetSlateId().value());
+		if (latest_slate.first != nullptr) {
+			slate = std::make_optional<Slate>(*latest_slate.first);
+		}
+
+		armored_slatepack = latest_slate.second;
+	}
+
+	return WalletTxDTO{ walletTx, kernels, outputDTOs, slate, armored_slatepack };
 }
 
 std::vector<WalletTx> WalletTxLoader::LoadWalletTxs(
@@ -78,6 +96,10 @@ bool WalletTxLoader::MeetsCriteria(const WalletTx& walletTx, const ListTxsCriter
 	}
 
 	if (criteria.GetEndRange().has_value() && criteria.GetEndRange().value() < txDateTime) {
+		return false;
+	}
+
+	if (!criteria.GetTxIds().empty() && criteria.GetTxIds().count(walletTx.GetId()) == 0) {
 		return false;
 	}
 

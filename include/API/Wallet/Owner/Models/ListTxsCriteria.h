@@ -15,15 +15,25 @@ class ListTxsCriteria
 public:
 	ListTxsCriteria(
 		const SessionToken& token,
+		const std::unordered_set<uint32_t>& txIds,
 		const std::optional<std::chrono::system_clock::time_point>& start_range,
 		const std::optional<std::chrono::system_clock::time_point>& end_range,
 		const std::unordered_set<EWalletTxType>& statuses
-	) : m_token(token), m_startRange(start_range), m_endRange(end_range), m_statuses(statuses) { }
+	) : m_token(token), m_txIds(txIds), m_startRange(start_range), m_endRange(end_range), m_statuses(statuses) { }
 
 	static ListTxsCriteria FromJSON(const Json::Value& json)
 	{
 		SessionToken token = SessionToken::FromBase64(
 			JsonUtil::GetRequiredString(json, "session_token")
+		);
+
+
+		std::unordered_set<uint32_t> ids;
+		std::vector<Json::Value> ids_json = JsonUtil::GetArray(json, "ids");
+		std::transform(
+			ids_json.cbegin(), ids_json.cend(),
+			std::inserter(ids, ids.end()),
+			[](const Json::Value& id_json) { return (uint32_t)JsonUtil::ConvertToUInt64(id_json); }
 		);
 
 		std::optional<std::chrono::system_clock::time_point> start_range = std::nullopt;
@@ -70,16 +80,18 @@ public:
 			}
 		}
 
-		return ListTxsCriteria(token, start_range, end_range, statuses);
+		return ListTxsCriteria(token, ids, start_range, end_range, statuses);
 	}
 
 	const SessionToken& GetToken() const noexcept { return m_token; }
+	const std::unordered_set<uint32_t>& GetTxIds() const noexcept { return m_txIds; }
 	const std::optional<std::chrono::system_clock::time_point>& GetStartRange() const noexcept { return m_startRange; }
 	const std::optional<std::chrono::system_clock::time_point>& GetEndRange() const noexcept { return m_endRange; }
 	const std::unordered_set<EWalletTxType>& GetStatuses() const noexcept { return m_statuses; }
 
 private:
 	SessionToken m_token;
+	std::unordered_set<uint32_t> m_txIds;
 	std::optional<std::chrono::system_clock::time_point> m_startRange;
 	std::optional<std::chrono::system_clock::time_point> m_endRange;
 	std::unordered_set<EWalletTxType> m_statuses;

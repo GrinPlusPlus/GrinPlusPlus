@@ -22,6 +22,8 @@ public:
 
 private:
     WalletTxDTO ToDTO(
+        const std::shared_ptr<const IWalletDB>& pWalletDB,
+        const SecureVector& masterSeed,
         const std::vector<OutputDataEntity>& outputs,
         const WalletTx& walletTx
     ) const;

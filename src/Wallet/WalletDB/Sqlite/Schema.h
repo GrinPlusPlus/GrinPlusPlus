@@ -1,3 +1,3 @@
 #pragma once
 
-static const int LATEST_SCHEMA_VERSION = 2;
+static const int LATEST_SCHEMA_VERSION = 3;

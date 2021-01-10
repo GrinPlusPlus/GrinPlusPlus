@@ -4,13 +4,15 @@
 #include "SlateUtil.h"
 
 #include <Core/Exceptions/WalletException.h>
+#include <Wallet/Models/Slatepack/Armor.h>
 #include <Common/Logger.h>
 
 Slate ReceiveSlateBuilder::AddReceiverData(
 	Locked<WalletImpl> wallet,
 	const SecureVector& masterSeed,
 	const Slate& send_slate,
-	const std::optional<SlatepackAddress>& addressOpt) const
+	const std::optional<SlatepackAddress>& addressOpt,
+	const std::vector<SlatepackAddress>& recipients) const
 {
 	WALLET_INFO_F(
 		"Receiving {} from {}",
@@ -64,15 +66,16 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 		masterSeed,
 		receiveSlate
 	);
-
+	
+	receiveSlate.sigs = std::vector<SlateSignature>{ signature };
 	UpdateDatabase(
 		pBatch.GetShared(),
 		masterSeed,
 		receiveSlate,
-		signature,
 		outputData,
 		walletTxId,
-		addressOpt
+		addressOpt,
+		Armor::Pack(pWallet->GetSlatepackAddress(), receiveSlate, recipients)
 	);
 
 	pBatch->Commit();
@@ -176,11 +179,11 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 void ReceiveSlateBuilder::UpdateDatabase(
 	std::shared_ptr<IWalletDB> pBatch,
 	const SecureVector& masterSeed,
-	Slate& receiveSlate,
-	const SlateSignature& signature,
+	const Slate& receiveSlate,
 	const OutputDataEntity& outputData,
 	const uint32_t walletTxId,
-	const std::optional<SlatepackAddress>& addressOpt) const
+	const std::optional<SlatepackAddress>& addressOpt,
+	const std::string& armored_slatepack) const
 {
 	// Save OutputDataEntity
 	pBatch->AddOutputs(masterSeed, std::vector<OutputDataEntity>{ outputData });
@@ -206,6 +209,5 @@ void ReceiveSlateBuilder::UpdateDatabase(
 
 	// receiveSlate.amount = 0;
 	// receiveSlate.fee = 0;
-	receiveSlate.sigs = std::vector<SlateSignature>{ signature };
-	pBatch->SaveSlate(masterSeed, receiveSlate);
+	pBatch->SaveSlate(masterSeed, receiveSlate, armored_slatepack);
 }

@@ -33,6 +33,11 @@ void SqliteDB::Statement::Finalize()
 	}
 }
 
+bool SqliteDB::Statement::IsColumnNull(const int col) const
+{
+	return sqlite3_column_type(m_pStatement, col) == SQLITE_NULL;
+}
+
 int SqliteDB::Statement::GetColumnInt(const int col) const
 {
     return sqlite3_column_int(m_pStatement, col);
@@ -48,6 +53,11 @@ std::vector<uint8_t> SqliteDB::Statement::GetColumnBytes(const int col) const
     const int size = sqlite3_column_bytes(m_pStatement, col);
     const unsigned char* pBytes = (const unsigned char*)sqlite3_column_blob(m_pStatement, col);
     return std::vector<uint8_t>{ pBytes, pBytes + size };
+}
+
+std::string SqliteDB::Statement::GetColumnString(const int col) const
+{
+	return (const char*)sqlite3_column_text(m_pStatement, col);
 }
 
 /**

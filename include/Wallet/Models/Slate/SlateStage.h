@@ -4,6 +4,7 @@
 
 enum class ESlateStage
 {
+    NONE = -1,
     STANDARD_SENT,
     STANDARD_RECEIVED,
     STANDARD_FINALIZED,
@@ -22,6 +23,15 @@ struct SlateStage
 
     bool operator!=(const SlateStage& rhs) const noexcept { return value != rhs.value; }
     bool operator!=(const ESlateStage& rhs) const noexcept { return value != rhs; }
+
+    bool operator<(const SlateStage& rhs) const noexcept { return ToByte() < rhs.ToByte(); }
+    bool operator<(const ESlateStage& rhs) const noexcept { return ToByte() < SlateStage::ToByte(rhs); }
+
+    bool operator>(const SlateStage& rhs) const noexcept { return ToByte() > rhs.ToByte(); }
+    bool operator>(const ESlateStage& rhs) const noexcept { return ToByte() > SlateStage::ToByte(rhs); }
+
+    bool operator>=(const SlateStage& rhs) const noexcept { return ToByte() >= rhs.ToByte(); }
+    bool operator>=(const ESlateStage& rhs) const noexcept { return ToByte() >= SlateStage::ToByte(rhs); }
 
     std::string ToString() const noexcept { return ToString(value); }
     uint8_t ToByte() const noexcept { return ToByte(value); }

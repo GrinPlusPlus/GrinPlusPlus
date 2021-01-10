@@ -40,7 +40,8 @@ private:
 
 	void UpdateDatabase(
 		const WalletTx& walletTx,
-		const Slate& finalizeSlate
+		const Slate& finalizeSlate,
+		const std::string& armored_slatepack
 	) const;
 
 	std::shared_ptr<Wallet> m_pWallet;

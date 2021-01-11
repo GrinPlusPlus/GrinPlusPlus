@@ -39,7 +39,7 @@ public:
 
 	uint16_t GetPortNumber() const noexcept { return m_pServer->GetPortNumber(); }
 
-	void AddMethod(const std::string& method, std::shared_ptr<RPCMethod> pMethod) noexcept
+	void AddMethod(const std::string& method, const std::shared_ptr<RPCMethod>& pMethod) noexcept
 	{
 		m_methods[method] = pMethod;
 	}

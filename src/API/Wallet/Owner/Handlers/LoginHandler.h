@@ -10,7 +10,7 @@
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <optional>
 
-class LoginHandler : RPCMethod
+class LoginHandler : public RPCMethod
 {
 public:
 	LoginHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)

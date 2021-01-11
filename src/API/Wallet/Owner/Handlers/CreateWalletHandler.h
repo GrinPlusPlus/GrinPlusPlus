@@ -12,7 +12,7 @@
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class CreateWalletHandler : RPCMethod
+class CreateWalletHandler : public RPCMethod
 {
 public:
 	CreateWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)

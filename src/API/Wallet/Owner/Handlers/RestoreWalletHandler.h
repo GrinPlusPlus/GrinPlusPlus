@@ -13,7 +13,7 @@
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class RestoreWalletHandler : RPCMethod
+class RestoreWalletHandler : public RPCMethod
 {
 public:
 	RestoreWalletHandler(const IWalletManagerPtr& pWalletManager, const TorProcess::Ptr& pTorProcess)

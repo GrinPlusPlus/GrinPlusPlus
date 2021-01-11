@@ -4,7 +4,7 @@
 #include <Wallet/WalletManager.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 
-class ScanForOutputsHandler : RPCMethod
+class ScanForOutputsHandler : public RPCMethod
 {
 public:
 	ScanForOutputsHandler(const IWalletManagerPtr& pWalletManager)

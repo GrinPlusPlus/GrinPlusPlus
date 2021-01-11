@@ -7,7 +7,7 @@
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class LogoutHandler : RPCMethod
+class LogoutHandler : public RPCMethod
 {
 public:
 	LogoutHandler(const IWalletManagerPtr& pWalletManager)

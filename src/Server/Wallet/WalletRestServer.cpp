@@ -67,7 +67,7 @@ int WalletRestServer::OwnerAPIHandler(mg_connection* pConnection, void* pWalletC
 		const HTTP::EHTTPMethod method = HTTPUtil::GetHTTPMethod(pConnection);
 		if (method == HTTP::EHTTPMethod::GET)
 		{
-			return OwnerGetAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager, *pContext->m_pNodeClient);
+			return OwnerGetAPI::HandleGET(pConnection, action, *pContext->m_pWalletManager);
 		}
 	}
 	catch (const SessionTokenException&)

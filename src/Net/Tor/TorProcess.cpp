@@ -27,7 +27,7 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	while (!pProcess->m_shutdown)
+	while (Global::IsRunning() && !pProcess->m_shutdown)
 	{
 		try
 		{

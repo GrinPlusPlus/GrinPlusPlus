@@ -2,6 +2,7 @@
 #include <Consensus.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Models/Slatepack/Armor.h>
+#include <Wallet/Exceptions/InsufficientFundsException.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/Hasher.h>
@@ -194,7 +195,21 @@ FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
         [](const OutputDataEntity& input) { return WalletOutputDTO::FromOutputData(input); }
     );
 
-	return FeeEstimateDTO(fee, std::move(inputDTOs));
+	uint64_t amount = criteria.GetAmount();
+	if (criteria.SendEntireBalance()) {
+		const uint64_t total_amount = std::accumulate(
+			available_coins.cbegin(), available_coins.cend(), (uint64_t)0,
+			[](const uint64_t total, const OutputDataEntity& coin) { return total + coin.GetAmount(); }
+		);
+
+		if (total_amount < fee) {
+			throw InsufficientFundsException();
+		}
+
+		amount = total_amount - fee;
+	}
+
+	return FeeEstimateDTO(amount, fee, std::move(inputDTOs));
 }
 
 // //

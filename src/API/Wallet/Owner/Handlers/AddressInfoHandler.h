@@ -24,6 +24,7 @@ public:
 
 		Json::Value result;
 		result["slatepack_address"] = slatepack_address.ToString();
+		result["tor_address"] = slatepack_address.ToTorAddress().ToString();
 		result["onion_address"] = "http://" + slatepack_address.ToTorAddress().ToString() + ".onion";
 		return request.BuildResult(result);
 	}

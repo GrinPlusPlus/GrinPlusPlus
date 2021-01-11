@@ -33,14 +33,6 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 	}
 
 	pAllocator->AddChain(pCandidateChain);
-	//std::shared_ptr<Chain> pSyncChain = Chain::Load(pAllocator, EChainType::SYNC, chainPath / "sync.chain", pGenesisIndex);
-	//if (pSyncChain == nullptr)
-	//{
-	//	LOG_INFO("Failed to load sync chain");
-	//	throw std::exception();
-	//}
-
-	//pAllocator->AddChain(pSyncChain);
 
 	auto pChainStore = std::shared_ptr<ChainStore>(new ChainStore(pConfirmedChain, pCandidateChain));
 	return std::make_shared<Locked<ChainStore>>(Locked<ChainStore>(pChainStore));
@@ -149,10 +141,6 @@ std::shared_ptr<Chain> ChainStore::GetChain(const EChainType chainType)
 	{
 		return m_pCandidateChain;
 	}
-	//else if (chainType == EChainType::SYNC)
-	//{
-	//	return m_pSyncChain;
-	//}
 
 	throw std::exception();
 }
@@ -167,10 +155,6 @@ std::shared_ptr<const Chain> ChainStore::GetChain(const EChainType chainType) co
 	{
 		return m_pCandidateChain;
 	}
-	//else if (chainType == EChainType::SYNC)
-	//{
-	//	return m_pSyncChain;
-	//}
 
 	throw std::exception();
 }

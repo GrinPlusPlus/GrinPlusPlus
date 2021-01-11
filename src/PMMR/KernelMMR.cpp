@@ -2,6 +2,7 @@
 #include "Common/MMRUtil.h"
 #include "Common/MMRHashUtil.h"
 
+#include <Core/Global.h>
 #include <Core/Traits/Lockable.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
@@ -13,7 +14,7 @@ KernelMMR::KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFi
 
 }
 
-std::shared_ptr<KernelMMR> KernelMMR::Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock)
+std::shared_ptr<KernelMMR> KernelMMR::Load(const fs::path& txHashSetPath)
 {
 	std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "kernel" / "pmmr_hash.bin");
 	std::shared_ptr<DataFile<KERNEL_SIZE>> pDataFile = DataFile<KERNEL_SIZE>::Load(txHashSetPath / "kernel" / "pmmr_data.bin");
@@ -22,7 +23,7 @@ std::shared_ptr<KernelMMR> KernelMMR::Load(const fs::path& txHashSetPath, const 
 
 	if (pHashFile->GetSize() == 0)
 	{
-		pKernelMMR->ApplyKernel(genesisBlock.GetKernels().front());
+		pKernelMMR->ApplyKernel(Global::GetGenesisBlock().GetKernels().front());
 	}
 
 	return pKernelMMR;

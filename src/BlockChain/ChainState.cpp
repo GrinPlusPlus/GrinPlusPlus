@@ -40,7 +40,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 		auto locked = MultiLocker().Lock(*pDatabase, *pHeaderMMR);
 		std::get<0>(locked)->AddBlockHeader(genesisBlock.GetHeader());
 		std::get<1>(locked)->AddHeader(*genesisBlock.GetHeader());
-		pTxHashSetManager->Write()->Open(genesisBlock.GetHeader(), genesisBlock);
+		pTxHashSetManager->Write()->Open(genesisBlock.GetHeader());
 
 		const BlockSums blockSums(
 			genesisBlock.GetOutputs().front().GetCommitment(),
@@ -51,7 +51,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 
 	auto pConfirmedIndex = pChainStore->Read()->GetConfirmedChain()->GetTip();
 	auto pConfirmedHeader = pDatabase->Read()->GetBlockHeader(pConfirmedIndex->GetHash());
-	pTxHashSetManager->Write()->Open(pConfirmedHeader, genesisBlock);
+	pTxHashSetManager->Write()->Open(pConfirmedHeader);
 
 	std::shared_ptr<ChainState> pChainState(new ChainState(config, pChainStore, pDatabase, pHeaderMMR, pTransactionPool, pTxHashSetManager));
 	return std::make_shared<Locked<ChainState>>(Locked<ChainState>(pChainState));

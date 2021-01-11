@@ -19,7 +19,7 @@ public:
 	TxHashSetManager(const Config& config);
 	~TxHashSetManager() = default;
 
-	std::shared_ptr<ITxHashSet> Open(BlockHeaderPtr pConfirmedTip, const FullBlock& genesisBlock);
+	std::shared_ptr<ITxHashSet> Open(const BlockHeaderPtr& pConfirmedTip);
 	void Close() { m_pTxHashSet.reset(); }
 
 	std::shared_ptr<ITxHashSet> GetTxHashSet() { return m_pTxHashSet; }

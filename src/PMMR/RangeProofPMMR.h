@@ -2,6 +2,7 @@
 
 #include "Common/PruneableMMR.h"
 
+#include <Core/Global.h>
 #include <Crypto/RangeProof.h>
 #include <filesystem.h>
 
@@ -10,7 +11,7 @@
 class RangeProofPMMR : public PruneableMMR<RANGE_PROOF_SIZE, RangeProof>
 {
 public:
-	static std::shared_ptr<RangeProofPMMR> Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock)
+	static std::shared_ptr<RangeProofPMMR> Load(const fs::path& txHashSetPath)
 	{
 		std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "rangeproof" / "pmmr_hash.bin");
 
@@ -32,7 +33,7 @@ public:
 		auto pPMMR = std::shared_ptr<RangeProofPMMR>(new RangeProofPMMR(pHashFile, pLeafSet, pPruneList, pDataFile));
 		if (pHashFile->GetSize() == 0)
 		{
-			pPMMR->Append(genesisBlock.GetOutputs().front().GetRangeProof());
+			pPMMR->Append(Global::GetGenesisBlock().GetOutputs().front().GetRangeProof());
 		}
 
 		return pPMMR;

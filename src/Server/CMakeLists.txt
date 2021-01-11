@@ -13,8 +13,6 @@ file(GLOB SOURCE_CODE
 	"Node/API/ServerAPI.cpp"
 	"Node/API/TxHashSetAPI.cpp"
 	"Wallet/WalletDaemon.cpp"
-	"Wallet/WalletRestServer.cpp"
-	"Wallet/API/OwnerGetAPI.cpp"
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

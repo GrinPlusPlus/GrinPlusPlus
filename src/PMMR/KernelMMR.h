@@ -16,7 +16,7 @@
 class KernelMMR : public MMR
 {
 public:
-	static std::shared_ptr<KernelMMR> Load(const fs::path& txHashSetPath, const FullBlock& genesisBlock);
+	static std::shared_ptr<KernelMMR> Load(const fs::path& txHashSetPath);
 	virtual ~KernelMMR() = default;
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const uint64_t mmrIndex) const;

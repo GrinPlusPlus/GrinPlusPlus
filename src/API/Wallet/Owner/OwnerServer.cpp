@@ -16,6 +16,7 @@
 #include "Handlers/CancelTxHandler.h"
 #include "Handlers/GetBalanceHandler.h"
 #include "Handlers/ListTxsHandler.h"
+#include "Handlers/ListOutputsHandler.h"
 #include "Handlers/RepostTxHandler.h"
 #include "Handlers/EstimateFeeHandler.h"
 #include "Handlers/ScanForOutputsHandler.h"
@@ -253,6 +254,8 @@ OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const 
         }
     */
     pServer->AddMethod("list_txs", std::shared_ptr<RPCMethod>(new ListTxsHandler(pWalletManager)));
+
+    pServer->AddMethod("list_outputs", std::shared_ptr<RPCMethod>(new ListOutputsHandler(pWalletManager)));
 
     /*
         Request:

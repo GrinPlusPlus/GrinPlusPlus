@@ -8,22 +8,10 @@
 #include <Wallet/Exceptions/SessionTokenException.h>
 
 /*
-	GET /v1/wallet/owner/accounts
 	GET /v1/wallet/owner/retrieve_outputs?refresh&show_spent&tx_id=x&tx_id=y
 */
 int OwnerGetAPI::HandleGET(mg_connection* pConnection, const std::string& action, IWalletManager& walletManager)
 {
-	if (action == "accounts")
-	{
-		Json::Value accountsNode(Json::arrayValue);
-		auto accounts = walletManager.GetAllAccounts();
-		for (const auto& account : accounts) {
-			accountsNode.append(account);
-		}
-
-		return HTTPUtil::BuildSuccessResponse(pConnection, JsonUtil::WriteCondensed(accountsNode));
-	}
-
 	// GET /v1/wallet/owner/retrieve_outputs?show_spent&show_canceled
 	if (action == "retrieve_outputs")
 	{

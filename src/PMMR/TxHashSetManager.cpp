@@ -10,6 +10,7 @@
 #include <Common/Logger.h>
 
 #include <filesystem.h>
+#include <thread>
 
 TxHashSetManager::TxHashSetManager(const Config& config)
 	: m_config(config), m_pTxHashSet(nullptr)

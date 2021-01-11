@@ -33,10 +33,21 @@ public:
         json["immature"] = m_immature;
         json["locked"] = m_locked;
         json["spendable"] = m_spendable;
+
+        json["fmt_total"] = FormatAmount(GetTotal());
+        json["fmt_unconfirmed"] = FormatAmount(m_unconfirmed);
+        json["fmt_immature"] = FormatAmount(m_immature);
+        json["fmt_locked"] = FormatAmount(m_locked);
+        json["fmt_spendable"] = FormatAmount(m_spendable);
         return json;
     }
 
 private:
+    static std::string FormatAmount(const uint64_t amount)
+    {
+        return std::to_string(amount / 1000000000) + "." + std::to_string(amount % 1000000000);
+    }
+
     uint64_t m_blockHeight;
     uint64_t m_unconfirmed;
     uint64_t m_immature;

@@ -67,7 +67,7 @@ public:
     std::vector<WalletTxDTO> GetTransactions()
     {
         return m_pWalletManager->GetWallet(m_token).Read()->GetTransactions(
-            ListTxsCriteria(m_token, std::nullopt, std::nullopt, {})
+            ListTxsCriteria(m_token, {}, std::nullopt, std::nullopt, {})
         );
     }
 

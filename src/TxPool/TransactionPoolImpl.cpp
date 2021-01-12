@@ -34,7 +34,7 @@ EAddTransactionStatus TransactionPool::AddTransaction(
 	}
 
 	// Verify fee meets minimum
-	if (pTransaction->FeeMeetsMinimum(next_block_height))
+	if (!pTransaction->FeeMeetsMinimum(next_block_height))
 	{
 		LOG_WARNING_F("Fee too low for transaction ({})", *pTransaction);
 		return EAddTransactionStatus::LOW_FEE;

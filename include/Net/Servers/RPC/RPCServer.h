@@ -32,7 +32,11 @@ public:
 	{
 		auto pRPCServer = std::shared_ptr<RPCServer>(new RPCServer(pServer, logFile));
 
+		WALLET_INFO_F("Adding RPC listener:  {}", uri);
+
 		pServer->AddListener(uri, APIHandler, pRPCServer.get());
+
+		WALLET_INFO_F("Added RPC listener:  {}", uri);
 
 		return pRPCServer;
 	}

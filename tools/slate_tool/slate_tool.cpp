@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <Core/Global.h>
+#include <Core/Context.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Util/JsonUtil.h>
@@ -37,6 +39,9 @@ int main(int argc, char* argv[])
         std::cout << "Usage: slate_tool <slate.json>" << std::endl;
         return -1;
     }
+
+    auto pContext = Context::Create(Environment::MAINNET, Config::Default(Environment::MAINNET));
+    Global::Init(pContext);
 
     std::unique_ptr<Slate> pSlate = nullptr;
     

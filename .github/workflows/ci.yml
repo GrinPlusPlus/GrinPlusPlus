@@ -113,7 +113,7 @@ jobs:
           buildDirectory: '${{ github.workspace }}/build'
           cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF"'
           buildWithCMake: true
-          buildWithCMakeArgs: '--config Release'
+          buildWithCMakeArgs: '--parallel --config Release'
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

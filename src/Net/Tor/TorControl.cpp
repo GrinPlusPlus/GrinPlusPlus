@@ -46,7 +46,7 @@ std::shared_ptr<TorControl> TorControl::Create(
 
 #ifdef __linux__
 		std::error_code ec;
-		fs::path torDataDir = torDataPath / ("data" + std::to_string(torConfig.GetControlPort()));
+		fs::path torDataDir = torDataPath / ("data" + std::to_string(controlPort));
 		fs::remove_all(torDataDir, ec);
 		fs::create_directories(torDataDir, ec);
 		std::string torrcPath = (torDataPath / ".torrc").u8string();

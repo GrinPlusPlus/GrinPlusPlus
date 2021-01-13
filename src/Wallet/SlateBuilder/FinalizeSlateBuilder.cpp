@@ -205,7 +205,7 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		return nullptr;
 	}
 
-	WALLET_INFO_F("Final transaction: {}", transaction.ToJSON().toStyledString());
+	WALLET_INFO_F("Final transaction: {}", transaction);
 
 	return std::make_unique<Transaction>(std::move(transaction));
 }

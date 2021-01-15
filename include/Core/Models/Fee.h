@@ -62,8 +62,7 @@ public:
 
 	static Fee FromJSON(const Json::Value& json)
 	{
-		uint64_t fee = json.asUInt64();
-		return Fee::From(fee);
+		return Fee::From(JsonUtil::ConvertToUInt64(json));
 	}
 
 private:

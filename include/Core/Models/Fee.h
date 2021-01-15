@@ -56,22 +56,14 @@ public:
 
 	Json::Value ToJSON() const
 	{
-		Json::Value json;
-		json["shift"] = m_shift;
-		json["fee"] = m_fee;
-		return json;
+		ByteBuffer buffer(Serialized());
+		return Json::UInt64(buffer.ReadU64());
 	}
 
 	static Fee FromJSON(const Json::Value& json)
 	{
-		if (json.isObject()) {
-			uint8_t shift = JsonUtil::GetRequiredUInt8(json, "shift");
-			uint64_t fee = JsonUtil::GetRequiredUInt64(json, "fee");
-			return Fee(shift, fee);
-		} else {
-			uint64_t fee = json.asUInt64();
-			return Fee::From(fee);
-		}
+		uint64_t fee = json.asUInt64();
+		return Fee::From(fee);
 	}
 
 private:

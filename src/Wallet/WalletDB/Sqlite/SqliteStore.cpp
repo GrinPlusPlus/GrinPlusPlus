@@ -101,8 +101,15 @@ void SqliteStore::DeleteWallet(const std::string& username)
 		throw WALLET_STORE_EXCEPTION("Wallet doesn't exist.");
 	}
 
+	const fs::path dbFilePath = userDBPath / "wallet.db";
+	
+	if (!FileUtil::RemoveFile(dbFilePath)) {
+		WALLET_ERROR_F("Failed to delete wallet.db file for user: {}", username);
+		throw WALLET_STORE_EXCEPTION("Failed to delete wallet.");
+	}
+
 	if (!FileUtil::RemoveFile(userDBPath)) {
-		WALLET_ERROR_F("Failed to delte wallet for user: {}", username);
+		WALLET_ERROR_F("Failed to delete wallet for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to delete wallet.");
 	}
 }

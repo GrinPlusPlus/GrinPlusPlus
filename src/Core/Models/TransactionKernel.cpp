@@ -24,7 +24,7 @@ TransactionKernel::TransactionKernel(const EKernelFeatures features, const Fee& 
 
 void TransactionKernel::Serialize(Serializer& serializer) const
 {
-	if (serializer.GetProtocolVersion() == EProtocolVersion::V2)
+	if (serializer.GetProtocolVersion() >= EProtocolVersion::V2)
 	{
 		serializer.Append<uint8_t>((uint8_t)GetFeatures());
 		switch (GetFeatures())
@@ -64,7 +64,7 @@ TransactionKernel TransactionKernel::Deserialize(ByteBuffer& byteBuffer)
 
 	Fee fee;
 	uint64_t lockHeight = 0;
-	if (byteBuffer.GetProtocolVersion() == EProtocolVersion::V2)
+	if (byteBuffer.GetProtocolVersion() >= EProtocolVersion::V2)
 	{
 		if (features != EKernelFeatures::COINBASE_KERNEL)
 		{

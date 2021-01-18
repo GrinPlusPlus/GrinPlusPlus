@@ -27,12 +27,7 @@ TorControl::TorControl(
 
 TorControl::~TorControl()
 {
-	if (m_pClient != nullptr) {
-		try
-		{
-			m_pClient->Invoke("SIGNAL DUMP\n");
-		} catch (std::exception&) { }
-	}
+	m_pClient.reset();
 }
 
 std::shared_ptr<TorControl> TorControl::Create(
@@ -145,14 +140,8 @@ bool TorControl::DelOnion(const TorAddress& torAddress)
 
 bool TorControl::CheckHeartbeat()
 {
-	// 250-status/bootstrap-phase=NOTICE BOOTSTRAP PROGRESS=100 TAG=done SUMMARY="Done"
-
-	// GETINFO status/clients-seen
-	// GETINFO current-time/local
-
 	try
 	{
-		m_pClient->Invoke("SIGNAL DUMP\n");
 		m_pClient->Invoke("SIGNAL HEARTBEAT\n");
 	}
 	catch (std::exception&)
@@ -160,8 +149,6 @@ bool TorControl::CheckHeartbeat()
 		return false;
 	}
 
-	// SIGNAL HEARTBEAT
-	//std::string command = "GETINFO onions/detached\n";
 	return true;
 }
 

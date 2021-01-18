@@ -130,7 +130,7 @@ std::pair<std::unique_ptr<Slate>, std::string> SlateTable::LoadLatestSlate(
 	SlateStage highest_stage = ESlateStage::NONE;
 	std::pair<std::unique_ptr<Slate>, std::string> latest = { nullptr, "" };
 	while (pStatement->Step()) {
-		WALLET_DEBUG_F(
+		WALLET_TRACE_F(
 			"Slate found for id {} with stage {}",
 			uuids::to_string(slateId),
 			pStatement->GetColumnString(0)

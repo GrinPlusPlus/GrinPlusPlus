@@ -25,6 +25,8 @@ public:
 	);
 	bool StopListener(const std::string& username);
 
+	bool IsListening(const std::string& username);
+
 private:
 	struct Context;
 

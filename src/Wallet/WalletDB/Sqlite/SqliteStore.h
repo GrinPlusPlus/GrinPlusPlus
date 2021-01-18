@@ -16,6 +16,7 @@ public:
 
 	std::vector<GrinStr> GetAccounts() const final;
 	Locked<IWalletDB> OpenWallet(const std::string& username, const SecureVector& masterSeed) final;
+	void CloseWallet(const std::string& username) final;
 	Locked<IWalletDB> CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed) final;
 	void DeleteWallet(const std::string& username) final;
 	void ChangePassword(const std::string& username, const EncryptedSeed& encryptedSeed) final;

@@ -191,7 +191,11 @@ void SessionManager::Logout(const SessionToken& token)
 	auto iter = m_sessionsById.find(token.GetSessionId());
 	if (iter != m_sessionsById.end())
 	{
+		std::string username = iter->second->m_wallet.Read()->GetUsername();
 		m_pForeignController->StopListener(iter->second->m_wallet.Read()->GetUsername());
+		if (!m_pForeignController->IsListening(username)) {
+			m_pWalletDB->CloseWallet(username);
+		}
 		m_sessionsById.erase(iter);
 	}
 }

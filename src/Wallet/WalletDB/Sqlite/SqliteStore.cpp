@@ -66,6 +66,15 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 	return walletDB;
 }
 
+void SqliteStore::CloseWallet(const std::string& username)
+{
+	auto iter = m_userDBs.find(username);
+	if (iter != m_userDBs.end()) {
+		WALLET_DEBUG_F("Closing wallet.db for user: {}", username);
+		m_userDBs.erase(iter);
+	}
+}
+
 Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const EncryptedSeed& encryptedSeed)
 {
 	const fs::path userDBPath = m_walletDirectory / username;
@@ -102,7 +111,7 @@ void SqliteStore::DeleteWallet(const std::string& username)
 	}
 
 	if (!FileUtil::RemoveFile(userDBPath)) {
-		WALLET_ERROR_F("Failed to delte wallet for user: {}", username);
+		WALLET_ERROR_F("Failed to delete wallet for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Failed to delete wallet.");
 	}
 }

@@ -78,3 +78,10 @@ bool ForeignController::StopListener(const std::string& username)
 
 	return true;
 }
+
+bool ForeignController::IsListening(const std::string& username)
+{
+	std::unique_lock<std::mutex> lock(m_contextsMutex);
+
+	return m_contextsByUsername.find(username) != m_contextsByUsername.end();
+}

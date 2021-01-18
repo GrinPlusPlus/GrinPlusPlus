@@ -5,11 +5,12 @@
 
 #include <Consensus.h>
 #include <GrinVersion.h>
+#include <Core/Enums/ProtocolVersion.h>
 
 namespace P2P
 {
 	// Current latest version of the protocol
-	static const uint32_t PROTOCOL_VERSION = 2;
+	static const uint32_t PROTOCOL_VERSION = (uint32_t)ProtocolVersion::Local();
 
 	// Grin's user agent with current version
 	static const std::string USER_AGENT = "Grin++ " + GRINPP_VERSION;

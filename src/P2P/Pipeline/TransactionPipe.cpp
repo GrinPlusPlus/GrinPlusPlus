@@ -35,7 +35,7 @@ void TransactionPipe::Thread_ProcessTransactions(TransactionPipe& pipeline)
 	LoggerAPI::SetThreadName("TXN_PIPE");
 	LOG_TRACE("BEGIN");
 
-	while (!pipeline.m_terminate)
+	while (!pipeline.m_terminate && Global::IsRunning())
 	{
 		try
 		{

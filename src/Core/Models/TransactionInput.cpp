@@ -9,7 +9,7 @@
 TransactionInput::TransactionInput(const EOutputFeatures features, Commitment&& commitment)
 	: m_features(features), m_commitment(std::move(commitment))
 {
-		Serializer serializer(ProtocolVersion::Local()); // TODO: Need to fix sort for V2 peers
+		Serializer serializer(ProtocolVersion::Local());
 		Serialize(serializer);
 		m_hash = Hasher::Blake2b(serializer.GetBytes());
 }

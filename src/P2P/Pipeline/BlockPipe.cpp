@@ -86,7 +86,7 @@ void BlockPipe::Thread_PostProcessBlocks(BlockPipe& pipeline)
 	LoggerAPI::SetThreadName("BLOCK_POSTPROCESS_PIPE");
 	LOG_TRACE("BEGIN");
 
-	while (!pipeline.m_terminate)
+	while (!pipeline.m_terminate && Global::IsRunning())
 	{
 		if (!pipeline.m_pBlockChain->ProcessNextOrphanBlock())
 		{

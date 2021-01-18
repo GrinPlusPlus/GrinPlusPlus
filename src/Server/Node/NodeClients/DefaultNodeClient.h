@@ -140,12 +140,12 @@ public:
 
 						return true;
 					} else {
-						LOG_ERROR_F("Failed to add {} for reason '{}'", pTransaction, (uint8_t)result);
+						LOG_ERROR_F("Failed to post {} for reason '{}'", pTransaction, (uint8_t)result);
 					}
 				}
 				catch (std::exception& e)
 				{
-					LOG_ERROR_F("Failed to add {}. Exception: ", pTransaction, e.what());
+					LOG_ERROR_F("Failed to post {}. Exception: ", pTransaction, e.what());
 					return false;
 				}
 			}

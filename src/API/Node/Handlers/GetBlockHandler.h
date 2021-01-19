@@ -19,7 +19,7 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		const Json::Value params = request.GetParams().value();
+		const Json::Value& params = request.GetParams().value();
 		if (!params.isArray() || params.size() < 3) {
 			return request.BuildError("INVALID_PARAMS", "Expected 3 parameters: height, hash, commit");
 		}

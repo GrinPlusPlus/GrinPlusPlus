@@ -142,12 +142,9 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
-	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
-	if (pTorAddress != nullptr)
-	{
-		wallet.Write()->SetTorAddress(*pTorAddress);
-		walletImpl.Write()->SetTorAddress(*pTorAddress);
-	}
+	TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
+	wallet.Write()->SetTorAddress(tor_address);
+	walletImpl.Write()->SetTorAddress(tor_address);
 
 	return wallet.Read()->GetTorAddress();
 }

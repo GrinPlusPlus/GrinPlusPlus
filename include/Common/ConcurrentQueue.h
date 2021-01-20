@@ -141,6 +141,12 @@ public:
 		return true;
 	}
 
+	size_t size() const noexcept
+	{
+		std::shared_lock<std::shared_mutex> read_lock(m_mutex);
+		return m_deque.size();
+	}
+
 private:
 	std::deque<T> m_deque;
 	mutable std::shared_mutex m_mutex;

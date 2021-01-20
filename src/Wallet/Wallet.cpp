@@ -135,20 +135,13 @@ SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
 	return *pSlateContext;
 }
 
-// void Wallet::CheckForOutputs(const bool fromGenesis)
-// {
-
-// }
-
 std::optional<TorAddress> Wallet::AddTorListener(const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
 {
 	KeyChain keyChain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
-	std::shared_ptr<TorAddress> pTorAddress = pTorProcess->AddListener(torKey.secret_key, GetListenerPort());
-	if (pTorAddress != nullptr) {
-		SetTorAddress(*pTorAddress);
-	}
+	TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, GetListenerPort());
+	SetTorAddress(tor_address);
 
 	return GetTorAddress();
 }

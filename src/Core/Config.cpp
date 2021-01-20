@@ -58,15 +58,21 @@ Config::CPtr Config::Load(const Environment environment)
 	// Read config
 	std::shared_ptr<Config> pConfig = nullptr;
 	fs::path configPath = dataDir / "server_config.json";
-	if (FileUtil::Exists(configPath)) {
-		std::vector<unsigned char> data;
-		if (!FileUtil::ReadFile(configPath, data)) {
-			LOG_ERROR_F("Failed to open config file at: {}", configPath);
-			throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
-		}
 
-		pConfig = Config::Load(JsonUtil::Parse(data), environment);
-	} else {
+	try {
+		if (FileUtil::Exists(configPath)) {
+			std::vector<unsigned char> data;
+			if (!FileUtil::ReadFile(configPath, data)) {
+				LOG_ERROR_F("Failed to open config file at: {}", configPath);
+				throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
+			}
+
+			pConfig = Config::Load(JsonUtil::Parse(data), environment);
+		}
+	}
+	catch (...) {}
+	
+	if (pConfig == nullptr) {
 		pConfig = Config::Default(environment);
 	}
 

@@ -31,7 +31,7 @@ public:
 	using Ptr = std::shared_ptr<Wallet>;
 	using CPtr = std::shared_ptr<const Wallet>;
 
-	Wallet(const Config::CPtr& pConfig, const Locked<IWalletDB>& walletDB, const SessionToken& token, const SecureVector& master_seed, const std::string& username, const KeyChainPath& user_path, const SlatepackAddress& address)
+	Wallet(const Config::Ptr& pConfig, const Locked<IWalletDB>& walletDB, const SessionToken& token, const SecureVector& master_seed, const std::string& username, const KeyChainPath& user_path, const SlatepackAddress& address)
 		: m_pConfig(pConfig), m_walletDB(walletDB), m_token(token), m_master_seed(master_seed), m_username(username), m_userPath(user_path), m_address(address) { }
 
 	const std::string& GetUsername() const noexcept { return m_username; }
@@ -95,7 +95,7 @@ public:
 	Locked<IWalletDB> GetDatabase() const { return m_walletDB; }
 
 private:
-	Config::CPtr m_pConfig;
+	Config::Ptr m_pConfig;
 	Locked<IWalletDB> m_walletDB;
 	SessionToken m_token;
 	SecureVector m_master_seed;

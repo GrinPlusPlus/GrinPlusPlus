@@ -22,7 +22,7 @@ public:
 			return request.BuildError("INVALID_PARAMS", "Expected object parameter");
 		}
 
-		Config config = Global::GetConfig();
+		Config& config = Global::GetConfig();
 		Json::Value json = config.GetJSON();
 
 		auto min_peers = JsonUtil::GetUInt32Opt(params_json, "min_peers");
@@ -33,6 +33,8 @@ public:
 
 			Json::Value& p2p_json = json["P2P"];
 			p2p_json["MIN_PEERS"] = min_peers.value();
+
+			config.SetMinPeers(min_peers.value());
 		}
 
 		auto max_peers = JsonUtil::GetUInt32Opt(params_json, "max_peers");
@@ -43,6 +45,8 @@ public:
 
 			Json::Value& p2p_json = json["P2P"];
 			p2p_json["MAX_PEERS"] = max_peers.value();
+
+			config.SetMaxPeers(max_peers.value());
 		}
 
 		auto min_confirmations = JsonUtil::GetUInt32Opt(params_json, "min_confirmations");
@@ -53,6 +57,8 @@ public:
 
 			Json::Value& wallet_json = json["WALLET"];
 			wallet_json["MIN_CONFIRMATIONS"] = min_confirmations.value();
+
+			config.SetMinConfirmations(min_confirmations.value());
 		}
 
 		fs::path config_path = config.GetDataDirectory() / "server_config.json";

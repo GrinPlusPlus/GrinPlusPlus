@@ -36,6 +36,7 @@ public:
     }
 
     Environment GetEnvironment() const noexcept { return m_env; }
+    Config& GetConfig() noexcept { return *m_pConfig; }
     const Config& GetConfig() const noexcept { return *m_pConfig; }
     const std::shared_ptr<Bosma::Scheduler>& GetScheduler() const noexcept { return m_pScheduler; }
 

@@ -26,7 +26,7 @@ public:
     static const std::atomic_bool& IsRunning();
     static void Shutdown();
     
-    static const Config& GetConfig();
+    static Config& GetConfig();
     static std::shared_ptr<Context> GetContext();
     static std::shared_ptr<TorProcess> GetTorProcess();
 

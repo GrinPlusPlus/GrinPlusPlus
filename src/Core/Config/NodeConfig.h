@@ -14,7 +14,7 @@ public:
 	//
 	// Getters
 	//
-	const P2PConfig& GetP2P() const { return m_p2pConfig; }
+	P2PConfig& GetP2P() { return m_p2pConfig; }
 	const DandelionConfig& GetDandelion() const { return m_dandelion; }
 	const fs::path& GetChainPath() const { return m_chainPath; }
 	const fs::path& GetDatabasePath() const { return m_databasePath; }

@@ -44,6 +44,7 @@ public:
 	uint32_t GetPublicKeyVersion() const { return m_publicKeyVersion; }
 	uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
 	uint32_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
+	void SetMinConfirmations(const uint32_t min_confirmations) { m_minimumConfirmations = min_confirmations; }
 
 private:
 	fs::path m_walletPath;

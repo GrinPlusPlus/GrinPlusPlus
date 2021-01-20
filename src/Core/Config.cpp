@@ -50,7 +50,7 @@ Config::Config(const Json::Value& json, const Environment environment, const fs:
 
 }
 
-Config::CPtr Config::Load(const Environment environment)
+Config::Ptr Config::Load(const Environment environment)
 {
 	fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
 	FileUtil::CreateDirectories(dataDir);
@@ -127,7 +127,11 @@ uint64_t Config::GetFeeBase() const noexcept { return m_pImpl->m_nodeConfig.GetF
 // P2P
 //
 int Config::GetMinPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinConnections(); }
+void Config::SetMinPeers(const int min_peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetMinConnections(min_peers); }
+
 int Config::GetMaxPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMaxConnections(); }
+void Config::SetMaxPeers(const int max_peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetMaxConnections(max_peers); }
+
 uint16_t Config::GetP2PPort() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetP2PPort(); }
 const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMagicBytes(); }
 
@@ -146,7 +150,9 @@ const fs::path& Config::GetWalletPath() const noexcept { return m_pImpl->m_walle
 uint32_t Config::GetOwnerPort() const noexcept { return m_pImpl->m_walletConfig.GetOwnerPort(); }
 uint32_t Config::GetPublicKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPublicKeyVersion(); }
 uint32_t Config::GetPrivateKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPrivateKeyVersion(); }
+
 uint32_t Config::GetMinimumConfirmations() const noexcept { return m_pImpl->m_walletConfig.GetMinimumConfirmations(); }
+void Config::SetMinConfirmations(const uint32_t min_confirmations) noexcept { return m_pImpl->m_walletConfig.SetMinConfirmations(min_confirmations); }
 
 //
 // TOR

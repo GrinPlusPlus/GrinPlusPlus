@@ -9,9 +9,9 @@
 class Config
 {
 public:
-	using CPtr = std::shared_ptr<const Config>;
+	using Ptr = std::shared_ptr<Config>;
 
-	static Config::CPtr Load(const Environment environment);
+	static Config::Ptr Load(const Environment environment);
 	static std::shared_ptr<Config> Load(const Json::Value& json, const Environment environment);
 	static std::shared_ptr<Config> Default(const Environment environment);
 
@@ -34,7 +34,11 @@ public:
 	// P2P
 	//
 	int GetMinPeers() const noexcept;
+	void SetMinPeers(int min_peers) noexcept;
+
 	int GetMaxPeers() const noexcept;
+	void SetMaxPeers(int max_peers) noexcept;
+
 	uint16_t GetP2PPort() const noexcept;
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept;
 
@@ -53,7 +57,9 @@ public:
 	uint32_t GetOwnerPort() const noexcept;
 	uint32_t GetPublicKeyVersion() const noexcept;
 	uint32_t GetPrivateKeyVersion() const noexcept;
+
 	uint32_t GetMinimumConfirmations() const noexcept;
+	void SetMinConfirmations(uint32_t min_confirmations) noexcept;
 
 	//
 	// TOR
@@ -71,4 +77,4 @@ private:
 	std::shared_ptr<Impl> m_pImpl;
 };
 
-typedef std::shared_ptr<const Config> ConfigPtr;
+typedef std::shared_ptr<Config> ConfigPtr;

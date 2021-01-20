@@ -53,7 +53,7 @@ void Global::Shutdown()
 	SHARED_CONTEXT.reset();
 }
 
-const Config& Global::GetConfig()
+Config& Global::GetConfig()
 {
 	return LockContext()->GetConfig();
 }

@@ -9,11 +9,12 @@
 class P2PConfig
 {
 public:
-	//
-	// Getters
-	//
 	int GetMaxConnections() const noexcept { return m_maxConnections; }
+	void SetMaxConnections(const int max_connections) noexcept { m_maxConnections = max_connections; }
+
 	int GetMinConnections() const noexcept { return m_minConnections; }
+	void SetMinConnections(const int min_connections) noexcept { m_minConnections = min_connections; }
+
 	uint16_t GetP2PPort() const noexcept { return m_port; }
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
 

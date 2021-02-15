@@ -258,7 +258,7 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 	Locked<WalletImpl> wallet = m_sessionManager.Read()->GetWalletImpl(receiveCriteria.GetToken());
 
 	std::vector<SlatepackAddress> recipients;
-	if (receiveCriteria.GetSlatepack().has_value()) {
+	if (receiveCriteria.GetSlatepack().has_value() && receiveCriteria.GetSlatepack().value().m_mode == SlatepackMessage::ENCRYPTED) {
 		recipients.push_back(receiveCriteria.GetSlatepack().value().m_sender);
 	}
 

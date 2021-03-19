@@ -4,6 +4,7 @@
 #include <Database/BlockDb.h>
 #include <Core/Exceptions/BadDataException.h>
 #include <Core/Exceptions/BlockChainException.h>
+#include <BlockChain/BadBlocks.h>
 #include <Common/Logger.h>
 #include <PMMR/HeaderMMR.h>
 #include <Common/Util/HexUtil.h>
@@ -20,6 +21,10 @@ BlockHeaderProcessor::BlockHeaderProcessor(const Config& config, std::shared_ptr
 EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr& pHeader)
 {
 	LOG_TRACE_F("Validating {}", *pHeader);
+
+	if (BAD_BLOCKS.find(pHeader->GetHash()) != BAD_BLOCKS.end()) {
+		return EBlockChainStatus::INVALID;
+	}
 
 	auto pLockedState = m_pChainState->BatchWrite();
 	auto pBlockDB = pLockedState->GetBlockDB();
@@ -128,6 +133,12 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 	if (headers.empty())
 	{
 		return EBlockChainStatus::SUCCESS;
+	}
+
+	for (const auto& pHeader : headers) {
+		if (BAD_BLOCKS.find(pHeader->GetHash()) != BAD_BLOCKS.end()) {
+			return EBlockChainStatus::INVALID;
+		}
 	}
 
 	uint64_t height = headers.front()->GetHeight();

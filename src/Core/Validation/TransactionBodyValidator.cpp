@@ -18,7 +18,7 @@ void TransactionBodyValidator::Validate(const TransactionBody& body)
 	
 	if (!KernelSignatureValidator::VerifyKernelSignatures(body.GetKernels()))
 	{
-		throw BAD_DATA_EXCEPTION("Kernel signatures invalid");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Kernel signatures invalid");
 	}
 }
 
@@ -30,7 +30,7 @@ void TransactionBodyValidator::VerifySorted(const TransactionBody& body)
 		&& Consensus::IsSorted(body.GetKernels());
 	if (!sorted)
 	{
-		throw BAD_DATA_EXCEPTION("Inputs, outputs, and/or kernels not sorted.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Inputs, outputs, and/or kernels not sorted.");
 	}
 }
 
@@ -57,7 +57,7 @@ void TransactionBodyValidator::VerifyCutThrough(const TransactionBody& body)
 	);
 	if (invalid)
 	{
-		throw BAD_DATA_EXCEPTION("Cut-through not performed correctly.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Cut-through not performed correctly.");
 	}
 }
 
@@ -73,6 +73,6 @@ void TransactionBodyValidator::VerifyRangeProofs(const std::vector<TransactionOu
 
 	if (!Crypto::VerifyRangeProofs(rangeProofs))
 	{
-		throw BAD_DATA_EXCEPTION("Range proofs invalid.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Range proofs invalid.");
 	}
 }

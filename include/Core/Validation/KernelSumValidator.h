@@ -77,7 +77,7 @@ public:
 				kernelSum,
 				kernelOffset.ToHex()
 			);
-			throw BAD_DATA_EXCEPTION("UTXO sum does not match kernel sum plus offset");
+			throw BAD_DATA_EXCEPTION(EBanReason::BadBlock, "UTXO sum does not match kernel sum plus offset");
 		}
 
 		return BlockSums(utxoSum, kernelSum);

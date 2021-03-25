@@ -29,7 +29,6 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr
 	auto pLockedState = m_pChainState->BatchWrite();
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
-	//auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
 
 	// Check if header already processed
@@ -54,16 +53,13 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSingleHeader(const BlockHeaderPtr
 
 	// Validate the header.
 	auto pPreviousHeaderPtr = pBlockDB->GetBlockHeader(pCandidateChain->GetTipHash());
-	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(*pHeader, *pPreviousHeaderPtr))
-	{
-		LOG_ERROR_F("Header {} failed to validate", *pHeader);
-		throw BAD_DATA_EXCEPTION("Header failed to validate.");
+	if (!BlockHeaderValidator(m_config, pBlockDB, pHeaderMMR).IsValidHeader(*pHeader, *pPreviousHeaderPtr)) {
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlockHeader, "Header {} failed to validate.", *pHeader);
 	}
 
 	pBlockDB->AddBlockHeader(pHeader);
 	pHeaderMMR->AddHeader(*pHeader);
 	pCandidateChain->AddBlock(pHeader->GetHash(), pHeader->GetHeight());
-	//pLockedState->GetChainStore()->ReorgChain(EChainType::CANDIDATE, EChainType::SYNC);
 
 	LOG_DEBUG_F("Successfully validated {}", *pHeader);
 
@@ -76,7 +72,6 @@ EBlockChainStatus BlockHeaderProcessor::ProcessOrphan(Writer<ChainState> pLocked
 	auto pBlockDB = pLockedState->GetBlockDB();
 	auto pOrphanPool = pLockedState->GetOrphanPool();
 	auto pCandidateChain = pLockedState->GetChainStore()->GetCandidateChain();
-	//auto pSyncChain = pLockedState->GetChainStore()->GetSyncChain();
 	auto pHeaderMMR = pLockedState->GetHeaderMMR();
 
 	const uint64_t totalDifficulty = pLockedState->GetTotalDifficulty(EChainType::CANDIDATE);
@@ -137,23 +132,19 @@ EBlockChainStatus BlockHeaderProcessor::ProcessSyncHeaders(const std::vector<Blo
 
 	for (const auto& pHeader : headers) {
 		if (BAD_BLOCKS.find(pHeader->GetHash()) != BAD_BLOCKS.end()) {
-			return EBlockChainStatus::INVALID;
+			throw BAD_DATA_EXCEPTION(EBanReason::BadBlockHeader, "Header included in BAD_BLOCKS");
 		}
 	}
 
 	uint64_t height = headers.front()->GetHeight();
-	if (height == 0)
-	{
-		LOG_ERROR("Header with height 0 received.");
-		throw BAD_DATA_EXCEPTION("Header with height 0 received.");
+	if (height == 0) {
+		throw BAD_DATA_EXCEPTION(EBanReason::BadBlockHeader, "Header with height 0 received.");
 	}
 
 	for (size_t i = 1; i < headers.size(); i++)
 	{
-		if (headers[i]->GetHeight() != (headers[i - 1]->GetHeight() + 1))
-		{
-			LOG_ERROR("Headers not sorted.");
-			throw BAD_DATA_EXCEPTION("Headers not sorted.");
+		if (headers[i]->GetHeight() != (headers[i - 1]->GetHeight() + 1)) {
+			throw BAD_DATA_EXCEPTION(EBanReason::BadBlockHeader, "Headers not sorted.");
 		}
 	}
 
@@ -275,10 +266,8 @@ void BlockHeaderProcessor::ValidateHeaders(Writer<ChainState> pLockedState, cons
 
 	for (auto pHeader : headers)
 	{
-		if (!validator.IsValidHeader(*pHeader, *pPreviousHeader))
-		{
-			LOG_ERROR_F("Header invalid: {}", *pHeader);
-			throw BAD_DATA_EXCEPTION("Header invalid.");
+		if (!validator.IsValidHeader(*pHeader, *pPreviousHeader)) {
+			throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlockHeader, "Header {} invalid.", *pHeader);
 		}
 
 		pHeaderMMR->AddHeader(*pHeader);

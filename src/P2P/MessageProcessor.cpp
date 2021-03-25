@@ -70,19 +70,34 @@ void MessageProcessor::ProcessMessage(Connection& connection, const RawMessage& 
 	{
 		return ProcessMessageInternal(connection, rawMessage);
 	}
-	catch (const BadDataException&)
+	catch (const BadDataException& e)
 	{
-		LOG_ERROR_F("Bad data received in message({}) from ({})", MessageTypes::ToString(messageType), connection);
-		connection.BanPeer(EBanReason::Abusive); // TODO: Determine real reason
+		LOG_ERROR_F(
+			"{} from {} contained bad data: {}",
+			MessageTypes::ToString(messageType),
+			connection,
+			e.what()
+		);
+
+		// TODO: Send ban reason
+		connection.BanPeer(e.GetReason());
 	}
-	catch (const BlockChainException&)
+	catch (const BlockChainException& e)
 	{
-		LOG_ERROR_F("BlockChain exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connection);
-		connection.Disconnect();
+		LOG_ERROR_F(
+			"BlockChain exception while processing {} from {}: {}",
+			MessageTypes::ToString(messageType),
+			connection,
+			e.what()
+		);
 	}
 	catch (const DeserializationException&)
 	{
-		LOG_ERROR_F("Deserialization exception while processing message({}) from ({})", MessageTypes::ToString(messageType), connection);
+		LOG_ERROR_F(
+			"Deserialization exception while processing {} from {}",
+			MessageTypes::ToString(messageType),
+			connection
+		);
 		connection.Disconnect();
 	}
 }
@@ -288,7 +303,6 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 				TransactionPtr pTransaction = StemTransactionMessage::Deserialize(byteBuffer).GetTransaction();
 				m_pPipeline->ProcessTransaction(connection, pTransaction, EPoolType::STEMPOOL);
 			}
-
 
 			break;
 		}

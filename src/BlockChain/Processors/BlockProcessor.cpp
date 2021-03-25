@@ -24,8 +24,7 @@ EBlockChainStatus BlockProcessor::ProcessBlock(const FullBlock& block)
 
 	BlockHeaderPtr pHeader = block.GetHeader();
 	if (pHeader->GetHeight() <= horizonHeight) {
-		LOG_WARNING("Can't process blocks beyond horizon.");
-		throw BAD_DATA_EXCEPTION("Can't process blocks beyond horizon.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadBlock, "Can't process blocks beyond horizon.");
 	}
 
 	// Make sure header is processed and valid before processing block.
@@ -206,15 +205,13 @@ void BlockProcessor::ValidateAndAddBlock(const FullBlock& block, Writer<ChainSta
 	}
 
 	if (pTxHashSet == nullptr || !pTxHashSet->ApplyBlock(pBlockDB, block)) {
-		LOG_ERROR_F("Failed to apply block {} to the TxHashSet", block);
-		throw BAD_DATA_EXCEPTION("Failed to apply block to the TxHashSet.");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Failed to apply block {} to the TxHashSet.", block);
 	}
 
 	BlockValidator::VerifySelfConsistent(block);
 
 	if (!pTxHashSet->ValidateRoots(*block.GetHeader())) {
-		LOG_ERROR_F("Failed to validate TxHashSet roots for block {}", block);
-		throw BAD_DATA_EXCEPTION("Failed to validate TxHashSet roots.");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Failed to validate TxHashSet roots for block {}.", block);
 	}
 
 	std::unique_ptr<BlockSums> pPreviousBlockSums = pBlockDB->GetBlockSums(previousHash);

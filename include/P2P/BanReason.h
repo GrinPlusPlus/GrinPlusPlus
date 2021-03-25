@@ -18,7 +18,7 @@ enum EBanReason
 
 namespace BanReason
 {
-	static std::string Format(const EBanReason& banReason)
+	static std::string Format(const EBanReason& banReason) noexcept
 	{
 		switch (banReason)
 		{

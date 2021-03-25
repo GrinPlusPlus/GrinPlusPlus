@@ -32,7 +32,7 @@ void TransactionValidator::ValidateWeight(const TransactionBody& body, const uin
 	uint64_t reserve_weight = (Consensus::OUTPUT_WEIGHT + Consensus::KERNEL_WEIGHT);
 
 	if ((weight + reserve_weight) > Consensus::MAX_BLOCK_WEIGHT) {
-		throw BAD_DATA_EXCEPTION("Transaction exceeds maximum weight");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Transaction exceeds maximum weight");
 	}
 }
 
@@ -46,7 +46,7 @@ void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 	);
 	if (hasCoinbaseOutputs)
 	{
-		throw BAD_DATA_EXCEPTION("Transaction contains coinbase outputs.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Transaction contains coinbase outputs.");
 	}
 
 	// Verify no kernel features.
@@ -57,7 +57,7 @@ void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 	);
 	if (hasCoinbaseKernels)
 	{
-		throw BAD_DATA_EXCEPTION("Transaction contains coinbase kernels.");
+		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Transaction contains coinbase kernels.");
 	}
 }
 
@@ -79,7 +79,6 @@ void TransactionValidator::ValidateKernelSums(const Transaction& transaction) co
 	}
 	catch (std::exception& e)
 	{
-		LOG_WARNING_F("Kernel sum validation failed with error: {}", e.what());
-		throw BAD_DATA_EXCEPTION("Kernel sum validation failed.");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadTransaction, "Kernel sum validation failed with error: {}", e.what());
 	}
 }

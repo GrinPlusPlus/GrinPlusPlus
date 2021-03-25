@@ -37,16 +37,14 @@ void BlockValidator::VerifyBody(const FullBlock& block)
 	}
 	catch (std::exception& e)
 	{
-		LOG_ERROR_F("Transaction body for block {} failed with error: {}", block, e.what());
-		throw BAD_DATA_EXCEPTION("Failed to validate transaction body");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Transaction body for block {} failed with error: {}", block, e.what());
 	}
 }
 
 void BlockValidator::VerifyWeight(const FullBlock& block)
 {
 	if (block.CalcWeight() > Consensus::MAX_BLOCK_WEIGHT) {
-		LOG_ERROR_F("Block {} exceeds maximum weight", block);
-		throw BAD_DATA_EXCEPTION("Block exceeds maximum weight");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Block {} exceeds maximum weight", block);
 	}
 }
 
@@ -63,8 +61,7 @@ void BlockValidator::VerifyKernelLockHeights(const FullBlock& block)
 	);
 	if (invalid)
 	{
-		LOG_ERROR_F("Failed to validate kernel lock heights for {}", block);
-		throw BAD_DATA_EXCEPTION("Failed to validate kernel lock heights");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Failed to validate kernel lock heights for {}", block);
 	}
 }
 
@@ -104,7 +101,6 @@ void BlockValidator::VerifyCoinbase(const FullBlock& block)
 
 	if (kernelSum != outputAdjustedSum)
 	{
-		LOG_ERROR_F("Failed to validate coinbase for {}", block);
-		throw BAD_DATA_EXCEPTION("Failed to validate coinbase");
+		throw BAD_DATA_EXCEPTION_F(EBanReason::BadBlock, "Failed to validate coinbase for {}", block);
 	}
 }

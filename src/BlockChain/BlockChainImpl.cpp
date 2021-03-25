@@ -138,15 +138,7 @@ uint64_t BlockChain::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChain::AddBlock(const FullBlock& block)
 {
-	try
-	{
-		return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
-	}
-	catch (std::exception& e)
-	{
-		LOG_ERROR_F("Invalid block: {}", e.what());
-		return EBlockChainStatus::INVALID;
-	}
+	return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
 }
 
 EBlockChainStatus BlockChain::AddCompactBlock(const CompactBlock& compactBlock)
@@ -192,7 +184,7 @@ fs::path BlockChain::SnapshotTxHashSet(BlockHeaderPtr pBlockHeader)
 	const uint64_t horizon = Consensus::GetHorizonHeight(pBatch->GetHeight(EChainType::CONFIRMED));
 	if (pBlockHeader->GetHeight() < horizon)
 	{
-		throw BAD_DATA_EXCEPTION("TxHashSet snapshot requested beyond horizon.");
+		throw BAD_DATA_EXCEPTION(EBanReason::Abusive, "TxHashSet snapshot requested beyond horizon.");
 	}
 
 	return pBatch->GetTxHashSetManager()->SaveSnapshot(pBatch->GetBlockDB(), pBlockHeader);
@@ -264,6 +256,10 @@ EBlockChainStatus BlockChain::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 	{
 		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(pBlockHeader);
 	}
+	catch (BadDataException& e)
+	{
+		throw e;
+	}
 	catch (std::exception& e)
 	{
 		LOG_ERROR_F("Invalid header {} - Exception: ", *pBlockHeader, e.what());
@@ -277,9 +273,9 @@ EBlockChainStatus BlockChain::AddBlockHeaders(const std::vector<BlockHeaderPtr>&
 	{
 		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSyncHeaders(blockHeaders);
 	}
-	catch (BadDataException&)
+	catch (BadDataException& e)
 	{
-		return EBlockChainStatus::INVALID;
+		throw e;
 	}
 	catch (std::exception&)
 	{

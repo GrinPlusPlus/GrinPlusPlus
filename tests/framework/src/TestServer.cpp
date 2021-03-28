@@ -125,7 +125,7 @@ CreatedUser TestServer::CreateUser(
 	const SeedWordSize num_words)
 {
 	auto response = m_pWalletManager->InitializeNewWallet(
-		CreateWalletCriteria(username, password, (uint8_t)num_words),
+		CreateWalletCriteria(StringUtil::ToLower(username), password, (uint8_t)num_words),
 		use_tor == UseTor::YES ? TorProcessManager::GetProcess(m_numUsers++) : nullptr
 	);
 	auto pWallet = TestWallet::Create(

@@ -92,7 +92,7 @@ Config::Ptr Config::Load(const Environment environment)
 
 std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment environment)
 {
-	fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
+	fs::path dataDir = DefaultDataDir(environment);
 
 	if (json.isMember(ConfigProps::DATA_PATH)) {
 		dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
@@ -101,6 +101,11 @@ std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment 
 	FileUtil::CreateDirectories(dataDir);
 
 	return std::shared_ptr<Config>(new Config(json, environment, dataDir));
+}
+
+fs::path Config::DefaultDataDir(const Environment environment)
+{
+	return FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
 }
 
 std::shared_ptr<Config> Config::Default(const Environment environment)

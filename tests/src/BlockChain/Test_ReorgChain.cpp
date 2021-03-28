@@ -4,7 +4,6 @@
 #include <TestMiner.h>
 #include <TestChain.h>
 #include <TxBuilder.h>
-#include <TestHelper.h>
 
 #include <Consensus.h>
 #include <BlockChain/BlockChain.h>

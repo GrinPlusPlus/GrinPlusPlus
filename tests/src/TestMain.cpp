@@ -3,9 +3,9 @@
 
 #include <Core/Global.h>
 #include <Core/Context.h>
-#include <TestHelper.h>
 
 #include <Common/Logger.h>
+#include <Common/Util/FileUtil.h>
 #include <iostream>
 
 class TestRuntime
@@ -13,7 +13,9 @@ class TestRuntime
 public:
     TestRuntime()
     {
-        m_pConfig = TestHelper::GetTestConfig();
+        FileUtil::RemoveFile(Config::DefaultDataDir(Environment::AUTOMATED_TESTING));
+
+        m_pConfig = Config::Default(Environment::AUTOMATED_TESTING);
         m_pContext = Context::Create(Environment::AUTOMATED_TESTING, m_pConfig);
         Global::Init(m_pContext);
         LoggerAPI::Initialize(m_pConfig->GetLogDirectory(), m_pConfig->GetLogLevel());

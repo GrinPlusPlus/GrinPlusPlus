@@ -102,7 +102,10 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 
 void SqliteStore::DeleteWallet(const std::string& username)
 {
-	// TODO: Check if database is in m_userDBs
+	if (m_userDBs.find(username) != m_userDBs.end()) {
+		WALLET_ERROR_F("User '{}' still logged in. Can't delete wallet.", username);
+		throw WALLET_STORE_EXCEPTION("User still logged in.");
+	}
 
 	const fs::path userDBPath = m_walletDirectory / username;
 	if (!FileUtil::Exists(userDBPath)) {

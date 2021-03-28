@@ -16,7 +16,7 @@ public:
     using UPtr = std::unique_ptr<ForeignServer>;
 
     ForeignServer(
-        const TorProcess::Ptr& pTorProcess,
+        const std::shared_ptr<ITorProcess>& pTorProcess,
         const RPCServerPtr& pRPCServer,
         const std::optional<TorAddress>& torAddressOpt)
         : m_pTorProcess(pTorProcess),
@@ -37,7 +37,7 @@ public:
 
     static ForeignServer::UPtr Create(
         const KeyChain& keyChain,
-        const TorProcess::Ptr& pTorProcess,
+        const std::shared_ptr<ITorProcess>& pTorProcess,
         IWalletManager& walletManager,
         const SessionToken& token
     );
@@ -48,7 +48,7 @@ public:
 private:
     static std::optional<TorAddress> AddTorListener(
         const KeyChain& keyChain,
-        const TorProcess::Ptr& pTorProcess,
+        const std::shared_ptr<ITorProcess>& pTorProcess,
         const uint16_t portNumber
     );
 
@@ -57,7 +57,7 @@ private:
         return HTTPUtil::BuildSuccessResponse(pConnection, "SUCCESS! Your wallet listener is working!");
     }
 
-    TorProcess::Ptr m_pTorProcess;
+    std::shared_ptr<ITorProcess> m_pTorProcess;
     RPCServerPtr m_pRPCServer;
     std::optional<TorAddress> m_torAddress;
 };

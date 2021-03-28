@@ -9,7 +9,7 @@
 
 ForeignServer::UPtr ForeignServer::Create(
     const KeyChain& keyChain,
-    const TorProcess::Ptr& pTorProcess,
+    const std::shared_ptr<ITorProcess>& pTorProcess,
     IWalletManager& walletManager,
     const SessionToken& token)
 {

@@ -23,7 +23,7 @@ add_subdirectory(Keychain)
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
 target_compile_definitions(${TARGET_NAME} PRIVATE MW_WALLET)
-target_link_libraries(${TARGET_NAME} Common Crypto Core Keychain WalletDB Tor)
+target_link_libraries(${TARGET_NAME} API Common Crypto Core Keychain WalletDB Tor)
 
 if (UNIX AND NOT APPLE)
 	target_link_libraries(${TARGET_NAME} uuid)

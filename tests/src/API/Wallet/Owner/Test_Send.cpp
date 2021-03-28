@@ -8,7 +8,7 @@
 #include <Comparators/JsonComparator.h>
 #include <optional>
 
-TEST_CASE("API: send - Slatepack", "[.]")
+TEST_CASE("API: send - Slatepack")
 {
     TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 

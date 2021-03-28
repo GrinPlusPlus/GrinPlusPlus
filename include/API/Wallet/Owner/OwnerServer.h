@@ -3,7 +3,7 @@
 #include <Net/Servers/RPC/RPCServer.h>
 
 // Forward Declarations
-class TorProcess;
+class ITorProcess;
 class IWalletManager;
 
 class OwnerServer
@@ -16,7 +16,7 @@ public:
 
     // TODO: Add e2e encryption
     static OwnerServer::UPtr Create(
-        const std::shared_ptr<TorProcess>& pTorProcess,
+        const std::shared_ptr<ITorProcess>& pTorProcess,
         const std::shared_ptr<IWalletManager>& pWalletManager
     );
 

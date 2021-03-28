@@ -15,11 +15,11 @@ public:
 		return std::make_unique<HttpConnection>(host, port);
 	}
 	
-	RPC::Response Invoke(const RPC::Request& request)
+	RPC::Response Invoke(const std::string& location, const RPC::Request& request)
 	{
 		try
 		{
-			return m_rpcClient.Invoke(m_host, "/v2/foreign", m_port, request);
+			return m_rpcClient.Invoke(m_host, location, m_port, request);
 		}
 		catch (RPCException&)
 		{
@@ -31,14 +31,14 @@ public:
 		}
 	}
 
-	RPC::Response Invoke(const std::string& method, const Json::Value& params)
+	RPC::Response Invoke(const std::string& location, const std::string& method, const Json::Value& params)
 	{
-		return Invoke(RPC::Request::BuildRequest(method, params));
+		return Invoke(location, RPC::Request::BuildRequest(method, params));
 	}
 
-	RPC::Response Invoke(const std::string& method)
+	RPC::Response Invoke(const std::string& location, const std::string& method)
 	{
-		return Invoke(RPC::Request::BuildRequest(method));
+		return Invoke(location, RPC::Request::BuildRequest(method));
 	}
 
 private:

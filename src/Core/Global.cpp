@@ -29,11 +29,14 @@ void Global::Init(const Context::Ptr& pContext)
 	RUNNING = true;
 
 	const Config& config = pContext->GetConfig();
-	TOR_PROCESS = TorProcess::Initialize(
-		config.GetTorDataPath(),
-		config.GetSocksPort(),
-		config.GetControlPort()
-	);
+
+	if (pContext->GetEnvironment() != Environment::AUTOMATED_TESTING) {
+		TOR_PROCESS = TorProcess::Initialize(
+			config.GetTorDataPath(),
+			config.GetSocksPort(),
+			config.GetControlPort()
+		);
+	}
 
 	signal(SIGINT, SigIntHandler);
 	signal(SIGTERM, SigIntHandler);

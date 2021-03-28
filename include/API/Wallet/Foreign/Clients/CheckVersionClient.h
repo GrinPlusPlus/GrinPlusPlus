@@ -16,7 +16,7 @@ public:
 		uint16_t slate_version;
 	};
 
-	static Response Call(TorConnection& connection) noexcept
+	static Response Call(ITorConnection& connection) noexcept
 	{
 		try
 		{

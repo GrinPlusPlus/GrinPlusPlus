@@ -22,7 +22,7 @@ public:
 	static INodeClientPtr Create(const std::string& host, const uint16_t port)
 	{
 		auto pConnection = HttpConnection::Connect(host, port);
-		auto response = pConnection->Invoke("get_version");
+		auto response = pConnection->Invoke("get_version", "/v2/foreign");
 		if (!response.GetResult().has_value()) {
 			throw std::exception();
 		}
@@ -132,7 +132,7 @@ public:
 		params.append(pTransaction->ToJSON());
 		params.append(poolType == EPoolType::MEMPOOL);
 
-		auto response = m_pConnection->Invoke("push_transaction", params);
+		auto response = m_pConnection->Invoke("/v2/foreign", "push_transaction", params);
 
 		return response.GetResult().has_value();
 	}
@@ -140,7 +140,7 @@ public:
 private:
 	Json::Value Invoke(const std::string& method, const Json::Value& params) const
 	{
-		auto response = m_pConnection->Invoke(method, params);
+		auto response = m_pConnection->Invoke("/v2/foreign", method, params);
 		if (!response.GetResult().has_value()) {
 			throw std::exception();
 		}
@@ -150,7 +150,7 @@ private:
 
 	Json::Value Invoke(const std::string& method) const
 	{
-		auto response = m_pConnection->Invoke(method);
+		auto response = m_pConnection->Invoke("/v2/foreign", method);
 		if (!response.GetResult().has_value()) {
 			throw std::exception();
 		}

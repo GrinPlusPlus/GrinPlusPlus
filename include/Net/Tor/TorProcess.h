@@ -11,14 +11,29 @@
 
 // Forward Declarations
 class TorControl;
-class TorConnection;
+class ITorConnection;
 
-class TorProcess
+class ITorProcess
 {
 public:
-	using Ptr = std::shared_ptr<TorProcess>;
+	using Ptr = std::shared_ptr<ITorProcess>;
 
-	~TorProcess();
+	virtual ~ITorProcess() = default;
+
+	virtual TorAddress AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber) = 0;
+	virtual bool RemoveListener(const TorAddress& torAddress) = 0;
+
+	virtual std::shared_ptr<ITorConnection> Connect(const TorAddress& address) = 0;
+
+	virtual bool RetryInit() = 0;
+};
+
+class TorProcess : public ITorProcess
+{
+public:
+	using Ptr = std::shared_ptr<ITorProcess>;
+
+	virtual ~TorProcess();
 
 	static TorProcess::Ptr Initialize(
 		const fs::path& torDataPath,
@@ -26,12 +41,12 @@ public:
 		const uint16_t controlPort
 	) noexcept;
 
-	TorAddress AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber);
-	bool RemoveListener(const TorAddress& torAddress);
+	TorAddress AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber) final;
+	bool RemoveListener(const TorAddress& torAddress) final;
 
-	std::shared_ptr<TorConnection> Connect(const TorAddress& address);
+	std::shared_ptr<ITorConnection> Connect(const TorAddress& address) final;
 
-	bool RetryInit();
+	bool RetryInit() final;
 
 private:
 	TorProcess(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort)

@@ -175,7 +175,7 @@ bool TorProcess::RemoveListener(const TorAddress& torAddress)
 	return false;
 }
 
-std::shared_ptr<TorConnection> TorProcess::Connect(const TorAddress& address)
+std::shared_ptr<ITorConnection> TorProcess::Connect(const TorAddress& address)
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
 

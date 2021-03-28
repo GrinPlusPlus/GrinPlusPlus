@@ -8,6 +8,8 @@
 class HttpRpcClient
 {
 public:
+	using Ptr = std::shared_ptr<HttpRpcClient>;
+
 	HttpRpcClient() : m_httpClient(std::shared_ptr<IHTTPClient>(new HTTPClient())) { }
 
 	HttpRpcClient(std::shared_ptr<IHTTPClient> httpClient)

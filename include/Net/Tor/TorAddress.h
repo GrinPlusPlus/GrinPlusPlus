@@ -12,6 +12,11 @@ public:
 	const std::string& ToString() const noexcept { return m_address; }
 	const ed25519_public_key_t& GetPublicKey() const noexcept { return m_publicKey; }
 
+	bool operator==(const TorAddress& rhs) const noexcept { return m_address == rhs.m_address; }
+	bool operator!=(const TorAddress& rhs) const noexcept { return m_address != rhs.m_address; }
+	bool operator<(const TorAddress& rhs) const noexcept { return m_address < rhs.m_address; }
+	bool operator<=(const TorAddress& rhs) const noexcept { return m_address <= rhs.m_address; }
+
 private:
 	std::string m_address;
 	ed25519_public_key_t m_publicKey;

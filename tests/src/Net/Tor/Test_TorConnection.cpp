@@ -5,7 +5,7 @@
 #include <Crypto/CSPRNG.h>
 #include <Net/Tor/TorConnection.h>
 
-TEST_CASE("TorConnection - Multiple calls", "[.]")
+TEST_CASE("TorConnection - Multiple calls")
 {
 	TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 

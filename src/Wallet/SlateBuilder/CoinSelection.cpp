@@ -22,6 +22,10 @@ std::vector<OutputDataEntity> CoinSelection::SelectCoinsToSpend(
 	{
 		return SelectUsingSmallestInputs(availableCoins, amount, feeBase, numOutputs, numKernels);
 	}
+	else if (strategy == ESelectionStrategy::FEWEST_INPUTS)
+	{
+		return SelectUsingFewestInputs(availableCoins, amount, feeBase, numOutputs, numKernels);
+	}
 	else if (strategy == ESelectionStrategy::ALL)
 	{
 		return SelectUsingAllInputs(availableCoins, amount, feeBase, numOutputs, numKernels);
@@ -51,6 +55,33 @@ std::vector<OutputDataEntity> CoinSelection::SelectUsingSmallestInputs(
 		const uint64_t fee = FeeUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
 		if (amountFound >= (amount + fee))
 		{
+			return selectedCoins;
+		}
+	}
+
+	// Not enough coins found.
+	WALLET_ERROR("Not enough funds.");
+	throw InsufficientFundsException();
+}
+
+std::vector<OutputDataEntity> CoinSelection::SelectUsingFewestInputs(
+	const std::vector<OutputDataEntity>& availableCoins,
+	const uint64_t amount,
+	const uint64_t feeBase,
+	const int64_t numOutputs,
+	const int64_t numKernels)
+{
+	std::vector<OutputDataEntity> sortedCoins = availableCoins;
+	std::sort(sortedCoins.rbegin(), sortedCoins.rend());
+
+	uint64_t amountFound = 0;
+	std::vector<OutputDataEntity> selectedCoins;
+	for (const OutputDataEntity& coin : sortedCoins) {
+		amountFound += coin.GetAmount();
+		selectedCoins.push_back(coin);
+
+		const uint64_t fee = FeeUtil::CalculateFee(feeBase, (int64_t)selectedCoins.size(), numOutputs, numKernels);
+		if (amountFound >= (amount + fee)) {
 			return selectedCoins;
 		}
 	}

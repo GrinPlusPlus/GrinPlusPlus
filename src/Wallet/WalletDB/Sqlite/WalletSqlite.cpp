@@ -133,9 +133,7 @@ uint32_t WalletSqlite::GetNextTransactionId()
 
 uint64_t WalletSqlite::GetRefreshBlockHeight() const
 {
-	UserMetadata metadata = GetMetadata();
-
-	return metadata.GetRefreshBlockHeight();
+	return GetMetadata().GetRefreshBlockHeight();
 }
 
 void WalletSqlite::UpdateRefreshBlockHeight(const uint64_t refreshBlockHeight)
@@ -147,16 +145,14 @@ void WalletSqlite::UpdateRefreshBlockHeight(const uint64_t refreshBlockHeight)
 
 uint64_t WalletSqlite::GetRestoreLeafIndex() const
 {
-	UserMetadata metadata = GetMetadata();
-
-	return metadata.GetRestoreLeafIndex();
+	return GetMetadata().GetRestoreLeafIndex();
 }
 
 void WalletSqlite::UpdateRestoreLeafIndex(const uint64_t lastLeafIndex)
 {
 	UserMetadata metadata = GetMetadata();
 
-	SaveMetadata(UserMetadata(metadata.GetNextTxId(), metadata.GetRefreshBlockHeight(), lastLeafIndex));
+	SaveMetadata(UserMetadata{ metadata.GetNextTxId(), metadata.GetRefreshBlockHeight(), lastLeafIndex });
 }
 
 UserMetadata WalletSqlite::GetMetadata() const

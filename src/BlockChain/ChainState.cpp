@@ -1,6 +1,7 @@
 #include "ChainState.h"
 
 #include <Consensus.h>
+#include <Crypto/Crypto.h>
 #include <Database/BlockDb.h>
 #include <PMMR/TxHashSetManager.h>
 #include <TxPool/TransactionPool.h>
@@ -24,6 +25,16 @@ ChainState::ChainState(
 
 }
 
+ChainState::~ChainState()
+{
+	m_pOrphanPool.reset();
+	m_pTxHashSetManager.reset();
+	m_pTransactionPool.reset();
+	m_pHeaderMMR.reset();
+	m_pBlockDB.reset();
+	m_pChainStore.reset();
+}
+
 std::shared_ptr<Locked<ChainState>> ChainState::Create(
 	const Config& config,
 	std::shared_ptr<Locked<ChainStore>> pChainStore,
@@ -43,7 +54,7 @@ std::shared_ptr<Locked<ChainState>> ChainState::Create(
 		pTxHashSetManager->Write()->Open(genesisBlock.GetHeader());
 
 		const BlockSums blockSums(
-			genesisBlock.GetOutputs().front().GetCommitment(),
+			Crypto::AddCommitments({ genesisBlock.GetOutputs().front().GetCommitment() }, { Crypto::CommitTransparent(Consensus::REWARD) }),
 			genesisBlock.GetKernels().front().GetCommitment()
 		);
 		std::get<0>(locked)->AddBlockSums(genesisBlock.GetHash(), blockSums);

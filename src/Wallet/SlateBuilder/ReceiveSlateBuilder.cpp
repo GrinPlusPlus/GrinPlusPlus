@@ -165,7 +165,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		kernel_commitment.Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
-		KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+		KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
 		ed25519_signature_t signature = ED25519::Sign(

@@ -2,6 +2,7 @@
 
 #include <Core/Models/OutputIdentifier.h>
 #include <Core/Models/OutputLocation.h>
+#include <Core/Models/TransactionOutput.h>
 #include <Crypto/RangeProof.h>
 #include <Crypto/Hasher.h>
 #include <json/json.h>
@@ -30,9 +31,17 @@ public:
 		m_rangeProof(std::move(rangeProof)) { }
 
 	bool IsSpent() const { return m_spent; }
-	const OutputIdentifier& GetIdentifier() const { return m_identifier; }
-	const OutputLocation& GetLocation() const { return m_location; }
-	const RangeProof& GetRangeProof() const { return m_rangeProof; }
+	const OutputIdentifier& GetIdentifier() const noexcept { return m_identifier; }
+	EOutputFeatures GetFeatures() const noexcept { return m_identifier.GetFeatures(); }
+	const Commitment& GetCommitment() const noexcept { return m_identifier.GetCommitment(); }
+	const OutputLocation& GetLocation() const noexcept { return m_location; }
+	uint64_t GetBlockHeight() const noexcept { return m_location.GetBlockHeight(); }
+	uint64_t GetMMRIndex() const noexcept { return m_location.GetMMRIndex(); }
+	const RangeProof& GetRangeProof() const noexcept { return m_rangeProof; }
+
+	TransactionOutput ToTxOutput() const noexcept {
+		return TransactionOutput{ GetFeatures(), GetCommitment(), GetRangeProof() };
+	}
 
 	Json::Value ToJSON() const
 	{

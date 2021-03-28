@@ -1,10 +1,8 @@
-set(TARGET_NAME Core_Tests)
-
-file(GLOB SOURCE_CODE
-    "*.cpp"
-	"Models/*.cpp"
-	"File/*.cpp"
+list_append_parent(
+    test_sources
+    ${CMAKE_CURRENT_LIST_DIR}
+    "File/Test_AppendOnlyFile.cpp"
+    "Models/Test_BlockHeader.cpp"
+    "Models/Test_Genesis.cpp"
+    "Models/Test_ShortId.cpp"
 )
-
-add_executable(${TARGET_NAME} ${SOURCE_CODE})
-target_link_libraries(${TARGET_NAME} Core TestUtil Wallet BlockChain)

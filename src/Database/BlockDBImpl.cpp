@@ -15,6 +15,17 @@
 
 using namespace rocksdb;
 
+
+BlockDB::BlockDB(const Config& config, std::unique_ptr<RocksDB>&& pRocksDB)
+	: m_config(config), m_pRocksDB(std::move(pRocksDB)), m_blockHeadersCache(128)
+{
+}
+
+BlockDB::~BlockDB()
+{
+	m_pRocksDB.reset();
+}
+
 std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 {
 	fs::path dbPath = config.GetDatabasePath() / "CHAIN/";
@@ -27,10 +38,10 @@ std::shared_ptr<BlockDB> BlockDB::OpenDB(const Config& config)
 	ColumnFamilyDescriptor SPENT_OUTPUTS_COLUMN = ColumnFamilyDescriptor("SPENT_OUTPUTS", *ColumnFamilyOptions().OptimizeForPointLookup(1024));
 
 	std::vector<ColumnFamilyDescriptor> tableNames = { ColumnFamilyDescriptor(), BLOCK_COLUMN, HEADER_COLUMN, BLOCK_SUMS_COLUMN, OUTPUT_POS_COLUMN, INPUT_BITMAP_COLUMN, SPENT_OUTPUTS_COLUMN };
-	std::shared_ptr<RocksDB> pRocksDB = RocksDBFactory::Open(dbPath, tableNames);
+	std::unique_ptr<RocksDB> pRocksDB = RocksDBFactory::Open(dbPath, tableNames);
 	pRocksDB->DeleteAll("INPUT_BITMAP");
 
-	return std::make_shared<BlockDB>(config, pRocksDB);
+	return std::make_shared<BlockDB>(config, std::move(pRocksDB));
 }
 
 void BlockDB::Commit()

@@ -113,15 +113,19 @@ namespace Consensus
 
 	// Nominal height for standard time intervals, hour is 60 blocks
 	static constexpr uint64_t HOUR_HEIGHT = 3600 / BLOCK_TIME_SEC;
+	static constexpr uint64_t HOURS(const uint64_t num_hours) { return num_hours * HOUR_HEIGHT; }
 
 	// A day is 1440 blocks
 	static constexpr uint64_t DAY_HEIGHT = 24 * HOUR_HEIGHT;
+	static constexpr uint64_t DAYS(const uint64_t num_days) { return num_days * DAY_HEIGHT; }
 
 	// A week is 10,080 blocks
 	static constexpr uint64_t WEEK_HEIGHT = 7 * DAY_HEIGHT;
+	static constexpr uint64_t WEEKS(const uint64_t num_weeks) { return num_weeks * WEEK_HEIGHT; }
 
 	// A year is 524,160 blocks
 	static constexpr uint64_t YEAR_HEIGHT = 52 * WEEK_HEIGHT;
+	static constexpr uint64_t YEARS(const uint64_t num_years) { return num_years * YEAR_HEIGHT; }
 
 	// Number of blocks before a coinbase matures and can be spent
 	// set to nominal number of block in one day (1440 with 1-minute blocks)

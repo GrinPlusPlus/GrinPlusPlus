@@ -6,6 +6,7 @@
 enum class ESelectionStrategy
 {
 	SMALLEST,
+	FEWEST_INPUTS,
 	CUSTOM,
 	ALL
 };
@@ -17,6 +18,10 @@ namespace SelectionStrategy
 		if (input == "SMALLEST")
 		{
 			return ESelectionStrategy::SMALLEST;
+		}
+		else if (input == "FEWEST_INPUTS")
+		{
+			return ESelectionStrategy::FEWEST_INPUTS;
 		}
 		else if (input == "CUSTOM")
 		{
@@ -35,6 +40,10 @@ namespace SelectionStrategy
 		if (strategy == ESelectionStrategy::SMALLEST)
 		{
 			return "SMALLEST";
+		}
+		else if (strategy == ESelectionStrategy::FEWEST_INPUTS)
+		{
+			return "FEWEST_INPUTS";
 		}
 		else if (strategy == ESelectionStrategy::CUSTOM)
 		{

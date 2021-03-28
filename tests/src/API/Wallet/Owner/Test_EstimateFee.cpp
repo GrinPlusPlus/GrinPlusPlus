@@ -4,22 +4,18 @@
 #include <Wallet/Models/DTOs/FeeEstimateDTO.h>
 
 #include <TestServer.h>
-#include <TestChain.h>
-#include <TestWalletServer.h>
 #include <Comparators/JsonComparator.h>
 #include <optional>
 
 TEST_CASE("API: estimate_fee - SMALLEST")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
-    TestChain chain(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
-    auto pWallet = pTestWalletServer->CreateUser("David", "P@ssw0rd123!");
-    chain.MineChain(pWallet, 30);
+    auto created_user = pTestServer->CreateUser("David", "P@ssw0rd123!");
+    pTestServer->MineChain(created_user.wallet->GetKeychain(), 30);
 
     Json::Value paramsJson;
-    paramsJson["session_token"] = pWallet->GetToken().ToBase64();
+    paramsJson["session_token"] = created_user.wallet->GetToken().ToBase64();
     paramsJson["amount"] = Json::UInt64(150'000'000'000);
     paramsJson["fee_base"] = 1'000'000;
     Json::Value selectionStrategyJson;
@@ -27,13 +23,13 @@ TEST_CASE("API: estimate_fee - SMALLEST")
     paramsJson["selection_strategy"] = selectionStrategyJson;
     paramsJson["change_outputs"] = 1;
 
-    auto response = pTestWalletServer->InvokeOwnerRPC("estimate_fee", paramsJson);
+    auto response = pTestServer->InvokeOwnerRPC("estimate_fee", paramsJson);
 
     auto resultOpt = response.GetResult();
     REQUIRE(resultOpt.has_value());
 
     const auto value = FeeEstimateDTO::FromJSON(resultOpt.value());
-    REQUIRE(value.GetFee() == 6'000'000);
+    REQUIRE(value.GetFee() == 48'000'000);
 
     // TODO: Finish assertions
 }

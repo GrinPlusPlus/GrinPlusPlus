@@ -44,6 +44,14 @@ public:
 	}
 
 	//
+	// Returns the current confirmed chain tip header.
+	//
+	BlockHeaderPtr GetTipHeader() const final
+	{
+		return GetBlockHeader(GetChainHeight());
+	}
+
+	//
 	// Returns the header of the confirmed block at the given height, if it exists.
 	//
 	BlockHeaderPtr GetBlockHeader(const uint64_t height) const final

@@ -7,6 +7,7 @@
 #include <Core/Models/DTOs/OutputRange.h>
 #include <TxPool/PoolType.h>
 #include <cstdint>
+#include <memory>
 #include <map>
 
 //
@@ -16,12 +17,19 @@
 class INodeClient
 {
 public:
+	using UPtr = std::unique_ptr<INodeClient>;
+
 	virtual ~INodeClient() = default;
 
 	//
 	// Returns the current confirmed chain height.
 	//
 	virtual uint64_t GetChainHeight() const = 0;
+
+	//
+	// Return the current confirmed chain tip header.
+	//
+	virtual BlockHeaderPtr GetTipHeader() const = 0;
 	
 	//
 	// Returns the header of the confirmed block at the given height, if it exists.

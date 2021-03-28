@@ -24,7 +24,7 @@ WalletSummaryDTO Wallet::GetWalletSummary() const
 	
 	std::vector<WalletTx> transactions = m_walletDB.Read()->GetTransactions(m_master_seed);
 	return WalletSummaryDTO(
-		m_pConfig->GetMinimumConfirmations(),
+		Global::GetConfig().GetMinimumConfirmations(),
 		balance,
 		std::move(transactions)
 	);
@@ -137,7 +137,7 @@ SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
 
 std::optional<TorAddress> Wallet::AddTorListener(const KeyChainPath& path, const TorProcess::Ptr& pTorProcess)
 {
-	KeyChain keyChain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
+	KeyChain keyChain = KeyChain::FromSeed(m_master_seed);
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
 	TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, GetListenerPort());
@@ -241,7 +241,7 @@ void Wallet::CancelTx(const uint32_t walletTxId)
 
 BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteria)
 {
-    const KeyChain keyChain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
+    const KeyChain keyChain = KeyChain::FromSeed(m_master_seed);
 
 	auto pDatabase = m_walletDB.BatchWrite();
 
@@ -302,7 +302,7 @@ BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteri
 
 SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) const
 {
-	KeyChain keychain = KeyChain::FromSeed(*m_pConfig, m_master_seed);
+	KeyChain keychain = KeyChain::FromSeed(m_master_seed);
 	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 	
 	return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));

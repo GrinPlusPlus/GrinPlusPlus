@@ -139,7 +139,7 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
 
-	KeyChain keyChain = KeyChain::FromSeed(m_config, m_sessionManager.Read()->GetSeed(token));
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
 	TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
@@ -238,7 +238,7 @@ Slate WalletManager::Send(const SendCriteria& sendCriteria)
 		catch (std::exception&) {}
 	}
 
-	return SendSlateBuilder(m_config, m_pNodeClient).BuildSendSlate(
+	return SendSlateBuilder(m_pNodeClient).BuildSendSlate(
 		wallet,
 		masterSeed,
 		sendCriteria.GetAmount().value_or(0),
@@ -262,7 +262,7 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 		recipients.push_back(receiveCriteria.GetSlatepack().value().m_sender);
 	}
 
-	return ReceiveSlateBuilder(m_config).AddReceiverData(
+	return ReceiveSlateBuilder().AddReceiverData(
 		wallet,
 		masterSeed,
 		receiveCriteria.GetSlate(),

@@ -17,10 +17,10 @@
 class TestMiner
 {
 public:
-	TestMiner(const TestServer::Ptr& pTestServer)
+	TestMiner(const std::weak_ptr<TestServer>& pTestServer)
 		: m_pTestServer(pTestServer)
 	{
-		m_proofNonces = pTestServer->GetGenesisHeader()->GetProofOfWork().GetProofNonces();
+		m_proofNonces = Global::GetGenesisHeader()->GetProofNonces();
 	}
 
 	//
@@ -35,11 +35,11 @@ public:
 		minedBlocks.reserve(chainLength);
 		
 		// Add the genesis block
-		minedBlocks.push_back({ m_pTestServer->GetGenesisBlock(), Consensus::REWARD, std::nullopt });
+		minedBlocks.push_back({ Global::GetGenesisBlock(), Consensus::REWARD, std::nullopt });
 
 		TxBuilder txBuilder(keyChain);
 
-		BlockHeaderPtr pPreviousHeader = m_pTestServer->GetGenesisHeader();
+		BlockHeaderPtr pPreviousHeader = Global::GetGenesisHeader();
 		for (uint32_t i = 1; i < chainLength; i++)
 		{
 			KeyChainPath keyChainPath({ 0, i });
@@ -47,7 +47,7 @@ public:
 			Test::Tx tx = txBuilder.BuildCoinbaseTx(keyChainPath, coinbaseAmount);
 
 			FullBlock block = MineNextBlock(pPreviousHeader, *tx.pTransaction, {});
-			if (m_pTestServer->GetBlockChain()->AddBlock(block) != EBlockChainStatus::SUCCESS)
+			if (m_pTestServer.lock()->GetBlockChain()->AddBlock(block) != EBlockChainStatus::SUCCESS)
 			{
 				throw std::exception();
 			}
@@ -103,14 +103,11 @@ public:
     }
 
 private:
-	TestServer::Ptr m_pTestServer;
-	std::vector<uint64_t> m_proofNonces;
-
 	Hash CalculateHeaderRoot(
 		const BlockHeaderPtr& pPreviousHeader,
 		const std::vector<FullBlock>& blocksToApply)
 	{
-		auto pHeaderMMRBatch = m_pTestServer->GetHeaderMMR()->BatchWrite();
+		auto pHeaderMMRBatch = m_pTestServer.lock()->GetHeaderMMR()->BatchWrite();
 		pHeaderMMRBatch->Rewind(pPreviousHeader->GetHeight() + 1);
 
 		for (const FullBlock& blockToApply : blocksToApply)
@@ -130,8 +127,8 @@ private:
 		const Transaction& transaction,
 		const std::vector<FullBlock>& blocksToApply)
 	{
-		auto pTxHashSetManager = m_pTestServer->GetTxHashSetManager()->BatchWrite();
-		auto pBlockDB = m_pTestServer->GetDatabase()->GetBlockDB()->BatchWrite();
+		auto pTxHashSetManager = m_pTestServer.lock()->GetTxHashSetManager()->BatchWrite();
+		auto pBlockDB = m_pTestServer.lock()->GetBlockDB()->BatchWrite();
 
 		pTxHashSetManager->GetTxHashSet()->Rewind(pBlockDB.GetShared(), *pPreviousHeader);
 
@@ -159,7 +156,7 @@ private:
 		m_proofNonces[0]++;
 
 		return ProofOfWork(
-			pPreviousHeader->GetProofOfWork().GetEdgeBits(),
+			pPreviousHeader->GetEdgeBits(),
 			std::vector<uint64_t>(m_proofNonces.cbegin(), m_proofNonces.cend())
 		);
 	}
@@ -172,4 +169,7 @@ private:
 		});
 		return Crypto::AddBlindingFactors(offsets, {});
 	}
+
+	std::weak_ptr<TestServer> m_pTestServer;
+	std::vector<uint64_t> m_proofNonces;
 };

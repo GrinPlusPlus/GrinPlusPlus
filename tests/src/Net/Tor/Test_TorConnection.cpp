@@ -2,20 +2,18 @@
 
 #include <TorProcessManager.h>
 #include <TestServer.h>
-#include <TestWalletServer.h>
 #include <Crypto/CSPRNG.h>
 #include <Net/Tor/TorConnection.h>
 
-TEST_CASE("TorConnection - Multiple calls")
+TEST_CASE("TorConnection - Multiple calls", "[.]")
 {
-	TestServer::Ptr pTestServer = TestServer::Create();
-	TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+	TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
-	auto pSender = pTestWalletServer->CreateUser("Sender", "P@ssw0rd123!");
-	REQUIRE(pSender->GetTorAddress().has_value());
+	auto created_user = pTestServer->CreateUser("Sender", "P@ssw0rd123!");
+	REQUIRE(created_user.wallet->GetTorAddress().has_value());
 
 	TorProcess::Ptr pTorProcess1 = TorProcessManager::GetProcess(1);
-	auto pConnection1 = pTorProcess1->Connect(pSender->GetTorAddress().value());
+	auto pConnection1 = pTorProcess1->Connect(created_user.wallet->GetTorAddress().value());
 
 	auto request = RPC::Request::BuildRequest("check_version");
 	auto response = pConnection1->Invoke(request, "/v2/foreign");

@@ -20,20 +20,18 @@
 #include <algorithm>
 
 BlockChain::BlockChain(
-	const Config& config,
-	std::shared_ptr<Locked<IBlockDB>> pDatabase,
-	std::shared_ptr<Locked<TxHashSetManager>> pTxHashSetManager,
 	std::shared_ptr<ITransactionPool> pTransactionPool,
-	std::shared_ptr<Locked<ChainState>> pChainState,
-	std::shared_ptr<Locked<IHeaderMMR>> pHeaderMMR)
-	: m_config(config),
-	m_pDatabase(pDatabase),
-	m_pTxHashSetManager(pTxHashSetManager),
-	m_pTransactionPool(pTransactionPool),
-	m_pChainState(pChainState),
-	m_pHeaderMMR(pHeaderMMR)
+	std::shared_ptr<Locked<ChainState>> pChainState)
+	: m_pTransactionPool(pTransactionPool), m_pChainState(pChainState)
 {
 
+}
+
+BlockChain::~BlockChain()
+{
+	Global::SetCoinView(nullptr);
+	m_pChainState.reset();
+	m_pTransactionPool.reset();
 }
 
 std::shared_ptr<BlockChain> BlockChain::Create(
@@ -107,12 +105,8 @@ std::shared_ptr<BlockChain> BlockChain::Create(
 	}
 
 	return std::shared_ptr<BlockChain>(new BlockChain(
-		config,
-		pDatabase,
-		pTxHashSetManager,
 		pTransactionPool,
-		pChainState,
-		pHeaderMMR
+		pChainState
 	));
 }
 
@@ -138,7 +132,7 @@ uint64_t BlockChain::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChain::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(m_config, m_pChainState).ProcessBlock(block);
+	return BlockProcessor(Global::GetConfig(), m_pChainState).ProcessBlock(block);
 }
 
 EBlockChainStatus BlockChain::AddCompactBlock(const CompactBlock& compactBlock)
@@ -194,7 +188,7 @@ EBlockChainStatus BlockChain::ProcessTransactionHashSet(const Hash& blockHash, c
 {
 	try
 	{
-		const bool success = TxHashSetProcessor(m_config, *this, m_pChainState).ProcessTxHashSet(blockHash, path, syncStatus);
+		const bool success = TxHashSetProcessor(Global::GetConfig(), *this, m_pChainState).ProcessTxHashSet(blockHash, path, syncStatus);
 		if (success)
 		{
 			return EBlockChainStatus::SUCCESS;
@@ -254,7 +248,7 @@ EBlockChainStatus BlockChain::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
 	try
 	{
-		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSingleHeader(pBlockHeader);
+		return BlockHeaderProcessor(Global::GetConfig(), m_pChainState).ProcessSingleHeader(pBlockHeader);
 	}
 	catch (BadDataException& e)
 	{
@@ -271,7 +265,7 @@ EBlockChainStatus BlockChain::AddBlockHeaders(const std::vector<BlockHeaderPtr>&
 {
 	try
 	{
-		return BlockHeaderProcessor(m_config, m_pChainState).ProcessSyncHeaders(blockHeaders);
+		return BlockHeaderProcessor(Global::GetConfig(), m_pChainState).ProcessSyncHeaders(blockHeaders);
 	}
 	catch (BadDataException& e)
 	{
@@ -412,7 +406,7 @@ bool BlockChain::ProcessNextOrphanBlock()
 
 	try
 	{
-		return BlockProcessor(m_config, m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
+		return BlockProcessor(Global::GetConfig(), m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
 	}
 	catch (std::exception&)
 	{

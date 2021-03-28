@@ -5,7 +5,6 @@
 #include <Wallet/PublicExtKey.h>
 #include <Wallet/KeyChainPath.h>
 
-#include <Core/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Crypto/BlindingFactor.h>
 #include <Crypto/RangeProof.h>
@@ -20,8 +19,8 @@ class KeyChain
 {
 public:
 	// FUTURE: Add FromMnemonic, ToMnemonic, and GetSeed methods
-	static KeyChain FromSeed(const Config& config, const SecureVector& masterSeed);
-	static KeyChain FromRandom(const Config& config);
+	static KeyChain FromSeed(const SecureVector& masterSeed);
+	static KeyChain FromRandom();
 
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath, const uint64_t amount) const;
 	SecretKey DerivePrivateKey(const KeyChainPath& keyPath) const;
@@ -42,11 +41,10 @@ public:
 	) const;
 
 private:
-	KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce);
+	KeyChain(PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce);
 
 	SecretKey CreateNonce(const Commitment& commitment, const SecretKey& nonceHash) const;
 
-	const Config& m_config;
 	PrivateExtKey m_masterKey;
 	SecretKey m_bulletProofNonce;
 };

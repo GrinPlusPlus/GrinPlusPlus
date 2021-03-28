@@ -1,7 +1,7 @@
-set(TARGET_NAME Consensus_Tests)
-
-file(GLOB SOURCE_CODE
-    "*.cpp"
+list_append_parent(
+    test_sources
+    ${CMAKE_CURRENT_LIST_DIR}
+    "Test_BlockTime.cpp"
+    "Test_Difficulty.cpp"
+    "Test_HardForks.cpp"
 )
-
-add_executable(${TARGET_NAME} ${SOURCE_CODE})

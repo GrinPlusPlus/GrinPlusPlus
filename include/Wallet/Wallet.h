@@ -13,6 +13,7 @@
 #include <API/Wallet/Foreign/Models/BuildCoinbaseCriteria.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 
+#include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Models/DTOs/WalletBalanceDTO.h>
 #include <Wallet/Models/DTOs/WalletSummaryDTO.h>
 #include <Wallet/Models/DTOs/WalletTxDTO.h>
@@ -31,12 +32,13 @@ public:
 	using Ptr = std::shared_ptr<Wallet>;
 	using CPtr = std::shared_ptr<const Wallet>;
 
-	Wallet(const Config::Ptr& pConfig, const Locked<IWalletDB>& walletDB, const SessionToken& token, const SecureVector& master_seed, const std::string& username, const KeyChainPath& user_path, const SlatepackAddress& address)
-		: m_pConfig(pConfig), m_walletDB(walletDB), m_token(token), m_master_seed(master_seed), m_username(username), m_userPath(user_path), m_address(address) { }
+	Wallet(const Locked<IWalletDB>& walletDB, const SessionToken& token, const SecureVector& master_seed, const std::string& username, const KeyChainPath& user_path, const SlatepackAddress& address)
+		: m_walletDB(walletDB), m_token(token), m_master_seed(master_seed), m_keychain(KeyChain::FromSeed(master_seed)), m_username(username), m_userPath(user_path), m_address(address) { }
 
 	const std::string& GetUsername() const noexcept { return m_username; }
 	const KeyChainPath& GetUserPath() const noexcept { return m_userPath; }
 	const SlatepackAddress& GetSlatepackAddress() const noexcept { return m_address; }
+	const KeyChain& GetKeychain() const noexcept { return m_keychain; }
 	const SecureVector& GetMasterSeed() const noexcept { return m_master_seed; }
 
 	void SetTorAddress(const TorAddress& address) noexcept { m_torAddressOpt = std::make_optional(address); }
@@ -95,10 +97,10 @@ public:
 	Locked<IWalletDB> GetDatabase() const { return m_walletDB; }
 
 private:
-	Config::Ptr m_pConfig;
 	Locked<IWalletDB> m_walletDB;
 	SessionToken m_token;
 	SecureVector m_master_seed;
+	KeyChain m_keychain;
 	std::string m_username; // Store Account (username and KeyChainPath), instead.
 	KeyChainPath m_userPath;
 	SlatepackAddress m_address;

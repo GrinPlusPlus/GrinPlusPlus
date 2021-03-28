@@ -32,11 +32,11 @@
 TEST_CASE("REORG 1")
 {
 	TestServer::Ptr pTestServer = TestServer::Create();
-	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	KeyChain keyChain = KeyChain::FromRandom();
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChain = pTestServer->GetBlockChain();
 
-	TestChain chain1(pTestServer);
+	TestChain chain1(pBlockChain);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -128,11 +128,11 @@ TEST_CASE("REORG 1")
 TEST_CASE("REORG 2")
 {
 	TestServer::Ptr pTestServer = TestServer::Create();
-	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	KeyChain keyChain = KeyChain::FromRandom();
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChain = pTestServer->GetBlockChain();
 
-	TestChain chain1(pTestServer);
+	TestChain chain1(pBlockChain);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -232,11 +232,11 @@ TEST_CASE("REORG 2")
 TEST_CASE("REORG 3")
 {
 	TestServer::Ptr pTestServer = TestServer::Create();
-	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	KeyChain keyChain = KeyChain::FromRandom();
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChain = pTestServer->GetBlockChain();
 
-	TestChain chain1(pTestServer);
+	TestChain chain1(pBlockChain);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -284,11 +284,11 @@ TEST_CASE("REORG 3")
 TEST_CASE("REORG 4")
 {
 	TestServer::Ptr pTestServer = TestServer::Create();
-	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	KeyChain keyChain = KeyChain::FromRandom();
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChain = pTestServer->GetBlockChain();
 
-	TestChain chain1(pTestServer);
+	TestChain chain1(pBlockChain);
 
 	Test::Tx coinbase_a = txBuilder.BuildCoinbaseTx(KeyChainPath({ 0, 1 }));
 	MinedBlock block_a = chain1.AddNextBlock({ coinbase_a });
@@ -348,7 +348,7 @@ TEST_CASE("Reorg Chain")
 {
 	TestServer::Ptr pTestServer = TestServer::Create();
 	TestMiner miner(pTestServer);
-	KeyChain keyChain = KeyChain::FromRandom(*pTestServer->GetConfig());
+	KeyChain keyChain = KeyChain::FromRandom();
 	TxBuilder txBuilder(keyChain);
 	auto pBlockChain = pTestServer->GetBlockChain();
 

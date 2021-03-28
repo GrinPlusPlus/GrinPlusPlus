@@ -3,10 +3,10 @@
 #include <Models/MinedBlock.h>
 #include <Models/TxModels.h>
 #include <RootCalculator.h>
-#include <TestServer.h>
 #include <TestWallet.h>
 #include <TxBuilder.h>
 
+#include <BlockChain/BlockChain.h>
 #include <Consensus.h>
 #include <Common/Util/TimeUtil.h>
 #include <Core/Models/FullBlock.h>
@@ -17,9 +17,9 @@
 class TestChain
 {
 public:
-    TestChain(const TestServer::Ptr& pServer) : m_pServer(pServer)
+    TestChain(const IBlockChain::Ptr& pBlockChain) : m_pBlockChain(pBlockChain)
     {
-        m_blocks.push_back({ pServer->GetGenesisBlock(), Consensus::REWARD, std::nullopt });
+        m_blocks.push_back({ Global::GetGenesisBlock(), Consensus::REWARD, std::nullopt });
     }
 
     std::vector<MinedBlock> MineChain(const TestWallet::Ptr& pWallet, const uint64_t totalHeight)
@@ -29,7 +29,7 @@ public:
             Test::Tx coinbase = pWallet->CreateCoinbase(KeyChainPath::FromString("m/0/0/" + std::to_string(i)), 0);
             MinedBlock block = AddNextBlock({ coinbase });
 
-            m_pServer->GetBlockChain()->AddBlock(block.block);
+            m_pBlockChain->AddBlock(block.block);
         }
 
         pWallet->RefreshWallet();
@@ -186,6 +186,6 @@ private:
         return outputs;
     }
 
-    TestServer::Ptr m_pServer;
+    IBlockChain::Ptr m_pBlockChain;
     std::vector<MinedBlock> m_blocks;
 };

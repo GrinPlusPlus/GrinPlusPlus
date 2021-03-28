@@ -13,8 +13,8 @@
 #include <Crypto/ED25519.h>
 #include <Wallet/Models/Slatepack/Armor.h>
 
-SendSlateBuilder::SendSlateBuilder(const Config& config, INodeClientConstPtr pNodeClient)
-	: m_config(config), m_pNodeClient(pNodeClient)
+SendSlateBuilder::SendSlateBuilder(INodeClientConstPtr pNodeClient)
+	: m_pNodeClient(pNodeClient)
 {
 
 }
@@ -138,7 +138,7 @@ Slate SendSlateBuilder::Build(
 	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;
 	if (torAddressOpt.has_value())
 	{
-		ed25519_keypair_t torKey = KeyChain::FromSeed(m_config, masterSeed).DeriveED25519Key(torPath);
+		ed25519_keypair_t torKey = KeyChain::FromSeed(masterSeed).DeriveED25519Key(torPath);
 		proofOpt = std::make_optional(SlatePaymentProof::Create(torKey.public_key, torAddressOpt.value().GetPublicKey()));
 	}
 

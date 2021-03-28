@@ -37,7 +37,7 @@ Locked<WalletImpl> WalletImpl::LoadWallet(
 {
 	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
 
-	ed25519_keypair_t torKey = KeyChain::FromSeed(config, masterSeed).DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+	ed25519_keypair_t torKey = KeyChain::FromSeed(masterSeed).DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
 
 	return Locked<WalletImpl>(std::make_shared<WalletImpl>(WalletImpl{
 		config, pNodeClient, walletDB, username, std::move(userPath), SlatepackAddress(torKey.public_key)
@@ -102,7 +102,7 @@ std::vector<OutputDataEntity> WalletImpl::RefreshOutputs(const SecureVector& mas
 
 std::vector<OutputDataEntity> WalletImpl::GetAllAvailableCoins(const SecureVector& masterSeed)
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	const KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 
 	std::vector<OutputDataEntity> coins;
 
@@ -126,7 +126,7 @@ OutputDataEntity WalletImpl::CreateBlindedOutput(
 	const uint32_t walletTxId,
 	const EBulletproofType& bulletproofType)
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	const KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 
 	SecretKey blindingFactor = keyChain.DerivePrivateKey(keyChainPath, amount);
 	Commitment commitment = Crypto::CommitBlinded(amount, BlindingFactor(blindingFactor.GetBytes()));
@@ -140,13 +140,15 @@ OutputDataEntity WalletImpl::CreateBlindedOutput(
 	);
 			
 	return OutputDataEntity(
-		KeyChainPath(keyChainPath),
+		keyChainPath,
 		std::move(blindingFactor),
 		std::move(transactionOutput),
 		amount,
 		EOutputStatus::NO_CONFIRMATIONS,
+		std::nullopt,
+		std::nullopt,
 		std::make_optional(walletTxId),
-		std::nullopt
+		std::vector<std::string>{}
 	);
 }
 
@@ -155,7 +157,7 @@ BuildCoinbaseResponse WalletImpl::CreateCoinbase(
 	const uint64_t fees,
 	const std::optional<KeyChainPath>& keyChainPathOpt)
 {
-	const KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	const KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 
 	auto pDatabase = m_walletDB.BatchWrite();
 

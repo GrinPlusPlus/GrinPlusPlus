@@ -26,6 +26,14 @@ private:
 		const int64_t numKernels
 	);
 
+	static std::vector<OutputDataEntity> SelectUsingFewestInputs(
+		const std::vector<OutputDataEntity>& availableCoins,
+		const uint64_t amount,
+		const uint64_t feeBase,
+		const int64_t numOutputs,
+		const int64_t numKernels
+	);
+
 	static std::vector<OutputDataEntity> SelectUsingAllInputs(
 		const std::vector<OutputDataEntity>& availableCoins,
 		const uint64_t amount,

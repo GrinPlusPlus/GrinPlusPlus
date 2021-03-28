@@ -1,9 +1,12 @@
-set(TARGET_NAME Wallet_Tests)
-
-file(GLOB SOURCE_CODE
-	"*.cpp"
+list_append_parent(
+    test_sources
+    ${CMAKE_CURRENT_LIST_DIR}
+    "Test_Bech32Address.cpp"
+    "Test_InitializeNewWallet.cpp"
+    "Test_KeyDerivation.cpp"
+    "Test_Mnemonic.cpp"
+    "Test_RewindBulletproof.cpp"
+    "Test_Slate.cpp"
+    "Test_Slatepack.cpp"
+    "Test_TransactionBuilder.cpp"
 )
-
-add_executable(${TARGET_NAME} ${SOURCE_CODE})
-target_compile_definitions(${TARGET_NAME} PRIVATE MW_WALLET)
-target_link_libraries(${TARGET_NAME} Common Crypto Core BlockChain Keychain WalletDB Wallet TestUtil chachapoly)

@@ -9,7 +9,7 @@ TEST_CASE("Chain Batching")
 	TestServer::Ptr pTestServer = TestServer::Create();
 	auto chain_path = pTestServer->GenerateTempDir() / "candidate.chain";
 	auto pAllocator = std::make_shared<BlockIndexAllocator>();
-	auto pGenesisIndex = pAllocator->GetOrCreateIndex(pTestServer->GetGenesisHeader()->GetHash(), 0);
+	auto pGenesisIndex = pAllocator->GetOrCreateIndex(Global::GetGenesisHash(), 0);
 
 	Hash hash1 = CSPRNG::GenerateRandom32();
 	Hash hash2a = CSPRNG::GenerateRandom32();
@@ -55,7 +55,7 @@ TEST_CASE("Chain Batching")
 			REQUIRE(pReader->GetByHeight(i)->GetHeight() == i);
 		}
 
-		REQUIRE(pReader->GetByHeight(0)->GetHash() == pTestServer->GetGenesisHeader()->GetHash());
+		REQUIRE(pReader->GetByHeight(0)->GetHash() == Global::GetGenesisHash());
 		REQUIRE(pReader->GetByHeight(1)->GetHash() == hash1);
 		REQUIRE(pReader->GetByHeight(2)->GetHash() == hash2b);
 		REQUIRE(pReader->GetByHeight(3)->GetHash() == hash3b);

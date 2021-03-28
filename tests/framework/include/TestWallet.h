@@ -29,6 +29,10 @@ public:
 
     const SessionToken& GetToken() const noexcept { return m_token; }
     uint16_t GetListenerPort() const noexcept { return m_listenerPort; }
+    SecureString GetSeedWords() const {
+        return m_pWalletManager->GetWallet(m_token).Read()->GetSeedWords();
+    }
+
     const std::optional<TorAddress>& GetTorAddress() const noexcept { return m_torAddress; }
     SlatepackAddress GetSlatepackAddress() const { return m_pWalletManager->GetWallet(m_token).Read()->GetSlatepackAddress(); }
 
@@ -64,11 +68,26 @@ public:
         m_pWalletManager->CheckForOutputs(m_token, true);
     }
 
+    Locked<Wallet> GetWallet()
+    {
+        return m_pWalletManager->GetWallet(m_token);
+    }
+
+    const KeyChain& GetKeychain()
+    {
+        return GetWallet().Read()->GetKeychain();
+    }
+
     std::vector<WalletTxDTO> GetTransactions()
     {
         return m_pWalletManager->GetWallet(m_token).Read()->GetTransactions(
             ListTxsCriteria(m_token, {}, std::nullopt, std::nullopt, {})
         );
+    }
+
+    void Logout()
+    {
+        m_pWalletManager->Logout(m_token);
     }
 
 private:

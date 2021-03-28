@@ -10,8 +10,7 @@
 class ReceiveSlateBuilder
 {
 public:
-	ReceiveSlateBuilder(const Config& config)
-		: m_config(config) { }
+	ReceiveSlateBuilder() = default;
 
 	Slate AddReceiverData(
 		Locked<WalletImpl> wallet,
@@ -38,6 +37,4 @@ private:
 		const std::optional<SlatepackAddress>& addressOpt,
 		const std::string& armored_slatepack
 	) const;
-
-	const Config& m_config;
 };

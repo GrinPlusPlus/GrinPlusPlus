@@ -1,16 +1,12 @@
 #include <catch.hpp>
 
-#include <Net/Clients/RPC/RPCClient.h>
-
 #include <TestServer.h>
-#include <TestWalletServer.h>
 #include <Comparators/JsonComparator.h>
 #include <optional>
 
 TEST_CASE("API: create_wallet - 24 words")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
     const uint8_t numWords = 24;
 
@@ -19,26 +15,21 @@ TEST_CASE("API: create_wallet - 24 words")
     paramsJson["password"] = "P@ssw0rd123!";
     paramsJson["num_seed_words"] = numWords;
 
-    RPC::Request request = RPC::Request::BuildRequest("create_wallet", paramsJson);
+    auto response_result = pTestServer->InvokeOwnerRPC("create_wallet", paramsJson).GetResult();
+    REQUIRE(response_result.has_value());
 
-    auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-
-    auto resultOpt = response.GetResult();
-    REQUIRE(resultOpt.has_value());
-
-    std::string sessionToken64 = resultOpt.value().get("session_token", Json::Value()).asString();
+    std::string sessionToken64 = response_result.value().get("session_token", Json::Value()).asString();
     REQUIRE_FALSE(sessionToken64.empty());
 
     SessionToken token = SessionToken::FromBase64(sessionToken64);
 
-    std::string walletSeed = resultOpt.value().get("wallet_seed", Json::Value()).asString();
+    std::string walletSeed = response_result.value().get("wallet_seed", Json::Value()).asString();
     REQUIRE(StringUtil::Split(walletSeed, " ").size() == numWords);
 }
 
 TEST_CASE("API: create_wallet - 12 words")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
     const uint8_t numWords = 12;
 
@@ -47,28 +38,23 @@ TEST_CASE("API: create_wallet - 12 words")
     paramsJson["password"] = "P@ssw0rd123!";
     paramsJson["num_seed_words"] = numWords;
 
-    RPC::Request request = RPC::Request::BuildRequest("create_wallet", paramsJson);
+    auto response_result = pTestServer->InvokeOwnerRPC("create_wallet", paramsJson).GetResult();
+    REQUIRE(response_result.has_value());
 
-    auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-
-    auto resultOpt = response.GetResult();
-    REQUIRE(resultOpt.has_value());
-
-    std::string sessionToken64 = resultOpt.value().get("session_token", Json::Value()).asString();
+    std::string sessionToken64 = response_result.value().get("session_token", Json::Value()).asString();
     REQUIRE_FALSE(sessionToken64.empty());
 
     SessionToken token = SessionToken::FromBase64(sessionToken64);
 
-    std::string walletSeed = resultOpt.value().get("wallet_seed", Json::Value()).asString();
+    std::string walletSeed = response_result.value().get("wallet_seed", Json::Value()).asString();
     REQUIRE(StringUtil::Split(walletSeed, " ").size() == numWords);
 }
 
 TEST_CASE("API: create_wallet - User already exists")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
-    pTestWalletServer->CreateUser("david", "password");
+    pTestServer->CreateUser("david", "password");
 
     const uint8_t numWords = 24;
 
@@ -77,20 +63,15 @@ TEST_CASE("API: create_wallet - User already exists")
     paramsJson["password"] = "P@ssw0rd123!";
     paramsJson["num_seed_words"] = numWords;
 
-    RPC::Request request = RPC::Request::BuildRequest("create_wallet", paramsJson);
+    auto response_error = pTestServer->InvokeOwnerRPC("create_wallet", paramsJson).GetError();
+    REQUIRE(response_error.has_value());
 
-    auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-
-    auto errorOpt = response.GetError();
-    REQUIRE(errorOpt.has_value());
-
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::USER_ALREADY_EXISTS.GetCode());
+    REQUIRE(response_error.value().GetCode() == RPC::Errors::USER_ALREADY_EXISTS.GetCode());
 }
 
 TEST_CASE("API: create_wallet - Password empty")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
     const uint8_t numWords = 24;
 
@@ -99,20 +80,14 @@ TEST_CASE("API: create_wallet - Password empty")
     paramsJson["password"] = "";
     paramsJson["num_seed_words"] = numWords;
 
-    RPC::Request request = RPC::Request::BuildRequest("create_wallet", paramsJson);
-
-    auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-
-    auto errorOpt = response.GetError();
-    REQUIRE(errorOpt.has_value());
-
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::PASSWORD_CRITERIA_NOT_MET.GetCode());
+    auto response_error = pTestServer->InvokeOwnerRPC("create_wallet", paramsJson).GetError();
+    REQUIRE(response_error.has_value());
+    REQUIRE(response_error.value().GetCode() == RPC::Errors::PASSWORD_CRITERIA_NOT_MET.GetCode());
 }
 
 TEST_CASE("API: create_wallet - Invalid num_seed_words")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
     const uint8_t numWords = 17;
 
@@ -121,12 +96,7 @@ TEST_CASE("API: create_wallet - Invalid num_seed_words")
     paramsJson["password"] = "P@ssw0rd123!";
     paramsJson["num_seed_words"] = numWords;
 
-    RPC::Request request = RPC::Request::BuildRequest("create_wallet", paramsJson);
-
-    auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-
-    auto errorOpt = response.GetError();
-    REQUIRE(errorOpt.has_value());
-
-    REQUIRE(errorOpt.value().GetCode() == RPC::Errors::INVALID_NUM_SEED_WORDS.GetCode());
+    auto response_error = pTestServer->InvokeOwnerRPC("create_wallet", paramsJson).GetError();
+    REQUIRE(response_error.has_value());
+    REQUIRE(response_error.value().GetCode() == RPC::Errors::INVALID_NUM_SEED_WORDS.GetCode());
 }

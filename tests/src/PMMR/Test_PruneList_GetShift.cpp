@@ -1,11 +1,13 @@
 #include <catch.hpp>
 
+#include <TestFileUtil.h>
 #include <PMMR/Common/PruneList.h>
 
 // start with an empty prune list (nothing shifted)
 TEST_CASE("PruneList::GetShift_Empty")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	// PruneList empty
 	REQUIRE(pPruneList->GetShift(0) == 0);
@@ -19,7 +21,8 @@ TEST_CASE("PruneList::GetShift_Empty")
 // Nothing is shifted, because shifting only occurs after a parent is pruned.
 TEST_CASE("PruneList::GetShift Pruned 0")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Flush();
@@ -36,7 +39,8 @@ TEST_CASE("PruneList::GetShift Pruned 0")
 // The parent node will be pruned, resulting in all leaves after the leaf 0 & 1 to shift by 2.
 TEST_CASE("PruneList::GetShift Pruned 0,1")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Add(1);
@@ -55,7 +59,8 @@ TEST_CASE("PruneList::GetShift Pruned 0,1")
 // It should've already been in prune list, so no change should occur.
 TEST_CASE("PruneList::GetShift Pruned 0,1,2")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Add(1);

@@ -77,6 +77,11 @@ public:
 		return m_pBlockChain->GetHeight(EChainType::CONFIRMED);
 	}
 
+	BlockHeaderPtr GetTipHeader() const final
+	{
+		return m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
+	}
+
 	BlockHeaderPtr GetBlockHeader(const uint64_t height) const final
 	{
 		return m_pBlockChain->GetBlockHeaderByHeight(height, EChainType::CONFIRMED);

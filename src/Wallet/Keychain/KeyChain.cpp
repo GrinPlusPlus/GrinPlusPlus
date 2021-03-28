@@ -2,6 +2,7 @@
 #include "SeedEncrypter.h"
 #include "KeyGenerator.h"
 
+#include <Core/Global.h>
 #include <Crypto/CSPRNG.h>
 #include <Crypto/ED25519.h>
 #include <Crypto/Crypto.h>
@@ -10,28 +11,28 @@
 #include <Core/Exceptions/UnimplementedException.h>
 #include <Common/Util/VectorUtil.h>
 
-KeyChain::KeyChain(const Config& config, PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce)
-	: m_config(config), m_masterKey(std::move(masterKey)), m_bulletProofNonce(std::move(bulletProofNonce))
+KeyChain::KeyChain(PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce)
+	: m_masterKey(std::move(masterKey)), m_bulletProofNonce(std::move(bulletProofNonce))
 {
 
 }
 
-KeyChain KeyChain::FromSeed(const Config& config, const SecureVector& masterSeed)
+KeyChain KeyChain::FromSeed(const SecureVector& masterSeed)
 {
-	PrivateExtKey masterKey = KeyGenerator(config).GenerateMasterKey(masterSeed);
+	PrivateExtKey masterKey = KeyGenerator(Global::GetConfig()).GenerateMasterKey(masterSeed);
 	SecretKey bulletProofNonce = Crypto::BlindSwitch(masterKey.GetPrivateKey(), 0);
-	return KeyChain(config, std::move(masterKey), std::move(bulletProofNonce));
+	return KeyChain(std::move(masterKey), std::move(bulletProofNonce));
 }
 
-KeyChain KeyChain::FromRandom(const Config& config)
+KeyChain KeyChain::FromRandom()
 {
 	SecretKey masterSeed(CSPRNG::GenerateRandom32().GetData());
-	return KeyChain::FromSeed(config, masterSeed.GetSecure());
+	return KeyChain::FromSeed(masterSeed.GetSecure());
 }
 
 SecretKey KeyChain::DerivePrivateKey(const KeyChainPath& keyPath) const
 {
-	KeyGenerator keygen(m_config);
+	KeyGenerator keygen(Global::GetConfig());
 
 	PrivateExtKey privateKey(m_masterKey);
 	for (const uint32_t childIndex : keyPath.GetKeyIndices())

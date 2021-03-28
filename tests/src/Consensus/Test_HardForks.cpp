@@ -16,7 +16,5 @@ TEST_CASE("Consensus::GetHeaderVersion")
 	REQUIRE(GetHeaderVersion(Environment::MAINNET, ((YEAR_HEIGHT * 3) / 2) - 1) == 3);
 	REQUIRE(GetHeaderVersion(Environment::MAINNET, (YEAR_HEIGHT * 3) / 2) == 4);
 	REQUIRE(GetHeaderVersion(Environment::MAINNET, (YEAR_HEIGHT * 2) - 1) == 4);
-
-	// v5 not active yet
-	REQUIRE_THROWS(GetHeaderVersion(Environment::MAINNET, (YEAR_HEIGHT * 2)));
+	REQUIRE(GetHeaderVersion(Environment::MAINNET, (YEAR_HEIGHT * 2)) == 5);
 }

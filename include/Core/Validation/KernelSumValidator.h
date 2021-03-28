@@ -86,15 +86,15 @@ public:
 private:
 	static Commitment AddKernelOffset(const Commitment& kernelSum, const BlindingFactor& totalKernelOffset)
 	{
-		// Add the commitments along with the commit to zero built from the offset
-		std::vector<Commitment> commitments;
-		commitments.push_back(kernelSum);
-
-		if (totalKernelOffset.GetBytes() != CBigInteger<32>::ValueOf(0))
-		{
-			commitments.push_back(Crypto::CommitBlinded((uint64_t)0, totalKernelOffset));
+		if (totalKernelOffset == CBigInteger<32>::ValueOf(0)) {
+			return kernelSum;
 		}
 
-		return Crypto::AddCommitments(commitments, std::vector<Commitment>());
+		// Add the commitments along with the commit to zero built from the offset
+		Commitment offset_commit = Crypto::CommitBlinded((uint64_t)0, totalKernelOffset);
+		return Crypto::AddCommitments(
+			std::vector<Commitment>{ kernelSum, std::move(offset_commit) },
+			std::vector<Commitment>()
+		);
 	}
 };

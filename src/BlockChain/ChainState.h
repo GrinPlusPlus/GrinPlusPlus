@@ -29,6 +29,8 @@ public:
 		const FullBlock& genesisBlock
 	);
 
+	~ChainState();
+
 	void UpdateSyncStatus(SyncStatus& syncStatus) const;
 	uint64_t GetHeight(const EChainType chainType) const;
 	uint64_t GetTotalDifficulty(const EChainType chainType) const;

@@ -1,11 +1,13 @@
 #include <catch.hpp>
 
+#include <TestFileUtil.h>
 #include <PMMR/Common/PruneList.h>
 
 // start with an empty prune list (nothing shifted)
 TEST_CASE("PruneList::GetLeafShift_Empty")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	// PruneList empty
 	REQUIRE(pPruneList->GetLeafShift(0) == 0);
@@ -18,7 +20,8 @@ TEST_CASE("PruneList::GetLeafShift_Empty")
 // Nothing is shifted, because shifting only occurs after a parent is pruned.
 TEST_CASE("PruneList::GetLeafShift Pruned 0")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Flush();
@@ -34,7 +37,8 @@ TEST_CASE("PruneList::GetLeafShift Pruned 0")
 // The parent node will be pruned, resulting in all leaves after the leaf 0 & 1 to shift by 2.
 TEST_CASE("PruneList::GetLeafShift Pruned 0,1")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Add(1);
@@ -52,7 +56,8 @@ TEST_CASE("PruneList::GetLeafShift Pruned 0,1")
 // The parent of leaves 0 & 1 will be pruned, but the parent of node 3 will remain.
 TEST_CASE("PruneList::GetLeafShift Pruned 0,1,3")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Add(1);
@@ -75,7 +80,8 @@ TEST_CASE("PruneList::GetLeafShift Pruned 0,1,3")
 // Everything after node 5 (parent of leaves 3 & 4) will shift by 4.
 TEST_CASE("PruneList::GetLeafShift Pruned 0,1,3,4")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(0);
 	pPruneList->Add(1);
@@ -98,7 +104,8 @@ TEST_CASE("PruneList::GetLeafShift Pruned 0,1,3,4")
 // Prune a few unconnected nodes in arbitrary order.
 TEST_CASE("PruneList::GetLeafShift Arbitrary pruning")
 {
-	std::shared_ptr<PruneList> pPruneList = PruneList::Load("C:\\FakeFile.txt");
+	auto pFile = TestFileUtil::CreateTempFile();
+	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	pPruneList->Add(4);
 	pPruneList->Add(10);

@@ -8,7 +8,7 @@ TEST_CASE("Consensus::GetMaxBlockTime")
 {
 	auto now = std::chrono::system_clock::now();
 
-	REQUIRE(GetMaxBlockTime(now) == (now + std::chrono::seconds(720)).time_since_epoch().count());
+	REQUIRE(GetMaxBlockTime(now) == (now + std::chrono::seconds(300)).time_since_epoch().count());
 }
 
 TEST_CASE("Consensus::GetMaxCoinbaseHeight")

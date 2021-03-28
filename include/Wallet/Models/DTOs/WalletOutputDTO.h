@@ -44,7 +44,7 @@ public:
 		auto mmrIndexOpt = entity.GetMMRIndex();
 		auto blockHeightOpt = entity.GetBlockHeight();
 		auto walletIdOpt = entity.GetWalletTxId();
-		auto labelOpt = entity.GetLabel();
+		auto labels = entity.GetLabels();
 
 		return WalletOutputDTO(
 			std::move(path),
@@ -54,7 +54,7 @@ public:
 			mmrIndexOpt,
 			blockHeightOpt,
 			walletIdOpt,
-			labelOpt
+			labels.empty() ? std::nullopt : std::make_optional(labels.front())
 		);
 	}
 

@@ -15,7 +15,7 @@ public:
 	//
 	// tableNames - First table name is the default table, so must be empty
 	//
-    static std::shared_ptr<RocksDB> Open(const fs::path& dbPath, const std::vector<rocksdb::ColumnFamilyDescriptor>& tableNames)
+    static std::unique_ptr<RocksDB> Open(const fs::path& dbPath, const std::vector<rocksdb::ColumnFamilyDescriptor>& tableNames)
     {
 		fs::create_directories(dbPath);
 
@@ -36,7 +36,7 @@ public:
 
 		std::vector<RocksDBTable> tables = CreateTables(pTransactionDB, tableNames, columnHandles);
 
-		return std::make_shared<RocksDB>(std::shared_ptr<rocksdb::OptimisticTransactionDB>(pTransactionDB), tables);
+		return std::make_unique<RocksDB>(std::shared_ptr<rocksdb::OptimisticTransactionDB>(pTransactionDB), tables);
     }
 
 private:

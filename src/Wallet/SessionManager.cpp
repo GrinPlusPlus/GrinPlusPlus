@@ -154,7 +154,6 @@ SessionToken SessionManager::Login(
 	);
 
 	Locked<Wallet> wallet = std::make_shared<Wallet>(
-		std::make_shared<Config>(m_config),
 		pWalletDB,
 		token,
 		seed,
@@ -169,7 +168,7 @@ SessionToken SessionManager::Login(
 		std::move(encryptedSeedWithCS)
 	);
 
-	KeyChain keyChain = KeyChain::FromSeed(m_config, seed);
+	KeyChain keyChain = KeyChain::FromSeed(seed);
 	auto listenerInfo = m_pForeignController->StartListener(
 		pTorProcess,
 		username,

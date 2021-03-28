@@ -251,6 +251,10 @@ std::optional<TorAddress> ForeignServer::AddTorListener(
     const TorProcess::Ptr& pTorProcess,
     const uint16_t portNumber)
 {
+    if (!pTorProcess) {
+        return std::nullopt;
+    }
+
     try
     {
         ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));

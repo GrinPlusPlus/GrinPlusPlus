@@ -17,6 +17,11 @@ public:
 	const std::unique_ptr<SecretKey>& GetBlindingFactor() const noexcept { return m_pBlindingFactor; }
 	const ProofMessage& GetProofMessage() const noexcept { return m_proofMessage; }
 
+	std::vector<uint32_t> ToKeyIndices(const EBulletproofType& type) const
+	{
+		return m_proofMessage.ToKeyIndices(type);
+	}
+
 private:
 	uint64_t m_amount;
 	std::unique_ptr<SecretKey> m_pBlindingFactor;

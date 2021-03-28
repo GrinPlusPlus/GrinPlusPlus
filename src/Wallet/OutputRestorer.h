@@ -5,9 +5,11 @@
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Core/Config.h>
 #include <Core/Models/DTOs/OutputDTO.h>
+#include <Crypto/BulletproofType.h>
 
 // Forward Declarations
 class KeyChain;
+class RewoundProof;
 
 class OutputRestorer
 {
@@ -24,6 +26,13 @@ private:
 	std::unique_ptr<OutputDataEntity> GetWalletOutput(
 		const OutputDTO& output,
 		const uint64_t currentBlockHeight
+	) const;
+
+	OutputDataEntity BuildWalletOutput(
+		const OutputDTO& output,
+		const uint64_t currentBlockHeight,
+		const RewoundProof& rewoundProof,
+		EBulletproofType type
 	) const;
 
 	EOutputStatus DetermineStatus(

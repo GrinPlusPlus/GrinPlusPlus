@@ -5,20 +5,17 @@
 
 #include <TestServer.h>
 #include <TestChain.h>
-#include <TestWalletServer.h>
 #include <Comparators/JsonComparator.h>
 #include <optional>
 
-TEST_CASE("API: send - Slatepack")
+TEST_CASE("API: send - Slatepack", "[.]")
 {
-    TestServer::Ptr pTestServer = TestServer::Create();
-    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
-    auto pWalletManager = pTestWalletServer->GetWalletManager();
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
 
-    auto pSenderWallet = pTestWalletServer->CreateUser("Alice", "P@ssw0rd123!");
-    auto pReceiverWallet = pTestWalletServer->CreateUser("Bob", "P@ssw0rd123!", false);
+    auto pSenderWallet = pTestServer->CreateUser("Alice", "P@ssw0rd123!", UseTor::YES).wallet;
+    auto pReceiverWallet = pTestServer->CreateUser("Bob", "P@ssw0rd123!", UseTor::NO).wallet;
 
-    TestChain chain(pTestServer);
+    TestChain chain(pTestServer->GetBlockChain());
     chain.MineChain(pSenderWallet, 30);
 
     // Send
@@ -32,17 +29,14 @@ TEST_CASE("API: send - Slatepack")
         std::nullopt
     );
 
-    RPC::Request request = RPC::Request::BuildRequest("send", criteria.ToJSON());
+    auto response_result = pTestServer->InvokeOwnerRPC("send", criteria.ToJSON()).GetResult();
+    REQUIRE(response_result.has_value());
 
-    auto rpc_response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
-    REQUIRE(rpc_response.GetResult().has_value());
-
-    SendResponse response = SendResponse::FromJSON(rpc_response.GetResult().value());
+    SendResponse response = SendResponse::FromJSON(response_result.value());
     REQUIRE(response.GetStatus() == SendResponse::EStatus::SENT);
 
     // Unpack slatepack
-    auto wallet = pWalletManager->GetWallet(pReceiverWallet->GetToken());
-    SlatepackMessage decrypted = wallet.Read()->DecryptSlatepack(response.GetArmoredSlate());
+    SlatepackMessage decrypted = pReceiverWallet->GetWallet().Read()->DecryptSlatepack(response.GetArmoredSlate());
 
     ByteBuffer deserializer(decrypted.m_payload);
     REQUIRE(Slate::Deserialize(deserializer) == response.GetSlate());
@@ -53,13 +47,13 @@ TEST_CASE("API: send - Slatepack")
 //TEST_CASE("API: send - TOR")
 //{
 //    TestServer::Ptr pTestServer = TestServer::Create();
-//    TestWalletServer::Ptr pTestWalletServer = TestWalletServer::Create(pTestServer);
+//    TestWalletServer::Ptr pTestServer = TestWalletServer::Create(pTestServer);
 //    TestChain chain(pTestServer);
 //
-//    auto pSender = pTestWalletServer->CreateUser("Sender", "P@ssw0rd123!");
+//    auto pSender = pTestServer->CreateUser("Sender", "P@ssw0rd123!");
 //    REQUIRE(pSender->GetTorAddress().has_value());
 //
-//    auto pReceiver = pTestWalletServer->CreateUser("Receiver", "password");
+//    auto pReceiver = pTestServer->CreateUser("Receiver", "password");
 //    REQUIRE(pReceiver->GetTorAddress().has_value());
 //    std::cout << pReceiver->GetTorAddress().value().ToString() << std::endl;
 //
@@ -79,10 +73,10 @@ TEST_CASE("API: send - Slatepack")
 //    RPC::Request request = RPC::Request::BuildRequest("send", paramsJson);
 //
 //    std::unique_ptr<RPC::Response> pResponse = nullptr;
-//    std::thread thread([&request, pTestWalletServer, &pResponse]() {
+//    std::thread thread([&request, pTestServer, &pResponse]() {
 //        try
 //        {
-//            auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
+//            auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestServer->GetOwnerPort(), request);
 //            pResponse = std::make_unique<RPC::Response>(std::move(response));
 //        }
 //        catch (std::exception& e)
@@ -90,7 +84,7 @@ TEST_CASE("API: send - Slatepack")
 //            std::cout << e.what() << std::endl;
 //        }
 //    });
-//    //auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestWalletServer->GetOwnerPort(), request);
+//    //auto response = HttpRpcClient().Invoke("127.0.0.1", "/v2", pTestServer->GetOwnerPort(), request);
 //    thread.join();
 //
 //    LoggerAPI::Flush();
@@ -117,7 +111,7 @@ TEST_CASE("API: send - Slatepack")
 //    REQUIRE(txs[0].GetOutputs().size() == 1);
 //
 //    auto pTransaction = pTestServer->GetTxPool()->GetTransactionToStem(
-//        pTestServer->GetDatabase()->GetBlockDB()->Read().GetShared(),
+//        pTestServer->GetBlockDB()->Read().GetShared(),
 //        pTestServer->GetTxHashSetManager()->Read()->GetTxHashSet()
 //    );
 //

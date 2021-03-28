@@ -8,56 +8,43 @@
 
 TEST_CASE("Wallet Creation/Deletion")
 {
-	auto pServer = TestServer::Create();
-	ConfigPtr pConfig = pServer->GetConfig();
-	auto pNodeClient = pServer->GetNodeClient();
-	IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(*pConfig, pNodeClient);
+	auto pServer = TestServer::CreateWithWallet();
 
 	// Create wallet
 	const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-	auto response = pWalletManager->InitializeNewWallet(
-		CreateWalletCriteria(username, "Password1", 24),
-		TorProcessManager::GetProcess(0)
-	);
+	auto created_user = pServer->CreateUser(username, "Password1", UseTor::NO);
 
 	// Validate seed words
-	SecureString seedWords = pWalletManager->GetWallet(response.GetToken()).Read()->GetSeedWords();
-	REQUIRE(response.GetSeed() == seedWords);
+	SecureString seedWords = created_user.wallet->GetSeedWords();
+	REQUIRE(created_user.seed_words == seedWords);
 
 	// Logout
-	pWalletManager->Logout(response.GetToken());
+	created_user.wallet->Logout();
 
 	// Delete wallet
-	pWalletManager->DeleteWallet(username, "Password1");
+	pServer->GetWalletManager()->DeleteWallet(username, "Password1");
 }
 
 TEST_CASE("Wallet Words Length")
 {
-	auto pServer = TestServer::Create();
-	ConfigPtr pConfig = pServer->GetConfig();
-	auto pNodeClient = pServer->GetNodeClient();
-	IWalletManagerPtr pWalletManager = WalletAPI::CreateWalletManager(*pConfig, pNodeClient);
+	auto pServer = TestServer::CreateWithWallet();
 
 	// Create wallet
 	std::vector<uint8_t> numWordsVec = { 12, 15, 18, 21, 24 };
 	for (uint8_t numWords : numWordsVec)
 	{
 		const std::string username = uuids::to_string(uuids::uuid_system_generator()());
-		auto response = pWalletManager->InitializeNewWallet(
-			CreateWalletCriteria(username, "Password1", numWords),
-			TorProcessManager::GetProcess(0)
-		);
+		auto created_user = pServer->CreateUser(username, "Password1", UseTor::NO, (SeedWordSize)numWords);
 
 		// Validate seed words
-		auto wallet = pWalletManager->GetWallet(response.GetToken());
-		SecureString seedWords = wallet.Read()->GetSeedWords();
-		REQUIRE(response.GetSeed() == seedWords);
-		REQUIRE(StringUtil::Split((const std::string&)response.GetSeed(), " ").size() == numWords);
+		SecureString seedWords = created_user.wallet->GetSeedWords();
+		REQUIRE(created_user.seed_words == seedWords);
+		REQUIRE(StringUtil::Split((const std::string&)seedWords, " ").size() == numWords);
 
 		// Logout
-		pWalletManager->Logout(response.GetToken());
+		created_user.wallet->Logout();
 
 		// Delete wallet
-		pWalletManager->DeleteWallet(username, "Password1");
+		pServer->GetWalletManager()->DeleteWallet(username, "Password1");
 	}
 }

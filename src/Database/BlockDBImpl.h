@@ -12,9 +12,8 @@ class RocksDB;
 class BlockDB : public IBlockDB
 {
 public:
-	BlockDB(const Config& config, const std::shared_ptr<RocksDB>& pRocksDB)
-		: m_config(config), m_pRocksDB(pRocksDB), m_blockHeadersCache(128) { }
-	virtual ~BlockDB() = default;
+	BlockDB(const Config& config, std::unique_ptr<RocksDB>&& pRocksDB);
+	virtual ~BlockDB();
 
 	static std::shared_ptr<BlockDB> OpenDB(const Config& config);
 
@@ -53,7 +52,7 @@ public:
 
 private:
 	const Config& m_config;
-	std::shared_ptr<RocksDB> m_pRocksDB;
+	std::unique_ptr<RocksDB> m_pRocksDB;
 	FIFOCache<Hash, BlockHeaderPtr> m_blockHeadersCache;
 
 	std::vector<BlockHeaderPtr> m_uncommitted;

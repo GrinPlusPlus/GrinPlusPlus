@@ -24,8 +24,7 @@ public:
 	//
 	// Constructors
 	//
-	TransactionOutput(const EOutputFeatures features, Commitment&& commitment, RangeProof&& rangeProof);
-	TransactionOutput(const EOutputFeatures features, const Commitment& commitment, const RangeProof& rangeProof);
+	TransactionOutput(const EOutputFeatures features, Commitment commitment, RangeProof rangeProof);
 	TransactionOutput(const TransactionOutput& transactionOutput) = default;
 	TransactionOutput(TransactionOutput&& transactionOutput) noexcept = default;
 	TransactionOutput() = default;

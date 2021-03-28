@@ -2,7 +2,6 @@
 
 #include "../WalletImpl.h"
 
-#include <Core/Config.h>
 #include <Crypto/SecretKey.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/NodeClient.h>
@@ -14,7 +13,7 @@
 class SendSlateBuilder
 {
 public:
-	SendSlateBuilder(const Config& config, INodeClientConstPtr pNodeClient);
+	SendSlateBuilder(INodeClientConstPtr pNodeClient);
 
 	//
 	// Creates a slate for sending grins from the provided wallet.
@@ -66,6 +65,5 @@ private:
 		const std::string& armored_slatepack
 	) const;
 
-	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
 };

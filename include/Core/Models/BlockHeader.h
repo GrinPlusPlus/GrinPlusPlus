@@ -63,7 +63,11 @@ public:
 	uint64_t GetTotalDifficulty() const { return m_totalDifficulty; }
 	uint32_t GetScalingDifficulty() const { return m_scalingDifficulty; }
 	uint64_t GetNonce() const { return m_nonce; }
+
+	// PoW
 	const ProofOfWork& GetProofOfWork() const { return m_proofOfWork; }
+	uint8_t GetEdgeBits() const { return m_proofOfWork.GetEdgeBits(); }
+	const std::vector<uint64_t>& GetProofNonces() const { return m_proofOfWork.GetProofNonces(); }
 
 	// Merklish roots
 	const Hash& GetOutputRoot() const { return m_outputRoot; }

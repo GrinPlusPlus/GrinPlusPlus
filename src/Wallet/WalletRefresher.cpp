@@ -30,7 +30,7 @@ std::vector<OutputDataEntity> WalletRefresher::Refresh(const SecureVector& maste
 	std::vector<WalletTx> walletTransactions = pBatch->GetTransactions(masterSeed);
 
 	// 1. Check for own outputs in new blocks.
-	KeyChain keyChain = KeyChain::FromSeed(m_config, masterSeed);
+	KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 	OutputRestorer restorer(m_config, m_pNodeClient, keyChain);
 	std::vector<OutputDataEntity> restoredOutputs = restorer.FindAndRewindOutputs(pBatch.GetShared(), fromGenesis);
 

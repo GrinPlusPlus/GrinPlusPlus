@@ -249,8 +249,6 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 					{
 						connection.SendMsg(GetCompactBlockMessage{ block.GetPreviousHash() });
 					}
-				} else if (added == EBlockChainStatus::INVALID) {
-					connection.BanPeer(EBanReason::BadBlock);
 				}
 			}
 
@@ -286,7 +284,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			}
 			else if (added == EBlockChainStatus::ORPHANED)
 			{
-				if (m_pSyncStatus->GetStatus() == ESyncStatus::NOT_SYNCING)
+				if (compactBlock.GetHeight() < (m_pBlockChain->GetHeight(EChainType::CONFIRMED) + 100))
 				{
 					if (compactBlock.GetTotalDifficulty() > m_pBlockChain->GetTotalDifficulty(EChainType::CONFIRMED))
 					{
@@ -369,6 +367,7 @@ void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequ
 	if (connection.GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest) {
 		LOG_WARNING_F("Peer '{}' requested multiple TxHashSet's within 2 hours.", connection.GetIPAddress());
 		connection.BanPeer(EBanReason::Abusive);
+		return;
 	}
 
 	LOG_INFO_F("Sending TxHashSet snapshot to {}", connection);

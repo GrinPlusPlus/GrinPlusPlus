@@ -71,6 +71,9 @@ set(WITH_GFLAGS OFF)
 #add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grinpp_macros.cmake)
+
 include(CheckFunctionExists)
 set(CMAKE_REQUIRED_INCLUDES string.h)
 CHECK_FUNCTION_EXISTS(memset_s HAS_MEMSET_S)

@@ -2,12 +2,14 @@
 
 #include "Messages/Message.h"
 
+#include <caches/Cache.h>
 #include <Core/Enums/ProtocolVersion.h>
 #include <Common/ConcurrentQueue.h>
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <P2P/SyncStatus.h>
 #include <Core/Config.h>
+#include <chrono>
 #include <atomic>
 #include <queue>
 
@@ -24,6 +26,8 @@ class MessageRetriever;
 //
 class Connection : public Traits::IPrintable, public std::enable_shared_from_this<Connection>
 {
+	using system_clock = std::chrono::system_clock;
+
 public:
 	using Ptr = std::shared_ptr<Connection>;
 
@@ -42,7 +46,8 @@ public:
 		m_connectedPeer(connectedPeer),
 		m_pSyncStatus(pSyncStatus),
 		m_pMessageProcessor(pMessageProcessor),
-		m_terminate(false) { }
+		m_terminate(false),
+		m_advertisedBlocks(256) { }
 
 	Connection(const Connection&) = delete;
 	Connection& operator=(const Connection&) = delete;
@@ -91,17 +96,27 @@ public:
 
 	std::string Format() const final { return "Connection{" + GetIPAddress().Format() + "}"; }
 
+	bool HasBlock(const Hash& hash) const { return m_advertisedBlocks.Cached(hash); }
+	void AdvertisedBlock(const Hash& hash) { return m_advertisedBlocks.Put(hash, hash); }
+
 private:
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 
-	void Connect();
+	bool Connect();
 	void Run();
+
+	void CheckPing();
+	bool CheckSend();
+	bool CheckReceive();
 
 	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
 
 	std::weak_ptr<MessageProcessor> m_pMessageProcessor;
+
+	std::chrono::system_clock::time_point m_lastPing;
+	std::chrono::system_clock::time_point m_lastReceived;
 
 	std::atomic<bool> m_terminate;
 	std::thread m_connectionThread;
@@ -113,6 +128,8 @@ private:
 	mutable SocketPtr m_pSocket;
 
 	ConcurrentQueue<IMessagePtr> m_sendQueue;
+
+	mutable LRUCache<Hash, Hash> m_advertisedBlocks;
 };
 
 typedef std::shared_ptr<Connection> ConnectionPtr;

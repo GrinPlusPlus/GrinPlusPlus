@@ -8,16 +8,24 @@
 class SocketException : public std::exception
 {
 public:
-	SocketException(const std::error_code& ec)
+	SocketException(const std::error_code& ec, const std::string& message)
 	{
-		if (ec)
-		{
-			LOG_DEBUG_F("Socket exception occurred: ({}) {}", ec.value(), ec.message());
+		m_message = "SocketException:";
+
+		if (ec) {
+			m_message += StringUtil::Format(" [{}: {}]", ec.value(), ec.message());
+		}
+
+		if (!message.empty()) {
+			m_message += " " + message;
 		}
 	}
 
 	const char* what() const throw()
 	{
-		return "Socket exception occurred.";
+		return m_message.c_str();
 	}
+
+private:
+	std::string m_message;
 };

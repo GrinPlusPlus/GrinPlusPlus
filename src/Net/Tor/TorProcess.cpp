@@ -66,6 +66,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				system("killall tor");
 #endif
 				ThreadUtil::SleepFor(std::chrono::seconds(5));
+				continue;
 			}
 
 			LOG_INFO("Initializing Tor");

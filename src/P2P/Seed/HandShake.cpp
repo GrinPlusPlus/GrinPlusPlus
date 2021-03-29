@@ -47,7 +47,7 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 	if (bHandMessageSent)
 	{
 		// Get Shake Message
-		std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config).RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
+		std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever::RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
 
 		if (pReceivedMessage.get() != nullptr)
 		{
@@ -91,7 +91,7 @@ bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
 	// Get Hand Message
-	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever(m_config).RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
+	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever::RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
 	if (pReceivedMessage != nullptr)
 	{
 		if (pReceivedMessage->GetMessageHeader().GetMessageType() == MessageTypes::Hand)

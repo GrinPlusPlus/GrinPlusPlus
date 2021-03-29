@@ -9,7 +9,7 @@
 std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
 	Socket& socket,
 	const Peer& peer,
-	const Socket::ERetrievalMode mode) const
+	const Socket::ERetrievalMode mode)
 {
 	std::vector<uint8_t> headerBuffer;
 	const bool received = socket.Receive(11, true, mode, headerBuffer);

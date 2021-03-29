@@ -9,11 +9,11 @@ TorControlClient::UPtr TorControlClient::Connect(const uint16_t control_port, co
 	auto pClient = std::make_unique<TorControlClient>();
 	bool connected = false;
 	auto timeout = std::chrono::system_clock::now() + TOR_STARTUP_TIMEOUT;
-	while (!connected && std::chrono::system_clock::now() < timeout) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+	while (Global::IsRunning() && !connected && std::chrono::system_clock::now() < timeout) {
 		// Open control socket
 		connected = pClient->Connect(SocketAddress{ "127.0.0.1", control_port });
+
+		ThreadUtil::SleepFor(std::chrono::milliseconds(500));
 	}
 
 	if (!connected) {

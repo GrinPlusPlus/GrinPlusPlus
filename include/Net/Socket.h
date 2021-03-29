@@ -62,6 +62,8 @@ public:
 	);
 
 private:
+	void ThrowSocketException(const asio::error_code& ec);
+
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
 	std::shared_ptr<asio::io_context> m_pContext;
 

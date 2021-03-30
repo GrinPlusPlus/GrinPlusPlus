@@ -1,5 +1,5 @@
 #include <Core/Validation/TransactionValidator.h>
-#include <Core/Validation/TransactionBodyValidator.h>
+#include <Core/Validation/TxBodyValidator.h>
 
 #include <Consensus.h>
 #include <Common/Util/HexUtil.h>
@@ -15,7 +15,7 @@ void TransactionValidator::Validate(const Transaction& transaction, const uint64
 	ValidateWeight(transaction.GetBody(), block_height);
 
 	// Validate the "transaction body"
-	TransactionBodyValidator().Validate(transaction.GetBody());
+	TxBodyValidator().Validate(transaction.GetBody());
 
 	// Verify no output or kernel includes invalid features (coinbase)
 	ValidateFeatures(transaction.GetBody());

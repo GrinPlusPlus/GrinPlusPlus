@@ -7,7 +7,8 @@ file(GLOB SOURCE_CODE
     "Models/*.cpp"
     "Serialization/Base58.cpp"
     "Traits/*.cpp"
-	"Validation/*.cpp"
+	"Validation/TransactionValidator.cpp"
+	"Validation/TxBodyValidator.cpp"
 )
 
 if (WIN32)

@@ -56,8 +56,7 @@ public:
 	static RangeProof Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint64_t proofSize = byteBuffer.ReadU64();
-		if (proofSize > MAX_PROOF_SIZE)
-		{
+		if (proofSize > MAX_PROOF_SIZE) {
 			throw DESERIALIZATION_EXCEPTION_F("Proof of size {} exceeds the maximum", proofSize);
 		}
 

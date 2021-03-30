@@ -5,4 +5,5 @@ list_append_parent(
     "Models/Test_BlockHeader.cpp"
     "Models/Test_Genesis.cpp"
     "Models/Test_ShortId.cpp"
+    "Validation/Test_TxBodyValidator.cpp"
 )

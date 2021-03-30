@@ -4,7 +4,7 @@
 #include <Crypto/Crypto.h>
 #include <Core/Exceptions/BlockChainException.h>
 #include <Core/Exceptions/BadDataException.h>
-#include <Core/Validation/TransactionBodyValidator.h>
+#include <Core/Validation/TxBodyValidator.h>
 #include <Core/Validation/KernelSumValidator.h>
 #include <Common/Util/FunctionalUtil.h>
 #include <PMMR/TxHashSet.h>
@@ -33,7 +33,7 @@ void BlockValidator::VerifyBody(const FullBlock& block)
 {
 	try
 	{
-		TransactionBodyValidator().Validate(block.GetTransactionBody());
+		TxBodyValidator().Validate(block.GetTransactionBody());
 	}
 	catch (std::exception& e)
 	{

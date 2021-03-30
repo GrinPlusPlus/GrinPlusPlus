@@ -26,7 +26,7 @@ KeyChain KeyChain::FromSeed(const SecureVector& masterSeed)
 
 KeyChain KeyChain::FromRandom()
 {
-	SecretKey masterSeed(CSPRNG::GenerateRandom32().GetData());
+	SecretKey masterSeed(CSPRNG::GenerateRandom32());
 	return KeyChain::FromSeed(masterSeed.GetSecure());
 }
 

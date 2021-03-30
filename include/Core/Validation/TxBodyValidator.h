@@ -2,7 +2,7 @@
 
 #include <Core/Models/TransactionBody.h>
 
-class TransactionBodyValidator
+class TxBodyValidator
 {
 public:
 	void Validate(const TransactionBody& transactionBody);

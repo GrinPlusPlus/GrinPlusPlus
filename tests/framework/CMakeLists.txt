@@ -3,4 +3,5 @@ list_append_parent(
     ${CMAKE_CURRENT_LIST_DIR}
     "src/TestServer.cpp"
     "src/TorProcessManager.cpp"
+    "src/TxBuilder.cpp"
 )

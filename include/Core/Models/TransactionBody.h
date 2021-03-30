@@ -28,6 +28,12 @@ public:
 	TransactionBody(TransactionBody&& other) noexcept = default;
 	TransactionBody() = default;
 
+	static TransactionBody NoSort(
+		std::vector<TransactionInput> inputs,
+		std::vector<TransactionOutput> outputs,
+		std::vector<TransactionKernel> kernels
+	);
+
 	//
 	// Destructor
 	//
@@ -42,8 +48,25 @@ public:
 	//
 	// Getters
 	//
+	const TransactionInput& GetInput(size_t idx) const
+	{
+		assert(idx < m_inputs.size());
+		return m_inputs[idx];
+	}
 	const std::vector<TransactionInput>& GetInputs() const { return m_inputs; }
+
+	const TransactionOutput& GetOutput(size_t idx) const
+	{
+		assert(idx < m_outputs.size());
+		return m_outputs[idx];
+	}
 	const std::vector<TransactionOutput>& GetOutputs() const { return m_outputs; }
+
+	const TransactionKernel& GetKernel(size_t idx) const
+	{
+		assert(idx < m_kernels.size());
+		return m_kernels[idx];
+	}
 	const std::vector<TransactionKernel>& GetKernels() const { return m_kernels; }
 
 	uint64_t CalcFee() const noexcept

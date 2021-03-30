@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/Secure.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Wallet/WalletTx.h>

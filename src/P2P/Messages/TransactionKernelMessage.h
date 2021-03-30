@@ -2,7 +2,7 @@
 
 #include "Message.h"
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 
 class TransactionKernelMessage : public IMessage
 {

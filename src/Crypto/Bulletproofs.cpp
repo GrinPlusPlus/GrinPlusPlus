@@ -5,7 +5,7 @@
 #include <Common/Util/FunctionalUtil.h>
 #include <Common/Logger.h>
 #include <Crypto/CSPRNG.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 
 const uint64_t MAX_WIDTH = 1 << 20;
 const size_t SCRATCH_SPACE_SIZE = 256 * MAX_WIDTH;

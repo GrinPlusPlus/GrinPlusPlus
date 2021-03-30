@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/HexUtil.h>
 

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Crypto/Age/RecipientLine.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Crypto/Hasher.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Crypto/X25519.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 #include <Core/Serialization/Base64.h>
 #include <Common/Util/StringUtil.h>
 #include <regex>

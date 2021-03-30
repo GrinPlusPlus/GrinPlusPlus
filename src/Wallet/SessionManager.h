@@ -3,7 +3,7 @@
 #include <Common/Compat.h>
 #include "LoggedInSession.h"
 
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Common/Secure.h>
 #include <Core/Config.h>
 #include <Net/Tor/TorProcess.h>

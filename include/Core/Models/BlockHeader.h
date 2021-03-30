@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/Hash.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/Hash.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Models/ProofOfWork.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>

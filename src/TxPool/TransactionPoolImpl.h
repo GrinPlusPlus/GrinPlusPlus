@@ -5,7 +5,7 @@
 #include <TxPool/TransactionPool.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Models/ShortId.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <shared_mutex>
 #include <set>
 

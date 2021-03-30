@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/Secure.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <optional>
 
 // Forward Declarations

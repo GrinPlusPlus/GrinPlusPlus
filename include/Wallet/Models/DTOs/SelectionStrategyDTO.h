@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Wallet/Enums/SelectionStrategy.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Core/Util/JsonUtil.h>
 #include <set>
 

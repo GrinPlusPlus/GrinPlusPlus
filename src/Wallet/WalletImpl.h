@@ -15,7 +15,7 @@
 #include <Net/Tor/TorAddress.h>
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Traits/Lockable.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Crypto/BulletproofType.h>
 #include <API/Wallet/Foreign/Models/BuildCoinbaseResponse.h>
 #include <string>

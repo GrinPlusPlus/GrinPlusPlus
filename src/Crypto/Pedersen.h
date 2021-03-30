@@ -2,10 +2,10 @@
 
 #include <secp256k1-zkp/secp256k1_commitment.h>
 
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/SecretKey.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/PublicKey.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/PublicKey.h>
 #include <shared_mutex>
 
 // Forward Declarations

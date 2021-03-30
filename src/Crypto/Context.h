@@ -3,8 +3,8 @@
 #include <secp256k1-zkp/secp256k1.h>
 #include <secp256k1-zkp/secp256k1_bulletproofs.h>
 #include <Crypto/CSPRNG.h>
-#include <Crypto/SecretKey.h>
-#include <Crypto/CryptoException.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Core/Exceptions/CryptoException.h>
 
 namespace secp256k1 {
 

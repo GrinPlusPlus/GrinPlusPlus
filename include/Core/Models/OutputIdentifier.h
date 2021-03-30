@@ -6,7 +6,7 @@
 
 #include <Core/Models/Features.h>
 #include <Core/Traits/Serializable.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 
 // Forward Declarations
 class TransactionOutput;

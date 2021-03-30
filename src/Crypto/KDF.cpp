@@ -1,7 +1,7 @@
 #include <Crypto/KDF.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 #include <Crypto/Hasher.h>
-#include <Crypto/ScryptParameters.h>
+#include <Crypto/Models/ScryptParameters.h>
 
 #include <scrypt/crypto_scrypt.h>
 #include <sodium/crypto_generichash_blake2b.h>

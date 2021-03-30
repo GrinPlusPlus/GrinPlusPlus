@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Crypto/Hash.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/Hash.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 

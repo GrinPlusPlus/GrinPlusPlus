@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
-#include <Crypto/CryptoException.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Core/Exceptions/CryptoException.h>
 #include <chachapoly.h>
 
 class ChaChaPoly

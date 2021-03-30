@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
-#include <Crypto/ScryptParameters.h>
+#include <Crypto/Models/BigInteger.h>
+#include <Crypto/Models/ScryptParameters.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 

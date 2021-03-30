@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/BigInteger.h>
+#include <Crypto/Models/SecretKey.h>
 
 /*
  * An Ed25519 secret key

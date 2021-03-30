@@ -1,7 +1,7 @@
 #pragma once
 
 #include <P2P/SyncStatus.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Net/Socket.h>
 #include <P2P/Peer.h>
 #include <BlockChain/BlockChain.h>

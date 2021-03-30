@@ -7,7 +7,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Traits/Serializable.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Core/Models/OutputLocation.h>
 #include <cstdint>
 #include <unordered_map>

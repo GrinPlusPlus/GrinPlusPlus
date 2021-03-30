@@ -2,7 +2,7 @@
 
 #include "Orphan.h"
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Models/FullBlock.h>
 #include <unordered_map>
 #include <caches/Cache.h>

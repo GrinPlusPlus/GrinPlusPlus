@@ -3,7 +3,7 @@
 #include "Common/PruneableMMR.h"
 
 #include <Core/Global.h>
-#include <Crypto/RangeProof.h>
+#include <Crypto/Models/RangeProof.h>
 #include <filesystem.h>
 
 #define RANGE_PROOF_SIZE 683

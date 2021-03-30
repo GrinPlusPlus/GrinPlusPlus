@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Common/Secure.h>
 #include <string>
 #include <vector>

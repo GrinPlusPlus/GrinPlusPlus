@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Models/BlockHeader.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/Peer.h>

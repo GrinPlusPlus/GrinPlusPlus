@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
-#include <Crypto/PublicKey.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/BigInteger.h>
+#include <Crypto/Models/PublicKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 

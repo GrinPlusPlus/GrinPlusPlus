@@ -1,7 +1,7 @@
 #pragma once
 
 #include <caches/Cache.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <mutex>
 
 class BulletProofsCache

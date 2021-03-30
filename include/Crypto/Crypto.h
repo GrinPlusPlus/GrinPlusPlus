@@ -5,16 +5,16 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/Secure.h>
-#include <Crypto/BigInteger.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/RangeProof.h>
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/Signature.h>
-#include <Crypto/ProofMessage.h>
-#include <Crypto/RewoundProof.h>
-#include <Crypto/Hash.h>
-#include <Crypto/PublicKey.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/BigInteger.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/RangeProof.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/Signature.h>
+#include <Crypto/Models/ProofMessage.h>
+#include <Crypto/Models/RewoundProof.h>
+#include <Crypto/Models/Hash.h>
+#include <Crypto/Models/PublicKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <cstdint>
 #include <vector>
 #include <memory>

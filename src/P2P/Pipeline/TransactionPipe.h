@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <P2P/Peer.h>
 #include <TxPool/PoolType.h>
 #include <Core/Models/Transaction.h>

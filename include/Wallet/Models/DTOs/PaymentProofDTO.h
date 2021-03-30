@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Util/JsonUtil.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Crypto/Models/ed25519_public_key.h>
 #include <Crypto/Models/ed25519_signature.h>
 

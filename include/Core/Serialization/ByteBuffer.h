@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <array>
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 
 class ByteBuffer
 {

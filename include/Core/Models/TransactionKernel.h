@@ -7,11 +7,11 @@
 #include <Core/Traits/Committed.h>
 #include <Core/Traits/Serializable.h>
 #include <Core/Traits/Hashable.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Models/Features.h>
 #include <Core/Models/Fee.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/Signature.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/Signature.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <json/json.h>

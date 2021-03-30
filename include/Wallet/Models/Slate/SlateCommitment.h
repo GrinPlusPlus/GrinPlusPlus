@@ -3,7 +3,7 @@
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Models/Features.h>
-#include <Crypto/RangeProof.h>
+#include <Crypto/Models/RangeProof.h>
 #include <Core/Util/JsonUtil.h>
 #include <optional>
 

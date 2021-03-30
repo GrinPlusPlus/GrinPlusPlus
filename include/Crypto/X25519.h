@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <sodium/crypto_kx.h>
 #include <sodium/crypto_scalarmult.h>
 

@@ -2,7 +2,7 @@
 
 #include "../WalletImpl.h"
 
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Wallet/WalletTx.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/Models/DTOs/SelectionStrategyDTO.h>

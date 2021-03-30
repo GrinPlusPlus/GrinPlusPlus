@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/Secure.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Wallet/Models/Slate/Slate.h>
 #include <Wallet/Wallet.h>
 

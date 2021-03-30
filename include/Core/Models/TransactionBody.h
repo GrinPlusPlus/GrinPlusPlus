@@ -5,7 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <vector>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionInput.h>

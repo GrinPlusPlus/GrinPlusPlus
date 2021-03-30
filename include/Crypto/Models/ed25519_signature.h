@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Traits/Printable.h>
 
 struct ed25519_signature_t : public Traits::IPrintable

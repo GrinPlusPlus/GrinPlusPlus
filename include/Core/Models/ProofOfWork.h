@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <Consensus.h>
-#include <Crypto/Hash.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/Hash.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 

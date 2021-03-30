@@ -8,8 +8,8 @@
 #include <Core/Models/TransactionOutput.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/SecretKey.h>
 #include <optional>
 
 static const uint8_t OUTPUT_DATA_FORMAT = 1;

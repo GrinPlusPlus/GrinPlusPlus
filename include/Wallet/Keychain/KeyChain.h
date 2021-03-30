@@ -5,10 +5,10 @@
 #include <Wallet/PublicExtKey.h>
 #include <Wallet/KeyChainPath.h>
 
-#include <Crypto/SecretKey.h>
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/RangeProof.h>
-#include <Crypto/RewoundProof.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/RangeProof.h>
+#include <Crypto/Models/RewoundProof.h>
 #include <Crypto/BulletproofType.h>
 #include <Crypto/Models/ed25519_keypair.h>
 #include <Crypto/ED25519.h>

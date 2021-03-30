@@ -2,11 +2,11 @@
 
 #include "BulletProofsCache.h"
 
-#include <Crypto/Commitment.h>
-#include <Crypto/RangeProof.h>
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/ProofMessage.h>
-#include <Crypto/RewoundProof.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/RangeProof.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/ProofMessage.h>
+#include <Crypto/Models/RewoundProof.h>
 #include <shared_mutex>
 
 // Forward Declarations

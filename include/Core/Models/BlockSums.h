@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Serializable.h>

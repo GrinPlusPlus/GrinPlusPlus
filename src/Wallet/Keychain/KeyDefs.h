@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 
 namespace KeyDefs
 {

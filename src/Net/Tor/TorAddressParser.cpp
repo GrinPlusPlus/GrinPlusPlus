@@ -2,7 +2,7 @@
 
 #include <Common/Logger.h>
 #include <Crypto/ED25519.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <sha3/sha3.h>
 #include <cppcodec/base32_rfc4648.hpp>
 

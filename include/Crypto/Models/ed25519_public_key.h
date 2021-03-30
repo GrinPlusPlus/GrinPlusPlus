@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Traits/Printable.h>
 
 #define ED25519_PUBKEY_LEN 32

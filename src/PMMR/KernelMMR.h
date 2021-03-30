@@ -7,7 +7,7 @@
 #include <Core/Models/TransactionKernel.h>
 #include <Core/Models/FullBlock.h>
 #include <Core/Traits/Lockable.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <filesystem.h>
 #include <cstdint>
 

@@ -3,8 +3,8 @@
 #include <Crypto/Age/RecipientLine.h>
 #include <Crypto/Age/Header.h>
 #include <Crypto/X25519.h>
-#include <Crypto/SecretKey.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Serialization/Base64.h>
 #include <regex>
 

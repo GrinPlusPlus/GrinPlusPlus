@@ -1,7 +1,7 @@
 #include <Crypto/AES256.h>
 
 #include <bitcoin/aes.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 
 std::vector<uint8_t> AES256::Encrypt(const SecureVector& input, const SecretKey& key, const CBigInteger<16>& iv)
 {   

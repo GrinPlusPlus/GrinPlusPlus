@@ -10,7 +10,7 @@
 #include <Core/Models/DTOs/BlockWithOutputs.h>
 #include <PMMR/HeaderMMR.h>
 #include <PMMR/TxHashSetManager.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Traits/Lockable.h>
 #include <Database/Database.h>
 #include <TxPool/TransactionPool.h>

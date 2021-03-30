@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 
 namespace Traits
 {

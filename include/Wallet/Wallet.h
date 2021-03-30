@@ -24,7 +24,7 @@
 
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorProcess.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 
 class Wallet
 {

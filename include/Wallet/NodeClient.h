@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Core/Models/OutputLocation.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Models/DTOs/BlockWithOutputs.h>

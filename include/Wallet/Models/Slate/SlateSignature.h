@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Crypto/Crypto.h>
-#include <Crypto/PublicKey.h>
-#include <Crypto/Signature.h>
+#include <Crypto/Models/PublicKey.h>
+#include <Crypto/Models/Signature.h>
 #include <Core/Util/JsonUtil.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>

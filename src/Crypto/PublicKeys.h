@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
-#include <Crypto/PublicKey.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/PublicKey.h>
 #include <secp256k1-zkp/secp256k1.h>
 #include <shared_mutex>
 

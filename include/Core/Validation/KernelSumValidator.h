@@ -2,8 +2,8 @@
 
 #include <Core/Exceptions/BadDataException.h>
 #include <Crypto/Crypto.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/BlindingFactor.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/BlindingFactor.h>
 #include <Core/Models/BlockSums.h>
 #include <Core/Models/TransactionBody.h>
 #include <Common/Util/FunctionalUtil.h>

@@ -3,7 +3,7 @@
 #include "HashFile.h"
 #include "PruneList.h"
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Traits/Lockable.h>
 #include <vector>
 

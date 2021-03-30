@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Traits/Batchable.h>
 #include <Core/Traits/Lockable.h>
 #include <vector>

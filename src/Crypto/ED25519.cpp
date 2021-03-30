@@ -3,7 +3,7 @@
 #include <sodium/crypto_sign.h>
 #include <sodium/crypto_core_ed25519.h>
 #include <sodium/crypto_sign_ed25519.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 
 ed25519_public_key_t ED25519::ToPubKey(const std::vector<uint8_t>& bytes)
 {

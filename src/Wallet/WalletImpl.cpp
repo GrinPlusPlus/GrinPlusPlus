@@ -5,7 +5,7 @@
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/NodeClient.h>
 #include <Common/Logger.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 #include <Crypto/Hasher.h>
 #include <Core/Exceptions/WalletException.h>
 #include <unordered_set>

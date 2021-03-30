@@ -2,7 +2,7 @@
 
 #include <Crypto/KDF.h>
 #include <Crypto/X25519.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Common/Util/StringUtil.h>
 #include <Core/Serialization/Base64.h>
 #include <optional>

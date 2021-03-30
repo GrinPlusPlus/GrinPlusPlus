@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Common/Util/HexUtil.h>
-#include <Crypto/BlindingFactor.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/PublicKey.h>
-#include <Crypto/Signature.h>
-#include <Crypto/RangeProof.h>
+#include <Crypto/Models/BlindingFactor.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/PublicKey.h>
+#include <Crypto/Models/Signature.h>
+#include <Crypto/Models/RangeProof.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Common/Logger.h>
 #include <json/json.h>

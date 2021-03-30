@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Crypto/ED25519.h>
-#include <Crypto/Signature.h>
+#include <Crypto/Models/Signature.h>
 #include <Core/Util/JsonUtil.h>
 #include <optional>
 

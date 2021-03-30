@@ -2,11 +2,11 @@
 
 #include <secp256k1-zkp/secp256k1_aggsig.h>
 
-#include <Crypto/Commitment.h>
-#include <Crypto/SecretKey.h>
-#include <Crypto/Signature.h>
-#include <Crypto/PublicKey.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/Signature.h>
+#include <Crypto/Models/PublicKey.h>
+#include <Crypto/Models/Hash.h>
 #include <vector>
 #include <memory>
 #include <shared_mutex>

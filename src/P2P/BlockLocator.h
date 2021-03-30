@@ -3,7 +3,7 @@
 #include <Core/Models/BlockHeader.h>
 #include <BlockChain/BlockChain.h>
 #include <P2P/SyncStatus.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 
 class BlockLocator
 {

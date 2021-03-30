@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Common/Util/HexUtil.h>
 #include <Core/Traits/Printable.h>
 #include <Core/Traits/Serializable.h>

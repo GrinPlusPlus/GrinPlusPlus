@@ -1,6 +1,6 @@
 #include "PublicKeys.h"
 
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 
 static PublicKeys instance;
 

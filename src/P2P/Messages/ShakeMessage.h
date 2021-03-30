@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Message.h"
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Net/SocketAddress.h>
 #include <P2P/Capabilities.h>
 

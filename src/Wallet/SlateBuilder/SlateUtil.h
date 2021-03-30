@@ -3,7 +3,7 @@
 #include "SigningKeys.h"
 
 #include <Common/Util/FunctionalUtil.h>
-#include <Crypto/Commitment.h>
+#include <Crypto/Models/Commitment.h>
 #include <Crypto/Crypto.h>
 #include <Wallet/Models/Slate/Slate.h>
 

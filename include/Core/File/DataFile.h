@@ -3,7 +3,7 @@
 #include <Core/File/AppendOnlyFile.h>
 #include <Core/Exceptions/FileException.h>
 #include <Core/Traits/Batchable.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Common/Util/StringUtil.h>
 #include <memory>
 

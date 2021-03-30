@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
-#include <Crypto/PublicKey.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/PublicKey.h>
 
 struct SigningKeys
 {

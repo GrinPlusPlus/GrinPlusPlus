@@ -5,12 +5,12 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <vector>
-#include <Crypto/Hash.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/Hash.h>
+#include <Crypto/Models/BigInteger.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Models/TransactionBody.h>
-#include <Crypto/BlindingFactor.h>
+#include <Crypto/Models/BlindingFactor.h>
 #include <Core/Traits/Printable.h>
 #include <json/json.h>
 #include <mutex>

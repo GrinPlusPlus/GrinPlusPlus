@@ -6,7 +6,7 @@
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
 #include <Common/Secure.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <cstdint>
 #include <string>
 

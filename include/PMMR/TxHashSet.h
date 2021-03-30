@@ -8,7 +8,7 @@
 #include <Core/Models/TxHashSetRoots.h>
 #include <Core/Traits/Batchable.h>
 #include <BlockChain/Chain.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 
 // Forward Declarations
 class Config;

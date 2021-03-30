@@ -5,7 +5,7 @@
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 #include <Common/Secure.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <vector>
 
 #define CRYPTO_API

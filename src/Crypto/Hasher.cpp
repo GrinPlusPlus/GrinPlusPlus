@@ -1,5 +1,5 @@
 #include <Crypto/Hasher.h>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 
 #include <sodium/crypto_generichash_blake2b.h>
 #include <bitcoin/sha256.h>

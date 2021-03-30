@@ -23,7 +23,6 @@ void TxBodyValidator::Validate(const TransactionBody& body)
 
 void TxBodyValidator::VerifySorted(const TransactionBody& body)
 {
-	// TODO: Check for duplicates?
 	const bool sorted = Consensus::IsSorted(body.GetInputs())
 		&& Consensus::IsSorted(body.GetOutputs())
 		&& Consensus::IsSorted(body.GetKernels());

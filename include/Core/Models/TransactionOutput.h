@@ -6,11 +6,11 @@
 
 #include <Core/Traits/Committed.h>
 #include <Core/Traits/Hashable.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Models/Features.h>
 #include <Core/Models/OutputIdentifier.h>
-#include <Crypto/Commitment.h>
-#include <Crypto/RangeProof.h>
+#include <Crypto/Models/Commitment.h>
+#include <Crypto/Models/RangeProof.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <json/json.h>

@@ -9,7 +9,7 @@
 #include <Core/Models/ShortId.h>
 #include <Core/Config.h>
 #include <PMMR/TxHashSetManager.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <set>
 
 class Pool

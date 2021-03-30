@@ -15,7 +15,7 @@
 #ifndef BITCOIN_BASE58_H
 #define BITCOIN_BASE58_H
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 
 #include <string>
 #include <vector>

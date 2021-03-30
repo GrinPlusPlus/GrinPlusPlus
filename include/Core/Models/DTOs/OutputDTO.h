@@ -3,7 +3,7 @@
 #include <Core/Models/OutputIdentifier.h>
 #include <Core/Models/OutputLocation.h>
 #include <Core/Models/TransactionOutput.h>
-#include <Crypto/RangeProof.h>
+#include <Crypto/Models/RangeProof.h>
 #include <Crypto/Hasher.h>
 #include <json/json.h>
 

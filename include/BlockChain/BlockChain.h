@@ -13,7 +13,7 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Models/Transaction.h>
 #include <Core/Traits/Lockable.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <PMMR/HeaderMMR.h>
 #include <filesystem.h>
 

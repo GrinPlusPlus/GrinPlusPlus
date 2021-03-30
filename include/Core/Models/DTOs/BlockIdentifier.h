@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Core/Models/BlockHeader.h>
 #include <json/json.h>
 

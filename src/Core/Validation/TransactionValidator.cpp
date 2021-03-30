@@ -44,8 +44,7 @@ void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 		transactionBody.GetOutputs().cend(),
 		[](const TransactionOutput& output) { return output.IsCoinbase(); }
 	);
-	if (hasCoinbaseOutputs)
-	{
+	if (hasCoinbaseOutputs) {
 		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Transaction contains coinbase outputs.");
 	}
 
@@ -55,8 +54,7 @@ void TransactionValidator::ValidateFeatures(const TransactionBody& transactionBo
 		transactionBody.GetKernels().cend(),
 		[](const TransactionKernel& kernel) { return kernel.IsCoinbase(); }
 	);
-	if (hasCoinbaseKernels)
-	{
+	if (hasCoinbaseKernels) {
 		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Transaction contains coinbase kernels.");
 	}
 }

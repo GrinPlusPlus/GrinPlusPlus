@@ -4,7 +4,7 @@
 #include <Crypto/CSPRNG.h>
 #include <Crypto/Crypto.h>
 #include <Crypto/ED25519.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Wallet/Models/Slatepack/Bech32Address.h>
 
 TEST_CASE("Bech32Address")

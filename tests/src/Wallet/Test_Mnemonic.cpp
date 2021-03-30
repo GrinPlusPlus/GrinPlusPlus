@@ -1,7 +1,7 @@
 #include <catch.hpp>
 
 #include <Wallet/Keychain/Mnemonic.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 
 TEST_CASE("Mnemonic::CreateMnemonic")
 {

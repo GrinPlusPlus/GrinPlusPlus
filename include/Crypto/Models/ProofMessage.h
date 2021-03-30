@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Crypto/BulletproofType.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 #include <cstdint>
 
 class ProofMessage

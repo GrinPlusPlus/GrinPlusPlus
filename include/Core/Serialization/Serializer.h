@@ -3,7 +3,7 @@
 #include <Common/Secure.h>
 #include <Core/Serialization/EndianHelper.h>
 #include <Core/Enums/ProtocolVersion.h>
-#include <Crypto/BigInteger.h>
+#include <Crypto/Models/BigInteger.h>
 
 #include <cstdint>
 #include <vector>

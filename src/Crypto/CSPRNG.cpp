@@ -1,7 +1,7 @@
 #include <Crypto/CSPRNG.h>
 
 #include <random>
-#include <Crypto/CryptoException.h>
+#include <Core/Exceptions/CryptoException.h>
 #include <Common/Compat.h>
 
 #ifdef _WIN32

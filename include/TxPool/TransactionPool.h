@@ -12,7 +12,7 @@
 #include <Core/Models/BlockHeader.h>
 #include <Core/Config.h>
 #include <PMMR/TxHashSetManager.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <vector>
 #include <set>
 

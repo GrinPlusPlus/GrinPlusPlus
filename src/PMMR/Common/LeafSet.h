@@ -5,7 +5,7 @@
 #include "MMRHashUtil.h"
 
 #include <string>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <Roaring.h>
 #include <filesystem.h>
 #include <Core/File/BitmapFile.h>

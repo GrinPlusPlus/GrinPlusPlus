@@ -4,7 +4,7 @@
 
 #include <PMMR/TxHashSet.h>
 #include <Core/Config.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <P2P/SyncStatus.h>
 #include <filesystem.h>
 #include <string>

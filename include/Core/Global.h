@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Enums/Environment.h>
-#include <Crypto/Hash.h>
+#include <Crypto/Models/Hash.h>
 #include <cstdint>
 #include <atomic>
 #include <memory>

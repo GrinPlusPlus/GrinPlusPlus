@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Crypto/SecretKey.h>
-#include <Crypto/ProofMessage.h>
+#include <Crypto/Models/SecretKey.h>
+#include <Crypto/Models/ProofMessage.h>
 #include <cstdint>
 
 class RewoundProof

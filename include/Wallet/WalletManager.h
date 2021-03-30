@@ -29,7 +29,7 @@
 #include <Wallet/Models/Slatepack/Armor.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorProcess.h>
-#include <Crypto/SecretKey.h>
+#include <Crypto/Models/SecretKey.h>
 #include <Common/Secure.h>
 #include <Common/GrinStr.h>
 

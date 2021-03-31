@@ -2,7 +2,6 @@
 
 #include "../ChainState.h"
 
-#include <Core/Config.h>
 #include <Core/Models/FullBlock.h>
 #include <BlockChain/BlockChainStatus.h>
 
@@ -21,7 +20,7 @@ class BlockProcessor
 		std::vector<FullBlock::CPtr> reorgBlocks;
 	};
 public:
-	BlockProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
+	BlockProcessor(const std::shared_ptr<Locked<ChainState>>& pChainState);
 
 	EBlockChainStatus ProcessBlock(const FullBlock& block);
 
@@ -32,6 +31,5 @@ private:
 
 	BlockProcessingInfo DetermineBlockStatus(const FullBlock& block, Writer<ChainState> pLockedState);
 
-	const Config& m_config;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

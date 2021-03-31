@@ -2,14 +2,14 @@
 
 #include "../ChainState.h"
 
-#include <Core/Config.h>
 #include <BlockChain/BlockChainStatus.h>
 #include <Core/Models/BlockHeader.h>
 
 class BlockHeaderProcessor
 {
 public:
-	BlockHeaderProcessor(const Config& config, std::shared_ptr<Locked<ChainState>> pChainState);
+	BlockHeaderProcessor(const std::shared_ptr<Locked<ChainState>>& pChainState)
+		: m_pChainState(pChainState) { }
 
 	//
 	// Validates and adds a single header to the candidate chain.
@@ -53,6 +53,5 @@ private:
 		const std::vector<BlockHeaderPtr>& headers
 	);
 
-	const Config& m_config;
 	std::shared_ptr<Locked<ChainState>> m_pChainState;
 };

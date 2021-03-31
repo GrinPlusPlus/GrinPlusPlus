@@ -16,6 +16,9 @@ class Chain;
 class IBlockDB : public Traits::IBatchable
 {
 public:
+	using Ptr = std::shared_ptr<IBlockDB>;
+	using CPtr = std::shared_ptr<const IBlockDB>;
+
 	virtual ~IBlockDB() = default;
 
 	/// <summary>

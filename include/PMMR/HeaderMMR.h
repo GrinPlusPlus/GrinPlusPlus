@@ -18,6 +18,8 @@ class BlockHeader;
 class IHeaderMMR : public Traits::IBatchable
 {
 public:
+	using CPtr = std::shared_ptr<IHeaderMMR>;
+
 	virtual ~IHeaderMMR() = default;
 
 	virtual void AddHeader(const BlockHeader& header) = 0;

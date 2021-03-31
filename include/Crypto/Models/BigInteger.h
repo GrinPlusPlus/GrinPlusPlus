@@ -66,6 +66,26 @@ public:
 		return m_data;
 	}
 
+	auto cbegin() const noexcept
+	{
+		return m_data.cbegin();
+	}
+
+	auto cend() const noexcept
+	{
+		return m_data.cend();
+	}
+
+	auto begin() noexcept
+	{
+		return m_data.begin();
+	}
+
+	auto end() noexcept
+	{
+		return m_data.end();
+	}
+
 	static CBigInteger<NUM_BYTES, ALLOC> ValueOf(const unsigned char value)
 	{
 		std::vector<unsigned char, ALLOC> data(NUM_BYTES);

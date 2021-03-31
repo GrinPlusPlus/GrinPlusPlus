@@ -6,12 +6,6 @@
 
 using namespace Consensus;
 
-DifficultyCalculator::DifficultyCalculator(std::shared_ptr<const IBlockDB> pBlockDB)
-	: m_pBlockDB(pBlockDB)
-{
-
-}
-
 // Computes the proof-of-work difficulty that the next block should comply
 // with. Takes an iterator over past block headers information, from latest
 // (highest height) to oldest (lowest height).

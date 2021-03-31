@@ -132,7 +132,7 @@ uint64_t BlockChain::GetTotalDifficulty(const EChainType chainType) const
 
 EBlockChainStatus BlockChain::AddBlock(const FullBlock& block)
 {
-	return BlockProcessor(Global::GetConfig(), m_pChainState).ProcessBlock(block);
+	return BlockProcessor(m_pChainState).ProcessBlock(block);
 }
 
 EBlockChainStatus BlockChain::AddCompactBlock(const CompactBlock& compactBlock)
@@ -248,7 +248,7 @@ EBlockChainStatus BlockChain::AddBlockHeader(BlockHeaderPtr pBlockHeader)
 {
 	try
 	{
-		return BlockHeaderProcessor(Global::GetConfig(), m_pChainState).ProcessSingleHeader(pBlockHeader);
+		return BlockHeaderProcessor(m_pChainState).ProcessSingleHeader(pBlockHeader);
 	}
 	catch (BadDataException& e)
 	{
@@ -265,7 +265,7 @@ EBlockChainStatus BlockChain::AddBlockHeaders(const std::vector<BlockHeaderPtr>&
 {
 	try
 	{
-		return BlockHeaderProcessor(Global::GetConfig(), m_pChainState).ProcessSyncHeaders(blockHeaders);
+		return BlockHeaderProcessor(m_pChainState).ProcessSyncHeaders(blockHeaders);
 	}
 	catch (BadDataException& e)
 	{
@@ -406,11 +406,14 @@ bool BlockChain::ProcessNextOrphanBlock()
 
 	try
 	{
-		return BlockProcessor(Global::GetConfig(), m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
+		return BlockProcessor(m_pChainState).ProcessBlock(*pOrphanBlock) == EBlockChainStatus::SUCCESS;
 	}
 	catch (std::exception&)
 	{
-		m_pChainState->Write()->GetOrphanPool()->RemoveOrphan(pNextHeader->GetHeight(), pNextHeader->GetHash());
+		m_pChainState->
+			Write()->
+			GetOrphanPool()->
+			RemoveOrphan(pNextHeader->GetHeight(), pNextHeader->GetHash());
 		return false;
 	}
 }

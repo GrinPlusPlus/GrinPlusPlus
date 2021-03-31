@@ -68,6 +68,8 @@ public:
 	const ProofOfWork& GetProofOfWork() const { return m_proofOfWork; }
 	uint8_t GetEdgeBits() const { return m_proofOfWork.GetEdgeBits(); }
 	const std::vector<uint64_t>& GetProofNonces() const { return m_proofOfWork.GetProofNonces(); }
+	bool IsPrimaryPoW() const { return m_proofOfWork.IsPrimary(); }
+	bool IsSecondaryPoW() const { return m_proofOfWork.IsSecondary(); }
 
 	// Merklish roots
 	const Hash& GetOutputRoot() const { return m_outputRoot; }

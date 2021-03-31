@@ -1,20 +1,26 @@
 #pragma once
 
 #include <Core/Models/BlockHeader.h>
-#include <Core/Config.h>
-
-// Forward Declarations
-class IHeaderMMR;
-class IBlockDB;
+#include <Database/BlockDb.h>
+#include <PMMR/HeaderMMR.h>
 
 class BlockHeaderValidator
 {
 public:
-	BlockHeaderValidator(const Config& config, std::shared_ptr<const IBlockDB> pBlockDB, std::shared_ptr<const IHeaderMMR> pHeaderMMR);
+	BlockHeaderValidator(const IBlockDB::CPtr& pBlockDB, const IHeaderMMR::CPtr& pHeaderMMR)
+		: m_pBlockDB(pBlockDB), m_pHeaderMMR(pHeaderMMR) { }
 
-	bool IsValidHeader(const BlockHeader& header, const BlockHeader& previousHeader) const;
+	/// <summary>
+	/// Ensures the height, version, timestamp, PoW, and MMR root of the header is valid.
+	/// </summary>
+	/// <param name="header">The header to validate.</param>
+	/// <param name="prev_header">The previous header.</param>
+	/// <throws>BadDataException if the header is invalid.</throws>
+	void Validate(const BlockHeader& header, const BlockHeader& prev_header) const;
 
-	const Config& m_config;
-	std::shared_ptr<const IBlockDB> m_pBlockDB;
-	std::shared_ptr<const IHeaderMMR> m_pHeaderMMR;
+private:
+	bool IsPoWValid(const BlockHeader& header, const BlockHeader& prev_header) const;
+
+	IBlockDB::CPtr m_pBlockDB;
+	IHeaderMMR::CPtr m_pHeaderMMR;
 };

@@ -10,6 +10,14 @@ static unsigned long DEFAULT_TIMEOUT = 2 * 1000; // 5s
 #define SOCKET_ERROR -1
 #endif
 
+Socket::Socket(const std::shared_ptr<asio::io_context>& pContext, const std::shared_ptr<asio::ip::tcp::socket>& pSocket)
+    : Socket(SocketAddress(pSocket->remote_endpoint().address().to_string(), pSocket->remote_endpoint().port()))
+{
+    m_pContext = pContext;
+    m_pSocket = pSocket;
+    m_socketOpen = true;
+}
+
 Socket::Socket(const SocketAddress& address)
     : m_address(address),
     m_socketOpen(false),

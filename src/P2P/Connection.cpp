@@ -27,33 +27,20 @@ Connection::Ptr Connection::CreateInbound(
     const PeerPtr& pPeer,
     const SocketPtr& pSocket,
     const uint64_t connectionId,
-    const Config& config,
     ConnectionManager& connectionManager,
     const std::weak_ptr<MessageProcessor>& pMessageProcessor,
     const SyncStatusConstPtr& pSyncStatus)
 {
-    ConnectedPeer connected_peer(pPeer, EDirection::INBOUND, pSocket->GetPort());
     auto pConnection = std::make_shared<Connection>(
-        config,
+        Global::GetConfig(),
         pSocket,
         connectionId,
         connectionManager,
-        connected_peer,
+        ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
         pSyncStatus,
         pMessageProcessor
     );
-
-    try {
-        HandShake(connectionManager, pSyncStatus)
-            .PerformHandshake(*pSocket, connected_peer, EDirection::INBOUND);
-
-        pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
-    }
-    catch (std::exception& e) {
-        LOG_ERROR_F("Handshake with {} failed. {}", connected_peer, e.what());
-        pConnection->m_terminate = true;
-    }
-
+    pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
     return pConnection;
 }
 
@@ -123,10 +110,9 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
         if (pConnection->Connect()) {
             LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
 
+            pConnection->GetPeer()->SetConnected(true);
             pConnection->m_connectionManager.AddConnection(pConnection);
             pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-
-            pConnection->GetPeer()->SetConnected(true);
             pConnection->Run();
             pConnection->GetSocket()->CloseSocket();
             pConnection->GetPeer()->SetConnected(false);
@@ -147,19 +133,19 @@ bool Connection::Connect()
         if (!m_pSocket->Connect(std::make_shared<asio::io_context>())) {
             return false;
         }
-
-        HandShake(m_connectionManager, m_pSyncStatus)
-            .PerformHandshake(*m_pSocket, m_connectedPeer, direction);
     }
+
+    HandShake(m_connectionManager, m_pSyncStatus)
+        .PerformHandshake(*m_pSocket, m_connectedPeer, direction);
+
+    m_lastPing = system_clock::now();
+    m_lastReceived = system_clock::now();
 
     return true;
 }
 
 void Connection::Run()
 {
-    m_lastPing = system_clock::now();
-    m_lastReceived = system_clock::now();
-
     while (!GetPeer()->IsBanned() && IsConnectionActive()) {
         if (ExceedsRateLimit()) {
             LOG_WARNING_F("Banning peer ({}) for exceeding rate limit.", GetIPAddress());
@@ -181,6 +167,8 @@ void Connection::Run()
             break;
         }
     }
+
+    LOG_INFO_F("Disconnecting from peer {}", GetPeer());
 }
 
 void Connection::CheckPing()

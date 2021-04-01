@@ -58,7 +58,6 @@ public:
 		const PeerPtr& pPeer,
 		const SocketPtr& pSocket,
 		const uint64_t connectionId,
-		const Config& config,
 		ConnectionManager& connectionManager,
 		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
 		const SyncStatusConstPtr& pSyncStatus

@@ -16,6 +16,7 @@
 class Socket : public Traits::IPrintable
 {
 public:
+	Socket(const std::shared_ptr<asio::io_context>& pContext, const std::shared_ptr<asio::ip::tcp::socket>& pSocket);
 	Socket(const SocketAddress& address);
 	virtual ~Socket();
 

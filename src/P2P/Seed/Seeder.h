@@ -46,12 +46,13 @@ private:
 		m_pBlockChain(pBlockChain),
 		m_pMessageProcessor(pMessageProcessor),
 		m_pSyncStatus(pSyncStatus),
-		m_pAsioContext(std::make_shared<asio::io_context>()),
+		m_pAsioContext(std::make_shared<asio::io_service>()),
 		m_terminate(false) { }
 
 	static void Thread_Seed(Seeder& seeder);
 	static void Thread_Listener(Seeder& seeder);
 
+	void Accept(const asio::error_code& ec);
 	ConnectionPtr SeedNewConnection();
 
 	std::shared_ptr<Context> m_pContext;
@@ -63,7 +64,9 @@ private:
 
 	std::atomic<bool> m_terminate = true;
 
-	std::shared_ptr<asio::io_context> m_pAsioContext;
+	std::shared_ptr<asio::io_service> m_pAsioContext;
+	std::shared_ptr<asio::ip::tcp::acceptor> m_pAcceptor;
+	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
 	std::thread m_seedThread;
 	std::thread m_listenerThread;
 	mutable std::atomic_bool m_usedDNS = false;

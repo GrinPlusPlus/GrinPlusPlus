@@ -7,6 +7,7 @@
 #include <Core/Serialization/EndianHelper.h>
 #include <Core/Exceptions/DeserializationException.h>
 #include <Core/Enums/ProtocolVersion.h>
+#include <Core/Traits/Serializable.h>
 
 #include <vector>
 #include <string>

@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <memory>
 #include <algorithm>
 
 enum class ESerializeLength

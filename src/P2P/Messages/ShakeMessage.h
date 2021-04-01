@@ -15,7 +15,7 @@ public:
 	ShakeMessage(
 		const uint32_t version, 
 		const Capabilities& capabilities,
-		Hash&& hash,
+		Hash hash,
 		const uint64_t totalDifficulty,
 		const std::string& userAgent
 	) 

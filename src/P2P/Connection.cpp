@@ -32,16 +32,28 @@ Connection::Ptr Connection::CreateInbound(
     const std::weak_ptr<MessageProcessor>& pMessageProcessor,
     const SyncStatusConstPtr& pSyncStatus)
 {
+    ConnectedPeer connected_peer(pPeer, EDirection::INBOUND, pSocket->GetPort());
     auto pConnection = std::make_shared<Connection>(
         config,
         pSocket,
         connectionId,
         connectionManager,
-        ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
+        connected_peer,
         pSyncStatus,
         pMessageProcessor
     );
-    pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+
+    try {
+        HandShake(connectionManager, pSyncStatus)
+            .PerformHandshake(*pSocket, connected_peer, EDirection::INBOUND);
+
+        pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+    }
+    catch (std::exception& e) {
+        LOG_ERROR_F("Handshake with {} failed. {}", connected_peer, e.what());
+        pConnection->m_terminate = true;
+    }
+
     return pConnection;
 }
 
@@ -107,24 +119,21 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 {
     LoggerAPI::SetThreadName("PEER");
 
-    bool connected = false;
     try {
-        connected = pConnection->Connect();
+        if (pConnection->Connect()) {
+            LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
+
+            pConnection->m_connectionManager.AddConnection(pConnection);
+            pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+
+            pConnection->GetPeer()->SetConnected(true);
+            pConnection->Run();
+            pConnection->GetSocket()->CloseSocket();
+            pConnection->GetPeer()->SetConnected(false);
+        }
     }
     catch (const std::exception& e) {
-        LOG_ERROR_F("Failed to connect: {}", e);
-    }
-
-    if (connected) {
-        LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
-
-        pConnection->m_connectionManager.AddConnection(pConnection);
-        pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-
-        pConnection->GetPeer()->SetConnected(true);
-        pConnection->Run();
-        pConnection->GetSocket()->CloseSocket();
-        pConnection->GetPeer()->SetConnected(false);
+        LOG_ERROR_F("Failed to connect to {}: {}", pConnection->m_connectedPeer, e);
     }
 
     pConnection->m_terminate = true;
@@ -135,15 +144,12 @@ bool Connection::Connect()
 {
     EDirection direction = m_pSocket->IsSocketOpen() ? EDirection::INBOUND : EDirection::OUTBOUND;
     if (direction == EDirection::OUTBOUND) {
-        m_pContext = std::make_shared<asio::io_context>();
-        if (!m_pSocket->Connect(m_pContext)) {
+        if (!m_pSocket->Connect(std::make_shared<asio::io_context>())) {
             return false;
         }
-    }
 
-    HandShake handShake(m_config, m_connectionManager, m_pSyncStatus);
-    if (!handShake.PerformHandshake(*m_pSocket, m_connectedPeer, direction)) {
-        throw std::runtime_error("Handshake failed");
+        HandShake(m_connectionManager, m_pSyncStatus)
+            .PerformHandshake(*m_pSocket, m_connectedPeer, direction);
     }
 
     return true;

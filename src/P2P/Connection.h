@@ -124,7 +124,6 @@ private:
 
 	ConnectedPeer m_connectedPeer;
 
-	std::shared_ptr<asio::io_context> m_pContext;
 	mutable SocketPtr m_pSocket;
 
 	ConcurrentQueue<IMessagePtr> m_sendQueue;

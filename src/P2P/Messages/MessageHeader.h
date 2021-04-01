@@ -6,15 +6,16 @@
 #include <cstdint>
 #include <Core/Global.h>
 #include <Core/Serialization/ByteBuffer.h>
+#include <Core/Traits/Printable.h>
 
-class MessageHeader
+class MessageHeader : public Traits::IPrintable
 {
 public:
 	//
 	// Constructors
 	//
-	MessageHeader(const std::vector<unsigned char>& magicBytes, const MessageTypes::EMessageType messageType, const uint64_t messageLength)
-		: m_magicBytes(magicBytes), m_messageType(messageType), m_messageLength(messageLength)
+	MessageHeader(std::vector<uint8_t> magicBytes, const MessageTypes::EMessageType messageType, const uint64_t messageLength)
+		: m_magicBytes(std::move(magicBytes)), m_type(messageType), m_length(messageLength)
 	{
 
 	}
@@ -36,9 +37,9 @@ public:
 	//
 	// Getters
 	//
-	const std::vector<unsigned char>& GetMagicBytes() const { return m_magicBytes; }
-	MessageTypes::EMessageType GetMessageType() const { return m_messageType; }
-	uint64_t GetMessageLength() const { return m_messageLength; }
+	const std::vector<uint8_t>& GetMagicBytes() const { return m_magicBytes; }
+	MessageTypes::EMessageType GetMessageType() const { return m_type; }
+	uint64_t GetMessageLength() const { return m_length; }
 
 	//
 	// Deserialization
@@ -59,12 +60,17 @@ public:
 			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Message length too long");
 		}
 
-		const std::vector<unsigned char> magicBytes = { magicByte1, magicByte2 };
+		const std::vector<uint8_t> magicBytes = { magicByte1, magicByte2 };
 		return MessageHeader(magicBytes, (MessageTypes::EMessageType) messageType, messageLength);
 	}
 
+	std::string Format() const noexcept final
+	{
+		return StringUtil::Format("{}:{}b", MessageTypes::ToString(m_type), m_length);
+	}
+
 private:
-	std::vector<unsigned char> m_magicBytes;
-	MessageTypes::EMessageType m_messageType;
-	uint64_t m_messageLength;
+	std::vector<uint8_t> m_magicBytes;
+	MessageTypes::EMessageType m_type;
+	uint64_t m_length;
 };

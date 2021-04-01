@@ -4,6 +4,7 @@
 #include <Core/Traits/Printable.h>
 #include <Core/Traits/Serializable.h>
 #include <Core/Exceptions/DeserializationException.h>
+#include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
 
 #include <asio.hpp>

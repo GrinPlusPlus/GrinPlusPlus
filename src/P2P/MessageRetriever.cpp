@@ -2,9 +2,18 @@
 #include "Messages/MessageHeader.h"
 
 #include <P2P/Peer.h>
+#include <P2P/ConnectedPeer.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 #include <Common/Logger.h>
+
+std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
+	Socket& socket,
+	const ConnectedPeer& connected_peer,
+	const Socket::ERetrievalMode mode)
+{
+	return RetrieveMessage(socket, *connected_peer.GetPeer(), mode);
+}
 
 std::unique_ptr<RawMessage> MessageRetriever::RetrieveMessage(
 	Socket& socket,

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 enum class EProtocolVersion
 {
     V1 = 1,

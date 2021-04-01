@@ -16,7 +16,7 @@ public:
 		const uint32_t version, 
 		const Capabilities& capabilities, 
 		const uint64_t nonce, 
-		Hash&& hash,
+		Hash hash,
 		const uint64_t totalDifficulty, 
 		SocketAddress&& senderAddress, 
 		SocketAddress&& receiverAddress, 

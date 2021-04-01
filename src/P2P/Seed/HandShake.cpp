@@ -3,172 +3,121 @@
 #include "../Messages/HandMessage.h"
 #include "../Messages/ShakeMessage.h"
 #include "../Messages/BanReasonMessage.h"
+#include "../Messages/RawMessage.h"
 #include "../MessageRetriever.h"
 #include "../ConnectionManager.h"
 
-#include <Net/SocketException.h>
+#include <Core/Exceptions/ProtocolException.h>
 #include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
 #include <Common/Util/VectorUtil.h>
 
-static const uint64_t NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
+static const uint64_t SELF_NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
 
-bool HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const
+void HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const
 {
-	try
-	{
-		LOG_TRACE_F("Performing handshake with {} - {}", socket, (direction == EDirection::INBOUND ? "inbound" : "outbound"));
+    LOG_TRACE_F(
+        "Performing handshake with {}({})",
+        socket,
+        (direction == EDirection::INBOUND ? "inbound" : "outbound")
+    );
 
-		if (direction == EDirection::OUTBOUND)
-		{
-			return PerformOutboundHandshake(socket, connectedPeer);
-		}
-		else
-		{
-			return PerformInboundHandshake(socket, connectedPeer);
-		}
-	}
-	catch (const DeserializationException&)
-	{
-		LOG_DEBUG_F("Failed to deserialize handshake from {}", socket);
-	}
-	catch (const SocketException&)
-	{
-		LOG_DEBUG_F("Socket exception encountered with {}", socket);
-	}
-
-	return false;
+    if (direction == EDirection::OUTBOUND) {
+        PerformOutboundHandshake(socket, connectedPeer);
+    } else {
+        PerformInboundHandshake(socket, connectedPeer);
+    }
 }
 
-bool HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
+void HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
-	// Send Hand Message
-	const bool bHandMessageSent = TransmitHandMessage(socket);
-	if (bHandMessageSent)
-	{
-		// Get Shake Message
-		std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever::RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
+    // Send Hand Message
+    TransmitHandMessage(socket);
 
-		if (pReceivedMessage.get() != nullptr)
-		{
-			const MessageTypes::EMessageType messageType = pReceivedMessage->GetMessageHeader().GetMessageType();
-			if (messageType == MessageTypes::Shake)
-			{
-				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
-				const ShakeMessage shakeMessage = ShakeMessage::Deserialize(byteBuffer);
+    // Get Shake Message
+    auto pReceived = MessageRetriever::RetrieveMessage(socket, connectedPeer, Socket::BLOCKING);
+    if (pReceived == nullptr) {
+        throw PROTOCOL_EXCEPTION("Shake message not received");
+    }
 
-				const uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, shakeMessage.GetVersion());
-				connectedPeer.UpdateVersion(version);
-				connectedPeer.UpdateCapabilities(shakeMessage.GetCapabilities());
-				connectedPeer.UpdateUserAgent(shakeMessage.GetUserAgent());
-				connectedPeer.UpdateTotals(shakeMessage.GetTotalDifficulty(), 0);
+    if (pReceived->GetMessageType() != MessageTypes::Shake) {
+        throw PROTOCOL_EXCEPTION_F("Expected shake but received {}.", *pReceived);
+    }
 
-				return true;
-			}
-			else if (messageType == MessageTypes::BanReasonMsg)
-			{
-				ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
-				const BanReasonMessage banReasonMessage = BanReasonMessage::Deserialize(byteBuffer);
+    ByteBuffer buffer(pReceived->GetPayload());
+    ShakeMessage shakeMessage = ShakeMessage::Deserialize(buffer);
 
-				LOG_DEBUG_F("Ban message received from {} with reason {}", socket, std::to_string(banReasonMessage.GetBanReason()));
-				return false;
-			}
-			else
-			{
-				LOG_DEBUG_F("Expected shake from {} but received {}.", socket, MessageTypes::ToString(messageType));
-				return false;
-			}
-		}
-
-		LOG_TRACE_F("Shake message not received from {}", socket);
-		return false;
-	}
-
-	LOG_DEBUG_F("Hand message not sent to {}", socket);
-	return false;
+    uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, shakeMessage.GetVersion());
+    connectedPeer.UpdateVersion(version);
+    connectedPeer.UpdateCapabilities(shakeMessage.GetCapabilities());
+    connectedPeer.UpdateUserAgent(shakeMessage.GetUserAgent());
+    connectedPeer.UpdateTotals(shakeMessage.GetTotalDifficulty(), 0);
 }
 
-bool HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
+void HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
-	// Get Hand Message
-	std::unique_ptr<RawMessage> pReceivedMessage = MessageRetriever::RetrieveMessage(socket, *connectedPeer.GetPeer(), Socket::BLOCKING);
-	if (pReceivedMessage != nullptr)
-	{
-		if (pReceivedMessage->GetMessageHeader().GetMessageType() == MessageTypes::Hand)
-		{
-			ByteBuffer byteBuffer(pReceivedMessage->GetPayload());
-			const HandMessage handMessage = HandMessage::Deserialize(byteBuffer);
+    // Get Hand Message
+    auto pReceived = MessageRetriever::RetrieveMessage(socket, connectedPeer, Socket::BLOCKING);
+    if (pReceived == nullptr) {
+        throw PROTOCOL_EXCEPTION("No message received from incoming peer.");
+    }
 
-			if (handMessage.GetNonce() != NONCE && !m_connectionManager.IsConnected(connectedPeer.GetPeer()->GetIPAddress()))
-			{
-				connectedPeer.UpdateCapabilities(handMessage.GetCapabilities());
-				connectedPeer.UpdateUserAgent(handMessage.GetUserAgent());
-				connectedPeer.UpdateTotals(handMessage.GetTotalDifficulty(), 0);
+    if (pReceived->GetMessageType() != MessageTypes::Hand) {
+        throw PROTOCOL_EXCEPTION_F("Expected hand but received {}", *pReceived);
+    }
 
-				const uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, handMessage.GetVersion());
-				connectedPeer.UpdateVersion(version);
+    ByteBuffer byteBuffer(pReceived->GetPayload());
+    HandMessage hand_message = HandMessage::Deserialize(byteBuffer);
+    
+    if (hand_message.GetNonce() == SELF_NONCE) {
+        throw PROTOCOL_EXCEPTION("Connected to self");
+    }
 
-				// Send Shake Message
-				if (TransmitShakeMessage(socket, version))
-				{
-					return true;
-				}
-				else
-				{
-					LOG_DEBUG_F("Failed to transmit shake message to {}", socket);
-					return false;
-				}
-			}
-			else if (handMessage.GetNonce() == NONCE)
-			{
-				LOG_DEBUG_F("Connected to self {}. Nonce: {}", socket, NONCE);
-			}
-			else
-			{
-				LOG_DEBUG_F("Already connected to {}", connectedPeer);
-			}
-		}
-		else
-		{
-			LOG_DEBUG_F("First message from {} was of type {}", socket, MessageTypes::ToString(pReceivedMessage->GetMessageHeader().GetMessageType()));
-			return false;
-		}
-	}
+    if (m_connectionManager.IsConnected(connectedPeer.GetIPAddress())) {
+        throw PROTOCOL_EXCEPTION("Already connected to peer");
+    }
 
-	LOG_TRACE_F("Unable to connect to {}.", socket);
-	return false;
+    connectedPeer.UpdateCapabilities(hand_message.GetCapabilities());
+    connectedPeer.UpdateUserAgent(hand_message.GetUserAgent());
+    connectedPeer.UpdateTotals(hand_message.GetTotalDifficulty(), 0);
+
+    uint32_t version = (std::min)(P2P::PROTOCOL_VERSION, hand_message.GetVersion());
+    connectedPeer.UpdateVersion(version);
+
+    // Send Shake Message
+    TransmitShakeMessage(socket, version);
 }
 
-bool HandShake::TransmitHandMessage(Socket& socket) const
+void HandShake::TransmitHandMessage(Socket& socket) const
 {
-	const IPAddress localHostIP = IPAddress::CreateV4({ 0x7F, 0x00, 0x00, 0x01 });
+    IPAddress localHostIP = IPAddress::CreateV4({ 0x7F, 0x00, 0x00, 0x01 });
+    HandMessage hand(
+        P2P::PROTOCOL_VERSION,
+        Capabilities::FAST_SYNC_NODE,
+        SELF_NONCE,
+        Global::GetGenesisHash(),
+        m_pSyncStatus->GetBlockDifficulty(),
+        SocketAddress(localHostIP, Global::GetConfig().GetP2PPort()),
+        SocketAddress(localHostIP, socket.GetPort()),
+        P2P::USER_AGENT
+    );
 
-	const uint16_t portNumber = socket.GetPort();
-
-	const uint32_t version = P2P::PROTOCOL_VERSION;
-	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
-	const uint64_t nonce = NONCE;
-	Hash hash = Global::GetGenesisHash();
-	const uint64_t totalDifficulty = m_pSyncStatus->GetBlockDifficulty();
-	SocketAddress senderAddress(localHostIP, Global::GetConfig().GetP2PPort());
-	SocketAddress receiverAddress(localHostIP, portNumber);
-	const std::string& userAgent = P2P::USER_AGENT;
-	const HandMessage handMessage(version, capabilities, nonce, std::move(hash), totalDifficulty, std::move(senderAddress), std::move(receiverAddress), userAgent);
-
-	std::vector<uint8_t> serialized_message = handMessage.Serialize(ProtocolVersion::Local());
-
-	return socket.Send(serialized_message, true);
+    if (!socket.Send(hand.Serialize(ProtocolVersion::Local()), true)) {
+        throw PROTOCOL_EXCEPTION("Failed to send hand message.");
+    }
 }
 
-bool HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVersion) const
+void HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVersion) const
 {
-	const Capabilities capabilities(Capabilities::FAST_SYNC_NODE); // LIGHT_CLIENT: Read P2P Config once light-clients are supported
-	Hash hash = Global::GetGenesisHash();
-	const uint64_t totalDifficulty = m_pSyncStatus->GetBlockDifficulty();
-	const std::string& userAgent = P2P::USER_AGENT;
-	const ShakeMessage shakeMessage(protocolVersion, capabilities, std::move(hash), totalDifficulty, userAgent);
+    ShakeMessage shakeMessage(
+        protocolVersion,
+        Capabilities::FAST_SYNC_NODE,
+        Global::GetGenesisHash(),
+        m_pSyncStatus->GetBlockDifficulty(),
+        P2P::USER_AGENT
+    );
 
-	std::vector<uint8_t> serialized_message = shakeMessage.Serialize(ProtocolVersion::ToEnum(protocolVersion));
-
-	return socket.Send(serialized_message, true);
+    if (!socket.Send(shakeMessage.Serialize(ProtocolVersion::ToEnum(protocolVersion)), true)) {
+        throw PROTOCOL_EXCEPTION("Failed to send shake message.");
+    }
 }

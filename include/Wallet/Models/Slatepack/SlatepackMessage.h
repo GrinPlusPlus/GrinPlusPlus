@@ -69,7 +69,7 @@ struct SlatepackMessage
                 }
             }
 
-            serializer.AppendBytes(tempSerializer.GetBytes(), ESerializeLength::U32);
+            serializer.Append(tempSerializer.GetBytes(), ESerializeLength::U32);
         }
 
         static Metadata Deserialize(ByteBuffer& byteBuffer)
@@ -135,13 +135,13 @@ struct SlatepackMessage
                 m_sender.Serialize(optSerializer);
             }
 
-            serializer.AppendByteVector(optSerializer.GetBytes(), ESerializeLength::U32);
+            serializer.Append(optSerializer.GetBytes(), ESerializeLength::U32);
         }
 
         if (m_mode == EMode::PLAINTEXT) {
-            serializer.AppendBytes(m_payload, ESerializeLength::U64);
+            serializer.Append(m_payload, ESerializeLength::U64);
         } else {
-            serializer.AppendBytes(EncryptPayload(recipients), ESerializeLength::U64);
+            serializer.Append(EncryptPayload(recipients), ESerializeLength::U64);
         }
 
         return serializer.GetBytes();

@@ -28,6 +28,7 @@ public:
 
 	PeerConstPtr GetPeer() const noexcept { return m_pPeer; }
 	PeerPtr GetPeer() noexcept { return m_pPeer; }
+	const IPAddress& GetIPAddress() const noexcept { return m_pPeer->GetIPAddress(); }
 	const EDirection GetDirection() const noexcept { return m_direction; }
 	uint16_t GetPort() const noexcept { return m_portNumber; }
 	uint64_t GetTotalDifficulty() const noexcept { return m_totalDifficulty.load(); }

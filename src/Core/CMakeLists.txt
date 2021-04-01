@@ -6,7 +6,7 @@ file(GLOB SOURCE_CODE
     "File/AppendOnlyFile.cpp"
     "Models/*.cpp"
     "Serialization/Base58.cpp"
-    "Traits/*.cpp"
+    "Traits/Serializable.cpp"
 	"Validation/TransactionValidator.cpp"
 	"Validation/TxBodyValidator.cpp"
 )

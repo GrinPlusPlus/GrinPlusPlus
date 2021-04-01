@@ -84,6 +84,5 @@ std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
 		LOG_TRACE_F("Error: {}", errorCode.message());
 	}
 	
-
 	return addresses;
 }

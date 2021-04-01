@@ -3,10 +3,11 @@
 #include <Net/IPAddress.h>
 
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Serializable.h>
 #include <Core/Serialization/ByteBuffer.h>
 #include <Core/Serialization/Serializer.h>
 
-class SocketAddress : public Traits::IPrintable
+class SocketAddress : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
 	//
@@ -47,6 +48,16 @@ public:
 		return SocketAddress(std::move(ipAddress), port);
 	}
 
+	static SocketAddress CreateV4(const std::array<uint8_t, 4>& bytes, const uint16_t port)
+	{
+		return SocketAddress(IPAddress::CreateV4(bytes), port);
+	}
+
+	static SocketAddress CreateV6(const std::array<uint8_t, 16>& bytes, const uint16_t port)
+	{
+		return SocketAddress(IPAddress::CreateV6(bytes), port);
+	}
+
 	//
 	// Destructor
 	//
@@ -57,6 +68,12 @@ public:
 	//
 	SocketAddress& operator=(const SocketAddress& other) = default;
 	SocketAddress& operator=(SocketAddress&& other) noexcept = default;
+	bool operator==(const SocketAddress& rhs) const {
+		return m_ipAddress == rhs.m_ipAddress && m_port == rhs.m_port;
+	}
+	bool operator<(const SocketAddress& rhs) const {
+		return m_ipAddress < rhs.m_ipAddress || (m_ipAddress == rhs.m_ipAddress && m_port < rhs.m_port);
+	}
 
 	//
 	// Getters

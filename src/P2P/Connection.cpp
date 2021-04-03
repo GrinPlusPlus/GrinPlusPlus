@@ -199,53 +199,51 @@ void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_r
 {
     std::unique_lock<std::mutex> write_lock(m_mutex);
 
-    if (!ec) {
-        if (bytes_received == 11) { // TODO: Assert?
-            assert(m_received.size() == 11);
+    if (!ec && m_pSocket != nullptr && bytes_received == 11) {
+        assert(m_received.size() == 11);
 
-            try {
-                MessageHeader msg_header = ByteBuffer(m_received).Read<MessageHeader>();
-                m_received.clear();
-                m_received.resize(11);
+        try {
+            MessageHeader msg_header = ByteBuffer(m_received).Read<MessageHeader>();
+            m_received.clear();
+            m_received.resize(11);
 
-                const auto type = msg_header.GetMessageType();
-                if (type == MessageTypes::Ping || type == MessageTypes::Pong) {
-                    m_lastPing = system_clock::now();
-                } else {
-                    LOG_TRACE_F("Received '{}' from {}", msg_header, GetPeer());
+            const auto type = msg_header.GetMessageType();
+            if (type == MessageTypes::Ping || type == MessageTypes::Pong) {
+                m_lastPing = system_clock::now();
+            } else {
+                LOG_TRACE_F("Received '{}' from {}", msg_header, GetPeer());
+            }
+
+            std::vector<uint8_t> payload;
+            const bool bPayloadRetrieved = m_pSocket->Receive(
+                msg_header.GetMessageLength(),
+                false,
+                Socket::BLOCKING,
+                payload
+            );
+            if (bPayloadRetrieved) {
+                GetPeer()->UpdateLastContactTime();
+                m_lastReceived = std::chrono::system_clock::now();
+
+                auto pMessageProcessor = m_pMessageProcessor.lock();
+                if (pMessageProcessor != nullptr) {
+                    RawMessage message(std::move(msg_header), std::move(payload));
+                    pMessageProcessor->ProcessMessage(*this, message);
                 }
 
-                std::vector<uint8_t> payload;
-                const bool bPayloadRetrieved = m_pSocket->Receive(
-                    msg_header.GetMessageLength(),
-                    false,
-                    Socket::BLOCKING,
-                    payload
+                asio::async_read(
+                    *m_pSocket->GetAsioSocket(),
+                    asio::buffer(m_received, 11),
+                    std::bind(&Connection::HandleReceived, this, std::placeholders::_1, std::placeholders::_2)
                 );
-                if (bPayloadRetrieved) {
-                    GetPeer()->UpdateLastContactTime();
-                    m_lastReceived = std::chrono::system_clock::now();
 
-                    auto pMessageProcessor = m_pMessageProcessor.lock();
-                    if (pMessageProcessor != nullptr) {
-                        RawMessage message(std::move(msg_header), std::move(payload));
-                        pMessageProcessor->ProcessMessage(*this, message);
-                    }
-
-                    asio::async_read(
-                        *m_pSocket->GetAsioSocket(),
-                        asio::buffer(m_received, 11),
-                        std::bind(&Connection::HandleReceived, this, std::placeholders::_1, std::placeholders::_2)
-                    );
-
-                    return;
-                }
-
-                LOG_INFO_F("Expected payload not received from: {}", GetPeer());
+                return;
             }
-            catch (std::exception& e) {
-                LOG_INFO_F("Error while receiving from {}: {}", GetPeer(), e.what());
-            }
+
+            LOG_INFO_F("Expected payload not received from: {}", GetPeer());
+        }
+        catch (std::exception& e) {
+            LOG_INFO_F("Error while receiving from {}: {}", GetPeer(), e.what());
         }
     }
 

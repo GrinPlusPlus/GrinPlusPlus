@@ -4,7 +4,6 @@
 
 #include <caches/Cache.h>
 #include <Core/Enums/ProtocolVersion.h>
-#include <Common/ConcurrentQueue.h>
 #include <Net/Socket.h>
 #include <P2P/ConnectedPeer.h>
 #include <P2P/SyncStatus.h>
@@ -50,7 +49,7 @@ public:
 	Connection(const Connection&) = delete;
 	Connection& operator=(const Connection&) = delete;
 	Connection(Connection&&) = delete;
-	~Connection() { Disconnect(true); }
+	~Connection() { Disconnect(); }
 
 	static Connection::Ptr CreateInbound(
 		const PeerPtr& pPeer,
@@ -70,15 +69,16 @@ public:
 		const SyncStatusConstPtr& pSyncStatus
 	);
 
-	void Disconnect(const bool wait = false);
+	void Disconnect();
 
 	uint64_t GetId() const { return m_connectionId; }
 	bool IsConnectionActive() const;
 
-	void AddToSendQueue(const IMessage& message);
-	bool SendMsg(const IMessage& message);
+	void SendAsync(const IMessage& message);
+	bool SendSync(const IMessage& message);
 	bool ExceedsRateLimit() const;
 	void BanPeer(const EBanReason reason);
+	void CheckPing();
 
 	SocketPtr GetSocket() const { return m_pSocket; }
 	PeerPtr GetPeer() { return m_connectedPeer.GetPeer(); }
@@ -100,13 +100,9 @@ public:
 private:
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
 	void HandleConnected(const asio::error_code& ec);
+	void HandleReceived(const asio::error_code& ec, const size_t bytes_received);
 
 	void ConnectOutbound();
-	void Run();
-
-	void CheckPing();
-	bool CheckSend();
-	bool CheckReceive();
 
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
@@ -114,18 +110,16 @@ private:
 
 	std::chrono::system_clock::time_point m_lastPing;
 	std::chrono::system_clock::time_point m_lastReceived;
+	std::vector<uint8_t> m_received;
 
 	std::atomic<bool> m_terminate;
 	std::thread m_connectionThread;
 	const uint64_t m_connectionId;
-
 	ConnectedPeer m_connectedPeer;
-
 	mutable SocketPtr m_pSocket;
 
-	ConcurrentQueue<IMessagePtr> m_sendQueue;
-
 	mutable LRUCache<Hash, Hash> m_advertisedBlocks;
+	mutable std::mutex m_mutex;
 };
 
 typedef std::shared_ptr<Connection> ConnectionPtr;

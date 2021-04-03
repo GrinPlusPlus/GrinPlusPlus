@@ -79,24 +79,15 @@ void Dandelion::Thread_Monitor(Dandelion& dandelion)
 			// Step 1: find all "ToStem" entries in stempool from last run.
 			// Aggregate them up to give a single (valid) aggregated tx and propagate it
 			// to the next Dandelion relay along the stem.
-			if (!dandelion.ProcessStemPhase())
-			{
-				LOG_TRACE("Problem with stem phase");
-			}
+			dandelion.ProcessStemPhase();
 
 			// Step 2: find all "ToFluff" entries in stempool from last run.
 			// Aggregate them up to give a single (valid) aggregated tx and (re)add it
 			// to our pool with stem=false (which will then broadcast it).
-			if (!dandelion.ProcessFluffPhase())
-			{
-				LOG_TRACE("Problem with fluff phase");
-			}
+			dandelion.ProcessFluffPhase();
 
 			// Step 3: now find all expired entries based on embargo timer.
-			if (!dandelion.ProcessExpiredEntries())
-			{
-				LOG_TRACE("Problem processing expired pool entries");
-			}
+			dandelion.ProcessExpiredEntries();
 		}
 		catch (std::exception& e)
 		{

@@ -54,13 +54,21 @@ public:
 	bool SetBlocking(const bool blocking);
 	bool IsBlocking() const { return m_blocking; }
 
-	bool IsOpen() const { return m_socketOpen; }
-	void SetOpen(bool open) { m_socketOpen = open; }
+	bool IsOpen() const {
+		std::shared_lock<std::shared_mutex> read_lock(m_mutex);
+		return m_socketOpen;
+	}
+
+	void SetOpen(bool open) {
+		std::unique_lock<std::shared_mutex> write_lock(m_mutex);
+		m_socketOpen = open;
+	}
 
 	bool IsConnectFailed() const { return m_failed; }
 	void SetConnectFailed(bool failed) { m_failed = failed; }
 
 	bool Send(const std::vector<uint8_t>& message, const bool incrementCount);
+	void SendAsync(const std::vector<uint8_t>& message, const bool incrementCount);
 
 	bool HasReceivedData();
 	bool Receive(

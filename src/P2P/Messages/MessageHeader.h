@@ -6,9 +6,11 @@
 #include <cstdint>
 #include <Core/Global.h>
 #include <Core/Serialization/ByteBuffer.h>
+#include <Core/Serialization/Serializer.h>
 #include <Core/Traits/Printable.h>
+#include <Core/Traits/Serializable.h>
 
-class MessageHeader : public Traits::IPrintable
+class MessageHeader : public Traits::IPrintable, public Traits::ISerializable
 {
 public:
 	//
@@ -44,6 +46,15 @@ public:
 	//
 	// Deserialization
 	//
+	void Serialize(Serializer& serializer) const noexcept
+	{
+		serializer
+			.Append<uint8_t>(Global::GetMagicBytes()[0])
+			.Append<uint8_t>(Global::GetMagicBytes()[1])
+			.Append<uint8_t>((uint8_t)m_type)
+			.Append<uint64_t>(m_length);
+	}
+
 	static MessageHeader Deserialize(ByteBuffer& byteBuffer)
 	{
 		const uint8_t magicByte1 = byteBuffer.ReadU8();

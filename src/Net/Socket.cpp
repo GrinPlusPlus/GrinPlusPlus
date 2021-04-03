@@ -29,6 +29,8 @@ Socket::Socket(
 
 Socket::~Socket()
 {
+    asio::error_code ec;
+    m_pSocket->close(ec);
     m_pSocket.reset();
     m_pContext.reset();
 }
@@ -183,6 +185,22 @@ bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount
     return bytesWritten == message.size();
 }
 
+void Socket::SendAsync(const std::vector<uint8_t>& message, const bool incrementCount)
+{
+    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+
+    if (incrementCount) {
+        m_rateCounter.AddMessageSent();
+    }
+
+    size_t message_size = message.size();
+    asio::async_write(*m_pSocket, asio::buffer(message.data(), message.size()), [this, message_size](const asio::error_code& ec, size_t bytes_transferred) {
+        if (ec || bytes_transferred != message_size) {
+            LOG_INFO_F("Failed to send message to {}", *this);
+        }
+    });
+}
+
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
 {
     bool hasReceivedData = HasReceivedData();
@@ -240,7 +258,7 @@ bool Socket::HasReceivedData()
         ThrowSocketException(m_errorCode);
     }
 
-    return available >= 11;
+    return available > 0;
 }
 
 void Socket::ThrowSocketException(const asio::error_code& ec)

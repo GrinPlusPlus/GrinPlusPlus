@@ -129,7 +129,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			auto pTipHeader = m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 			const PongMessage pongMessage(pTipHeader->GetTotalDifficulty(), pTipHeader->GetHeight());
 
-			connection.SendMsg(pongMessage);
+			connection.SendSync(pongMessage);
 			break;
 		}
 		case Pong:
@@ -153,7 +153,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			);
 
 			LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), connection);
-			connection.SendMsg(PeerAddressesMessage{ std::move(socketAddresses) });
+			connection.SendSync(PeerAddressesMessage{ std::move(socketAddresses) });
 			break;
 		}
 		case PeerAddrs:
@@ -173,7 +173,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			std::vector<BlockHeaderPtr> blockHeaders = BlockLocator(m_pBlockChain).LocateHeaders(hashes);
 			LOG_DEBUG_F("Sending {} headers to {}.", blockHeaders.size(), connection);
                 
-			connection.SendMsg(HeadersMessage{ std::move(blockHeaders) });
+			connection.SendSync(HeadersMessage{ std::move(blockHeaders) });
 			break;
 		}
 		case Header:
@@ -193,7 +193,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 				if (!m_pBlockChain->HasBlock(pBlockHeader->GetHeight(), pBlockHeader->GetHash())) {
 					LOG_TRACE_F("Valid header {} received from {}. Requesting compact block", *pBlockHeader, connection);
 					const GetCompactBlockMessage getCompactBlockMessage(pBlockHeader->GetHash());
-					connection.SendMsg(GetCompactBlockMessage{ pBlockHeader->GetHash() });
+					connection.SendSync(GetCompactBlockMessage{ pBlockHeader->GetHash() });
 				}
 			} else if (status == EBlockChainStatus::INVALID) {
 				connection.BanPeer(EBanReason::BadBlockHeader);
@@ -223,7 +223,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
 			std::unique_ptr<FullBlock> pBlock = m_pBlockChain->GetBlockByHash(getBlockMessage.GetHash());
 			if (pBlock != nullptr) {
-				connection.SendMsg(BlockMessage{ std::move(*pBlock) });
+				connection.SendSync(BlockMessage{ std::move(*pBlock) });
 			}
 
 			break;
@@ -245,7 +245,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 				} else if (added == EBlockChainStatus::ORPHANED) {
 					if (block.GetTotalDifficulty() > m_pBlockChain->GetTotalDifficulty(EChainType::CONFIRMED))
 					{
-						connection.SendMsg(GetCompactBlockMessage{ block.GetPreviousHash() });
+						connection.SendSync(GetCompactBlockMessage{ block.GetPreviousHash() });
 					}
 				}
 			}
@@ -258,7 +258,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			std::unique_ptr<CompactBlock> pCompactBlock = m_pBlockChain->GetCompactBlockByHash(getCompactBlockMessage.GetHash());
 			if (pCompactBlock != nullptr)
 			{
-				connection.SendMsg(CompactBlockMessage{ *pCompactBlock });
+				connection.SendSync(CompactBlockMessage{ *pCompactBlock });
 			}
 
 			break;
@@ -277,7 +277,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			}
 			else if (added == EBlockChainStatus::TRANSACTIONS_MISSING)
 			{
-				connection.SendMsg(GetBlockMessage{ compactBlock.GetHash() });
+				connection.SendSync(GetBlockMessage{ compactBlock.GetHash() });
 				break;
 			}
 			else if (added == EBlockChainStatus::ORPHANED)
@@ -286,7 +286,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 				{
 					if (compactBlock.GetTotalDifficulty() > m_pBlockChain->GetTotalDifficulty(EChainType::CONFIRMED))
 					{
-						connection.SendMsg(GetCompactBlockMessage{ compactBlock.GetPreviousHash() });
+						connection.SendSync(GetCompactBlockMessage{ compactBlock.GetPreviousHash() });
 					}
 				}
 			}
@@ -330,7 +330,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			TransactionPtr pTransaction = m_pBlockChain->GetTransactionByKernelHash(kernelHash);
 			if (pTransaction != nullptr) {
 				LOG_DEBUG_F("Transaction {} found.", pTransaction);
-				connection.SendMsg(TransactionMessage{ pTransaction });
+				connection.SendSync(TransactionMessage{ pTransaction });
 			}
 
 			break;
@@ -345,7 +345,7 @@ void MessageProcessor::ProcessMessageInternal(Connection& connection, const RawM
 			Hash kernelHash = TransactionKernelMessage::Deserialize(byteBuffer).GetKernelHash();
 			TransactionPtr pTransaction = m_pBlockChain->GetTransactionByKernelHash(kernelHash);
 			if (pTransaction == nullptr) {
-				connection.SendMsg(GetTransactionMessage{ std::move(kernelHash) });
+				connection.SendSync(GetTransactionMessage{ std::move(kernelHash) });
 			}
 
 			break;
@@ -401,7 +401,7 @@ void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequ
 		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 		file.seekg(0);
 		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-		connection.SendMsg(archiveMessage);
+		connection.SendSync(archiveMessage);
 
 		SocketPtr pSocket = connection.GetSocket();
 		pSocket->SetBlocking(false);

@@ -122,14 +122,16 @@ void Seeder::Accept(const asio::error_code& ec)
             pSocket->SetOpen(true);
 
             auto pPeer = m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
-            Connection::CreateInbound(
-                pPeer,
-                pSocket,
-                m_nextId++,
-                m_connectionManager,
-                m_pMessageProcessor,
-                m_pSyncStatus
-            );
+            if (!pPeer->IsBanned()) {
+                Connection::CreateInbound(
+                    pPeer,
+                    pSocket,
+                    m_nextId++,
+                    m_connectionManager,
+                    m_pMessageProcessor,
+                    m_pSyncStatus
+                );
+            }
         } else {
             asio::error_code ignoreError;
             m_pSocket->close(ignoreError);

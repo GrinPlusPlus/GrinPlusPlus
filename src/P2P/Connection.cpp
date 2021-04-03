@@ -13,14 +13,16 @@
 #include <chrono>
 #include <memory>
 
-void Connection::Disconnect(const bool wait)
+void Connection::Disconnect()
 {
+    std::unique_lock<std::mutex> write_lock(m_mutex);
+
     m_terminate = true;
-    if (wait) {
-        ThreadUtil::Join(m_connectionThread);
-        m_connectedPeer.GetPeer()->SetConnected(false);
+    if (m_pSocket) {
+        m_pSocket->CloseSocket();
         m_pSocket.reset();
     }
+    m_connectedPeer.GetPeer()->SetConnected(false);
 }
 
 Connection::Ptr Connection::CreateInbound(
@@ -50,7 +52,7 @@ Connection::Ptr Connection::CreateOutbound(
     ConnectionManager& connectionManager,
     const std::weak_ptr<MessageProcessor>& pMessageProcessor,
     const SyncStatusConstPtr& pSyncStatus)
-{
+{    
     ConnectedPeer connectedPeer(
         pPeer,
         EDirection::OUTBOUND,
@@ -93,9 +95,19 @@ bool Connection::IsConnectionActive() const
     return m_pSocket->IsActive();
 }
 
-void Connection::AddToSendQueue(const IMessage& message)
+void Connection::SendAsync(const IMessage& message)
 {
-    m_sendQueue.push_back(message.Clone());
+    std::vector<uint8_t> serialized = message.Serialize(GetProtocolVersion());
+    if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {
+        LOG_TRACE_F(
+            "Sending {}b '{}' message to {}",
+            serialized.size(),
+            MessageTypes::ToString(message.GetMessageType()),
+            m_pSocket
+        );
+    }
+
+    m_pSocket->SendAsync(serialized, true);
 }
 
 bool Connection::ExceedsRateLimit() const
@@ -112,6 +124,8 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
 {
     LoggerAPI::SetThreadName("PEER");
 
+    std::unique_lock<std::mutex> write_lock(pConnection->m_mutex);
+
     try {
         if (pConnection->GetDirection() == EDirection::OUTBOUND) {
             pConnection->ConnectOutbound();
@@ -127,17 +141,19 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
         LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
         pConnection->GetPeer()->SetConnected(true);
         pConnection->m_connectionManager.AddConnection(pConnection);
-        pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-        pConnection->Run();
-        pConnection->GetSocket()->CloseSocket();
+        pConnection->SendSync(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+
+        pConnection->m_received.resize(11);
+        asio::async_read(
+            *pConnection->GetSocket()->GetAsioSocket(),
+            asio::buffer(pConnection->m_received, 11),
+            std::bind(&Connection::HandleReceived, pConnection.get(), std::placeholders::_1, std::placeholders::_2)
+        );
     }
     catch (const std::exception& e) {
         LOG_ERROR_F("Failed to connect to {}: {}", pConnection->m_connectedPeer, e);
     }
 
-    pConnection->GetPeer()->SetConnected(false);
-
-    pConnection->m_terminate = true;
     ThreadUtil::Detach(pConnection->m_connectionThread);
 }
 
@@ -159,86 +175,93 @@ void Connection::ConnectOutbound()
 
 void Connection::HandleConnected(const asio::error_code& ec)
 {
-    if (!ec) {
-        m_pSocket->SetOpen(true);
-    } else {
-        m_pSocket->SetConnectFailed(true);
+    if (m_pSocket) {
+        if (!ec) {
+            m_pSocket->SetOpen(true);
+        } else {
+            m_pSocket->SetConnectFailed(true);
+        }
     }
 }
 
-void Connection::Run()
+void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_received)
 {
-    while (!GetPeer()->IsBanned() && IsConnectionActive()) {
-        if (ExceedsRateLimit()) {
-            LOG_WARNING_F("Banning peer ({}) for exceeding rate limit.", GetIPAddress());
-            GetPeer()->Ban(EBanReason::Abusive);
-            break;
-        }
+    std::unique_lock<std::mutex> write_lock(m_mutex);
 
-        try {
-            CheckPing();
+    if (!ec) {
+        if (bytes_received == 11) { // TODO: Assert?
+            assert(m_received.size() == 11);
 
-            bool message_sent = CheckSend();
-            bool message_received = CheckReceive();
-            if (!message_sent && !message_received) {
-                ThreadUtil::SleepFor(std::chrono::milliseconds(5));
+            try {
+                MessageHeader msg_header = ByteBuffer(m_received).Read<MessageHeader>();
+                m_received.clear();
+                m_received.resize(11);
+
+                const auto type = msg_header.GetMessageType();
+                if (type == MessageTypes::Ping || type == MessageTypes::Pong) {
+                    m_lastPing = system_clock::now();
+                } else {
+                    LOG_TRACE_F("Received '{}' from {}", msg_header, GetPeer());
+                }
+
+                std::vector<uint8_t> payload;
+                const bool bPayloadRetrieved = m_pSocket->Receive(
+                    msg_header.GetMessageLength(),
+                    false,
+                    Socket::BLOCKING,
+                    payload
+                );
+                if (bPayloadRetrieved) {
+                    GetPeer()->UpdateLastContactTime();
+                    m_lastReceived = std::chrono::system_clock::now();
+
+                    auto pMessageProcessor = m_pMessageProcessor.lock();
+                    if (pMessageProcessor != nullptr) {
+                        RawMessage message(std::move(msg_header), std::move(payload));
+                        pMessageProcessor->ProcessMessage(*this, message);
+                    }
+
+                    asio::async_read(
+                        *m_pSocket->GetAsioSocket(),
+                        asio::buffer(m_received, 11),
+                        std::bind(&Connection::HandleReceived, this, std::placeholders::_1, std::placeholders::_2)
+                    );
+
+                    return;
+                }
+
+                LOG_INFO_F("Expected payload not received from: {}", GetPeer());
             }
-        }
-        catch (const std::exception& e) {
-            LOG_ERROR_F("Exception thrown: {}", e.what());
-            break;
+            catch (std::exception& e) {
+                LOG_INFO_F("Error while receiving from {}: {}", GetPeer(), e.what());
+            }
         }
     }
 
-    LOG_INFO_F("Disconnecting from peer {}", GetPeer());
+    m_pSocket->CloseSocket();
+    GetPeer()->SetConnected(false);
 }
 
 void Connection::CheckPing()
 {
+    std::unique_lock<std::mutex> write_lock(m_mutex);
+
+    if (ExceedsRateLimit()) {
+        LOG_WARNING_F("Banning {} for exceeding rate limit.", GetPeer());
+        GetPeer()->Ban(EBanReason::Abusive);
+        return;
+    }
+
     if (m_lastPing + std::chrono::seconds(10) < system_clock::now()) {
         uint64_t block_difficulty = m_pSyncStatus->GetBlockDifficulty();
         uint64_t block_height = m_pSyncStatus->GetBlockHeight();
-        AddToSendQueue(PingMessage{ block_difficulty, block_height });
+        SendAsync(PingMessage{ block_difficulty, block_height });
 
         m_lastPing = system_clock::now();
     }
 }
 
-// Send the next message in the queue, if one exists.
-bool Connection::CheckSend()
-{
-    auto pMessageToSend = m_sendQueue.copy_front();
-    if (pMessageToSend != nullptr) {
-        IMessagePtr pMessage = *pMessageToSend;
-        m_sendQueue.pop_front(1);
-        SendMsg(*pMessage);
-    }
-
-    return pMessageToSend != nullptr;
-}
-
-// Check for received messages and if there is a new message, process it.
-bool Connection::CheckReceive()
-{
-    std::unique_ptr<RawMessage> pRawMessage = MessageRetriever::RetrieveMessage(
-        *m_pSocket,
-        *GetPeer(),
-        Socket::NON_BLOCKING
-    );
-
-    if (pRawMessage != nullptr) {
-        auto pMessageProcessor = m_pMessageProcessor.lock();
-        if (pMessageProcessor != nullptr) {
-            pMessageProcessor->ProcessMessage(*this, *pRawMessage);
-        }
-
-        m_lastReceived = system_clock::now();
-    }
-
-    return pRawMessage != nullptr;
-}
-
-bool Connection::SendMsg(const IMessage& message)
+bool Connection::SendSync(const IMessage& message)
 {
     std::vector<uint8_t> serialized_message = message.Serialize(GetProtocolVersion());
     if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {

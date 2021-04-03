@@ -44,6 +44,7 @@ public:
 		m_pSyncStatus(pSyncStatus),
 		m_pMessageProcessor(pMessageProcessor),
 		m_terminate(false),
+		m_sendingDisabled(false),
 		m_advertisedBlocks(256) { }
 
 	Connection(const Connection&) = delete;
@@ -74,6 +75,7 @@ public:
 	uint64_t GetId() const { return m_connectionId; }
 	bool IsConnectionActive() const;
 
+	void DisableSends(bool disabled) { m_sendingDisabled = disabled; }
 	void SendAsync(const IMessage& message);
 	bool SendSync(const IMessage& message);
 	bool ExceedsRateLimit() const;
@@ -113,6 +115,7 @@ private:
 	std::vector<uint8_t> m_received;
 
 	std::atomic<bool> m_terminate;
+	std::atomic<bool> m_sendingDisabled;
 	std::thread m_connectionThread;
 	const uint64_t m_connectionId;
 	ConnectedPeer m_connectedPeer;

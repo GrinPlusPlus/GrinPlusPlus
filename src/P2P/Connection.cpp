@@ -99,17 +99,19 @@ bool Connection::IsConnectionActive() const
 
 void Connection::SendAsync(const IMessage& message)
 {
-    std::vector<uint8_t> serialized = message.Serialize(GetProtocolVersion());
-    if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {
-        LOG_TRACE_F(
-            "Sending {}b '{}' message to {}",
-            serialized.size(),
-            MessageTypes::ToString(message.GetMessageType()),
-            m_pSocket
-        );
-    }
+    if (!m_sendingDisabled) {
+        std::vector<uint8_t> serialized = message.Serialize(GetProtocolVersion());
+        if (message.GetMessageType() != MessageTypes::Ping && message.GetMessageType() != MessageTypes::Pong) {
+            LOG_TRACE_F(
+                "Sending {}b '{}' message to {}",
+                serialized.size(),
+                MessageTypes::ToString(message.GetMessageType()),
+                m_pSocket
+            );
+        }
 
-    m_pSocket->SendAsync(serialized, true);
+        m_pSocket->SendAsync(serialized, true);
+    }
 }
 
 bool Connection::ExceedsRateLimit() const
@@ -248,7 +250,9 @@ void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_r
     }
 
     LOG_INFO_F("Disconnecting from socket {}. Error: {}", GetSocket(), ec ? ec.message() : "<none>");
-    m_pSocket->CloseSocket();
+    if (GetSocket() != nullptr) {
+        m_pSocket->CloseSocket();
+    }
     GetPeer()->SetConnected(false);
 }
 

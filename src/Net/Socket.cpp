@@ -207,7 +207,7 @@ void Socket::SendAsync(const std::vector<uint8_t>& message, const bool increment
 
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
 {
-    bool hasReceivedData = HasReceivedData(numBytes);
+    bool hasReceivedData = HasReceivedData(1);
     if (mode == BLOCKING) {
         std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
         while (!hasReceivedData) {
@@ -216,7 +216,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
             }
 
             ThreadUtil::SleepFor(std::chrono::milliseconds(5));
-            hasReceivedData = HasReceivedData(numBytes);
+            hasReceivedData = HasReceivedData(1);
         }
     }
 
@@ -246,7 +246,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
             return true;
         } else if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK) {
             LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 

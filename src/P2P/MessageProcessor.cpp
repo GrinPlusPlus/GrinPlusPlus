@@ -400,6 +400,8 @@ void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequ
 	{
 		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 		file.seekg(0);
+
+		connection.DisableSends(true);
 		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
 		connection.SendSync(archiveMessage);
 
@@ -428,6 +430,7 @@ void MessageProcessor::SendTxHashSet(Connection& connection, const TxHashSetRequ
 		}
 
 		pSocket->SetBlocking(true);
+		connection.DisableSends(false);
 	}
 	catch (...)
 	{

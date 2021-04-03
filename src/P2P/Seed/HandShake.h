@@ -13,7 +13,7 @@ public:
 	HandShake(ConnectionManager& connectionManager, const SyncStatusConstPtr& pSyncStatus)
 		: m_connectionManager(connectionManager), m_pSyncStatus(pSyncStatus) { }
 
-	void PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const;
+	void PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer) const;
 
 private:
 	void PerformOutboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const;

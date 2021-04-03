@@ -43,6 +43,8 @@ public:
 	uint16_t GetP2PPort() const noexcept;
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept;
 
+	uint8_t GetMinSyncPeers() const noexcept;
+
 	//
 	// Dandelion
 	//

@@ -46,14 +46,12 @@ static const int BUFFER_SIZE = 256 * 1024;
 using namespace MessageTypes;
 
 MessageProcessor::MessageProcessor(
-	const Config& config,
 	ConnectionManager& connectionManager,
 	Locked<PeerManager> peerManager,
 	const IBlockChain::Ptr& pBlockChain,
 	const std::shared_ptr<Pipeline>& pPipeline,
 	SyncStatusConstPtr pSyncStatus)
-	: m_config(config),
-	m_connectionManager(connectionManager),
+	: m_connectionManager(connectionManager),
 	m_peerManager(peerManager),
 	m_pBlockChain(pBlockChain),
 	m_pPipeline(pPipeline),

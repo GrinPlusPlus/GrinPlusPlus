@@ -140,6 +140,8 @@ void Config::SetMaxPeers(const int max_peers) noexcept { m_pImpl->m_nodeConfig.G
 uint16_t Config::GetP2PPort() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetP2PPort(); }
 const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMagicBytes(); }
 
+uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
+
 //
 // Dandelion
 //

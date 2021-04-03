@@ -16,6 +16,7 @@ TorProcess::~TorProcess()
 	m_shutdown = true;
 	LOG_INFO("Terminating tor process");
 	ThreadUtil::Join(m_initThread);
+	LOG_INFO("Terminated tor process");
 }
 
 TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort) noexcept

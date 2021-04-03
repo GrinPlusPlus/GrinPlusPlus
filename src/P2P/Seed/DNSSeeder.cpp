@@ -1,16 +1,11 @@
 #include "DNSSeeder.h"
 
 #include <Common/Logger.h>
+#include <Core/Config.h>
 #include <Core/Global.h>
 #include <asio.hpp>
 
-DNSSeeder::DNSSeeder(const Config& config)
-	: m_config(config)
-{
-
-}
-
-std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
+std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS()
 {
 	std::vector<SocketAddress> addresses;
 
@@ -18,7 +13,6 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 	if (Global::IsMainnet())
 	{
 		dnsSeeds = {
-			"mainnet.seed.grin-tech.org",		// igno.peverell@protonmail.com
 			"mainnet.seed.grin.icu",			// gary.peverell@protonmail.com
 			"mainnet.seed.713.mw",				// jasper@713.mw
 			"mainnet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
@@ -29,7 +23,6 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 	else
 	{
 		dnsSeeds = {
-			"floonet.seed.grin-tech.org",		// igno.peverell@protonmail.com
 			"floonet.seed.grin.icu",			// gary.peverell@protonmail.com
 			"floonet.seed.713.mw",				// jasper@713.mw
 			"floonet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
@@ -46,17 +39,12 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS() const
 			LOG_TRACE_F("IP Address: {}", ipAddress);
 			addresses.emplace_back(SocketAddress(ipAddress, Global::GetConfig().GetP2PPort()));
 		}
-
-		if (Global::IsTestnet())
-		{
-			addresses.emplace_back(SocketAddress("100.26.68.39", 13414));
-		}
 	}
 
 	return addresses;
 }
 
-std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName) const
+std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName)
 {
 	asio::io_context context;
 	asio::ip::tcp::resolver resolver(context);

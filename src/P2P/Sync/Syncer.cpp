@@ -7,8 +7,7 @@
 #include <P2P/SyncStatus.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
-
-static const int MINIMUM_NUM_PEERS = 4;
+#include <Core/Global.h>
 
 Syncer::Syncer(
 	std::weak_ptr<ConnectionManager> pConnectionManager,
@@ -57,14 +56,14 @@ void Syncer::Thread_Sync(Syncer& syncer)
 	BlockSyncer blockSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain, syncer.m_pPipeline);
 	bool startup = true;
 
-	while (!syncer.m_terminate)
+	while (!syncer.m_terminate && Global::IsRunning())
 	{
 		try
 		{
 			ThreadUtil::SleepFor(std::chrono::milliseconds(10));
 			syncer.UpdateSyncStatus();
 
-			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= MINIMUM_NUM_PEERS)
+			if (syncer.m_pSyncStatus->GetNumActiveConnections() >= Global::GetConfig().GetMinSyncPeers())
 			{
 				// Sync Headers
 				if (headerSyncer.SyncHeaders(*syncer.m_pSyncStatus, startup))

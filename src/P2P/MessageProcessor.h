@@ -5,7 +5,6 @@
 
 #include <BlockChain/BlockChain.h>
 #include <P2P/ConnectedPeer.h>
-#include <Core/Config.h>
 #include <memory>
 
 // Forward Declarations
@@ -31,7 +30,6 @@ public:
 	};
 
 	MessageProcessor(
-		const Config& config,
 		ConnectionManager& connectionManager,
 		Locked<PeerManager> peerManager,
 		const IBlockChain::Ptr& pBlockChain,
@@ -45,7 +43,6 @@ private:
 	void ProcessMessageInternal(Connection& connection, const RawMessage& rawMessage);
 	void SendTxHashSet(Connection& connection, const TxHashSetRequestMessage& txHashSetRequestMessage);
 
-	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
 	IBlockChain::Ptr m_pBlockChain;

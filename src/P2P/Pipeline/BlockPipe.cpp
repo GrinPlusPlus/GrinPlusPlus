@@ -33,7 +33,7 @@ void BlockPipe::Thread_ProcessNewBlocks(BlockPipe& pipeline)
 	LoggerAPI::SetThreadName("BLOCK_PREPROCESS_PIPE");
 	LOG_TRACE("BEGIN");
 
-	while (!pipeline.m_terminate)
+	while (!pipeline.m_terminate && Global::IsRunning())
 	{
 		std::vector<BlockEntry> blocksToProcess = pipeline.m_blocksToProcess.copy_front(8); // TODO: Use number of CPU threads.
 		if (!blocksToProcess.empty())

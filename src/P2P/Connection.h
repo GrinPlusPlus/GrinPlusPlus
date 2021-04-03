@@ -32,15 +32,13 @@ public:
 	using Ptr = std::shared_ptr<Connection>;
 
 	Connection(
-		const Config& config,
 		const SocketPtr& pSocket,
 		const uint64_t connectionId,
 		ConnectionManager& connectionManager,
 		const ConnectedPeer& connectedPeer,
 		SyncStatusConstPtr pSyncStatus,
 		const std::weak_ptr<MessageProcessor>& pMessageProcessor
-	)	: m_config(config),
-		m_pSocket(pSocket),
+	)	: m_pSocket(pSocket),
 		m_connectionId(connectionId),
 		m_connectionManager(connectionManager),
 		m_connectedPeer(connectedPeer),
@@ -66,7 +64,7 @@ public:
 	static Connection::Ptr CreateOutbound(
 		const PeerPtr& pPeer,
 		const uint64_t connectionId,
-		const Config& config,
+		const std::shared_ptr<asio::io_service>& pAsioContext,
 		ConnectionManager& connectionManager,
 		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
 		const SyncStatusConstPtr& pSyncStatus
@@ -91,6 +89,7 @@ public:
 	uint64_t GetHeight() const { return m_connectedPeer.GetHeight(); }
 	Capabilities GetCapabilities() const { return m_connectedPeer.GetPeer()->GetCapabilities(); }
 	EProtocolVersion GetProtocolVersion() const noexcept { return ProtocolVersion::ToEnum(GetPeer()->GetVersion()); }
+	const EDirection GetDirection() const noexcept { return m_connectedPeer.GetDirection(); }
 	void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height) { m_connectedPeer.UpdateTotals(totalDifficulty, height); }
 
 	std::string Format() const final { return "Connection{" + GetIPAddress().Format() + "}"; }
@@ -100,18 +99,17 @@ public:
 
 private:
 	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
+	void HandleConnected(const asio::error_code& ec);
 
-	bool Connect();
+	void ConnectOutbound();
 	void Run();
 
 	void CheckPing();
 	bool CheckSend();
 	bool CheckReceive();
 
-	const Config& m_config;
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
-
 	std::weak_ptr<MessageProcessor> m_pMessageProcessor;
 
 	std::chrono::system_clock::time_point m_lastPing;

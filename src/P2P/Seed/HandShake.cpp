@@ -14,8 +14,9 @@
 
 static const uint64_t SELF_NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
 
-void HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer, const EDirection direction) const
+void HandShake::PerformHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
+    EDirection direction = connectedPeer.GetDirection();
     LOG_TRACE_F(
         "Performing handshake with {}({})",
         socket,

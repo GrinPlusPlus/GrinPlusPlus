@@ -4,23 +4,21 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
 
-static unsigned long DEFAULT_TIMEOUT = 2 * 1000; // 5s
+static unsigned long DEFAULT_TIMEOUT = 2 * 1000;
 
 #ifndef _WIN32
 #define SOCKET_ERROR -1
 #endif
 
-Socket::Socket(const std::shared_ptr<asio::io_context>& pContext, const std::shared_ptr<asio::ip::tcp::socket>& pSocket)
-    : Socket(SocketAddress(pSocket->remote_endpoint().address().to_string(), pSocket->remote_endpoint().port()))
-{
-    m_pContext = pContext;
-    m_pSocket = pSocket;
-    m_socketOpen = true;
-}
-
-Socket::Socket(const SocketAddress& address)
-    : m_address(address),
+Socket::Socket(
+    SocketAddress socket_address,
+    const std::shared_ptr<asio::io_context>& pContext,
+    const std::shared_ptr<asio::ip::tcp::socket>& pSocket)
+    : m_pSocket(pSocket),
+    m_pContext(pContext),
+    m_address(std::move(socket_address)),
     m_socketOpen(false),
+    m_failed(false),
     m_blocking(true),
     m_receiveBufferSize(0),
     m_receiveTimeout(DEFAULT_TIMEOUT),
@@ -35,89 +33,22 @@ Socket::~Socket()
     m_pContext.reset();
 }
 
-bool Socket::Connect(std::shared_ptr<asio::io_context> pContext)
+bool Socket::SetDefaultOptions()
 {
-    m_pContext = pContext;
-    asio::ip::tcp::endpoint endpoint(asio::ip::address(asio::ip::address_v4::from_string(m_address.GetIPAddress().Format())), m_address.GetPortNumber());
-
-    m_pSocket = std::make_shared<asio::ip::tcp::socket>(*pContext);
-    m_pSocket->async_connect(endpoint, [this](const asio::error_code& ec)
-        {
-            m_errorCode = ec;
-            if (!ec) {
-                asio::socket_base::receive_buffer_size option(32768);
-                m_pSocket->set_option(option);
+    asio::socket_base::receive_buffer_size option(32768);
+    m_pSocket->set_option(option);
 
 #ifdef _WIN32
-                if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-                    return false;
-                }
+    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
+        return false;
+    }
 
-                if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-                    return false;
-                }
+    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
+        return false;
+    }
 #endif
 
-                m_address = SocketAddress(m_address.GetIPAddress(), m_pSocket->remote_endpoint().port());
-                m_socketOpen = true;
-                return true;
-            } else {
-                asio::error_code ignoreError;
-                m_pSocket->close(ignoreError);
-                return false;
-            }
-        }
-    );
-
-    pContext->run();
-
-    auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    while (!m_errorCode && !m_socketOpen && std::chrono::system_clock::now() < timeout) {
-        ThreadUtil::SleepFor(std::chrono::milliseconds(10));
-    }
-
-    return m_socketOpen;
-}
-
-bool Socket::Accept(std::shared_ptr<asio::io_context> pContext, asio::ip::tcp::acceptor& acceptor, const std::atomic_bool& terminate)
-{
-    m_pContext = pContext;
-    m_pSocket = std::make_shared<asio::ip::tcp::socket>(*pContext);
-    acceptor.async_accept(*m_pSocket, [this, pContext](const asio::error_code& ec)
-        {
-            m_errorCode = ec;
-            if (!ec) {
-                if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-                    return false;
-                }
-
-                if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-                    return false;
-                }
-
-                const std::string address = m_pSocket->remote_endpoint().address().to_string();
-                m_address = SocketAddress(address, m_pSocket->remote_endpoint().port());
-                m_socketOpen = true;
-                return true;
-            } else {
-                asio::error_code ignoreError;
-                m_pSocket->close(ignoreError);
-                return false;
-            }
-        }
-    );
-
-    while (!m_errorCode && !m_socketOpen) {
-        if (terminate) {
-            break;
-        }
-
-        pContext->run_one_for(std::chrono::milliseconds(100));
-    }
-
-    pContext->reset();
-
-    return m_socketOpen;
+    return true;
 }
 
 bool Socket::CloseSocket()
@@ -135,13 +66,6 @@ bool Socket::CloseSocket()
     return !error;
 }
 
-bool Socket::IsSocketOpen() const
-{
-    std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
-    return m_socketOpen;
-}
-
 bool Socket::IsActive() const
 {
     std::shared_lock<std::shared_mutex> readLock(m_mutex);
@@ -155,7 +79,7 @@ bool Socket::IsActive() const
     }
 
     if (m_errorCode) {
-        LOG_INFO_F("Connection with ({}) not active. Error: {}", m_address, m_errorCode.message());
+        LOG_INFO_F("Connection with {} not active. Error: {}", m_address, m_errorCode.message());
     }
 
     return false;

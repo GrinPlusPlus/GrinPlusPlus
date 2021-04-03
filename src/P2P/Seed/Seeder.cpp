@@ -20,12 +20,11 @@ Seeder::~Seeder()
     m_terminate = true;
 
     m_pAsioContext->stop();
-    ThreadUtil::Join(m_listenerThread);
     ThreadUtil::Join(m_seedThread);
+    ThreadUtil::Join(m_asioThread);
 }
 
 std::unique_ptr<Seeder> Seeder::Create(
-    const std::shared_ptr<Context>& pContext,
     ConnectionManager& connectionManager,
     Locked<PeerManager> peerManager,
     const IBlockChain::Ptr& pBlockChain,
@@ -33,7 +32,6 @@ std::unique_ptr<Seeder> Seeder::Create(
     SyncStatusConstPtr pSyncStatus)
 {
     auto pMessageProcessor = std::make_shared<MessageProcessor>(
-        pContext->GetConfig(),
         connectionManager,
         peerManager,
         pBlockChain,
@@ -41,16 +39,25 @@ std::unique_ptr<Seeder> Seeder::Create(
         pSyncStatus
     );
     std::unique_ptr<Seeder> pSeeder(new Seeder(
-        pContext,
         connectionManager,
         peerManager,
         pBlockChain,
         pMessageProcessor,
         pSyncStatus
     ));
+
+    pSeeder->m_asioThread = std::thread(Thread_AsioContext, std::ref(*pSeeder.get()));
     pSeeder->m_seedThread = std::thread(Thread_Seed, std::ref(*pSeeder.get()));
-    pSeeder->m_listenerThread = std::thread(Thread_Listener, std::ref(*pSeeder.get()));
+
     return pSeeder;
+}
+
+void Seeder::Thread_AsioContext(Seeder& seeder)
+{
+    LoggerAPI::SetThreadName("ASIO");
+
+    seeder.StartListener();
+    seeder.m_pAsioContext->run();
 }
 
 //
@@ -65,7 +72,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
     auto lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(10);
 
     const size_t minimumConnections = Global::GetConfig().GetMinPeers();
-    while (!seeder.m_terminate) {
+    while (!seeder.m_terminate && Global::IsRunning()) {
         try {
             seeder.m_connectionManager.PruneConnections(true);
 
@@ -73,8 +80,8 @@ void Seeder::Thread_Seed(Seeder& seeder)
             const size_t numOutbound = seeder.m_connectionManager.GetNumOutbound();
             if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now) {
                 lastConnectTime = now;
+
                 const size_t connectionsToAdd = (std::min)((size_t)15, (minimumConnections - numOutbound));
-                LOG_TRACE_F("Attempting to add {} connections", connectionsToAdd);
                 for (size_t i = 0; i < connectionsToAdd; i++) {
                     seeder.SeedNewConnection();
                 }
@@ -90,48 +97,34 @@ void Seeder::Thread_Seed(Seeder& seeder)
     LOG_TRACE("END");
 }
 
-//
-// Continuously listens for new connections, and drops them if node already has maximum number of connections
-// This function operates in its own thread.
-//
-void Seeder::Thread_Listener(Seeder& seeder)
+void Seeder::StartListener()
 {
-    LoggerAPI::SetThreadName("LISTENER");
-    LOG_TRACE("BEGIN");
-
     try {
-        const uint16_t portNumber = Global::GetConfig().GetP2PPort();
-        seeder.m_pAsioContext = std::make_shared<asio::io_service>();
-        seeder.m_pAcceptor = std::make_shared<asio::ip::tcp::acceptor>(
-            *seeder.m_pAsioContext,
-            asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portNumber)
+        m_pAcceptor = std::make_shared<asio::ip::tcp::acceptor>(
+            *m_pAsioContext,
+            asio::ip::tcp::endpoint(asio::ip::tcp::v4(), Global::GetConfig().GetP2PPort())
         );
 
-        //asio::error_code errorCode;
-        //seeder.m_pAcceptor->listen(asio::socket_base::max_listen_connections, errorCode);
-
-        seeder.m_pSocket = std::make_shared<asio::ip::tcp::socket>(*seeder.m_pAsioContext);
-        seeder.m_pAcceptor->async_accept(*seeder.m_pSocket, std::bind(&Seeder::Accept, &seeder, std::placeholders::_1));
-
-        seeder.m_pAsioContext->run();
+        m_pSocket = std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext);
+        m_pAcceptor->async_accept(*m_pSocket, std::bind(&Seeder::Accept, this, std::placeholders::_1));
     }
     catch (std::exception& e) {
         LOG_ERROR_F("Listener failed with error: {}", e.what());
     }
-
-    LOG_TRACE("END");
 }
 
 void Seeder::Accept(const asio::error_code& ec)
 {
     if (!ec) {
         if (m_connectionManager.GetNumberOfActiveConnections() < Global::GetConfig().GetMaxPeers()) {
-            SocketPtr socket(new Socket(m_pAsioContext, m_pSocket));
+            SocketAddress socket_address = SocketAddress::FromEndpoint(m_pSocket->remote_endpoint());
+            SocketPtr pSocket(new Socket(SocketAddress::FromEndpoint(m_pSocket->remote_endpoint()), m_pAsioContext, m_pSocket));
+            pSocket->SetOpen(true);
 
-            auto pPeer = m_peerManager.Write()->GetPeer(socket->GetIPAddress());
+            auto pPeer = m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
             Connection::CreateInbound(
                 pPeer,
-                socket,
+                pSocket,
                 m_nextId++,
                 m_connectionManager,
                 m_pMessageProcessor,
@@ -147,24 +140,22 @@ void Seeder::Accept(const asio::error_code& ec)
     }
 }
 
-ConnectionPtr Seeder::SeedNewConnection()
+void Seeder::SeedNewConnection()
 {
     PeerPtr pPeer = m_peerManager.Write()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
     if (pPeer != nullptr) {
         LOG_TRACE_F("Attempting to seed: {}", pPeer);
-        return Connection::CreateOutbound(
+        Connection::CreateOutbound(
             pPeer,
             m_nextId++,
-            Global::GetConfig(),
+            m_pAsioContext,
             m_connectionManager,
             m_pMessageProcessor,
             m_pSyncStatus
         );
     } else if (!m_usedDNS.exchange(true)) {
-        std::vector<SocketAddress> peerAddresses = DNSSeeder(Global::GetConfig()).GetPeersFromDNS();
+        std::vector<SocketAddress> peerAddresses = DNSSeeder::GetPeersFromDNS();
 
         m_peerManager.Write()->AddFreshPeers(peerAddresses);
     }
-
-    return nullptr;
 }

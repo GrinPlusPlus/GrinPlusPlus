@@ -32,7 +32,6 @@ Connection::Ptr Connection::CreateInbound(
     const SyncStatusConstPtr& pSyncStatus)
 {
     auto pConnection = std::make_shared<Connection>(
-        Global::GetConfig(),
         pSocket,
         connectionId,
         connectionManager,
@@ -47,17 +46,23 @@ Connection::Ptr Connection::CreateInbound(
 Connection::Ptr Connection::CreateOutbound(
     const PeerPtr& pPeer,
     const uint64_t connectionId,
-    const Config& config,
+    const std::shared_ptr<asio::io_service>& pAsioContext,
     ConnectionManager& connectionManager,
     const std::weak_ptr<MessageProcessor>& pMessageProcessor,
     const SyncStatusConstPtr& pSyncStatus)
 {
-    ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND, config.GetP2PPort());
-    SocketPtr pSocket = std::make_shared<Socket>(
-        SocketAddress{ pPeer->GetIPAddress(), config.GetP2PPort() }
+    ConnectedPeer connectedPeer(
+        pPeer,
+        EDirection::OUTBOUND,
+        Global::GetConfig().GetP2PPort()
     );
+    SocketPtr pSocket(new Socket(
+        connectedPeer.GetSocketAddress(),
+        pAsioContext,
+        std::make_shared<asio::ip::tcp::socket>(*pAsioContext)
+    ));
+
     ConnectionPtr pConnection = std::make_shared<Connection>(
-        config,
         pSocket,
         connectionId,
         connectionManager,
@@ -67,6 +72,7 @@ Connection::Ptr Connection::CreateOutbound(
     );
 
     pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+
     return pConnection;
 }
 
@@ -102,46 +108,62 @@ bool Connection::ExceedsRateLimit() const
 // Continuously checks for messages to send and/or receive until the connection is terminated.
 // This function runs in its own thread.
 //
-void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnection)
+void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnection)  // TODO: Thread no longer necessary - can be handled by asio
 {
     LoggerAPI::SetThreadName("PEER");
 
     try {
-        if (pConnection->Connect()) {
-            LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
-
-            pConnection->GetPeer()->SetConnected(true);
-            pConnection->m_connectionManager.AddConnection(pConnection);
-            pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
-            pConnection->Run();
-            pConnection->GetSocket()->CloseSocket();
-            pConnection->GetPeer()->SetConnected(false);
+        if (pConnection->GetDirection() == EDirection::OUTBOUND) {
+            pConnection->ConnectOutbound();
         }
+
+        pConnection->GetSocket()->SetDefaultOptions();
+        HandShake(pConnection->m_connectionManager, pConnection->m_pSyncStatus)
+            .PerformHandshake(*pConnection->m_pSocket, pConnection->m_connectedPeer);
+
+        pConnection->m_lastPing = system_clock::now();
+        pConnection->m_lastReceived = system_clock::now();
+
+        LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
+        pConnection->GetPeer()->SetConnected(true);
+        pConnection->m_connectionManager.AddConnection(pConnection);
+        pConnection->SendMsg(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+        pConnection->Run();
+        pConnection->GetSocket()->CloseSocket();
     }
     catch (const std::exception& e) {
         LOG_ERROR_F("Failed to connect to {}: {}", pConnection->m_connectedPeer, e);
     }
 
+    pConnection->GetPeer()->SetConnected(false);
+
     pConnection->m_terminate = true;
     ThreadUtil::Detach(pConnection->m_connectionThread);
 }
 
-bool Connection::Connect()
+void Connection::ConnectOutbound()
 {
-    EDirection direction = m_pSocket->IsSocketOpen() ? EDirection::INBOUND : EDirection::OUTBOUND;
-    if (direction == EDirection::OUTBOUND) {
-        if (!m_pSocket->Connect(std::make_shared<asio::io_context>())) {
-            return false;
-        }
+    auto pAsioSocket = m_pSocket->GetAsioSocket();
+    pAsioSocket->async_connect(m_pSocket->GetEndpoint(), std::bind(&Connection::HandleConnected, this, std::placeholders::_1));
+
+    auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
+    while (!m_pSocket->IsConnectFailed() && !m_pSocket->IsOpen() && std::chrono::system_clock::now() < timeout && Global::IsRunning()) {
+        ThreadUtil::SleepFor(std::chrono::milliseconds(5));
     }
 
-    HandShake(m_connectionManager, m_pSyncStatus)
-        .PerformHandshake(*m_pSocket, m_connectedPeer, direction);
+    if (m_pSocket->IsConnectFailed() || !m_pSocket->IsOpen()) {
+        pAsioSocket->cancel();
+        throw std::runtime_error("No response");
+    }
+}
 
-    m_lastPing = system_clock::now();
-    m_lastReceived = system_clock::now();
-
-    return true;
+void Connection::HandleConnected(const asio::error_code& ec)
+{
+    if (!ec) {
+        m_pSocket->SetOpen(true);
+    } else {
+        m_pSocket->SetConnectFailed(true);
+    }
 }
 
 void Connection::Run()

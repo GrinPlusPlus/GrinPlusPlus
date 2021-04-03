@@ -58,6 +58,11 @@ public:
 		return SocketAddress(IPAddress::CreateV6(bytes), port);
 	}
 
+	static SocketAddress FromEndpoint(const asio::ip::tcp::endpoint& endpoint)
+	{
+		return SocketAddress(endpoint.address().to_string(), endpoint.port());
+	}
+
 	//
 	// Destructor
 	//
@@ -83,6 +88,14 @@ public:
 	std::string Format() const final
 	{
 		return m_ipAddress.Format() + ":" + std::to_string(m_port);
+	}
+
+	asio::ip::tcp::endpoint GetEndpoint() const
+	{
+		return asio::ip::tcp::endpoint{
+			asio::ip::address_v4::from_string(m_ipAddress.Format()),
+			m_port
+		};
 	}
 
 	//

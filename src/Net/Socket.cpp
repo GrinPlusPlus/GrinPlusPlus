@@ -207,7 +207,7 @@ void Socket::SendAsync(const std::vector<uint8_t>& message, const bool increment
 
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
 {
-    bool hasReceivedData = HasReceivedData(11);
+    bool hasReceivedData = HasReceivedData(numBytes);
     if (mode == BLOCKING) {
         std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
         while (!hasReceivedData) {
@@ -216,7 +216,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
             }
 
             ThreadUtil::SleepFor(std::chrono::milliseconds(5));
-            hasReceivedData = HasReceivedData(11);
+            hasReceivedData = HasReceivedData(numBytes);
         }
     }
 

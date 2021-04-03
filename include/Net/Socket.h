@@ -70,7 +70,6 @@ public:
 	bool Send(const std::vector<uint8_t>& message, const bool incrementCount);
 	void SendAsync(const std::vector<uint8_t>& message, const bool incrementCount);
 
-	bool HasReceivedData();
 	bool Receive(
 		const size_t numBytes,
 		const bool incrementCount,
@@ -79,6 +78,7 @@ public:
 	);
 
 private:
+	bool HasReceivedData(const size_t bytes_needed);
 	void ThrowSocketException(const asio::error_code& ec);
 
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;

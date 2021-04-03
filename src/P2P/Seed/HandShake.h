@@ -2,6 +2,7 @@
 
 #include <P2P/SyncStatus.h>
 #include <P2P/ConnectedPeer.h>
+#include "../Messages/RawMessage.h"
 
 // Forward Declarations
 class Socket;
@@ -20,6 +21,7 @@ private:
 	void PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const;
 	void TransmitHandMessage(Socket& socket) const;
 	void TransmitShakeMessage(Socket& socket, const uint32_t protocolVersion) const;
+	std::unique_ptr<RawMessage> RetrieveMessage(Socket& socket, const Peer& peer) const;
 
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;

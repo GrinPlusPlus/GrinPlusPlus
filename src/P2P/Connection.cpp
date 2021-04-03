@@ -1,5 +1,4 @@
 #include "Connection.h"
-#include "MessageRetriever.h"
 #include "MessageProcessor.h"
 #include "ConnectionManager.h"
 #include "Messages/PingMessage.h"
@@ -9,6 +8,7 @@
 #include <Net/SocketException.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
+#include <Crypto/CSPRNG.h>
 #include <thread>
 #include <chrono>
 #include <memory>
@@ -81,14 +81,17 @@ Connection::Ptr Connection::CreateOutbound(
 bool Connection::IsConnectionActive() const
 {
     if (m_terminate || m_pSocket == nullptr) {
+        LOG_DEBUG_F("Socket has been terminated for {}", GetPeer());
         return false;
     }
 
     if ((m_lastReceived + std::chrono::seconds(60)) < system_clock::now()) {
+        LOG_DEBUG_F("{} has not received a message in more than a minute", GetPeer());
         return false;
     }
 
     if (GetPeer()->IsBanned()) {
+        LOG_DEBUG_F("{} is banned", GetPeer());
         return false;
     }
 
@@ -141,7 +144,10 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
         LOG_DEBUG_F("Connected to {}", pConnection->m_connectedPeer);
         pConnection->GetPeer()->SetConnected(true);
         pConnection->m_connectionManager.AddConnection(pConnection);
-        pConnection->SendSync(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+
+        if (pConnection->GetDirection() == EDirection::OUTBOUND) {
+            pConnection->SendSync(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+        }
 
         pConnection->m_received.resize(11);
         asio::async_read(
@@ -154,7 +160,11 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
         LOG_ERROR_F("Failed to connect to {}: {}", pConnection->m_connectedPeer, e);
     }
 
+    write_lock.unlock();
     ThreadUtil::Detach(pConnection->m_connectionThread);
+    while (!pConnection->m_terminate && Global::IsRunning()) {
+        ThreadUtil::SleepFor(std::chrono::milliseconds(20));
+    }
 }
 
 void Connection::ConnectOutbound()
@@ -238,6 +248,7 @@ void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_r
         }
     }
 
+    LOG_INFO_F("Disconnecting from socket {}. Error: {}", GetSocket(), ec ? ec.message() : "<none>");
     m_pSocket->CloseSocket();
     GetPeer()->SetConnected(false);
 }
@@ -245,6 +256,10 @@ void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_r
 void Connection::CheckPing()
 {
     std::unique_lock<std::mutex> write_lock(m_mutex);
+
+    if (GetSocket() == nullptr || !GetSocket()->IsActive()) {
+        return;
+    }
 
     if (ExceedsRateLimit()) {
         LOG_WARNING_F("Banning {} for exceeding rate limit.", GetPeer());

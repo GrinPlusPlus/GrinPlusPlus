@@ -296,6 +296,7 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 
 void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 {
+	auto last_ping_check = std::chrono::system_clock::now();
 	while (Global::IsRunning())
 	{
 		std::unique_ptr<MessageToBroadcast> pBroadcastMessage = connectionManager.m_sendQueue.copy_front();
@@ -315,9 +316,13 @@ void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
 			}
 		}
 
-		auto pConnections = connectionManager.m_connections.Read();
-		for (ConnectionPtr pConnection : *pConnections) {
-			pConnection->CheckPing();
+		if (last_ping_check + std::chrono::seconds(2) < std::chrono::system_clock::now()) {
+			last_ping_check = std::chrono::system_clock::now();
+
+			auto pConnections = connectionManager.m_connections.Read();
+			for (ConnectionPtr pConnection : *pConnections) {
+				pConnection->CheckPing();
+			}
 		}
 
 		ThreadUtil::SleepFor(std::chrono::milliseconds(10));

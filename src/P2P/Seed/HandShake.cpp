@@ -3,8 +3,6 @@
 #include "../Messages/HandMessage.h"
 #include "../Messages/ShakeMessage.h"
 #include "../Messages/BanReasonMessage.h"
-#include "../Messages/RawMessage.h"
-#include "../MessageRetriever.h"
 #include "../ConnectionManager.h"
 
 #include <Core/Exceptions/ProtocolException.h>
@@ -36,7 +34,7 @@ void HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
     TransmitHandMessage(socket);
 
     // Get Shake Message
-    auto pReceived = MessageRetriever::RetrieveMessage(socket, connectedPeer, Socket::BLOCKING);
+    auto pReceived = RetrieveMessage(socket, *connectedPeer.GetPeer());
     if (pReceived == nullptr) {
         throw PROTOCOL_EXCEPTION("Shake message not received");
     }
@@ -58,7 +56,7 @@ void HandShake::PerformOutboundHandshake(Socket& socket, ConnectedPeer& connecte
 void HandShake::PerformInboundHandshake(Socket& socket, ConnectedPeer& connectedPeer) const
 {
     // Get Hand Message
-    auto pReceived = MessageRetriever::RetrieveMessage(socket, connectedPeer, Socket::BLOCKING);
+    auto pReceived = RetrieveMessage(socket, *connectedPeer.GetPeer());
     if (pReceived == nullptr) {
         throw PROTOCOL_EXCEPTION("No message received from incoming peer.");
     }
@@ -121,4 +119,30 @@ void HandShake::TransmitShakeMessage(Socket& socket, const uint32_t protocolVers
     if (!socket.Send(shakeMessage.Serialize(ProtocolVersion::ToEnum(protocolVersion)), true)) {
         throw PROTOCOL_EXCEPTION("Failed to send shake message.");
     }
+}
+
+std::unique_ptr<RawMessage> HandShake::RetrieveMessage(Socket& socket, const Peer& peer) const
+{
+    std::vector<uint8_t> headerBuffer;
+    const bool received = socket.Receive(11, true, Socket::BLOCKING, headerBuffer);
+    if (!received) {
+        return nullptr;
+    }
+
+    MessageHeader messageHeader = ByteBuffer(std::move(headerBuffer)).Read<MessageHeader>();
+    LOG_TRACE_F("Received '{}' message from {}", messageHeader, peer);
+
+    std::vector<uint8_t> payload;
+    const bool bPayloadRetrieved = socket.Receive(
+        messageHeader.GetMessageLength(),
+        false,
+        Socket::BLOCKING,
+        payload
+    );
+    if (!bPayloadRetrieved) {
+        throw PROTOCOL_EXCEPTION("Expected payload not received");
+    }
+
+    peer.UpdateLastContactTime();
+    return std::make_unique<RawMessage>(std::move(messageHeader), std::move(payload));
 }

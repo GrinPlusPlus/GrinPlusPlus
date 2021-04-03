@@ -54,7 +54,6 @@ protected:
 	void SerializeBody(Serializer& serializer) const final
 	{
 		m_pTransaction->Serialize(serializer);
-		LOG_INFO_F("Serialized TransactionMsg: {}", HexUtil::ConvertToHex(serializer.GetBytes()));
 	}
 
 private:

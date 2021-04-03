@@ -55,7 +55,7 @@ bool Socket::SetDefaultOptions()
 
 bool Socket::CloseSocket()
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     m_socketOpen = false;
 
@@ -70,7 +70,7 @@ bool Socket::CloseSocket()
 
 bool Socket::IsActive() const
 {
-    std::shared_lock<std::shared_mutex> readLock(m_mutex);
+    //std::shared_lock<std::shared_mutex> readLock(m_mutex);
 
     if (m_socketOpen && !m_errorCode) {
         return true;
@@ -82,6 +82,8 @@ bool Socket::IsActive() const
 
     if (m_errorCode) {
         LOG_INFO_F("Connection with {} not active. Error: {}", m_address, m_errorCode.message());
+    } else {
+        LOG_INFO_F("Connection with {} not active.", m_address);
     }
 
     return false;
@@ -89,7 +91,7 @@ bool Socket::IsActive() const
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 #ifdef _WIN32
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
@@ -110,7 +112,7 @@ bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 
 bool Socket::SetReceiveBufferSize(const int bufferSize)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     const int socketRcvBuff = bufferSize;
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
@@ -125,7 +127,7 @@ bool Socket::SetReceiveBufferSize(const int bufferSize)
 
 bool Socket::SetSendTimeout(const unsigned long milliseconds)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
 #ifdef _WIN32
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
@@ -146,7 +148,7 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     if (m_blocking != blocking) {
 #ifdef _WIN32
@@ -171,7 +173,7 @@ bool Socket::SetBlocking(const bool blocking)
 
 bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     if (incrementCount) {
         m_rateCounter.AddMessageSent();
@@ -187,7 +189,7 @@ bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount
 
 void Socket::SendAsync(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     if (incrementCount) {
         m_rateCounter.AddMessageSent();
@@ -195,15 +197,17 @@ void Socket::SendAsync(const std::vector<uint8_t>& message, const bool increment
 
     size_t message_size = message.size();
     asio::async_write(*m_pSocket, asio::buffer(message.data(), message.size()), [this, message_size](const asio::error_code& ec, size_t bytes_transferred) {
-        if (ec || bytes_transferred != message_size) {
-            LOG_INFO_F("Failed to send message to {}", *this);
+        if (ec) {
+            LOG_INFO_F("Failed to send message to {}: {}", *this, ec.message());
+        } else if (bytes_transferred != message_size) {
+            LOG_INFO_F("Not all bytes were sent to {}", *this);
         }
     });
 }
 
 bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
 {
-    bool hasReceivedData = HasReceivedData();
+    bool hasReceivedData = HasReceivedData(11);
     if (mode == BLOCKING) {
         std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
         while (!hasReceivedData) {
@@ -212,7 +216,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
             }
 
             ThreadUtil::SleepFor(std::chrono::milliseconds(5));
-            hasReceivedData = HasReceivedData();
+            hasReceivedData = HasReceivedData(11);
         }
     }
 
@@ -220,7 +224,7 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
         return false;
     }
 
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     if (data.size() < numBytes) {
         data.resize(numBytes);
@@ -249,16 +253,16 @@ bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERe
     return false;
 }
 
-bool Socket::HasReceivedData()
+bool Socket::HasReceivedData(const size_t bytes_needed)
 {
-    std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     const size_t available = m_pSocket->available(m_errorCode);
     if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
         ThrowSocketException(m_errorCode);
     }
 
-    return available > 0;
+    return available >= bytes_needed;
 }
 
 void Socket::ThrowSocketException(const asio::error_code& ec)

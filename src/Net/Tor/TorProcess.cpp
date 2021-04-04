@@ -92,6 +92,8 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 					}
 				}
 			}
+
+			ThreadUtil::SleepFor(std::chrono::seconds(10));
 		}
 		catch (const std::exception& e)
 		{

@@ -66,6 +66,7 @@ private:
 	std::thread m_asioThread;
 	std::thread m_seedThread;
 
+	std::mutex m_mutex;
 	mutable std::atomic_bool m_usedDNS = false;
 	mutable uint64_t m_nextId = { 1 };
 };

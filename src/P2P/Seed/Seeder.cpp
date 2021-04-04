@@ -20,6 +20,8 @@ Seeder::~Seeder()
     m_terminate = true;
 
     m_pAsioContext->stop();
+
+    std::unique_lock<std::mutex> lock(m_mutex);
     ThreadUtil::Join(m_seedThread);
     ThreadUtil::Join(m_asioThread);
 }
@@ -115,6 +117,8 @@ void Seeder::StartListener()
 
 void Seeder::Accept(const asio::error_code& ec)
 {
+    std::unique_lock<std::mutex> lock(m_mutex);
+
     if (!ec) {
         if (m_connectionManager.GetNumberOfActiveConnections() < Global::GetConfig().GetMaxPeers()) {
             SocketAddress socket_address = SocketAddress::FromEndpoint(m_pSocket->remote_endpoint());

@@ -64,7 +64,7 @@ int AccountsTable::GetNextChildIndex(SqliteDB& database, std::string parentPath)
 	const std::string select_next_child_index = StringUtil::Format("SELECT next_child_index FROM accounts WHERE parent_path='{}'", parentPath);
 	auto pStatement = database.Query(select_next_child_index);
 	if (!pStatement->Step()) {
-		WALLET_ERROR_F("Account not found for user");
+		WALLET_ERROR("Account not found for user");
 		throw WALLET_STORE_EXCEPTION("Account not found.");
 	}
 
@@ -89,7 +89,7 @@ int AccountsTable::GetCurrentAddressIndex(SqliteDB& database, std::string parent
 
 	auto pStatement = database.Query(select_version_query);
 	if (!pStatement->Step()) {
-		WALLET_ERROR_F("Account not found for user");
+		WALLET_ERROR("Account not found for user");
 		throw WALLET_STORE_EXCEPTION("Account not found.");
 	}
 

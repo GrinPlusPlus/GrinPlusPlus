@@ -66,7 +66,19 @@ public:
 			config.SetMinConfirmations(min_confirmations.value());
 		}
 
-		fs::path config_path = Global::GetConfigFilePath();
+		auto reuse_address = JsonUtil::GetUInt32Opt(params_json, "reuse_address");
+		if (reuse_address.has_value()) {
+			if (!json.isMember("WALLET")) {
+				json["WALLET"] = Json::Value();
+			}
+
+			Json::Value& wallet_json = json["WALLET"];
+			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
+
+			config.SetReusableAddresses(reuse_address.value());
+		}
+
+		fs::path config_path = config.GetDataDirectory() / "server_config.json";
 		std::ofstream file(config_path, std::ios::out | std::ios::binary | std::ios::ate);
 		if (file.is_open()) {
 			file << config_json;

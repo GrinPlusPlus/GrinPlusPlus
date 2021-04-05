@@ -186,6 +186,8 @@ uint32_t Config::GetPrivateKeyVersion() const noexcept { return m_pImpl->m_walle
 
 uint32_t Config::GetMinimumConfirmations() const noexcept { return m_pImpl->m_walletConfig.GetMinimumConfirmations(); }
 void Config::SetMinConfirmations(const uint32_t min_confirmations) noexcept { return m_pImpl->m_walletConfig.SetMinConfirmations(min_confirmations); }
+bool Config::ShouldReuseAddresses() const noexcept { return m_pImpl->m_walletConfig.ShouldReuseAddresses(); }
+void Config::SetReusableAddresses(const uint32_t reuse_addresses) noexcept { return m_pImpl->m_walletConfig.SetReusableAddresses(reuse_addresses); }
 
 //
 // TOR

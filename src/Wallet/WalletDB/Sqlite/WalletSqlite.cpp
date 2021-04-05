@@ -7,6 +7,7 @@
 #include "Tables/MetadataTable.h"
 #include "Tables/SlateTable.h"
 #include "Tables/SlateContextTable.h"
+#include "Tables/AccountsTable.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Wallet/Models/Slate/SlateStage.h>
@@ -43,26 +44,23 @@ void WalletSqlite::OnEndWrite()
 
 KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 {
-	std::string get_next_child_query = StringUtil::Format("SELECT next_child_index FROM accounts WHERE parent_path='{}'", parentPath.Format());
-	auto pStatement = m_pDatabase->Query(get_next_child_query);
-
-	if (!pStatement->Step()) {
-		WALLET_ERROR_F("Account not found for user: {}", m_username);
-		throw WALLET_STORE_EXCEPTION("Account not found.");
-	}
-
-	const uint32_t nextChildIndex = (uint32_t)pStatement->GetColumnInt(0);
+	const uint32_t nextChildIndex = (uint32_t)AccountsTable::GetNextChildIndex(*m_pDatabase, parentPath.Format());
 	KeyChainPath nextChildPath = parentPath.GetChild(nextChildIndex);
-	pStatement->Finalize();
 
-	std::string update_next_child_cmd = StringUtil::Format(
-		"UPDATE accounts SET next_child_index={} WHERE parent_path='{}';",
-		nextChildPath.GetKeyIndices().back() + 1,
-		parentPath.Format()
-	);
-	m_pDatabase->Execute(update_next_child_cmd);
+	AccountsTable::UpdateNextChildIndex(*m_pDatabase, parentPath.Format(), nextChildPath.GetKeyIndices().back() + 1);
 
 	return nextChildPath;
+}
+
+int WalletSqlite::GetAddressIndex(const KeyChainPath& parentPath) const
+{
+	return AccountsTable::GetCurrentAddressIndex(*m_pDatabase, parentPath.Format());
+}
+
+void WalletSqlite::IncreaseAddressIndex(const KeyChainPath& parentPath)
+{
+	int current_index = AccountsTable::GetCurrentAddressIndex(*m_pDatabase, parentPath.Format());
+	AccountsTable::UpdateCurrentAddressIndex(*m_pDatabase, parentPath.Format(), current_index + 1);
 }
 
 std::unique_ptr<Slate> WalletSqlite::LoadSlate(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateStage& stage) const

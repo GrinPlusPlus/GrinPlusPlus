@@ -7,6 +7,7 @@
 #include "Tables/MetadataTable.h"
 #include "Tables/SlateContextTable.h"
 #include "Tables/SlateTable.h"
+#include "Tables/AccountsTable.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Common/Util/FileUtil.h>
@@ -55,6 +56,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 		MetadataTable::UpdateSchema(*pDatabase, version);
 		SlateContextTable::UpdateSchema(*pDatabase, version);
 		SlateTable::UpdateSchema(*pDatabase, version);
+		AccountsTable::UpdateSchema(*pDatabase, version);
 
 		transaction.Commit();
 	} else if (version > LATEST_SCHEMA_VERSION) {
@@ -138,6 +140,7 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 		SqliteDB::Ptr pDatabase = SqliteDB::Open(walletDBFile, username);
 
 		SqliteTransaction transaction(pDatabase);
+		
 		transaction.Begin();
 
 		VersionTable::CreateTable(*pDatabase);
@@ -156,7 +159,7 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 		pDatabase->Execute(table_creation_cmd);
 
 		transaction.Commit();
-
+		
 		return pDatabase;
 	}
 	catch (WalletStoreException&)

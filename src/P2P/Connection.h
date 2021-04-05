@@ -100,7 +100,7 @@ public:
 	void AdvertisedBlock(const Hash& hash) { return m_advertisedBlocks.Put(hash, hash); }
 
 private:
-	static void Thread_ProcessConnection(std::shared_ptr<Connection> pConnection);
+	static void Thread_Connect(std::shared_ptr<Connection> pConnection);
 	void HandleConnected(const asio::error_code& ec);
 	void HandleReceived(const asio::error_code& ec, const size_t bytes_received);
 

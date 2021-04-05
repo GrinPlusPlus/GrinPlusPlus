@@ -40,7 +40,10 @@ Connection::Ptr Connection::CreateInbound(
         pSyncStatus,
         pMessageProcessor
     );
-    pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+
+    std::thread connect_thr(Thread_Connect, pConnection);
+    ThreadUtil::Detach(connect_thr);
+
     return pConnection;
 }
 
@@ -72,7 +75,8 @@ Connection::Ptr Connection::CreateOutbound(
         pMessageProcessor
     );
 
-    pConnection->m_connectionThread = std::thread(Thread_ProcessConnection, pConnection);
+    std::thread connect_thr(Thread_Connect, pConnection);
+    ThreadUtil::Detach(connect_thr);
 
     return pConnection;
 }
@@ -124,7 +128,7 @@ bool Connection::ExceedsRateLimit() const
 // Continuously checks for messages to send and/or receive until the connection is terminated.
 // This function runs in its own thread.
 //
-void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnection)  // TODO: Thread no longer necessary - can be handled by asio
+void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)  // TODO: Thread no longer necessary - can be handled by asio
 {
     LoggerAPI::SetThreadName("PEER");
 
@@ -159,12 +163,6 @@ void Connection::Thread_ProcessConnection(std::shared_ptr<Connection> pConnectio
     }
     catch (const std::exception& e) {
         LOG_ERROR_F("Failed to connect to {}: {}", pConnection->m_connectedPeer, e);
-    }
-
-    write_lock.unlock();
-    ThreadUtil::Detach(pConnection->m_connectionThread);
-    while (!pConnection->m_terminate && Global::IsRunning()) {
-        ThreadUtil::SleepFor(std::chrono::milliseconds(20));
     }
 }
 

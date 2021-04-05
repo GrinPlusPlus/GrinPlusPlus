@@ -21,7 +21,8 @@ public:
 		const TorProcess::Ptr& pTorProcess,
 		const std::string& username,
 		const SessionToken& token,
-		const KeyChain& keyChain
+		const KeyChain& keyChain,
+		const int currentAddressIndex
 	);
 	bool StopListener(const std::string& username);
 

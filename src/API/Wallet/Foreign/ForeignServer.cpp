@@ -11,7 +11,8 @@ ForeignServer::UPtr ForeignServer::Create(
     const KeyChain& keyChain,
     const std::shared_ptr<ITorProcess>& pTorProcess,
     IWalletManager& walletManager,
-    const SessionToken& token)
+    const SessionToken& token,
+    const int currentAddressIndex)
 {
     RPCServerPtr pServer = RPCServer::Create(
         EServerType::PUBLIC,
@@ -239,7 +240,7 @@ ForeignServer::UPtr ForeignServer::Create(
     */
     pServer->AddMethod("build_coinbase", std::shared_ptr<RPCMethod>((RPCMethod*)new BuildCoinbaseHandler(walletManager)));
 
-    std::optional<TorAddress> addressOpt = AddTorListener(keyChain, pTorProcess, pServer->GetPortNumber());
+    std::optional<TorAddress> addressOpt = AddTorListener(keyChain, pTorProcess, pServer->GetPortNumber(), currentAddressIndex);
 
     pServer->GetServer()->AddListener("/status", StatusListener, nullptr);
 
@@ -249,7 +250,8 @@ ForeignServer::UPtr ForeignServer::Create(
 std::optional<TorAddress> ForeignServer::AddTorListener(
     const KeyChain& keyChain,
     const TorProcess::Ptr& pTorProcess,
-    const uint16_t portNumber)
+    const uint16_t portNumber,
+    int addressIndex)
 {
     if (!pTorProcess) {
         return std::nullopt;
@@ -257,7 +259,7 @@ std::optional<TorAddress> ForeignServer::AddTorListener(
 
     try
     {
-        ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+        ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(addressIndex));
 
         auto tor_address = pTorProcess->AddListener(torKey.secret_key, portNumber);
         return std::make_optional(std::move(tor_address));

@@ -10,7 +10,7 @@
 
 void AccountsTable::CreateTable(SqliteDB& database)
 {
-	std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
+	std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL, current_address_index INTEGER NOT NULL);";
 
 	database.Execute(table_creation_cmd);
 }

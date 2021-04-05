@@ -168,11 +168,14 @@ SessionToken SessionManager::Login(
 	);
 
 	KeyChain keyChain = KeyChain::FromSeed(seed);
+	KeyChainPath userPath = KeyChainPath::FromString("m/0/0");
+	int currentAddressIndex = pWalletDB.Read()->GetAddressIndex(userPath);
 	auto listenerInfo = m_pForeignController->StartListener(
 		pTorProcess,
 		username,
 		token,
-		keyChain
+		keyChain,
+		currentAddressIndex
 	);
 	wallet.Write()->SetListenerPort(listenerInfo.first);
 	walletImpl.Write()->SetListenerPort(listenerInfo.first);

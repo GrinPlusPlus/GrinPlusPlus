@@ -137,6 +137,8 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 
 	try
 	{
+		// TODO: Add indices
+
 		SqliteDB::Ptr pDatabase = SqliteDB::Open(walletDBFile, username);
 
 		SqliteTransaction transaction(pDatabase);
@@ -149,12 +151,10 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 		MetadataTable::CreateTable(*pDatabase);
 		SlateContextTable::CreateTable(*pDatabase);
 		SlateTable::CreateTable(*pDatabase);
-
-		std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
-		// TODO: Add indices
+		AccountsTable::CreateTable(*pDatabase);
 
 		KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
-		table_creation_cmd += StringUtil::Format("insert into accounts values('m/0/0','DEFAULT',{});", nextChildPath.GetKeyIndices().back());
+		std::string table_creation_cmd = StringUtil::Format("insert into accounts values('m/0/0','DEFAULT',{}, 0);", nextChildPath.GetKeyIndices().back());
 
 		pDatabase->Execute(table_creation_cmd);
 

@@ -32,7 +32,8 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 	const TorProcess::Ptr& pTorProcess,
 	const std::string& username,
 	const SessionToken& token,
-	const KeyChain& keyChain)
+	const KeyChain& keyChain,
+	const int currentAddressIndex)
 {
 	std::unique_lock<std::mutex> lock(m_contextsMutex);
 
@@ -50,7 +51,8 @@ std::pair<uint16_t, std::optional<TorAddress>> ForeignController::StartListener(
 		keyChain,
 		pTorProcess,
 		m_walletManager,
-		token
+		token,
+		currentAddressIndex
 	);
 
 	auto response = std::make_pair(pServer->GetPortNumber(), pServer->GetTorAddress());

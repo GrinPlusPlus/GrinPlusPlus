@@ -10,7 +10,7 @@ public:
 	//
 	// Constructors
 	//
-	TxHashSetArchiveMessage(Hash&& blockHash, const uint64_t blockHeight, const uint64_t zippedDataSize)
+	TxHashSetArchiveMessage(Hash blockHash, const uint64_t blockHeight, const uint64_t zippedDataSize)
 		: m_blockHash(std::move(blockHash)), m_blockHeight(blockHeight), m_zippedDataSize(zippedDataSize)
 	{
 

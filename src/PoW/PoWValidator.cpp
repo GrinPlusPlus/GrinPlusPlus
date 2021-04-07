@@ -51,8 +51,6 @@ bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& prev
     } else {
         return Cuckatoo::Validate(header);
     }
-
-    return false;
 }
 
 // Maximum difficulty this proof of work can achieve

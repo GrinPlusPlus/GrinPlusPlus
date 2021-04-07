@@ -48,6 +48,11 @@ public:
 		m_pTxHashSetPipe->ReceiveTxHashSet(pConnection, message);
 	}
 
+	void SendTxHashSet(const Connection::Ptr& pConnection, const Hash& block_hash)
+	{
+		m_pTxHashSetPipe->SendTxHashSet(pConnection, block_hash);
+	}
+
 private:
 	Pipeline(
 		std::shared_ptr<BlockPipe> pBlockPipe,

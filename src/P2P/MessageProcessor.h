@@ -41,7 +41,6 @@ public:
 
 private:
 	void ProcessMessageInternal(const std::shared_ptr<Connection>& pConnection, const RawMessage& rawMessage);
-	void SendTxHashSet(const std::shared_ptr<Connection>& pConnection, const TxHashSetRequestMessage& request);
 
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;

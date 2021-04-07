@@ -7,6 +7,7 @@
 #include <Common/Util/FileUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
+#include <Core/File/FileRemover.h>
 #include <Core/Global.h>
 #include <BlockChain/BlockChain.h>
 
@@ -18,6 +19,7 @@ static const int BUFFER_SIZE = 256 * 1024;
 TxHashSetPipe::~TxHashSetPipe()
 {
 	ThreadUtil::Join(m_txHashSetThread);
+	ThreadUtil::JoinAll(m_sendThreads);
 }
 
 std::shared_ptr<TxHashSetPipe> TxHashSetPipe::Create(
@@ -143,4 +145,98 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 	}
 
 	pipeline.m_processing = false;
+}
+
+void TxHashSetPipe::SendTxHashSet(const std::shared_ptr<Connection>& pConnection, const Hash& block_hash)
+{
+	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
+	if (pConnection->GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest) {
+		LOG_WARNING_F("Peer '{}' requested multiple TxHashSet's within 2 hours.", pConnection->GetIPAddress());
+		pConnection->BanPeer(EBanReason::Abusive);
+		return;
+	}
+
+	LOG_INFO_F("Sending TxHashSet snapshot to {}", pConnection);
+	pConnection->GetPeer()->UpdateLastTxHashSetRequest();
+	pConnection->DisableSends(true);
+
+	std::thread send_thread = std::thread(
+		Thread_SendTxHashSet,
+		m_pBlockChain,
+		pConnection,
+		block_hash
+	);
+	m_sendThreads.push_back(std::move(send_thread));
+}
+
+void TxHashSetPipe::Thread_SendTxHashSet(
+	IBlockChain::Ptr pBlockChain,
+	std::shared_ptr<Connection> pConnection,
+	Hash block_hash)
+{
+	auto pHeader = pBlockChain->GetBlockHeaderByHash(block_hash);
+	if (pHeader == nullptr) {
+		return;
+	}
+
+	fs::path zipFilePath;
+
+	try {
+		zipFilePath = pBlockChain->SnapshotTxHashSet(pHeader);
+	}
+	catch (std::exception&) {
+		return;
+	}
+
+	// Hack until I can determine why zips aren't deleted.
+	FileRemover remover(zipFilePath);
+
+	std::ifstream file(zipFilePath, std::ios::in | std::ios::ate | std::ios::binary);
+	if (!file.is_open()) {
+		FileUtil::RemoveFile(zipFilePath);
+		return;
+	}
+
+	try {
+		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
+		file.seekg(0);
+
+		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
+		pConnection->SendSync(archiveMessage);
+
+		SocketPtr pSocket = pConnection->GetSocket();
+		pSocket->SetBlocking(false);
+
+		std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
+		uint64_t totalBytesRead = 0;
+		while (totalBytesRead < fileSize) {
+			file.read((char*)&buffer[0], BUFFER_SIZE);
+			const uint64_t bytesRead = file.gcount();
+
+			std::vector<uint8_t> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
+			bool sent = pSocket->SendSync(bytesToSend, false);
+			if (!sent || !Global::IsRunning()) {
+				LOG_ERROR("Transmission ended abruptly");
+				file.close();
+				FileUtil::RemoveFile(zipFilePath);
+
+				return;
+			}
+
+			totalBytesRead += bytesRead;
+		}
+
+		pSocket->SetBlocking(true);
+		pConnection->DisableSends(false);
+	}
+	catch (...) {
+		if (file.is_open()) {
+			file.close();
+		}
+		FileUtil::RemoveFile(zipFilePath);
+		throw;
+	}
+
+	file.close();
+	FileUtil::RemoveFile(zipFilePath);
 }

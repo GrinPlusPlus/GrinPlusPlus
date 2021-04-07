@@ -35,6 +35,11 @@ public:
 		const TxHashSetArchiveMessage& archive_msg
 	);
 
+	void SendTxHashSet(
+		const std::shared_ptr<Connection>& pConnection,
+		const Hash& block_hash
+	);
+
 private:
 	TxHashSetPipe(
 		const std::shared_ptr<ConnectionManager>& pConnectionManager,
@@ -55,7 +60,15 @@ private:
 		const uint64_t zipped_size,
 		const Hash blockHash
 	);
+
+	static void Thread_SendTxHashSet(
+		IBlockChain::Ptr pBlockChain,
+		std::shared_ptr<Connection> pConnection,
+		Hash block_hash
+	);
+
 	std::thread m_txHashSetThread;
+	std::vector<std::thread> m_sendThreads;
 
 	std::atomic_bool m_processing;
 };

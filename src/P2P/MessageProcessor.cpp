@@ -313,7 +313,8 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 		}
 		case TxHashSetRequest:
 		{
-			SendTxHashSet(pConnection, TxHashSetRequestMessage::Deserialize(byteBuffer));
+			TxHashSetRequestMessage msg = TxHashSetRequestMessage::Deserialize(byteBuffer);
+			m_pPipeline->SendTxHashSet(pConnection, msg.GetBlockHash());
 			break;
 		}
 		case TxHashSetArchive:
@@ -357,90 +358,4 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 	}
 
 	return;
-}
-
-void MessageProcessor::SendTxHashSet(const std::shared_ptr<Connection>& pConnection, const TxHashSetRequestMessage& txHashSetRequestMessage)
-{
-	const time_t maxTxHashSetRequest = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() - std::chrono::hours(2));
-	if (pConnection->GetPeer()->GetLastTxHashSetRequest() > maxTxHashSetRequest) {
-		LOG_WARNING_F("Peer '{}' requested multiple TxHashSet's within 2 hours.", pConnection->GetIPAddress());
-		pConnection->BanPeer(EBanReason::Abusive);
-		return;
-	}
-
-	LOG_INFO_F("Sending TxHashSet snapshot to {}", pConnection);
-	pConnection->GetPeer()->UpdateLastTxHashSetRequest();
-
-	auto pHeader = m_pBlockChain->GetBlockHeaderByHash(txHashSetRequestMessage.GetBlockHash());
-	if (pHeader == nullptr) {
-		return;
-	}
-
-	fs::path zipFilePath;
-	
-	try
-	{
-		zipFilePath = m_pBlockChain->SnapshotTxHashSet(pHeader);
-	}
-	catch (std::exception&)
-	{
-		return;
-	}
-
-	// Hack until I can determine why zips aren't deleted.
-	FileRemover remover(zipFilePath);
-
-	std::ifstream file(zipFilePath, std::ios::in | std::ios::ate | std::ios::binary);
-	if (!file.is_open()) {
-		FileUtil::RemoveFile(zipFilePath);
-		return;
-	}
-	
-	try
-	{
-		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
-		file.seekg(0);
-
-		pConnection->DisableSends(true);
-		TxHashSetArchiveMessage archiveMessage(Hash(pHeader->GetHash()), pHeader->GetHeight(), fileSize);
-		pConnection->SendSync(archiveMessage);
-
-		SocketPtr pSocket = pConnection->GetSocket();
-		pSocket->SetBlocking(false);
-
-		std::vector<unsigned char> buffer(BUFFER_SIZE, 0);
-		uint64_t totalBytesRead = 0;
-		while (totalBytesRead < fileSize)
-		{
-			file.read((char*)&buffer[0], BUFFER_SIZE);
-			const uint64_t bytesRead = file.gcount();
-
-			std::vector<uint8_t> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-			bool sent = pSocket->SendSync(bytesToSend, false);
-			if (!sent || !Global::IsRunning()) {
-				LOG_ERROR("Transmission ended abruptly");
-				file.close();
-				FileUtil::RemoveFile(zipFilePath);
-
-				return;
-			}
-
-			totalBytesRead += bytesRead;
-		}
-
-		pSocket->SetBlocking(true);
-		pConnection->DisableSends(false);
-	}
-	catch (...)
-	{
-		if (file.is_open())
-		{
-			file.close();
-		}
-		FileUtil::RemoveFile(zipFilePath);
-		throw;
-	}
-
-	file.close();
-	FileUtil::RemoveFile(zipFilePath);
 }

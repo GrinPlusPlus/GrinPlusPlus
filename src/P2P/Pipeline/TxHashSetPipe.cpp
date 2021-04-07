@@ -201,48 +201,25 @@ void TxHashSetPipe::Thread_SendTxHashSet(
 		const uint64_t fileSize = FileUtil::GetFileSize(zipFilePath);
 		file.seekg(0);
 
-		TxHashSetArchiveMessage archiveMessage(pHeader->GetHash(), pHeader->GetHeight(), fileSize);
-		pConnection->SendSync(archiveMessage);
-
-		SocketPtr pSocket = pConnection->GetSocket();
-		pSocket->SetBlocking(false);
+		pConnection->SendSync(TxHashSetArchiveMessage{ pHeader->GetHash(), pHeader->GetHeight(), fileSize });
 
 		std::vector<uint8_t> buffer(BUFFER_SIZE, 0);
 		uint64_t totalBytesRead = 0;
-		while (totalBytesRead < fileSize) {
-			file.read((char*)&buffer[0], BUFFER_SIZE);
-			const uint64_t bytesRead = file.gcount();
-
-			if (bytesRead == 0 || bytesRead > BUFFER_SIZE) {
-				LOG_ERROR_F("Error while reading file. Bytes read: {}", bytesRead);
-				file.close();
-				FileUtil::RemoveFile(zipFilePath);
-
-				return;
-			}
-
-			std::vector<uint8_t> bytesToSend(buffer.cbegin(), buffer.cbegin() + bytesRead);
-			bool sent = pSocket->SendSync(bytesToSend, false);
+		while (file.read((char*)buffer.data(), BUFFER_SIZE)) {
+			std::vector<uint8_t> bytesToSend(
+				buffer.cbegin(),
+				buffer.cbegin() + file.gcount()
+			);
+			bool sent = pConnection->GetSocket()->SendSync(bytesToSend, false);
 			if (!sent || !Global::IsRunning()) {
-				LOG_ERROR("Transmission ended abruptly");
-				file.close();
-				FileUtil::RemoveFile(zipFilePath);
-
-				return;
+				throw std::runtime_error("Transmission ended abruptly");
 			}
-
-			totalBytesRead += bytesRead;
 		}
 
-		pSocket->SetBlocking(true);
 		pConnection->DisableSends(false);
 	}
-	catch (...) {
-		if (file.is_open()) {
-			file.close();
-		}
-		FileUtil::RemoveFile(zipFilePath);
-		throw;
+	catch (std::exception& e) {
+		LOG_ERROR_F("Exception thrown while sending TxHashSet: {}", e.what());
 	}
 
 	file.close();

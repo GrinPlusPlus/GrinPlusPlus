@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Messages/Message.h"
+#include "Messages/MessageHeader.h"
 
 #include <caches/Cache.h>
 #include <Core/Enums/ProtocolVersion.h>
@@ -52,24 +53,7 @@ public:
 	Connection(Connection&&) = delete;
 	~Connection() { Disconnect(); }
 
-	static Connection::Ptr CreateInbound(
-		const PeerPtr& pPeer,
-		const SocketPtr& pSocket,
-		const uint64_t connectionId,
-		ConnectionManager& connectionManager,
-		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-		const SyncStatusConstPtr& pSyncStatus
-	);
-
-	static Connection::Ptr CreateOutbound(
-		const PeerPtr& pPeer,
-		const uint64_t connectionId,
-		const std::shared_ptr<asio::io_service>& pAsioContext,
-		ConnectionManager& connectionManager,
-		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-		const SyncStatusConstPtr& pSyncStatus
-	);
-
+	void Connect();
 	void Disconnect();
 
 	uint64_t GetId() const { return m_connectionId; }
@@ -78,6 +62,10 @@ public:
 	void DisableSends(bool disabled) { m_sendingDisabled = disabled; }
 	void SendAsync(const IMessage& message);
 	bool SendSync(const IMessage& message);
+
+	void DisableReceives(bool disabled) { m_receivingDisabled = disabled; }
+	bool ReceiveSync(std::vector<uint8_t>& bytes, const size_t num_bytes);
+
 	bool ExceedsRateLimit() const;
 	void BanPeer(const EBanReason reason);
 	void CheckPing();
@@ -102,7 +90,8 @@ public:
 private:
 	static void Thread_Connect(std::shared_ptr<Connection> pConnection);
 	void HandleConnected(const asio::error_code& ec);
-	void HandleReceived(const asio::error_code& ec, const size_t bytes_received);
+	void HandleReceivedHeader(const asio::error_code& ec, const size_t bytes_received);
+	void HandleReceivedBody(MessageHeader msg_header, const asio::error_code& ec, const size_t bytes_received);
 
 	void ConnectOutbound();
 
@@ -116,6 +105,7 @@ private:
 
 	std::atomic<bool> m_terminate;
 	std::atomic<bool> m_sendingDisabled;
+	std::atomic<bool> m_receivingDisabled;
 	std::thread m_connectionThread;
 	const uint64_t m_connectionId;
 	ConnectedPeer m_connectedPeer;

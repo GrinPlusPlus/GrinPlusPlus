@@ -37,11 +37,11 @@ public:
 		SyncStatusConstPtr pSyncStatus
 	);
 
-	void ProcessMessage(Connection& connection, const RawMessage& rawMessage);
+	void ProcessMessage(const std::shared_ptr<Connection>& pConnection, const RawMessage& rawMessage);
 
 private:
-	void ProcessMessageInternal(Connection& connection, const RawMessage& rawMessage);
-	void SendTxHashSet(Connection& connection, const TxHashSetRequestMessage& txHashSetRequestMessage);
+	void ProcessMessageInternal(const std::shared_ptr<Connection>& pConnection, const RawMessage& rawMessage);
+	void SendTxHashSet(const std::shared_ptr<Connection>& pConnection, const TxHashSetRequestMessage& request);
 
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;

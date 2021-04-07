@@ -12,78 +12,26 @@
 #include <chrono>
 #include <memory>
 
+void Connection::Connect()
+{
+    std::thread connect_thr(Thread_Connect, shared_from_this());
+    ThreadUtil::Detach(connect_thr);
+}
+
 void Connection::Disconnect()
 {
     std::unique_lock<std::mutex> write_lock(m_mutex);
 
-    m_terminate = true;
-    if (m_pSocket) {
+    if (!m_terminate) {
+        m_terminate = true;
         m_pSocket->CloseSocket();
-        m_pSocket.reset();
+        m_connectedPeer.GetPeer()->SetConnected(false);
     }
-    m_connectedPeer.GetPeer()->SetConnected(false);
-}
-
-Connection::Ptr Connection::CreateInbound(
-    const PeerPtr& pPeer,
-    const SocketPtr& pSocket,
-    const uint64_t connectionId,
-    ConnectionManager& connectionManager,
-    const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-    const SyncStatusConstPtr& pSyncStatus)
-{
-    auto pConnection = std::make_shared<Connection>(
-        pSocket,
-        connectionId,
-        connectionManager,
-        ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
-        pSyncStatus,
-        pMessageProcessor
-    );
-
-    std::thread connect_thr(Thread_Connect, pConnection);
-    ThreadUtil::Detach(connect_thr);
-
-    return pConnection;
-}
-
-Connection::Ptr Connection::CreateOutbound(
-    const PeerPtr& pPeer,
-    const uint64_t connectionId,
-    const std::shared_ptr<asio::io_service>& pAsioContext,
-    ConnectionManager& connectionManager,
-    const std::weak_ptr<MessageProcessor>& pMessageProcessor,
-    const SyncStatusConstPtr& pSyncStatus)
-{    
-    ConnectedPeer connectedPeer(
-        pPeer,
-        EDirection::OUTBOUND,
-        Global::GetConfig().GetP2PPort()
-    );
-    SocketPtr pSocket(new Socket(
-        connectedPeer.GetSocketAddress(),
-        pAsioContext,
-        std::make_shared<asio::ip::tcp::socket>(*pAsioContext)
-    ));
-
-    ConnectionPtr pConnection = std::make_shared<Connection>(
-        pSocket,
-        connectionId,
-        connectionManager,
-        connectedPeer,
-        pSyncStatus,
-        pMessageProcessor
-    );
-
-    std::thread connect_thr(Thread_Connect, pConnection);
-    ThreadUtil::Detach(connect_thr);
-
-    return pConnection;
 }
 
 bool Connection::IsConnectionActive() const
 {
-    if (m_terminate || m_pSocket == nullptr) {
+    if (m_terminate) {
         LOG_DEBUG_F("Socket has been terminated for {}", GetPeer());
         return false;
     }
@@ -114,7 +62,7 @@ void Connection::SendAsync(const IMessage& message)
             );
         }
 
-        m_pSocket->SendAsync(serialized, true);
+        m_pSocket->SendAsync(serialized);
     }
 }
 
@@ -124,15 +72,9 @@ bool Connection::ExceedsRateLimit() const
         || m_pSocket->GetRateCounter().GetReceivedInLastMinute() > 500;
 }
 
-//
-// Continuously checks for messages to send and/or receive until the connection is terminated.
-// This function runs in its own thread.
-//
-void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)  // TODO: Thread no longer necessary - can be handled by asio
+void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)
 {
     LoggerAPI::SetThreadName("PEER");
-
-    std::unique_lock<std::mutex> write_lock(pConnection->m_mutex);
 
     try {
         if (pConnection->GetDirection() == EDirection::OUTBOUND) {
@@ -141,7 +83,7 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)  // TOD
 
         pConnection->GetSocket()->SetDefaultOptions();
         HandShake(pConnection->m_connectionManager, pConnection->m_pSyncStatus)
-            .PerformHandshake(*pConnection->m_pSocket, pConnection->m_connectedPeer);
+            .PerformHandshake(pConnection->m_pSocket, pConnection->m_connectedPeer);
 
         pConnection->m_lastPing = system_clock::now();
         pConnection->m_lastReceived = system_clock::now();
@@ -158,7 +100,7 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)  // TOD
         asio::async_read(
             *pConnection->GetSocket()->GetAsioSocket(),
             asio::buffer(pConnection->m_received, 11),
-            std::bind(&Connection::HandleReceived, pConnection.get(), std::placeholders::_1, std::placeholders::_2)
+            std::bind(&Connection::HandleReceivedHeader, pConnection, std::placeholders::_1, std::placeholders::_2)
         );
     }
     catch (const std::exception& e) {
@@ -169,10 +111,13 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)  // TOD
 void Connection::ConnectOutbound()
 {
     auto pAsioSocket = m_pSocket->GetAsioSocket();
-    pAsioSocket->async_connect(m_pSocket->GetEndpoint(), std::bind(&Connection::HandleConnected, this, std::placeholders::_1));
+    pAsioSocket->async_connect(
+        m_pSocket->GetEndpoint(),
+        std::bind(&Connection::HandleConnected, shared_from_this(), std::placeholders::_1)
+    );
 
     auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    while (!m_pSocket->IsConnectFailed() && !m_pSocket->IsOpen() && std::chrono::system_clock::now() < timeout && Global::IsRunning()) {
+    while (!m_pSocket->IsConnectFailed() && !m_pSocket->IsOpen() && system_clock::now() < timeout && Global::IsRunning()) {
         ThreadUtil::SleepFor(std::chrono::milliseconds(5));
     }
 
@@ -193,52 +138,27 @@ void Connection::HandleConnected(const asio::error_code& ec)
     }
 }
 
-void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_received)
+void Connection::HandleReceivedHeader(const asio::error_code& ec, const size_t bytes_received)
 {
     std::unique_lock<std::mutex> write_lock(m_mutex);
 
-    if (!ec && m_pSocket != nullptr && bytes_received == 11) {
+    if (!ec && m_pSocket->IsOpen() && bytes_received == 11) {
         assert(m_received.size() == 11);
 
         try {
             MessageHeader msg_header = ByteBuffer(m_received).Read<MessageHeader>();
+
             m_received.clear();
-            m_received.resize(11);
-
-            const auto type = msg_header.GetMessageType();
-            if (type == MessageTypes::Ping || type == MessageTypes::Pong) {
-                m_lastPing = system_clock::now();
-            } else {
-                LOG_TRACE_F("Received '{}' from {}", msg_header, GetPeer());
-            }
-
-            std::vector<uint8_t> payload;
-            const bool bPayloadRetrieved = m_pSocket->Receive(
-                msg_header.GetMessageLength(),
-                false,
-                Socket::BLOCKING,
-                payload
-            );
-            if (bPayloadRetrieved) {
-                GetPeer()->UpdateLastContactTime();
-                m_lastReceived = std::chrono::system_clock::now();
-
-                auto pMessageProcessor = m_pMessageProcessor.lock();
-                if (pMessageProcessor != nullptr) {
-                    RawMessage message(std::move(msg_header), std::move(payload));
-                    pMessageProcessor->ProcessMessage(*this, message);
-                }
-
+            m_received.resize(msg_header.GetLength());
+            if (m_pSocket->IsOpen()) {
                 asio::async_read(
                     *m_pSocket->GetAsioSocket(),
-                    asio::buffer(m_received, 11),
-                    std::bind(&Connection::HandleReceived, this, std::placeholders::_1, std::placeholders::_2)
+                    asio::buffer(m_received, m_received.size()),
+                    std::bind(&Connection::HandleReceivedBody, shared_from_this(), msg_header, std::placeholders::_1, std::placeholders::_2)
                 );
-
-                return;
             }
 
-            LOG_INFO_F("Expected payload not received from: {}", GetPeer());
+            return;
         }
         catch (std::exception& e) {
             LOG_INFO_F("Error while receiving from {}: {}", GetPeer(), e.what());
@@ -246,9 +166,53 @@ void Connection::HandleReceived(const asio::error_code& ec, const size_t bytes_r
     }
 
     LOG_INFO_F("Disconnecting from socket {}. Error: {}", GetSocket(), ec ? ec.message() : "<none>");
-    if (GetSocket() != nullptr) {
-        m_pSocket->CloseSocket();
+    m_pSocket->CloseSocket();
+    GetPeer()->SetConnected(false);
+}
+
+void Connection::HandleReceivedBody(MessageHeader msg_header, const asio::error_code& ec, const size_t bytes_received)
+{
+    std::unique_lock<std::mutex> write_lock(m_mutex);
+
+    if (!ec && m_pSocket->IsOpen() && bytes_received == msg_header.GetLength()) {
+        assert(m_received.size() == msg_header.GetLength());
+
+        try {
+            const auto type = msg_header.GetMessageType();
+            if (type == MessageTypes::Ping || type == MessageTypes::Pong) {
+                m_lastPing = system_clock::now();
+            } else {
+                LOG_TRACE_F("Received '{}' from {}", msg_header, GetPeer());
+            }
+
+            GetPeer()->UpdateLastContactTime();
+            m_lastReceived = std::chrono::system_clock::now();
+
+            auto pMessageProcessor = m_pMessageProcessor.lock();
+            if (pMessageProcessor != nullptr) {
+                RawMessage message(std::move(msg_header), std::move(m_received));
+                pMessageProcessor->ProcessMessage(shared_from_this(), message);
+            }
+
+            if (!m_receivingDisabled && m_pSocket->IsOpen()) {
+                m_received.clear();
+                m_received.resize(11);
+                asio::async_read(
+                    *m_pSocket->GetAsioSocket(),
+                    asio::buffer(m_received, m_received.size()),
+                    std::bind(&Connection::HandleReceivedHeader, shared_from_this(), std::placeholders::_1, std::placeholders::_2)
+                );
+            }
+
+            return;
+        }
+        catch (std::exception& e) {
+            LOG_INFO_F("Error while receiving from {}: {}", GetPeer(), e.what());
+        }
     }
+
+    LOG_INFO_F("Disconnecting from socket {}. Error: {}", GetSocket(), ec ? ec.message() : "<none>");
+    m_pSocket->CloseSocket();
     GetPeer()->SetConnected(false);
 }
 
@@ -256,7 +220,7 @@ void Connection::CheckPing()
 {
     std::unique_lock<std::mutex> write_lock(m_mutex);
 
-    if (GetSocket() == nullptr || !GetSocket()->IsActive()) {
+    if (!GetSocket()->IsActive()) {
         return;
     }
 
@@ -267,9 +231,7 @@ void Connection::CheckPing()
     }
 
     if (m_lastPing + std::chrono::seconds(10) < system_clock::now()) {
-        uint64_t block_difficulty = m_pSyncStatus->GetBlockDifficulty();
-        uint64_t block_height = m_pSyncStatus->GetBlockHeight();
-        SendAsync(PingMessage{ block_difficulty, block_height });
+        SendAsync(PingMessage{ m_pSyncStatus->GetBlockDifficulty(), m_pSyncStatus->GetBlockHeight() });
 
         m_lastPing = system_clock::now();
     }
@@ -287,7 +249,21 @@ bool Connection::SendSync(const IMessage& message)
         );
     }
 
-    return GetSocket()->Send(serialized_message, true);
+    return GetSocket()->SendSync(serialized_message, true);
+}
+
+bool Connection::ReceiveSync(std::vector<uint8_t>& bytes, const size_t num_bytes)
+{
+    std::unique_lock<std::mutex> write_lock(m_mutex);
+
+    bytes = m_pSocket->ReceiveSync(num_bytes, false);
+    if (bytes.size() != num_bytes) {
+        return false;
+    }
+
+    m_lastReceived = system_clock::now();
+    GetPeer()->UpdateLastContactTime();
+    return true;
 }
 
 void Connection::BanPeer(const EBanReason reason)

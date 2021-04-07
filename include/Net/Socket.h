@@ -10,12 +10,17 @@
 #include <memory>
 #include <atomic>
 #include <shared_mutex>
+#include <queue>
 
 #include <asio.hpp>
 
-class Socket : public Traits::IPrintable
+class Socket :
+	public Traits::IPrintable,
+	public std::enable_shared_from_this<Socket>
 {
 public:
+	using Ptr = std::shared_ptr<Socket>;
+
 	Socket(
 		SocketAddress socket_address,
 		const std::shared_ptr<asio::io_context>& pContext,
@@ -55,32 +60,27 @@ public:
 	bool IsBlocking() const { return m_blocking; }
 
 	bool IsOpen() const {
-		std::shared_lock<std::shared_mutex> read_lock(m_mutex);
 		return m_socketOpen;
 	}
 
 	void SetOpen(bool open) {
-		std::unique_lock<std::shared_mutex> write_lock(m_mutex);
 		m_socketOpen = open;
 	}
 
 	bool IsConnectFailed() const { return m_failed; }
 	void SetConnectFailed(bool failed) { m_failed = failed; }
 
-	bool Send(const std::vector<uint8_t>& message, const bool incrementCount);
-	void SendAsync(const std::vector<uint8_t>& message, const bool incrementCount);
+	bool SendSync(const std::vector<uint8_t>& message, const bool incrementCount);
+	void SendAsync(const std::vector<uint8_t>& message);
 
-	bool Receive(
-		const size_t numBytes,
-		const bool incrementCount,
-		const ERetrievalMode mode,
-		std::vector<uint8_t>& data
-	);
+	std::vector<uint8_t> ReceiveSync(const size_t numBytes, const bool incrementCount);
 
 private:
-	bool HasReceivedData(const size_t bytes_needed);
+	bool HasReceivedData();
 	void ThrowSocketException(const asio::error_code& ec);
+	void HandleSent(const asio::error_code& ec, size_t bytes_transferred);
 
+	std::shared_mutex m_socketMutex;
 	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
 	std::shared_ptr<asio::io_context> m_pContext;
 
@@ -91,10 +91,13 @@ private:
 	int m_receiveBufferSize;
 	RateCounter m_rateCounter;
 
-	mutable std::shared_mutex m_mutex;
+	std::mutex m_writeQueueMutex;
+	std::queue<std::vector<uint8_t>> m_writeQueue; // TODO: Use strand instead of queue
+
 	asio::error_code m_errorCode;
 	std::atomic_bool m_socketOpen;
 	std::atomic_bool m_failed;
+	std::atomic_uint32_t m_tasks;
 };
 
 typedef std::shared_ptr<Socket> SocketPtr;

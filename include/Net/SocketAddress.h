@@ -58,6 +58,11 @@ public:
 		return SocketAddress(IPAddress::CreateV6(bytes), port);
 	}
 
+	static SocketAddress From(const asio::ip::tcp::socket& socket)
+	{
+		return SocketAddress::FromEndpoint(socket.remote_endpoint());
+	}
+
 	static SocketAddress FromEndpoint(const asio::ip::tcp::endpoint& endpoint)
 	{
 		return SocketAddress(endpoint.address().to_string(), endpoint.port());

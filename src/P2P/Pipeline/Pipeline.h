@@ -24,7 +24,7 @@ public:
 	{
 		std::shared_ptr<BlockPipe> pBlockPipe = BlockPipe::Create(config, pBlockChain);
 		std::shared_ptr<TransactionPipe> pTransactionPipe = TransactionPipe::Create(config, pConnectionManager, pBlockChain);
-		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(config, pBlockChain, pSyncStatus);
+		std::shared_ptr<TxHashSetPipe> pTxHashSetPipe = TxHashSetPipe::Create(pConnectionManager, pBlockChain, pSyncStatus);
 
 		return std::shared_ptr<Pipeline>(new Pipeline(pBlockPipe, pTransactionPipe, pTxHashSetPipe));
 	}
@@ -43,9 +43,9 @@ public:
 		m_pTransactionPipe->AddTransactionToProcess(connection, pTransaction, poolType);
 	}
 
-	void ReceiveTxHashSet(Connection& connection, const TxHashSetArchiveMessage& message)
+	void ReceiveTxHashSet(const Connection::Ptr& pConnection, const TxHashSetArchiveMessage& message)
 	{
-		m_pTxHashSetPipe->ReceiveTxHashSet(connection, message);
+		m_pTxHashSetPipe->ReceiveTxHashSet(pConnection, message);
 	}
 
 private:

@@ -41,7 +41,9 @@ public:
 	//
 	const std::vector<uint8_t>& GetMagicBytes() const { return m_magicBytes; }
 	MessageTypes::EMessageType GetMessageType() const { return m_type; }
+	MessageTypes::EMessageType GetType() const { return m_type; }
 	uint64_t GetMessageLength() const { return m_length; }
+	uint64_t GetLength() const { return m_length; }
 
 	//
 	// Deserialization

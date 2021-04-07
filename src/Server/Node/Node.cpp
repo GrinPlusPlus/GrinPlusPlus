@@ -84,7 +84,7 @@ void Node::UpdateDisplay(const int secondsRunning)
 	}
 	else if (status == ESyncStatus::PROCESSING_TXHASHSET)
 	{
-		std::cout << "\nStatus: Validating TxHashSet";
+		std::cout << "\nStatus: Validating TxHashSet (" << pSyncStatus->GetProcessingStatus() << "%)";
 	}
 	else if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
 	{

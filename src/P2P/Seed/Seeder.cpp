@@ -59,7 +59,11 @@ void Seeder::Thread_AsioContext(Seeder& seeder)
     LoggerAPI::SetThreadName("ASIO");
 
     seeder.StartListener();
-    seeder.m_pAsioContext->run();
+
+    while (!seeder.m_terminate) {
+        asio::error_code ec;
+        seeder.m_pAsioContext->run(ec);
+    }
 }
 
 //
@@ -127,14 +131,15 @@ void Seeder::Accept(const asio::error_code& ec)
 
             auto pPeer = m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
             if (!pPeer->IsBanned()) {
-                Connection::CreateInbound(
-                    pPeer,
+                auto pConnection = std::make_shared<Connection>(
                     pSocket,
                     m_nextId++,
                     m_connectionManager,
-                    m_pMessageProcessor,
-                    m_pSyncStatus
+                    ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
+                    m_pSyncStatus,
+                    m_pMessageProcessor
                 );
+                pConnection->Connect();
             }
         } else {
             asio::error_code ignoreError;
@@ -151,14 +156,27 @@ void Seeder::SeedNewConnection()
     PeerPtr pPeer = m_peerManager.Write()->GetNewPeer(Capabilities::FAST_SYNC_NODE);
     if (pPeer != nullptr) {
         LOG_TRACE_F("Attempting to seed: {}", pPeer);
-        Connection::CreateOutbound(
+
+        ConnectedPeer connectedPeer(
             pPeer,
-            m_nextId++,
-            m_pAsioContext,
-            m_connectionManager,
-            m_pMessageProcessor,
-            m_pSyncStatus
+            EDirection::OUTBOUND,
+            Global::GetConfig().GetP2PPort()
         );
+        SocketPtr pSocket(new Socket(
+            connectedPeer.GetSocketAddress(),
+            m_pAsioContext,
+            std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
+        ));
+
+        ConnectionPtr pConnection = std::make_shared<Connection>(
+            pSocket,
+            m_nextId++,
+            m_connectionManager,
+            connectedPeer,
+            m_pSyncStatus,
+            m_pMessageProcessor
+        );
+        pConnection->Connect();
     } else if (!m_usedDNS.exchange(true)) {
         std::vector<SocketAddress> peerAddresses = DNSSeeder::GetPeersFromDNS();
 

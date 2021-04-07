@@ -29,41 +29,25 @@ Socket::Socket(
 
 Socket::~Socket()
 {
-    asio::error_code ec;
-    m_pSocket->close(ec);
+    CloseSocket();
+
+    std::lock(m_socketMutex, m_writeQueueMutex);
     m_pSocket.reset();
     m_pContext.reset();
 }
 
-bool Socket::SetDefaultOptions()
-{
-    asio::socket_base::receive_buffer_size option(32768);
-    m_pSocket->set_option(option);
-
-#ifdef _WIN32
-    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-        return false;
-    }
-
-    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
-        return false;
-    }
-#endif
-
-    return true;
-}
-
 bool Socket::CloseSocket()
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    std::unique_lock<std::shared_mutex> socketLock(m_socketMutex);
+    if (!m_socketOpen) {
+        return true;
+    }
 
     m_socketOpen = false;
 
     asio::error_code error;
     m_pSocket->shutdown(asio::socket_base::shutdown_both, error);
-    if (!error) {
-        m_pSocket->close(error);
-    }
+    m_pSocket->close(error);
 
     return !error;
 }
@@ -87,6 +71,24 @@ bool Socket::IsActive() const
     }
 
     return false;
+}
+
+bool Socket::SetDefaultOptions()
+{
+    asio::socket_base::receive_buffer_size option(32768);
+    m_pSocket->set_option(option);
+
+#ifdef _WIN32
+    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
+        return false;
+    }
+
+    if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
+        return false;
+    }
+#endif
+
+    return true;
 }
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
@@ -171,9 +173,9 @@ bool Socket::SetBlocking(const bool blocking)
     return m_blocking == blocking;
 }
 
-bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount)
+bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
 
     if (incrementCount) {
         m_rateCounter.AddMessageSent();
@@ -187,82 +189,100 @@ bool Socket::Send(const std::vector<uint8_t>& message, const bool incrementCount
     return bytesWritten == message.size();
 }
 
-void Socket::SendAsync(const std::vector<uint8_t>& message, const bool incrementCount)
+void Socket::SendAsync(const std::vector<uint8_t>& message)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+    bool first_in_queue = m_writeQueue.empty();
+    m_writeQueue.push(message);
 
-    if (incrementCount) {
-        m_rateCounter.AddMessageSent();
+    if (!first_in_queue) {
+        // There is already an async_write in process.
+        // It will send this message when it completes.
+        return;
     }
 
     size_t message_size = message.size();
-    asio::async_write(*m_pSocket, asio::buffer(message.data(), message.size()), [this, message_size](const asio::error_code& ec, size_t bytes_transferred) {
-        if (ec) {
-            LOG_INFO_F("Failed to send message to {}: {}", *this, ec.message());
-        } else if (bytes_transferred != message_size) {
-            LOG_INFO_F("Not all bytes were sent to {}", *this);
-        }
-    });
+
+    std::shared_lock<std::shared_mutex> socketLock(m_socketMutex);
+    if (m_socketOpen) {
+        asio::async_write(
+            *m_pSocket,
+            asio::buffer(message.data(), message.size()),
+            std::bind(&Socket::HandleSent, shared_from_this(), std::placeholders::_1, std::placeholders::_2)
+        );
+    }
 }
 
-bool Socket::Receive(const size_t numBytes, const bool incrementCount, const ERetrievalMode mode, std::vector<uint8_t>& data)
+void Socket::HandleSent(const asio::error_code& ec, size_t)
 {
-    bool hasReceivedData = HasReceivedData(1);
-    if (mode == BLOCKING) {
-        std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
-        while (!hasReceivedData) {
-            if (std::chrono::system_clock::now() >= timeout || !Global::IsRunning()) {
-                return false;
-            }
+    std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
 
-            ThreadUtil::SleepFor(std::chrono::milliseconds(5));
-            hasReceivedData = HasReceivedData(1);
-        }
+    m_rateCounter.AddMessageSent();
+    if (!m_writeQueue.empty()) {
+        m_writeQueue.pop();
     }
 
-    if (!hasReceivedData) {
-        return false;
+    if (ec) {
+        LOG_INFO_F("Failed to send message to {}: {}", *this, ec.message());
+    } else if (!m_writeQueue.empty()) {
+        std::vector<uint8_t> message = m_writeQueue.front();
+
+        std::shared_lock<std::shared_mutex> socketLock(m_socketMutex);
+        if (m_socketOpen) {
+            asio::async_write(
+                *m_pSocket,
+                asio::buffer(message.data(), message.size()),
+                std::bind(&Socket::HandleSent, shared_from_this(), std::placeholders::_1, std::placeholders::_2)
+            );
+        }
+    }
+}
+
+std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incrementCount)
+{
+    std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
+    while (!HasReceivedData()) {
+        if (std::chrono::system_clock::now() >= timeout || !Global::IsRunning()) {
+            return {};
+        }
+
+        ThreadUtil::SleepFor(std::chrono::milliseconds(5));
     }
 
     //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
-    if (data.size() < numBytes) {
-        data.resize(numBytes);
-    }
+    std::vector<uint8_t> bytes(num_bytes);
 
     size_t numTries = 0;
     size_t bytesRead = 0;
     while (numTries++ < 3) {
-        bytesRead += asio::read(*m_pSocket, asio::buffer(data.data() + bytesRead, numBytes - bytesRead), m_errorCode);
+        bytesRead += asio::read(*m_pSocket, asio::buffer(bytes.data() + bytesRead, num_bytes - bytesRead), m_errorCode);
         if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
             ThrowSocketException(m_errorCode);
         }
 
-        if (bytesRead == numBytes) {
+        if (bytesRead == num_bytes) {
             if (incrementCount) {
                 m_rateCounter.AddMessageReceived();
             }
 
-            return true;
+            return bytes;
         } else if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK) {
             LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 
-    return false;
+    return {};
 }
 
-bool Socket::HasReceivedData(const size_t bytes_needed)
+bool Socket::HasReceivedData()
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
     const size_t available = m_pSocket->available(m_errorCode);
     if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
         ThrowSocketException(m_errorCode);
     }
 
-    return available >= bytes_needed;
+    return available > 0;
 }
 
 void Socket::ThrowSocketException(const asio::error_code& ec)

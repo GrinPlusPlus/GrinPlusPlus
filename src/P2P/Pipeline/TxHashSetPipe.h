@@ -12,7 +12,7 @@
 #include <thread>
 
 // Forward Declarations
-class Config;
+class ConnectionManager;
 class Connection;
 class TxHashSetArchiveMessage;
 
@@ -20,7 +20,7 @@ class TxHashSetPipe
 {
 public:
 	static std::shared_ptr<TxHashSetPipe> Create(
-		const Config& config,
+		const std::shared_ptr<ConnectionManager>& pConnectionManager,
 		const IBlockChain::Ptr& pBlockChain,
 		SyncStatusPtr pSyncStatus
 	);
@@ -29,25 +29,32 @@ public:
 
 	//
 	// Downloads a TxHashSet and kicks off a new thread to process it.
-	// Caller should ban peer if false is returned.
 	//
-	void ReceiveTxHashSet(Connection& connection, const TxHashSetArchiveMessage& txHashSetArchiveMessage);
+	void ReceiveTxHashSet(
+		const std::shared_ptr<Connection>& pConnection,
+		const TxHashSetArchiveMessage& archive_msg
+	);
 
 private:
 	TxHashSetPipe(
-		const Config& config,
+		const std::shared_ptr<ConnectionManager>& pConnectionManager,
 		const IBlockChain::Ptr& pBlockChain,
 		SyncStatusPtr pSyncStatus
-	) : m_config(config),
+	) : m_pConnectionManager(pConnectionManager),
 		m_pBlockChain(pBlockChain),
 		m_pSyncStatus(pSyncStatus),
 		m_processing(false) { }
 
-	const Config& m_config;
+	std::shared_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChain::Ptr m_pBlockChain;
 	SyncStatusPtr m_pSyncStatus;
 
-	static void Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, PeerPtr pPeer, const Hash blockHash, const fs::path path);
+	static void Thread_ProcessTxHashSet(
+		TxHashSetPipe& pipeline,
+		std::shared_ptr<Connection> pConnection,
+		const uint64_t zipped_size,
+		const Hash blockHash
+	);
 	std::thread m_txHashSetThread;
 
 	std::atomic_bool m_processing;

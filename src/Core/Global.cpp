@@ -113,8 +113,6 @@ std::shared_ptr<const ICoinView> Global::GetCoinView()
 
 Context::Ptr Global::LockContext()
 {
-	assert(GLOBAL_CONTEXT != nullptr);
-
 	auto pContext = GLOBAL_CONTEXT.lock();
 	if (pContext == nullptr) {
 		throw std::runtime_error("Failed to obtain global context.");

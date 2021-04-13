@@ -37,7 +37,7 @@ public:
 
 			m_minimumConfirmations = walletJSON.get(ConfigProps::Wallet::MIN_CONFIRMATIONS, 10).asUInt();
 
-			m_reuseAddress = walletJSON.get(ConfigProps::Wallet::REUSE_ADDRESS, 0).asUInt();
+			m_reuseAddress = walletJSON.get(ConfigProps::Wallet::REUSE_ADDRESS, 1).asUInt();
 		}
 	}
 

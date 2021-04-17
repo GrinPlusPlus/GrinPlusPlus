@@ -16,6 +16,7 @@ public:
 		config_json["min_peers"] = config.GetMinPeers();
 		config_json["max_peers"] = config.GetMaxPeers();
 		config_json["min_confirmations"] = config.GetMinimumConfirmations();
+		config_json["reuse_address"] = config.ShouldReuseAddresses();
 
 		return request.BuildResult(config_json);
 	}

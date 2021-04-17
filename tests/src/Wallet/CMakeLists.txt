@@ -9,4 +9,5 @@ list_append_parent(
     "Test_Slate.cpp"
     "Test_Slatepack.cpp"
     "Test_TransactionBuilder.cpp"
+    "Test_Config.cpp"
 )

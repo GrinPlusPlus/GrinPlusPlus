@@ -13,7 +13,7 @@ TEST_CASE("Config")
 	REQUIRE(pConfig->GetMinimumConfirmations() == 10);
 	REQUIRE(pConfig->GetMinPeers() == 10);
 	REQUIRE(pConfig->GetMaxPeers() == 50);
-	REQUIRE(pConfig->ShouldReuseAddresses() == false);
+	REQUIRE(pConfig->ShouldReuseAddresses() == true);
 	REQUIRE(pConfig->GetChainPath().generic_u8string().find("CHAIN") != std::string::npos);
 	REQUIRE(pConfig->GetControlPassword() == "MyPassword");
 	REQUIRE(pConfig->GetControlPort() == 3423);
@@ -29,10 +29,10 @@ TEST_CASE("Config")
 	pConfig->SetMinConfirmations (25);
 	pConfig->SetMinPeers(1);
 	pConfig->SetMaxPeers(15);
-	pConfig->ShouldReuseAddresses(true);
+	pConfig->ShouldReuseAddresses(false);
 
 	REQUIRE(pConfig->GetMinimumConfirmations() == 25);
 	REQUIRE(pConfig->GetMinPeers() == 1);
 	REQUIRE(pConfig->GetMaxPeers() == 15);
-	REQUIRE(pConfig->ShouldReuseAddresses() == true);
+	REQUIRE(pConfig->ShouldReuseAddresses() == false);
 }

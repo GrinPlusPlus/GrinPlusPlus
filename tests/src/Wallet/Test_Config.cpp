@@ -24,4 +24,15 @@ TEST_CASE("Config")
 	REQUIRE(pConfig->GetHashedControlPassword() == "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F");
 	REQUIRE(pConfig->GetLogDirectory().generic_u8string().find("LOGS") != std::string::npos);
 	REQUIRE(pConfig->GetLogLevel() == "DEBUG");
+
+
+	pConfig->SetMinConfirmations (25);
+	pConfig->SetMinPeers(1);
+	pConfig->SetMaxPeers(15);
+	pConfig->ShouldReuseAddresses(true);
+
+	REQUIRE(pConfig->GetMinimumConfirmations() == 25);
+	REQUIRE(pConfig->GetMinPeers() == 1);
+	REQUIRE(pConfig->GetMaxPeers() == 15);
+	REQUIRE(pConfig->ShouldReuseAddresses() == true);
 }

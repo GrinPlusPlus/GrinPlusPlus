@@ -47,8 +47,8 @@ public:
 	uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
 	uint32_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
 	void SetMinConfirmations(const uint32_t min_confirmations) { m_minimumConfirmations = min_confirmations; }
-	bool ShouldReuseAddresses() const { return m_reuseAddress == 1; }
-	void SetReusableAddresses(const uint32_t reuse_address) { m_reuseAddress = reuse_address; }
+	uint32_t GetReuseAddress() const { return m_reuseAddress; }
+	void SetReuseAddress(const uint32_t reuse_address) { m_reuseAddress = reuse_address; }
 
 private:
 	fs::path m_walletPath;

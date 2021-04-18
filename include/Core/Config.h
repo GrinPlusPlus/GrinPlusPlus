@@ -74,7 +74,7 @@ public:
 	void SetMinConfirmations(uint32_t min_confirmations) noexcept;
 
 	bool ShouldReuseAddresses() const noexcept;
-	void SetReusableAddresses(uint32_t reuse_addresses) noexcept;
+	void ShouldReuseAddresses(bool reuse_addresses) noexcept;
 	//
 	// TOR
 	//

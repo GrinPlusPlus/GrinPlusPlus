@@ -171,7 +171,7 @@ ForeignServer::UPtr ForeignServer::Create(
             }
         }
     */
-    pServer->AddMethod("receive_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveTxHandler(walletManager, token)));
+    pServer->AddMethod("receive_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new ReceiveTxHandler(walletManager, token, pTorProcess)));
 
     pServer->AddMethod("finalize_tx", std::shared_ptr<RPCMethod>((RPCMethod*)new FinalizeTxHandler(walletManager, token, pTorProcess)));
 

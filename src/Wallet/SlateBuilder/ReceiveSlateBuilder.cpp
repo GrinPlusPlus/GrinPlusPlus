@@ -165,8 +165,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		kernel_commitment.Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
-		KeyChainPath userPath = KeyChainPath::FromString("m/0/0");
-		int currentAddressIndex = pWallet->GetDatabase().Read()->GetAddressIndex(userPath);
+		int currentAddressIndex = pWallet->GetDatabase().Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0"));
 
 		KeyChain keyChain = KeyChain::FromSeed(masterSeed);
 		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(currentAddressIndex));

@@ -40,6 +40,7 @@ public:
 	virtual std::unique_ptr<SlateContextEntity> LoadSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId) const = 0;
 	virtual void SaveSlateContext(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateContextEntity& slateContext) = 0;
 
+	void SaveOutput(const SecureVector& masterSeed, const OutputDataEntity& output) { AddOutputs(masterSeed, std::vector<OutputDataEntity>{ output }); }
 	virtual void AddOutputs(const SecureVector& masterSeed, const std::vector<OutputDataEntity>& outputs) = 0;
 	virtual std::vector<OutputDataEntity> GetOutputs(const SecureVector& masterSeed) const = 0;
 

@@ -5,7 +5,7 @@
 enum EOutputStatus
 {
 	SPENDABLE = 0,
-	IMMATURE = 1,
+	IMMATURE = 1, // DEPRECATED: Outputs should be marked as spendable.
 	NO_CONFIRMATIONS = 2,
 	SPENT = 3,
 	LOCKED = 4,

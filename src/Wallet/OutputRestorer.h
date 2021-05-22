@@ -3,7 +3,6 @@
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletDB/WalletDB.h>
 #include <Wallet/WalletDB/Models/OutputDataEntity.h>
-#include <Core/Config.h>
 #include <Core/Models/DTOs/OutputDTO.h>
 #include <Crypto/BulletproofType.h>
 
@@ -14,8 +13,8 @@ class RewoundProof;
 class OutputRestorer
 {
 public:
-	OutputRestorer(const Config& config, INodeClientConstPtr pNodeClient, const KeyChain& keyChain)
-		: m_config(config), m_pNodeClient(pNodeClient), m_keyChain(keyChain) { }
+	OutputRestorer(INodeClientConstPtr pNodeClient, const KeyChain& keyChain)
+		: m_pNodeClient(pNodeClient), m_keyChain(keyChain) { }
 
 	std::vector<OutputDataEntity> FindAndRewindOutputs(
 		const std::shared_ptr<IWalletDB>& pBatch,
@@ -24,23 +23,15 @@ public:
 
 private:
 	std::unique_ptr<OutputDataEntity> GetWalletOutput(
-		const OutputDTO& output,
-		const uint64_t currentBlockHeight
+		const OutputDTO& output
 	) const;
 
 	OutputDataEntity BuildWalletOutput(
 		const OutputDTO& output,
-		const uint64_t currentBlockHeight,
 		const RewoundProof& rewoundProof,
 		EBulletproofType type
 	) const;
 
-	EOutputStatus DetermineStatus(
-		const OutputDTO& output,
-		const uint64_t currentBlockHeight
-	) const;
-
-	const Config& m_config;
 	INodeClientConstPtr m_pNodeClient;
 	const KeyChain& m_keyChain;
 };

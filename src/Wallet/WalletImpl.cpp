@@ -4,6 +4,7 @@
 #include <Consensus.h>
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/NodeClient.h>
+#include <Wallet/WalletUtil.h>
 #include <Common/Logger.h>
 #include <Core/Exceptions/CryptoException.h>
 #include <Crypto/Hasher.h>
@@ -58,41 +59,40 @@ WalletSummaryDTO WalletImpl::GetWalletSummary(const SecureVector& masterSeed)
 
 WalletBalanceDTO WalletImpl::GetBalance(const SecureVector& masterSeed)
 {
-	uint64_t awaitingConfirmation = 0;
-	uint64_t immature = 0;
-	uint64_t locked = 0;
-	uint64_t spendable = 0;
+    uint64_t awaitingConfirmation = 0;
+    uint64_t immature = 0;
+    uint64_t locked = 0;
+    uint64_t spendable = 0;
 
-	const uint64_t lastConfirmedHeight = m_pNodeClient->GetChainHeight();
 	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputDataEntity& outputData : outputs)
-	{
-		const EOutputStatus status = outputData.GetStatus();
-		if (status == EOutputStatus::LOCKED)
-		{
-			locked += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::SPENDABLE)
-		{
-			spendable += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::IMMATURE)
-		{
-			immature += outputData.GetAmount();
-		}
-		else if (status == EOutputStatus::NO_CONFIRMATIONS)
-		{
-			awaitingConfirmation += outputData.GetAmount();
-		}
-	}
+	const uint64_t current_height = m_walletDB.Read()->GetRefreshBlockHeight();
 
-	return WalletBalanceDTO(
-		lastConfirmedHeight,
-		awaitingConfirmation,
-		immature,
-		locked,
-		spendable
-	);
+    for (const OutputDataEntity& outputData : outputs) {
+        const EOutputStatus status = outputData.GetStatus();
+
+        if (status == EOutputStatus::LOCKED) {
+            locked += outputData.GetAmount();
+        } else if (status == EOutputStatus::SPENDABLE) {
+            const EOutputFeatures features = outputData.GetFeatures();
+            const uint64_t output_height = outputData.GetBlockHeight().value_or(0);
+
+            if (WalletUtil::IsOutputImmature(features, output_height, current_height)) {
+                immature += outputData.GetAmount();
+            } else {
+                spendable += outputData.GetAmount();
+            }
+        } else if (status == EOutputStatus::NO_CONFIRMATIONS) {
+            awaitingConfirmation += outputData.GetAmount();
+        }
+    }
+
+    return WalletBalanceDTO(
+		current_height,
+        awaitingConfirmation,
+        immature,
+        locked,
+        spendable
+    );
 }
 
 std::vector<OutputDataEntity> WalletImpl::RefreshOutputs(const SecureVector& masterSeed, const bool fromGenesis)
@@ -103,16 +103,23 @@ std::vector<OutputDataEntity> WalletImpl::RefreshOutputs(const SecureVector& mas
 std::vector<OutputDataEntity> WalletImpl::GetAllAvailableCoins(const SecureVector& masterSeed)
 {
 	const KeyChain keyChain = KeyChain::FromSeed(masterSeed);
+	auto pTip = m_pNodeClient->GetTipHeader();
+	if (pTip == nullptr) {
+		throw std::runtime_error("Tip header not received");
+	}
 
 	std::vector<OutputDataEntity> coins;
 
 	std::vector<Commitment> commitments;
 	const std::vector<OutputDataEntity> outputs = RefreshOutputs(masterSeed, false);
-	for (const OutputDataEntity& output : outputs)
-	{
-		if (output.GetStatus() == EOutputStatus::SPENDABLE)
-		{
-			coins.emplace_back(output);
+	for (const OutputDataEntity& output : outputs) {
+		if (output.GetStatus() == EOutputStatus::SPENDABLE) {
+			EOutputFeatures features = output.GetFeatures();
+			uint64_t output_height = output.GetBlockHeight().value_or(0);
+
+			if (!WalletUtil::IsOutputImmature(features, output_height, pTip->GetHeight())) {
+				coins.emplace_back(output);
+			}
 		}
 	}
 

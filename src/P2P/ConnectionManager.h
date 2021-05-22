@@ -37,6 +37,7 @@ public:
 
 	void PruneConnections(const bool bInactiveOnly);
 	void AddConnection(ConnectionPtr pConnection);
+	ConnectionPtr GetConnection(const uint64_t connectionId) const;
 
 private:
 	ConnectionManager();

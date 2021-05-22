@@ -102,7 +102,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: 'Run CMake'
-        uses: lukka/run-cmake@v3.2
+        uses: lukka/run-cmake@v3.3
         with:
           cmakeGenerator: ${{ matrix.cmake_generator }}
           cmakeBuildType: 'Release'
@@ -113,7 +113,7 @@ jobs:
           buildDirectory: '${{ github.workspace }}/build'
           cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF"'
           buildWithCMake: true
-          buildWithCMakeArgs: '--parallel --config Release'
+          buildWithCMakeArgs: '--config Release --parallel'
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

@@ -196,6 +196,18 @@ void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 	m_connections.Write()->emplace_back(pConnection);
 }
 
+ConnectionPtr ConnectionManager::GetConnection(const uint64_t connectionId) const
+{
+	auto connections = m_connections.Read();
+	for (auto pConnection : *connections) {
+		if (pConnection->GetId() == connectionId) {
+			return pConnection;
+		}
+	}
+
+	return nullptr;
+}
+
 void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 {
 	std::vector<ConnectionPtr> connectionsToClose;

@@ -3,6 +3,7 @@
 #include <Wallet/Keychain/KeyChain.h>
 #include <Wallet/Models/Slatepack/Armor.h>
 #include <Wallet/Exceptions/InsufficientFundsException.h>
+#include <Wallet/WalletUtil.h>
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/Hasher.h>
@@ -45,10 +46,15 @@ WalletBalanceDTO Wallet::GetBalance() const
 		if (status == EOutputStatus::LOCKED) {
 			locked += outputData.GetAmount();
 		} else if (status == EOutputStatus::SPENDABLE) {
-			spendable += outputData.GetAmount();
-		} else if (status == EOutputStatus::IMMATURE) {
-			immature += outputData.GetAmount();
-		} else if (status == EOutputStatus::NO_CONFIRMATIONS) {
+			const EOutputFeatures features = outputData.GetFeatures();
+			const uint64_t output_height = outputData.GetBlockHeight().value_or(0);
+			const uint64_t current_height = pWalletDB->GetRefreshBlockHeight();
+			if (WalletUtil::IsOutputImmature(features, output_height, current_height)) {
+				immature += outputData.GetAmount();
+			} else {
+				spendable += outputData.GetAmount();
+			}
+		} if (status == EOutputStatus::NO_CONFIRMATIONS) {
 			awaitingConfirmation += outputData.GetAmount();
 		}
 	}

@@ -27,6 +27,13 @@ public:
 	);
 
 private:
+	std::vector<OutputDataEntity> FindNewOutputs(
+		const SecureVector& masterSeed,
+		const std::shared_ptr<IWalletDB>& pBatch,
+		const std::vector<OutputDataEntity>& walletOutputs,
+		const bool fromGenesis
+	);
+
 	void RefreshOutputs(
 		const SecureVector& masterSeed,
 		Writer<IWalletDB> pBatch,

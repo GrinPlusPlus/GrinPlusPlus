@@ -10,12 +10,6 @@ static const uint64_t NUM_OUTPUTS_PER_BATCH = 1000;
 
 std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const std::shared_ptr<IWalletDB>& pBatch, const bool fromGenesis) const
 {
-    BlockHeaderPtr pTipHeader = m_pNodeClient->GetTipHeader();
-    if (pTipHeader == nullptr) {
-        WALLET_ERROR("Tip header is null");
-        return {};
-    }
-
     uint64_t nextLeafIndex = fromGenesis ? 0 : pBatch->GetRestoreLeafIndex() + 1;
     uint64_t highestIndex = 0;
 
@@ -28,7 +22,7 @@ std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const std::sh
         }
 
         for (const OutputDTO& output : pOutputRange->GetOutputs()) {
-            std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(output, pTipHeader->GetHeight());
+            std::unique_ptr<OutputDataEntity> pOutputDataEntity = GetWalletOutput(output);
             if (pOutputDataEntity != nullptr) {
                 walletOutputs.emplace_back(*pOutputDataEntity);
             }
@@ -51,7 +45,7 @@ std::vector<OutputDataEntity> OutputRestorer::FindAndRewindOutputs(const std::sh
     return walletOutputs;
 }
 
-std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDTO& output, const uint64_t currentBlockHeight) const
+std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDTO& output) const
 {
     EBulletproofType type = EBulletproofType::ORIGINAL;
 
@@ -66,7 +60,7 @@ std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDT
     }
 
     if (pRewoundProof) {
-        return std::make_unique<OutputDataEntity>(BuildWalletOutput(output, currentBlockHeight, *pRewoundProof, type));
+        return std::make_unique<OutputDataEntity>(BuildWalletOutput(output, *pRewoundProof, type));
     }
 
     return nullptr;
@@ -74,7 +68,6 @@ std::unique_ptr<OutputDataEntity> OutputRestorer::GetWalletOutput(const OutputDT
 
 OutputDataEntity OutputRestorer::BuildWalletOutput(
     const OutputDTO& output,
-    const uint64_t currentBlockHeight,
     const RewoundProof& rewoundProof,
     EBulletproofType type) const
 {
@@ -93,34 +86,15 @@ OutputDataEntity OutputRestorer::BuildWalletOutput(
         secret_key = m_keyChain.DerivePrivateKey(keyChainPath, rewoundProof.GetAmount());
     }
 
-    const EOutputStatus status = DetermineStatus(output, currentBlockHeight);
-
     return OutputDataEntity{
         KeyChainPath{ rewoundProof.ToKeyIndices(type) },
         std::move(secret_key),
         output.ToTxOutput(),
         rewoundProof.GetAmount(),
-        status,
+        output.IsSpent() ? EOutputStatus::SPENT : EOutputStatus::SPENDABLE,
         output.GetMMRIndex(),
         output.GetBlockHeight(),
         std::nullopt,
         std::vector<std::string>{}
     };
-}
-
-EOutputStatus OutputRestorer::DetermineStatus(const OutputDTO& output, const uint64_t currentBlockHeight) const
-{
-    if (output.IsSpent()) {
-        return EOutputStatus::SPENT;
-    }
-
-    const EOutputFeatures features = output.GetFeatures();
-    const uint64_t outputBlockHeight = output.GetBlockHeight();
-    const uint32_t minimumConfirmations = m_config.GetMinimumConfirmations();
-
-    if (WalletUtil::IsOutputImmature(features, outputBlockHeight, currentBlockHeight, minimumConfirmations)) {
-        return EOutputStatus::IMMATURE;
-    }
-
-    return EOutputStatus::SPENDABLE;
 }

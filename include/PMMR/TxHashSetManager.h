@@ -4,13 +4,12 @@
 #include <Core/Config.h>
 #include <Core/Traits/Lockable.h>
 #include <filesystem.h>
-
-#define TXHASHSET_API
+#include <memory>
 
 // Forward Declarations
 class IBlockDB;
 
-class TXHASHSET_API TxHashSetManager : public Traits::IBatchable
+class TxHashSetManager : public Traits::IBatchable
 {
 public:
 	using Ptr = std::shared_ptr<TxHashSetManager>;

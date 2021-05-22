@@ -18,11 +18,14 @@
 class LeafSet
 {
 public:
+	LeafSet(const fs::path& path, const std::shared_ptr<BitmapFile>& pBitmap)
+		: m_path(path), m_pBitmap(pBitmap) { }
+
 	static std::shared_ptr<LeafSet> Load(const fs::path& path)
 	{
 		auto pBitmapFile = BitmapFile::Load(path);
 
-		return std::shared_ptr<LeafSet>(new LeafSet(path, pBitmapFile));
+		return std::make_shared<LeafSet>(path, BitmapFile::Load(path));
 	}
 
 	void Add(const uint64_t leafIndex) { m_pBitmap->Set(leafIndex); }
@@ -71,9 +74,6 @@ public:
 	}
 
 private:
-	LeafSet(const fs::path& path, const std::shared_ptr<BitmapFile>& pBitmap)
-		: m_path(path), m_pBitmap(pBitmap) { }
-
 	fs::path m_path;
 	std::shared_ptr<BitmapFile> m_pBitmap;
 };

@@ -14,7 +14,6 @@ EOutputFeatures CoinView::GetOutputType(const Commitment& commitment) const
     }
 
     auto pTxHashSet = pState->GetTxHashSetManager()->GetTxHashSet();
-    OutputDTO output = pTxHashSet->GetOutput(*pLocation);
 
-    return output.GetIdentifier().GetFeatures();
+    return pTxHashSet->GetOutput(*pLocation).GetFeatures();
 }

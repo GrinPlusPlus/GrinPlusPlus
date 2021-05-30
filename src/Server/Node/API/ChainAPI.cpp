@@ -163,7 +163,7 @@ int ChainAPI::GetChainOutputsByIds_Handler(struct mg_connection* conn, void* pNo
 				Json::Value outputNode;
 				outputNode["commit"] = commitment.Format();
 				outputNode["height"] = pOutputPosition->GetBlockHeight();
-				outputNode["mmr_index"] = pOutputPosition->GetMMRIndex() + 1;
+				outputNode["mmr_index"] = pOutputPosition->GetPosition() + 1;
 
 				rootNode.append(outputNode);
 			}

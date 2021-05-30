@@ -16,7 +16,30 @@ TEST_CASE("BlockHeader::Deserialize")
 	CBigInteger<32> totalKernelOffset = CBigInteger<32>::FromHex("5102030405060708090A0B0C0D0E0F1112131415161718191A1B1C1D1E1F2021");
 
 	const uint64_t outputMMRSize = 4;
-	const uint64_t kernelMMRSize = 5;
+	const uint64_t kernelMMRSize = 7;
+	const uint64_t total_difficulty = 1000;
+	const uint64_t scaling_difficulty = 10;
+	const uint64_t nonce = 123456;
+
 	// TODO: Finish this
-	//const BlockHeader blockHeader(version, height, timestamp, std::move(previousBlockHash), std::move(previousRoot), std::move(outputRoot), std::move(rangeProofRoot), std::move(kernelRoot), std::move(totalKernelOffset), outputMMRSize, kernelMMRSize, std::move(proofOfWork));
+	BlockHeader block_header(
+		version,
+		height,
+		timestamp,
+		std::move(previousBlockHash),
+		std::move(previousRoot),
+		std::move(outputRoot),
+		std::move(rangeProofRoot),
+		std::move(kernelRoot),
+		std::move(totalKernelOffset),
+		outputMMRSize,
+		kernelMMRSize,
+		total_difficulty,
+		scaling_difficulty,
+		nonce,
+		ProofOfWork((uint8_t)10, std::vector<uint64_t>{})
+	);
+
+	REQUIRE(block_header.GetNumOutputs() == 3);
+	REQUIRE(block_header.GetNumKernels() == 4);
 }

@@ -10,6 +10,7 @@
 #include <Core/Traits/Hashable.h>
 #include <Core/Traits/Serializable.h>
 #include <Common/Util/HexUtil.h>
+#include <PMMR/Common/Index.h>
 #include <json/json.h>
 #include <cstdint>
 #include <memory>
@@ -77,10 +78,13 @@ public:
 	const Hash& GetKernelRoot() const { return m_kernelRoot; }
 
 	const BlindingFactor& GetTotalKernelOffset() const { return m_totalKernelOffset; }
+	const BlindingFactor& GetOffset() const { return m_totalKernelOffset; }
 
 	// Merkle Mountain Range Sizes
 	uint64_t GetOutputMMRSize() const { return m_outputMMRSize; }
 	uint64_t GetKernelMMRSize() const { return m_kernelMMRSize; }
+	uint64_t GetNumOutputs() const { return Index::At(m_outputMMRSize).GetLeafIndex(); }
+	uint64_t GetNumKernels() const { return Index::At(m_kernelMMRSize).GetLeafIndex(); }
 
 	//
 	// Serialization/Deserialization

@@ -92,7 +92,7 @@ OutputDataEntity OutputRestorer::BuildWalletOutput(
         output.ToTxOutput(),
         rewoundProof.GetAmount(),
         output.IsSpent() ? EOutputStatus::SPENT : EOutputStatus::SPENDABLE,
-        output.GetMMRIndex(),
+        output.GetMMRPosition(),
         output.GetBlockHeight(),
         std::nullopt,
         std::vector<std::string>{}

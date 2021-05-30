@@ -259,7 +259,7 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 
 				outputNode["block_height"] = info.GetLocation().GetBlockHeight();
 				outputNode["merkle_proof"] = Json::nullValue;
-				outputNode["mmr_index"] = info.GetLocation().GetMMRIndex() + 1;
+				outputNode["mmr_index"] = info.GetLeafIndex().GetPosition() + 1;
 				outputsNode.append(outputNode);
 			}
 

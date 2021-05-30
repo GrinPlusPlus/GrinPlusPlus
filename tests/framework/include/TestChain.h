@@ -29,7 +29,9 @@ public:
             Test::Tx coinbase = pWallet->CreateCoinbase(KeyChainPath::FromString("m/0/0/" + std::to_string(i)), 0);
             MinedBlock block = AddNextBlock({ coinbase });
 
-            m_pBlockChain->AddBlock(block.block);
+            if (m_pBlockChain->AddBlock(block.block) != EBlockChainStatus::SUCCESS) {
+                throw std::runtime_error("Failed to add block");
+            }
         }
 
         pWallet->RefreshWallet();
@@ -57,7 +59,7 @@ public:
             CalcOutputRoot(pTransaction->GetOutputs()),
             CalcRangeProofRoot(pTransaction->GetOutputs()),
             CalcKernelRoot(pTransaction->GetKernels()),
-            Crypto::AddBlindingFactors({ pPrevHeader->GetTotalKernelOffset(), pTransaction->GetOffset() }, {}),
+            Crypto::AddBlindingFactors({ pPrevHeader->GetOffset(), pTransaction->GetOffset() }, {}),
             CalcOutputSize(pTransaction->GetOutputs()),
             CalcKernelSize(pTransaction->GetKernels()),
             pPrevHeader->GetTotalDifficulty() + 1 + additionalDifficulty,
@@ -105,7 +107,7 @@ public:
 
     uint64_t CalcKernelSize(const std::vector<TransactionKernel>& additionalKernels = {})
     {
-        return MMRUtil::GetPMMRIndex(GetAllKernels(additionalKernels).size());
+        return LeafIndex::At(GetAllKernels(additionalKernels).size()).GetPosition();
     }
 
     Hash CalcOutputRoot(const std::vector<TransactionOutput>& additionalOutputs = {})
@@ -124,7 +126,7 @@ public:
 
     uint64_t CalcOutputSize(const std::vector<TransactionOutput>& additionalOutputs = {})
     {
-        return MMRUtil::GetPMMRIndex(GetAllOutputs(additionalOutputs).size());
+        return LeafIndex::At(GetAllOutputs(additionalOutputs).size()).GetPosition();
     }
 
     Hash CalcRangeProofRoot(const std::vector<TransactionOutput>& additionalOutputs = {})

@@ -10,10 +10,10 @@ TEST_CASE("PruneList::GetShift_Empty")
 	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
 	// PruneList empty
-	REQUIRE(pPruneList->GetShift(0) == 0);
-	REQUIRE(pPruneList->GetShift(1) == 0);
-	REQUIRE(pPruneList->GetShift(2) == 0);
-	REQUIRE(pPruneList->GetShift(3) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(0)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(1)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(2)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(3)) == 0);
 	REQUIRE(pPruneList->GetTotalShift() == 0);
 }
 
@@ -24,14 +24,14 @@ TEST_CASE("PruneList::GetShift Pruned 0")
 	auto pFile = TestFileUtil::CreateTempFile();
 	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
-	pPruneList->Add(0);
+	pPruneList->Add(Index::At(0));
 	pPruneList->Flush();
 
 	// PruneList contains: 0
-	REQUIRE(pPruneList->GetShift(0) == 0);
-	REQUIRE(pPruneList->GetShift(1) == 0);
-	REQUIRE(pPruneList->GetShift(2) == 0);
-	REQUIRE(pPruneList->GetShift(3) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(0)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(1)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(2)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(3)) == 0);
 	REQUIRE(pPruneList->GetTotalShift() == 0);
 }
 
@@ -42,16 +42,16 @@ TEST_CASE("PruneList::GetShift Pruned 0,1")
 	auto pFile = TestFileUtil::CreateTempFile();
 	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
-	pPruneList->Add(0);
-	pPruneList->Add(1);
+	pPruneList->Add(Index::At(0));
+	pPruneList->Add(Index::At(1));
 	pPruneList->Flush();
 
 	// PruneList contains: 2
-	REQUIRE(pPruneList->GetShift(0) == 0);
-	REQUIRE(pPruneList->GetShift(1) == 0);
-	REQUIRE(pPruneList->GetShift(2) == 2);
-	REQUIRE(pPruneList->GetShift(3) == 2);
-	REQUIRE(pPruneList->GetShift(4) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(0)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(1)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(2)) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(3)) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(4)) == 2);
 	REQUIRE(pPruneList->GetTotalShift() == 2);
 }
 
@@ -62,17 +62,17 @@ TEST_CASE("PruneList::GetShift Pruned 0,1,2")
 	auto pFile = TestFileUtil::CreateTempFile();
 	std::shared_ptr<PruneList> pPruneList = PruneList::Load(pFile->GetPath());
 
-	pPruneList->Add(0);
-	pPruneList->Add(1);
-	pPruneList->Add(2);
+	pPruneList->Add(Index::At(0));
+	pPruneList->Add(Index::At(1));
+	pPruneList->Add(Index::At(2));
 	pPruneList->Flush();
 
 	// PruneList contains: 2
-	REQUIRE(pPruneList->GetShift(0) == 0);
-	REQUIRE(pPruneList->GetShift(1) == 0);
-	REQUIRE(pPruneList->GetShift(2) == 2);
-	REQUIRE(pPruneList->GetShift(3) == 2);
-	REQUIRE(pPruneList->GetShift(4) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(0)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(1)) == 0);
+	REQUIRE(pPruneList->GetShift(Index::At(2)) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(3)) == 2);
+	REQUIRE(pPruneList->GetShift(Index::At(4)) == 2);
 	REQUIRE(pPruneList->GetTotalShift() == 2);
 }
 

@@ -4,4 +4,5 @@ list_append_parent(
     "src/TestServer.cpp"
     "src/TorProcessManager.cpp"
     "src/TxBuilder.cpp"
+    "src/Net/TestListener.cpp"
 )

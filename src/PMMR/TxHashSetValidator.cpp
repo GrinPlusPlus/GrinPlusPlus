@@ -142,34 +142,27 @@ bool TxHashSetValidator::ValidateSizes(TxHashSet& txHashSet, const BlockHeader& 
 bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) const
 {
 	try
-	{
-		const uint64_t size = pMMR->GetSize();
-		for (uint64_t i = 0; i < size; i++)
-		{
-			const uint64_t height = MMRUtil::GetHeight(i);
-			if (height > 0)
-			{
-				const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(i);
-				if (pParentHash != nullptr)
-				{
-					const uint64_t leftIndex = MMRUtil::GetLeftChildIndex(i, height);
-					const std::unique_ptr<Hash> pLeftHash = pMMR->GetHashAt(leftIndex);
+    {
+        const uint64_t size = pMMR->GetSize();
+        Index mmr_idx = Index::At(0);
+        while (mmr_idx < size) {
+            if (!mmr_idx.IsLeaf()) {
+                const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(mmr_idx);
+                if (pParentHash != nullptr) {
+                    const std::unique_ptr<Hash> pLeftHash = pMMR->GetHashAt(mmr_idx.GetLeftChild());
+                    const std::unique_ptr<Hash> pRightHash = pMMR->GetHashAt(mmr_idx.GetRightChild());
+                    if (pLeftHash != nullptr && pRightHash != nullptr) {
+                        const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, mmr_idx.GetPosition());
+                        if (*pParentHash != expectedHash) {
+                            LOG_ERROR_F("Invalid parent hash at {}", mmr_idx);
+                            return false;
+                        }
+                    }
+                }
+            }
 
-					const uint64_t rightIndex = MMRUtil::GetRightChildIndex(i);
-					const std::unique_ptr<Hash> pRightHash = pMMR->GetHashAt(rightIndex);
-
-					if (pLeftHash != nullptr && pRightHash != nullptr)
-					{
-						const Hash expectedHash = MMRHashUtil::HashParentWithIndex(*pLeftHash, *pRightHash, i);
-						if (*pParentHash != expectedHash)
-						{
-							LOG_ERROR_F("Invalid parent hash at index ({})", i);
-							return false;
-						}
-					}
-				}
-			}
-		}
+            ++mmr_idx;
+        }
 	}
 	catch (...)
 	{
@@ -214,11 +207,9 @@ BlockSums TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const Blo
 	// Determine output commitments
 	std::shared_ptr<const OutputPMMR> pOutputPMMR = txHashSet.GetOutputPMMR();
 	std::vector<Commitment> outputCommitments;
-	for (uint64_t i = 0; i < blockHeader.GetOutputMMRSize(); i++)
-	{
-		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetAt(i);
-		if (pOutput != nullptr)
-		{
+	for (LeafIndex output_idx = LeafIndex::At(0); output_idx < blockHeader.GetNumOutputs(); output_idx++) {
+		std::unique_ptr<OutputIdentifier> pOutput = pOutputPMMR->GetAt(output_idx);
+		if (pOutput != nullptr) {
 			outputCommitments.push_back(pOutput->GetCommitment());
 		}
 	}
@@ -226,11 +217,9 @@ BlockSums TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const Blo
 	// Determine kernel excess commitments
 	std::shared_ptr<const KernelMMR> pKernelMMR = txHashSet.GetKernelMMR();
 	std::vector<Commitment> excessCommitments;
-	for (uint64_t i = 0; i < blockHeader.GetKernelMMRSize(); i++)
-	{
-		std::unique_ptr<TransactionKernel> pKernel = pKernelMMR->GetKernelAt(i);
-		if (pKernel != nullptr)
-		{
+	for (LeafIndex kernel_idx = LeafIndex::At(0); kernel_idx < blockHeader.GetNumKernels(); kernel_idx++) {
+		std::unique_ptr<TransactionKernel> pKernel = pKernelMMR->GetKernelAt(kernel_idx);
+		if (pKernel != nullptr) {
 			excessCommitments.push_back(pKernel->GetExcessCommitment());
 		}
 	}
@@ -240,7 +229,7 @@ BlockSums TxHashSetValidator::ValidateKernelSums(TxHashSet& txHashSet, const Blo
 		outputCommitments,
 		excessCommitments,
 		overage,
-		blockHeader.GetTotalKernelOffset(),
+		blockHeader.GetOffset(),
 		std::nullopt
 	);
 }
@@ -252,15 +241,15 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, SyncStatus& s
 	size_t i = 0;
 	LOG_INFO("BEGIN");
 	const uint64_t outputMMRSize = txHashSet.GetOutputPMMR()->GetSize();
-	for (uint64_t mmrIndex = 0; mmrIndex < outputMMRSize; mmrIndex++)
+	for (LeafIndex leaf_idx = LeafIndex::At(0); leaf_idx.GetPosition() < outputMMRSize; leaf_idx++)
 	{
-		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetAt(mmrIndex);
+		std::unique_ptr<OutputIdentifier> pOutput = txHashSet.GetOutputPMMR()->GetAt(leaf_idx);
 		if (pOutput != nullptr)
 		{
-			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetAt(mmrIndex);
+			std::unique_ptr<RangeProof> pRangeProof = txHashSet.GetRangeProofPMMR()->GetAt(leaf_idx);
 			if (pRangeProof == nullptr)
 			{
-				LOG_ERROR_F("No rangeproof found at mmr index ({})", mmrIndex);
+				LOG_ERROR_F("No rangeproof found at leaf index ({})", leaf_idx);
 				return false;
 			}
 
@@ -276,7 +265,7 @@ bool TxHashSetValidator::ValidateRangeProofs(TxHashSet& txHashSet, SyncStatus& s
 
 				rangeProofs.clear();
 
-				syncStatus.UpdateProcessingStatus((uint8_t)(40 + ((30.0 * mmrIndex) / outputMMRSize)));
+				syncStatus.UpdateProcessingStatus((uint8_t)(40 + ((30.0 * leaf_idx.GetPosition()) / outputMMRSize)));
 			}
 		}
 	}
@@ -297,34 +286,28 @@ bool TxHashSetValidator::ValidateKernelSignatures(const KernelMMR& kernelMMR, Sy
 {
 	std::vector<TransactionKernel> kernels;
 
-	const uint64_t mmrSize = kernelMMR.GetSize();
-	for (uint64_t i = 0; i < mmrSize; i++)
-	{
-		std::unique_ptr<TransactionKernel> pKernel = kernelMMR.GetKernelAt(i);
-		if (pKernel != nullptr)
-		{
-			kernels.push_back(*pKernel);
+	const uint64_t num_kernels = kernelMMR.GetNumKernels();
+	for (LeafIndex leaf_idx = LeafIndex::At(0); leaf_idx < num_kernels; leaf_idx++) {
+		std::unique_ptr<TransactionKernel> pKernel = kernelMMR.GetKernelAt(leaf_idx);
+		if (pKernel == nullptr) {
+			return false;
+		}
 
-			if (kernels.size() >= 2000)
-			{
-				if (!KernelSignatureValidator::VerifyKernelSignatures(kernels))
-				{
-					return false;
-				}
+		kernels.push_back(*pKernel);
 
-				kernels.clear();
-
-				syncStatus.UpdateProcessingStatus((uint8_t)(70 + ((30.0 * i) / mmrSize)));
+		if (kernels.size() >= 2000) {
+			if (!KernelSignatureValidator::BatchVerify(kernels)) {
+				return false;
 			}
+
+			kernels.clear();
+
+			syncStatus.UpdateProcessingStatus((uint8_t)(70 + ((30.0 * leaf_idx.Get()) / num_kernels)));
 		}
 	}
 
-	if (!kernels.empty())
-	{
-		if (!KernelSignatureValidator::VerifyKernelSignatures(kernels))
-		{
-			return false;
-		}
+	if (!KernelSignatureValidator::BatchVerify(kernels)) {
+		return false;
 	}
 
 	return true;

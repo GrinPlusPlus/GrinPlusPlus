@@ -13,50 +13,38 @@ public:
     template<class T, typename = std::enable_if_t<std::is_base_of_v<Traits::ISerializable, T>>>
     static Hash CalculateRoot(const std::vector<T>& leaves)
     {
-		assert(!leaves.empty());
+        assert(!leaves.empty());
 
         std::vector<Hash> hashes;
 
-        for (size_t leafIdx = 0; leafIdx < leaves.size(); leafIdx++)
-        {
-			uint64_t position = MMRUtil::GetPMMRIndex(leafIdx);
-            hashes.push_back(Hasher::Blake2b(leaves[leafIdx].SerializeWithIndex(position)));
+        for (LeafIndex leaf_idx = LeafIndex::At(0); leaf_idx < leaves.size(); leaf_idx++) {
+            Hash leaf_hash = Hasher::Blake2b(leaves[leaf_idx].SerializeWithIndex(leaf_idx.GetPosition()));
+            hashes.push_back(std::move(leaf_hash));
 
-			const uint64_t nextLeafPosition = MMRUtil::GetPMMRIndex(leafIdx + 1);
+            // Add parent hashes
+            for (Index mmr_idx = leaf_idx.GetIndex() + 1; !mmr_idx.IsLeaf(); mmr_idx++) {
+                Hash mmr_hash = MMRHashUtil::HashParentWithIndex(
+                    hashes[mmr_idx.GetLeftChild().Get()],
+                    hashes[mmr_idx.GetRightChild().Get()],
+                    mmr_idx.Get()
+                );
+                hashes.push_back(std::move(mmr_hash));
+            }
+        }
 
-			// Add parent hashes
-			uint64_t peak = 1;
-			while (++position < nextLeafPosition)
-			{
-				const uint64_t leftSiblingPosition = position - (2 * peak);
+        Hash hash = ZERO_HASH;
+        const std::vector<uint64_t> peakIndices = MMRUtil::GetPeakIndices(hashes.size());
+        for (auto iter = peakIndices.crbegin(); iter != peakIndices.crend(); iter++) {
+            const Hash& peakHash = hashes[*iter];
+            if (peakHash != ZERO_HASH) {
+                if (hash == ZERO_HASH) {
+                    hash = peakHash;
+                } else {
+                    hash = MMRHashUtil::HashParentWithIndex(peakHash, hash, hashes.size());
+                }
+            }
+        }
 
-				const Hash& leftHash = hashes[leftSiblingPosition];
-				const Hash& rightHash = hashes[position - 1];
-
-				peak *= 2;
-
-				hashes.push_back(MMRHashUtil::HashParentWithIndex(leftHash, rightHash, position));
-			}
-		}
-
-		Hash hash = ZERO_HASH;
-		const std::vector<uint64_t> peakIndices = MMRUtil::GetPeakIndices(hashes.size());
-		for (auto iter = peakIndices.crbegin(); iter != peakIndices.crend(); iter++)
-		{
-			const Hash& peakHash = hashes[*iter];
-			if (peakHash != ZERO_HASH)
-			{
-				if (hash == ZERO_HASH)
-				{
-					hash = peakHash;
-				}
-				else
-				{
-					hash = MMRHashUtil::HashParentWithIndex(peakHash, hash, hashes.size());
-				}
-			}
-		}
-
-		return hash;
+        return hash;
     }
 };

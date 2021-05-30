@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PruneList.h"
-#include "MMRUtil.h"
 #include "MMRHashUtil.h"
 
 #include <string>
@@ -12,12 +11,16 @@
 #include <Common/Util/HexUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Core/Serialization/Serializer.h>
+#include <PMMR/Common/LeafIndex.h>
 
 #include <filesystem.h>
 
 class LeafSet
 {
 public:
+	using Ptr = std::shared_ptr<LeafSet>;
+	using CPtr = std::shared_ptr<const LeafSet>;
+
 	LeafSet(const fs::path& path, const std::shared_ptr<BitmapFile>& pBitmap)
 		: m_path(path), m_pBitmap(pBitmap) { }
 
@@ -28,9 +31,9 @@ public:
 		return std::make_shared<LeafSet>(path, BitmapFile::Load(path));
 	}
 
-	void Add(const uint64_t leafIndex) { m_pBitmap->Set(leafIndex); }
-	void Remove(const uint64_t leafIndex) { m_pBitmap->Unset(leafIndex); }
-	bool Contains(const uint64_t leafIndex) const { return m_pBitmap->IsSet(leafIndex); }
+	void Add(const LeafIndex& leafIndex) { m_pBitmap->Set(leafIndex.Get()); }
+	void Remove(const LeafIndex& leafIndex) { m_pBitmap->Unset(leafIndex.Get()); }
+	bool Contains(const LeafIndex& leafIndex) const { return m_pBitmap->IsSet(leafIndex.Get()); }
 
 	void Rewind(const uint64_t numLeaves, const std::vector<uint64_t>& leavesToAdd) { m_pBitmap->Rewind(numLeaves, leavesToAdd); }
 	void Commit() { m_pBitmap->Commit(); }

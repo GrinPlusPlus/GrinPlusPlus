@@ -16,13 +16,12 @@ KernelMMR::KernelMMR(std::shared_ptr<HashFile> pHashFile, std::shared_ptr<DataFi
 
 std::shared_ptr<KernelMMR> KernelMMR::Load(const fs::path& txHashSetPath)
 {
-	std::shared_ptr<HashFile> pHashFile = HashFile::Load(txHashSetPath / "kernel" / "pmmr_hash.bin");
-	std::shared_ptr<DataFile<KERNEL_SIZE>> pDataFile = DataFile<KERNEL_SIZE>::Load(txHashSetPath / "kernel" / "pmmr_data.bin");
+	auto pHashFile = HashFile::Load(txHashSetPath / "kernel" / "pmmr_hash.bin");
+	auto pDataFile = DataFile<KERNEL_SIZE>::Load(txHashSetPath / "kernel" / "pmmr_data.bin");
 
-	auto pKernelMMR =  std::shared_ptr<KernelMMR>(new KernelMMR(pHashFile, pDataFile));
+	auto pKernelMMR =  std::make_shared<KernelMMR>(pHashFile, pDataFile);
 
-	if (pHashFile->GetSize() == 0)
-	{
+	if (pHashFile->GetSize() == 0) {
 		pKernelMMR->ApplyKernel(Global::GetGenesisBlock().GetKernels().front());
 	}
 
@@ -34,19 +33,12 @@ Hash KernelMMR::Root(const uint64_t size) const
 	return MMRHashUtil::Root(m_pHashFile, size, nullptr);
 }
 
-std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const uint64_t mmrIndex) const
+std::unique_ptr<TransactionKernel> KernelMMR::GetKernelAt(const LeafIndex& leaf_idx) const
 {
-	if (MMRUtil::IsLeaf(mmrIndex))
-	{
-		const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
-
-		std::vector<unsigned char> data = m_pDataFile->GetDataAt(numLeaves - 1);
-
-		if (data.size() == KERNEL_SIZE)
-		{
-			ByteBuffer byteBuffer(std::move(data));
-			return std::make_unique<TransactionKernel>(TransactionKernel::Deserialize(byteBuffer));
-		}
+	std::vector<uint8_t> data = m_pDataFile->GetDataAt(leaf_idx.Get());
+	if (data.size() == KERNEL_SIZE) {
+		ByteBuffer byteBuffer(std::move(data));
+		return std::make_unique<TransactionKernel>(TransactionKernel::Deserialize(byteBuffer));
 	}
 
 	return std::unique_ptr<TransactionKernel>(nullptr);
@@ -57,10 +49,10 @@ std::vector<Hash> KernelMMR::GetLastLeafHashes(const uint64_t numHashes) const
 	return MMRHashUtil::GetLastLeafHashes(m_pHashFile, nullptr, nullptr, numHashes);
 }
 
-bool KernelMMR::Rewind(const uint64_t size)
+bool KernelMMR::Rewind(const uint64_t num_kernels)
 {
-	m_pHashFile->Rewind(size);
-	m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1));
+	m_pHashFile->Rewind(LeafIndex::At(num_kernels).GetPosition());
+	m_pDataFile->Rewind(num_kernels);
 	return true;
 }
 
@@ -78,11 +70,8 @@ void KernelMMR::Rollback() noexcept
 
 void KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
-	// Add to data file
-	Serializer serializer;
-	kernel.Serialize(serializer);
-	m_pDataFile->AddData(serializer.GetBytes());
+	std::vector<uint8_t> serialized = kernel.Serialized();
 
-	// Add hashes
-	MMRHashUtil::AddHashes(m_pHashFile, serializer.GetBytes(), nullptr);
+	m_pDataFile->AddData(serialized);
+	MMRHashUtil::AddHashes(m_pHashFile, serialized, nullptr);
 }

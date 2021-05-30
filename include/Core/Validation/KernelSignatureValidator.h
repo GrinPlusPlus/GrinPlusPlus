@@ -7,15 +7,19 @@
 class KernelSignatureValidator
 {
 public:
-	static bool VerifyKernelSignature(const TransactionKernel& kernel)
+	static bool Verify(const TransactionKernel& kernel)
 	{
-		return VerifyKernelSignatures(std::vector<TransactionKernel>({ kernel }));
+		return BatchVerify(std::vector<TransactionKernel>({ kernel }));
 	}
 
 	// Verify the tx kernels.
 	// No ability to batch verify these right now so just do them individually.
-	static bool VerifyKernelSignatures(const std::vector<TransactionKernel>& kernels)
+	static bool BatchVerify(const std::vector<TransactionKernel>& kernels)
 	{
+		if (kernels.empty()) {
+			return true;
+		}
+
 		std::vector<const Commitment*> commitments;
 		commitments.reserve(kernels.size());
 		std::vector<const Signature*> signatures;

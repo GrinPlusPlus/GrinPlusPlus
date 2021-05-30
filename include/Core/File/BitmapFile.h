@@ -13,6 +13,7 @@
 #include <Common/Util/BitUtil.h>
 #include <Common/Util/FileUtil.h>
 #include <Common/Logger.h>
+#include <PMMR/Common/LeafIndex.h>
 #include <fstream>
 #include <functional>
 #include <algorithm>
@@ -99,7 +100,8 @@ public:
 	{
 		for (auto iter = positionsToSet.begin(); iter != positionsToSet.end(); iter++)
 		{
-			Set(MMRUtil::GetLeafIndex(iter.i.current_value - 1));
+			Index mmr_idx = Index::At(iter.i.current_value - 1);
+			Set(mmr_idx.GetLeafIndex());
 		}
 	}
 
@@ -115,7 +117,8 @@ public:
 	{
 		for (auto iter = positionsToUnset.begin(); iter != positionsToUnset.end(); iter++)
 		{
-			Unset(MMRUtil::GetLeafIndex(iter.i.current_value - 1));
+			Index mmr_idx = Index::At(iter.i.current_value - 1);
+			Unset(mmr_idx.GetLeafIndex());
 		}
 	}
 
@@ -150,7 +153,7 @@ public:
 			{
 				if ((byte & BitToByte(j)) > 0)
 				{
-					bitmap.add((uint32_t)(MMRUtil::GetPMMRIndex((i * 8) + j) + 1));
+					bitmap.add((uint32_t)(LeafIndex::At((i * 8) + j).GetPosition() + 1));
 				}
 			}
 		}
@@ -236,14 +239,11 @@ private:
 				throw FILE_EXCEPTION_F("Failed to read file: {}", m_path);
 			}
 
-			const uint64_t numLeaves = MMRUtil::GetNumLeaves(data.size() * 8);
+			const uint64_t numLeaves = Index::At(data.size() * 8).GetLeafIndex();
 			std::vector<uint8_t> converted((numLeaves / 8) + 1);
-			for (size_t i = 0; i < numLeaves; i++)
-			{
-				const uint64_t mmrIndex = MMRUtil::GetPMMRIndex(i);
-				if (data[mmrIndex / 8] & BitToByte(mmrIndex % 8))
-				{
-					converted[i / 8] = converted[i / 8] | BitToByte(i % 8);
+			for (LeafIndex leaf_idx = LeafIndex::At(0); leaf_idx.Get() < numLeaves; ++leaf_idx) {
+				if (data[leaf_idx.GetPosition() / 8] & BitToByte(leaf_idx.GetPosition() % 8)) {
+					converted[leaf_idx.Get() / 8] = converted[leaf_idx.Get() / 8] | BitToByte(leaf_idx.Get() % 8);
 				}
 			}
 

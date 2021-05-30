@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Roaring.h>
+#include <PMMR/Common/Index.h>
 #include <filesystem.h>
 
 #include <string>
@@ -11,25 +12,28 @@
 class PruneList
 {
 public:
-	static std::shared_ptr<PruneList> Load(const fs::path& filePath);
+	using Ptr = std::shared_ptr<PruneList>;
+	using CPtr = std::shared_ptr<const PruneList>;
+
+	static PruneList::Ptr Load(const fs::path& filePath);
 
 	void Flush();
 
 	// Adds the node to the prune list.
 	// Compacts if pruning the node means a parent can get pruned as well.
-	void Add(const uint64_t mmrIndex);
+	void Add(const Index& mmrIndex);
 
 	// Indicates whether the position is pruned.
-	bool IsPruned(const uint64_t mmrIndex) const;
+	bool IsPruned(const Index& mmrIndex) const;
 
 	// Indicates whether the position is the root of a pruned subtree.
-	bool IsPrunedRoot(const uint64_t mmrIndex) const;
+	bool IsPrunedRoot(const Index& mmrIndex) const;
 
-	bool IsCompacted(const uint64_t mmrIndex) const;
+	bool IsCompacted(const Index& mmrIndex) const;
 
 	uint64_t GetTotalShift() const;
-	uint64_t GetShift(const uint64_t mmrIndex) const;
-	uint64_t GetLeafShift(const uint64_t mmrIndex) const;
+	uint64_t GetShift(const Index& mmrIndex) const;
+	uint64_t GetLeafShift(const Index& mmr_idx) const;
 
 private:
 	PruneList(const fs::path& filePath, Roaring&& prunedRoots);

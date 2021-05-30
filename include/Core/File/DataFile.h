@@ -11,6 +11,9 @@ template<size_t NUM_BYTES>
 class DataFile : public Traits::IBatchable
 {
 public:
+	using Ptr = std::shared_ptr<DataFile<NUM_BYTES>>;
+	using CPtr = std::shared_ptr<const DataFile<NUM_BYTES>>;
+
 	virtual ~DataFile() = default;
 
 	static std::shared_ptr<DataFile> Load(const fs::path& path)

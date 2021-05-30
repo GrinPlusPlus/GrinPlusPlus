@@ -40,47 +40,38 @@ public:
 		SetDirty(true);
 
 		// Add to LeafSet
-		const uint64_t totalShift = m_pPruneList->GetTotalShift();
-		const uint64_t mmrIndex = m_pHashFile->GetSize() + totalShift;
-		m_pLeafSet->Add(MMRUtil::GetLeafIndex(mmrIndex));
+		Index mmr_idx = Index::At(m_pHashFile->GetSize() + m_pPruneList->GetTotalShift());
+		m_pLeafSet->Add(LeafIndex::From(mmr_idx));
 
 		// Add to data file
-		Serializer serializer;
-		object.Serialize(serializer);
-		m_pDataFile->AddData(serializer.GetBytes());
+		std::vector<uint8_t> serialized = object.Serialized();
+		m_pDataFile->AddData(serialized);
 
 		// Add hashes
-		MMRHashUtil::AddHashes(m_pHashFile, serializer.GetBytes(), m_pPruneList);
+		MMRHashUtil::AddHashes(m_pHashFile, serialized, m_pPruneList);
 	}
 
-	void Remove(const uint64_t mmrIndex)
+	void Remove(const LeafIndex& leaf_idx)
 	{
-		LOG_TRACE_F("Spending output at index ({})", mmrIndex);
+		LOG_TRACE_F("Spending output at {}", leaf_idx);
+
+		if (!m_pLeafSet->Contains(leaf_idx)) {
+			LOG_WARNING_F("LeafSet does not contain output: {}", leaf_idx);
+			throw TXHASHSET_EXCEPTION(StringUtil::Format("LeafSet does not contain output: {}", leaf_idx));
+		}
+
 		SetDirty(true);
-
-		if (!MMRUtil::IsLeaf(mmrIndex))
-		{
-			LOG_WARNING_F("Output is not a leaf ({})", mmrIndex);
-			throw TXHASHSET_EXCEPTION(StringUtil::Format("Output is not a leaf ({})", mmrIndex));
-		}
-
-		const uint64_t leafIndex = MMRUtil::GetLeafIndex(mmrIndex);
-		if (!m_pLeafSet->Contains(leafIndex))
-		{
-			LOG_WARNING_F("LeafSet does not contain output ({})", mmrIndex);
-			throw TXHASHSET_EXCEPTION(StringUtil::Format("LeafSet does not contain output ({})", mmrIndex));
-		}
-
-		m_pLeafSet->Remove(leafIndex);
+		m_pLeafSet->Remove(leaf_idx);
 	}
 
-	void Rewind(const uint64_t size, const std::vector<uint64_t>& leavesToAdd)
+	void Rewind(const uint64_t num_leaves, const std::vector<uint64_t>& leavesToAdd)
 	{
 		SetDirty(true);
 
-		m_pHashFile->Rewind(size - m_pPruneList->GetShift(size - 1));
-		m_pDataFile->Rewind(MMRUtil::GetNumLeaves(size - 1) - m_pPruneList->GetLeafShift(size - 1));
-		m_pLeafSet->Rewind(MMRUtil::GetNumLeaves(size - 1), leavesToAdd);
+		LeafIndex next_leaf = LeafIndex::At(num_leaves);
+		m_pHashFile->Rewind(next_leaf.GetPosition() - m_pPruneList->GetShift(next_leaf.GetIndex() - 1));
+		m_pDataFile->Rewind(num_leaves - m_pPruneList->GetLeafShift(next_leaf.GetIndex() - 1));
+		m_pLeafSet->Rewind(num_leaves, leavesToAdd);
 	}
 
 	Hash Root(const uint64_t size) const final
@@ -95,16 +86,13 @@ public:
 
 	uint64_t GetSize() const final
 	{
-		const uint64_t totalShift = m_pPruneList->GetTotalShift();
-
-		return totalShift + m_pHashFile->GetSize();
+		return m_pPruneList->GetTotalShift() + m_pHashFile->GetSize();
 	}
 
-	std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const final
+	std::unique_ptr<Hash> GetHashAt(const Index& mmrIndex) const final
 	{
 		Hash hash = MMRHashUtil::GetHashAt(m_pHashFile, mmrIndex, m_pPruneList);
-		if (hash == ZERO_HASH)
-		{
+		if (hash == ZERO_HASH) {
 			return std::unique_ptr<Hash>(nullptr);
 		}
 
@@ -116,41 +104,28 @@ public:
 		return MMRHashUtil::GetLastLeafHashes(m_pHashFile, m_pLeafSet, m_pPruneList, numHashes);
 	}
 
-	bool IsUnpruned(const uint64_t mmrIndex) const
+	bool IsUnpruned(const LeafIndex& leaf_idx) const
 	{
-		if (MMRUtil::IsLeaf(mmrIndex))
-		{
-			if (mmrIndex < GetSize())
-			{
-				return m_pLeafSet->Contains(MMRUtil::GetLeafIndex(mmrIndex));
-			}
-		}
-
-		return false;
+		return leaf_idx.GetPosition() < GetSize() && m_pLeafSet->Contains(leaf_idx);
 	}
 
-	std::unique_ptr<DATA_TYPE> GetAt(const uint64_t mmrIndex) const
+	std::unique_ptr<DATA_TYPE> GetAt(const LeafIndex& leaf_idx) const
 	{
-		if (IsUnpruned(mmrIndex))
-		{
-			const uint64_t shift = m_pPruneList->GetLeafShift(mmrIndex);
-			const uint64_t numLeaves = MMRUtil::GetNumLeaves(mmrIndex);
-			const uint64_t shiftedIndex = ((numLeaves - 1) - shift);
+        if (IsUnpruned(leaf_idx)) {
+            uint64_t shift = m_pPruneList->GetLeafShift(leaf_idx.GetIndex());
+            uint64_t shifted_idx = leaf_idx.Get() - shift;
 
-			try
-			{
-				std::vector<unsigned char> data = m_pDataFile->GetDataAt(shiftedIndex);
-				if (data.size() == DATA_SIZE)
-				{
-					ByteBuffer byteBuffer(std::move(data));
-					return std::make_unique<DATA_TYPE>(DATA_TYPE::Deserialize(byteBuffer));
-				}
-			}
-			catch (FileException&)
-			{
-				return std::unique_ptr<DATA_TYPE>(nullptr);
-			}
-		}
+            try {
+                std::vector<unsigned char> data = m_pDataFile->GetDataAt(shifted_idx);
+                if (data.size() == DATA_SIZE) {
+                    ByteBuffer byteBuffer(std::move(data));
+                    return std::make_unique<DATA_TYPE>(DATA_TYPE::Deserialize(byteBuffer));
+                }
+            }
+            catch (FileException&) {
+                return std::unique_ptr<DATA_TYPE>(nullptr);
+            }
+        }
 
 		return std::unique_ptr<DATA_TYPE>(nullptr);
 	}

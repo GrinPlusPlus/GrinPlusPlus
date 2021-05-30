@@ -64,7 +64,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 
 			// Rewind Kernel MMR
 			std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(txHashSetPath);
-			pKernelMMR->Rewind(pHeader->GetKernelMMRSize());
+			pKernelMMR->Rewind(pHeader->GetNumKernels());
 			pKernelMMR->Commit();
 
 			// Create output BitmapFile from Roaring file
@@ -79,7 +79,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 
 			// Rewind Output MMR
 			std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(txHashSetPath);
-			pOutputPMMR->Rewind(pHeader->GetOutputMMRSize(), {});
+			pOutputPMMR->Rewind(pHeader->GetNumOutputs(), {});
 			pOutputPMMR->Commit();
 
 			// Create rangeproof BitmapFile from Roaring file
@@ -94,7 +94,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 
 			// Rewind RangeProof MMR
 			std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(txHashSetPath);
-			pRangeProofPMMR->Rewind(pHeader->GetOutputMMRSize(), {});
+			pRangeProofPMMR->Rewind(pHeader->GetNumOutputs(), {});
 			pRangeProofPMMR->Commit();
 
 			return std::shared_ptr<TxHashSet>(new TxHashSet(config, pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));

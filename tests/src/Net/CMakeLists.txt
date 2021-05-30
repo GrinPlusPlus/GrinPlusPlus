@@ -2,6 +2,7 @@ list_append_parent(
     test_sources
     ${CMAKE_CURRENT_LIST_DIR}
     "Test_IPAddress.cpp"
+    "Test_Socket.cpp"
     "Test_SocketAddress.cpp"
     "Tor/Test_TorAddressParser.cpp"
     "Tor/Test_TorConnection.cpp"

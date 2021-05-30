@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Crypto/Models/Hash.h>
+#include <PMMR/Common/Index.h>
 #include <cstdint>
 #include <memory>
 
@@ -23,7 +24,7 @@ public:
 	// Gets the Hash at the mmr index.
 	// Returns NULL if the node has been pruned.
 	//
-	virtual std::unique_ptr<Hash> GetHashAt(const uint64_t mmrIndex) const = 0;
+	virtual std::unique_ptr<Hash> GetHashAt(const Index& mmrIndex) const = 0;
 
 	//
 	// Gets the last n leaf hashes.

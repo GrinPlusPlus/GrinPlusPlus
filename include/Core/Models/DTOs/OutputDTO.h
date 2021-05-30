@@ -36,7 +36,8 @@ public:
 	const Commitment& GetCommitment() const noexcept { return m_identifier.GetCommitment(); }
 	const OutputLocation& GetLocation() const noexcept { return m_location; }
 	uint64_t GetBlockHeight() const noexcept { return m_location.GetBlockHeight(); }
-	uint64_t GetMMRIndex() const noexcept { return m_location.GetMMRIndex(); }
+	uint64_t GetMMRPosition() const noexcept { return m_location.GetPosition(); }
+	const LeafIndex& GetLeafIndex() const noexcept { return m_location.GetLeafIndex(); }
 	const RangeProof& GetRangeProof() const noexcept { return m_rangeProof; }
 
 	TransactionOutput ToTxOutput() const noexcept {
@@ -57,7 +58,7 @@ public:
 
 		json["block_height"] = m_location.GetBlockHeight();
 		json["merkle_proof"] = Json::nullValue;
-		json["mmr_index"] = m_location.GetMMRIndex() + 1;
+		json["mmr_index"] = m_location.GetLeafIndex().GetPosition() + 1;
 		return json;
 	}
 

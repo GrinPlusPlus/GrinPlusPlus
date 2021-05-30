@@ -16,7 +16,7 @@ void TxBodyValidator::Validate(const TransactionBody& body)
 	VerifyCutThrough(body);
 	VerifyRangeProofs(body.GetOutputs());
 	
-	if (!KernelSignatureValidator::VerifyKernelSignatures(body.GetKernels())) {
+	if (!KernelSignatureValidator::BatchVerify(body.GetKernels())) {
 		throw BAD_DATA_EXCEPTION(EBanReason::BadTransaction, "Kernel signatures invalid");
 	}
 }

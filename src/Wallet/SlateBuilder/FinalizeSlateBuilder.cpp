@@ -175,7 +175,7 @@ std::unique_ptr<Transaction> FinalizeSlateBuilder::BuildTransaction(
 		finalExcess,
 		aggSignature
 	);
-	if (!KernelSignatureValidator().VerifyKernelSignature(kernel)) {
+	if (!KernelSignatureValidator().Verify(kernel)) {
 		WALLET_ERROR_F(
 			"Failed to verify kernel signatures for {}",
 			finalizeSlate

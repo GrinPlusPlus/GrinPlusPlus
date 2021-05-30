@@ -286,7 +286,7 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 		if (pOutput != nullptr) {
 			std::unique_ptr<RangeProof> pRangeProof = m_pRangeProofPMMR->GetAt(leaf_idx);
 			std::unique_ptr<OutputLocation> pOutputPosition = pBlockDB->GetOutputPosition(pOutput->GetCommitment());
-			if (pRangeProof == nullptr || pOutputPosition == nullptr || leaf_idx.GetPosition() != pOutputPosition->GetPosition()) {
+			if (pRangeProof == nullptr || pOutputPosition == nullptr || leaf_idx != pOutputPosition->GetLeafIndex()) {
 				throw TXHASHSET_EXCEPTION_F("Failed to build OutputDTO at {}", leaf_idx);
 			}
 
@@ -296,10 +296,10 @@ OutputRange TxHashSet::GetOutputsByLeafIndex(std::shared_ptr<const IBlockDB> pBl
 		++leaf_idx;
 	}
 
-	const uint64_t maxLeafIndex = Index::At(outputSize).GetLeafIndex();
+	const uint64_t maxLeafIndex = LeafIndex::AtPos(outputSize);
 	const uint64_t lastRetrievedIndex = outputs.empty() ? 0 : outputs.back().GetLeafIndex().Get();
 
-	return OutputRange(maxLeafIndex, lastRetrievedIndex, std::move(outputs));
+	return OutputRange(maxLeafIndex > 0 ? maxLeafIndex - 1 : 0, lastRetrievedIndex, std::move(outputs));
 }
 
 std::vector<OutputDTO> TxHashSet::GetOutputsByMMRIndex(std::shared_ptr<const IBlockDB> pBlockDB, const uint64_t startIndex, const uint64_t lastIndex) const

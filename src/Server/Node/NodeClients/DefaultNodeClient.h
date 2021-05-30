@@ -110,8 +110,7 @@ public:
 	std::unique_ptr<OutputRange> GetOutputsByLeafIndex(const uint64_t startIndex, const uint64_t maxNumOutputs) const final
 	{
 		auto pTxHashSet = m_pTxHashSetManager->GetTxHashSet();
-		if (pTxHashSet == nullptr)
-		{
+		if (pTxHashSet == nullptr) {
 			return std::unique_ptr<OutputRange>(nullptr);
 		}
 

@@ -22,5 +22,4 @@ file(GLOB SOURCE_CODE
 
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
-target_compile_definitions(${TARGET_NAME} PRIVATE MW_PMMR)
 target_link_libraries(${TARGET_NAME} Common Crypto Core ZLIB::ZLIB minizip::minizip jsoncpp)

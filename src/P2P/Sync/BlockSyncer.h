@@ -23,7 +23,6 @@ public:
 	) : m_pConnectionManager(pConnectionManager),
 		m_pBlockChain(pBlockChain),
 		m_pPipeline(pPipeline),
-		m_timeout(std::chrono::system_clock::now()),
 		m_lastHeight(0),
 		m_highestRequested(0) { }
 
@@ -38,7 +37,6 @@ private:
 	IBlockChain::Ptr m_pBlockChain;
 	std::shared_ptr<Pipeline> m_pPipeline;
 
-	std::chrono::time_point<std::chrono::system_clock> m_timeout;
 	uint64_t m_lastHeight;
 	uint64_t m_highestRequested;
 
@@ -47,7 +45,7 @@ private:
 		PeerPtr PEER;
 		uint64_t BLOCK_HEIGHT;
 		std::chrono::time_point<std::chrono::system_clock> TIMEOUT;
-		bool retried;
+		bool RETRIED;
 		// TODO: Add retry?
 	};
 	std::unordered_map<uint64_t, RequestedBlock> m_requestedBlocks;

@@ -25,8 +25,6 @@ public:
 	static std::shared_ptr<Locked<PeerManager>> Create(const std::shared_ptr<Context>& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB);
 	~PeerManager();
 
-	bool ArePeersNeeded(const Capabilities::ECapability& preferredCapability) const;
-
 	PeerPtr GetPeer(const IPAddress& address);
 	std::optional<PeerConstPtr> GetPeer(const IPAddress& address) const;
 

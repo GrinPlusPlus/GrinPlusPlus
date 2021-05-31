@@ -117,22 +117,6 @@ std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
 	return connectedPeers;
 }
 
-std::optional<std::pair<uint64_t, ConnectedPeer>> ConnectionManager::GetConnectedPeer(const IPAddress& address) const
-{
-	auto connections = m_connections.Read();
-
-	for (ConnectionPtr pConnection : *connections)
-	{
-		ConnectedPeer connectedPeer = pConnection->GetConnectedPeer();
-		if (connectedPeer.GetPeer()->GetIPAddress() == address)
-		{
-			return std::make_optional(std::make_pair(pConnection->GetId(), std::move(connectedPeer)));
-		}
-	}
-
-	return std::nullopt;
-}
-
 uint64_t ConnectionManager::GetMostWork() const
 {
 	auto connections = m_connections.Read();

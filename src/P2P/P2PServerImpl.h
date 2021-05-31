@@ -31,7 +31,7 @@ public:
 	std::vector<ConnectedPeer> GetConnectedPeers() const final;
 	std::optional<PeerConstPtr> GetPeer(const IPAddress& address) const final;
 
-	bool BanPeer(const IPAddress& address, const EBanReason banReason) final;
+	void BanPeer(const IPAddress& address, const EBanReason banReason) final;
 	void UnbanPeer(const IPAddress& address) final;
 	bool UnbanAllPeers() final;
 

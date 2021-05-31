@@ -84,7 +84,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
 
             auto now = std::chrono::system_clock::now();
             const size_t numOutbound = seeder.m_connectionManager.GetNumOutbound();
-            if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(2) < now) {
+            if (numOutbound < minimumConnections && lastConnectTime + std::chrono::seconds(5) < now) {
                 lastConnectTime = now;
 
                 const size_t connectionsToAdd = (std::min)((size_t)15, (minimumConnections - numOutbound));

@@ -16,7 +16,6 @@ bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus, const bool startup)
             RequestBlocks();
 
             m_lastHeight = chainHeight;
-            m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(5);
         }
 
         return true;
@@ -110,12 +109,12 @@ bool BlockSyncer::RequestBlocks()
         if (iter != m_requestedBlocks.end()) {
             if (IsSlowPeer(iter->second.PEER) || iter->second.TIMEOUT < std::chrono::system_clock::now()) {
                 if (!iter->second.PEER->IsBanned()) {
-                    if (!iter->second.retried) {
+                    if (!iter->second.RETRIED) {
                         LOG_INFO_F("Requesting block {} from peer {} again", iter->second.BLOCK_HEIGHT, iter->second.PEER);
                         GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
                         if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, iter->second.PEER)) {
                             iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(10);
-                            iter->second.retried = true;
+                            iter->second.RETRIED = true;
                             ++blockIndex;
                             continue;
                         }
@@ -147,7 +146,8 @@ bool BlockSyncer::RequestBlocks()
             RequestedBlock blockRequested;
             blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
             blockRequested.PEER = mostWorkPeers[nextPeer];
-            blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(10);
+            blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(15);
+            blockRequested.RETRIED = false;
 
             m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);
         }

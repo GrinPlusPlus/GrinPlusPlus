@@ -125,25 +125,12 @@ std::vector<ConnectedPeer> P2PServer::GetConnectedPeers() const
 
 std::optional<PeerConstPtr> P2PServer::GetPeer(const IPAddress& address) const
 {
-	std::optional<std::pair<uint64_t, ConnectedPeer>> connectedPeerOpt = m_pConnectionManager->GetConnectedPeer(address);
-	if (connectedPeerOpt.has_value())
-	{
-		return std::make_optional(connectedPeerOpt.value().second.GetPeer());
-	}
-
 	return m_pPeerManager->Read()->GetPeer(address);
 }
 
-bool P2PServer::BanPeer(const IPAddress& address, const EBanReason banReason)
+void P2PServer::BanPeer(const IPAddress& address, const EBanReason banReason)
 {
-	std::optional<PeerPtr> peerOpt = m_pPeerManager->Write()->GetPeer(address);
-	if (peerOpt.has_value())
-	{
-		peerOpt.value()->Ban(banReason);
-		return true;
-	}
-
-	return false;
+	m_pPeerManager->Write()->BanPeer(address, banReason);
 }
 
 void P2PServer::UnbanPeer(const IPAddress& address)

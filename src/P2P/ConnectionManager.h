@@ -27,7 +27,6 @@ public:
 	bool IsConnected(const IPAddress& address) const;
 	std::vector<PeerPtr> GetMostWorkPeers() const;
 	std::vector<ConnectedPeer> GetConnectedPeers() const;
-	std::optional<std::pair<uint64_t, ConnectedPeer>> GetConnectedPeer(const IPAddress& address) const;
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 

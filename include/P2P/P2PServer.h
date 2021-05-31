@@ -44,7 +44,7 @@ public:
 		const IPAddress& address
 	) const = 0;
 
-	virtual bool BanPeer(
+	virtual void BanPeer(
 		const IPAddress& address,
 		const EBanReason banReason
 	) = 0;

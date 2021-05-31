@@ -90,11 +90,8 @@ int PeersAPI::Peer_Handler(struct mg_connection* conn, void* pNodeContext)
 		const std::string commandStr = ParseCommand(requestedPeer);
 		if (commandStr == "ban" && method == HTTP::EHTTPMethod::POST)
 		{
-			const bool banned = pServer->m_pP2PServer->BanPeer(ipAddress, EBanReason::ManualBan);
-			if (banned)
-			{
-				return HTTPUtil::BuildSuccessResponse(conn, "");
-			}
+			pServer->m_pP2PServer->BanPeer(ipAddress, EBanReason::ManualBan);
+			return HTTPUtil::BuildSuccessResponse(conn, "");
 		}
 		else if (commandStr == "unban" && method == HTTP::EHTTPMethod::POST)
 		{

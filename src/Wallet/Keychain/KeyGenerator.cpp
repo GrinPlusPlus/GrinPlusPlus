@@ -4,7 +4,6 @@
 #include <Crypto/Crypto.h>
 #include <Crypto/Hasher.h>
 #include <Common/Util/BitUtil.h>
-#include <Common/Util/VectorUtil.h>
 #include <Core/Serialization/Serializer.h>
 #include <Wallet/PublicExtKey.h>
 

@@ -9,7 +9,6 @@
 #include <Crypto/Hasher.h>
 #include <Wallet/Exceptions/KeyChainException.h>
 #include <Core/Exceptions/UnimplementedException.h>
-#include <Common/Util/VectorUtil.h>
 
 KeyChain::KeyChain(PrivateExtKey&& masterKey, SecretKey&& bulletProofNonce)
 	: m_masterKey(std::move(masterKey)), m_bulletProofNonce(std::move(bulletProofNonce))

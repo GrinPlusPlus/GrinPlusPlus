@@ -2,7 +2,6 @@
 #include "ValidTransactionFinder.h"
 
 #include <Core/Util/TransactionUtil.h>
-#include <Common/Util/VectorUtil.h>
 #include <Common/Logger.h>
 #include <algorithm>
 #include <unordered_map>

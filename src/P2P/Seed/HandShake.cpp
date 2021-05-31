@@ -8,7 +8,6 @@
 #include <Core/Exceptions/ProtocolException.h>
 #include <Crypto/CSPRNG.h>
 #include <Common/Logger.h>
-#include <Common/Util/VectorUtil.h>
 
 static const uint64_t SELF_NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
 

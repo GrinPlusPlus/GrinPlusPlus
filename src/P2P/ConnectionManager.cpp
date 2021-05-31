@@ -8,7 +8,6 @@
 #include <thread>
 #include <chrono>
 #include <Common/Logger.h>
-#include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Util/ThreadUtil.h>
 #include <Core/Global.h>
@@ -199,38 +198,22 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		auto connectionsWriter = m_connections.Write();
 		std::vector<ConnectionPtr>& connections = *connectionsWriter;
 
-		for (int i = (int)connections.size() - 1; i >= 0; i--)
-		{
-			ConnectionPtr pConnection = connections[i];
-			if (!bInactiveOnly)
-			{
-				connectionsToClose.push_back(pConnection);
-				VectorUtil::Remove<ConnectionPtr>(connections, i);
-			}
-			else if (!pConnection->IsConnectionActive())
-			{
-				LOG_DEBUG_F("Disconnecting from inactive peer ({}) at ({})", pConnection->GetId(), pConnection->GetIPAddress());
-				connectionsToClose.push_back(pConnection);
-				VectorUtil::Remove<ConnectionPtr>(connections, i);
-			}
-		}
+        for (auto iter = connections.begin(); iter < connections.end(); iter++) {
+            ConnectionPtr pConnection = *iter;
+            if (!bInactiveOnly || !pConnection->IsConnectionActive()) {
+                connectionsToClose.push_back(pConnection);
+                connections.erase(iter);
+            }
+        }
 
-		size_t numOutbound = 0;
-		size_t numInbound = 0;
-		for (auto pConnection : connections)
-		{
-			if (pConnection->GetConnectedPeer().GetDirection() == EDirection::INBOUND)
-			{
-				numInbound++;
+		m_numInbound = std::accumulate(
+			connections.begin(), connections.end(), (size_t)0,
+			[](size_t inbound, const ConnectionPtr& pConnection) {
+				return pConnection->GetDirection() == EDirection::INBOUND ? inbound + 1 : inbound;
 			}
-			else
-			{
-				numOutbound++;
-			}
-		}
+		);
 
-		m_numInbound = numInbound;
-		m_numOutbound = numOutbound;
+		m_numOutbound = connections.size() - m_numInbound;
 	}
 
 	for (ConnectionPtr pConnection : connectionsToClose)

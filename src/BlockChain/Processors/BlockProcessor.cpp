@@ -113,7 +113,7 @@ BlockProcessor::BlockProcessingInfo BlockProcessor::DetermineBlockStatus(const F
 		}
 
 		if (pForkBlock == nullptr) {
-			LOG_TRACE_F("Mising previous block. Treating {} as orphan.", block);
+			LOG_TRACE_F("Missing previous block. Treating {} as orphan.", block);
 			return { EBlockStatus::ORPHAN, {} };
 		}
 

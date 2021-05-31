@@ -13,7 +13,6 @@
 #include <Core/Exceptions/WalletException.h>
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/CSPRNG.h>
-#include <Common/Util/VectorUtil.h>
 #include <Common/Util/StringUtil.h>
 #include <Common/Logger.h>
 #include <Net/Tor/TorConnection.h>

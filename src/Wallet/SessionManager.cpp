@@ -3,7 +3,6 @@
 #include "Keychain/SeedEncrypter.h"
 
 #include <Common/Logger.h>
-#include <Common/Util/VectorUtil.h>
 #include <Crypto/Hasher.h>
 #include <Crypto/CSPRNG.h>
 #include <Wallet/Exceptions/SessionTokenException.h>

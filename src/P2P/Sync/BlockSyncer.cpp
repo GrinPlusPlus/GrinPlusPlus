@@ -100,7 +100,7 @@ bool BlockSyncer::RequestBlocks()
     std::vector<std::pair<uint64_t, Hash>> blocksToRequest;
 
     while (blockIndex < blocksNeeded.size()) {
-        if (m_pPipeline->GetBlockPipe()->IsProcessingBlock(blocksNeeded[blockIndex].second)) {
+        if (m_pPipeline->GetBlockPipe()->IsProcessingBlock(blocksNeeded[blockIndex].second) || m_pBlockChain->HasBlock(blocksNeeded[blockIndex].first, blocksNeeded[blockIndex].second)) {
             ++blockIndex;
             continue;
         }
@@ -113,7 +113,7 @@ bool BlockSyncer::RequestBlocks()
                         LOG_INFO_F("Requesting block {} from peer {} again", iter->second.BLOCK_HEIGHT, iter->second.PEER);
                         GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
                         if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, iter->second.PEER)) {
-                            iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(10);
+                            iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
                             iter->second.RETRIED = true;
                             ++blockIndex;
                             continue;
@@ -146,7 +146,7 @@ bool BlockSyncer::RequestBlocks()
             RequestedBlock blockRequested;
             blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
             blockRequested.PEER = mostWorkPeers[nextPeer];
-            blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(15);
+            blockRequested.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(10);
             blockRequested.RETRIED = false;
 
             m_requestedBlocks[blockRequested.BLOCK_HEIGHT] = std::move(blockRequested);

@@ -168,6 +168,7 @@ void Seeder::SeedNewConnection()
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
 
+        std::cout << "Attempt to connect to " << connectedPeer.Format() << std::endl;
         ConnectionPtr pConnection = std::make_shared<Connection>(
             pSocket,
             m_nextId++,

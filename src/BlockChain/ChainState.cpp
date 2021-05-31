@@ -196,30 +196,27 @@ std::unique_ptr<BlockWithOutputs> ChainState::GetBlockWithOutputs(const uint64_t
 
 std::vector<std::pair<uint64_t, Hash>> ChainState::GetBlocksNeeded(const uint64_t maxNumBlocks) const
 {
-	std::vector<std::pair<uint64_t, Hash>> blocksNeeded;
-	blocksNeeded.reserve(maxNumBlocks);
+    std::vector<std::pair<uint64_t, Hash>> blocksNeeded;
+    blocksNeeded.reserve(maxNumBlocks);
 
-	std::shared_ptr<const Chain> pCandidateChain = GetChainStore()->GetCandidateChain();
-	const uint64_t candidateHeight = pCandidateChain->GetTip()->GetHeight();
+    std::shared_ptr<const Chain> pCandidateChain = GetChainStore()->GetCandidateChain();
+    const uint64_t candidateHeight = pCandidateChain->GetTip()->GetHeight();
 
-	uint64_t nextHeight = GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
-	while (nextHeight <= candidateHeight)
-	{
-		auto pIndex = pCandidateChain->GetByHeight(nextHeight);
-		if (!m_pOrphanPool->IsOrphan(nextHeight, pIndex->GetHash()))
-		{
-			blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight, pIndex->GetHash()));
+    uint64_t nextHeight = GetChainStore()->FindCommonIndex(EChainType::CANDIDATE, EChainType::CONFIRMED)->GetHeight() + 1;
+    while (nextHeight <= candidateHeight) {
+        auto pIndex = pCandidateChain->GetByHeight(nextHeight);
+        if (!m_pOrphanPool->IsOrphan(nextHeight, pIndex->GetHash())) {
+            blocksNeeded.emplace_back(std::pair<uint64_t, Hash>(nextHeight, pIndex->GetHash()));
 
-			if (blocksNeeded.size() == maxNumBlocks)
-			{
-				break;
-			}
-		}
+            if (blocksNeeded.size() == maxNumBlocks) {
+                break;
+            }
+        }
 
-		++nextHeight;
-	}
+        ++nextHeight;
+    }
 
-	return blocksNeeded;
+    return blocksNeeded;
 }
 
 void ChainState::Commit()

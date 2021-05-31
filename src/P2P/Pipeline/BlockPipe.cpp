@@ -114,5 +114,5 @@ bool BlockPipe::IsProcessingBlock(const Hash& hash) const
 		return blockEntry.m_block.GetHash() == hash;
 	};
 
-	return m_blocksToProcess.contains<Hash>(hash, comparator);
+	return m_blocksToProcess.contains<Hash>(hash, comparator) || m_pBlockChain->HasOrphan(hash);
 }

@@ -47,6 +47,7 @@ private:
 		PeerPtr PEER;
 		uint64_t BLOCK_HEIGHT;
 		std::chrono::time_point<std::chrono::system_clock> TIMEOUT;
+		bool retried;
 		// TODO: Add retry?
 	};
 	std::unordered_map<uint64_t, RequestedBlock> m_requestedBlocks;

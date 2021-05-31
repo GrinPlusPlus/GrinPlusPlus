@@ -418,6 +418,17 @@ bool BlockChain::ProcessNextOrphanBlock()
 	}
 }
 
+bool BlockChain::HasOrphan(const Hash& blockHash) const
+{
+	auto pReader = m_pChainState->Read();
+	auto pHeader = pReader->GetBlockHeaderByHash(blockHash);
+	if (pHeader == nullptr) {
+		return false;
+	}
+
+	return pReader->GetOrphanBlock(pHeader->GetHeight(), blockHash) != nullptr;
+}
+
 namespace BlockChainAPI
 {
 	BLOCK_CHAIN_API std::shared_ptr<IBlockChain> OpenBlockChain(

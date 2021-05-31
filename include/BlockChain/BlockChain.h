@@ -130,6 +130,7 @@ public:
 	virtual std::vector<std::pair<uint64_t, Hash>> GetBlocksNeeded(const uint64_t maxNumBlocks) const = 0;
 
 	virtual bool ProcessNextOrphanBlock() = 0;
+	virtual bool HasOrphan(const Hash& blockHash) const = 0;
 };
 
 namespace BlockChainAPI

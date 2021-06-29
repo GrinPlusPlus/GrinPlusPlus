@@ -46,6 +46,8 @@ namespace ConfigProps
 		static const std::string WALLET = "WALLET";
 
 		static const std::string MIN_CONFIRMATIONS = "MIN_CONFIRMATIONS";
+
+		static const std::string REUSE_ADDRESS = "REUSE_ADDRESS";
 	}
 
 	namespace Tor

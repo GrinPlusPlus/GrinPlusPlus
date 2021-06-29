@@ -39,7 +39,8 @@ public:
         const KeyChain& keyChain,
         const std::shared_ptr<ITorProcess>& pTorProcess,
         IWalletManager& walletManager,
-        const SessionToken& token
+        const SessionToken& token,
+        const int currentAddressIndex
     );
 
     uint16_t GetPortNumber() const noexcept { return m_pRPCServer->GetPortNumber(); }
@@ -49,7 +50,8 @@ private:
     static std::optional<TorAddress> AddTorListener(
         const KeyChain& keyChain,
         const std::shared_ptr<ITorProcess>& pTorProcess,
-        const uint16_t portNumber
+        const uint16_t portNumber,
+        int addressIndex
     );
 
     static int StatusListener(mg_connection* pConnection, void*)

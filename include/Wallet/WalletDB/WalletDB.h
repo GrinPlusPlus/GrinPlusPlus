@@ -19,6 +19,8 @@ public:
 	virtual ~IWalletDB() = default;
 
 	virtual KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) = 0;
+	virtual int GetAddressIndex(const KeyChainPath& parentPath) const = 0;
+	virtual void IncreaseAddressIndex(const KeyChainPath& parentPath) = 0;
 
 	virtual std::unique_ptr<Slate> LoadSlate(
 		const SecureVector& masterSeed,

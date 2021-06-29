@@ -21,6 +21,8 @@ public:
 	void OnEndWrite() final;
 
 	KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) final;
+	int GetAddressIndex(const KeyChainPath& parentPath) const final;
+	void IncreaseAddressIndex(const KeyChainPath& parentPath) final;
 
 	std::unique_ptr<Slate> LoadSlate(
 		const SecureVector& masterSeed,
@@ -63,6 +65,7 @@ public:
 	void UpdateRefreshBlockHeight(const uint64_t refreshBlockHeight) final;
 	uint64_t GetRestoreLeafIndex() const final;
 	void UpdateRestoreLeafIndex(const uint64_t lastLeafIndex) final;
+
 
 private:
 	UserMetadata GetMetadata() const;

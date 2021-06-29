@@ -31,11 +31,14 @@ public:
 		FileUtil::CreateDirectories(m_walletPath);
 
 		m_minimumConfirmations = 10;
+		m_reuseAddress = 1;
 		if (json.isMember(ConfigProps::Wallet::WALLET))
 		{
 			const Json::Value& walletJSON = json[ConfigProps::Wallet::WALLET];
 
 			m_minimumConfirmations = walletJSON.get(ConfigProps::Wallet::MIN_CONFIRMATIONS, 10).asUInt();
+
+			m_reuseAddress = walletJSON.get(ConfigProps::Wallet::REUSE_ADDRESS, 1).asUInt();
 		}
 	}
 
@@ -45,6 +48,8 @@ public:
 	uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
 	uint32_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
 	void SetMinConfirmations(const uint32_t min_confirmations) { m_minimumConfirmations = min_confirmations; }
+	uint32_t GetReuseAddress() const { return m_reuseAddress; }
+	void SetReuseAddress(const uint32_t reuse_address) { m_reuseAddress = reuse_address; }
 
 private:
 	fs::path m_walletPath;
@@ -52,4 +57,5 @@ private:
 	uint32_t m_publicKeyVersion;
 	uint32_t m_privateKeyVersion;
 	uint32_t m_minimumConfirmations;
+	uint32_t m_reuseAddress;
 };

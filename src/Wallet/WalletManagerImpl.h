@@ -13,6 +13,8 @@ public:
 	WalletManager(const Config& config, INodeClientPtr nodeClient, std::shared_ptr<IWalletStore> pWalletStore);
 	~WalletManager();
 
+	bool ShouldReuseAddresses() final;
+
 	Locked<Wallet> GetWallet(const SessionToken& token) final;
 
 	CreateWalletResponse InitializeNewWallet(
@@ -31,6 +33,11 @@ public:
 	std::optional<TorAddress> AddTorListener(
 		const SessionToken& token,
 		const KeyChainPath& path,
+		const TorProcess::Ptr& pTorProcess
+	);
+
+	std::optional<TorAddress> CheckTorListener(
+		const SessionToken& token,
 		const TorProcess::Ptr& pTorProcess
 	);
 

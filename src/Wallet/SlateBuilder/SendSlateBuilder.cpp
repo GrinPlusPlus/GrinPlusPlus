@@ -132,7 +132,8 @@ Slate SendSlateBuilder::Build(
 	);
 
 	// Payment proof
-	KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
+	// KeyChainPath torPath = KeyChainPath::FromString("m/0/1/1");// TODO: pBatch->GetNextChildPath(KeyChainPath::FromString("m/0/1"));
+	KeyChainPath torPath = KeyChainPath::FromString("m/0/1").GetChild(pBatch->GetAddressIndex(KeyChainPath::FromString("m/0/0")));
 
 	std::optional<SlatePaymentProof> proofOpt = std::nullopt;
 	auto torAddressOpt = addressOpt.has_value() ? TorAddressParser::Parse(addressOpt.value()) : std::nullopt;

@@ -13,6 +13,7 @@ file(GLOB SOURCE_CODE
 	"Sqlite/Tables/SlateContextTable.cpp"
 	"Sqlite/Tables/TransactionsTable.cpp"
 	"Sqlite/Tables/VersionTable.cpp"
+	"Sqlite/Tables/AccountsTable.cpp"
 )
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})

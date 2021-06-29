@@ -120,7 +120,9 @@ private:
 				criteria.GetPostMethod()
 			);
 
-			return m_pWalletManager->Finalize(finalize_criteria, m_pTorProcess);
+			Slate slate = m_pWalletManager->Finalize(finalize_criteria, m_pTorProcess);
+
+			return slate;
 		}
 		catch (std::exception&)
 		{

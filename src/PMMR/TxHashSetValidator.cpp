@@ -144,8 +144,7 @@ bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) cons
 	try
     {
         const uint64_t size = pMMR->GetSize();
-        Index mmr_idx = Index::At(0);
-        while (mmr_idx < size) {
+		for (Index mmr_idx = Index::At(0); mmr_idx < size; mmr_idx++) {
             if (!mmr_idx.IsLeaf()) {
                 const std::unique_ptr<Hash> pParentHash = pMMR->GetHashAt(mmr_idx);
                 if (pParentHash != nullptr) {
@@ -160,12 +159,11 @@ bool TxHashSetValidator::ValidateMMRHashes(std::shared_ptr<const MMR> pMMR) cons
                     }
                 }
             }
-
-            ++mmr_idx;
         }
 	}
-	catch (...)
+	catch (std::exception& e)
 	{
+		LOG_ERROR_F("Exception thrown while validating hashes: {}", e.what());
 		return false;
 	}
 

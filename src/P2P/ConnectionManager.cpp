@@ -30,7 +30,7 @@ void ConnectionManager::Shutdown()
 {
 	try
 	{
-		ThreadUtil::Join(m_broadcastThread);
+		ThreadUtil::Join(m_pingThread);
 
 		PruneConnections(false);
 	}
@@ -47,7 +47,7 @@ void ConnectionManager::Shutdown()
 std::shared_ptr<ConnectionManager> ConnectionManager::Create()
 {
 	auto pConnectionManager = std::shared_ptr<ConnectionManager>(new ConnectionManager());
-	pConnectionManager->m_broadcastThread = std::thread(Thread_Broadcast, std::ref(*pConnectionManager));
+	pConnectionManager->m_pingThread = std::thread(ThreadPing, std::ref(*pConnectionManager));
 	return pConnectionManager;
 }
 
@@ -56,8 +56,7 @@ void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
 	auto connections = m_connections.Read();
 
 	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
-	if (pMostWorkPeer != nullptr)
-	{
+	if (pMostWorkPeer != nullptr) {
 		syncStatus.UpdateNetworkStatus(
 			connections->size(),
 			pMostWorkPeer->GetHeight(),
@@ -72,7 +71,7 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 	return std::any_of(
 		connections->cbegin(),
 		connections->cend(),
-		[&address](ConnectionPtr pConnection)
+		[&address](const ConnectionPtr& pConnection)
 		{
 			return pConnection->GetIPAddress() == address && pConnection->IsConnectionActive();
 		}
@@ -86,13 +85,10 @@ std::vector<PeerPtr> ConnectionManager::GetMostWorkPeers() const
 	auto connections = m_connections.Read();
 
 	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
-	if (pMostWorkPeer != nullptr)
-	{
+	if (pMostWorkPeer != nullptr) {
 		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
-		for (ConnectionPtr pConnection : *connections)
-		{
-			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0)
-			{
+		for (const ConnectionPtr& pConnection : *connections) {
+			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0) {
 				mostWorkPeers.push_back(pConnection->GetPeer());
 			}
 		}
@@ -110,7 +106,7 @@ std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
 		connections->cbegin(),
 		connections->cend(),
 		std::back_inserter(connectedPeers),
-		[](ConnectionPtr pConnection) { return pConnection->GetConnectedPeer(); }
+		[](const ConnectionPtr& pConnection) { return pConnection->GetConnectedPeer(); }
 	);
 
 	return connectedPeers;
@@ -120,8 +116,7 @@ uint64_t ConnectionManager::GetMostWork() const
 {
 	auto connections = m_connections.Read();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
-	if (pConnection != nullptr)
-	{
+	if (pConnection != nullptr) {
 		return pConnection->GetTotalDifficulty();
 	}
 
@@ -132,8 +127,7 @@ uint64_t ConnectionManager::GetHighestHeight() const
 {
 	auto connections = m_connections.Read();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
-	if (pConnection != nullptr)
-	{
+	if (pConnection != nullptr) {
 		return pConnection->GetHeight();
 	}
 
@@ -144,8 +138,7 @@ PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 {
 	auto connections = m_connections.Read();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
-	if (pConnection != nullptr)
-	{
+	if (pConnection != nullptr) {
 		pConnection->SendAsync(message);
 		return pConnection->GetPeer();
 	}
@@ -155,11 +148,9 @@ PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 
 bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer)
 {
-	auto connections = m_connections.Read();
-	for (auto pConnection : *connections)
-	{
-		if (pConnection->GetIPAddress() == pPeer->GetIPAddress())
-		{
+	auto connections = *m_connections.Read().GetShared();
+	for (auto pConnection : connections) {
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress()) {
 			pConnection->SendAsync(message);
 			return true;
 		}
@@ -170,7 +161,15 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr 
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
 {
-	m_sendQueue.push_back(MessageToBroadcast(sourceId, message.Clone()));
+	LOG_DEBUG_F("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
+
+	// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
+	auto connections = *m_connections.Read().GetShared();
+	for (ConnectionPtr pConnection : connections) {
+		if (pConnection->GetId() != sourceId) {
+			pConnection->SendAsync(message);
+		}
+	}
 }
 
 void ConnectionManager::AddConnection(ConnectionPtr pConnection)
@@ -216,7 +215,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 		m_numOutbound = connections.size() - m_numInbound;
 	}
 
-	for (ConnectionPtr pConnection : connectionsToClose)
+	for (const ConnectionPtr& pConnection : connectionsToClose)
 	{
 		try
 		{
@@ -234,7 +233,7 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 	std::vector<ConnectionPtr> mostWorkPeers;
 	uint64_t mostWork = 0;
 	uint64_t mostWorkHeight = 0;
-	for (ConnectionPtr pConnection : connections)
+	for (const ConnectionPtr& pConnection : connections)
 	{
 		if (pConnection->GetHeight() == 0)
 		{
@@ -273,37 +272,15 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 	return mostWorkPeers[index];
 }
 
-void ConnectionManager::Thread_Broadcast(ConnectionManager& connectionManager)
+void ConnectionManager::ThreadPing(ConnectionManager& connectionManager)
 {
-	auto last_ping_check = std::chrono::system_clock::now();
 	while (Global::IsRunning())
 	{
-		std::unique_ptr<MessageToBroadcast> pBroadcastMessage = connectionManager.m_sendQueue.copy_front();
-		if (pBroadcastMessage != nullptr)
-		{
-			connectionManager.m_sendQueue.pop_front(1);
-			LOG_DEBUG_F("Broadcasting message: {}", MessageTypes::ToString(pBroadcastMessage->m_pMessage->GetMessageType()));
-
-			// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
-			auto pConnections = connectionManager.m_connections.Read();
-			for (ConnectionPtr pConnection : *pConnections)
-			{
-				if (pConnection->GetId() != pBroadcastMessage->m_sourceId)
-				{
-					pConnection->SendAsync(*pBroadcastMessage->m_pMessage);
-				}
-			}
+		auto connections = *connectionManager.m_connections.Read().GetShared();
+		for (const ConnectionPtr& pConnection : connections) {
+			pConnection->CheckPing();
 		}
 
-		if (last_ping_check + std::chrono::seconds(2) < std::chrono::system_clock::now()) {
-			last_ping_check = std::chrono::system_clock::now();
-
-			auto pConnections = connectionManager.m_connections.Read();
-			for (ConnectionPtr pConnection : *pConnections) {
-				pConnection->CheckPing();
-			}
-		}
-
-		ThreadUtil::SleepFor(std::chrono::milliseconds(10));
+		ThreadUtil::SleepFor(std::chrono::seconds(2));
 	}
 }

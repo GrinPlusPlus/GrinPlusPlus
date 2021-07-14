@@ -91,9 +91,13 @@ public:
 
 	std::unique_ptr<Hash> GetHashAt(const Index& mmrIndex) const final
 	{
+		if (m_pPruneList->IsCompacted(mmrIndex)) {
+			return nullptr;
+		}
+
 		Hash hash = MMRHashUtil::GetHashAt(m_pHashFile, mmrIndex, m_pPruneList);
 		if (hash == ZERO_HASH) {
-			return std::unique_ptr<Hash>(nullptr);
+			return nullptr;
 		}
 
 		return std::make_unique<Hash>(std::move(hash));

@@ -98,10 +98,11 @@ public:
 
 	void Set(const Roaring& positionsToSet)
 	{
-		for (auto iter = positionsToSet.begin(); iter != positionsToSet.end(); iter++)
-		{
+		for (auto iter = positionsToSet.begin(); iter != positionsToSet.end(); iter++) {
 			Index mmr_idx = Index::At(iter.i.current_value - 1);
-			Set(mmr_idx.GetLeafIndex());
+			if (mmr_idx.IsLeaf()) {
+				Set(mmr_idx.GetLeafIndex());
+			}
 		}
 	}
 
@@ -115,10 +116,11 @@ public:
 
 	void Unset(const Roaring& positionsToUnset)
 	{
-		for (auto iter = positionsToUnset.begin(); iter != positionsToUnset.end(); iter++)
-		{
+		for (auto iter = positionsToUnset.begin(); iter != positionsToUnset.end(); iter++) {
 			Index mmr_idx = Index::At(iter.i.current_value - 1);
-			Unset(mmr_idx.GetLeafIndex());
+			if (mmr_idx.IsLeaf()) {
+				Unset(mmr_idx.GetLeafIndex());
+			}
 		}
 	}
 

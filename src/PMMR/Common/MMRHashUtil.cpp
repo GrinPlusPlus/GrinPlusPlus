@@ -63,7 +63,7 @@ Hash MMRHashUtil::GetHashAt(
 {
 	if (pPruneList != nullptr) {
 		if (pPruneList->IsCompacted(mmr_idx)) {
-			return ZERO_HASH;
+			throw std::runtime_error("Hash is compacted");
 		}
 
 		return pHashFile->GetDataAt(mmr_idx.Get() - pPruneList->GetShift(mmr_idx));
@@ -100,9 +100,7 @@ std::vector<Hash> MMRHashUtil::GetLastLeafHashes(
 
 		if (pLeafSet == nullptr || pLeafSet->Contains(leaf_idx)) {
 			Hash hash = GetHashAt(pHashFile, leaf_idx.GetIndex(), pPruneList);
-			if (hash != ZERO_HASH) {
-				hashes.emplace_back(std::move(hash));
-			}
+			hashes.emplace_back(std::move(hash));
 		}
 	}
 

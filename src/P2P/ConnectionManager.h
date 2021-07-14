@@ -42,23 +42,10 @@ private:
 	ConnectionManager();
 
 	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const;
-	static void Thread_Broadcast(ConnectionManager& connectionManager);
+	static void ThreadPing(ConnectionManager& connectionManager);
 	
 	Locked<std::vector<ConnectionPtr>> m_connections;
-
-	struct MessageToBroadcast
-	{
-		MessageToBroadcast(uint64_t sourceId, std::shared_ptr<IMessage> pMessage)
-			: m_sourceId(sourceId), m_pMessage(pMessage)
-		{
-
-		}
-		uint64_t m_sourceId;
-		std::shared_ptr<IMessage> m_pMessage;
-	};
-
-	ConcurrentQueue<MessageToBroadcast> m_sendQueue;
-	std::thread m_broadcastThread;
+	std::thread m_pingThread;
 
 	std::atomic<size_t> m_numOutbound;
 	std::atomic<size_t> m_numInbound;

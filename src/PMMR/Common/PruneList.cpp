@@ -142,7 +142,7 @@ void PruneList::BuildPrunedCache()
         Index parent_idx = mmr_idx;
         while (parent_idx < maximum) {
             if (m_prunedRoots.contains(parent_idx.GetPosition() + 1)) {
-                m_prunedCache.add(parent_idx.GetPosition() + 1);
+                m_prunedCache.add(mmr_idx.GetPosition() + 1);
                 break;
             }
 

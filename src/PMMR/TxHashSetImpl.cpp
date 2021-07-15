@@ -14,13 +14,11 @@
 #include <thread>
 
 TxHashSet::TxHashSet(
-	const Config& config,
 	std::shared_ptr<KernelMMR> pKernelMMR,
 	std::shared_ptr<OutputPMMR> pOutputPMMR,
 	std::shared_ptr<RangeProofPMMR> pRangeProofPMMR,
 	BlockHeaderPtr pBlockHeader)
-	: m_config(config),
-	m_pKernelMMR(pKernelMMR),
+	: m_pKernelMMR(pKernelMMR),
 	m_pOutputPMMR(pOutputPMMR),
 	m_pRangeProofPMMR(pRangeProofPMMR),
 	m_pBlockHeader(pBlockHeader),

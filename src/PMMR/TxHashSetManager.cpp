@@ -43,7 +43,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::Open(const BlockHeaderPtr& pConfir
 		}
 	}
 
-	m_pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(m_config, pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
+	m_pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
 
 	return m_pTxHashSet;
 }
@@ -67,37 +67,17 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 			pKernelMMR->Rewind(pHeader->GetNumKernels());
 			pKernelMMR->Commit();
 
-			// Create output BitmapFile from Roaring file
-			const fs::path leafPath = txHashSetPath / "output" / "pmmr_leaf.bin";
-			Roaring outputBitmap;
-			std::vector<unsigned char> outputBytes;
-			if (FileUtil::ReadFile(leafPath, outputBytes))
-			{
-				outputBitmap = Roaring::readSafe((const char*)outputBytes.data(), outputBytes.size());
-			}
-			BitmapFile::Create(txHashSetPath / "output" / "pmmr_leafset.bin", outputBitmap);
-
 			// Rewind Output MMR
 			std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(txHashSetPath);
 			pOutputPMMR->Rewind(pHeader->GetNumOutputs(), {});
 			pOutputPMMR->Commit();
-
-			// Create rangeproof BitmapFile from Roaring file
-			const fs::path rangeproofPath = txHashSetPath / "rangeproof" / "pmmr_leaf.bin";
-			Roaring rangeproofBitmap;
-			std::vector<unsigned char> rangeproofBytes;
-			if (FileUtil::ReadFile(rangeproofPath, rangeproofBytes))
-			{
-				rangeproofBitmap = Roaring::readSafe((const char*)rangeproofBytes.data(), rangeproofBytes.size());
-			}
-			BitmapFile::Create(txHashSetPath / "rangeproof" / "pmmr_leafset.bin", rangeproofBitmap);
 
 			// Rewind RangeProof MMR
 			std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(txHashSetPath);
 			pRangeProofPMMR->Rewind(pHeader->GetNumOutputs(), {});
 			pRangeProofPMMR->Commit();
 
-			return std::shared_ptr<TxHashSet>(new TxHashSet(config, pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));
+			return std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));
 		}
 	}
 	catch (std::exception& e)
@@ -137,7 +117,7 @@ fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<IBlockDB> pBlockDB, Bloc
 			auto pKernelMMR = KernelMMR::Load(snapshotDir);
 			auto pOutputPMMR = OutputPMMR::Load(snapshotDir);
 			auto pRangeProofPMMR = RangeProofPMMR::Load(snapshotDir);
-			TxHashSet snapshotTxHashSet(m_config, pKernelMMR, pOutputPMMR, pRangeProofPMMR, pFlushedHeader);
+			TxHashSet snapshotTxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pFlushedHeader);
 
 			// Rewind Snapshot TxHashSet
 			snapshotTxHashSet.Rewind(pBlockDB, *pHeader);

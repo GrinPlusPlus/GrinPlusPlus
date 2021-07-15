@@ -34,6 +34,7 @@ std::shared_ptr<Locked<ChainStore>> ChainStore::Load(const Config& config, std::
 
 	pAllocator->AddChain(pCandidateChain);
 
+	LOG_TRACE("Chains loaded");
 	auto pChainStore = std::shared_ptr<ChainStore>(new ChainStore(pConfirmedChain, pCandidateChain));
 	return std::make_shared<Locked<ChainStore>>(Locked<ChainStore>(pChainStore));
 }

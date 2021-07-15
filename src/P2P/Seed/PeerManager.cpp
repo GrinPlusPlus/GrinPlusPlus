@@ -62,13 +62,18 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
         );
 
         for (auto iter = peerManager.m_peersByAddress.begin(); iter != peerManager.m_peersByAddress.end(); iter++) {
-            PeerEntry& peerEntry = iter->second;
-            if (peerEntry.m_peer->IsDirty()) {
-                peersToUpdate.push_back(peerEntry.m_peer);
-                peerEntry.m_peer->SetDirty(false);
-            } else if (peerEntry.m_peer->GetLastContactTime() > 0 && peerEntry.m_peer->GetLastContactTime() < minimumContactTime) {
-                peerManager.m_peersByAddress.erase(iter);
-                peersToDelete.push_back(peerEntry.m_peer);
+            try {
+                PeerEntry& peerEntry = iter->second;
+                if (peerEntry.m_peer->IsDirty()) {
+                    peersToUpdate.push_back(peerEntry.m_peer);
+                    peerEntry.m_peer->SetDirty(false);
+                } else if (peerEntry.m_peer->GetLastContactTime() > 0 && peerEntry.m_peer->GetLastContactTime() < minimumContactTime) {
+                    peerManager.m_peersByAddress.erase(iter);
+                    peersToDelete.push_back(peerEntry.m_peer);
+                }
+            } 
+            catch (std::exception& e) {
+                LOG_ERROR_F("Exception thrown: {}", e.what());
             }
         }
 

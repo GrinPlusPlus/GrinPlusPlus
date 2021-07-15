@@ -96,10 +96,6 @@ public:
 		}
 
 		Hash hash = MMRHashUtil::GetHashAt(m_pHashFile, mmrIndex, m_pPruneList);
-		if (hash == ZERO_HASH) {
-			return nullptr;
-		}
-
 		return std::make_unique<Hash>(std::move(hash));
 	}
 
@@ -111,6 +107,11 @@ public:
 	bool IsUnpruned(const LeafIndex& leaf_idx) const
 	{
 		return leaf_idx.GetPosition() < GetSize() && m_pLeafSet->Contains(leaf_idx);
+	}
+
+	bool IsCompacted(const Index& index) const
+	{
+		return m_pPruneList->IsCompacted(index);
 	}
 
 	std::unique_ptr<DATA_TYPE> GetAt(const LeafIndex& leaf_idx) const

@@ -13,7 +13,6 @@ class TxHashSet : public ITxHashSet
 {
 public:
 	TxHashSet(
-		const Config& config,
 		std::shared_ptr<KernelMMR> pKernelMMR,
 		std::shared_ptr<OutputPMMR> pOutputPMMR,
 		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR,
@@ -47,7 +46,6 @@ public:
 	std::shared_ptr<RangeProofPMMR> GetRangeProofPMMR() { return m_pRangeProofPMMR; }
 
 private:
-	const Config& m_config;
 	std::shared_ptr<KernelMMR> m_pKernelMMR;
 	std::shared_ptr<OutputPMMR> m_pOutputPMMR;
 	std::shared_ptr<RangeProofPMMR> m_pRangeProofPMMR;

@@ -55,7 +55,7 @@ std::shared_ptr<TorControl> TorControl::Create(
 		std::string torrcPath = "./tor/.torrc";
 #endif
 
-		std::vector<std::string> args({
+		/*std::vector<std::string> args({
 			command.u8string(),
 			"--ControlPort", std::to_string(controlPort),
 			"--SocksPort", std::to_string(socksPort),
@@ -70,9 +70,12 @@ std::shared_ptr<TorControl> TorControl::Create(
 			// Fallback to tor on path
 			args[0] = "tor";
 			pProcess = ChildProcess::Create(args);
-		}
+		}*/
 
+		ChildProcess::UCPtr pProcess =  nullptr;
+		
 		auto pClient = TorControlClient::Connect(controlPort, Global::GetConfig().GetControlPassword());
+		
 		if (pClient != nullptr) {
 			return std::make_unique<TorControl>(
 				socksPort,

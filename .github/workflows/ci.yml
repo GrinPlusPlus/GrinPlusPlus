@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
         name: [macos, ubuntu, windows]
         include:
           - name: macos

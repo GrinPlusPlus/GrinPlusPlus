@@ -52,7 +52,7 @@ Index Index::GetRightChild() const noexcept
 uint64_t Index::CalculateHeight(const uint64_t position) noexcept
 {
     uint64_t height = position;
-    uint64_t peakSize = BitUtil::FillOnesToRight(position + 1);
+    uint64_t peakSize = BitUtil::FillOnesToRight(position);
     while (peakSize != 0) {
         if (height >= peakSize) {
             height -= peakSize;

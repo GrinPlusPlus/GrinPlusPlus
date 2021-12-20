@@ -227,7 +227,7 @@ TxHashSetRoots TxHashSet::GetRoots(const std::shared_ptr<const IBlockDB>& pBlock
 
 void TxHashSet::SaveOutputPositions(const Chain::CPtr& pChain, std::shared_ptr<IBlockDB> pBlockDB) const
 {
-	uint64_t firstOutput = 0;
+	// uint64_t firstOutput = 0;
 	LeafIndex leaf_idx = LeafIndex::At(0);
 	for (uint64_t height = 0; height <= m_pBlockHeader->GetHeight(); height++) {
 		auto pIndex = pChain->GetByHeight(height);

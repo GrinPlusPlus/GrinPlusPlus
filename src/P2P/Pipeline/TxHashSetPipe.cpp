@@ -204,7 +204,9 @@ void TxHashSetPipe::Thread_SendTxHashSet(
 		pConnection->SendSync(TxHashSetArchiveMessage{ pHeader->GetHash(), pHeader->GetHeight(), fileSize });
 
 		std::vector<uint8_t> buffer(BUFFER_SIZE, 0);
-		uint64_t totalBytesRead = 0;
+		
+		//uint64_t totalBytesRead = 0;
+		
 		while (file.read((char*)buffer.data(), BUFFER_SIZE)) {
 			std::vector<uint8_t> bytesToSend(
 				buffer.cbegin(),

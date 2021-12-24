@@ -179,12 +179,15 @@ bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementC
 
 void Socket::SendAsync(const std::vector<uint8_t>& message)
 {
-    if (!m_writeQueue.empty()) {
+    bool first_in_queue = m_writeQueue.empty();
+    m_writeQueue.push_back(message);
+
+    if (!first_in_queue) {
         // There is already an async_write in process.
         // It will send this message when it completes.
         return;
     }
-    m_writeQueue.push_back(message);
+
     std::shared_lock<std::shared_mutex> socketLock(m_socketMutex);
     if (m_socketOpen) {
         asio::async_write(

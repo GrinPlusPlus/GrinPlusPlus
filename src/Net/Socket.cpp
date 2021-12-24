@@ -165,8 +165,6 @@ bool Socket::SetBlocking(const bool blocking)
 
 bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    //std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
-
     if (incrementCount) {
         m_rateCounter.AddMessageSent();
     }
@@ -199,8 +197,6 @@ void Socket::SendAsync(const std::vector<uint8_t>& message)
 
 void Socket::HandleSent(const asio::error_code& ec, size_t)
 {
-    //std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
-
     m_rateCounter.AddMessageSent();
 
     if (!m_writeQueue.empty()) {

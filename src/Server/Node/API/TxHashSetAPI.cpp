@@ -247,7 +247,6 @@ int TxHashSetAPI::GetOutputs_Handler(struct mg_connection* conn, void* pNodeCont
 			for (const OutputDTO& info : range.GetOutputs())
 			{
 				Json::Value outputNode;
-				// const EOutputFeatures features = info.GetIdentifier().GetFeatures();
 				outputNode["output_type"] = OutputFeatures::ToString(info.GetIdentifier().GetFeatures());
 				outputNode["commit"] = info.GetIdentifier().GetCommitment().ToHex();
 				outputNode["spent"] = info.IsSpent();

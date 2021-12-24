@@ -11,7 +11,7 @@ public:
     SharedQueue() = default;
     ~SharedQueue() = default;
 
-    T& SharedQueue<T>::front()
+    T& front()
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         while (queue_.empty())
@@ -21,7 +21,7 @@ public:
         return queue_.front();
     }
 
-    void SharedQueue<T>::pop_front()
+    void pop_front()
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         while (queue_.empty())
@@ -31,7 +31,7 @@ public:
         queue_.pop_front();
     }
 
-    void SharedQueue<T>::push_back(const T& item)
+    void push_back(const T& item)
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         queue_.push_back(item);
@@ -40,7 +40,7 @@ public:
 
     }
 
-    void SharedQueue<T>::push_back(T&& item)
+    void push_back(T&& item)
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         queue_.push_back(std::move(item));
@@ -49,7 +49,7 @@ public:
 
     }
 
-    int SharedQueue<T>::size()
+    int size()
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         int size = queue_.size();
@@ -57,7 +57,7 @@ public:
         return size;
     }
 
-    bool SharedQueue<T>::empty()
+    bool empty()
     {
         return queue_.empty();
     }

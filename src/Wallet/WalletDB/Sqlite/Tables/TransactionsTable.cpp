@@ -25,7 +25,6 @@ void TransactionsTable::AddTransactions(SqliteDB& database, const SecureVector& 
 {
 	for (const WalletTx& walletTx : transactions)
 	{
-		sqlite3_stmt* stmt = nullptr;
 		std::string insert_tx_cmd = "insert into transactions(id, slate_id, encrypted) values(?, ?, ?)";
 		insert_tx_cmd += " ON CONFLICT(id) DO UPDATE SET slate_id=excluded.slate_id, encrypted=excluded.encrypted";
 

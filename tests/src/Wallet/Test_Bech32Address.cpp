@@ -9,7 +9,6 @@
 
 TEST_CASE("Bech32Address")
 {
-    uint8_t version = 1;
     ed25519_keypair_t ed25519_keypair = ED25519::CalculateKeypair(SecretKey{ CSPRNG::GenerateRandomBytes(32) });
     SecretKey excess = CSPRNG::GenerateRandomBytes(32);
     SecretKey nonce = CSPRNG::GenerateRandomBytes(32);

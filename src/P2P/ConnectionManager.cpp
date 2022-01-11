@@ -201,7 +201,6 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
             ConnectionPtr pConnection = *iter;
             if (!bInactiveOnly || !pConnection->IsConnectionActive()) {
                 connectionsToClose.push_back(pConnection);
-                connections.erase(iter);
             }
         }
 

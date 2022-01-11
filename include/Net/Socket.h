@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/Compat.h>
+#include <Common/SharedQueue.h>
 #include <Core/Traits/Printable.h>
 #include <Net/RateCounter.h>
 #include <Net/SocketAddress.h>
@@ -92,7 +93,7 @@ private:
 	RateCounter m_rateCounter;
 
 	std::mutex m_writeQueueMutex;
-	std::queue<std::vector<uint8_t>> m_writeQueue; // TODO: Use strand instead of queue
+	SharedQueue<std::vector<uint8_t>> m_writeQueue; // TODO: Use strand instead of queue
 
 	asio::error_code m_errorCode;
 	std::atomic_bool m_socketOpen;

@@ -61,20 +61,27 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
             std::chrono::system_clock::now() - std::chrono::hours(24 * 7)
         );
 
-        for (auto iter = peerManager.m_peersByAddress.begin(); iter != peerManager.m_peersByAddress.end(); iter++) {
+        for (auto iter : peerManager.m_peersByAddress)
+        {
             try {
-                PeerEntry& peerEntry = iter->second;
-                if (peerEntry.m_peer->IsDirty()) {
+                PeerEntry& peerEntry = iter.second;
+                if (peerEntry.m_peer->IsDirty())
+                {
                     peersToUpdate.push_back(peerEntry.m_peer);
                     peerEntry.m_peer->SetDirty(false);
-                } else if (peerEntry.m_peer->GetLastContactTime() > 0 && peerEntry.m_peer->GetLastContactTime() < minimumContactTime) {
-                    peerManager.m_peersByAddress.erase(iter);
+                } else if (peerEntry.m_peer->GetLastContactTime() > 0 && peerEntry.m_peer->GetLastContactTime() < minimumContactTime)
+                {
                     peersToDelete.push_back(peerEntry.m_peer);
                 }
             } 
             catch (std::exception& e) {
                 LOG_ERROR_F("Exception thrown: {}", e.what());
             }
+        }
+
+        for (PeerPtr pPeer : peersToDelete)
+        {
+            peerManager.m_peersByAddress.erase(pPeer->GetIPAddress());
         }
 
         peerManager.m_pPeerDB->Write()->SavePeers(peersToUpdate);

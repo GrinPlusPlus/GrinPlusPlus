@@ -54,8 +54,6 @@ bool Socket::CloseSocket()
 
 bool Socket::IsActive() const
 {
-    //std::shared_lock<std::shared_mutex> readLock(m_mutex);
-
     if (m_socketOpen && !m_errorCode) {
         return true;
     }
@@ -93,8 +91,6 @@ bool Socket::SetDefaultOptions()
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
 #ifdef _WIN32
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 #else
@@ -114,8 +110,6 @@ bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
 
 bool Socket::SetReceiveBufferSize(const int bufferSize)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
     const int socketRcvBuff = bufferSize;
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
     if (result == 0) {
@@ -129,8 +123,6 @@ bool Socket::SetReceiveBufferSize(const int bufferSize)
 
 bool Socket::SetSendTimeout(const unsigned long milliseconds)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
 #ifdef _WIN32
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 #else
@@ -150,8 +142,6 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
-
     if (m_blocking != blocking) {
 #ifdef _WIN32
         unsigned long blockingValue = (blocking ? 0 : 1);
@@ -175,8 +165,6 @@ bool Socket::SetBlocking(const bool blocking)
 
 bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
-
     if (incrementCount) {
         m_rateCounter.AddMessageSent();
     }
@@ -192,15 +180,13 @@ bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementC
 void Socket::SendAsync(const std::vector<uint8_t>& message)
 {
     bool first_in_queue = m_writeQueue.empty();
-    m_writeQueue.push(message);
+    m_writeQueue.push_back(message);
 
     if (!first_in_queue) {
         // There is already an async_write in process.
         // It will send this message when it completes.
         return;
     }
-
-    size_t message_size = message.size();
 
     std::shared_lock<std::shared_mutex> socketLock(m_socketMutex);
     if (m_socketOpen) {
@@ -214,11 +200,10 @@ void Socket::SendAsync(const std::vector<uint8_t>& message)
 
 void Socket::HandleSent(const asio::error_code& ec, size_t)
 {
-    std::unique_lock<std::mutex> writeQueueLock(m_writeQueueMutex);
-
     m_rateCounter.AddMessageSent();
+
     if (!m_writeQueue.empty()) {
-        m_writeQueue.pop();
+        m_writeQueue.pop_front();
     }
 
     if (ec) {
@@ -247,8 +232,6 @@ std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incr
 
         ThreadUtil::SleepFor(std::chrono::milliseconds(5));
     }
-
-    //std::unique_lock<std::shared_mutex> writeLock(m_mutex);
 
     std::vector<uint8_t> bytes(num_bytes);
 

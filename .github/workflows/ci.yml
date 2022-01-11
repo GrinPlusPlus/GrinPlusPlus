@@ -24,7 +24,7 @@ jobs:
                 backend/bin/Release/tx_verifier
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
-            os: ubuntu-16.04
+            os: ubuntu-18.04
             os_name: linux
             compiler: gcc
             version: "8"

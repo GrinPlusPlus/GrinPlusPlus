@@ -12,7 +12,7 @@ std::shared_ptr<Server> Server::Create(const EServerType type, const std::option
 	std::string listeningPort = StringUtil::Format("{}:{}", listenerAddr, port.value_or(0));
 
 	const char* pOptions[] = {
-		"num_threads", "50",
+		"num_threads", "10", // TODO: this could be a parameter or adjust it depending on the OS
 		"listening_ports", listeningPort.c_str(),
 		"enable_keep_alive", "no",
 		"keep_alive_timeout_ms", "no",

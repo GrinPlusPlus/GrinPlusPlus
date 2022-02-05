@@ -13,9 +13,10 @@ std::shared_ptr<Server> Server::Create(const EServerType type, const std::option
 
 	const char* pOptions[] = {
 		"num_threads", "50",
-		"connection_queue", "30",
-		"keep_alive_timeout_ms", "0",
 		"listening_ports", listeningPort.c_str(),
+		"enable_keep_alive", "no",
+		"keep_alive_timeout_ms", "no",
+		"request_timeout_ms", "120000",
 		NULL
 	};
 

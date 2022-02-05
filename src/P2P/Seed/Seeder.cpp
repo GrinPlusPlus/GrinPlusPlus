@@ -75,7 +75,7 @@ void Seeder::Thread_Seed(Seeder& seeder)
     LoggerAPI::SetThreadName("SEED");
     LOG_TRACE("BEGIN");
 
-    auto lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(10);
+    auto lastConnectTime = std::chrono::system_clock::now() - std::chrono::seconds(5);
 
     const size_t minimumConnections = Global::GetConfig().GetMinPeers();
     while (!seeder.m_terminate && Global::IsRunning()) {
@@ -168,7 +168,7 @@ void Seeder::SeedNewConnection()
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
 
-        std::cout << "Attempt to connect to " << connectedPeer.Format() << std::endl;
+        std::cout << "Attempt to connect to " << connectedPeer.Format() << "..." << std::endl;
         ConnectionPtr pConnection = std::make_shared<Connection>(
             pSocket,
             m_nextId++,
@@ -180,7 +180,6 @@ void Seeder::SeedNewConnection()
         pConnection->Connect();
     } else if (!m_usedDNS.exchange(true)) {
         std::vector<SocketAddress> peerAddresses = DNSSeeder::GetPeersFromDNS();
-
         m_peerManager.Write()->AddFreshPeers(peerAddresses);
     }
 }

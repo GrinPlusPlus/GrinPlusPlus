@@ -12,8 +12,11 @@ std::shared_ptr<Server> Server::Create(const EServerType type, const std::option
 	std::string listeningPort = StringUtil::Format("{}:{}", listenerAddr, port.value_or(0));
 
 	const char* pOptions[] = {
-		"num_threads", "15",
+		"num_threads", "50",
 		"listening_ports", listeningPort.c_str(),
+		"enable_keep_alive", "no",
+		"keep_alive_timeout_ms", "no",
+		"request_timeout_ms", "120000",
 		NULL
 	};
 
@@ -21,8 +24,8 @@ std::shared_ptr<Server> Server::Create(const EServerType type, const std::option
 	auto pCivetContext = mg_start(NULL, 0, pOptions);
 	if (pCivetContext == nullptr)
 	{
-		LOG_ERROR("Failed to start server.");
-		throw HTTP_EXCEPTION("mg_start failed.");
+		LOG_ERROR_F("Failed to start server ({}).", listeningPort);
+		throw HTTP_EXCEPTION("mg_start failed " + listeningPort);
 	}
 
 	mg_server_ports ports;

@@ -65,6 +65,7 @@ ConfigPtr Initialize(const Environment environment)
 	try
 	{
 		pConfig = Config::Load(environment);
+		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)
 	{
@@ -75,6 +76,7 @@ ConfigPtr Initialize(const Environment environment)
 	try
 	{
 		LoggerAPI::Initialize(pConfig->GetLogDirectory(), pConfig->GetLogLevel());
+		IO::Out("Logger initialized.");
 	}
 	catch (std::exception& e)
 	{
@@ -102,7 +104,6 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 		throw;
 	}
 
-
 	std::unique_ptr<Node> pNode = nullptr;
 	INodeClientPtr pNodeClient = nullptr;
 
@@ -118,6 +119,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 		pNode = Node::Create(pContext);
 		pNodeClient = pNode->GetNodeClient();
 	}
+	IO::Out("RPC Node Client started.");
 
 	std::unique_ptr<WalletDaemon> pWallet = nullptr;
 	if (options.include_wallet) {
@@ -127,12 +129,14 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 			pNodeClient
 		);
 	}
+	IO::Out("Wallet Daemon started.");
 
 	system_clock::time_point startTime = system_clock::now();
 	while (true) {
 		if (!Global::IsRunning()) {
 			IO::Clear();
 			IO::Out("SHUTTING DOWN...");
+			IO::Flush();
 
 			break;
 		}

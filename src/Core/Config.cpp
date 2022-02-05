@@ -12,6 +12,7 @@
 #include <Core/Util/JsonUtil.h>
 #include <fstream>
 
+#include "../Server/console.h"
 struct Config::Impl
 {
 	Impl(const Json::Value& json, const Environment environment, const fs::path& dataPath)
@@ -72,7 +73,7 @@ Config::Ptr Config::Load(const Environment environment)
 	}
 	catch (...) {}
 	
-	if (pConfig == nullptr) {
+	if (pConfig == nullptr || pConfig->GetJSON().empty()) {
 		pConfig = Config::Default(environment);
 	}
 
@@ -110,7 +111,15 @@ fs::path Config::DefaultDataDir(const Environment environment)
 
 std::shared_ptr<Config> Config::Default(const Environment environment)
 {
-	return Load(Json::Value(), environment);
+	Json::Value m_json = Json::Value(); 
+	m_json["P2P"] = Json::Value();
+	m_json["P2P"]["MAX_PEERS"] = 60;
+	m_json["P2P"]["MIN_PEERS"] = 10;
+	m_json["WALLET"] = Json::Value();
+	m_json["WALLET"]["DATABASE"] = "SQLITE";
+	m_json["WALLET"]["MIN_CONFIRMATIONS"] = 10;
+
+	return Load(m_json, environment);
 }
 
 Json::Value& Config::GetJSON() noexcept { return m_pImpl->m_json; }

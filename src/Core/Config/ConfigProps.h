@@ -14,6 +14,7 @@ namespace ConfigProps
 
 		static const std::string MIN_PEERS = "MIN_PEERS";
 		static const std::string MAX_PEERS = "MAX_PEERS";
+		static const std::string PREFERRED_PEERS = "PREFERRED_PEERS";
 	}
 
 	namespace Dandelion

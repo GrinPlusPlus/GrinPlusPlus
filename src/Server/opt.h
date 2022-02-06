@@ -3,6 +3,7 @@
 #include <Core/Enums/Environment.h>
 #include <Net/SocketAddress.h>
 #include <klib/ketopt.h>
+#include <filesystem.h>
 #include <iostream>
 #include <optional>
 
@@ -13,6 +14,7 @@ struct Options
 	Environment environment;
 	bool include_wallet;
 	std::optional<std::pair<std::string, uint16_t>> shared_node;
+	std::optional<fs::path> config_path;
 };
 
 static ko_longopt_t longopts[] = {
@@ -21,6 +23,7 @@ static ko_longopt_t longopts[] = {
 	{ "headless", ko_no_argument, 303 },
 	{ "no-wallet", ko_no_argument, 304 },
 	{ "shared-node", ko_required_argument, 305 },
+	{ "config-path", ko_required_argument, 306 },
 	{ NULL, 0, 0 }
 };
 
@@ -31,6 +34,7 @@ static Options ParseOptions(int argc, char* argv[])
 		false,
 		Environment::MAINNET,
 		true,
+		std::nullopt,
 		std::nullopt
 	};
 
@@ -47,6 +51,10 @@ static Options ParseOptions(int argc, char* argv[])
 			options.shared_node = std::make_optional<std::pair<std::string, uint16_t>>({ parts[0], (uint16_t)std::stoul(parts[1]) });
 			options.headless = true;
 		}
+		else if (c == 306)
+		{
+			options.config_path = opt.arg;
+		}
 	}
 
 	return options;
@@ -60,4 +68,5 @@ static void PrintHelp()
 	std::cout << "--headless" << "\t" << "Run headless app with no console output" << std::endl;
 	std::cout << "--no-wallet" << "\t" << "Run only a node, not a wallet" << std::endl;
 	std::cout << "--shared-node [host:port]" << "\t" << "Uses the node at the given address and port (grinnode.live:80)" << std::endl;
+	std::cout << "--config-path [path_to_config]" << "\t" << "Uses the config file at the path provided" << std::endl;
 }

@@ -20,7 +20,7 @@
 
 using namespace std::chrono;
 
-ConfigPtr Initialize(const Environment environment);
+ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environment environment);
 void Run(const ConfigPtr& pConfig, const Options& options);
 
 int main(int argc, char* argv[])
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		IO::MakeHeadless();
 	}
 
-	ConfigPtr pConfig = Initialize(opt.environment);
+	ConfigPtr pConfig = Initialize(opt.config_path, opt.environment);
 
 	try
 	{
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-ConfigPtr Initialize(const Environment environment)
+ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environment environment)
 {
 	IO::Out("INITIALIZING...");
 	IO::Flush();
@@ -64,7 +64,7 @@ ConfigPtr Initialize(const Environment environment)
 	ConfigPtr pConfig = nullptr;
 	try
 	{
-		pConfig = Config::Load(environment);
+		pConfig = Config::Load(config_path, environment);
 		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)

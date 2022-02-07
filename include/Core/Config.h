@@ -5,13 +5,14 @@
 #include <string>
 #include <filesystem.h>
 #include <json/json.h>
+#include <optional>
 
 class Config
 {
 public:
 	using Ptr = std::shared_ptr<Config>;
 
-	static Config::Ptr Load(const Environment environment);
+	static Config::Ptr Load(const std::optional<fs::path>& config_path, const Environment environment);
 	static fs::path DefaultDataDir(const Environment environment);
 	static std::shared_ptr<Config> Load(const Json::Value& json, const Environment environment);
 	static std::shared_ptr<Config> Default(const Environment environment);

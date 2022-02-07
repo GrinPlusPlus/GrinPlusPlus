@@ -51,14 +51,25 @@ Config::Config(const Json::Value& json, const Environment environment, const fs:
 
 }
 
-Config::Ptr Config::Load(const Environment environment)
+Config::Ptr Config::Load(const std::optional<fs::path>& config_path, const Environment environment)
 {
-	fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
-	FileUtil::CreateDirectories(dataDir);
+	fs::path configPath;
+	if (config_path.has_value()) {
+		configPath = config_path.value();
+		if (!FileUtil::Exists(configPath)) {
+			LOG_ERROR_F("Failed to open config file at: {}", configPath);
+			throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
+		}
+	} else {
+		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
+		FileUtil::CreateDirectories(dataDir);
+
+		configPath = dataDir / "server_config.json";
+	}
+
 
 	// Read config
 	std::shared_ptr<Config> pConfig = nullptr;
-	fs::path configPath = dataDir / "server_config.json";
 
 	try {
 		if (FileUtil::Exists(configPath)) {

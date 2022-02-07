@@ -20,6 +20,8 @@ public:
 
 	uint8_t GetMinSyncPeers() const noexcept { return m_minSyncPeers; }
 
+    const std::vector<std::string>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
+
 	//
 	// Constructor
 	//
@@ -49,6 +51,14 @@ public:
 			{
 				m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 10).asInt();
 			}
+
+			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS))
+			{
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, nullptr);
+				for (auto& peer : peers) {
+					m_peferredPeers.push_back(peer.asString());
+                }
+			}
 		}
 
 		if (env == Environment::AUTOMATED_TESTING) {
@@ -64,4 +74,5 @@ private:
 	uint16_t m_port;
 	std::vector<uint8_t> m_magicBytes;
 	uint8_t m_minSyncPeers;
+	std::vector<std::string> m_peferredPeers;
 };

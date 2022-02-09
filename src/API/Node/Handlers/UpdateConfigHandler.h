@@ -72,9 +72,8 @@ public:
 			file << config_json;
 			file.close();
 
-			Json::Value result;
-			result["Ok"] = config_json;
-			return request.BuildResult(result);
+			Json::Value result_json;
+			return request.BuildResult(result_json);
 		} else {
 			std::string error_message = "Failed to save config file at: " + config_path.u8string();
 			LOG_ERROR(error_message);

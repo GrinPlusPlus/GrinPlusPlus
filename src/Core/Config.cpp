@@ -98,7 +98,7 @@ Config::Ptr Config::Load(const std::optional<fs::path>& config_path, const Envir
 
 	file << json;
 	file.close();
-
+	
 	return pConfig;
 }
 
@@ -134,6 +134,9 @@ std::shared_ptr<Config> Config::Default(const Environment environment)
 }
 
 Json::Value& Config::GetJSON() noexcept { return m_pImpl->m_json; }
+
+const fs::path& Config::GetConfigPath() const noexcept { return m_configPath; }
+void Config::SetConfigPath(const fs::path configPath) noexcept { m_configPath = configPath; }
 
 const std::string& Config::GetLogLevel() const noexcept { return m_pImpl->m_logLevel; }
 const fs::path& Config::GetDataDirectory() const noexcept { return m_pImpl->m_dataPath; }

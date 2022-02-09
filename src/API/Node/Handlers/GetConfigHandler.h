@@ -10,6 +10,7 @@ class GetConfigHandler : public RPCMethod
 public:
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
+		Json::Value result;
 		const Config& config = Global::GetConfig();
 
 		Json::Value config_json;
@@ -17,7 +18,9 @@ public:
 		config_json["max_peers"] = config.GetMaxPeers();
 		config_json["min_confirmations"] = config.GetMinimumConfirmations();
 
-		return request.BuildResult(config_json);
+		result["Ok"] = config_json;
+
+		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

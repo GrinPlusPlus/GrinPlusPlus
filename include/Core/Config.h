@@ -19,6 +19,9 @@ public:
 
 	Json::Value& GetJSON() noexcept;
 
+	const fs::path& GetConfigPath() const noexcept;
+	void SetConfigPath(fs::path configPath) noexcept;
+
 	const std::string& GetLogLevel() const noexcept;
 	const fs::path& GetDataDirectory() const noexcept;
 	const fs::path& GetLogDirectory() const noexcept;
@@ -79,6 +82,7 @@ private:
 	
 	struct Impl;
 	std::shared_ptr<Impl> m_pImpl;
+	fs::path m_configPath;
 };
 
 typedef std::shared_ptr<Config> ConfigPtr;

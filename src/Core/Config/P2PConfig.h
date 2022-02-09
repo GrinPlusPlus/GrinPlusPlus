@@ -35,7 +35,7 @@ public:
 			m_magicBytes = { 83, 59 };
 		}
 
-		m_maxConnections = 50;
+		m_maxConnections = 60;
 		m_minConnections = 10;
 
 		if (json.isMember(ConfigProps::P2P::P2P))
@@ -44,7 +44,7 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::MAX_PEERS))
 			{
-				m_maxConnections = p2pJSON.get(ConfigProps::P2P::MAX_PEERS, 50).asInt();
+				m_maxConnections = p2pJSON.get(ConfigProps::P2P::MAX_PEERS, 60).asInt();
 			}
 
 			if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS))

@@ -11,6 +11,7 @@
 #include <Core/Config.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Common/Util/FileUtil.h>
 
 #include <stdio.h> 
 #include <iostream>
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
 	}
 
 	ConfigPtr pConfig = Initialize(opt.config_path, opt.environment);
-
+	
 	try
 	{
 		Run(pConfig, opt);
@@ -65,6 +66,12 @@ ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environme
 	try
 	{
 		pConfig = Config::Load(config_path, environment);
+		if(config_path.has_value()){
+			pConfig->SetConfigPath(config_path.value());
+		} else {
+			fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
+			pConfig->SetConfigPath(dataDir / "server_config.json");
+		}
 		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)

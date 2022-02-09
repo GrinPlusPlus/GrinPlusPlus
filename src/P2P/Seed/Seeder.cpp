@@ -167,7 +167,19 @@ void Seeder::SeedNewConnection()
             m_pAsioContext,
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
+        
+        if(Global::GetConfig().GetBlockedPeers().size() > 0 && 
+            Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string())) {
 
+            return;
+        }
+
+        if(Global::GetConfig().GetAlloweddPeers().size() > 0 && 
+            !Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string())) {
+                
+            return;
+        }
+        
         std::cout << "Attempt to connect to " << connectedPeer.Format() << "..." << std::endl;
         ConnectionPtr pConnection = std::make_shared<Connection>(
             pSocket,
@@ -177,6 +189,7 @@ void Seeder::SeedNewConnection()
             m_pSyncStatus,
             m_pMessageProcessor
         );
+        
         pConnection->Connect();
     } else if (!m_usedDNS.exchange(true)) {
         std::vector<SocketAddress> peerAddresses = DNSSeeder::GetPeersFromDNS();

@@ -27,11 +27,23 @@ std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pCo
     std::shared_ptr<PeerManager> pPeerManager(new PeerManager(pContext, pPeerDB));
 
     pPeerManager->m_peersByAddress.clear();
-    const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
-    for (const PeerPtr& peer : peers) {
-        pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-    }
 
+    std::vector<std::string> preferredPeers = Global::GetConfig().GetPreferredPeers();
+    if(preferredPeers.size()) {
+        LOG_INFO("Preferred peers found.");
+        for (const auto s_peer : preferredPeers) {
+            const PeerPtr& peer = std::make_shared<Peer>(IPAddress::Parse(s_peer));
+            pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+        }
+    } 
+    else {
+        LOG_INFO("Getting peers from database...");
+        const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
+        for (const PeerPtr& peer : peers) {
+            pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+        }
+    }
+    
     std::shared_ptr<Locked<PeerManager>> pLocked = std::make_shared<Locked<PeerManager>>(Locked<PeerManager>(pPeerManager));
 
     std::weak_ptr<Locked<PeerManager>> pLockedWeak(pLocked);

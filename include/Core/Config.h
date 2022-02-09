@@ -49,6 +49,12 @@ public:
 
 	uint8_t GetMinSyncPeers() const noexcept;
 
+	const std::vector<std::string>& GetPreferredPeers() const noexcept;
+	const std::vector<std::string>& GetAlloweddPeers() const noexcept;
+	const std::vector<std::string>& GetBlockedPeers() const noexcept;
+	bool IsPeerAllowed(const std::string peer);
+	bool IsPeerBlocked(const std::string peer);
+
 	//
 	// Dandelion
 	//

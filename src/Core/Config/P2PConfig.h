@@ -21,7 +21,9 @@ public:
 	uint8_t GetMinSyncPeers() const noexcept { return m_minSyncPeers; }
 
     const std::vector<std::string>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
-
+	const std::vector<std::string>& GetAllowedPeers() const noexcept { return m_allowedPeers; }
+	const std::vector<std::string>& GetBlockedPeers() const noexcept { return m_blockedPeers; }
+	
 	//
 	// Constructor
 	//
@@ -59,6 +61,22 @@ public:
 					m_peferredPeers.push_back(peer.asString());
                 }
 			}
+
+			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS))
+			{
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, nullptr);
+				for (auto& peer : peers) {
+					m_allowedPeers.push_back(peer.asString());
+                }
+			}
+
+			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS))
+			{
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, nullptr);
+				for (auto& peer : peers) {
+					m_blockedPeers.push_back(peer.asString());
+                }
+			}
 		}
 
 		if (env == Environment::AUTOMATED_TESTING) {
@@ -75,4 +93,6 @@ private:
 	std::vector<uint8_t> m_magicBytes;
 	uint8_t m_minSyncPeers;
 	std::vector<std::string> m_peferredPeers;
+	std::vector<std::string> m_allowedPeers;
+	std::vector<std::string> m_blockedPeers;
 };

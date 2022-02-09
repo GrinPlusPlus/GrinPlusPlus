@@ -165,6 +165,20 @@ const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pI
 
 uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
 
+const std::vector<std::string>& Config::GetPreferredPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers(); }
+const std::vector<std::string>& Config::GetAlloweddPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers(); }
+const std::vector<std::string>& Config::GetBlockedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers(); }
+
+bool Config::IsPeerAllowed (const std::string peer) { 
+	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers();
+	return std::find(vec.begin(), vec.end(), peer) != vec.end();
+}
+
+bool Config::IsPeerBlocked (const std::string peer) {
+	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers();
+	return std::find(vec.begin(), vec.end(), peer) != vec.end();
+}
+
 //
 // Dandelion
 //

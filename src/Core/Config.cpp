@@ -51,22 +51,12 @@ Config::Config(const Json::Value& json, const Environment environment, const fs:
 
 }
 
-Config::Ptr Config::Load(const std::optional<fs::path>& config_path, const Environment environment)
+Config::Ptr Config::Load(const fs::path& configPath, const Environment environment)
 {
-	fs::path configPath;
-	if (config_path.has_value()) {
-		configPath = config_path.value();
-		if (!FileUtil::Exists(configPath)) {
-			LOG_ERROR_F("Failed to open config file at: {}", configPath);
-			throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
-		}
-	} else {
-		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
-		FileUtil::CreateDirectories(dataDir);
-
-		configPath = dataDir / "server_config.json";
+	if (!FileUtil::Exists(configPath)) {
+		LOG_ERROR_F("Failed to open config file at: {}", configPath);
+		throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
 	}
-
 
 	// Read config
 	std::shared_ptr<Config> pConfig = nullptr;
@@ -98,7 +88,7 @@ Config::Ptr Config::Load(const std::optional<fs::path>& config_path, const Envir
 
 	file << json;
 	file.close();
-	
+
 	return pConfig;
 }
 
@@ -134,9 +124,6 @@ std::shared_ptr<Config> Config::Default(const Environment environment)
 }
 
 Json::Value& Config::GetJSON() noexcept { return m_pImpl->m_json; }
-
-const fs::path& Config::GetConfigPath() const noexcept { return m_configPath; }
-void Config::SetConfigPath(const fs::path configPath) noexcept { m_configPath = configPath; }
 
 const std::string& Config::GetLogLevel() const noexcept { return m_pImpl->m_logLevel; }
 const fs::path& Config::GetDataDirectory() const noexcept { return m_pImpl->m_dataPath; }

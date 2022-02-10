@@ -5,22 +5,18 @@
 #include <string>
 #include <filesystem.h>
 #include <json/json.h>
-#include <optional>
 
 class Config
 {
 public:
 	using Ptr = std::shared_ptr<Config>;
 
-	static Config::Ptr Load(const std::optional<fs::path>& config_path, const Environment environment);
+	static Config::Ptr Load(const fs::path& configPath, const Environment environment);
 	static fs::path DefaultDataDir(const Environment environment);
 	static std::shared_ptr<Config> Load(const Json::Value& json, const Environment environment);
 	static std::shared_ptr<Config> Default(const Environment environment);
 
 	Json::Value& GetJSON() noexcept;
-
-	const fs::path& GetConfigPath() const noexcept;
-	void SetConfigPath(fs::path configPath) noexcept;
 
 	const std::string& GetLogLevel() const noexcept;
 	const fs::path& GetDataDirectory() const noexcept;
@@ -88,7 +84,6 @@ private:
 	
 	struct Impl;
 	std::shared_ptr<Impl> m_pImpl;
-	fs::path m_configPath;
 };
 
 typedef std::shared_ptr<Config> ConfigPtr;

@@ -66,7 +66,7 @@ public:
 			config.SetMinConfirmations(min_confirmations.value());
 		}
 
-		fs::path config_path = config.GetConfigPath();
+		fs::path config_path = Global::GetConfigFilePath();
 		std::ofstream file(config_path, std::ios::out | std::ios::binary | std::ios::ate);
 		if (file.is_open()) {
 			file << config_json;

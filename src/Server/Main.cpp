@@ -62,16 +62,12 @@ ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environme
 	IO::Out("INITIALIZING...");
 	IO::Flush();
 
+	Global::SetConfigFilePath(config_path, Env::ToString(environment));
+
 	ConfigPtr pConfig = nullptr;
 	try
 	{
-		pConfig = Config::Load(config_path, environment);
-		if(config_path.has_value()){
-			pConfig->SetConfigPath(config_path.value());
-		} else {
-			fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
-			pConfig->SetConfigPath(dataDir / "server_config.json");
-		}
+		pConfig = Config::Load(Global::GetConfigFilePath(), environment);
 		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)

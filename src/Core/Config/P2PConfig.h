@@ -31,7 +31,7 @@ public:
 	//
 	P2PConfig(const Environment env, const Json::Value& json)
 	{
-		if (env == Environment::MAINNET) {
+		if (env == Environment::MAINNET)  {
 			m_port = 3414;
 			m_magicBytes = { 97, 61 };
 		} else {
@@ -42,42 +42,30 @@ public:
 		m_maxConnections = 60;
 		m_minConnections = 10;
 
-		if (json.isMember(ConfigProps::P2P::P2P))
-		{
+		if (json.isMember(ConfigProps::P2P::P2P)) {
 			const Json::Value& p2pJSON = json[ConfigProps::P2P::P2P];
 
-			if (p2pJSON.isMember(ConfigProps::P2P::MAX_PEERS))
-			{
+			if (p2pJSON.isMember(ConfigProps::P2P::MAX_PEERS)) {
 				m_maxConnections = p2pJSON.get(ConfigProps::P2P::MAX_PEERS, 60).asInt();
 			}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS))
-			{
+			if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS)) {
 				m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 10).asInt();
 			}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS))
-			{
+			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) {
-					m_peferredPeers.push_back(peer.asString());
-                }
+				for (auto& peer : peers) { m_peferredPeers.push_back(peer.asString()); }
 			}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS))
-			{
+			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) {
-					m_allowedPeers.push_back(peer.asString());
-                }
+				for (auto& peer : peers) { m_allowedPeers.push_back(peer.asString()); }
 			}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS))
-			{
+			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) {
-					m_blockedPeers.push_back(peer.asString());
-                }
+				for (auto& peer : peers) { m_blockedPeers.push_back(peer.asString()); }
 			}
 		}
 

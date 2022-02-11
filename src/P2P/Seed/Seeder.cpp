@@ -168,16 +168,12 @@ void Seeder::SeedNewConnection()
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
         
-        if(Global::GetConfig().GetBlockedPeers().size() > 0 && 
-            Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string()))
-        {
+        if(Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string())) {
             LOG_TRACE_F("peer is blocked: {}", pPeer);
             return;
         }
 
-        if(Global::GetConfig().GetAlloweddPeers().size() > 0 && 
-            !Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string()))
-        {
+        if(!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string())) {
             LOG_TRACE_F("peer is not allowed: {}", pPeer);        
             return;
         }

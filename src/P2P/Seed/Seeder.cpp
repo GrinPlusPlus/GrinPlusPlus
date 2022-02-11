@@ -169,14 +169,16 @@ void Seeder::SeedNewConnection()
         ));
         
         if(Global::GetConfig().GetBlockedPeers().size() > 0 && 
-            Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string())) {
-
+            Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string()))
+        {
+            LOG_TRACE_F("peer is blocked: {}", pPeer);
             return;
         }
 
         if(Global::GetConfig().GetAlloweddPeers().size() > 0 && 
-            !Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string())) {
-                
+            !Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string()))
+        {
+            LOG_TRACE_F("peer is not allowed: {}", pPeer);        
             return;
         }
         

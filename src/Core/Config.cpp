@@ -48,35 +48,29 @@ struct Config::Impl
 Config::Config(const Json::Value& json, const Environment environment, const fs::path& dataPath)
 	: m_pImpl(std::make_shared<Impl>(json, environment, dataPath))
 {
-
+	
 }
 
 Config::Ptr Config::Load(const fs::path& configPath, const Environment environment)
 {
-	if (!FileUtil::Exists(configPath)) {
-		LOG_ERROR_F("Failed to open config file at: {}", configPath);
-		throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
-	}
-
-	// Read config
 	std::shared_ptr<Config> pConfig = nullptr;
-
+	
+	// Read config file
 	try {
-		if (FileUtil::Exists(configPath)) {
-			std::vector<unsigned char> data;
-			if (!FileUtil::ReadFile(configPath, data)) {
-				LOG_ERROR_F("Failed to open config file at: {}", configPath);
-				throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
-			}
-
-			pConfig = Config::Load(JsonUtil::Parse(data), environment);
+		std::vector<unsigned char> data;
+		if (!FileUtil::ReadFile(configPath, data)) {
+			LOG_ERROR_F("Failed to open config file at: {}", configPath);
+			throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
 		}
+		pConfig = Config::Load(JsonUtil::Parse(data), environment);
 	}
-	catch (...) {}
+	catch (...) { }
 	
 	if (pConfig == nullptr || pConfig->GetJSON().empty()) {
 		pConfig = Config::Default(environment);
 	}
+
+	FileUtil::CreateDirectories(pConfig->GetDataDirectory());
 
 	// Update config file
 	Json::Value& json = pConfig->GetJSON();
@@ -99,9 +93,7 @@ std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment 
 	if (json.isMember(ConfigProps::DATA_PATH)) {
 		dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
 	}
-
-	FileUtil::CreateDirectories(dataDir);
-
+	
 	return std::shared_ptr<Config>(new Config(json, environment, dataDir));
 }
 

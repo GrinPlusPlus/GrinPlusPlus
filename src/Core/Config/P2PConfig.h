@@ -6,6 +6,8 @@
 #include <json/json.h>
 #include <Core/Enums/Environment.h>
 
+#include <Core/Exceptions/FileException.h>
+
 class P2PConfig
 {
 public:
@@ -56,7 +58,7 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS))
 			{
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, nullptr);
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, Json::Value(Json::nullValue));
 				for (auto& peer : peers) {
 					m_peferredPeers.push_back(peer.asString());
                 }
@@ -64,7 +66,7 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS))
 			{
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, nullptr);
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, Json::Value(Json::nullValue));
 				for (auto& peer : peers) {
 					m_allowedPeers.push_back(peer.asString());
                 }
@@ -72,7 +74,7 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS))
 			{
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, nullptr);
+				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, Json::Value(Json::nullValue));
 				for (auto& peer : peers) {
 					m_blockedPeers.push_back(peer.asString());
                 }

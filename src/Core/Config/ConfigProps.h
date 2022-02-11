@@ -16,7 +16,7 @@ namespace ConfigProps
 		static const std::string MAX_PEERS = "MAX_PEERS";
 		static const std::string PREFERRED_PEERS = "PREFERRED_PEERS";
 		static const std::string ALLOWED_PEERS = "ALLOWED_PEERS";
-		static const std::string BLOCKED_PEERS = "BLOCKED_PEERS ";
+		static const std::string BLOCKED_PEERS = "BLOCKED_PEERS";
 	}
 
 	namespace Dandelion

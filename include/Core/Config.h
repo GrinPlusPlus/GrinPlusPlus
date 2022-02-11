@@ -50,7 +50,8 @@ public:
 	const std::vector<std::string>& GetBlockedPeers() const noexcept;
 	bool IsPeerAllowed(const std::string peer);
 	bool IsPeerBlocked(const std::string peer);
-
+	bool IsPeerPreferred(const std::string peer);
+	
 	//
 	// Dandelion
 	//

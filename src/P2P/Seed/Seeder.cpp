@@ -129,7 +129,22 @@ void Seeder::Accept(const asio::error_code& ec)
             SocketPtr pSocket(new Socket(SocketAddress::FromEndpoint(m_pSocket->remote_endpoint()), m_pAsioContext, m_pSocket));
             pSocket->SetOpen(true);
 
-            auto pPeer = m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
+            const IPAddress& ipAddress =  pSocket->GetIPAddress();
+
+            const std::string& ipAddressStr = ipAddress.GetAddress().to_string();
+
+            if(Global::GetConfig().IsPeerBlocked(ipAddressStr)) {
+                LOG_TRACE_F("peer is blocked: {}", ipAddressStr);
+                return;
+            }
+
+            if(!Global::GetConfig().IsPeerAllowed(ipAddressStr)) {
+                LOG_TRACE_F("peer is not allowed: {}", ipAddressStr);        
+                return;
+            }
+
+            auto pPeer = m_peerManager.Write()->GetPeer(ipAddress);
+
             if (!pPeer->IsBanned()) {
                 auto pConnection = std::make_shared<Connection>(
                     pSocket,
@@ -168,13 +183,20 @@ void Seeder::SeedNewConnection()
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
         
-        if(Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress().GetAddress().to_string())) {
-            LOG_TRACE_F("peer is blocked: {}", pPeer);
+        const std::string& ipAddressStr = pSocket->GetIPAddress().GetAddress().to_string();
+
+        if(Global::GetConfig().IsPeerBlocked(ipAddressStr)) {
+            LOG_TRACE_F("peer is blocked: {}", ipAddressStr);
             return;
         }
 
-        if(!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress().GetAddress().to_string())) {
-            LOG_TRACE_F("peer is not allowed: {}", pPeer);        
+        if(!Global::GetConfig().IsPeerAllowed(ipAddressStr)) {
+            LOG_TRACE_F("peer is not allowed: {}", ipAddressStr);        
+            return;
+        }
+
+        if(!Global::GetConfig().IsPeerPreferred(ipAddressStr)) {
+            LOG_TRACE_F("peer is not in preferred pool of peers: {}", ipAddressStr);        
             return;
         }
         

@@ -160,6 +160,12 @@ bool Config::IsPeerBlocked (const std::string peer) {
 	return false;
 }
 
+bool Config::IsPeerPreferred (const std::string peer) {
+	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
+	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
+	return true;
+}
+
 //
 // Dandelion
 //

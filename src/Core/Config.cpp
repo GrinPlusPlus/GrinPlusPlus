@@ -10,9 +10,11 @@
 #include <Common/Util/StringUtil.h>
 #include <Core/Exceptions/FileException.h>
 #include <Core/Util/JsonUtil.h>
-#include <fstream>
+#include <Net/IPAddress.h>
 
-#include "../Server/console.h"
+#include <fstream>
+#include <unordered_set>
+
 struct Config::Impl
 {
 	Impl(const Json::Value& json, const Environment environment, const fs::path& dataPath)
@@ -144,24 +146,24 @@ const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pI
 
 uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
 
-const std::vector<std::string>& Config::GetPreferredPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers(); }
-const std::vector<std::string>& Config::GetAllowedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers(); }
-const std::vector<std::string>& Config::GetBlockedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers(); }
+const std::unordered_set<IPAddress>& Config::GetPreferredPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers(); }
+const std::unordered_set<IPAddress>& Config::GetAllowedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers(); }
+const std::unordered_set<IPAddress>& Config::GetBlockedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers(); }
 
-bool Config::IsPeerAllowed (const std::string peer) {
-	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers();
+bool Config::IsPeerAllowed(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers();
 	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
 	return true;
 }
 
-bool Config::IsPeerBlocked (const std::string peer) {
-	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers();
+bool Config::IsPeerBlocked(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers();
 	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
 	return false;
 }
 
-bool Config::IsPeerPreferred (const std::string peer) {
-	std::vector<std::string> vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
+bool Config::IsPeerPreferred(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
 	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
 	return true;
 }

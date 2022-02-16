@@ -129,21 +129,17 @@ void Seeder::Accept(const asio::error_code& ec)
             SocketPtr pSocket(new Socket(SocketAddress::FromEndpoint(m_pSocket->remote_endpoint()), m_pAsioContext, m_pSocket));
             pSocket->SetOpen(true);
 
-            const IPAddress& ipAddress =  pSocket->GetIPAddress();
-
-            const std::string& ipAddressStr = ipAddress.GetAddress().to_string();
-
-            if(Global::GetConfig().IsPeerBlocked(ipAddressStr)) {
-                LOG_TRACE_F("peer is blocked: {}", ipAddressStr);
+            if (Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress())) {
+                LOG_TRACE_F("peer is blocked: {}",  pSocket->GetIPAddress());
                 return;
             }
 
-            if(!Global::GetConfig().IsPeerAllowed(ipAddressStr)) {
-                LOG_TRACE_F("peer is not allowed: {}", ipAddressStr);        
+            if (!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress())) {
+                LOG_TRACE_F("peer is not allowed: {}",  pSocket->GetIPAddress());        
                 return;
             }
 
-            auto pPeer = m_peerManager.Write()->GetPeer(ipAddress);
+            auto pPeer = m_peerManager.Write()->GetPeer( pSocket->GetIPAddress());
 
             if (!pPeer->IsBanned()) {
                 auto pConnection = std::make_shared<Connection>(
@@ -183,20 +179,18 @@ void Seeder::SeedNewConnection()
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
         
-        const std::string& ipAddressStr = pSocket->GetIPAddress().GetAddress().to_string();
-
-        if(Global::GetConfig().IsPeerBlocked(ipAddressStr)) {
-            LOG_TRACE_F("peer is blocked: {}", ipAddressStr);
+        if (Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is blocked: {}", pSocket->GetIPAddress());
             return;
         }
 
-        if(!Global::GetConfig().IsPeerAllowed(ipAddressStr)) {
-            LOG_TRACE_F("peer is not allowed: {}", ipAddressStr);        
+        if (!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is not allowed: {}", pSocket->GetIPAddress());        
             return;
         }
 
-        if(!Global::GetConfig().IsPeerPreferred(ipAddressStr)) {
-            LOG_TRACE_F("peer is not in preferred pool of peers: {}", ipAddressStr);        
+        if (!Global::GetConfig().IsPeerPreferred(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is not in preferred pool of peers: {}", pSocket->GetIPAddress());        
             return;
         }
         

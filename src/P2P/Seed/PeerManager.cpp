@@ -28,24 +28,12 @@ std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pCo
 
     pPeerManager->m_peersByAddress.clear();
 
-    std::vector<std::string> preferredPeers = Global::GetConfig().GetPreferredPeers();
-    if(preferredPeers.size() > 0) {
+    if (Global::GetConfig().GetPreferredPeers().size() > 0) {
         LOG_INFO("Preferred peers found.");
-        for (const std::string addressStr : preferredPeers) {
+        for (const IPAddress& ipAddress : Global::GetConfig().GetPreferredPeers()) {
             try {
-                if(!IPAddress::IsValidIPAddress(addressStr)) {
-                    LOG_INFO_F("Resolving domain: {}", addressStr);
-                    for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
-                    {
-                        LOG_INFO_F("Resolved domain: {}", ipAddress);
-                        const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
-                        pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-                    }
-                } else {
-                    IPAddress ipAddress = IPAddress::Parse(addressStr);
-                    const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
-                    pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-                }
+                const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
+                pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
             }
             catch (std::exception& e) {
                 LOG_ERROR_F("Exception thrown: {}", e.what());
@@ -89,7 +77,7 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
             std::chrono::system_clock::now() - std::chrono::hours(24 * 7)
         );
 
-        for (auto iter : peerManager.m_peersByAddress)
+        for (auto& iter : peerManager.m_peersByAddress)
         {
             try {
                 PeerEntry& peerEntry = iter.second;
@@ -198,7 +186,7 @@ std::vector<PeerPtr> PeerManager::GetPeers(
 
 void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 {
-    for (auto socketAddress : peerAddresses) {
+    for (auto& socketAddress : peerAddresses) {
         const IPAddress& ipAddress = socketAddress.GetIPAddress();
         if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end()) {
             m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(ipAddress)));

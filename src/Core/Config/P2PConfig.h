@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <json/json.h>
+#include <Common/Logger.h>
 #include <Core/Enums/Environment.h>
 
 #include <Core/Exceptions/FileException.h>
@@ -22,9 +23,9 @@ public:
 
 	uint8_t GetMinSyncPeers() const noexcept { return m_minSyncPeers; }
 
-    const std::vector<std::string>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
-	const std::vector<std::string>& GetAllowedPeers() const noexcept { return m_allowedPeers; }
-	const std::vector<std::string>& GetBlockedPeers() const noexcept { return m_blockedPeers; }
+    const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
+	const std::unordered_set<IPAddress>& GetAllowedPeers() const noexcept { return m_allowedPeers; }
+	const std::unordered_set<IPAddress>& GetBlockedPeers() const noexcept { return m_blockedPeers; }
 	
 	//
 	// Constructor
@@ -55,17 +56,29 @@ public:
 
 			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) { m_peferredPeers.push_back(peer.asString()); }
+				for (auto& peer : peers) { 
+					const std::string& addressStr = peer.asCString();
+					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+					m_peferredPeers.insert(iPAddresses.begin(), iPAddresses.end());
+				}
 			}
 
 			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) { m_allowedPeers.push_back(peer.asString()); }
+				for (auto& peer : peers) {
+					const std::string& addressStr = peer.asCString();
+					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+					m_allowedPeers.insert(iPAddresses.begin(), iPAddresses.end());
+				}
 			}
 
 			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS)) {
 				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) { m_blockedPeers.push_back(peer.asString()); }
+				for (auto& peer : peers) {
+					const std::string& addressStr = peer.asCString();
+					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+					m_blockedPeers.insert(iPAddresses.begin(), iPAddresses.end());
+				}
 			}
 		}
 
@@ -82,7 +95,23 @@ private:
 	uint16_t m_port;
 	std::vector<uint8_t> m_magicBytes;
 	uint8_t m_minSyncPeers;
-	std::vector<std::string> m_peferredPeers;
-	std::vector<std::string> m_allowedPeers;
-	std::vector<std::string> m_blockedPeers;
+	std::unordered_set<IPAddress> m_peferredPeers;
+	std::unordered_set<IPAddress> m_allowedPeers;
+	std::unordered_set<IPAddress> m_blockedPeers;
+
+	static std::vector<IPAddress> GetValidIPAddress(const std::string& addressStr)
+    {
+		std::vector<IPAddress> ipList;
+        if(!IPAddress::IsValidIPAddress(addressStr)) {
+			LOG_INFO_F("Resolving domain: {}", addressStr);
+			for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
+			{
+				LOG_INFO_F("Resolved domain: {}", ipAddress);
+				ipList.push_back(IPAddress::Parse(addressStr));
+			}
+		} else {
+			ipList.push_back(IPAddress::Parse(addressStr));
+		}
+		return ipList;
+    };
 };

@@ -5,6 +5,8 @@
 #include <string>
 #include <filesystem.h>
 #include <json/json.h>
+#include <Net/IPAddress.h>
+#include <unordered_set>
 
 class Config
 {
@@ -45,12 +47,12 @@ public:
 
 	uint8_t GetMinSyncPeers() const noexcept;
 
-	const std::vector<std::string>& GetPreferredPeers() const noexcept;
-	const std::vector<std::string>& GetAllowedPeers() const noexcept;
-	const std::vector<std::string>& GetBlockedPeers() const noexcept;
-	bool IsPeerAllowed(const std::string peer);
-	bool IsPeerBlocked(const std::string peer);
-	bool IsPeerPreferred(const std::string peer);
+	const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept;
+	const std::unordered_set<IPAddress>& GetAllowedPeers() const noexcept;
+	const std::unordered_set<IPAddress>& GetBlockedPeers() const noexcept;
+	bool IsPeerAllowed(const IPAddress& peer);
+	bool IsPeerBlocked(const IPAddress& peer);
+	bool IsPeerPreferred(const IPAddress& peer);
 	
 	//
 	// Dandelion

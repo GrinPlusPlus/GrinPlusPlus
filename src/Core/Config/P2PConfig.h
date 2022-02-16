@@ -102,15 +102,15 @@ private:
 	static std::vector<IPAddress> GetValidIPAddress(const std::string& addressStr)
     {
 		std::vector<IPAddress> ipList;
-        if(!IPAddress::IsValidIPAddress(addressStr)) {
+        if(IPAddress::IsValidIPAddress(addressStr)) {
+			ipList.push_back(IPAddress::Parse(addressStr));
+		} else {
 			LOG_INFO_F("Resolving domain: {}", addressStr);
 			for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
 			{
 				LOG_INFO_F("Resolved domain: {}", ipAddress);
-				ipList.push_back(IPAddress::Parse(addressStr));
+				ipList.push_back(ipAddress);
 			}
-		} else {
-			ipList.push_back(IPAddress::Parse(addressStr));
 		}
 		return ipList;
     };

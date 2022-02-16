@@ -31,11 +31,21 @@ std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pCo
     std::vector<std::string> preferredPeers = Global::GetConfig().GetPreferredPeers();
     if(preferredPeers.size() > 0) {
         LOG_INFO("Preferred peers found.");
-        for (const std::string ipAddressStr : preferredPeers) {
+        for (const std::string addressStr : preferredPeers) {
             try {
-                IPAddress ipAddress = IPAddress::Parse(ipAddressStr);
-                const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
-                pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+                if(!IPAddress::IsValidIPAddress(addressStr)) {
+                    LOG_INFO_F("Resolving domain: {}", addressStr);
+                    for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
+                    {
+                        LOG_INFO_F("Resolved domain: {}", ipAddress);
+                        const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
+                        pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+                    }
+                } else {
+                    IPAddress ipAddress = IPAddress::Parse(addressStr);
+                    const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
+                    pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+                }
             }
             catch (std::exception& e) {
                 LOG_ERROR_F("Exception thrown: {}", e.what());

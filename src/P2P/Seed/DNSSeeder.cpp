@@ -34,7 +34,7 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS()
 	for (auto seed : dnsSeeds)
 	{
 		LOG_TRACE_F("Checking seed: {}", seed);
-		const std::vector<IPAddress> ipAddresses = Resolve(seed);
+		const std::vector<IPAddress> ipAddresses = IPAddress::Resolve(seed);
 		for (const IPAddress ipAddress : ipAddresses)
 		{
 			LOG_TRACE_F("IP Address: {}", ipAddress);
@@ -45,33 +45,3 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS()
 	return addresses;
 }
 
-std::vector<IPAddress> DNSSeeder::Resolve(const std::string& domainName)
-{
-	asio::io_context context;
-	asio::ip::tcp::resolver resolver(context);
-	asio::ip::tcp::resolver::query query(domainName, "domain");
-	asio::error_code errorCode;
-	asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, errorCode);
-
-	std::vector<IPAddress> addresses;
-	if (!errorCode)
-	{
-		std::for_each(iter, {}, [&addresses](auto& it)
-			{
-				try
-				{
-					addresses.push_back(IPAddress(it.endpoint().address()));
-				}
-				catch (std::exception& e)
-				{
-					LOG_INFO_F("Exception thrown: {}", e.what());
-				}
-			});
-	}
-	else
-	{
-		LOG_TRACE_F("Error: {}", errorCode.message());
-	}
-	
-	return addresses;
-}

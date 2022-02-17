@@ -102,16 +102,26 @@ private:
 	static std::vector<IPAddress> GetValidIPAddress(const std::string& addressStr)
     {
 		std::vector<IPAddress> ipList;
-        if(IPAddress::IsValidIPAddress(addressStr)) {
-			ipList.push_back(IPAddress::Parse(addressStr));
+
+        if (IPAddress::IsValidIPAddress(addressStr)) {
+			try {
+				ipList.push_back(IPAddress::Parse(addressStr));
+			} catch (std::exception& e) {
+				LOG_DEBUG_F("Error parsing IP Address: {} {}", addressStr, e.what());
+			}
 		} else {
 			LOG_INFO_F("Resolving domain: {}", addressStr);
-			for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
-			{
-				LOG_INFO_F("Resolved domain: {}", ipAddress);
-				ipList.push_back(ipAddress);
+			try {
+				for (const IPAddress ipAddress : IPAddress::Resolve(addressStr))
+				{
+					LOG_INFO_F("Resolved domain: {}", ipAddress);
+					ipList.push_back(ipAddress);
+				}
+			} catch (std::exception& e) {
+				LOG_DEBUG_F("Failed to resolve domain: {} {}", addressStr, e.what());
 			}
 		}
+
 		return ipList;
     };
 };

@@ -82,6 +82,8 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)
         }
 
         pConnection->GetSocket()->SetDefaultOptions();
+        pConnection->GetSocket()->SetReceiveTimeout(10 * 1000);
+        pConnection->GetSocket()->SetSendTimeout(10 * 1000);
         HandShake(pConnection->m_connectionManager, pConnection->m_pSyncStatus)
             .PerformHandshake(pConnection->m_pSocket, pConnection->m_connectedPeer);
 

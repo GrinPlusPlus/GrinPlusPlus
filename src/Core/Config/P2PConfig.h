@@ -85,7 +85,7 @@ public:
 		if (env == Environment::AUTOMATED_TESTING) {
 			m_minSyncPeers = 1;
 		} else {
-			m_minSyncPeers = 4;
+			m_minSyncPeers = 3;
 		}
 	}
 

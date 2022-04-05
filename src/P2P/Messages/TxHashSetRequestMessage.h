@@ -3,7 +3,6 @@
 #include "Message.h"
 #include <Crypto/Models/Hash.h>
 
-// Second part of a handshake, receiver of the first part replies with its own version and characteristics.
 class TxHashSetRequestMessage : public IMessage
 {
 public:

@@ -90,7 +90,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/vcpkg/
-          key: ${{ hashFiles( '.git/HEAD' ) }}--${{ hashFiles( '../backend/vcpkg/*' ) }}${{ runner.os }}-v2
+          key: ${{ hashFiles( '.git/HEAD' ) }}--${{ hashFiles( '**/backend/vcpkg/*' ) }}${{ runner.os }}-v2
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v6
         with:

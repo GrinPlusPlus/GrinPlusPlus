@@ -13,7 +13,7 @@ TorControlClient::UPtr TorControlClient::Connect(const uint16_t control_port, co
 		// Open control socket
 		connected = pClient->Connect(SocketAddress{ "127.0.0.1", control_port });
 
-		ThreadUtil::SleepFor(std::chrono::milliseconds(500));
+		ThreadUtil::SleepFor(std::chrono::milliseconds(1000));
 	}
 
 	if (!connected) {

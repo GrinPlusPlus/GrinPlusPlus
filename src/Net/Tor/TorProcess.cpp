@@ -29,7 +29,7 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	while (Global::IsRunning() && !pProcess->m_shutdown)
+	while (!pProcess->m_shutdown)
 	{
 		try
 		{
@@ -64,7 +64,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 #ifdef _WIN32
 				system("taskkill /IM tor.exe /F");
 #else
-				system("killall tor");
+				system("killall -9 tor");
 #endif
 				ThreadUtil::SleepFor(std::chrono::seconds(5));
 				continue;

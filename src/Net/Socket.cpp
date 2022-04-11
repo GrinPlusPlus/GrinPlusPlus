@@ -226,11 +226,20 @@ void Socket::HandleSent(const asio::error_code& ec, size_t)
 
 std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incrementCount)
 {
+    std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
+    while (!HasReceivedData()) {
+        if (std::chrono::system_clock::now() >= timeout || !Global::IsRunning()) {
+            return {};
+        }
+
+        ThreadUtil::SleepFor(std::chrono::milliseconds(5));
+    }
+
     std::vector<uint8_t> bytes(num_bytes);
 
     size_t numTries = 0;
     size_t bytesRead = 0;
-    while (numTries++ < 10) {
+    while (numTries++ < 5) {
         bytesRead = m_pSocket->read_some(asio::buffer(bytes.data(), num_bytes), m_errorCode);
         if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
             ThrowSocketException(m_errorCode);

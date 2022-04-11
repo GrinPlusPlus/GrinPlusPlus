@@ -240,7 +240,7 @@ std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incr
     size_t numTries = 0;
     size_t bytesRead = 0;
     while (numTries++ < 5) {
-        bytesRead = m_pSocket->read_some(asio::buffer(bytes.data(), num_bytes), m_errorCode);
+        bytesRead += asio::read(*m_pSocket, asio::buffer(bytes.data() + bytesRead, num_bytes - bytesRead), m_errorCode);
         if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
             ThrowSocketException(m_errorCode);
         }
@@ -253,6 +253,7 @@ std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incr
             return bytes;
         } else if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK) {
             LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 

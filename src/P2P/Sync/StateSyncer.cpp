@@ -63,17 +63,17 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
 	// If TxHashSet download timed out, request it from another peer.
 	if ((m_timeRequested + std::chrono::minutes(120)) < std::chrono::system_clock::now())
 	{
-		LOG_WARNING("Download timed out.");
+		LOG_WARNING("Download timed out (120 minutes).");
 		return true;
 	}
 
-	// If 30 seconds elapsed with no progress, try another peer.
-	if ((m_timeRequested + std::chrono::seconds(30)) < std::chrono::system_clock::now())
+	// If 10 seconds elapsed with no progress, try another peer.
+	if ((m_timeRequested + std::chrono::seconds(10)) < std::chrono::system_clock::now())
 	{
 		const uint64_t downloaded = syncStatus.GetDownloaded();
 		if (downloaded == 0)
 		{
-			LOG_WARNING("30 seconds elapsed and download still not started.");
+			LOG_WARNING("10 seconds elapsed and download still not started.");
 			return true;
 		}
 	}

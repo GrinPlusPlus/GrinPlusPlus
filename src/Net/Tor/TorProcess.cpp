@@ -61,6 +61,8 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				continue;
 			}
 
+			if(!IsTorPresent()) continue;
+
 			if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
 				LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
 #ifdef _WIN32
@@ -71,8 +73,6 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				ThreadUtil::SleepFor(std::chrono::seconds(5));
 				continue;
 			}
-
-			if(!IsTorPresent()) continue;
 
 			LOG_INFO("Initializing Tor");
 			pProcess->m_pControl = TorControl::Create(

@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include <Common/Util/FileUtil.h>
+
 #include "TorControl.h"
 
 TorProcess::~TorProcess()
@@ -112,7 +114,7 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 
 bool TorProcess::IsTorPresent()
 {
-    return (std::filesystem::exists(GetTorCommand()));
+    return (FileUtil::Exists(GetTorCommand()));
 }
 
 bool TorProcess::IsPortOpen(const uint16_t port)

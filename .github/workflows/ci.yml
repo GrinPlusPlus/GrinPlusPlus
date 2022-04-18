@@ -111,7 +111,7 @@ jobs:
           useVcpkgToolchainFile: true
           vcpkgTriplet: '${{ matrix.vcpkg_triplet }}'
           buildDirectory: '${{ github.workspace }}/build'
-          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF -DCMAKE_CXX_FLAGS="-Os"'
+          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF'
           buildWithCMake: true
           buildWithCMakeArgs: '--config Release --parallel'
       - name: Upload artifact

@@ -70,6 +70,8 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				continue;
 			}
 
+			if(!IsTorPresent()) continue;
+
 			LOG_INFO("Initializing Tor");
 			pProcess->m_pControl = TorControl::Create(
 				pProcess->m_socksPort,
@@ -101,6 +103,16 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 			ThreadUtil::SleepFor(std::chrono::seconds(30));
 		}
 	}
+}
+
+ fs::path TorProcess::GetTorCommand()
+{
+	return fs::current_path() / "tor" / "tor";
+}
+
+bool TorProcess::IsTorPresent()
+{
+    return (std::filesystem::exists(GetTorCommand()));
 }
 
 bool TorProcess::IsPortOpen(const uint16_t port)

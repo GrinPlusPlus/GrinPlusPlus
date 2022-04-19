@@ -8,6 +8,7 @@
 #include <Common/Util/StringUtil.h>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <Crypto/ED25519.h>
+#include <Net/Tor/TorProcess.h>
 #include <filesystem.h>
 
 TorControl::TorControl(
@@ -37,7 +38,7 @@ std::shared_ptr<TorControl> TorControl::Create(
 {
 	try
 	{
-		const fs::path command = fs::current_path() / "tor" / "tor";
+		const fs::path command = TorProcess::GetTorCommand();
 
 #ifdef __linux__
 		std::error_code ec;

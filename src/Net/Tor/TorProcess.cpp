@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include <Common/Util/FileUtil.h>
+
 #include "TorControl.h"
 
 TorProcess::~TorProcess()
@@ -59,6 +61,11 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				continue;
 			}
 
+			if(!IsTorPresent()) {
+				ThreadUtil::SleepFor(std::chrono::seconds(10));
+				continue;
+			}
+
 			if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
 				LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
 #ifdef _WIN32
@@ -101,6 +108,20 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 			ThreadUtil::SleepFor(std::chrono::seconds(30));
 		}
 	}
+}
+
+fs::path TorProcess::GetTorCommand()
+{
+#ifdef _WIN32
+	return fs::current_path() / "tor" / "tor.exe";
+#else
+	return fs::current_path() / "tor" / "tor";
+#endif
+}
+
+bool TorProcess::IsTorPresent()
+{
+    return FileUtil::Exists(GetTorCommand());
 }
 
 bool TorProcess::IsPortOpen(const uint16_t port)

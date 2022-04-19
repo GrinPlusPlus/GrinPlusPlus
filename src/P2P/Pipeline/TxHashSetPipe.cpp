@@ -14,7 +14,7 @@
 #include <filesystem.h>
 #include <fstream>
 
-static const int BUFFER_SIZE = 256 * 1024;
+static const int BUFFER_SIZE = 128 * 1024;
 
 TxHashSetPipe::~TxHashSetPipe()
 {
@@ -84,6 +84,8 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 
 		SocketPtr pSocket = pConnection->GetSocket();
 		pSocket->SetReceiveTimeout(10 * 1000);
+		pSocket->SetDefaultOptions();
+		pSocket->SetBlocking(true);
 		pSocket->SetReceiveBufferSize(BUFFER_SIZE);
 
 		std::ofstream fout;
@@ -96,6 +98,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 
 			const bool received = pConnection->ReceiveSync(buffer, bytesToRead);
 			if (!received || !Global::IsRunning()) {
+				LOG_INFO_F("bytesReceived: {} zipped_size: {}", bytesReceived, zipped_size);
 				LOG_ERROR("Transmission ended abruptly");
 				fout.close();
 				FileUtil::RemoveFile(txHashSetPath);

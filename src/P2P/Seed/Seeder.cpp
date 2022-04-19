@@ -122,33 +122,44 @@ void Seeder::StartListener()
 void Seeder::Accept(const asio::error_code& ec)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
+    
+    if (ec) return;
+    
+    if (m_connectionManager.GetNumberOfActiveConnections() < Global::GetConfig().GetMaxPeers()) {
+        SocketAddress socket_address = SocketAddress::FromEndpoint(m_pSocket->remote_endpoint());
+        SocketPtr pSocket(new Socket(SocketAddress::FromEndpoint(m_pSocket->remote_endpoint()), m_pAsioContext, m_pSocket));
+        pSocket->SetOpen(true);
 
-    if (!ec) {
-        if (m_connectionManager.GetNumberOfActiveConnections() < Global::GetConfig().GetMaxPeers()) {
-            SocketAddress socket_address = SocketAddress::FromEndpoint(m_pSocket->remote_endpoint());
-            SocketPtr pSocket(new Socket(SocketAddress::FromEndpoint(m_pSocket->remote_endpoint()), m_pAsioContext, m_pSocket));
-            pSocket->SetOpen(true);
-
-            auto pPeer = m_peerManager.Write()->GetPeer(pSocket->GetIPAddress());
-            if (!pPeer->IsBanned()) {
-                auto pConnection = std::make_shared<Connection>(
-                    pSocket,
-                    m_nextId++,
-                    m_connectionManager,
-                    ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
-                    m_pSyncStatus,
-                    m_pMessageProcessor
-                );
-                pConnection->Connect();
-            }
-        } else {
-            asio::error_code ignoreError;
-            m_pSocket->close(ignoreError);
+        if (Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is blocked: {}",  pSocket->GetIPAddress());
+            return;
         }
 
-        m_pSocket = std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext);
-        m_pAcceptor->async_accept(*m_pSocket, std::bind(&Seeder::Accept, this, std::placeholders::_1));
+        if (!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is not allowed: {}",  pSocket->GetIPAddress());        
+            return;
+        }
+
+        auto pPeer = m_peerManager.Write()->GetPeer( pSocket->GetIPAddress());
+
+        if (!pPeer->IsBanned()) {
+            auto pConnection = std::make_shared<Connection>(
+                pSocket,
+                m_nextId++,
+                m_connectionManager,
+                ConnectedPeer(pPeer, EDirection::INBOUND, pSocket->GetPort()),
+                m_pSyncStatus,
+                m_pMessageProcessor
+            );
+            pConnection->Connect();
+        }
+    } else {
+        asio::error_code ignoreError;
+        m_pSocket->close(ignoreError);
     }
+
+    m_pSocket = std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext);
+    m_pAcceptor->async_accept(*m_pSocket, std::bind(&Seeder::Accept, this, std::placeholders::_1));
 }
 
 void Seeder::SeedNewConnection()
@@ -167,7 +178,22 @@ void Seeder::SeedNewConnection()
             m_pAsioContext,
             std::make_shared<asio::ip::tcp::socket>(*m_pAsioContext)
         ));
+        
+        if (Global::GetConfig().IsPeerBlocked(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is blocked: {}", pSocket->GetIPAddress());
+            return;
+        }
 
+        if (!Global::GetConfig().IsPeerAllowed(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is not allowed: {}", pSocket->GetIPAddress());        
+            return;
+        }
+
+        if (!Global::GetConfig().IsPeerPreferred(pSocket->GetIPAddress())) {
+            LOG_TRACE_F("peer is not in preferred pool of peers: {}", pSocket->GetIPAddress());        
+            return;
+        }
+        
         std::cout << "Attempt to connect to " << connectedPeer.Format() << "..." << std::endl;
         ConnectionPtr pConnection = std::make_shared<Connection>(
             pSocket,
@@ -177,6 +203,7 @@ void Seeder::SeedNewConnection()
             m_pSyncStatus,
             m_pMessageProcessor
         );
+        
         pConnection->Connect();
     } else if (!m_usedDNS.exchange(true)) {
         std::vector<SocketAddress> peerAddresses = DNSSeeder::GetPeersFromDNS();

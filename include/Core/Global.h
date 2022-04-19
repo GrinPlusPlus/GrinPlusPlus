@@ -7,6 +7,10 @@
 #include <memory>
 #include <vector>
 
+#include <filesystem.h>
+
+#include <optional>
+
 // Forward Declarations
 class Context;
 class Config;
@@ -48,6 +52,9 @@ public:
 
     static void SetCoinView(const std::shared_ptr<const ICoinView>& pCoinView);
     static std::shared_ptr<const ICoinView> GetCoinView();
+
+    static void SetConfigFilePath(const std::optional<fs::path>& pFilePath,  std::string environment);
+    static fs::path& GetConfigFilePath();
 
 private:
     static std::shared_ptr<Context> LockContext();

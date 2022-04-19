@@ -4,7 +4,7 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
 
-static unsigned long DEFAULT_TIMEOUT = 2 * 1000;
+static unsigned long DEFAULT_TIMEOUT = 1 * 1000;
 
 #ifndef _WIN32
 #define SOCKET_ERROR -1
@@ -73,8 +73,10 @@ bool Socket::IsActive() const
 
 bool Socket::SetDefaultOptions()
 {
-    asio::socket_base::receive_buffer_size option(32768);
+    asio::socket_base::receive_buffer_size option(32 * 1024);
     m_pSocket->set_option(option);
+    asio::ip::tcp::no_delay no_delay_option(true);
+    m_pSocket->set_option(no_delay_option);
 
 #ifdef _WIN32
     if (setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, (char*)&DEFAULT_TIMEOUT, sizeof(DEFAULT_TIMEOUT)) == SOCKET_ERROR) {
@@ -224,7 +226,7 @@ void Socket::HandleSent(const asio::error_code& ec, size_t)
 
 std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incrementCount)
 {
-    std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(8);
+    std::chrono::time_point timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
     while (!HasReceivedData()) {
         if (std::chrono::system_clock::now() >= timeout || !Global::IsRunning()) {
             return {};
@@ -237,7 +239,7 @@ std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incr
 
     size_t numTries = 0;
     size_t bytesRead = 0;
-    while (numTries++ < 3) {
+    while (numTries++ < 5) {
         bytesRead += asio::read(*m_pSocket, asio::buffer(bytes.data() + bytesRead, num_bytes - bytesRead), m_errorCode);
         if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
             ThrowSocketException(m_errorCode);
@@ -251,7 +253,7 @@ std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incr
             return bytes;
         } else if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK) {
             LOG_DEBUG("EAGAIN error returned. Pausing briefly, and then trying again.");
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }
 

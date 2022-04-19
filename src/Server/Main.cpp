@@ -11,6 +11,7 @@
 #include <Core/Config.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Common/Util/FileUtil.h>
 
 #include <stdio.h> 
 #include <iostream>
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
 	}
 
 	ConfigPtr pConfig = Initialize(opt.config_path, opt.environment);
-
+	
 	try
 	{
 		Run(pConfig, opt);
@@ -61,10 +62,12 @@ ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environme
 	IO::Out("INITIALIZING...");
 	IO::Flush();
 
+	Global::SetConfigFilePath(config_path, Env::ToString(environment));
+
 	ConfigPtr pConfig = nullptr;
 	try
 	{
-		pConfig = Config::Load(config_path, environment);
+		pConfig = Config::Load(Global::GetConfigFilePath(), environment);
 		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)

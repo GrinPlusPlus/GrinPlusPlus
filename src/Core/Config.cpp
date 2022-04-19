@@ -10,9 +10,11 @@
 #include <Common/Util/StringUtil.h>
 #include <Core/Exceptions/FileException.h>
 #include <Core/Util/JsonUtil.h>
-#include <fstream>
+#include <Net/IPAddress.h>
 
-#include "../Server/console.h"
+#include <fstream>
+#include <unordered_set>
+
 struct Config::Impl
 {
 	Impl(const Json::Value& json, const Environment environment, const fs::path& dataPath)
@@ -48,45 +50,29 @@ struct Config::Impl
 Config::Config(const Json::Value& json, const Environment environment, const fs::path& dataPath)
 	: m_pImpl(std::make_shared<Impl>(json, environment, dataPath))
 {
-
+	
 }
 
-Config::Ptr Config::Load(const std::optional<fs::path>& config_path, const Environment environment)
+Config::Ptr Config::Load(const fs::path& configPath, const Environment environment)
 {
-	fs::path configPath;
-	if (config_path.has_value()) {
-		configPath = config_path.value();
-		if (!FileUtil::Exists(configPath)) {
+	std::shared_ptr<Config> pConfig = nullptr;
+	
+	// Read config file
+	try {
+		std::vector<unsigned char> data;
+		if (!FileUtil::ReadFile(configPath, data)) {
 			LOG_ERROR_F("Failed to open config file at: {}", configPath);
 			throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
 		}
-	} else {
-		fs::path dataDir = FileUtil::GetHomeDirectory() / ".GrinPP" / Env::ToString(environment);
-		FileUtil::CreateDirectories(dataDir);
-
-		configPath = dataDir / "server_config.json";
+		pConfig = Config::Load(JsonUtil::Parse(data), environment);
 	}
-
-
-	// Read config
-	std::shared_ptr<Config> pConfig = nullptr;
-
-	try {
-		if (FileUtil::Exists(configPath)) {
-			std::vector<unsigned char> data;
-			if (!FileUtil::ReadFile(configPath, data)) {
-				LOG_ERROR_F("Failed to open config file at: {}", configPath);
-				throw FILE_EXCEPTION_F("Failed to open config file at: {}", configPath);
-			}
-
-			pConfig = Config::Load(JsonUtil::Parse(data), environment);
-		}
-	}
-	catch (...) {}
+	catch (...) { }
 	
 	if (pConfig == nullptr || pConfig->GetJSON().empty()) {
 		pConfig = Config::Default(environment);
 	}
+
+	FileUtil::CreateDirectories(pConfig->GetDataDirectory());
 
 	// Update config file
 	Json::Value& json = pConfig->GetJSON();
@@ -109,9 +95,7 @@ std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment 
 	if (json.isMember(ConfigProps::DATA_PATH)) {
 		dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
 	}
-
-	FileUtil::CreateDirectories(dataDir);
-
+	
 	return std::shared_ptr<Config>(new Config(json, environment, dataDir));
 }
 
@@ -161,6 +145,28 @@ uint16_t Config::GetP2PPort() const noexcept { return m_pImpl->m_nodeConfig.GetP
 const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMagicBytes(); }
 
 uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
+
+const std::unordered_set<IPAddress>& Config::GetPreferredPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers(); }
+const std::unordered_set<IPAddress>& Config::GetAllowedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers(); }
+const std::unordered_set<IPAddress>& Config::GetBlockedPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers(); }
+
+bool Config::IsPeerAllowed(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetAllowedPeers();
+	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
+	return true;
+}
+
+bool Config::IsPeerBlocked(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers();
+	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
+	return false;
+}
+
+bool Config::IsPeerPreferred(const IPAddress& peer) {
+	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
+	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
+	return true;
+}
 
 //
 // Dandelion

@@ -5,14 +5,15 @@
 #include <string>
 #include <filesystem.h>
 #include <json/json.h>
-#include <optional>
+#include <Net/IPAddress.h>
+#include <unordered_set>
 
 class Config
 {
 public:
 	using Ptr = std::shared_ptr<Config>;
 
-	static Config::Ptr Load(const std::optional<fs::path>& config_path, const Environment environment);
+	static Config::Ptr Load(const fs::path& configPath, const Environment environment);
 	static fs::path DefaultDataDir(const Environment environment);
 	static std::shared_ptr<Config> Load(const Json::Value& json, const Environment environment);
 	static std::shared_ptr<Config> Default(const Environment environment);
@@ -46,6 +47,13 @@ public:
 
 	uint8_t GetMinSyncPeers() const noexcept;
 
+	const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept;
+	const std::unordered_set<IPAddress>& GetAllowedPeers() const noexcept;
+	const std::unordered_set<IPAddress>& GetBlockedPeers() const noexcept;
+	bool IsPeerAllowed(const IPAddress& peer);
+	bool IsPeerBlocked(const IPAddress& peer);
+	bool IsPeerPreferred(const IPAddress& peer);
+	
 	//
 	// Dandelion
 	//

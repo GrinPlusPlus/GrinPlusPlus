@@ -56,13 +56,11 @@ void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
 	auto connections = m_connections.Read();
 
 	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
-	if (pMostWorkPeer != nullptr) {
-		syncStatus.UpdateNetworkStatus(
-			connections->size(),
-			pMostWorkPeer->GetHeight(),
-			pMostWorkPeer->GetTotalDifficulty()
-		);
-	}
+	syncStatus.UpdateNetworkStatus(
+		connections->size(),
+		pMostWorkPeer != nullptr ? pMostWorkPeer->GetHeight() : NULL,
+		pMostWorkPeer != nullptr ? pMostWorkPeer->GetTotalDifficulty() : NULL
+	);
 }
 
 bool ConnectionManager::IsConnected(const IPAddress& address) const

@@ -8,7 +8,6 @@
 #include <Core/Serialization/ByteBuffer.h>
 
 #include <asio.hpp>
-//#include <asio/ip/address.hpp>
 
 class IPAddress : public Traits::IPrintable, public Traits::ISerializable
 {
@@ -42,6 +41,53 @@ public:
         }
 
         return IPAddress(std::move(address));
+    }
+
+    static bool IsValidIPAddress(const std::string& addressStr)
+    {
+        // split the string into tokens
+        std::vector<std::string> list = split(addressStr, '.');
+    
+        // if the token size is not equal to four
+        if (list.size() != 4) {
+            return false;
+        }
+    
+        // validate each token
+        for (std::string str: list)
+        {
+            // verify that the string is a number or not, and the numbers
+            // are in the valid range
+            if (!isNumber(str) || stoi(str) > 255 || stoi(str) < 0) {
+                return false;
+            }
+        }
+    
+        return true;
+    }
+
+    static std::vector<IPAddress> Resolve(const std::string& domainName)
+    {
+        asio::io_context context;
+        asio::ip::tcp::resolver resolver(context);
+        asio::ip::tcp::resolver::query query(domainName, "domain");
+        asio::error_code errorCode;
+        asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, errorCode);
+
+        std::vector<IPAddress> addresses;
+        if (!errorCode)
+        {
+            std::for_each(iter, {}, [&addresses](auto& it)
+                {
+                    try
+                    {
+                        addresses.push_back(IPAddress(it.endpoint().address()));
+                    }
+                    catch (...) { }
+                });
+        }
+        
+        return addresses;
     }
 
     //
@@ -102,6 +148,33 @@ public:
 
 private:
     asio::ip::address m_address;
+
+    // check if a given string is a numeric string or not
+    static bool isNumber(const std::string& str)
+    {
+        // `std::find_first_not_of` searches the string for the first character
+        return !str.empty() && (str.find_first_not_of("[0123456789]") == std::string::npos);
+    };
+    
+    // Function to split string `str` using a given delimiter
+    static std::vector<std::string> split(const std::string& str, char delim)
+    {
+        auto i = 0;
+        std::vector<std::string> list;
+    
+        int pos = static_cast<int>(str.find(delim));
+    
+        while (pos != std::string::npos)
+        {
+            list.push_back(str.substr(i, pos - i));
+            i = ++pos;
+            pos = static_cast<int>(str.find(delim, pos));
+        }
+    
+        list.push_back(str.substr(i, str.length()));
+    
+        return list;
+    };
 };
 
 namespace std

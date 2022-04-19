@@ -103,7 +103,7 @@ bool HeaderSyncer::RequestHeaders(const SyncStatus& syncStatus)
 	if (m_pPeer != nullptr)
 	{
 		LOG_TRACE("Headers requested.");
-		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(12);
+		m_timeout = std::chrono::system_clock::now() + std::chrono::seconds(10);
 		m_lastHeight = syncStatus.GetHeaderHeight();
 	}
 

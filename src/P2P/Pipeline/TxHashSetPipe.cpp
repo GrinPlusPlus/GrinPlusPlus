@@ -14,7 +14,7 @@
 #include <filesystem.h>
 #include <fstream>
 
-static const int BUFFER_SIZE = 124 * 1024;
+static const int BUFFER_SIZE = 128 * 1024;
 
 TxHashSetPipe::~TxHashSetPipe()
 {

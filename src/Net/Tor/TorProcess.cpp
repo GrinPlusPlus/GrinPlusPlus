@@ -110,14 +110,18 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 	}
 }
 
- fs::path TorProcess::GetTorCommand()
+fs::path TorProcess::GetTorCommand()
 {
+#ifdef _WIN32
+	return fs::current_path() / "tor" / "tor.exe";
+#else
 	return fs::current_path() / "tor" / "tor";
+#endif
 }
 
 bool TorProcess::IsTorPresent()
 {
-    return (FileUtil::Exists(GetTorCommand()));
+    return FileUtil::Exists(GetTorCommand());
 }
 
 bool TorProcess::IsPortOpen(const uint16_t port)

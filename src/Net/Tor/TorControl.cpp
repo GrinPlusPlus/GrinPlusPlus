@@ -8,7 +8,6 @@
 #include <Common/Util/StringUtil.h>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <Crypto/ED25519.h>
-#include <Net/Tor/TorProcess.h>
 #include <filesystem.h>
 
 TorControl::TorControl(
@@ -38,8 +37,6 @@ std::shared_ptr<TorControl> TorControl::Create(
 {
 	try
 	{
-		const fs::path command = TorProcess::GetTorCommand();
-
 #ifdef __linux__
 		std::error_code ec;
 		fs::path torDataDir = torDataPath / ("data" + std::to_string(controlPort));
@@ -55,23 +52,6 @@ std::shared_ptr<TorControl> TorControl::Create(
 		fs::copy_file(torDataPath / ".torrc", "./tor/.torrc", ec);
 		std::string torrcPath = "./tor/.torrc";
 #endif
-
-		/*std::vector<std::string> args({
-			command.u8string(),
-			"--ControlPort", std::to_string(controlPort),
-			"--SocksPort", std::to_string(socksPort),
-			"--DataDirectory", torDataDir.u8string(),
-			"--HashedControlPassword", Global::GetConfig().GetHashedControlPassword(),
-			"-f", torrcPath,
-			"--ignore-missing-torrc"
-		});
-		
-		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);
-		if (pProcess == nullptr) {
-			// Fallback to tor on path
-			args[0] = "tor";
-			pProcess = ChildProcess::Create(args);
-		}*/
 
 		ChildProcess::UCPtr pProcess =  nullptr;
 		

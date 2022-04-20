@@ -3,6 +3,8 @@
 #include <Core/Genesis.h>
 #include <Core/Config.h>
 
+#include <Common/Util/FileUtil.h>
+
 #include <csignal>
 #include <cassert>
 
@@ -15,6 +17,7 @@ static std::weak_ptr<Context> GLOBAL_CONTEXT;
 static std::atomic_bool RUNNING = false;
 static std::shared_ptr<const ICoinView> COIN_VIEW;
 static TorProcess::Ptr TOR_PROCESS;
+static fs::path CONFIG_FILE_PATH;
 
 static void SigIntHandler(int signum)
 {
@@ -109,6 +112,16 @@ void Global::SetCoinView(const std::shared_ptr<const ICoinView>& pCoinView)
 std::shared_ptr<const ICoinView> Global::GetCoinView()
 {
 	return COIN_VIEW;
+}
+
+fs::path& Global::GetConfigFilePath() { return CONFIG_FILE_PATH; }
+void Global::SetConfigFilePath(const std::optional<fs::path>& pFilePath, std::string environment)
+{
+	if (pFilePath.has_value()) {
+		CONFIG_FILE_PATH = pFilePath.value();
+	} else {
+		CONFIG_FILE_PATH = FileUtil::GetHomeDirectory() / ".GrinPP" / environment  / "server_config.json";
+	}
 }
 
 Context::Ptr Global::LockContext()

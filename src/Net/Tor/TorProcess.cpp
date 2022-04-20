@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include <Common/Util/FileUtil.h>
+
 #include "TorControl.h"
 
 TorProcess::~TorProcess()
@@ -29,7 +31,7 @@ TorProcess::Ptr TorProcess::Initialize(const fs::path& torDataPath, const uint16
 
 void TorProcess::Thread_Initialize(TorProcess* pProcess)
 {
-	while (Global::IsRunning() && !pProcess->m_shutdown)
+	while (!pProcess->m_shutdown)
 	{
 		try
 		{
@@ -59,15 +61,6 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 				continue;
 			}
 
-			/*if (!IsPortOpen(pProcess->m_socksPort) || !IsPortOpen(pProcess->m_controlPort)) {
-				LOG_WARNING("Tor port(s) in use. Trying to end tor process.");
-
-				system("killall -9 libtor.so");
-
-				ThreadUtil::SleepFor(std::chrono::seconds(5));
-				continue;
-			}*/
-
 			LOG_INFO("Initializing Tor");
 			pProcess->m_pControl = TorControl::Create(
 				pProcess->m_socksPort,
@@ -92,6 +85,20 @@ void TorProcess::Thread_Initialize(TorProcess* pProcess)
 			ThreadUtil::SleepFor(std::chrono::seconds(30));
 		}
 	}
+}
+
+fs::path TorProcess::GetTorCommand()
+{
+#ifdef _WIN32
+	return fs::current_path() / "tor" / "tor.exe";
+#else
+	return fs::current_path() / "tor" / "tor";
+#endif
+}
+
+bool TorProcess::IsTorPresent()
+{
+    return FileUtil::Exists(GetTorCommand());
 }
 
 bool TorProcess::IsPortOpen(const uint16_t port)

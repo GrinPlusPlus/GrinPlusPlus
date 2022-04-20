@@ -27,11 +27,27 @@ std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pCo
     std::shared_ptr<PeerManager> pPeerManager(new PeerManager(pContext, pPeerDB));
 
     pPeerManager->m_peersByAddress.clear();
-    const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
-    for (const PeerPtr& peer : peers) {
-        pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-    }
 
+    if (Global::GetConfig().GetPreferredPeers().size() > 0) {
+        LOG_INFO("Preferred peers found.");
+        for (const IPAddress& ipAddress : Global::GetConfig().GetPreferredPeers()) {
+            try {
+                const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
+                pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+            }
+            catch (std::exception& e) {
+                LOG_ERROR_F("Exception thrown: {}", e.what());
+            }
+        }
+    } 
+    else {
+        LOG_INFO("Getting peers from database...");
+        const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
+        for (const PeerPtr& peer : peers) {
+            pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+        }
+    }
+    
     std::shared_ptr<Locked<PeerManager>> pLocked = std::make_shared<Locked<PeerManager>>(Locked<PeerManager>(pPeerManager));
 
     std::weak_ptr<Locked<PeerManager>> pLockedWeak(pLocked);
@@ -61,7 +77,7 @@ void PeerManager::Thread_ManagePeers(PeerManager& peerManager)
             std::chrono::system_clock::now() - std::chrono::hours(24 * 7)
         );
 
-        for (auto iter : peerManager.m_peersByAddress)
+        for (auto& iter : peerManager.m_peersByAddress)
         {
             try {
                 PeerEntry& peerEntry = iter.second;
@@ -170,7 +186,7 @@ std::vector<PeerPtr> PeerManager::GetPeers(
 
 void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 {
-    for (auto socketAddress : peerAddresses) {
+    for (auto& socketAddress : peerAddresses) {
         const IPAddress& ipAddress = socketAddress.GetIPAddress();
         if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end()) {
             m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(ipAddress)));

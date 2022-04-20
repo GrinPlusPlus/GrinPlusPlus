@@ -82,6 +82,8 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)
         }
 
         pConnection->GetSocket()->SetDefaultOptions();
+        pConnection->GetSocket()->SetBlocking(true);
+        
         HandShake(pConnection->m_connectionManager, pConnection->m_pSyncStatus)
             .PerformHandshake(pConnection->m_pSocket, pConnection->m_connectedPeer);
 
@@ -94,6 +96,7 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)
 
         if (pConnection->GetDirection() == EDirection::OUTBOUND) {
             pConnection->SendSync(GetPeerAddressesMessage(Capabilities::ECapability::FAST_SYNC_NODE));
+            LOG_DEBUG_F("Capabilities sent to {}", pConnection->m_connectedPeer);
         }
 
         pConnection->m_received.resize(11);

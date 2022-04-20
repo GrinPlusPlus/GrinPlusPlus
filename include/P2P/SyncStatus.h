@@ -70,8 +70,8 @@ public:
 	void UpdateNetworkStatus(const uint64_t numActiveConnections, const uint64_t networkHeight, const uint64_t networkDifficulty)
 	{
 		m_numActiveConnections = numActiveConnections;
-		m_networkHeight = networkHeight;
-		m_networkDifficulty = networkDifficulty;
+		if (networkHeight != NULL) m_networkHeight = networkHeight;
+		if (networkDifficulty != NULL) m_networkDifficulty = networkDifficulty;
 	}
 
 	void UpdateHeaderStatus(const uint64_t headerHeight, const uint64_t headerDifficulty)

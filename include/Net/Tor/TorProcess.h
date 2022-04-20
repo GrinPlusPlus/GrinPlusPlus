@@ -48,12 +48,15 @@ public:
 
 	bool RetryInit() final;
 
+	static fs::path GetTorCommand();
+
 private:
 	TorProcess(const fs::path& torDataPath, const uint16_t socksPort, const uint16_t controlPort)
 		: m_torDataPath(torDataPath), m_socksPort(socksPort), m_controlPort(controlPort), m_pControl(nullptr), m_shutdown(false) { }
 
 	static void Thread_Initialize(TorProcess* pProcess);
 	static bool IsPortOpen(const uint16_t port);
+	static bool IsTorPresent();
 
 	std::unique_ptr<TorAddress> AddListener(
 		const std::unique_lock<std::mutex>&,

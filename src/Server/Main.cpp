@@ -11,6 +11,7 @@
 #include <Core/Config.h>
 #include <Common/Logger.h>
 #include <Common/Util/ThreadUtil.h>
+#include <Common/Util/FileUtil.h>
 
 #include <stdio.h> 
 #include <iostream>
@@ -20,7 +21,7 @@
 
 using namespace std::chrono;
 
-ConfigPtr Initialize(const Environment environment);
+ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environment environment);
 void Run(const ConfigPtr& pConfig, const Options& options);
 
 int main(int argc, char* argv[])
@@ -37,8 +38,8 @@ int main(int argc, char* argv[])
 		IO::MakeHeadless();
 	}
 
-	ConfigPtr pConfig = Initialize(opt.environment);
-
+	ConfigPtr pConfig = Initialize(opt.config_path, opt.environment);
+	
 	try
 	{
 		Run(pConfig, opt);
@@ -56,15 +57,17 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-ConfigPtr Initialize(const Environment environment)
+ConfigPtr Initialize(const std::optional<fs::path>& config_path, const Environment environment)
 {
 	IO::Out("INITIALIZING...");
 	IO::Flush();
 
+	Global::SetConfigFilePath(config_path, Env::ToString(environment));
+
 	ConfigPtr pConfig = nullptr;
 	try
 	{
-		pConfig = Config::Load(environment);
+		pConfig = Config::Load(Global::GetConfigFilePath(), environment);
 		IO::Out("Configuration loaded.");
 	}
 	catch (std::exception& e)

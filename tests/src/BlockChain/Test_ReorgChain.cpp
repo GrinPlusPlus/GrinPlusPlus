@@ -391,7 +391,7 @@ TEST_CASE("Reorg Chain")
 	});
 
 	FullBlock block30a = miner.MineNextBlock(
-		minedChain.back().block.GetHeader(),
+		minedChain[28].block.GetHeader(),
 		*pCombinedTx30a
 	);
 

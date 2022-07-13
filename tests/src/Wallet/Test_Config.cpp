@@ -8,11 +8,11 @@
 
 TEST_CASE("Config")
 {
-	ConfigPtr pConfig = Config::Load(Environment::AUTOMATED_TESTING);
+	ConfigPtr pConfig = Config::Default(Environment::AUTOMATED_TESTING);
 	
 	REQUIRE(pConfig->GetMinimumConfirmations() == 10);
 	REQUIRE(pConfig->GetMinPeers() == 10);
-	REQUIRE(pConfig->GetMaxPeers() == 50);
+	REQUIRE(pConfig->GetMaxPeers() == 60);
 	REQUIRE(pConfig->ShouldReuseAddresses() == true);
 	REQUIRE(pConfig->GetChainPath().generic_u8string().find("CHAIN") != std::string::npos);
 	REQUIRE(pConfig->GetControlPassword() == "MyPassword");

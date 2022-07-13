@@ -68,11 +68,11 @@ public:
 
 		auto reuse_address = JsonUtil::GetUInt32Opt(params_json, "reuse_address");
 		if (reuse_address.has_value()) {
-			if (!json.isMember("WALLET")) {
-				json["WALLET"] = Json::Value();
+			if (!config_json.isMember("WALLET")) {
+				config_json["WALLET"] = Json::Value();
 			}
 
-			Json::Value& wallet_json = json["WALLET"];
+			Json::Value& wallet_json = config_json["WALLET"];
 			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
 
 			config.ShouldReuseAddresses(reuse_address.value() == 0 ? false: true);

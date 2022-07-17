@@ -193,6 +193,9 @@ void Config::ShouldReuseAddresses(const bool reuse_addresses) noexcept { return 
 // TOR
 //
 const fs::path& Config::GetTorDataPath() const noexcept { return m_pImpl->m_torConfig.GetTorDataPath(); }
+const fs::path& Config::GetTorrcPath() const noexcept { return m_pImpl->m_torConfig.GetTorrcPath(); }
+void Config::AddTorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddTorBridge(bridge); }
+void Config::ClearTorBridges() noexcept { return m_pImpl->m_torConfig.ClearTorBridges(); }
 uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
 uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }

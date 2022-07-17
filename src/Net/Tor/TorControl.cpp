@@ -11,6 +11,8 @@
 #include <Net/Tor/TorProcess.h>
 #include <filesystem.h>
 
+#include <fstream>
+
 TorControl::TorControl(
 	const uint16_t socksPort,
 	const uint16_t controlPort,
@@ -46,13 +48,16 @@ std::shared_ptr<TorControl> TorControl::Create(
 		fs::remove_all(torDataDir, ec);
 		fs::create_directories(torDataDir, ec);
 		std::string torrcPath = (torDataPath / ".torrc").u8string();
+		if (!fs::exists(torrcPath)) std::ofstream ofstream(torrcPath);
 #else
 		std::error_code ec;
 		fs::path torDataDir = "./tor/data" + std::to_string(controlPort);
 		fs::remove_all(torDataDir, ec);
 		fs::create_directories(torDataDir, ec);
 		fs::remove("./tor/.torrc", ec);
-		fs::copy_file(torDataPath / ".torrc", "./tor/.torrc", ec);
+		fs::path t_torrcPath = torDataPath / ".torrc";
+		if (!fs::exists(t_torrcPath)) std::ofstream file(t_torrcPath);
+		fs::copy_file(t_torrcPath, "./tor/.torrc", ec);
 		std::string torrcPath = "./tor/.torrc";
 #endif
 

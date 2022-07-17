@@ -3,8 +3,11 @@
 #include "ConfigProps.h"
 
 #include <json/json.h>
+
 #include <cstdint>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 class TorConfig
 {
@@ -25,6 +28,18 @@ public:
 
 	const fs::path& GetTorDataPath() const noexcept { return m_torDataPath; }
 
+	const fs::path& GetTorrcPath() const noexcept { return m_torrcPath; }
+
+	void AddTorBridge(std::string bridge) const noexcept
+	{
+	
+	}
+
+	void ClearTorBridges() const noexcept
+	{
+		
+	}
+
 	//
 	// Constructor
 	//
@@ -35,6 +50,7 @@ public:
 		m_password = "MyPassword";
 		m_hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
 		m_torDataPath = torDataPath;
+		m_torrcPath = torDataPath / ".torrc";
 		fs::create_directories(torDataPath);
 
 		if (json.isMember(ConfigProps::Tor::TOR))
@@ -68,4 +84,5 @@ private:
 	std::string m_password;
 	std::string m_hashedPassword;
 	fs::path m_torDataPath;
+	fs::path m_torrcPath;
 };

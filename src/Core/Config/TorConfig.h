@@ -4,6 +4,8 @@
 
 #include <json/json.h>
 
+#include <filesystem.h>
+
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -32,12 +34,37 @@ public:
 
 	void AddTorBridge(std::string bridge) const noexcept
 	{
-	
+		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
+		configFile << bridge;
 	}
 
 	void ClearTorBridges() const noexcept
 	{
-		
+		std::ifstream configFile(m_torrcPath);
+
+		if (!configFile.is_open())
+		{
+			return;
+		}
+		std::ofstream newConfigFile;
+		newConfigFile.open("temp.torrc", std::ofstream::out);
+
+		std::string line;
+		while (std::getline(configFile,line))
+		{
+			if (line.find("ClientTransportPlugin") == std::string::npos) {
+				continue;
+			}
+			if (line.find("Bridge") == std::string::npos) {
+				continue;
+			}
+			
+			newConfigFile << line;
+		}
+		newConfigFile.close();
+		configFile.close();
+		remove(m_torrcPath);
+		rename("temp.torrc", m_torrcPath);
 	}
 
 	//

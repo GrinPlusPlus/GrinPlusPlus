@@ -35,7 +35,7 @@ public:
 	void AddTorBridge(std::string bridge) const noexcept
 	{
 		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
-		configFile << bridge;
+		configFile << "Bridge " , bridge;
 	}
 
 	void ClearTorBridges() const noexcept

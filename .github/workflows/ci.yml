@@ -111,9 +111,17 @@ jobs:
           useVcpkgToolchainFile: true
           vcpkgTriplet: '${{ matrix.vcpkg_triplet }}'
           buildDirectory: '${{ github.workspace }}/build'
-          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF'
+          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=ON'
           buildWithCMake: true
           buildWithCMakeArgs: '--config Release --parallel'
+      - name: 'Run Tests (windows)'
+        if: runner.os == 'windows'
+        run: |
+          "..\backend\bin\Release\Release\Tests.exe"
+      - name: 'Run Tests (windows)'
+        if: runner.os != 'windows'
+        run: |
+          "./../backend/bin/Release/Release/Tests"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

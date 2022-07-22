@@ -32,6 +32,14 @@ public:
 
 	const fs::path& GetTorrcPath() const noexcept { return m_torrcPath; }
 
+	const std::string ReadTorrcFile() const noexcept
+	{
+		std::ifstream torrc(m_torrcPath);
+		std::stringstream buffer;
+		buffer << torrc.rdbuf();
+		return buffer.str();
+	}
+	
 	void AddTorBridge(std::string bridge) const noexcept
 	{
 		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
@@ -79,6 +87,7 @@ public:
 		m_torDataPath = torDataPath;
 		m_torrcPath = torDataPath / ".torrc";
 		fs::create_directories(torDataPath);
+		if (!fs::exists(m_torrcPath)) std::ofstream file(m_torrcPath);
 
 		if (json.isMember(ConfigProps::Tor::TOR))
 		{

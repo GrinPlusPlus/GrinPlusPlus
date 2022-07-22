@@ -196,6 +196,7 @@ const fs::path& Config::GetTorDataPath() const noexcept { return m_pImpl->m_torC
 const fs::path& Config::GetTorrcPath() const noexcept { return m_pImpl->m_torConfig.GetTorrcPath(); }
 void Config::AddTorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddTorBridge(bridge); }
 void Config::ClearTorBridges() noexcept { return m_pImpl->m_torConfig.ClearTorBridges(); }
+const std::string Config::ReadTorrcFile() const noexcept { return m_pImpl->m_torConfig.ReadTorrcFile(); }
 uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
 uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }

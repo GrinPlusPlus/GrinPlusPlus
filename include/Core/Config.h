@@ -82,6 +82,7 @@ public:
 	const fs::path& GetTorrcPath() const noexcept;
 	void AddTorBridge(const std::string bridge) noexcept;
 	void ClearTorBridges() noexcept;
+	const std::string ReadTorrcFile() const noexcept;
 	uint16_t GetSocksPort() const noexcept;
 	uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;

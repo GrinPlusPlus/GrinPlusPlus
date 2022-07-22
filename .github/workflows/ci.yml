@@ -48,7 +48,6 @@ jobs:
                 backend/bin/Release/Release/GrinNode.exe
                 backend/bin/Release/Release/slate_tool.exe
                 backend/bin/Release/Release/tx_verifier.exe
-                backend/bin/Release/Release/Tests.exe
             release_command: 'npm run clean_build:win && npm run release'
 
     steps:
@@ -114,17 +113,9 @@ jobs:
           useVcpkgToolchainFile: true
           vcpkgTriplet: '${{ matrix.vcpkg_triplet }}'
           buildDirectory: '${{ github.workspace }}/build'
-          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=ON'
+          cmakeAppendedArgs: ' ${{ matrix.cmake_platform_args }} -DCMAKE_BUILD_TYPE=Release -DGRINPP_TESTS=OFF'
           buildWithCMake: true
           buildWithCMakeArgs: '--config Release --parallel'
-      - name: 'Run Tests (windows)'
-        if: runner.os == 'windows'
-        run: |
-          "..\backend\bin\Release\Release\Tests.exe"
-      - name: 'Run Tests (linux & macOS)'
-        if: runner.os != 'windows'
-        run: |
-          "../backend/bin/Release/Tests"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

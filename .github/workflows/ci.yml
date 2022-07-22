@@ -124,7 +124,7 @@ jobs:
       - name: 'Run Tests (linux & macOS)'
         if: runner.os != 'windows'
         run: |
-          "./../backend/bin/Release/Tests"
+          "../backend/bin/Release/Tests"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         env:

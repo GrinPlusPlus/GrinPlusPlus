@@ -119,7 +119,7 @@ TEST_CASE("Slatepack - Recieve")
     Slate slate1 = Slate::Deserialize(buffer1);
     REQUIRE(slate1.amount == 1000000000);
 
-    /*x25519_public_key_t ephemeral_public_key(CBigInteger<32>::FromHex("1a7f941f7769a3e132374c13e9e492618ac4bd26ece8161cdd168b4a6845e972"));
+    x25519_public_key_t ephemeral_public_key(CBigInteger<32>::FromHex("1a7f941f7769a3e132374c13e9e492618ac4bd26ece8161cdd168b4a6845e972"));
     SecretKey shared_secret = X25519::ECDH(x_keypair.seckey, ephemeral_public_key);
 
     REQUIRE(shared_secret.GetBytes().ToHex() == "e55e34d16234491af9f0c681f70c0cd8c69ccc8f19bb5d0c790c16510b81bb2e");
@@ -148,7 +148,7 @@ TEST_CASE("Slatepack - Recieve")
     ByteBuffer buffer{ message.m_payload };
     Slate slate = Slate::Deserialize(buffer);
 
-    REQUIRE(slate.amount == 1000000000);*/
+    REQUIRE(slate.amount == 1000000000);
 }
 
 TEST_CASE("Slatepack - E2E")

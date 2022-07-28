@@ -32,7 +32,6 @@ public:
 		Config& config = Global::GetConfig();
 		
 		if (!tor_bridge.empty()) config.AddTorBridge(tor_bridge);
-		else config.ClearTorBridges();
 		
 		Json::Value result;
 		result["status"] = "SUCCESS";

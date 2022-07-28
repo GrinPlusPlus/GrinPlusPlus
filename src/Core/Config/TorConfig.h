@@ -10,6 +10,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <iostream>
 
 class TorConfig
 {
@@ -42,37 +43,16 @@ public:
 	
 	void AddTorBridge(std::string bridge) const noexcept
 	{
+		AddRequiredHeaders();
 		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
-		configFile << "Bridge " , bridge;
+		configFile << "Bridge " << bridge << "\n";
 	}
 
-	void ClearTorBridges() const noexcept
+	void ClearTorrcFile() const noexcept
 	{
-		std::ifstream configFile(m_torrcPath);
-
-		if (!configFile.is_open())
-		{
-			return;
-		}
-		std::ofstream newConfigFile;
-		newConfigFile.open("temp.torrc", std::ofstream::out);
-
-		std::string line;
-		while (std::getline(configFile,line))
-		{
-			if (line.find("ClientTransportPlugin") == std::string::npos) {
-				continue;
-			}
-			if (line.find("Bridge") == std::string::npos) {
-				continue;
-			}
-			
-			newConfigFile << line;
-		}
-		newConfigFile.close();
-		configFile.close();
-		remove(m_torrcPath);
-		rename("temp.torrc", m_torrcPath);
+		std::ofstream ofs;
+		ofs.open(m_torrcPath, std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
 	}
 
 	//
@@ -121,4 +101,45 @@ private:
 	std::string m_hashedPassword;
 	fs::path m_torDataPath;
 	fs::path m_torrcPath;
+
+	void AddRequiredHeaders() const noexcept
+	{
+		std::ifstream configFile(m_torrcPath);
+		std::string line;
+		int i = 0;
+		
+		std::ofstream newConfigFile;
+		newConfigFile.open("temp.torrc", std::ofstream::out);
+		
+		while (std::getline(configFile, line))
+		{
+			i += 1;
+			
+			if (i == 1)
+			{
+				if(line.find("UseBridges 1") == std::string::npos) newConfigFile << "UseBridges 1" << "\n";
+			}
+			else if (i == 2)
+			{
+				if (line.find("ClientTransportPlugin") == std::string::npos)
+				{
+#ifdef _WIN32
+					fs::path obfs4Dir = (m_torDataPath / "PluggableTransports" / "obfs4proxy.exe");
+#else
+					fs::path obfs4Dir = (m_torDataPath / "PluggableTransports" / "obfs4proxy");
+#endif
+					newConfigFile << "ClientTransportPlugin obfs4 exec " << obfs4Dir << "\n";
+				}
+			}		
+			
+			newConfigFile << line << "\n";
+		}
+		
+		newConfigFile.close();
+		configFile.close();
+		remove(m_torrcPath);
+		rename("temp.torrc", m_torrcPath);
+		
+		return;
+	}
 };

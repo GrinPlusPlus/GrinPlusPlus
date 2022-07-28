@@ -38,7 +38,7 @@ TEST_CASE("SlatepackAddress")
         */
 
         KeyChain keyChain = KeyChain::FromSeed((const SecureVector&)seed);
-		
+        
         KeyChainPath path0 = KeyChainPath::FromString("m/0/1/").GetChild(0);
         KeyChainPath path1 = KeyChainPath::FromString("m/0/1/1");
         KeyChainPath path2 = KeyChainPath::FromString("m/0/1/").GetChild(2);

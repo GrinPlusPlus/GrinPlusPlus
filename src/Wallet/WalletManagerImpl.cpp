@@ -159,27 +159,31 @@ std::optional<TorAddress> WalletManager::CheckTorListener(const SessionToken& to
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
 	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
 
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+
 	// Should we reuse the addresses?
 	if (!m_config.ShouldReuseAddresses())
 	{
-		// let's then remove the current listener first
-		KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
-		ed25519_keypair_t torKey;
-		KeyChainPath currentPath = KeyChainPath::FromString("m/0/1").GetChild(wallet.Read()->GetDatabase().Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0")));
-		torKey = keyChain.DeriveED25519Key(currentPath);
-		pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
-
+		// get current path
+		int childIndex = wallet.Read()->GetDatabase().Read()->GetAddressIndex(KeyChainPath::FromString("m/0/1"));
+		KeyChainPath currentPath = KeyChainPath::FromString("m/0/1").GetChild(childIndex);
 		// now let's increase the index
-		wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(KeyChainPath::FromString("m/0/1"));
-
+		wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(currentPath);
 		// after increasing the index we should then add the tor listener again using the new derived key
-		KeyChainPath newPath = KeyChainPath::FromString("m/0/1").GetChild(wallet.Read()->GetDatabase().Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0")));
-		torKey = keyChain.DeriveED25519Key(newPath);
-		TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
-		wallet.Write()->SetTorAddress(tor_address);
-		walletImpl.Write()->SetTorAddress(tor_address);
+		KeyChainPath newPath = currentPath.GetChild(wallet.Read()->GetDatabase().Read()->GetAddressIndex(currentPath));
+		if (pTorProcess != nullptr)
+		{
+			// let's then remove the current listener first and then add a new one
+			ed25519_keypair_t torKey = keyChain.DeriveED25519Key(currentPath);
+			pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
+			pTorProcess->AddListener(keyChain.DeriveED25519Key(newPath).secret_key, wallet.Read()->GetListenerPort());
+		}
+		SlatepackAddress address(keyChain.DeriveED25519Key(newPath).public_key);
+		TorAddress torAddress = address.ToTorAddress();
+		wallet.Write()->SetTorAddress(torAddress);
+		walletImpl.Write()->SetTorAddress(torAddress);
 	}
-
+	
 	return wallet.Read()->GetTorAddress();
 }
 

@@ -34,10 +34,8 @@ public:
 
 			RPC::Response response = request.BuildResult(ReceiveTxResponse(std::move(receivedSlate)));
 			
-			if (!m_walletManager.ShouldReuseAddresses())
-			{
-				m_walletManager.CheckTorListener(m_token, m_pTorProcess);
-			}
+			// Update keychain index if m_reuseAddress is set false
+			m_walletManager.CheckTorListener(m_token, m_pTorProcess);
 			
 			return response;
 		}

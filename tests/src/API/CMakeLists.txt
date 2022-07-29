@@ -6,4 +6,5 @@ list_append_parent(
     "Wallet/Owner/Test_EstimateFee.cpp"
     "Wallet/Owner/Test_Login.cpp"
     "Wallet/Owner/Test_Send.cpp"
+    "Wallet/Owner/Test_Receive.cpp"
 )

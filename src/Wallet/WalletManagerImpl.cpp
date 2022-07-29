@@ -170,7 +170,7 @@ std::optional<TorAddress> WalletManager::CheckTorListener(const SessionToken& to
 		pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
 
 		// now let's increase the index
-		wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(KeyChainPath::FromString("m/0/0"));
+		wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(KeyChainPath::FromString("m/0/1"));
 
 		// after increasing the index we should then add the tor listener again using the new derived key
 		KeyChainPath newPath = KeyChainPath::FromString("m/0/1").GetChild(wallet.Read()->GetDatabase().Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0")));

@@ -139,6 +139,8 @@ bool TorProcess::RetryInit()
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
 
+	m_pControl = nullptr;
+	
 	if (m_pControl == nullptr) {
 		m_pControl = TorControl::Create(m_socksPort, m_controlPort, m_torDataPath);
 		return m_pControl != nullptr;

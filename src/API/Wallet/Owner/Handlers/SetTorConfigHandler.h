@@ -31,7 +31,10 @@ public:
 				
 		Config& config = Global::GetConfig();
 		
-		if (!tor_bridge.empty()) config.AddTorBridge(tor_bridge);
+		if (!tor_bridge.empty()) {
+			config.AddTorBridge(tor_bridge);
+			m_pTorProcess->RetryInit();
+		}
 		
 		Json::Value result;
 		result["status"] = "SUCCESS";

@@ -168,7 +168,7 @@ SessionToken SessionManager::Login(
 	);
 
 	KeyChain keyChain = KeyChain::FromSeed(seed);
-	int currentAddressIndex = pWalletDB.Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0"));
+	int currentAddressIndex = pWalletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
 	
 	auto listenerInfo = m_pForeignController->StartListener(
 		pTorProcess,

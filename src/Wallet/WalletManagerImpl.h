@@ -36,9 +36,13 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	);
 
-	std::optional<TorAddress> CheckTorListener(
+	bool RemoveCurrentTorListener(
 		const SessionToken& token,
 		const TorProcess::Ptr& pTorProcess
+	);
+	
+	KeyChainPath UpdateKeyChainPathIndex(
+		const SessionToken& token
 	);
 
 	LoginResponse Login(

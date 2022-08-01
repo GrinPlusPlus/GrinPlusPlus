@@ -78,9 +78,13 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	) = 0;
 
-	virtual std::optional<TorAddress> CheckTorListener(
+	virtual bool RemoveCurrentTorListener(
 		const SessionToken& token,
 		const TorProcess::Ptr& pTorProcess
+	) = 0; 
+		
+	virtual KeyChainPath UpdateKeyChainPathIndex(
+		const SessionToken& token
 	) = 0;
 
 	//

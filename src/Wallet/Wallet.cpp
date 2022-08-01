@@ -309,7 +309,7 @@ BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteri
 SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) const
 {
 	// FUTURE: Support multiple account paths
-	int currentAddressIndex = m_walletDB.Read()->GetAddressIndex(KeyChainPath::FromString("m/0/0"));
+	int currentAddressIndex = m_walletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
 
 	KeyChain keychain = KeyChain::FromSeed(m_master_seed);
 	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(currentAddressIndex));

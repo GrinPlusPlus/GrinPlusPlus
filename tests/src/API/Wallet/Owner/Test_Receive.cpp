@@ -3,19 +3,22 @@
 #include <Net/Clients/RPC/RPCClient.h>
 #include <API/Wallet/Owner/Models/SendResponse.h>
 
+#include <Core/Global.h>
 #include <TestServer.h>
 #include <TestChain.h>
 #include <Comparators/JsonComparator.h>
 #include <optional>
 
-TEST_CASE("API: Slatepack - Generate Address on Receive")
+TEST_CASE("API: Slatepack - Generate new Address on Receive")
 {
-    ConfigPtr pConfig = Config::Default(Environment::AUTOMATED_TESTING);
-    pConfig->ShouldReuseAddresses(false);
-    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
+    REQUIRE(Global::GetConfig().ShouldReuseAddresses() == true);
+    Global::GetConfig().ShouldReuseAddresses(false);
+    REQUIRE(Global::GetConfig().ShouldReuseAddresses() == false);
 	
+    TestServer::Ptr pTestServer = TestServer::CreateWithWallet();
+    	
     auto pSenderWallet = pTestServer->CreateUser("Alice", "P@ssw0rd123!", UseTor::YES).wallet;
-    auto pReceiverWallet = pTestServer->CreateUser("Bob", "P@ssw0rd123!", UseTor::NO).wallet;
+    auto pReceiverWallet = pTestServer->CreateUser("Bob", "P@ssw0rd123!", UseTor::YES).wallet;
 
     TestChain chain(pTestServer->GetBlockChain());
     chain.MineChain(pSenderWallet, 30);
@@ -23,7 +26,7 @@ TEST_CASE("API: Slatepack - Generate Address on Receive")
     // sender address before receiving
     std::string s_addressBefore = pSenderWallet->GetSlatepackAddress().ToString();
 	// receiver address before receiving
-    std::string r_addressBefore = pReceiverWallet->GetSlatepackAddress().ToString();
+    std::string r_AddressBefore = pReceiverWallet->GetSlatepackAddress().ToString();
 	
     // Send
     SendCriteria criteria(
@@ -32,7 +35,7 @@ TEST_CASE("API: Slatepack - Generate Address on Receive")
         1'000'000,
         (uint8_t)1,
         SelectionStrategyDTO(ESelectionStrategy::SMALLEST, {}),
-        std::make_optional<std::string>(pReceiverWallet->GetSlatepackAddress().ToString()),
+        std::make_optional<std::string>(r_AddressBefore),
         std::nullopt
     );
 
@@ -40,7 +43,7 @@ TEST_CASE("API: Slatepack - Generate Address on Receive")
     REQUIRE(response_result.has_value());
 
     SendResponse response = SendResponse::FromJSON(response_result.value());
-    REQUIRE(response.GetStatus() == SendResponse::EStatus::SENT);
+    REQUIRE(response.GetStatus() == SendResponse::EStatus::FINALIZED);
 
     // Unpack slatepack
     SlatepackMessage decrypted = pReceiverWallet->GetWallet().Read()->DecryptSlatepack(response.GetArmoredSlate());
@@ -52,7 +55,45 @@ TEST_CASE("API: Slatepack - Generate Address on Receive")
     REQUIRE(s_addressBefore == pSenderWallet->GetSlatepackAddress().ToString());
 
     // receiver address after receiving should be different
-    //REQUIRE(r_addressBefore != pReceiverWallet->GetSlatepackAddress().ToString());
-    	
-    // TODO: Check amount, fee?, etc
+    std::string newAddress = pReceiverWallet->GetSlatepackAddress().ToString();
+    REQUIRE(r_AddressBefore != newAddress);
+
+    // Send
+    SendCriteria criteria2(
+        pSenderWallet->GetToken(),
+        1'000'000'000,
+        1'000'000,
+        (uint8_t)1,
+        SelectionStrategyDTO(ESelectionStrategy::SMALLEST, {}),
+        std::make_optional<std::string>(newAddress),
+        std::nullopt
+    );
+    response_result = pTestServer->InvokeOwnerRPC("send", criteria2.ToJSON()).GetResult();
+    REQUIRE(response_result.has_value());
+    response = SendResponse::FromJSON(response_result.value());
+    REQUIRE(response.GetStatus() == SendResponse::EStatus::FINALIZED);
+    // receiver address after receiving should be different
+    REQUIRE(newAddress != pReceiverWallet->GetSlatepackAddress().ToString());
+
+    REQUIRE(Global::GetConfig().ShouldReuseAddresses() == false);
+    Global::GetConfig().ShouldReuseAddresses(true);
+    REQUIRE(Global::GetConfig().ShouldReuseAddresses() == true);
+
+    newAddress = pReceiverWallet->GetSlatepackAddress().ToString();
+    // Send
+    SendCriteria criteria3(
+        pSenderWallet->GetToken(),
+        1'000'000'000,
+        1'000'000,
+        (uint8_t)1,
+        SelectionStrategyDTO(ESelectionStrategy::SMALLEST, {}),
+        std::make_optional<std::string>(newAddress),
+        std::nullopt
+    );
+    response_result = pTestServer->InvokeOwnerRPC("send", criteria3.ToJSON()).GetResult();
+    REQUIRE(response_result.has_value());
+    response = SendResponse::FromJSON(response_result.value());
+    REQUIRE(response.GetStatus() == SendResponse::EStatus::FINALIZED);
+    // receiver address after receiving should be the same now
+    REQUIRE(newAddress == pReceiverWallet->GetSlatepackAddress().ToString());
 }

@@ -11,6 +11,8 @@
 #include <Net/Tor/TorProcess.h>
 #include <filesystem.h>
 
+#include <fstream>
+
 TorControl::TorControl(
 	const uint16_t socksPort,
 	const uint16_t controlPort,

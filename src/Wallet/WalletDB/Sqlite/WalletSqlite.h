@@ -21,8 +21,8 @@ public:
 	void OnEndWrite() final;
 
 	KeyChainPath GetNextChildPath(const KeyChainPath& parentPath) final;
-	int GetAddressIndex(const KeyChainPath& parentPath) const final;
-	void IncreaseAddressIndex(const KeyChainPath& parentPath) final;
+	int GetCurrentAddressIndex(const KeyChainPath& parentPath) const final;
+	int IncreaseAddressIndex(const KeyChainPath& parentPath) final;
 
 	std::unique_ptr<Slate> LoadSlate(
 		const SecureVector& masterSeed,

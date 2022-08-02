@@ -3,8 +3,14 @@
 #include "ConfigProps.h"
 
 #include <json/json.h>
+
+#include <filesystem.h>
+
 #include <cstdint>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <iostream>
 
 class TorConfig
 {
@@ -25,6 +31,30 @@ public:
 
 	const fs::path& GetTorDataPath() const noexcept { return m_torDataPath; }
 
+	const fs::path& GetTorrcPath() const noexcept { return m_torrcPath; }
+
+	const std::string ReadTorrcFile() const noexcept
+	{
+		std::ifstream torrc(m_torrcPath);
+		std::stringstream buffer;
+		buffer << torrc.rdbuf();
+		return buffer.str();
+	}
+	
+	void AddTorBridge(std::string bridge) const noexcept
+	{
+		AddRequiredHeaders();
+		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
+		configFile << "Bridge " << bridge << "\n";
+	}
+
+	void ClearTorrcFile() const noexcept
+	{
+		std::ofstream ofs;
+		ofs.open(m_torrcPath, std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
+	}
+
 	//
 	// Constructor
 	//
@@ -35,7 +65,9 @@ public:
 		m_password = "MyPassword";
 		m_hashedPassword = "16:906248AB51F939ED605CE9937D3B1FDE65DEB4098A889B2A07AC221D8F";
 		m_torDataPath = torDataPath;
+		m_torrcPath = torDataPath / ".torrc";
 		fs::create_directories(torDataPath);
+		if (!fs::exists(m_torrcPath)) std::ofstream file(m_torrcPath);
 
 		if (json.isMember(ConfigProps::Tor::TOR))
 		{
@@ -68,4 +100,46 @@ private:
 	std::string m_password;
 	std::string m_hashedPassword;
 	fs::path m_torDataPath;
+	fs::path m_torrcPath;
+
+	void AddRequiredHeaders() const noexcept
+	{
+		std::ifstream configFile(m_torrcPath);
+		std::string line;
+		int i = 0;
+		
+		std::ofstream newConfigFile;
+		newConfigFile.open("temp.torrc", std::ofstream::out);
+		
+		while (std::getline(configFile, line))
+		{
+			i += 1;
+			
+			if (i == 1)
+			{
+				if(line.find("UseBridges 1") == std::string::npos) newConfigFile << "UseBridges 1" << "\n";
+			}
+			else if (i == 2)
+			{
+				if (line.find("ClientTransportPlugin") == std::string::npos)
+				{
+#ifdef _WIN32
+					fs::path obfs4Dir = (m_torDataPath / "PluggableTransports" / "obfs4proxy.exe");
+#else
+					fs::path obfs4Dir = (m_torDataPath / "PluggableTransports" / "obfs4proxy");
+#endif
+					newConfigFile << "ClientTransportPlugin obfs4 exec " << obfs4Dir << "\n";
+				}
+			}		
+			
+			newConfigFile << line << "\n";
+		}
+		
+		newConfigFile.close();
+		configFile.close();
+		remove(m_torrcPath);
+		rename("temp.torrc", m_torrcPath);
+		
+		return;
+	}
 };

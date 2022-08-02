@@ -96,7 +96,7 @@ public:
 	{
 		if (path.empty() || path.at(0) != 'm')
 		{
-			throw DESERIALIZATION_EXCEPTION_F("Invalid path: {}", path);
+			throw DESERIALIZATION_EXCEPTION_F("Invalid path: \"{}\"", path);
 		}
 
 		std::vector<uint32_t> keyIndices;
@@ -106,7 +106,7 @@ public:
 		{
 			if (remaining.at(0) != '/')
 			{
-				throw DESERIALIZATION_EXCEPTION_F("Invalid path: {}", path);
+				throw DESERIALIZATION_EXCEPTION_F("Invalid path: \"{}\"", path);
 			}
 
 			remaining = remaining.substr(1);

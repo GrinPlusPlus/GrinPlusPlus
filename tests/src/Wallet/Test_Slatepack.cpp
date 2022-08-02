@@ -12,15 +12,20 @@
 #include <Wallet/Keychain/Mnemonic.h>
 #include <Wallet/WalletDB/WalletStore.h>
 #include <Wallet/Keychain/KeyChain.h>
+#include <Core/Config.h>
 
 
 TEST_CASE("SlatepackAddress")
 {
     SECTION("Testing Multiple Addresses Generation")
     {
-        // seed words = dehydrate opened lilac elapse subtly prying swept ruby liar veteran wife afloat strained camp tugs pager dual tomorrow aimless boxes saucepan invoke utensils vapidly lilac
-        SecretKey seed = CBigInteger<32>::FromHex("f9a0e73d3cd533368f75ff63cbd97b2100beffbc339cdfa5c203c1a022d9cf11");
-        
+        // seed words = antique couple pulse gold power coconut refuse river room tornado custom frame spy property future cluster betray retire series orchard exile order sword bid
+        std::vector<uint8_t> seed = CBigInteger<32>::FromHex("09e626b6322a9459ed1dd6bbfcacda2e4d3558d7a1631576ff104e04fb387710").GetData();
+
+        SecureString mnemonic = Mnemonic::CreateMnemonic(seed.data(), seed.size());
+        REQUIRE(std::string(mnemonic.begin(), mnemonic.end()) == "antique couple pulse gold power coconut refuse river room tornado custom frame spy property future cluster betray retire series orchard exile order sword bid");
+        REQUIRE(Mnemonic::ToEntropy(mnemonic) == (const SecureVector&)seed);
+		
         /* 
         *  From RFC-0010 (https://github.com/mimblewimble/grin-rfcs/blob/master/text/0010-online-transacting-via-tor.md):
         * 
@@ -32,7 +37,9 @@ TEST_CASE("SlatepackAddress")
         * 
         */
 
-        KeyChainPath path0 = KeyChainPath::FromString("m/0/1").GetChild(0);
+        KeyChain keyChain = KeyChain::FromSeed((const SecureVector&)seed);
+        
+        KeyChainPath path0 = KeyChainPath::FromString("m/0/1/").GetChild(0);
         KeyChainPath path1 = KeyChainPath::FromString("m/0/1/1");
         KeyChainPath path2 = KeyChainPath::FromString("m/0/1/").GetChild(2);
         KeyChainPath path3 = KeyChainPath::FromString("m/0/1/").GetChild(3);
@@ -44,35 +51,39 @@ TEST_CASE("SlatepackAddress")
         REQUIRE(path3.Format() == "m/0/1/3");
         REQUIRE(path4.Format() == "m/0/1/4");
 
-        ed25519_keypair_t key_pair_t0 = KeyChain::FromSeed(seed.GetSecure()).DeriveED25519Key(path0);
+        SecretKey key0 = keyChain.DerivePrivateKey(path0);
+        REQUIRE(key0.GetBytes().Format() == "4594a17b9d1e8a97d55855ca86d072b71445f307bb88d13ece2a83e4d5a7098d");
+        REQUIRE(Hasher::Blake2b(key0.GetVec()).Format() == "969933f23d8e8d22b9d464a9b7d27112335e5a03244428a1eeace727a26222cf");
+		
+        ed25519_keypair_t key_pair_t0 = keyChain.DeriveED25519Key(path0);
         SlatepackAddress recipient0(key_pair_t0.public_key);
-        REQUIRE(recipient0.GetEdwardsPubKey().Format() == "068131549ec5c3bdcb3d13a855e1b76d179919efd974669292b322f5d59a4ccc");
-        REQUIRE(recipient0.ToTorAddress().ToString() == "a2atcve6yxb33sz5couflynxnulzsgpp3f2gneuswmrplvm2jtgmjead");
-        REQUIRE(recipient0.ToString() == "grin1q6qnz4y7chpmmjeazw59tcdhd5tejx00m96xdy5jkv30t4v6fnxqv9kwer");
+        REQUIRE(recipient0.GetEdwardsPubKey().Format() == "eae22f4149ef8ba1601c1dc9225bf70a4cf1a265c089385d85181e406bd5759a");
+        REQUIRE(recipient0.ToTorAddress().ToString() == "5lrc6qkj56f2cya4dxesew7xbjgpditfycetqxmfdapea26vownfpnid");
+        REQUIRE(recipient0.ToString() == "grin1at3z7s2fa796zcqurhyjyklhpfx0rgn9czynshv9rq0yq674wkdq5qdy6w");
 
-        ed25519_keypair_t key_pair_t1 = KeyChain::FromSeed(seed.GetSecure()).DeriveED25519Key(path1);
+        ed25519_keypair_t key_pair_t1 = keyChain.DeriveED25519Key(path1);
         SlatepackAddress recipient1(key_pair_t1.public_key);
-        REQUIRE(recipient1.GetEdwardsPubKey().Format() == "b861e80849b78b4d8e04faeb79645aad7abbb2b71ebe242830045e30719b47f2");
-        REQUIRE(recipient1.ToTorAddress().ToString() == "xbq6qccjw6fu3dqe7lvxszc2vv5lxmvxd27cikbqarpda4m3i7zedkqd");
-        REQUIRE(recipient1.ToString() == "grin1hps7szzfk795mrsylt4hjez644athv4hr6lzg2psq30rquvmgleq8epcsx");
+        REQUIRE(recipient1.GetEdwardsPubKey().Format() == "38ca1ccde9967778414b4954db6f670f3a9fb94a67c795bb7cb03cbca5a04772");
+        REQUIRE(recipient1.ToTorAddress().ToString() == "hdfbztpjsz3xqqkljfknw33hb45j7okkm7dzlo34wa6lzjnai5zj25yd");
+        REQUIRE(recipient1.ToString() == "grin18r9pen0fjemhss2tf92dkmm8puaflw22vlretwmukq7tefdqgaeqyve0qy");
 
-        ed25519_keypair_t key_pair_t2 = KeyChain::FromSeed(seed.GetSecure()).DeriveED25519Key(path2);
+        ed25519_keypair_t key_pair_t2 = keyChain.DeriveED25519Key(path2);
         SlatepackAddress recipient2(key_pair_t2.public_key);
-        REQUIRE(recipient2.GetEdwardsPubKey().Format() == "90dc6c505d48f5e125632ccfe638fbdf07da083319334d490a92802075e29dc3");
-        REQUIRE(recipient2.ToTorAddress().ToString() == "sdogyuc5jd26cjldfth6moh334d5ucbtdezu2sikskaca5pctxbvsrid");
-        REQUIRE(recipient2.ToString() == "grin1jrwxc5zafr67zftr9n87vw8mmura5zpnrye56jg2j2qzqa0znhpsq2d477");
+        REQUIRE(recipient2.GetEdwardsPubKey().Format() == "0741a2aca1e20772dd4ceef0505f0f2b03fef54222b9613b0d79d51d4a80409d");
+        REQUIRE(recipient2.ToTorAddress().ToString() == "a5a2flfb4idxfxkm53yfaxypfmb755kcek4wcoynphkr2suaicotbyad");
+        REQUIRE(recipient2.ToString() == "grin1qaq69t9pugrh9h2vamc9qhc09vplaa2zy2ukzwcd08236j5qgzwsmasmf5");
 
-        ed25519_keypair_t key_pair_t3 = KeyChain::FromSeed(seed.GetSecure()).DeriveED25519Key(path3);
+        ed25519_keypair_t key_pair_t3 = keyChain.DeriveED25519Key(path3);
         SlatepackAddress recipient3(key_pair_t3.public_key);
-        REQUIRE(recipient3.GetEdwardsPubKey().Format() == "cf54e41d1eb7f7d45787f008d5723e15671f65a013dafd0cb1603bd620c24577");
-        REQUIRE(recipient3.ToTorAddress().ToString() == "z5koihi6w735iv4h6aenk4r6cvtr6znacpnp2dfrma55migciv36koqd");
-        REQUIRE(recipient3.ToString() == "grin1ea2wg8g7klmag4u87qyd2u37z4n37edqz0d06r93vqaavgxzg4msznam2f");
+        REQUIRE(recipient3.GetEdwardsPubKey().Format() == "897bdd8906a2e6ed5e0b545f5edb765502f48d4d8ce130ad4fa307425d7b4ded");
+        REQUIRE(recipient3.ToTorAddress().ToString() == "rf553cigulto2xqlkrpv5w3wkubpjdknrtqtblkpumduexl3jxw5v2qd");
+        REQUIRE(recipient3.ToString() == "grin139aamzgx5tnw6hst2304akmk25p0fr2d3nsnpt205vr5yhtmfhksd4wg9s");
 
-        ed25519_keypair_t key_pair_t4 = KeyChain::FromSeed(seed.GetSecure()).DeriveED25519Key(path4);
+        ed25519_keypair_t key_pair_t4 = keyChain.DeriveED25519Key(path4);
         SlatepackAddress recipient4(key_pair_t4.public_key);
-        REQUIRE(recipient4.GetEdwardsPubKey().Format() == "ce4e426102139765def0dce6cf4e190ed04aeb1651903dc00ceb7dcfae349af0");
-        REQUIRE(recipient4.ToTorAddress().ToString() == "zzheeyiccolwlxxq3ttm6tqzb3iev2ywkgid3qam5n647lrutlymi5yd");
-        REQUIRE(recipient4.ToString() == "grin1ee8yycgzzwtkthhsmnnv7nsepmgy46ck2xgrmsqvad7ult35ntcq4gmv9g");
+        REQUIRE(recipient4.GetEdwardsPubKey().Format() == "dc716e256fffdc5f73e2de5b6a53cb7127ed3ac83746b9ebe148286695d8c2aa");
+        REQUIRE(recipient4.ToTorAddress().ToString() == "3ryw4jlp77of647c3znwuu6loet62owig5dlt27bjaugnfoyykvneayd");
+        REQUIRE(recipient4.ToString() == "grin1m3ckuft0llw97ulzmedk557twyn76wkgxartn6lpfq5xd9wcc24qnpwde5");
     }
 
     SECTION("Testing Derived Key")
@@ -119,7 +130,7 @@ TEST_CASE("Slatepack - Recieve")
     Slate slate1 = Slate::Deserialize(buffer1);
     REQUIRE(slate1.amount == 1000000000);
 
-    /*x25519_public_key_t ephemeral_public_key(CBigInteger<32>::FromHex("1a7f941f7769a3e132374c13e9e492618ac4bd26ece8161cdd168b4a6845e972"));
+    x25519_public_key_t ephemeral_public_key(CBigInteger<32>::FromHex("1a7f941f7769a3e132374c13e9e492618ac4bd26ece8161cdd168b4a6845e972"));
     SecretKey shared_secret = X25519::ECDH(x_keypair.seckey, ephemeral_public_key);
 
     REQUIRE(shared_secret.GetBytes().ToHex() == "e55e34d16234491af9f0c681f70c0cd8c69ccc8f19bb5d0c790c16510b81bb2e");
@@ -148,7 +159,7 @@ TEST_CASE("Slatepack - Recieve")
     ByteBuffer buffer{ message.m_payload };
     Slate slate = Slate::Deserialize(buffer);
 
-    REQUIRE(slate.amount == 1000000000);*/
+    REQUIRE(slate.amount == 1000000000);
 }
 
 TEST_CASE("Slatepack - E2E")

@@ -52,15 +52,16 @@ KeyChainPath WalletSqlite::GetNextChildPath(const KeyChainPath& parentPath)
 	return nextChildPath;
 }
 
-int WalletSqlite::GetAddressIndex(const KeyChainPath& parentPath) const
+int WalletSqlite::GetCurrentAddressIndex(const KeyChainPath& parentPath) const
 {
 	return AccountsTable::GetCurrentAddressIndex(*m_pDatabase, parentPath.Format());
 }
 
-void WalletSqlite::IncreaseAddressIndex(const KeyChainPath& parentPath)
+int WalletSqlite::IncreaseAddressIndex(const KeyChainPath& parentPath)
 {
 	int current_index = AccountsTable::GetCurrentAddressIndex(*m_pDatabase, parentPath.Format());
 	AccountsTable::UpdateCurrentAddressIndex(*m_pDatabase, parentPath.Format(), current_index + 1);
+	return current_index + 1;
 }
 
 std::unique_ptr<Slate> WalletSqlite::LoadSlate(const SecureVector& masterSeed, const uuids::uuid& slateId, const SlateStage& stage) const

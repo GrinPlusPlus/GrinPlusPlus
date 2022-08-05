@@ -259,8 +259,9 @@ std::optional<TorAddress> ForeignServer::AddTorListener(
 
     try
     {
-        ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(addressIndex));
-
+        KeyChainPath path = KeyChainPath::FromString("m/0/1").GetChild(addressIndex);
+        WALLET_DEBUG_F("Adding Tor Listener at: {}", path.Format());
+        ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
         auto tor_address = pTorProcess->AddListener(torKey.secret_key, portNumber);
         return std::make_optional(std::move(tor_address));
     }

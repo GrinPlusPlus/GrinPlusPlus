@@ -41,7 +41,7 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	);
 	
-	KeyChainPath UpdateKeyChainPathIndex(
+	KeyChainPath IncreaseKeyChainPathIndex(
 		const SessionToken& token
 	);
 

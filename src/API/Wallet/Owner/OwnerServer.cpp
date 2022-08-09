@@ -25,6 +25,7 @@
 #include "Handlers/SetTorConfigHandler.h"
 #include "Handlers/GetTorConfigHandler.h"
 #include "Handlers/GetWalletAddressHandler.h"
+#include "Handlers/GetNewWalletAddressHandler.h"
 
 OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {
@@ -331,6 +332,8 @@ OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const 
     pServer->AddMethod("get_tor_config", std::shared_ptr<RPCMethod>(new GetTorConfigHandler(pTorProcess)));
 	
     pServer->AddMethod("get_slatepack_address", std::shared_ptr<RPCMethod>(new GetWalletAddressHandler(pWalletManager)));
+
+    pServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
 
     // TODO: Add the following APIs: 
     // authenticate - Simply validates the password - useful for confirming password before sending funds

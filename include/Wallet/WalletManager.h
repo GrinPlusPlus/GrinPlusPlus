@@ -83,7 +83,7 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	) = 0; 
 		
-	virtual KeyChainPath UpdateKeyChainPathIndex(
+	virtual KeyChainPath IncreaseKeyChainPathIndex(
 		const SessionToken& token
 	) = 0;
 

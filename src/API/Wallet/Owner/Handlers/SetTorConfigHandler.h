@@ -2,11 +2,11 @@
 
 #include <Core/Config.h>
 #include <Core/Global.h>
-#include <Net/Clients/RPC/RPC.h>
+#include <Core/Util/JsonUtil.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <API/Wallet/Owner/Models/Errors.h>
-#include <Wallet/Models/Slatepack/SlatepackAddress.h>
-#include <Core/Util/JsonUtil.h>
+#include <optional>
+#include <fstream>
 
 class SetTorConfigHandler : public RPCMethod
 {
@@ -26,11 +26,22 @@ public:
 			return request.BuildError("INVALID_PARAMS", "Expected object parameter");
 		}
 		
-		const Json::Value& json_params = request.GetParams().value();
-		std::string tor_bridge = JsonUtil::GetRequiredString(json_params, "bridge");
-				
 		Config& config = Global::GetConfig();
-		
+
+		const Json::Value& json_params = request.GetParams().value();
+
+		std::string tor_bridge = JsonUtil::GetRequiredString(json_params, "bridge");
+		auto snowflake_enabled = JsonUtil::GetUInt32Opt(json_params, "snowflkae");
+
+		if (!tor_bridge.empty() && snowflake_enabled.has_value()) {
+			return request.BuildError("INVALID_PARAMS", "Expected object parameter");
+		}
+
+		if (snowflake_enabled.has_value()) {
+			config.EnableSnowflake(snowflake_enabled.value() == 0 ? false : true);
+			m_pTorProcess->RetryInit();
+		}
+
 		if (!tor_bridge.empty()) {
 			config.AddTorBridge(tor_bridge);
 			m_pTorProcess->RetryInit();

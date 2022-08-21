@@ -87,6 +87,10 @@ public:
 	uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;
 	const std::string& GetHashedControlPassword() const noexcept;
+	bool IsTorBridgesEnabled() noexcept;
+	void EnableSnowflake(const bool enable) noexcept;
+	bool IsObfs4Enabled() noexcept;
+	bool IsSnowflakeEnabled() noexcept;
 
 private:
 	Config(const Json::Value& json, const Environment environment, const fs::path& dataPath);

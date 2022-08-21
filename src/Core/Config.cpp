@@ -201,3 +201,7 @@ uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.Get
 uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }
 const std::string& Config::GetHashedControlPassword() const noexcept { return m_pImpl->m_torConfig.GetHashedControlPassword(); }
+bool Config::IsTorBridgesEnabled() noexcept { return m_pImpl->m_torConfig.IsTorBridgesEnabled(); }
+void Config::EnableSnowflake(bool enable) noexcept { return m_pImpl->m_torConfig.EnableSnowflake(enable); }
+bool Config::IsObfs4Enabled() noexcept { return m_pImpl->m_torConfig.IsSnowflakeEnabled(); }
+bool Config::IsSnowflakeEnabled() noexcept { return m_pImpl->m_torConfig.IsSnowflakeEnabled(); }

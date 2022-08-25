@@ -31,7 +31,7 @@ public:
 		const Json::Value& json_params = request.GetParams().value();
 
 		std::string tor_bridge = JsonUtil::GetRequiredString(json_params, "bridge");
-		auto snowflake_enabled = JsonUtil::GetUInt32Opt(json_params, "snowflkae");
+		auto snowflake_enabled = JsonUtil::GetUInt32Opt(json_params, "snowflake");
 
 		if (!tor_bridge.empty() && snowflake_enabled.has_value()) {
 			return request.BuildError("INVALID_PARAMS", "Expected object parameter");

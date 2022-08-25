@@ -75,7 +75,7 @@ public:
 			Json::Value& wallet_json = config_json["WALLET"];
 			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
 
-			config.ShouldReuseAddresses(reuse_address.value() == 0 ? false: true);
+			config.ShouldReuseAddresses(reuse_address.value() == 0);
 		}
 
 		fs::path config_path = config.GetDataDirectory() / "server_config.json";

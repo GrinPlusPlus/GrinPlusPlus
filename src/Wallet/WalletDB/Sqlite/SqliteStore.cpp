@@ -47,6 +47,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 	SqliteDB::Ptr pDatabase = SqliteDB::Open(dbFile, username);
 
 	const int version = VersionTable::GetCurrentVersion(*pDatabase);
+	
 	if (version < LATEST_SCHEMA_VERSION) {
 		SqliteTransaction transaction(pDatabase);
 		transaction.Begin();

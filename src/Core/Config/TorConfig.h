@@ -227,14 +227,12 @@ private:
 	{
 		std::ifstream configFile(m_torrcPath);
 		std::string line;
-		int i = 0;
-
+		
 		std::ofstream newConfigFile;
 		newConfigFile.open("temp.torrc", std::ofstream::out);
 
 		while (std::getline(configFile, line))
 		{
-
 			if (line.find("UseBridges 1") != std::string::npos) newConfigFile << "";
 			if (line.find("ClientTransportPlugin snowflake") != std::string::npos) newConfigFile << "";
 			if (line.find("Bridge snowflake") != std::string::npos) newConfigFile << "";

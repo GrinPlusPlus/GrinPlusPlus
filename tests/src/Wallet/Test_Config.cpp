@@ -31,10 +31,10 @@ TEST_CASE("Config")
 	std::string torrcPath{ pConfig->GetTorrcPath().u8string() };
 	REQUIRE(torrcPath == (dataPath/".torrc").u8string());
 	
-	std::string bridge1 = "obfs4 185.177.207.6:63133 EDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
-	std::string bridge2 = "obfs4 185.177.207.6:63133 EDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
-	std::string bridge3 = "obfs4 185.177.207.6:63133 EDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
-	std::string bridge4 = "obfs4 185.177.207.6:63133 EDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
+	std::string bridge1 = "obfs4 185.177.207.6:63133 ADEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
+	std::string bridge2 = "obfs4 185.177.207.7:63133 BDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
+	std::string bridge3 = "obfs4 185.177.207.8:63133 CDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
+	std::string bridge4 = "obfs4 185.177.207.9:63133 DDEF8A9E6AC0E564B9AE5C43AE8CE8B6C7006A85 cert = p9L6 + 25s8bnfkye1ZxFeAE4mAGY7DH4Gaj7dxngIIzP9BtqrHHwZXdjMK0RVIQ34C7aqZw iat - mode = 2";
 	pConfig->AddTorBridge(bridge1);
 	pConfig->AddTorBridge(bridge2);
 	pConfig->AddTorBridge(bridge3);

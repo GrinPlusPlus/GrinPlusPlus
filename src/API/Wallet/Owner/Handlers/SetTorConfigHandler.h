@@ -38,7 +38,15 @@ public:
 		}
 
 		if (snowflake_enabled.has_value()) {
-			config.EnableSnowflake(snowflake_enabled.value() == 0 ? false : true);
+			if (snowflake_enabled.value() == 0)
+			{
+				config.DisableSnowflake();
+			}
+			else
+			{
+				config.EnableSnowflake();
+			}
+			
 			m_pTorProcess->RetryInit();
 		}
 

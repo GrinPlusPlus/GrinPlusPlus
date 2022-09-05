@@ -88,9 +88,11 @@ public:
 	const std::string& GetControlPassword() const noexcept;
 	const std::string& GetHashedControlPassword() const noexcept;
 	bool IsTorBridgesEnabled() noexcept;
-	void EnableSnowflake(const bool enable) noexcept;
+	bool EnableSnowflake() noexcept;
+	bool DisableSnowflake() noexcept;
 	bool IsObfs4Enabled() noexcept;
 	bool IsSnowflakeEnabled() noexcept;
+	bool DisableObfsBridges() noexcept;
 
 private:
 	Config(const Json::Value& json, const Environment environment, const fs::path& dataPath);

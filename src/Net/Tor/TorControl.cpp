@@ -65,7 +65,8 @@ std::shared_ptr<TorControl> TorControl::Create(
 			"--DataDirectory", torDataDir.u8string(),
 			"--HashedControlPassword", Global::GetConfig().GetHashedControlPassword(),
 			"-f", torrcPath,
-			"--ignore-missing-torrc"
+			"--ignore-missing-torrc",
+			"--hush"
 		});
 		
 		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);

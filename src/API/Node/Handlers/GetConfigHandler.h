@@ -17,7 +17,28 @@ public:
 		config_json["max_peers"] = config.GetMaxPeers();
 		config_json["min_confirmations"] = config.GetMinimumConfirmations();
 		config_json["reuse_address"] = config.ShouldReuseAddresses();
-
+		
+		Json::Value preferred_peers;
+		for (const IPAddress& peer : config.GetPreferredPeers())
+		{
+			preferred_peers.append(peer.Format());
+		}
+		config_json["preferred_peers"] = preferred_peers;
+		
+		Json::Value allowed_peers;
+		for (const IPAddress& peer : config.GetAllowedPeers())
+		{
+			allowed_peers.append(peer.Format());
+		}
+		config_json["allowed_peers"] = allowed_peers;
+		
+		Json::Value blocked_peers;
+		for (const IPAddress& peer : config.GetBlockedPeers())
+		{
+			blocked_peers.append(peer.Format());
+		}
+		config_json["blocked_peers"] = blocked_peers;
+		
 		return request.BuildResult(config_json);
 	}
 

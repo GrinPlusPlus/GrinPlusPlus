@@ -53,6 +53,10 @@ public:
 	bool IsPeerAllowed(const IPAddress& peer);
 	bool IsPeerBlocked(const IPAddress& peer);
 	bool IsPeerPreferred(const IPAddress& peer);
+
+	void UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept;
+	void UpdateAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept;
+	void UpdateBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept;
 	
 	//
 	// Dandelion

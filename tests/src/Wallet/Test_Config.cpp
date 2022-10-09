@@ -71,4 +71,16 @@ TEST_CASE("Config")
 	REQUIRE(pConfig->GetMinPeers() == 1);
 	REQUIRE(pConfig->GetMaxPeers() == 15);
 	REQUIRE(pConfig->ShouldReuseAddresses() == false);
+
+	std::unordered_set<IPAddress> preferredPeers = { IPAddress::Parse("10.0.0.10"), IPAddress::Parse("10.0.0.11"), IPAddress::Parse("10.0.0.12") };
+	std::unordered_set<IPAddress> allowedPeers = { IPAddress::Parse("10.0.0.13"), IPAddress::Parse("10.0.0.14") };
+	std::unordered_set<IPAddress> blockedPeers = { IPAddress::Parse("10.0.0.11") };
+
+	pConfig->UpdatePreferredPeers(preferredPeers);
+	pConfig->UpdateAllowedPeers(allowedPeers);
+	pConfig->UpdateBlockedPeers(blockedPeers);
+
+	REQUIRE(pConfig->GetPreferredPeers() == preferredPeers);
+	REQUIRE(pConfig->GetAllowedPeers() == allowedPeers);
+	REQUIRE(pConfig->GetBlockedPeers() == blockedPeers);
 }

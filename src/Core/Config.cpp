@@ -168,6 +168,10 @@ bool Config::IsPeerPreferred(const IPAddress& peer) {
 	return true;
 }
 
+void Config::UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetPreferredPeers(peers); }
+void Config::UpdateAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetAllowedPeers(peers); }
+void Config::UpdateBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetBlockedPeers(peers); }
+
 //
 // Dandelion
 //

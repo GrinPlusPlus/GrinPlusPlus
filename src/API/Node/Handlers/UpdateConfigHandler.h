@@ -154,7 +154,7 @@ public:
 			{
 				arr.append(peer);
 			}
-			p2p_json["blocked_PEERS"] = arr;
+			p2p_json["BLOCKED_PEERS"] = arr;
 
 			config.UpdateBlockedPeers(blockedPeers);
 		}

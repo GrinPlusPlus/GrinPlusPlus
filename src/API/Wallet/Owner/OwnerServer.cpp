@@ -22,7 +22,7 @@
 #include "Handlers/ScanForOutputsHandler.h"
 #include "Handlers/AddressInfoHandler.h"
 #include "Handlers/ListWalletsHandler.h"
-#include "Handlers/SetTorConfigHandler.h"
+#include "Handlers/UpdateTorConfigHandler.h"
 #include "Handlers/GetTorConfigHandler.h"
 #include "Handlers/GetWalletAddressHandler.h"
 #include "Handlers/GetNewWalletAddressHandler.h"
@@ -327,10 +327,10 @@ OwnerServer::UPtr OwnerServer::Create(const TorProcess::Ptr& pTorProcess, const 
 
     pServer->AddMethod("list_wallets", std::shared_ptr<RPCMethod>(new ListWalletsHandler(pWalletManager)));
 
-    pServer->AddMethod("set_tor_config", std::shared_ptr<RPCMethod>(new SetTorConfigHandler(pTorProcess)));
+    pServer->AddMethod("set_tor_config", std::shared_ptr<RPCMethod>(new UpdateTorConfigHandler(pTorProcess)));
+    
+    pServer->AddMethod("get_tor_config", std::shared_ptr<RPCMethod>(new GetTorConfigHandler()));
 
-    pServer->AddMethod("get_tor_config", std::shared_ptr<RPCMethod>(new GetTorConfigHandler(pTorProcess)));
-	
     pServer->AddMethod("get_slatepack_address", std::shared_ptr<RPCMethod>(new GetWalletAddressHandler(pWalletManager)));
 
     pServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));

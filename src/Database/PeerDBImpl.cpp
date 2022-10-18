@@ -37,7 +37,8 @@ std::shared_ptr<PeerDB> PeerDB::OpenDB(const Config& config)
 	fs::create_directories(dbPath);
 
 	DB* pDatabase = nullptr;
-	Status status = DB::Open(options, dbPath.u8string(), &pDatabase); // TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
+	// TODO: Define columns (Peer by address, Peer by capabilities, Peer by last contact, etc.)?
+	Status status = DB::Open(options, dbPath.u8string(), &pDatabase);
 	if (!status.ok())
 	{
 		LOG_ERROR_F("DB::Open failed with error: {}", status.getState());

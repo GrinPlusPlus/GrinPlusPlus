@@ -198,9 +198,9 @@ void Config::ShouldReuseAddresses(const bool reuse_addresses) noexcept { return 
 //
 const fs::path& Config::GetTorDataPath() const noexcept { return m_pImpl->m_torConfig.GetTorDataPath(); }
 const fs::path& Config::GetTorrcPath() const noexcept { return m_pImpl->m_torConfig.GetTorrcPath(); }
-void Config::AddTorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddTorBridge(bridge); }
+void Config::AddObfs4TorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddObfs4TorBridge(bridge); }
 void Config::ClearTorrcFile() noexcept { return m_pImpl->m_torConfig.ClearTorrcFile(); }
-const std::string Config::ReadTorrcFile() const noexcept { return m_pImpl->m_torConfig.ReadTorrcFile(); }
+const std::string Config::GetTorrcFileContent() const noexcept { return m_pImpl->m_torConfig.ReadTorrcFile(); }
 uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
 uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }
@@ -211,3 +211,5 @@ bool Config::DisableSnowflake() noexcept { return m_pImpl->m_torConfig.DisableSn
 bool Config::DisableObfsBridges() noexcept { return m_pImpl->m_torConfig.DisableObfsBridges(); }
 bool Config::IsObfs4Enabled() noexcept { return m_pImpl->m_torConfig.IsObfs4ConfigPresent(); }
 bool Config::IsSnowflakeEnabled() noexcept { return m_pImpl->m_torConfig.IsSnowflakeConfigPresent(); }
+void Config::DisableTorBridges() noexcept { return m_pImpl->m_torConfig.DisableTorBridges(); }
+std::vector<std::string> Config::GetTorBridgesList() noexcept { return m_pImpl->m_torConfig.ListTorBridges(); }

@@ -11,38 +11,27 @@
 class GetTorConfigHandler : public RPCMethod
 {
 public:
-	GetTorConfigHandler(const TorProcess::Ptr& pTorProcess)
-		: m_pTorProcess(pTorProcess) { }
+	GetTorConfigHandler() { }
 	virtual ~GetTorConfigHandler() = default;
 		
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
-		if (!request.GetParams().has_value()) {
-			return request.BuildError(RPC::Errors::PARAMS_MISSING);
-		}
-
-		const Json::Value params_json = request.GetParams().value();
-		if (!params_json.isObject()) {
-			return request.BuildError("INVALID_PARAMS", "Expected object parameter");
-		}
-		
 		Config& config = Global::GetConfig();
 		
-		// check if params_json is and empty array
-		if (params_json.isArray() && params_json.empty()) {
-			Json::Value torrc_json;
-			torrc_json["torrc"] = config.ReadTorrcFile();
-			
-			return request.BuildResult(torrc_json);
-		}
+		Json::Value json;
 		
-		Json::Value result;
-		result["status"] = "SUCCESS";
-		return request.BuildResult(result);
+		Json::Value bridges(Json::arrayValue);
+		for (const std::string& bridge : config.GetTorBridgesList())
+		{
+			bridges.append(bridge);
+		}
+
+		json["torrc"] = config.GetTorrcFileContent();
+		json["bridges"] = bridges;
+		json["bridges_type"] = config.IsTorBridgesEnabled() ? config.IsSnowflakeEnabled() ? "snowflake" : "obfs4" : "";
+		
+		return request.BuildResult(json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }
-
-private:
-	TorProcess::Ptr m_pTorProcess;
 };

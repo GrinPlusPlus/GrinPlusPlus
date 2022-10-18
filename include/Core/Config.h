@@ -84,9 +84,9 @@ public:
 	//
 	const fs::path& GetTorDataPath() const noexcept;
 	const fs::path& GetTorrcPath() const noexcept;
-	void AddTorBridge(const std::string bridge) noexcept;
+	void AddObfs4TorBridge(const std::string bridge) noexcept;
 	void ClearTorrcFile() noexcept;
-	const std::string ReadTorrcFile() const noexcept;
+	const std::string GetTorrcFileContent() const noexcept;
 	uint16_t GetSocksPort() const noexcept;
 	uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;
@@ -97,6 +97,8 @@ public:
 	bool IsObfs4Enabled() noexcept;
 	bool IsSnowflakeEnabled() noexcept;
 	bool DisableObfsBridges() noexcept;
+	void DisableTorBridges() noexcept;
+	std::vector<std::string> GetTorBridgesList() noexcept;
 
 private:
 	Config(const Json::Value& json, const Environment environment, const fs::path& dataPath);

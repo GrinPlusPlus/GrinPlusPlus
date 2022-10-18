@@ -139,8 +139,7 @@ bool TorProcess::RetryInit()
 {
 	std::unique_lock<std::mutex> lock(m_mutex);
 	m_pControl = nullptr;
-	m_pControl = TorControl::Create(m_socksPort, m_controlPort, m_torDataPath);
-	return m_pControl != nullptr;
+	return m_pControl == nullptr;
 }
 
 TorAddress TorProcess::AddListener(const ed25519_secret_key_t& secretKey, const uint16_t portNumber)

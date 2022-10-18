@@ -166,7 +166,7 @@ private:
     
         while (pos != std::string::npos)
         {
-            list.push_back(str.substr(i, pos - i));
+            list.push_back(str.substr(i, static_cast<std::basic_string<char, std::char_traits<char>, std::allocator<char>>::size_type>(pos) - i));
             i = ++pos;
             pos = static_cast<int>(str.find(delim, pos));
         }

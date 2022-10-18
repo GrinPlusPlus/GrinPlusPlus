@@ -75,7 +75,7 @@ public:
 			Json::Value& wallet_json = config_json["WALLET"];
 			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
 
-			config.ShouldReuseAddresses(reuse_address.value() == 0);
+			config.ShouldReuseAddresses(reuse_address.value()==1);
 		}
 
 		std::unordered_set<IPAddress> preferredPeers;

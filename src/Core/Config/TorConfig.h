@@ -41,7 +41,7 @@ public:
 		return buffer.str();
 	}
 	
-	void AddTorBridge(std::string bridge) const noexcept
+	void AddObfs4TorBridge(std::string bridge) const noexcept
 	{
 		if (!IsObfs4ConfigPresent()) AddObfs4Config();
 		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
@@ -122,6 +122,28 @@ public:
 		}
 
 		return enabled;
+	}
+
+	void DisableTorBridges() const noexcept
+	{
+		if (IsSnowflakeConfigPresent()) DisableSnowflake();
+		else DisableObfsBridges();
+	}
+
+	std::vector<std::string> ListTorBridges() const noexcept
+	{
+		std::vector<std::string> bridges;
+		std::ifstream configFile(m_torrcPath);
+		std::string line;
+		while (std::getline(configFile, line))
+		{
+			if (line.rfind("Bridge", 0) == 0)
+			{
+				bridges.push_back(line.substr(7)); // Bridges length = 6
+			}
+		}
+
+		return bridges;
 	}
 
 	//

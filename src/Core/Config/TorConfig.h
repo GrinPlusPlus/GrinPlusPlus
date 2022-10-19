@@ -43,6 +43,7 @@ public:
 	
 	void AddObfs4TorBridge(std::string bridge) const noexcept
 	{
+		if (bridge.empty()) return;
 		if (!IsObfs4ConfigPresent()) AddObfs4Config();
 		std::ofstream configFile(m_torrcPath, std::ios_base::app | std::ios_base::out);
 		configFile << "Bridge " << bridge << "\n";
@@ -220,7 +221,7 @@ private:
 #else
 			fs::path snowflakeDir = (m_torDataPath / "PluggableTransports" / "snowflake-client");
 #endif
-			newConfigFile << "ClientTransportPlugin snowflake exec " << snowflakeDir << " ";
+			newConfigFile << "ClientTransportPlugin snowflake exec " << snowflakeDir.u8string() << " ";
 			newConfigFile << "-url https://snowflake-broker.torproject.net.global.prod.fastly.net/ ";
 			newConfigFile << "-front cdn.sstatic.net ";
 			newConfigFile << "-ice stun:stun.l.google.com:19302,stun:stun.voip.blackberry.com:3478,stun:stun.altar.com.pl:3478,stun:stun.antisip.com:3478,stun:stun.bluesip.net:3478,stun:stun.dus.net:3478,stun:stun.epygi.com:3478,stun:stun.sonetel.com:3478,stun:stun.sonetel.net:3478,stun:stun.stunprotocol.org:3478,stun:stun.uls.co.za:3478,stun:stun.voipgate.com:3478,stun:stun.voys.nl:3478\n";
@@ -233,7 +234,7 @@ private:
 #else
 			fs::path obfs4Dir = (m_torDataPath / "PluggableTransports" / "obfs4proxy");
 #endif
-			newConfigFile << "ClientTransportPlugin obfs4 exec " << obfs4Dir << "\n";
+			newConfigFile << "ClientTransportPlugin obfs4 exec " << obfs4Dir.u8string() << "\n";
 		}
 		while (std::getline(configFile, line))
 		{

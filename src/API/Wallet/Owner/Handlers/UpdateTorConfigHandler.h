@@ -29,7 +29,7 @@ public:
 		const Json::Value& json_params = request.GetParams().value();
 
 		std::vector<Json::Value> torBridges = JsonUtil::GetRequiredArray(json_params, "bridges_list");
-		auto enableSnowflake = JsonUtil::GetRequiredBool(json_params, "enable_snowflake");
+		bool enableSnowflake = JsonUtil::GetRequiredBool(json_params, "enable_snowflake");
 		
 		Config& config = Global::GetConfig();
 		
@@ -46,12 +46,16 @@ public:
 			config.DisableSnowflake();
 		}
 		
-		if(!torBridges.empty()) {
+		if(!torBridges.empty())
+		{
 			for (const Json::Value& bridge : torBridges)
 			{
 				config.AddObfs4TorBridge(bridge.asString());
-			}
-			
+			}	
+		}
+		else
+		{
+			config.DisableObfsBridges();
 		}
 
 		Json::Value bridges(Json::arrayValue);

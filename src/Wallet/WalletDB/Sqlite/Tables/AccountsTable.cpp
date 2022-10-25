@@ -10,8 +10,7 @@
 
 void AccountsTable::CreateTable(SqliteDB& database)
 {
-	std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL, current_address_index INTEGER NOT NULL);";
-
+	std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
 	database.Execute(table_creation_cmd);
 }
 
@@ -19,9 +18,10 @@ void AccountsTable::UpdateSchema(SqliteDB& database, const int previousVersion)
 {
 	if (previousVersion < 2) {
 		CreateTable(database);
-	} else if (previousVersion < 3) {
-		// Nothing yet
-		// WALLET_INFO("Migrating Accounts Table to new schema");
+	} else if (previousVersion < 4) {
+		WALLET_INFO("Migrating Accounts Table to new schema");
+		std::string table_creation_cmd = "alter table accounts add current_address_index integer default 0 not null;";
+		database.Execute(table_creation_cmd);
 	}
 }
 

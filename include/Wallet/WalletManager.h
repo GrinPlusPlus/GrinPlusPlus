@@ -33,12 +33,15 @@
 #include <Common/Secure.h>
 #include <Common/GrinStr.h>
 
+
 #define WALLET_API
 
 class IWalletManager
 {
 public:
 	virtual ~IWalletManager() = default;
+
+	virtual bool ShouldReuseAddresses() = 0;
 
 	virtual Locked<Wallet> GetWallet(const SessionToken& token) = 0;
 
@@ -73,6 +76,15 @@ public:
 		const SessionToken& token,
 		const KeyChainPath& path,
 		const TorProcess::Ptr& pTorProcess
+	) = 0;
+
+	virtual bool RemoveCurrentTorListener(
+		const SessionToken& token,
+		const TorProcess::Ptr& pTorProcess
+	) = 0; 
+		
+	virtual KeyChainPath IncreaseAddressKeyChainPathIndex(
+		const SessionToken& token
 	) = 0;
 
 	//

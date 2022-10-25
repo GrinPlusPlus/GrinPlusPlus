@@ -34,6 +34,12 @@ WalletManager::~WalletManager()
 	LOG_INFO("Shutting down wallet manager");
 }
 
+
+bool WalletManager::ShouldReuseAddresses()
+{
+	return m_config.ShouldReuseAddresses();
+}
+
 Locked<Wallet> WalletManager::GetWallet(const SessionToken& token)
 {
 	SecureVector masterSeed = m_sessionManager.Read()->GetSeed(token);
@@ -141,11 +147,41 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(path);
 
-	TorAddress tor_address = pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
-	wallet.Write()->SetTorAddress(tor_address);
-	walletImpl.Write()->SetTorAddress(tor_address);
+	TorAddress torAddress = TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key));
+	
+	wallet.Write()->SetTorAddress(torAddress);
+	walletImpl.Write()->SetTorAddress(torAddress);
+
+	pTorProcess->AddListener(torKey.secret_key, wallet.Read()->GetListenerPort());
 
 	return wallet.Read()->GetTorAddress();
+}
+
+bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const TorProcess::Ptr& pTorProcess)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
+
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+	
+	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+	KeyChainPath currentPath = KeyChainPath::FromString("m/0/1").GetChild(currentIndex);
+	ed25519_keypair_t torKey = keyChain.DeriveED25519Key(currentPath);
+	
+	return pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
+}
+
+KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken& token)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
+
+	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
+	
+	// now let's increase the index
+	int nextIndex = wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(userPath);
+	// after increasing the index we should then add the tor listener again using the new derived key
+	return KeyChainPath::FromString("m/0/1").GetChild(nextIndex);
 }
 
 std::vector<GrinStr> WalletManager::GetAllAccounts() const
@@ -261,13 +297,15 @@ Slate WalletManager::Receive(const ReceiveCriteria& receiveCriteria)
 		recipients.push_back(receiveCriteria.GetSlatepack().value().m_sender);
 	}
 
-	return ReceiveSlateBuilder().AddReceiverData(
+	Slate slate = ReceiveSlateBuilder().AddReceiverData(
 		wallet,
 		masterSeed,
 		receiveCriteria.GetSlate(),
 		receiveCriteria.GetAddress(),
 		recipients
 	);
+
+	return slate;
 }
 
 Slate WalletManager::Finalize(const FinalizeCriteria& finalizeCriteria, const TorProcess::Ptr& pTorProcess)

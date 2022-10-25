@@ -53,6 +53,10 @@ public:
 	bool IsPeerAllowed(const IPAddress& peer);
 	bool IsPeerBlocked(const IPAddress& peer);
 	bool IsPeerPreferred(const IPAddress& peer);
+
+	void UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept;
+	void UpdateAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept;
+	void UpdateBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept;
 	
 	//
 	// Dandelion
@@ -73,14 +77,28 @@ public:
 	uint32_t GetMinimumConfirmations() const noexcept;
 	void SetMinConfirmations(uint32_t min_confirmations) noexcept;
 
+	bool ShouldReuseAddresses() const noexcept;
+	void ShouldReuseAddresses(bool reuse_addresses) noexcept;
 	//
 	// TOR
 	//
 	const fs::path& GetTorDataPath() const noexcept;
+	const fs::path& GetTorrcPath() const noexcept;
+	void AddObfs4TorBridge(const std::string bridge) noexcept;
+	void ClearTorrcFile() noexcept;
+	const std::string GetTorrcFileContent() const noexcept;
 	uint16_t GetSocksPort() const noexcept;
 	uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;
 	const std::string& GetHashedControlPassword() const noexcept;
+	bool IsTorBridgesEnabled() noexcept;
+	bool EnableSnowflake() noexcept;
+	bool DisableSnowflake() noexcept;
+	bool IsObfs4Enabled() noexcept;
+	bool IsSnowflakeEnabled() noexcept;
+	bool DisableObfsBridges() noexcept;
+	void DisableTorBridges() noexcept;
+	std::vector<std::string> GetTorBridgesList() noexcept;
 
 private:
 	Config(const Json::Value& json, const Environment environment, const fs::path& dataPath);

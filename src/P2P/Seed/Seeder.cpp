@@ -194,7 +194,6 @@ void Seeder::SeedNewConnection()
             return;
         }
         
-        std::cout << "Attempt to connect to " << connectedPeer.Format() << "..." << std::endl;
         ConnectionPtr pConnection = std::make_shared<Connection>(
             pSocket,
             m_nextId++,

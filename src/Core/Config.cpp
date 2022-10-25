@@ -168,6 +168,10 @@ bool Config::IsPeerPreferred(const IPAddress& peer) {
 	return true;
 }
 
+void Config::UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetPreferredPeers(peers); }
+void Config::UpdateAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetAllowedPeers(peers); }
+void Config::UpdateBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetBlockedPeers(peers); }
+
 //
 // Dandelion
 //
@@ -186,12 +190,26 @@ uint32_t Config::GetPrivateKeyVersion() const noexcept { return m_pImpl->m_walle
 
 uint32_t Config::GetMinimumConfirmations() const noexcept { return m_pImpl->m_walletConfig.GetMinimumConfirmations(); }
 void Config::SetMinConfirmations(const uint32_t min_confirmations) noexcept { return m_pImpl->m_walletConfig.SetMinConfirmations(min_confirmations); }
+bool Config::ShouldReuseAddresses() const noexcept { return m_pImpl->m_walletConfig.GetReuseAddress() == 0 ? false : true; }
+void Config::ShouldReuseAddresses(const bool reuse_addresses) noexcept { return m_pImpl->m_walletConfig.SetReuseAddress(reuse_addresses ? 1 : 0); }
 
 //
 // TOR
 //
 const fs::path& Config::GetTorDataPath() const noexcept { return m_pImpl->m_torConfig.GetTorDataPath(); }
+const fs::path& Config::GetTorrcPath() const noexcept { return m_pImpl->m_torConfig.GetTorrcPath(); }
+void Config::AddObfs4TorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddObfs4TorBridge(bridge); }
+void Config::ClearTorrcFile() noexcept { return m_pImpl->m_torConfig.ClearTorrcFile(); }
+const std::string Config::GetTorrcFileContent() const noexcept { return m_pImpl->m_torConfig.ReadTorrcFile(); }
 uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
 uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }
 const std::string& Config::GetHashedControlPassword() const noexcept { return m_pImpl->m_torConfig.GetHashedControlPassword(); }
+bool Config::IsTorBridgesEnabled() noexcept { return m_pImpl->m_torConfig.IsTorBridgesEnabled(); }
+bool Config::EnableSnowflake() noexcept { return m_pImpl->m_torConfig.EnableSnowflake(); }
+bool Config::DisableSnowflake() noexcept { return m_pImpl->m_torConfig.DisableSnowflake(); }
+bool Config::DisableObfsBridges() noexcept { return m_pImpl->m_torConfig.DisableObfsBridges(); }
+bool Config::IsObfs4Enabled() noexcept { return m_pImpl->m_torConfig.IsObfs4ConfigPresent(); }
+bool Config::IsSnowflakeEnabled() noexcept { return m_pImpl->m_torConfig.IsSnowflakeConfigPresent(); }
+void Config::DisableTorBridges() noexcept { return m_pImpl->m_torConfig.DisableTorBridges(); }
+std::vector<std::string> Config::GetTorBridgesList() noexcept { return m_pImpl->m_torConfig.ListTorBridges(); }

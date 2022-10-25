@@ -37,8 +37,9 @@ Locked<WalletImpl> WalletImpl::LoadWallet(
 	const std::string& username)
 {
 	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
-
-	ed25519_keypair_t torKey = KeyChain::FromSeed(masterSeed).DeriveED25519Key(KeyChainPath::FromString("m/0/1/0"));
+    int currentAddressIndex = walletDB.Read()->GetCurrentAddressIndex(userPath);
+	KeyChainPath currentAddressPath = KeyChainPath::FromString("m/0/1").GetChild(currentAddressIndex);
+	ed25519_keypair_t torKey = KeyChain::FromSeed(masterSeed).DeriveED25519Key(currentAddressPath);
 
 	return Locked<WalletImpl>(std::make_shared<WalletImpl>(WalletImpl{
 		config, pNodeClient, walletDB, username, std::move(userPath), SlatepackAddress(torKey.public_key)

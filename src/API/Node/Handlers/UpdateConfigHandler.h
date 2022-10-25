@@ -66,7 +66,100 @@ public:
 			config.SetMinConfirmations(min_confirmations.value());
 		}
 
-		fs::path config_path = Global::GetConfigFilePath();
+		auto reuse_address = JsonUtil::GetUInt32Opt(params_json, "reuse_address");
+		if (reuse_address.has_value()) {
+			if (!config_json.isMember("WALLET")) {
+				config_json["WALLET"] = Json::Value();
+			}
+
+			Json::Value& wallet_json = config_json["WALLET"];
+			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
+
+			config.ShouldReuseAddresses(reuse_address.value()==1);
+		}
+
+		std::unordered_set<IPAddress> preferredPeers;
+		std::vector<Json::Value>preferred_peers_json = JsonUtil::GetArray(params_json, "preferred_peers");
+		std::transform(
+			preferred_peers_json.cbegin(), preferred_peers_json.cend(),
+			std::inserter(preferredPeers, preferredPeers.end()),
+			[](const Json::Value& peer_json) {
+				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+				return IPAddress::Parse(peer.value());
+			}
+		);
+		
+		if (!preferredPeers.empty()) {
+			if (!config_json.isMember("P2P")) {
+				config_json["P2P"] = Json::Value();
+			}
+
+			Json::Value& p2p_json = config_json["P2P"];
+			Json::Value arr;
+			for (const Json::Value& peer : preferred_peers_json)
+			{
+				arr.append(peer);
+			}
+			p2p_json["PREFERRED_PEERS"] = arr;
+
+			config.UpdatePreferredPeers(preferredPeers);
+		}
+
+		std::unordered_set<IPAddress> allowedPeers;
+		std::vector<Json::Value>allowed_peers_json = JsonUtil::GetArray(params_json, "allowed_peers");
+		std::transform(
+			allowed_peers_json.cbegin(), allowed_peers_json.cend(),
+			std::inserter(allowedPeers, allowedPeers.end()),
+			[](const Json::Value& peer_json) {
+				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+				return IPAddress::Parse(peer.value());
+			}
+		);
+
+		if (!allowedPeers.empty()) {
+			if (!config_json.isMember("P2P")) {
+				config_json["P2P"] = Json::Value();
+			}
+
+			Json::Value& p2p_json = config_json["P2P"];
+			Json::Value arr;
+			for (const Json::Value& peer : allowed_peers_json)
+			{
+				arr.append(peer);
+			}
+			p2p_json["ALLOWED_PEERS"] = arr;
+
+			config.UpdateAllowedPeers(allowedPeers);
+		}
+
+		std::unordered_set<IPAddress> blockedPeers;
+		std::vector<Json::Value>blocked_peers_json = JsonUtil::GetArray(params_json, "blocked_peers");
+		std::transform(
+			blocked_peers_json.cbegin(), blocked_peers_json.cend(),
+			std::inserter(blockedPeers, blockedPeers.end()),
+			[](const Json::Value& peer_json) {
+				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+				return IPAddress::Parse(peer.value());
+			}
+		);
+
+		if (!blockedPeers.empty()) {
+			if (!config_json.isMember("P2P")) {
+				config_json["P2P"] = Json::Value();
+			}
+
+			Json::Value& p2p_json = config_json["P2P"];
+			Json::Value arr;
+			for (const Json::Value& peer : blocked_peers_json)
+			{
+				arr.append(peer);
+			}
+			p2p_json["BLOCKED_PEERS"] = arr;
+
+			config.UpdateBlockedPeers(blockedPeers);
+		}
+		
+		fs::path config_path = config.GetDataDirectory() / "server_config.json";
 		std::ofstream file(config_path, std::ios::out | std::ios::binary | std::ios::ate);
 		if (file.is_open()) {
 			file << config_json;

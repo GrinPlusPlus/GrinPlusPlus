@@ -11,6 +11,8 @@
 #include <Net/Tor/TorProcess.h>
 #include <filesystem.h>
 
+#include <fstream>
+
 TorControl::TorControl(
 	const uint16_t socksPort,
 	const uint16_t controlPort,
@@ -62,8 +64,8 @@ std::shared_ptr<TorControl> TorControl::Create(
 			"--SocksPort", std::to_string(socksPort),
 			"--DataDirectory", torDataDir.u8string(),
 			"--HashedControlPassword", Global::GetConfig().GetHashedControlPassword(),
-			"-f", torrcPath,
-			"--ignore-missing-torrc"
+			"--ignore-missing-torrc",
+			"-f", torrcPath
 		});
 		
 		ChildProcess::UCPtr pProcess = ChildProcess::Create(args);

@@ -38,6 +38,7 @@ public:
 	const std::string& GetUsername() const noexcept { return m_username; }
 	const KeyChainPath& GetUserPath() const noexcept { return m_userPath; }
 	const SlatepackAddress& GetSlatepackAddress() const noexcept { return m_address; }
+	void SetSlatepackAddress(const SlatepackAddress& address) noexcept { m_address = address; }
 	const KeyChain& GetKeychain() const noexcept { return m_keychain; }
 	const SecureVector& GetMasterSeed() const noexcept { return m_master_seed; }
 

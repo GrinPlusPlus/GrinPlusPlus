@@ -7,6 +7,7 @@
 #include "Tables/MetadataTable.h"
 #include "Tables/SlateContextTable.h"
 #include "Tables/SlateTable.h"
+#include "Tables/AccountsTable.h"
 
 #include <Wallet/WalletDB/WalletStoreException.h>
 #include <Common/Util/FileUtil.h>
@@ -46,6 +47,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 	SqliteDB::Ptr pDatabase = SqliteDB::Open(dbFile, username);
 
 	const int version = VersionTable::GetCurrentVersion(*pDatabase);
+	
 	if (version < LATEST_SCHEMA_VERSION) {
 		SqliteTransaction transaction(pDatabase);
 		transaction.Begin();
@@ -55,6 +57,7 @@ Locked<IWalletDB> SqliteStore::OpenWallet(const std::string& username, const Sec
 		MetadataTable::UpdateSchema(*pDatabase, version);
 		SlateContextTable::UpdateSchema(*pDatabase, version);
 		SlateTable::UpdateSchema(*pDatabase, version);
+		AccountsTable::UpdateSchema(*pDatabase, version);
 
 		transaction.Commit();
 	} else if (version > LATEST_SCHEMA_VERSION) {
@@ -135,9 +138,12 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 
 	try
 	{
+		// TODO: Add indices
+
 		SqliteDB::Ptr pDatabase = SqliteDB::Open(walletDBFile, username);
 
 		SqliteTransaction transaction(pDatabase);
+		
 		transaction.Begin();
 
 		VersionTable::CreateTable(*pDatabase);
@@ -146,17 +152,15 @@ SqliteDB::Ptr SqliteStore::CreateWalletDB(const std::string& username)
 		MetadataTable::CreateTable(*pDatabase);
 		SlateContextTable::CreateTable(*pDatabase);
 		SlateTable::CreateTable(*pDatabase);
-
-		std::string table_creation_cmd = "create table accounts(parent_path TEXT PRIMARY KEY, account_name TEXT NOT NULL, next_child_index INTEGER NOT NULL);";
-		// TODO: Add indices
+		AccountsTable::CreateTable(*pDatabase);
 
 		KeyChainPath nextChildPath = KeyChainPath::FromString("m/0/0").GetRandomChild();
-		table_creation_cmd += StringUtil::Format("insert into accounts values('m/0/0','DEFAULT',{});", nextChildPath.GetKeyIndices().back());
+		std::string table_creation_cmd = StringUtil::Format("insert into accounts values('m/0/0','DEFAULT',{}, 0);", nextChildPath.GetKeyIndices().back());
 
 		pDatabase->Execute(table_creation_cmd);
 
 		transaction.Commit();
-
+		
 		return pDatabase;
 	}
 	catch (WalletStoreException&)

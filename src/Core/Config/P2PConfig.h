@@ -8,6 +8,7 @@
 #include <Core/Enums/Environment.h>
 
 #include <Core/Exceptions/FileException.h>
+#include <Core/Global.h>
 
 class P2PConfig
 {
@@ -26,66 +27,71 @@ public:
     const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
 	const std::unordered_set<IPAddress>& GetAllowedPeers() const noexcept { return m_allowedPeers; }
 	const std::unordered_set<IPAddress>& GetBlockedPeers() const noexcept { return m_blockedPeers; }
-	
+
+	void SetPreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_peferredPeers = peers; };
+	void SetAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_allowedPeers = peers; };
+	void SetBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_blockedPeers = peers; };
+		
 	//
 	// Constructor
 	//
 	P2PConfig(const Environment env, const Json::Value& json)
 	{
-		if (env == Environment::MAINNET)  {
-			m_port = 3414;
-			m_magicBytes = { 97, 61 };
-		} else {
-			m_port = 13414;
-			m_magicBytes = { 83, 59 };
-		}
+		m_port = 13414;
+		m_magicBytes = { 83, 59 };
 
 		m_maxConnections = 60;
 		m_minConnections = 10;
 
-		if (json.isMember(ConfigProps::P2P::P2P)) {
-			const Json::Value& p2pJSON = json[ConfigProps::P2P::P2P];
+		m_minSyncPeers = 3;
 
-			if (p2pJSON.isMember(ConfigProps::P2P::MAX_PEERS)) {
-				m_maxConnections = p2pJSON.get(ConfigProps::P2P::MAX_PEERS, 60).asInt();
-			}
+		if (env == Environment::MAINNET) {
+			m_port = 3414;
+			m_magicBytes = { 97, 61 };
+		}
+		if (env == Environment::AUTOMATED_TESTING) {
+			m_minSyncPeers = 1;
+		}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS)) {
-				m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 10).asInt();
-			}
+		if (!json.isMember(ConfigProps::P2P::P2P)) {
+			return;
+		}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS)) {
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) { 
-					const std::string& addressStr = peer.asCString();
-					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
-					m_peferredPeers.insert(iPAddresses.begin(), iPAddresses.end());
-				}
-			}
+		const Json::Value& p2pJSON = json[ConfigProps::P2P::P2P];
 
-			if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS)) {
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) {
-					const std::string& addressStr = peer.asCString();
-					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
-					m_allowedPeers.insert(iPAddresses.begin(), iPAddresses.end());
-				}
-			}
+		if (p2pJSON.isMember(ConfigProps::P2P::MAX_PEERS)) {
+			m_maxConnections = p2pJSON.get(ConfigProps::P2P::MAX_PEERS, 60).asInt();
+		}
 
-			if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS)) {
-				Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, Json::Value(Json::nullValue));
-				for (auto& peer : peers) {
-					const std::string& addressStr = peer.asCString();
-					const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
-					m_blockedPeers.insert(iPAddresses.begin(), iPAddresses.end());
-				}
+		if (p2pJSON.isMember(ConfigProps::P2P::MIN_PEERS)) {
+			m_minConnections = p2pJSON.get(ConfigProps::P2P::MIN_PEERS, 10).asInt();
+		}
+
+		if (p2pJSON.isMember(ConfigProps::P2P::PREFERRED_PEERS)) {
+			Json::Value peers = p2pJSON.get(ConfigProps::P2P::PREFERRED_PEERS, Json::Value(Json::nullValue));
+			for (auto& peer : peers) { 
+				const std::string& addressStr = peer.asCString();
+				const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+				m_peferredPeers.insert(iPAddresses.begin(), iPAddresses.end());
 			}
 		}
 
-		if (env == Environment::AUTOMATED_TESTING) {
-			m_minSyncPeers = 1;
-		} else {
-			m_minSyncPeers = 3;
+		if (p2pJSON.isMember(ConfigProps::P2P::ALLOWED_PEERS)) {
+			Json::Value peers = p2pJSON.get(ConfigProps::P2P::ALLOWED_PEERS, Json::Value(Json::nullValue));
+			for (auto& peer : peers) {
+				const std::string& addressStr = peer.asCString();
+				const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+				m_allowedPeers.insert(iPAddresses.begin(), iPAddresses.end());
+			}
+		}
+
+		if (p2pJSON.isMember(ConfigProps::P2P::BLOCKED_PEERS)) {
+			Json::Value peers = p2pJSON.get(ConfigProps::P2P::BLOCKED_PEERS, Json::Value(Json::nullValue));
+			for (auto& peer : peers) {
+				const std::string& addressStr = peer.asCString();
+				const std::vector<IPAddress>& iPAddresses = GetValidIPAddress(addressStr);
+				m_blockedPeers.insert(iPAddresses.begin(), iPAddresses.end());
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@
 #include <Crypto/Curve25519.h>
 #include <Crypto/CSPRNG.h>
 #include <Core/Serialization/Serializer.h>
+#include <Core/Util/JsonUtil.h>
 #include <Net/Tor/TorAddress.h>
 #include <Net/Tor/TorAddressParser.h>
 #include <Wallet/Models/Slatepack/Bech32Address.h>
@@ -49,6 +50,16 @@ public:
     {
         uint8_t size = deserializer.ReadU8();
         return Parse(deserializer.ReadString(size));
+    }
+
+    Json::Value ToJSON() const noexcept
+    {
+        Json::Value addressJSON;
+        addressJSON["slatepack"] = ToString();
+        addressJSON["onion"] = ToTorAddress().ToString();
+        addressJSON["key"] = ToX25519PubKey().bytes.ToHex();
+
+        return addressJSON;
     }
 
 private:

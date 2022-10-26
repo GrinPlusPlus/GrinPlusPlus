@@ -27,7 +27,7 @@ TorControlClient::UPtr TorControlClient::Connect(const uint16_t control_port, co
 	try {
 		pClient->Invoke(auth_command);
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 30; i++) {
 			ThreadUtil::SleepFor(std::chrono::seconds(2));
 			if (pClient->IsBootstrapped()) {
 				return pClient;

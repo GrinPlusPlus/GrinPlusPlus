@@ -34,7 +34,9 @@ public:
 			
 			// Update keychain index if m_reuseAddress is set false
 			if (!m_walletManager.ShouldReuseAddresses())
-			{				
+			{		
+				m_walletManager.RemoveCurrentTorListener(m_token, m_pTorProcess);
+
 				KeyChainPath newPath = m_walletManager.IncreaseAddressKeyChainPathIndex(m_token);
 				std::optional<TorAddress> torAddress = m_walletManager.AddTorListener(m_token, newPath, m_pTorProcess);
 				m_walletManager.GetWallet(m_token).Write()->SetSlatepackAddress(torAddress.value().GetPublicKey());

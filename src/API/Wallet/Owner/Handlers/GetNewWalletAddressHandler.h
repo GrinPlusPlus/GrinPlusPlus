@@ -24,7 +24,9 @@ public:
 		Json::Value tokenJson = JsonUtil::GetRequiredField(request.GetParams().value(), "session_token");
 		SessionToken token = SessionToken::FromBase64(tokenJson.asString());
 
+		m_pWalletManager->RemoveCurrentTorListener(token, m_pTorProcess);
 		KeyChainPath newPath = m_pWalletManager->IncreaseAddressKeyChainPathIndex(token);
+		
 		std::optional<TorAddress> torAddress = m_pWalletManager->AddTorListener(token, newPath, m_pTorProcess);
 		m_pWalletManager->GetWallet(token).Write()->SetSlatepackAddress(torAddress.value().GetPublicKey());
 		

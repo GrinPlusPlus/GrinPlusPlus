@@ -48,6 +48,7 @@ jobs:
                 backend/bin/Release/Release/GrinNode.exe
                 backend/bin/Release/Release/slate_tool.exe
                 backend/bin/Release/Release/tx_verifier.exe
+                backend/bin/Release/Release/Tests.exe
             release_command: 'npm run clean_build:win && npm run release'
 
     steps:

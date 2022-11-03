@@ -8,6 +8,7 @@
 #include <Core/Util/FeeUtil.h>
 #include <Crypto/Hasher.h>
 #include <Crypto/Curve25519.h>
+#include <Common/Logger.h>
 
 #include "CancelTx.h"
 #include "WalletTxLoader.h"
@@ -309,10 +310,23 @@ BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteri
 SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) const
 {
 	// FUTURE: Support multiple account paths
-	int currentAddressIndex = m_walletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
 
 	KeyChain keychain = KeyChain::FromSeed(m_master_seed);
-	ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(currentAddressIndex));
+	int currentIndex = m_walletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+
+	for (uint32_t index = 0; index <= currentIndex; index++)
+	{
+		ed25519_keypair_t decrypt_key = keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(index));
+		try
+		{
+			return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
+		}
+		catch (std::exception& e)
+		{
+			continue;
+		}
+	}
 	
-	return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
+	LOG_ERROR("Failed to decrypt Slatepack");
+	throw WALLET_EXCEPTION("Failed to decrypt Slatepack");
 }

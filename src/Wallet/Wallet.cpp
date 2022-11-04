@@ -312,7 +312,7 @@ SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) c
 	// FUTURE: Support multiple account paths
 
 	KeyChain keychain = KeyChain::FromSeed(m_master_seed);
-	int currentIndex = m_walletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+	uint32_t currentIndex = m_walletDB.Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
 
 	for (uint32_t index = 0; index <= currentIndex; index++)
 	{

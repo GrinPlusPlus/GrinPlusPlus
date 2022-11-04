@@ -138,7 +138,7 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 	const std::shared_ptr<WalletImpl>& pWallet,
 	const SecureVector& masterSeed,
 	Slate& receiveSlate,
-	u_int32_t currentIndex) const
+	const int currentIndex) const
 {
 	if (receiveSlate.GetPaymentProof().has_value())
 	{

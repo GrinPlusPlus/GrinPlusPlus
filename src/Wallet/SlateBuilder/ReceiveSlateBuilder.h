@@ -27,7 +27,7 @@ private:
 		const std::shared_ptr<WalletImpl>& pWallet,
 		const SecureVector& masterSeed,
 		Slate& receiveSlate,
-		uint32_t currentIndex
+		const int currentIndex
 	) const;
 	void UpdateDatabase(
 		std::shared_ptr<IWalletDB> pBatch,

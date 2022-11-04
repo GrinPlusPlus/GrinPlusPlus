@@ -321,8 +321,9 @@ SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) c
 		{
 			return Armor::Unpack(armoredSlatepack, Curve25519::ToX25519(decrypt_key));
 		}
-		catch (std::exception& e)
+		catch (...)
 		{
+			// If our guess is wrong, simply move on and try the next guess.
 			continue;
 		}
 	}

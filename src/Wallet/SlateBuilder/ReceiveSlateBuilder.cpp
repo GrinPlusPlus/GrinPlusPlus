@@ -61,10 +61,13 @@ Slate ReceiveSlateBuilder::AddReceiverData(
 	// Add output to Transaction
 	receiveSlate.AddOutput(outputData.GetFeatures(), outputData.GetCommitment(), outputData.GetRangeProof());
 
+	WALLET_INFO("Updating Payment Proof...");
+
 	UpdatePaymentProof(
 		pWallet.GetShared(),
 		masterSeed,
-		receiveSlate
+		receiveSlate,
+		pBatch->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"))
 	);
 	
 	receiveSlate.sigs = std::vector<SlateSignature>{ signature };
@@ -134,7 +137,8 @@ SlateSignature ReceiveSlateBuilder::BuildSignature(Slate& slate, const SigningKe
 void ReceiveSlateBuilder::UpdatePaymentProof(
 	const std::shared_ptr<WalletImpl>& pWallet,
 	const SecureVector& masterSeed,
-	Slate& receiveSlate) const
+	Slate& receiveSlate,
+	u_int32_t currentIndex) const
 {
 	if (receiveSlate.GetPaymentProof().has_value())
 	{
@@ -143,18 +147,9 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 			throw WALLET_EXCEPTION("");
 		}
 
-		auto& proof = receiveSlate.GetPaymentProof().value();
-		if (proof.GetReceiverAddress() != pWallet->GetTorAddress().value().GetPublicKey())
-		{
-			throw WALLET_EXCEPTION_F("Payment proof receiver address ({} - {}) does not match wallet's (TOR: [{} - {}], Slatepack: [{} - {}])",
-				proof.GetReceiverAddress().Format(),
-				SlatepackAddress(proof.GetReceiverAddress()).ToString(),
-				pWallet->GetTorAddress().value().GetPublicKey().Format(),
-				SlatepackAddress(pWallet->GetTorAddress().value().GetPublicKey()).ToString(),
-				pWallet->GetSlatepackAddress().GetEdwardsPubKey().Format(),
-				pWallet->GetSlatepackAddress().ToString()
-			);
-		}
+		SlatePaymentProof& proof = receiveSlate.GetPaymentProof().value();
+		
+		int address_index = pWallet->FindAddressIndex(masterSeed, proof.GetReceiverAddress(), currentIndex);
 
 		Commitment kernel_commitment = Crypto::ToCommitment(receiveSlate.CalculateTotalExcess());
 		WALLET_INFO_F("Calculated commitment: {}", kernel_commitment);
@@ -165,16 +160,15 @@ void ReceiveSlateBuilder::UpdatePaymentProof(
 		kernel_commitment.Serialize(messageSerializer);
 		messageSerializer.AppendBigInteger(proof.GetSenderAddress().bytes);
 
-		int currentAddressIndex = pWallet->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
-
 		KeyChain keyChain = KeyChain::FromSeed(masterSeed);
-		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(currentAddressIndex));
+		ed25519_keypair_t torKey = keyChain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(address_index));
 
 		ed25519_signature_t signature = ED25519::Sign(
 			torKey.secret_key,
 			messageSerializer.GetBytes()
 		);
 		proof.AddSignature(std::move(signature));
+		WALLET_INFO_F("Added Signature ({})", kernel_commitment);
 	}
 }
 

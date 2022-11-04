@@ -70,6 +70,11 @@ public:
 		const std::optional<KeyChainPath>& keyChainPathOpt
 	);
 
+	uint32_t FindAddressIndex(
+		const SecureVector& masterSeed,
+		const ed25519_public_key_t& publicKey,
+		const uint32_t currentIndex) const;
+
 private:
 	WalletImpl(
 		const Config& config,

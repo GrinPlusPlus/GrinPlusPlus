@@ -328,6 +328,6 @@ SlatepackMessage Wallet::DecryptSlatepack(const std::string& armoredSlatepack) c
 		}
 	}
 	
-	LOG_ERROR("Failed to decrypt Slatepack");
+	WALLET_ERROR("Failed to decrypt Slatepack");
 	throw WALLET_EXCEPTION("Failed to decrypt Slatepack");
 }

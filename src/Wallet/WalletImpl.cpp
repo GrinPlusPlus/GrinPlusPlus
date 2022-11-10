@@ -253,3 +253,21 @@ std::unique_ptr<WalletTx> WalletImpl::GetTxBySlateId(const SecureVector& masterS
 	WALLET_INFO("Could not find transaction " + uuids::to_string(slateId));
 	return std::unique_ptr<WalletTx>(nullptr);
 }
+
+uint32_t WalletImpl::FindAddressIndex(const SecureVector& masterSeed, const ed25519_public_key_t& publicKey, const uint32_t currentIndex) const
+{
+	// FUTURE: Support multiple account paths
+
+	KeyChain keychain = KeyChain::FromSeed(masterSeed);
+	for (uint32_t index = 0; index <= currentIndex; index++)
+	{
+		if (publicKey == keychain.DeriveED25519Key(KeyChainPath::FromString("m/0/1").GetChild(index)).public_key) 
+		{
+			WALLET_INFO_F("Public Key: {} is valid.", publicKey.Format());
+			return index;
+		}
+	}
+	
+	WALLET_ERROR("Failed to validate Public Key");
+	throw WALLET_EXCEPTION("Failed to validate Public Key");
+}

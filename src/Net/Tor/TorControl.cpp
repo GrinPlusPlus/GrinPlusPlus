@@ -65,6 +65,7 @@ std::shared_ptr<TorControl> TorControl::Create(
 			"--DataDirectory", torDataDir.u8string(),
 			"--HashedControlPassword", Global::GetConfig().GetHashedControlPassword(),
 			"--ignore-missing-torrc",
+			"--hush",
 			"-f", torrcPath
 		});
 		

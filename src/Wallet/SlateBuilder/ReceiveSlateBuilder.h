@@ -26,7 +26,8 @@ private:
 	void UpdatePaymentProof(
 		const std::shared_ptr<WalletImpl>& pWallet,
 		const SecureVector& masterSeed,
-		Slate& receiveSlate
+		Slate& receiveSlate,
+		const int currentIndex
 	) const;
 	void UpdateDatabase(
 		std::shared_ptr<IWalletDB> pBatch,

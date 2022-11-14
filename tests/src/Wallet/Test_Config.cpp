@@ -92,4 +92,12 @@ TEST_CASE("Config")
 	REQUIRE(pConfig->GetPreferredPeers() == preferredPeers);
 	REQUIRE(pConfig->GetAllowedPeers() == allowedPeers);
 	REQUIRE(pConfig->GetBlockedPeers() == blockedPeers);
+
+	pConfig->UpdatePreferredPeers({});
+	pConfig->UpdateAllowedPeers({});
+	pConfig->UpdateBlockedPeers({});
+
+	REQUIRE(pConfig->GetPreferredPeers().empty() == true);
+	REQUIRE(pConfig->GetAllowedPeers().empty() == true);
+	REQUIRE(pConfig->GetBlockedPeers().empty() == true);
 }

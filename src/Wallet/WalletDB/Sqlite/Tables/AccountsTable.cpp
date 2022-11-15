@@ -20,8 +20,11 @@ void AccountsTable::CreateTable(SqliteDB& database)
 
 void AccountsTable::UpdateSchema(SqliteDB& database, const int previousVersion)
 {
-	if (previousVersion < 4) {
+	if (previousVersion < 2) {
 		CreateTable(database);
+	} else if(previousVersion < 4) {
+		std::string table_creation_cmd = "ALTER TABLE accounts ADD current_address_index INTEGER DEFAULT 0 NOT NULL;";
+		database.Execute(table_creation_cmd);
 	}
 }
 

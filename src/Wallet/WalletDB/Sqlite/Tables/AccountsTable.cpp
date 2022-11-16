@@ -23,9 +23,10 @@ void AccountsTable::UpdateSchema(SqliteDB& database, const int previousVersion)
 	if (previousVersion < 2) {
 		CreateTable(database);
 	} else if(previousVersion < 4) {
-		// Apparently... in SQLite... the "alter table" statement does not generate exceptions if the column already exists.
-		std::string table_creation_cmd = "ALTER TABLE accounts ADD current_address_index INTEGER DEFAULT 0 NOT NULL;";
-		database.Execute(table_creation_cmd);
+		try {
+			std::string table_creation_cmd = "ALTER TABLE accounts ADD current_address_index INTEGER DEFAULT 0 NOT NULL;";
+			database.Execute(table_creation_cmd);
+		} catch (...) { }
 	}
 }
 

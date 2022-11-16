@@ -105,6 +105,16 @@ public:
 		return values;
 	}
 
+	static std::optional<std::vector<Json::Value>> GetOptionalArray(const Json::Value& node, const std::string& key)
+	{
+		Json::Value value = node.get(key, Json::nullValue);
+		if (!value.isNull() && value.isArray())
+		{
+			return std::make_optional(GetArray(node, key));
+		}
+		return std::nullopt;
+	}
+
 	static std::vector<Json::Value> GetArray(const Json::Value& node, const std::string& key)
 	{
 		std::vector<Json::Value> values;
@@ -119,6 +129,12 @@ public:
 		}
 
 		return values;
+	}
+
+	static bool KeyExists(const Json::Value& node, const std::string& key) {
+		Json::Value value = node.get(key, Json::nullValue);
+
+		return !value.isNull();
 	}
 
 	//

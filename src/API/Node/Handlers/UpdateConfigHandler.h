@@ -24,7 +24,7 @@ public:
 
 		Config& config = Global::GetConfig();
 		Json::Value config_json = config.GetJSON();
-
+		
 		auto min_peers = JsonUtil::GetUInt32Opt(params_json, "min_peers");
 		if (min_peers.has_value()) {
 			if(min_peers.value() < config.GetMinSyncPeers()) {
@@ -78,18 +78,20 @@ public:
 			config.ShouldReuseAddresses(reuse_address.value()==1);
 		}
 
-		std::unordered_set<IPAddress> preferredPeers;
-		std::vector<Json::Value>preferred_peers_json = JsonUtil::GetArray(params_json, "preferred_peers");
-		std::transform(
-			preferred_peers_json.cbegin(), preferred_peers_json.cend(),
-			std::inserter(preferredPeers, preferredPeers.end()),
-			[](const Json::Value& peer_json) {
-				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
-				return IPAddress::Parse(peer.value());
-			}
-		);
-		
-		if (!preferredPeers.empty()) {
+		if (JsonUtil::KeyExists(params_json, "preferred_peers"))
+		{
+			auto preferred_peers_json = JsonUtil::GetRequiredArray(params_json, "preferred_peers");
+			std::unordered_set<IPAddress> preferredPeers;
+
+			std::transform(
+				preferred_peers_json.cbegin(), preferred_peers_json.cend(),
+				std::inserter(preferredPeers, preferredPeers.end()),
+				[](const Json::Value& peer_json) {
+					std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+					return IPAddress::Parse(peer.value());
+				}
+			);
+
 			if (!config_json.isMember("P2P")) {
 				config_json["P2P"] = Json::Value();
 			}
@@ -104,19 +106,21 @@ public:
 
 			config.UpdatePreferredPeers(preferredPeers);
 		}
+		
+		if (JsonUtil::KeyExists(params_json, "allowed_peers"))
+		{
+			auto allowed_peers_json = JsonUtil::GetRequiredArray(params_json, "allowed_peers");
+			std::unordered_set<IPAddress> allowedPeers;
 
-		std::unordered_set<IPAddress> allowedPeers;
-		std::vector<Json::Value>allowed_peers_json = JsonUtil::GetArray(params_json, "allowed_peers");
-		std::transform(
-			allowed_peers_json.cbegin(), allowed_peers_json.cend(),
-			std::inserter(allowedPeers, allowedPeers.end()),
-			[](const Json::Value& peer_json) {
-				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
-				return IPAddress::Parse(peer.value());
-			}
-		);
+			std::transform(
+				allowed_peers_json.cbegin(), allowed_peers_json.cend(),
+				std::inserter(allowedPeers, allowedPeers.end()),
+				[](const Json::Value& peer_json) {
+					std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+					return IPAddress::Parse(peer.value());
+				}
+			);
 
-		if (!allowedPeers.empty()) {
 			if (!config_json.isMember("P2P")) {
 				config_json["P2P"] = Json::Value();
 			}
@@ -131,19 +135,21 @@ public:
 
 			config.UpdateAllowedPeers(allowedPeers);
 		}
+		
+		if (JsonUtil::KeyExists(params_json, "blocked_peers"))
+		{
+			auto blocked_peers_json = JsonUtil::GetRequiredArray(params_json, "blocked_peers");
+			std::unordered_set<IPAddress> blockedPeers;
 
-		std::unordered_set<IPAddress> blockedPeers;
-		std::vector<Json::Value>blocked_peers_json = JsonUtil::GetArray(params_json, "blocked_peers");
-		std::transform(
-			blocked_peers_json.cbegin(), blocked_peers_json.cend(),
-			std::inserter(blockedPeers, blockedPeers.end()),
-			[](const Json::Value& peer_json) {
-				std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
-				return IPAddress::Parse(peer.value());
-			}
-		);
+			std::transform(
+				blocked_peers_json.cbegin(), blocked_peers_json.cend(),
+				std::inserter(blockedPeers, blockedPeers.end()),
+				[](const Json::Value& peer_json) {
+					std::optional<std::string> peer = JsonUtil::ConvertToStringOpt(peer_json);
+					return IPAddress::Parse(peer.value());
+				}
+			);
 
-		if (!blockedPeers.empty()) {
 			if (!config_json.isMember("P2P")) {
 				config_json["P2P"] = Json::Value();
 			}

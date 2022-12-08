@@ -56,7 +56,7 @@ private:
 
     static int StatusListener(mg_connection* pConnection, void*)
     {
-        return HTTPUtil::BuildSuccessResponse(pConnection, "SUCCESS! Your wallet listener is working!");
+        return HTTPUtil::BuildSuccessResponse(pConnection, "Wallet listener is working properly.");
     }
 
     std::shared_ptr<ITorProcess> m_pTorProcess;

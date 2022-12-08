@@ -5,6 +5,7 @@
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <API/Wallet/Owner/Models/Errors.h>
+
 #include <optional>
 
 class PushTransactionHandler : public RPCMethod

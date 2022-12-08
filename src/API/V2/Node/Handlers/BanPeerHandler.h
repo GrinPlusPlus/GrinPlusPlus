@@ -15,12 +15,8 @@ public:
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
-		Json::Value versionJson;
-		versionJson["node_version"] = StringUtil::Format("Grin++ {}", GRINPP_VERSION);
-		versionJson["block_header_version"] = m_pBlockChain->GetTipBlockHeader(EChainType::CANDIDATE)->GetVersion();
-
 		Json::Value result;
-		result["Ok"] = versionJson;
+		result["Ok"] = NULL;
 		return request.BuildResult(result);
 	}
 

@@ -13,21 +13,22 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS()
 	if (Global::IsMainnet())
 	{
 		dnsSeeds = {
-			"mainnet.seed.grin.prokapi.com",	// hendi@prokapi.com
-			"mainnet-seed.grinnode.live"	    // info@grinnode.live
-			"grinseed.yeastplume.org",			// yeastplume@protonmail.com
-			"mainnet.seed.713.mw",				// jasper@713.mw
 			"mainnet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
-			"mainnet.seed.grin.icu",			// gary.peverell@protonmail.com
+			"mainnet.seed.grin.prokapi.com"		// hendi@prokapi.com
+			"grinseed.revcore.net",			// yeastplume@gmail.com
+			"mainnet-seed.grinnode.live",		// info@grinnode.live
+			"mainnet.grin.punksec.de",		// grin@punksec.de
+			"grinnode.30-r.com",			// trinitron@30-r.com
 		};
 	}
 	else
 	{
 		dnsSeeds = {
-			"floonet.seed.713.mw",				// jasper@713.mw
 			"floonet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
 			"floonet.seed.grin.prokapi.com",	// hendi@prokapi.com
-			"floonet.seed.grin.icu",			// gary.peverell@protonmail.com
+			"grintestseed.revcore.net",		// yeastplume@gmail.com
+			"testnet.grin.punksec.de",		// grin@punksec.de
+			"testnet.grinnode.30-r.com",		// trinitron@30-r.com
 		};
 	}
 

@@ -14,7 +14,7 @@ std::vector<SocketAddress> DNSSeeder::GetPeersFromDNS()
 	{
 		dnsSeeds = {
 			"mainnet.seed.grin.lesceller.com",	// q.lesceller@gmail.com
-			"mainnet.seed.grin.prokapi.com",		// hendi@prokapi.com
+			"mainnet.seed.grin.prokapi.com",	// hendi@prokapi.com
 			"grinseed.revcore.net",			// yeastplume@gmail.com
 			"mainnet-seed.grinnode.live",		// info@grinnode.live
 			"mainnet.grin.punksec.de",		// grin@punksec.de

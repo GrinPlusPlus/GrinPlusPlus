@@ -7,5 +7,5 @@ file(GLOB SOURCE_CODE
     "Wallet/Owner/*.cpp"
 )
 
-add_library(${TARGET_NAME} STATIC ${SOURCE_CODE})
+add_library(${TARGET_NAME} STATIC ${SOURCE_CODE} "Node/Handlers/GetTxHashsetHandler.h")
 target_link_libraries(${TARGET_NAME} Core Net)

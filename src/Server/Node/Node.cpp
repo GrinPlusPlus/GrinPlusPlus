@@ -31,11 +31,11 @@ Node::~Node()
 	LOG_INFO("Shutting down node daemon");
 }
 
-std::unique_ptr<Node> Node::Create(const Context::Ptr& pContext)
+std::unique_ptr<Node> Node::Create(const Context::Ptr& pContext, const ServerPtr& pServer)
 {
 	auto pNodeClient = DefaultNodeClient::Create(pContext);
 	auto pNodeRestServer = NodeRestServer::Create(
-		pContext->GetConfig(),
+		pServer,
 		pNodeClient->GetNodeContext()
 	);
 

@@ -20,7 +20,7 @@ public:
 	const fs::path& GetDatabasePath() const { return m_databasePath; }
 	const fs::path& GetTxHashSetPath() const { return m_txHashSetPath; }
 	uint64_t GetFeeBase() const noexcept { return 500000; } // TODO: Read from config.
-	uint16_t GetRestAPIPort() const { return m_restAPIPort; }
+	uint16_t GetOwnerAPIPort() const { return m_ownerAPIPort; }
 
 	//
 	// Constructor
@@ -29,16 +29,16 @@ public:
 		: m_p2pConfig(env, json), m_dandelion(json)
 	{
 		if (env == Environment::MAINNET) {
-			m_restAPIPort = 3413;
+			m_ownerAPIPort = 3420;
 		} else {
-			m_restAPIPort = 13413;
+			m_ownerAPIPort = 13420;
 		}
 
 		if (json.isMember(ConfigProps::Server::SERVER)) {
 			const Json::Value& serverJSON = json[ConfigProps::Server::SERVER];
 
 			if (serverJSON.isMember(ConfigProps::Server::REST_API_PORT)) {
-				m_restAPIPort = (uint16_t)serverJSON.get(ConfigProps::Server::REST_API_PORT, m_restAPIPort).asInt();
+				m_ownerAPIPort = (uint16_t)serverJSON.get(ConfigProps::Server::REST_API_PORT, m_ownerAPIPort).asInt();
 			}
 		}
 
@@ -63,7 +63,7 @@ private:
 	fs::path m_databasePath;
 	fs::path m_txHashSetPath;
 
-	uint16_t m_restAPIPort;
+	uint16_t m_ownerAPIPort;
 	P2PConfig m_p2pConfig;
 	DandelionConfig m_dandelion;
 };

@@ -3,10 +3,10 @@
 #include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <GrinVersion.h>
+#include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class GetVersionHandler : public RPCMethod
+class GetUnconfirmedTransactions : public RPCMethod
 {
 public:
 	RPC::Response Handle(const RPC::Request& request) const final

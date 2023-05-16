@@ -1,12 +1,12 @@
 #pragma once
 
+#include <Consensus.h>
 #include <BlockChain/BlockChain.h>
 #include <Net/Clients/RPC/RPC.h>
 #include <Net/Servers/RPC/RPCMethod.h>
-#include <GrinVersion.h>
 #include <optional>
 
-class GetVersionHandler : public RPCMethod
+class GetConnectedPeersHandler : public RPCMethod
 {
 public:
 	RPC::Response Handle(const RPC::Request& request) const final
@@ -17,4 +17,7 @@ public:
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }
+
+private:
+	IBlockChain::Ptr m_pBlockChain;
 };

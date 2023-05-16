@@ -30,7 +30,7 @@ public:
 	const fs::path& GetChainPath() const noexcept;
 	const fs::path& GetDatabasePath() const noexcept;
 	const fs::path& GetTxHashSetPath() const noexcept;
-	uint16_t GetRestAPIPort() const noexcept;
+	uint16_t GetOwnerAPIPort() const noexcept;
 	uint64_t GetFeeBase() const noexcept;
 
 	//

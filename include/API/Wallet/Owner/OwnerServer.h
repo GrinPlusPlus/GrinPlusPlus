@@ -16,6 +16,7 @@ public:
 
     // TODO: Add e2e encryption
     static OwnerServer::UPtr Create(
+        const ServerPtr& pServer,
         const std::shared_ptr<ITorProcess>& pTorProcess,
         const std::shared_ptr<IWalletManager>& pWalletManager
     );

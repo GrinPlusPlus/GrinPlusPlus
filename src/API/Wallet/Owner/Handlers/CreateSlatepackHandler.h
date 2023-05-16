@@ -9,12 +9,12 @@
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class ReceiveHandler : public RPCMethod
+class CreateSlatepackHandler : public RPCMethod
 {
 public:
-	ReceiveHandler(const IWalletManagerPtr& pWalletManager)
+	CreateSlatepackHandler(const IWalletManagerPtr& pWalletManager)
 		: m_pWalletManager(pWalletManager) { }
-	virtual ~ReceiveHandler() = default;
+	virtual ~CreateSlatepackHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
@@ -61,11 +61,6 @@ public:
 		}
 
 		result["slatepack"] = Armor::Pack(address, slate, recipients);
-		result["slate"] = slate.ToJSON();
-		if (!sender.IsNull()) {
-			result["sender"] = sender.ToJSON();
-		}
-
 		return request.BuildResult(result);
 	}
 

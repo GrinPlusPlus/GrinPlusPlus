@@ -13,7 +13,7 @@ public:
 		: m_pNodeContext(pNodeContext), m_pNodeServer(std::move(pNodeServer)) { }
 	~NodeRestServer() = default;
 
-	static NodeRestServer::UPtr Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext);
+	static NodeRestServer::UPtr Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext);
 
 private:
 	std::shared_ptr<NodeContext> m_pNodeContext;

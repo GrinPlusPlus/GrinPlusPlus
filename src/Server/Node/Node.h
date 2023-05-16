@@ -14,7 +14,7 @@ class DefaultNodeClient;
 class Node
 {
 public:
-	static std::unique_ptr<Node> Create(const std::shared_ptr<Context>& pContext);
+	static std::unique_ptr<Node> Create(const std::shared_ptr<Context>& pContext, const ServerPtr& pServer);
 
 	Node(
 		const std::shared_ptr<Context>& pContext,

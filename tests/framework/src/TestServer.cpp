@@ -98,7 +98,11 @@ TestServer::Ptr TestServer::CreateWithWallet()
 	));
 
 	pServer->m_pWalletManager = WalletAPI::CreateWalletManager(Global::GetConfig(), pNodeClient);
-	pServer->m_pOwnerServer = OwnerServer::Create(TorProcessManager::GetProcess(0), pServer->m_pWalletManager);
+
+	const uint16_t port = Global::GetConfig().GetOwnerAPIPort();
+	ServerPtr pAPIServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
+
+	pServer->m_pOwnerServer = OwnerServer::Create(pAPIServer, TorProcessManager::GetProcess(0), pServer->m_pWalletManager);
 
 	return pServer;
 }
@@ -115,7 +119,7 @@ fs::path TestServer::GenerateTempDir()
 RPC::Response TestServer::InvokeOwnerRPC(const std::string& method, const Json::Value& paramsJson)
 {
 	RPC::Request request = RPC::Request::BuildRequest(method, paramsJson);
-	return HttpRpcClient().Invoke("127.0.0.1", "/v2", GetOwnerPort(), request);
+	return HttpRpcClient().Invoke("127.0.0.1", "/v3/owner", GetOwnerPort(), request);
 }
 
 CreatedUser TestServer::CreateUser(

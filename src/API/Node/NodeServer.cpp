@@ -38,8 +38,8 @@ NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain:
     pOwnerServer->AddMethod("update_config", std::shared_ptr<RPCMethod>(new UpdateConfigHandler()));
     pOwnerServer->AddMethod("get_status", std::shared_ptr<RPCMethod>(new GetStatusHandler(pBlockChain, pP2PServer)));
     pOwnerServer->AddMethod("get_peers", std::shared_ptr<RPCMethod>(new GetPeersHandler(pP2PServer)));
-    pOwnerServer->AddMethod("ban_peer", std::shared_ptr<RPCMethod>(new BanPeerHandler()));
-    pOwnerServer->AddMethod("unban_peer", std::shared_ptr<RPCMethod>(new UnbanPeerHandler()));
+    pOwnerServer->AddMethod("ban_peer", std::shared_ptr<RPCMethod>(new BanPeerHandler(pP2PServer)));
+    pOwnerServer->AddMethod("unban_peer", std::shared_ptr<RPCMethod>(new UnbanPeerHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_connected_peers", std::shared_ptr<RPCMethod>(new GetConnectedPeersHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_txhashset", std::shared_ptr<RPCMethod>(new GetTxHashsetHandler(pBlockChain)));
     pOwnerServer->AddMethod("get_outputs", std::shared_ptr<RPCMethod>(new GetOutputsHandler(pBlockChain)));

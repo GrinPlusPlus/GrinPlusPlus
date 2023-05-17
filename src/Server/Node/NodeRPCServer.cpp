@@ -1,4 +1,4 @@
-#include "NodeRestServer.h"
+#include "NodeRPCServer.h"
 #include "NodeContext.h"
 
 #include "API/HeaderAPI.h"
@@ -18,7 +18,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-NodeRestServer::UPtr NodeRestServer::Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext)
+NodeRPCServer::UPtr NodeRPCServer::Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext)
 {
 	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
 
@@ -43,5 +43,5 @@ NodeRestServer::UPtr NodeRestServer::Create(const ServerPtr& pServer, std::share
 	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
 	*/
 
-	return std::make_unique<NodeRestServer>(pNodeContext, std::move(pV2Server));
+	return std::make_unique<NodeRPCServer>(pNodeContext, std::move(pV2Server));
 }

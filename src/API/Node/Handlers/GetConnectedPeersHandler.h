@@ -15,12 +15,12 @@ public:
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
-		const std::vector<PeerConstPtr> peers = m_pP2PServer->GetAllPeers();
+		const std::vector<ConnectedPeer> connectedPeers = m_pP2PServer->GetConnectedPeers();
 
 		Json::Value json;
-		for (PeerConstPtr peer : peers)
+		for (const ConnectedPeer& connectedPeer : connectedPeers)
 		{
-			json.append(peer->ToJSON());
+			json.append(connectedPeer.ToJSON());
 		}
 
 		Json::Value result;

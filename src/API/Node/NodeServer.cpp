@@ -31,14 +31,12 @@ NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain:
     pForeignServer->AddMethod("get_version", std::make_shared<GetVersionHandler>());
     pForeignServer->AddMethod("get_tip", std::make_shared<GetTipHandler>(pBlockChain));
     pForeignServer->AddMethod("push_transaction", std::make_shared<PushTransactionHandler>(pBlockChain, pP2PServer));
-    pForeignServer->AddMethod("get_config", std::shared_ptr<RPCMethod>(new GetConfigHandler())); /* DEPRECATED since v1.2.9 */
-    pForeignServer->AddMethod("update_config", std::shared_ptr<RPCMethod>(new UpdateConfigHandler())); /* DEPRECATED since v1.2.9 */
-
+    
     RPCServer::Ptr pOwnerServer = RPCServer::Create(pServer, "/v2/owner", LoggerAPI::LogFile::NODE);
  
     pOwnerServer->AddMethod("get_config", std::shared_ptr<RPCMethod>(new GetConfigHandler()));
     pOwnerServer->AddMethod("update_config", std::shared_ptr<RPCMethod>(new UpdateConfigHandler()));
-    pOwnerServer->AddMethod("get_status", std::shared_ptr<RPCMethod>(new GetStatusHandler()));
+    pOwnerServer->AddMethod("get_status", std::shared_ptr<RPCMethod>(new GetStatusHandler(pBlockChain, pP2PServer)));
     pOwnerServer->AddMethod("get_peers", std::shared_ptr<RPCMethod>(new GetPeersHandler()));
     pOwnerServer->AddMethod("ban_peer", std::shared_ptr<RPCMethod>(new BanPeerHandler()));
     pOwnerServer->AddMethod("unban_peer", std::shared_ptr<RPCMethod>(new UnbanPeerHandler()));

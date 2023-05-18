@@ -15,19 +15,18 @@
 #include "Handlers/GetConnectedPeersHandler.h"
 #include "Handlers/GetPeersHandler.h"
 #include "Handlers/GetStatusHandler.h"
-#include "Handlers/GetTxHashsetHandler.h"
 #include "Handlers/UnbanPeerHandler.h"
 #include "Handlers/UpdateConfigHandler.h"
 
-
-NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain::Ptr& pBlockChain, const IP2PServerPtr& pP2PServer)
+NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain::Ptr& pBlockChain,
+                                    const IP2PServerPtr& pP2PServer, const ITxHashSetPtr& pTxHashSet,
+                                    const IDatabasePtr& pDatabase)
 {
     RPCServer::Ptr pForeignServer = RPCServer::Create(pServer, "/v2/foreign", LoggerAPI::LogFile::NODE);
-
     pForeignServer->AddMethod("get_block", std::make_shared<GetBlockHandler>(pBlockChain));
     pForeignServer->AddMethod("get_header", std::make_shared<GetHeaderHandler>(pBlockChain));
     pForeignServer->AddMethod("get_kernel", std::make_shared<GetKernelHandler>(pBlockChain));
-    pForeignServer->AddMethod("get_outputs", std::shared_ptr<RPCMethod>(new GetOutputsHandler(pBlockChain)));
+    pForeignServer->AddMethod("get_outputs", std::shared_ptr<RPCMethod>(new GetOutputsHandler(pTxHashSet, pDatabase)));
     pForeignServer->AddMethod("get_tip", std::make_shared<GetTipHandler>(pBlockChain));
     pForeignServer->AddMethod("get_unconfirmed_transactions", std::make_shared<GetUnconfirmedTransactions>());
     pForeignServer->AddMethod("get_unspent_outputs", std::make_shared<GetUnspentOutputsHandler>());
@@ -35,13 +34,11 @@ NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain:
     pForeignServer->AddMethod("push_transaction", std::make_shared<PushTransactionHandler>(pBlockChain, pP2PServer));
     
     RPCServer::Ptr pOwnerServer = RPCServer::Create(pServer, "/v2/owner", LoggerAPI::LogFile::NODE);
- 
     pOwnerServer->AddMethod("ban_peer", std::shared_ptr<RPCMethod>(new BanPeerHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_config", std::shared_ptr<RPCMethod>(new GetConfigHandler()));
     pOwnerServer->AddMethod("get_connected_peers", std::shared_ptr<RPCMethod>(new GetConnectedPeersHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_peers", std::shared_ptr<RPCMethod>(new GetPeersHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_status", std::shared_ptr<RPCMethod>(new GetStatusHandler(pBlockChain, pP2PServer)));
-    pOwnerServer->AddMethod("get_txhashset", std::shared_ptr<RPCMethod>(new GetTxHashsetHandler(pBlockChain)));
     pOwnerServer->AddMethod("unban_peer", std::shared_ptr<RPCMethod>(new UnbanPeerHandler(pP2PServer)));
     pOwnerServer->AddMethod("update_config", std::shared_ptr<RPCMethod>(new UpdateConfigHandler()));
 

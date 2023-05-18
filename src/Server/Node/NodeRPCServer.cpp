@@ -20,7 +20,8 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 
 NodeRPCServer::UPtr NodeRPCServer::Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext)
 {
-	NodeServer::UPtr pServerV2 = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
+	;
+	NodeServer::UPtr pServerV2 = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer, pNodeContext->m_pTxHashSetManager->GetTxHashSet(), pNodeContext->m_pDatabase);
 
 	/* Add v1 handlers */
 	/*

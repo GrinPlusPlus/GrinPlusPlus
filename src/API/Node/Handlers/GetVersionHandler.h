@@ -11,8 +11,12 @@ class GetVersionHandler : public RPCMethod
 public:
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
+		Json::Value json;
+		json["node_version"] = GRINPP_VERSION;
+		
 		Json::Value result;
-		result["Ok"] = "";
+		result["Ok"] = json;
+		
 		return request.BuildResult(result);
 	}
 

@@ -129,6 +129,7 @@ const fs::path& Config::GetLogDirectory() const noexcept { return m_pImpl->m_log
 const fs::path& Config::GetChainPath() const noexcept { return m_pImpl->m_nodeConfig.GetChainPath(); }
 const fs::path& Config::GetDatabasePath() const noexcept { return m_pImpl->m_nodeConfig.GetDatabasePath(); }
 const fs::path& Config::GetTxHashSetPath() const noexcept { return m_pImpl->m_nodeConfig.GetTxHashSetPath(); }
+uint16_t Config::GetNodeAPIPort() const noexcept { return m_pImpl->m_nodeConfig.GetNodeAPIPort(); }
 uint16_t Config::GetOwnerAPIPort() const noexcept { return m_pImpl->m_nodeConfig.GetOwnerAPIPort(); }
 uint64_t Config::GetFeeBase() const noexcept { return m_pImpl->m_nodeConfig.GetFeeBase(); }
 

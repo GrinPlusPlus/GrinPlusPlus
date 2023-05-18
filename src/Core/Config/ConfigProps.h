@@ -32,8 +32,7 @@ namespace ConfigProps
 	namespace Server
 	{
 		static const std::string SERVER = "SERVER";
-
-		static const std::string REST_API_PORT = "REST_API_PORT";
+		static const std::string NODE_API_PORT = "NODE_API_PORT";
 		static const std::string OWNER_API_PORT = "OWNER_API_PORT";
 	}
 

@@ -110,7 +110,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	std::unique_ptr<Node> pNode = nullptr;
 	INodeClientPtr pNodeClient = nullptr;
 	
-	const uint16_t port = pContext->GetConfig().GetOwnerAPIPort();
+	const uint16_t& port = pContext->GetConfig().GetNodeAPIPort();
 	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
 
 	if (options.shared_node.has_value())
@@ -130,7 +130,6 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	std::unique_ptr<WalletDaemon> pWallet = nullptr;
 	if (options.include_wallet) {
 		pWallet = WalletDaemon::Create(
-			pServer,
 			pContext->GetConfig(),
 			Global::GetTorProcess(),
 			pNodeClient

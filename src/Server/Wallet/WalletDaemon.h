@@ -13,7 +13,6 @@ class WalletDaemon
 {
 public:
 	WalletDaemon(
-		const ServerPtr& pServer,
 		const Config& config,
 		IWalletManagerPtr pWalletManager,
 		std::unique_ptr<OwnerServer>&& pOwnerServer
@@ -21,14 +20,12 @@ public:
 	~WalletDaemon();
 
 	static std::unique_ptr<WalletDaemon> Create(
-		const ServerPtr& pServer,
 		const Config& config,
 		const TorProcess::Ptr& pTorProcess,
 		const INodeClientPtr& pNodeClient
 	);
 
 private:
-	const ServerPtr& m_server;
 	const Config& m_config;
 	IWalletManagerPtr m_pWalletManager;
 	std::unique_ptr<OwnerServer> m_pOwnerServer;

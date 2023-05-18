@@ -30,9 +30,14 @@
 #include "Handlers/DecodeSlatepackHandler.h"
 #include "Handlers/InitSendTxHandler.h"
 
-OwnerServer::UPtr OwnerServer::Create(const ServerPtr& pServer, const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {
-    RPCServer::Ptr pOwnerServer = RPCServer::Create(pServer, "/v3/owner", LoggerAPI::LogFile::WALLET);
+    RPCServerPtr pOwnerServer = RPCServer::Create(
+        EServerType::LOCAL,
+        std::make_optional<uint16_t>(serverPort),
+        "/v3/owner",
+        LoggerAPI::LogFile::WALLET
+    );
 
     /*
         Request:

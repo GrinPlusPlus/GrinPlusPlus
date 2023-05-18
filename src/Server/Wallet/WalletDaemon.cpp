@@ -26,7 +26,7 @@ std::unique_ptr<WalletDaemon> WalletDaemon::Create(
 {
 	auto pWalletManager = WalletAPI::CreateWalletManager(config, pNodeClient);
 
-	const uint16_t& port = config.GetNodeAPIPort();
+	const uint16_t& port = config.GetOwnerAPIPort();
 	auto pOwnerServer = OwnerServer::Create(
 		port,
 		pTorProcess,

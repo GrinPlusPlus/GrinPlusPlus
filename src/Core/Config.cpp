@@ -185,7 +185,7 @@ uint8_t Config::GetStemProbability() const noexcept { return m_pImpl->m_nodeConf
 // Wallet
 //
 const fs::path& Config::GetWalletPath() const noexcept { return m_pImpl->m_walletConfig.GetWalletPath(); }
-uint32_t Config::GetOwnerPort() const noexcept { return m_pImpl->m_walletConfig.GetOwnerPort(); }
+uint32_t Config::GetWalletOwnerPort() const noexcept { return m_pImpl->m_walletConfig.GetWalletOwnerPort(); }
 uint32_t Config::GetPublicKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPublicKeyVersion(); }
 uint32_t Config::GetPrivateKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPrivateKeyVersion(); }
 

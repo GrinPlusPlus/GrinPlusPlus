@@ -18,7 +18,7 @@ public:
 
 	Node(
 		const std::shared_ptr<Context>& pContext,
-		std::unique_ptr<NodeRPCServer>&& pNodeRestServer,
+		std::unique_ptr<NodeRPCServer>&& pNodeRPCServer,
 		std::shared_ptr<DefaultNodeClient> pNodeClient
 	);
 	~Node();
@@ -29,6 +29,6 @@ public:
 
 private:
 	std::shared_ptr<Context> m_pContext;
-	std::unique_ptr<NodeRPCServer> m_pNodeRestServer;
+	std::unique_ptr<NodeRPCServer> m_pNodeRPCServer;
 	std::shared_ptr<DefaultNodeClient> m_pNodeClient;
 };

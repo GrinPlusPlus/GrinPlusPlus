@@ -20,7 +20,7 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 
 NodeRPCServer::UPtr NodeRPCServer::Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext)
 {
-	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
+	NodeServer::UPtr pServerV2 = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
 
 	/* Add v1 handlers */
 	/*
@@ -43,5 +43,5 @@ NodeRPCServer::UPtr NodeRPCServer::Create(const ServerPtr& pServer, std::shared_
 	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
 	*/
 
-	return std::make_unique<NodeRPCServer>(pNodeContext, std::move(pV2Server));
+	return std::make_unique<NodeRPCServer>(pNodeContext, std::move(pServerV2));
 }

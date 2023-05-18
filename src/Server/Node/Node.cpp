@@ -17,10 +17,10 @@
 
 Node::Node(
 	const Context::Ptr& pContext,
-	std::unique_ptr<NodeRPCServer>&& pNodeRestServer,
+	std::unique_ptr<NodeRPCServer>&& pNodeRPCServer,
 	std::shared_ptr<DefaultNodeClient> pNodeClient)
 	: m_pContext(pContext),
-	m_pNodeRestServer(std::move(pNodeRestServer)),
+	m_pNodeRPCServer(std::move(pNodeRPCServer)),
 	m_pNodeClient(pNodeClient)
 {
 

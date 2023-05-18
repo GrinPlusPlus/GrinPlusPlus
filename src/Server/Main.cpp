@@ -110,9 +110,6 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	std::unique_ptr<Node> pNode = nullptr;
 	INodeClientPtr pNodeClient = nullptr;
 	
-	const uint16_t& port = pContext->GetConfig().GetNodeAPIPort();
-	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
-
 	if (options.shared_node.has_value())
 	{
 		pNodeClient = RPCNodeClient::Create(
@@ -122,19 +119,20 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 	}
 	else
 	{
+		const uint16_t& nodeAPIPort = pContext->GetConfig().GetNodeAPIPort();
+		ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(nodeAPIPort));
 		pNode = Node::Create(pContext, pServer);
 		pNodeClient = pNode->GetNodeClient();
 	}
-	IO::Out("RPC Node Client started.");
+	IO::Out("RPC Node Client started") ;
 
 	std::unique_ptr<WalletDaemon> pWallet = nullptr;
-	if (options.include_wallet) {
-		pWallet = WalletDaemon::Create(
-			pContext->GetConfig(),
-			Global::GetTorProcess(),
-			pNodeClient
-		);
-	}
+	pWallet = WalletDaemon::Create(
+		pContext->GetConfig(),
+		Global::GetTorProcess(),
+		pNodeClient
+	);
+
 	IO::Out("Wallet Daemon started.");
 
 	system_clock::time_point startTime = system_clock::now();

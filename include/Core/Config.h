@@ -71,7 +71,7 @@ public:
 	// Wallet
 	//
 	const fs::path& GetWalletPath() const noexcept;
-	uint32_t GetOwnerPort() const noexcept;
+	uint32_t GetWalletOwnerPort() const noexcept;
 	uint32_t GetPublicKeyVersion() const noexcept;
 	uint32_t GetPrivateKeyVersion() const noexcept;
 

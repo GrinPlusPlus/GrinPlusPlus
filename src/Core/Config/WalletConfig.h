@@ -16,13 +16,13 @@ public:
 	{
 		if (environment == Environment::MAINNET)
 		{
-			m_ownerPort = 3420; // TODO: Read value
+			m_walletOwnerPort = 3420; // TODO: Read value
 			m_privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x04, 0xA4);
 			m_publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x3C, 0x08, 0xDF);
 		}
 		else
 		{
-			m_ownerPort = 13420;
+			m_walletOwnerPort = 13420;
 			m_privateKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3A, 0x10);
 			m_publicKeyVersion = BitUtil::ConvertToU32(0x03, 0x27, 0x3E, 0x4B);
 		}
@@ -43,7 +43,7 @@ public:
 	}
 
 	const fs::path& GetWalletPath() const { return m_walletPath; }
-	uint32_t GetOwnerPort() const { return m_ownerPort; }
+	uint32_t GetWalletOwnerPort() const { return m_walletOwnerPort; }
 	uint32_t GetPublicKeyVersion() const { return m_publicKeyVersion; }
 	uint32_t GetPrivateKeyVersion() const { return m_privateKeyVersion; }
 	uint32_t GetMinimumConfirmations() const { return m_minimumConfirmations; }
@@ -53,7 +53,7 @@ public:
 
 private:
 	fs::path m_walletPath;
-	uint32_t m_ownerPort;
+	uint32_t m_walletOwnerPort;
 	uint32_t m_publicKeyVersion;
 	uint32_t m_privateKeyVersion;
 	uint32_t m_minimumConfirmations;

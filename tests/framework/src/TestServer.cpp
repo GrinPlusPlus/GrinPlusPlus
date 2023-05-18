@@ -99,10 +99,9 @@ TestServer::Ptr TestServer::CreateWithWallet()
 
 	pServer->m_pWalletManager = WalletAPI::CreateWalletManager(Global::GetConfig(), pNodeClient);
 
-	const uint16_t port = Global::GetConfig().GetOwnerAPIPort();
-	ServerPtr pAPIServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
+	const uint16_t& apiPort = Global::GetConfig().GetOwnerAPIPort();
 
-	pServer->m_pOwnerServer = OwnerServer::Create(pAPIServer, TorProcessManager::GetProcess(0), pServer->m_pWalletManager);
+	pServer->m_pOwnerServer = OwnerServer::Create(apiPort, TorProcessManager::GetProcess(0), pServer->m_pWalletManager);
 
 	return pServer;
 }

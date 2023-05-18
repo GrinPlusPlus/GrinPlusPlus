@@ -15,16 +15,8 @@ public:
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
-		auto pTip = m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
-
-		Json::Value tipJson;
-		tipJson["height"] = pTip->GetHeight();
-		tipJson["last_block_pushed"] = pTip->GetHash().ToHex();
-		tipJson["prev_block_to_last"] = pTip->GetPreviousHash().ToHex();
-		tipJson["total_difficulty"] = pTip->GetTotalDifficulty();
-
 		Json::Value result;
-		result["Ok"] = tipJson;
+		result["Ok"] = "";
 		return request.BuildResult(result);
 	}
 

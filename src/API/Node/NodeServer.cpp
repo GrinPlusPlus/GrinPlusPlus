@@ -14,6 +14,7 @@
 #include "Handlers/GetConnectedPeersHandler.h"
 #include "Handlers/GetPeersHandler.h"
 #include "Handlers/GetStatusHandler.h"
+#include "Handlers/ShutdownHandler.h"
 #include "Handlers/UnbanPeerHandler.h"
 #include "Handlers/UpdateConfigHandler.h"
 
@@ -37,6 +38,7 @@ NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain:
     pOwnerServer->AddMethod("get_connected_peers", std::shared_ptr<RPCMethod>(new GetConnectedPeersHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_peers", std::shared_ptr<RPCMethod>(new GetPeersHandler(pP2PServer)));
     pOwnerServer->AddMethod("get_status", std::shared_ptr<RPCMethod>(new GetStatusHandler(pBlockChain, pP2PServer)));
+    pOwnerServer->AddMethod("shutdown", std::shared_ptr<RPCMethod>(new ShutdownHandler()));
     pOwnerServer->AddMethod("unban_peer", std::shared_ptr<RPCMethod>(new UnbanPeerHandler(pP2PServer)));
     pOwnerServer->AddMethod("update_config", std::shared_ptr<RPCMethod>(new UpdateConfigHandler()));
 

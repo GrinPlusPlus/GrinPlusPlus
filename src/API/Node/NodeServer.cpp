@@ -5,7 +5,6 @@
 #include "Handlers/GetKernelHandler.h"
 #include "Handlers/GetOutputsHandler.h"
 #include "Handlers/GetTipHandler.h"
-#include "Handlers/GetUnconfirmedTransactions.h"
 #include "Handlers/GetUnspentOutputsHandler.h"
 #include "Handlers/GetVersionHandler.h"
 #include "Handlers/PushTransactionHandler.h"
@@ -28,7 +27,6 @@ NodeServer::UPtr NodeServer::Create(const ServerPtr& pServer, const IBlockChain:
     pForeignServer->AddMethod("get_kernel", std::make_shared<GetKernelHandler>(pBlockChain));
     pForeignServer->AddMethod("get_outputs", std::shared_ptr<RPCMethod>(new GetOutputsHandler(pTxHashSet, pDatabase)));
     pForeignServer->AddMethod("get_tip", std::make_shared<GetTipHandler>(pBlockChain));
-    pForeignServer->AddMethod("get_unconfirmed_transactions", std::make_shared<GetUnconfirmedTransactions>());
     pForeignServer->AddMethod("get_unspent_outputs", std::make_shared<GetUnspentOutputsHandler>(pTxHashSet, pDatabase));
     pForeignServer->AddMethod("get_version", std::make_shared<GetVersionHandler>());
     pForeignServer->AddMethod("push_transaction", std::make_shared<PushTransactionHandler>(pBlockChain, pP2PServer));

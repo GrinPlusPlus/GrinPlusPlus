@@ -92,9 +92,11 @@ public:
 
 	static SpentOutputs Deserialize(ByteBuffer& byteBuffer)
 	{
+#pragma warning( push )
+#pragma warning( disable : 4189)
 		const uint8_t version = byteBuffer.ReadU8();
 		assert(version == 0);
-
+#pragma warning( pop ) 
 		const uint16_t numOutputs = byteBuffer.ReadU16();
 
 		std::vector<SpentOutput> spentOutputs;

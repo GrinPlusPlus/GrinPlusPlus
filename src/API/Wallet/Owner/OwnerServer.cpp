@@ -30,7 +30,7 @@
 #include "Handlers/DecodeSlatepackHandler.h"
 #include "Handlers/InitSendTxHandler.h"
 #include "Handlers/AuthenticateWalletHandler.h"
-
+#include "Handlers/ChangePasswordHandler.h"
 
 OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {
@@ -351,7 +351,6 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProce
     pOwnerServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
 
     // TODO: Add the following APIs: 
-    // authenticate - Simply validates the password - useful for confirming password before sending funds
     // tx_info - Detailed info about a specific transaction (status, kernels, inputs, outputs, payment proofs, labels, etc)
     // update_labels - Add or remove labels - useful for coin control
     // verify_payment_proof - Takes in an existing payment proof and validates it
@@ -363,6 +362,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProce
     pOwnerServer->AddMethod("init_send_tx", std::shared_ptr<RPCMethod>(new InitSendTxHandler(pTorProcess, pWalletManager)));
 
     pOwnerServer->AddMethod("authenticate", std::shared_ptr<RPCMethod>(new AuthenticateWalletHandler(pWalletManager)));
+
+    pOwnerServer->AddMethod("change_password", std::shared_ptr<RPCMethod>(new ChangePasswordHandler(pWalletManager)));
 
     return std::make_unique<OwnerServer>(pOwnerServer);
 }

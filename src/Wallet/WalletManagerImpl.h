@@ -50,6 +50,7 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	) final;
 	void Logout(const SessionToken& token) final;
+	void AuthenticateWallet(const GrinStr& username, const SecureString& password) final;
 	void DeleteWallet(const GrinStr& username, const SecureString& password) final;
 	void ChangePassword(
 		const GrinStr& username,

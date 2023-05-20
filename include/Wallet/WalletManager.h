@@ -99,6 +99,14 @@ public:
 	// Deletes the session information.
 	//
 	virtual void Logout(const SessionToken& token) = 0;
+	
+	//
+	// Validates the password and then deletes the wallet.
+	//
+	virtual void AuthenticateWallet(
+		const GrinStr& username,
+		const SecureString& password
+	) = 0;
 
 	//
 	// Validates the password and then deletes the wallet.

@@ -7,12 +7,12 @@
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
 
-class ChangePasswordHandler : public RPCMethod
+class AuthenticateTxHandler : public RPCMethod
 {
 public:
-	ChangePasswordHandler(const IWalletManagerPtr& pWalletManager)
+	AuthenticateTxHandler(const IWalletManagerPtr& pWalletManager)
 		: m_pWalletManager(pWalletManager) { }
-	virtual ~ChangePasswordHandler() = default;
+	virtual ~AuthenticateTxHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{

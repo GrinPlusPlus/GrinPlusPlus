@@ -226,6 +226,22 @@ void WalletManager::Logout(const SessionToken& token)
 	m_sessionManager.Write()->Logout(token);
 }
 
+void WalletManager::AuthenticateWallet(const GrinStr& username, const SecureString& password)
+{
+	WALLET_WARNING_F("Attempting to delete wallet with username: {}", username);
+
+	try
+	{
+		GrinStr usernameLower = username.ToLower();
+		m_sessionManager.Read()->Authenticate(usernameLower, password);
+	}
+	catch (std::exception& e)
+	{
+		WALLET_ERROR_F("Error ({}) while attempting to authenticate wallet: {}", e.what(), username);
+		throw WALLET_EXCEPTION(e.what());
+	}
+}
+
 void WalletManager::DeleteWallet(const GrinStr& username, const SecureString& password)
 {
 	WALLET_WARNING_F("Attempting to delete wallet with username: {}", username);

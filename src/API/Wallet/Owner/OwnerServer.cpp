@@ -31,6 +31,7 @@
 #include "Handlers/InitSendTxHandler.h"
 #include "Handlers/AuthenticateWalletHandler.h"
 #include "Handlers/ChangePasswordHandler.h"
+#include "Handlers/GetTopLevelDirectoryHandler.h"
 
 OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
 {
@@ -364,6 +365,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProce
     pOwnerServer->AddMethod("authenticate", std::shared_ptr<RPCMethod>(new AuthenticateWalletHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("change_password", std::shared_ptr<RPCMethod>(new ChangePasswordHandler(pWalletManager)));
+
+    pOwnerServer->AddMethod("get_top_level_directory", std::shared_ptr<RPCMethod>(new GetTopLevelDirectoryHandler(pWalletManager)));
 
     return std::make_unique<OwnerServer>(pOwnerServer);
 }

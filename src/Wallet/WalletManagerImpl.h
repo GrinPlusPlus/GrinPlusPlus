@@ -45,6 +45,8 @@ public:
 		const SessionToken& token
 	);
 
+	std::string GetWalletsDirectory() const final;
+
 	LoginResponse Login(
 		const LoginCriteria& criteria,
 		const TorProcess::Ptr& pTorProcess

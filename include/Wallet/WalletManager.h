@@ -69,6 +69,8 @@ public:
 		const SessionToken& token,
 		const bool fromGenesis
 	) = 0;
+	
+	virtual std::string GetWalletsDirectory() const = 0;
 
 	virtual std::vector<GrinStr> GetAllAccounts() const = 0;
 

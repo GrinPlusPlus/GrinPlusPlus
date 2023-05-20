@@ -18,6 +18,7 @@
 #include <Net/Tor/TorConnection.h>
 #include <Net/Tor/TorProcess.h>
 #include <cassert>
+#include <fstream>
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, std::shared_ptr<IWalletStore> pWalletStore)
@@ -184,6 +185,11 @@ KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken&
 	return KeyChainPath::FromString("m/0/1").GetChild(nextIndex);
 }
 
+std::string WalletManager::GetWalletsDirectory() const
+{
+	return m_config.GetDataDirectory().u8string();
+}
+
 std::vector<GrinStr> WalletManager::GetAllAccounts() const
 {
 	return m_pWalletStore->GetAccounts();
@@ -228,7 +234,7 @@ void WalletManager::Logout(const SessionToken& token)
 
 void WalletManager::AuthenticateWallet(const GrinStr& username, const SecureString& password)
 {
-	WALLET_WARNING_F("Attempting to delete wallet with username: {}", username);
+	WALLET_WARNING_F("Attempting to authenticate wallet with username: {}", username);
 
 	try
 	{

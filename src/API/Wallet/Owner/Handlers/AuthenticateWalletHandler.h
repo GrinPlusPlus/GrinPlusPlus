@@ -31,7 +31,7 @@ public:
 		return request.BuildResult(result);
 	}
 
-	bool ContainsSecrets() const noexcept final { return false; }
+	bool ContainsSecrets() const noexcept final { return true; }
 
 private:
 	IWalletManagerPtr m_pWalletManager;

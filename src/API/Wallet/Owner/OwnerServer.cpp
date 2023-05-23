@@ -33,8 +33,11 @@
 #include "Handlers/AuthenticateWalletHandler.h"
 #include "Handlers/ChangePasswordHandler.h"
 #include "Handlers/GetTopLevelDirectoryHandler.h"
+#include "Handlers/NodeHeightHandler.h"
 
-OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
+                                      const TorProcess::Ptr& pTorProcess,
+                                      const IWalletManagerPtr& pWalletManager)
 {
     RPCServerPtr pOwnerServer = RPCServer::Create(
         EServerType::LOCAL,
@@ -370,6 +373,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProce
     pOwnerServer->AddMethod("change_password", std::shared_ptr<RPCMethod>(new ChangePasswordHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("get_top_level_directory", std::shared_ptr<RPCMethod>(new GetTopLevelDirectoryHandler(pWalletManager)));
+
+    pOwnerServer->AddMethod("node_height", std::shared_ptr<RPCMethod>(new NodeHeightHandler(pWalletManager)));
 
     return std::make_unique<OwnerServer>(pOwnerServer);
 }

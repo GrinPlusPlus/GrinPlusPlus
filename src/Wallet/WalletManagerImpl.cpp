@@ -161,8 +161,7 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const TorProcess::Ptr& pTorProcess)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
-
+	
 	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 	
 	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
@@ -175,8 +174,7 @@ bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const To
 ed25519_secret_key_t WalletManager::GetAddressSecretKey(const SessionToken & token)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
-
+	
 	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 
 	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
@@ -189,8 +187,7 @@ ed25519_secret_key_t WalletManager::GetAddressSecretKey(const SessionToken & tok
 int WalletManager::GetAddressDerivationIndex(const SessionToken& token)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
-
+	
 	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 
 	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
@@ -201,7 +198,6 @@ int WalletManager::GetAddressDerivationIndex(const SessionToken& token)
 KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken& token)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
 
 	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
 	

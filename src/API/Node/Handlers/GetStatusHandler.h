@@ -15,6 +15,10 @@ public:
 
 	RPC::Response Handle(const RPC::Request& request) const final
 	{
+		Json::Value statusNode;
+		statusNode["protocol_version"] = P2P::PROTOCOL_VERSION;
+		statusNode["user_agent"] = P2P::USER_AGENT;
+
 		auto pTip = m_pBlockChain->GetTipBlockHeader(EChainType::CONFIRMED);
 
 		if (pTip == nullptr)
@@ -22,9 +26,12 @@ public:
 			return request.BuildError("INVALID_CHAIN_STATUS", "Failed to find tip.");
 		}
 
-		Json::Value statusNode;
-		statusNode["protocol_version"] = P2P::PROTOCOL_VERSION;
-		statusNode["user_agent"] = P2P::USER_AGENT;
+		Json::Value tipNode;
+		tipNode["height"] = pTip->GetHeight();
+		tipNode["last_block_pushed"] = pTip->GetHash().ToHex();
+		tipNode["prev_block_to_last"] = pTip->GetPreviousHash().ToHex();
+		tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
+		statusNode["tip"] = tipNode;	
 
 		SyncStatusConstPtr pSyncStatus = m_pP2PServer->GetSyncStatus();
 		statusNode["sync_status"] = GetStatusString(*pSyncStatus);
@@ -50,13 +57,6 @@ public:
 			}
 		}
 		statusNode["sync_info"] = syncInfo;
-
-		Json::Value tipNode;
-		tipNode["height"] = pTip->GetHeight();
-		tipNode["last_block_pushed"] = pTip->GetHash().ToHex();
-		tipNode["prev_block_to_last"] = pTip->GetPreviousHash().ToHex();
-		tipNode["total_difficulty"] = pTip->GetTotalDifficulty();
-		statusNode["tip"] = tipNode;
 
 		Json::Value result;
 		result["Ok"] = statusNode;

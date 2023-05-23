@@ -34,6 +34,7 @@
 #include "Handlers/ChangePasswordHandler.h"
 #include "Handlers/GetTopLevelDirectoryHandler.h"
 #include "Handlers/NodeHeightHandler.h"
+#include "Handlers/GetStoredTxHandler.h"
 
 OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
                                       const TorProcess::Ptr& pTorProcess,
@@ -358,7 +359,6 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     pOwnerServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
 
     // TODO: Add the following APIs: 
-    // tx_info - Detailed info about a specific transaction (status, kernels, inputs, outputs, payment proofs, labels, etc)
     // update_labels - Add or remove labels - useful for coin control
     // verify_payment_proof - Takes in an existing payment proof and validates it
 
@@ -375,6 +375,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     pOwnerServer->AddMethod("get_top_level_directory", std::shared_ptr<RPCMethod>(new GetTopLevelDirectoryHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("node_height", std::shared_ptr<RPCMethod>(new NodeHeightHandler(pWalletManager)));
+
+    pOwnerServer->AddMethod("get_stored_tx", std::shared_ptr<RPCMethod>(new GetStoredTxHandler(pWalletManager)));
 
     return std::make_unique<OwnerServer>(pOwnerServer);
 }

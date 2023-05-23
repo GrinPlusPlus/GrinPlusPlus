@@ -41,6 +41,14 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	);
 	
+	int GetAddressDerivationIndex(
+		const SessionToken& token
+	);
+
+	ed25519_secret_key_t GetAddressSecretKey(
+		const SessionToken& token
+	);
+
 	KeyChainPath IncreaseAddressKeyChainPathIndex(
 		const SessionToken& token
 	);

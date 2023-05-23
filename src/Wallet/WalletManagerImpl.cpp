@@ -172,6 +172,32 @@ bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const To
 	return pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
 }
 
+ed25519_secret_key_t WalletManager::GetAddressSecretKey(const SessionToken & token)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
+
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+
+	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+	KeyChainPath currentPath = KeyChainPath::FromString("m/0/1").GetChild(currentIndex);
+	ed25519_keypair_t secretKey = keyChain.DeriveED25519Key(currentPath);
+	
+	return secretKey.secret_key;
+}
+
+int WalletManager::GetAddressDerivationIndex(const SessionToken& token)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
+
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+
+	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+
+	return currentIndex;
+}
+
 KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken& token)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);

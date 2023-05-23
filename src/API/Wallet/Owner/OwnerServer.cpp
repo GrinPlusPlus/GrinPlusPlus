@@ -25,6 +25,7 @@
 #include "Handlers/UpdateTorConfigHandler.h"
 #include "Handlers/GetTorConfigHandler.h"
 #include "Handlers/GetWalletAddressHandler.h"
+#include "Handlers/GetAddressSecretKeyHandler.h"
 #include "Handlers/GetNewWalletAddressHandler.h"
 #include "Handlers/CreateSlatepackHandler.h"
 #include "Handlers/DecodeSlatepackHandler.h"
@@ -348,6 +349,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort, const TorProce
     pOwnerServer->AddMethod("get_tor_config", std::shared_ptr<RPCMethod>(new GetTorConfigHandler()));
 
     pOwnerServer->AddMethod("get_slatepack_address", std::shared_ptr<RPCMethod>(new GetWalletAddressHandler(pWalletManager)));
+
+    pOwnerServer->AddMethod("get_slatepack_secret_key", std::shared_ptr<RPCMethod>(new GetAddressSecretKeyHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
 

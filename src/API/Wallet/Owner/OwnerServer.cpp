@@ -377,7 +377,7 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     pOwnerServer->AddMethod("get_top_level_directory", std::shared_ptr<RPCMethod>(new GetTopLevelDirectoryHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("node_height", std::shared_ptr<RPCMethod>(new NodeHeightHandler(pWalletManager))); // TODO: node_height
-    pOwnerServer->AddMethod("get_stored_tx", std::shared_ptr<RPCMethod>(new GetStoredTxHandler(pWalletManager))); // TODO: get_stored_tx
+    pOwnerServer->AddMethod("get_stored_tx", std::shared_ptr<RPCMethod>(new GetStoredTxHandler(pWalletManager)));
     pOwnerServer->AddMethod("slate_from_slatepack_message", std::shared_ptr<RPCMethod>(new SlateFromSlatepackMessageHandler(pWalletManager))); // TODO: slate_from_slatepack_message
 
     return std::make_unique<OwnerServer>(pOwnerServer);

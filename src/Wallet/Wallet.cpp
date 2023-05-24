@@ -128,6 +128,20 @@ Slate Wallet::GetSlate(const uuids::uuid& slateId, const SlateStage& stage) cons
 	return *pSlate;
 }
 
+Slate Wallet::GetSlate(const uuids::uuid& slateId) const
+{
+	auto latest_slate = m_walletDB.Read()->LoadLatestSlate(m_master_seed, slateId);
+	if (latest_slate.first != nullptr) {
+		return (Slate)(*latest_slate.first);
+	}
+	WALLET_ERROR_F(
+		"Failed to load slate for {}",
+		uuids::to_string(slateId)
+	);
+	throw WALLET_EXCEPTION("Failed to load slate.");
+}
+
+
 SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
 {
 	auto pSlateContext = m_walletDB.Read()->LoadSlateContext(m_master_seed, slateId);

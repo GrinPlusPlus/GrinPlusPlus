@@ -55,6 +55,7 @@ public:
 	std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) const;
 	std::vector<WalletOutputDTO> GetOutputs(const bool includeSpent, const bool includeCanceled) const;
 	Slate GetSlate(const uuids::uuid& slateId, const SlateStage& stage) const;
+	Slate GetSlate(const uuids::uuid& slateId) const;
 	SlateContextEntity GetSlateContext(const uuids::uuid& slateId) const;
 
 	// void CheckForOutputs(const bool fromGenesis);

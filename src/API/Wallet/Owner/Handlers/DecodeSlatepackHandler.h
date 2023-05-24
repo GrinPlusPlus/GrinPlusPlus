@@ -8,6 +8,7 @@
 #include <Common/Util/FileUtil.h>
 #include <API/Wallet/Owner/Models/Errors.h>
 #include <optional>
+#include <API/Wallet/Owner/Models/DecodeSlatepackCriteria.h>
 
 class DecodeSlatepackHandler : public RPCMethod
 {
@@ -36,31 +37,13 @@ public:
 			}
 		};
 
-		ReceiveCriteria criteria = ReceiveCriteria::FromJSON(
+		DecodeSlatepackCriteria criteria = DecodeSlatepackCriteria::FromJSON(
 			request.GetParams().value(),
-			SlatepackDecryptor{ m_pWalletManager }
-		);
-
-		SlatepackAddress sender;
-		if (criteria.GetSlatepack().has_value()) {
-			sender = criteria.GetSlatepack().value().m_sender;
-		}
-
-		WALLET_INFO_F("Receiving slatepack from {}", sender.IsNull() ? "unknown sender" : sender.ToString());
-
-		Slate slate = m_pWalletManager->Receive(criteria);
+			SlatepackDecryptor{ m_pWalletManager });
 
 		Json::Value result;
-		result["status"] = "RECEIVED";
+		result["Ok"] = criteria.GetSlatepackMessage().ToJSON();
 
-		SlatepackAddress address = m_pWalletManager->GetWallet(criteria.GetToken()).Read()->GetSlatepackAddress();
-
-		std::vector<SlatepackAddress> recipients;
-		if (!sender.IsNull()) {
-			recipients.push_back(sender);
-		}
-
-		result["slatepack"] = Armor::Pack(address, slate, recipients);
 		return request.BuildResult(result);
 	}
 

@@ -360,10 +360,7 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
 
     pOwnerServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
 
-    // TODO: Add the following APIs: 
-    // update_labels - Add or remove labels - useful for coin control
-    // verify_payment_proof - Takes in an existing payment proof and validates it
-
+    
     pOwnerServer->AddMethod("create_slatepack_message", std::shared_ptr<RPCMethod>(new CreateSlatepackHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("decode_slatepack_message", std::shared_ptr<RPCMethod>(new DecodeSlatepackHandler(pWalletManager)));
@@ -377,9 +374,14 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     pOwnerServer->AddMethod("get_top_level_directory", std::shared_ptr<RPCMethod>(new GetTopLevelDirectoryHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("node_height", std::shared_ptr<RPCMethod>(new NodeHeightHandler(pWalletManager))); // TODO: node_height
+    
     pOwnerServer->AddMethod("get_stored_tx", std::shared_ptr<RPCMethod>(new GetStoredTxHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("slate_from_slatepack_message", std::shared_ptr<RPCMethod>(new SlateFromSlatepackMessageHandler(pWalletManager)));
+
+    // TODO: Add the following APIs: 
+    // update_labels - Add or remove labels - useful for coin control
+    // verify_payment_proof - Takes in an existing payment proof and validates it
 
     return std::make_unique<OwnerServer>(pOwnerServer);
 }

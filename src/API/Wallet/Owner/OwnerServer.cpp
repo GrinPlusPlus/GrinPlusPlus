@@ -359,9 +359,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     pOwnerServer->AddMethod("get_slatepack_secret_key", std::shared_ptr<RPCMethod>(new GetAddressSecretKeyHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("get_new_slatepack_address", std::shared_ptr<RPCMethod>(new GetNewWalletAddressHandler(pWalletManager, pTorProcess)));
-
     
-    pOwnerServer->AddMethod("create_slatepack_message", std::shared_ptr<RPCMethod>(new CreateSlatepackHandler(pWalletManager)));
+    pOwnerServer->AddMethod("create_slatepack_message", std::shared_ptr<RPCMethod>(new CreateSlatepackHandler(pTorProcess, pWalletManager)));
 
     pOwnerServer->AddMethod("decode_slatepack_message", std::shared_ptr<RPCMethod>(new DecodeSlatepackHandler(pWalletManager)));
 

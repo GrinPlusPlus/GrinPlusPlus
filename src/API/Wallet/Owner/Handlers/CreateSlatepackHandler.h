@@ -7,13 +7,14 @@
 #include <Net/Servers/RPC/RPCMethod.h>
 #include <Common/Util/FileUtil.h>
 #include <API/Wallet/Owner/Models/Errors.h>
+#include <API/Wallet/Owner/Models/CreateSlatepackCriteria.h>
 #include <optional>
 
 class CreateSlatepackHandler : public RPCMethod
 {
 public:
-	CreateSlatepackHandler(const IWalletManagerPtr& pWalletManager)
-		: m_pWalletManager(pWalletManager) { }
+	CreateSlatepackHandler(const TorProcess::Ptr& pTorProcess, const IWalletManagerPtr& pWalletManager)
+		: m_pTorProcess(pTorProcess), m_pWalletManager(pWalletManager) { }
 	virtual ~CreateSlatepackHandler() = default;
 
 	RPC::Response Handle(const RPC::Request& request) const final
@@ -23,48 +24,39 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
-		struct SlatepackDecryptor : public ISlatepackDecryptor
-		{
-			SlatepackDecryptor(const IWalletManagerPtr& pWalletManager_)
-				: pWalletManager(pWalletManager_) { }
+		CreateSlatepackCriteria criteria = CreateSlatepackCriteria::FromJSON(request.GetParams().value());
 
-			IWalletManagerPtr pWalletManager;
+		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
+		SlatepackAddress sender_address = wallet.Read()->GetSlatepackAddress();
+		std::vector<SlatepackAddress> recipients = GetRecipients(criteria);
 
-			SlatepackMessage Decrypt(const SessionToken& token, const std::string& armored) const final
-			{
-				return pWalletManager->GetWallet(token).Read()->DecryptSlatepack(armored);
-			}
-		};
-
-		ReceiveCriteria criteria = ReceiveCriteria::FromJSON(
-			request.GetParams().value(),
-			SlatepackDecryptor{ m_pWalletManager }
-		);
-
-		SlatepackAddress sender;
-		if (criteria.GetSlatepack().has_value()) {
-			sender = criteria.GetSlatepack().value().m_sender;
-		}
-
-		WALLET_INFO_F("Receiving slatepack from {}", sender.IsNull() ? "unknown sender" : sender.ToString());
-
-		Slate slate = m_pWalletManager->Receive(criteria);
-
+		Slate slate = criteria.GetSlate();
+		
 		Json::Value result;
-		result["status"] = "RECEIVED";
+		result["Ok"] = Armor::Pack(sender_address, slate, recipients);
 
-		SlatepackAddress address = m_pWalletManager->GetWallet(criteria.GetToken()).Read()->GetSlatepackAddress();
-
-		std::vector<SlatepackAddress> recipients;
-		if (!sender.IsNull()) {
-			recipients.push_back(sender);
-		}
-
-		result["slatepack"] = Armor::Pack(address, slate, recipients);
 		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }
 
+private:
+	std::vector<SlatepackAddress> GetRecipients(const CreateSlatepackCriteria& criteria) const noexcept
+	{
+		std::vector<SlatepackAddress> recipients;
+
+		if (criteria.GetAddress().has_value()) {
+			try
+			{
+				SlatepackAddress slatepack_address = SlatepackAddress::Parse(criteria.GetAddress().value());
+				recipients.emplace_back(std::move(slatepack_address));
+			}
+			catch (std::exception&) {}
+		}
+
+		return recipients;
+	}
+
+	TorProcess::Ptr m_pTorProcess;
 	IWalletManagerPtr m_pWalletManager;
 };

@@ -6,6 +6,7 @@
 #include <Core/Util/JsonUtil.h>
 #include <P2P/P2PServer.h>
 #include <BlockChain/BlockChain.h>
+#include <API/Wallet/Owner/Models/SlateFromSlatepackMessageCriteria.h>
 
 class SlateFromSlatepackMessageHandler : public RPCMethod
 {
@@ -20,8 +21,25 @@ public:
 			return request.BuildError(RPC::Errors::PARAMS_MISSING);
 		}
 
+		struct SlatepackDecryptor : public ISlatepackDecryptor
+		{
+			SlatepackDecryptor(const IWalletManagerPtr& pWalletManager_)
+				: pWalletManager(pWalletManager_) { }
+
+			IWalletManagerPtr pWalletManager;
+
+			SlatepackMessage Decrypt(const SessionToken& token, const std::string& armored) const final
+			{
+				return pWalletManager->GetWallet(token).Read()->DecryptSlatepack(armored);
+			}
+		};
+
+		SlateFromSlatepackMessageCriteria criteria = SlateFromSlatepackMessageCriteria::FromJSON(
+														request.GetParams().value(),
+														SlatepackDecryptor{ m_pWalletManager });
+		
 		Json::Value result;
-		result["Ok"] = "";
+		result["Ok"] = criteria.GetSlate().ToJSON();
 		
 		return request.BuildResult(result);
 	}

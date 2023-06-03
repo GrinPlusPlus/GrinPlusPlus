@@ -5,6 +5,10 @@
 #include <atomic>
 #include <mutex>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 class IO
 {
 public:
@@ -43,11 +47,7 @@ public:
 
         std::unique_lock<std::mutex> lock(s_mutex);
 
-#ifdef _WIN32
-        std::system("cls");
-#else
-        std::system("clear");
-#endif
+        cls();
     }
 
     static void Flush()
@@ -59,4 +59,35 @@ public:
 private:
     inline static std::atomic_bool s_headless{ false };
     inline static std::mutex s_mutex{};
+
+#ifdef _WIN32
+    static void cls(void)
+    {
+        DWORD n;                         /* Number of characters written */
+        DWORD size;                      /* number of visible characters */
+        COORD coord = { 0 };               /* Top left screen position */
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+        /* Get a handle to the console */
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        GetConsoleScreenBufferInfo(h, &csbi);
+
+        /* Find the number of characters to overwrite */
+        size = csbi.dwSize.X * csbi.dwSize.Y;
+
+        /* Overwrite the screen buffer with whitespace */
+        FillConsoleOutputCharacter(h, TEXT(' '), size, coord, &n);
+        GetConsoleScreenBufferInfo(h, &csbi);
+        FillConsoleOutputAttribute(h, csbi.wAttributes, size, coord, &n);
+
+        /* Reset the cursor to the top left position */
+        SetConsoleCursorPosition(h, coord);
+    }
+#else
+    static void cls(void)
+    {
+        std::cout << "\033[2J\033[1; 1H";
+    }
+#endif
 };

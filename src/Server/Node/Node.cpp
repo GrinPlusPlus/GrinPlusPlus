@@ -71,16 +71,16 @@ void Node::UpdateDisplay(const int secondsRunning)
 	else if (status == ESyncStatus::SYNCING_HEADERS)
 	{
 		const uint64_t networkHeight = pSyncStatus->GetNetworkHeight();
-		const uint64_t percentage = networkHeight > 0 ? (pSyncStatus->GetHeaderHeight() * 100 / networkHeight) : 0;
+		const double percentage = networkHeight > 0 ? (pSyncStatus->GetHeaderHeight() * 100 / (networkHeight * 1.0)) : 0;
 		std::cout << "\nStatus: Syncing Headers (" << percentage << "%)";
 	}
 	else if (status == ESyncStatus::SYNCING_TXHASHSET)
 	{
 		const uint64_t downloaded = pSyncStatus->GetDownloaded();
 		const uint64_t downloadSize = pSyncStatus->GetDownloadSize();
-		const uint64_t percentage = downloadSize > 0 ? (downloaded * 100) / downloadSize : 0;
+		const double percentage = downloadSize > 0 ? (downloaded * 100) / (downloadSize * 1.0) : 0;
 
-		std::cout << "\nStatus: Syncing TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
+		std::cout << "\nStatus: Downloading TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
 	}
 	else if (status == ESyncStatus::PROCESSING_TXHASHSET)
 	{

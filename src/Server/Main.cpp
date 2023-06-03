@@ -151,7 +151,7 @@ void Run(const ConfigPtr& pConfig, const Options& options)
 			pNode->UpdateDisplay(secondsRunning);
 		}
 
-		ThreadUtil::SleepFor(seconds(1));
+		ThreadUtil::SleepFor(milliseconds(500));
 	}
 
 	LOG_INFO_F("Closing Grin++ v{}", GRINPP_VERSION);

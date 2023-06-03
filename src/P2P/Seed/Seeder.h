@@ -45,7 +45,10 @@ private:
 		m_terminate(false) { }
 
 	static void Thread_AsioContext(Seeder& seeder);
+	
+	static void Thread_Listener(Seeder& seeder);
 	static void Thread_Seed(Seeder& seeder);
+
 	void StartListener();
 
 	void Accept(const asio::error_code& ec);
@@ -61,9 +64,10 @@ private:
 
 	std::shared_ptr<asio::io_service> m_pAsioContext;
 	std::shared_ptr<asio::ip::tcp::acceptor> m_pAcceptor;
-	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
+	std::shared_ptr<asio::ip::tcp::socket> m_pServerSocket;
 
 	std::thread m_asioThread;
+	std::thread m_listenerThread;
 	std::thread m_seedThread;
 
 	std::mutex m_mutex;

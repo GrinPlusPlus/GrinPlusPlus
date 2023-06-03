@@ -46,6 +46,8 @@ public:
 	uint16_t GetP2PPort() const noexcept;
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept;
 
+	IPAddress GetP2PIP() const noexcept;
+
 	uint8_t GetMinSyncPeers() const noexcept;
 
 	const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept;

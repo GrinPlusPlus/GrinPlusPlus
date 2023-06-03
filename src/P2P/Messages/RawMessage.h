@@ -10,6 +10,7 @@ public:
 	//
 	// Constructors
 	//
+	RawMessage() noexcept = default;
 	RawMessage(MessageHeader&& messageHeader, std::vector<unsigned char>&& payload)
 		: m_header(messageHeader), m_payload(std::move(payload))
 	{

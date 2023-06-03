@@ -145,6 +145,8 @@ void Config::SetMaxPeers(const int max_peers) noexcept { m_pImpl->m_nodeConfig.G
 uint16_t Config::GetP2PPort() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetP2PPort(); }
 const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMagicBytes(); }
 
+IPAddress Config::GetP2PIP() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetLocalhostIP(); }
+
 uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
 
 const std::unordered_set<IPAddress>& Config::GetPreferredPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers(); }
@@ -161,12 +163,6 @@ bool Config::IsPeerBlocked(const IPAddress& peer) {
 	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetBlockedPeers();
 	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
 	return false;
-}
-
-bool Config::IsPeerPreferred(const IPAddress& peer) {
-	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
-	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
-	return true;
 }
 
 void Config::UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetPreferredPeers(peers); }

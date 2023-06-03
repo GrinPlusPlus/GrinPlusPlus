@@ -35,7 +35,6 @@ public:
 		NON_BLOCKING
 	};
 
-	bool SetDefaultOptions();
 	bool CloseSocket();
 	bool IsActive() const;
 
@@ -60,13 +59,12 @@ public:
 	bool SetBlocking(const bool blocking);
 	bool IsBlocking() const { return m_blocking; }
 
-	bool IsOpen() const {
-		return m_socketOpen;
-	}
+	bool SetDelayOption(const bool delayed);
+	bool IsDelayed() const { return m_delayed; }
 
-	void SetOpen(bool open) {
-		m_socketOpen = open;
-	}
+	bool IsOpen() const { return m_pSocket->is_open(); }
+
+	void SetOpen(bool open) { m_socketOpen = open; }
 
 	bool IsConnectFailed() const { return m_failed; }
 	void SetConnectFailed(bool failed) { m_failed = failed; }
@@ -87,6 +85,7 @@ private:
 
 	SocketAddress m_address;
 	bool m_blocking;
+	bool m_delayed;
 	unsigned long m_receiveTimeout;
 	unsigned long m_sendTimeout;
 	int m_receiveBufferSize;

@@ -34,9 +34,13 @@ public:
 	bool SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer);
 	void BroadcastMessage(const IMessage& message, const uint64_t sourceId);
 
+	std::pair <PeerPtr, std::unique_ptr<RawMessage>> ExchangeMessageWithMostWorkPeer(const IMessage& message);
+	bool ExchangeMessageWithPeer(const IMessage& message, PeerConstPtr pPeer);
+
 	void PruneConnections(const bool bInactiveOnly);
 	void AddConnection(ConnectionPtr pConnection);
 	ConnectionPtr GetConnection(const uint64_t connectionId) const;
+	bool ConnectionExist(const IPAddress& ipAddress) const;
 
 private:
 	ConnectionManager();

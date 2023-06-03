@@ -22,7 +22,7 @@ public:
 	bool SyncState(SyncStatus& syncStatus);
 
 private:
-	bool IsStateSyncDue(const SyncStatus& syncStatus) const;
+	bool IsStateSyncDue(const SyncStatus& syncStatus);
 	bool RequestState(const SyncStatus& syncStatus);
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeRequested;

@@ -34,8 +34,8 @@ namespace P2P
 	static const uint32_t MAX_LOCATORS = 20;
 
 	// How long a banned peer should be banned for
-	static const int64_t BAN_WINDOW = 10800;
+	static const int64_t BAN_WINDOW = 3600;
 
 	// Number of seconds to wait before retrying to connect to peer
-	static const uint32_t RETRY_WINDOW = 5 * 60;
+	static const uint32_t RETRY_WINDOW = 10 * 60;
 }

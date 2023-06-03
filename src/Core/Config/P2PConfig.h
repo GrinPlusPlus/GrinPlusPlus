@@ -22,6 +22,8 @@ public:
 	uint16_t GetP2PPort() const noexcept { return m_port; }
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept { return m_magicBytes; }
 
+	IPAddress GetLocalhostIP() const noexcept { return m_ipv4; }
+
 	uint8_t GetMinSyncPeers() const noexcept { return m_minSyncPeers; }
 
     const std::unordered_set<IPAddress>& GetPreferredPeers() const noexcept { return m_peferredPeers; }
@@ -37,6 +39,9 @@ public:
 	//
 	P2PConfig(const Environment env, const Json::Value& json)
 	{
+		m_ipv4 = IPAddress::GetLocaPrimaryEndpointAddress();
+		LOG_INFO_F("Resolved local IPv4 address: {}", m_ipv4);
+
 		m_port = 13414;
 		m_magicBytes = { 83, 59 };
 
@@ -98,6 +103,7 @@ public:
 private:
 	int m_maxConnections;
 	int m_minConnections;
+	IPAddress m_ipv4;
 	uint16_t m_port;
 	std::vector<uint8_t> m_magicBytes;
 	uint8_t m_minSyncPeers;

@@ -57,35 +57,36 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::LoadFromZip(const Config& config, 
 
 	try
 	{
-		if (zip.Extract(zipFilePath, *pHeader))
+		if (!zip.Extract(zipFilePath, *pHeader))
 		{
-			LOG_INFO_F("{} extracted successfully", zipFilePath);
-			FileUtil::RemoveFile(zipFilePath);
-
-			// Rewind Kernel MMR
-			std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(txHashSetPath);
-			pKernelMMR->Rewind(pHeader->GetNumKernels());
-			pKernelMMR->Commit();
-
-			// Rewind Output MMR
-			std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(txHashSetPath);
-			pOutputPMMR->Rewind(pHeader->GetNumOutputs(), {});
-			pOutputPMMR->Commit();
-
-			// Rewind RangeProof MMR
-			std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(txHashSetPath);
-			pRangeProofPMMR->Rewind(pHeader->GetNumOutputs(), {});
-			pRangeProofPMMR->Commit();
-
-			return std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));
+			return nullptr;
 		}
+
+		LOG_DEBUG_F("{} extracted successfully", zipFilePath);
+		FileUtil::RemoveFile(zipFilePath);
+
+		// Rewind Kernel MMR
+		std::shared_ptr<KernelMMR> pKernelMMR = KernelMMR::Load(txHashSetPath);
+		pKernelMMR->Rewind(pHeader->GetNumKernels());
+		pKernelMMR->Commit();
+
+		// Rewind Output MMR
+		std::shared_ptr<OutputPMMR> pOutputPMMR = OutputPMMR::Load(txHashSetPath);
+		pOutputPMMR->Rewind(pHeader->GetNumOutputs(), {});
+		pOutputPMMR->Commit();
+
+		// Rewind RangeProof MMR
+		std::shared_ptr<RangeProofPMMR> pRangeProofPMMR = RangeProofPMMR::Load(txHashSetPath);
+		pRangeProofPMMR->Rewind(pHeader->GetNumOutputs(), {});
+		pRangeProofPMMR->Commit();
+
+		return std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pHeader));
 	}
 	catch (std::exception& e)
 	{
 		LOG_ERROR_F("Failed to load: {}", e.what());
+		return nullptr;
 	}
-
-	return nullptr;
 }
 
 fs::path TxHashSetManager::SaveSnapshot(std::shared_ptr<IBlockDB> pBlockDB, BlockHeaderPtr pHeader) const

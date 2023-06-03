@@ -136,21 +136,65 @@ PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 {
 	auto connections = m_connections.Read();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+
 	if (pConnection != nullptr) {
-		pConnection->SendAsync(message);
-		return pConnection->GetPeer();
+		if (pConnection->IsBusy())
+		{
+			return nullptr;
+		}
+		LOG_DEBUG_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+		pConnection->IsBusy(true);
+		auto sent = pConnection->SendSync(message);
+		pConnection->IsBusy(false);
+		if(sent)
+		{
+			return pConnection->GetPeer();
+		}
 	}
 
 	return nullptr;
+}
+
+
+std::pair <PeerPtr, std::unique_ptr<RawMessage>> ConnectionManager::ExchangeMessageWithMostWorkPeer(const IMessage& message)
+{
+	auto connections = m_connections.Read();
+	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+	if (pConnection == nullptr || pConnection->IsBusy())
+	{
+		return std::make_pair(nullptr, nullptr);
+	}
+	
+	return std::make_pair(pConnection->GetPeer(), pConnection->SendReceiveSync(message));	
 }
 
 bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer)
 {
 	auto connections = *m_connections.Read().GetShared();
 	for (auto pConnection : connections) {
-		if (pConnection->GetIPAddress() == pPeer->GetIPAddress()) {
-			pConnection->SendAsync(message);
-			return true;
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress() && !pConnection->IsBusy()) {
+			LOG_DEBUG_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+			return pConnection->SendSync(message);
+		}
+	}
+
+	return false;
+}
+
+bool ConnectionManager::ExchangeMessageWithPeer(const IMessage& message, PeerConstPtr pPeer)
+{
+	auto connections = *m_connections.Read().GetShared();
+	for (auto pConnection : connections) {
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress() && !pConnection->IsBusy()) {
+			if (pConnection->IsBusy())
+			{
+				continue;
+			}
+			LOG_DEBUG_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+			pConnection->IsBusy(true);
+			auto response = pConnection->SendReceiveSync(message) != nullptr;
+			pConnection->IsBusy(false);
+			return response;
 		}
 	}
 
@@ -164,8 +208,8 @@ void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t
 	// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
 	auto connections = *m_connections.Read().GetShared();
 	for (ConnectionPtr pConnection : connections) {
-		if (pConnection->GetId() != sourceId) {
-			pConnection->SendAsync(message);
+		if (pConnection->GetId() != sourceId && !pConnection->IsBusy()) {
+			pConnection->SendSync(message);
 		}
 	}
 }
@@ -175,6 +219,7 @@ void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 	LOG_DEBUG_F("Adding connection: {}", pConnection->GetPeer());
 	m_connections.Write()->emplace_back(pConnection);
 }
+
 
 ConnectionPtr ConnectionManager::GetConnection(const uint64_t connectionId) const
 {
@@ -186,6 +231,19 @@ ConnectionPtr ConnectionManager::GetConnection(const uint64_t connectionId) cons
 	}
 
 	return nullptr;
+}
+
+bool ConnectionManager::ConnectionExist(const IPAddress& ipAddress) const
+{
+	auto connections = m_connections.Read();
+	return std::any_of(
+		connections->cbegin(),
+		connections->cend(),
+		[&ipAddress](const ConnectionPtr& pConnection)
+		{
+			return pConnection->GetIPAddress() == ipAddress;
+		}
+	);
 }
 
 void ConnectionManager::PruneConnections(const bool bInactiveOnly)
@@ -228,6 +286,11 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 			continue;
 		}
 
+		if (pConnection->IsBusy())
+		{
+			continue;
+		}
+
 		if (pConnection->GetTotalDifficulty() > mostWork)
 		{
 			mostWork = pConnection->GetTotalDifficulty();
@@ -262,13 +325,19 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 
 void ConnectionManager::ThreadPing(ConnectionManager& connectionManager)
 {
-	while (Global::IsRunning())
+	do
 	{
-		auto connections = *connectionManager.m_connections.Read().GetShared();
-		for (const ConnectionPtr& pConnection : connections) {
-			pConnection->CheckPing();
-		}
+		ThreadUtil::SleepFor(std::chrono::seconds(5));
 
-		ThreadUtil::SleepFor(std::chrono::seconds(2));
-	}
+		auto connections = *connectionManager.m_connections.Read().GetShared();
+		for (const ConnectionPtr& pConnection : connections)
+		{
+			if (pConnection->IsBusy())
+			{
+				continue;
+			}
+			pConnection->CheckPingSync();
+		}
+		
+	} while (Global::IsRunning());
 }

@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Seed/PeerManager.h"
+
 #include "Messages/Message.h"
+#include "Messages/RawMessage.h"
 #include "Messages/MessageHeader.h"
 
 #include <caches/Cache.h>
@@ -37,13 +40,15 @@ public:
 		ConnectionManager& connectionManager,
 		const ConnectedPeer& connectedPeer,
 		SyncStatusConstPtr pSyncStatus,
-		const std::weak_ptr<MessageProcessor>& pMessageProcessor
+		const std::weak_ptr<MessageProcessor>& pMessageProcessor,
+		Locked<PeerManager> peerManager
 	)	: m_pSocket(pSocket),
 		m_connectionId(connectionId),
 		m_connectionManager(connectionManager),
 		m_connectedPeer(connectedPeer),
 		m_pSyncStatus(pSyncStatus),
 		m_pMessageProcessor(pMessageProcessor),
+		m_peerManager(peerManager),
 		m_terminate(false),
 		m_sendingDisabled(false),
 		m_advertisedBlocks(256) { }
@@ -56,19 +61,26 @@ public:
 	void Connect();
 	void Disconnect();
 
+	void Init();
+
 	uint64_t GetId() const { return m_connectionId; }
 	bool IsConnectionActive() const;
 
 	void DisableSends(bool disabled) { m_sendingDisabled = disabled; }
 	void SendAsync(const IMessage& message);
 	bool SendSync(const IMessage& message);
+	std::unique_ptr<RawMessage> SendReceiveSync(const IMessage& message);
+	bool ReceiveProcessSync();
 
 	void DisableReceives(bool disabled) { m_receivingDisabled = disabled; }
 	bool ReceiveSync(std::vector<uint8_t>& bytes, const size_t num_bytes);
 
+	bool IsBusy() { return m_sendingDisabled == true || m_receivingDisabled == true; }
+	void IsBusy(bool busy) { m_sendingDisabled = busy; m_receivingDisabled = busy; }
+
 	bool ExceedsRateLimit() const;
 	void BanPeer(const EBanReason reason);
-	void CheckPing();
+	void CheckPingSync();
 
 	SocketPtr GetSocket() const { return m_pSocket; }
 	PeerPtr GetPeer() { return m_connectedPeer.GetPeer(); }
@@ -87,17 +99,22 @@ public:
 	bool HasBlock(const Hash& hash) const { return m_advertisedBlocks.Cached(hash); }
 	void AdvertisedBlock(const Hash& hash) { return m_advertisedBlocks.Put(hash, hash); }
 
+	std::weak_ptr<MessageProcessor> GetMessageProcessor() const { return m_pMessageProcessor; }
+
 private:
 	static void Thread_Connect(std::shared_ptr<Connection> pConnection);
 	void HandleConnected(const asio::error_code& ec);
 	void HandleReceivedHeader(const asio::error_code& ec, const size_t bytes_received);
 	void HandleReceivedBody(MessageHeader msg_header, const asio::error_code& ec, const size_t bytes_received);
 
+	std::unique_ptr<RawMessage> RetrieveMessage();
+
 	void ConnectOutbound();
 
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
 	std::weak_ptr<MessageProcessor> m_pMessageProcessor;
+	Locked<PeerManager> m_peerManager;
 
 	std::chrono::system_clock::time_point m_lastPing;
 	std::chrono::system_clock::time_point m_lastReceived;

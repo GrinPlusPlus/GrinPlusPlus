@@ -3,26 +3,39 @@
 #include <Net/Socket.h>
 #include <P2P/SyncStatus.h>
 #include <P2P/ConnectedPeer.h>
-#include "../Messages/RawMessage.h"
+#include <P2P/Capabilities.h>
+#include <P2P/Direction.h>
 
-// Forward Declarations
-class ConnectionManager;
+#include "../Messages/RawMessage.h"
+#include "../Messages/ShakeMessage.h"
+#include "../Messages/HandMessage.h"
+
 
 class HandShake
 {
 public:
-	HandShake(ConnectionManager& connectionManager, const SyncStatusConstPtr& pSyncStatus)
-		: m_connectionManager(connectionManager), m_pSyncStatus(pSyncStatus) { }
+	HandShake(const SyncStatusConstPtr& pSyncStatus,
+			  const Socket::Ptr& pSocket) : m_pSyncStatus(pSyncStatus),
+											m_pSocket(pSocket),
+											m_TotalDifficulty(0) { }
+	void Perform(EDirection direction);
 
-	void PerformHandshake(const Socket::Ptr& pSocket, ConnectedPeer& connectedPeer) const;
+	ShakeMessage RetrieveShakeMessage();
+	HandMessage RetrieveHandMessage();
 
+	void UpdateConnectedPeer(ConnectedPeer& connectedPeer);
 private:
-	void PerformOutboundHandshake(const Socket::Ptr& pSocket, ConnectedPeer& connectedPeer) const;
-	void PerformInboundHandshake(const Socket::Ptr& pSocket, ConnectedPeer& connectedPeer) const;
-	void TransmitHandMessage(const Socket::Ptr& pSocket) const;
-	void TransmitShakeMessage(const Socket::Ptr& pSocket, const uint32_t protocolVersion) const;
-	std::unique_ptr<RawMessage> RetrieveMessage(const Socket::Ptr& pSocket, const Peer& peer) const;
+	void TransmitHandMessage() ;
+	void TransmitShakeMessage();
 
-	ConnectionManager& m_connectionManager;
-	SyncStatusConstPtr m_pSyncStatus;
+	std::unique_ptr<RawMessage> RetrieveMessage();
+
+	uint32_t m_Version = 0;
+	Capabilities m_Capabilities;
+	std::string m_UserAgent = "";
+	uint64_t m_TotalDifficulty = 0;
+
+	const Socket::Ptr& m_pSocket;
+	
+	const SyncStatusConstPtr m_pSyncStatus;
 };

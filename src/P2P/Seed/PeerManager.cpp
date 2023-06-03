@@ -134,7 +134,7 @@ std::optional<PeerConstPtr> PeerManager::GetPeer(const IPAddress& address) const
 
 PeerPtr PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability)
 {
-    std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, 1, true);
+    std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, 1, false);
     if (peers.empty()) {
         peers = GetPeersWithCapability(Capabilities::UNKNOWN, 1, true);
     }

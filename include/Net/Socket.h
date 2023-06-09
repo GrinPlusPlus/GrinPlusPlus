@@ -47,20 +47,28 @@ public:
 	uint16_t GetPort() const { return m_address.GetPortNumber(); }
 	RateCounter& GetRateCounter() { return m_rateCounter; }
 
+	void SetDefaults();
+
 	bool SetReceiveTimeout(const unsigned long milliseconds);
 	unsigned long GetReceiveTimeout() const { return m_receiveTimeout; }
 
 	bool SetSendTimeout(const unsigned long milliseconds);
 	unsigned long GetSendTimeout() const { return m_sendTimeout; }
 
-	bool SetReceiveBufferSize(const int size);
-	int GetReceiveBufferSize() const { return m_receiveBufferSize; }
+	bool SetReceiveBufferSize(const size_t size);
+	size_t GetReceiveBufferSize() const { return m_receiveBufferSize; }
+	
+	bool SetSendBufferSize(const size_t size);
+	size_t GetSendBufferSize() const { return m_sendBufferSize; }
 
 	bool SetBlocking(const bool blocking);
 	bool IsBlocking() const { return m_blocking; }
 
 	bool SetDelayOption(const bool delayed);
 	bool IsDelayed() const { return m_delayed; }
+
+	bool SetKeepAliveOption(const bool keepAlive);
+	bool IsKeepAliveEnabled();
 
 	bool IsOpen() const { return m_pSocket->is_open(); }
 
@@ -72,10 +80,11 @@ public:
 	bool SendSync(const std::vector<uint8_t>& message, const bool incrementCount);
 	void SendAsync(const std::vector<uint8_t>& message);
 
-	std::vector<uint8_t> ReceiveSync(const size_t numBytes, const bool incrementCount);
+	std::vector<uint8_t> ReceiveSync(const size_t bufferSize, const bool incrementCount);
+
+	bool HasReceivedData();
 
 private:
-	bool HasReceivedData();
 	void ThrowSocketException(const asio::error_code& ec);
 	void HandleSent(const asio::error_code& ec, size_t bytes_transferred);
 
@@ -86,9 +95,11 @@ private:
 	SocketAddress m_address;
 	bool m_blocking;
 	bool m_delayed;
+	bool m_keptAlive;
 	unsigned long m_receiveTimeout;
 	unsigned long m_sendTimeout;
-	int m_receiveBufferSize;
+	size_t m_receiveBufferSize;
+	size_t m_sendBufferSize;
 	RateCounter m_rateCounter;
 
 	std::mutex m_writeQueueMutex;

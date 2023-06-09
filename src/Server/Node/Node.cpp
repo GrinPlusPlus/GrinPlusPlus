@@ -57,22 +57,22 @@ void Node::UpdateDisplay(const int secondsRunning)
 
 	IO::Clear();
 
-	std::cout << "Time Running: " << secondsRunning << "s";
+	std::cout << "Time Running: \t\t" << secondsRunning << "s";
 
 	const ESyncStatus status = pSyncStatus->GetStatus();
 	if (status == ESyncStatus::NOT_SYNCING)
 	{
-		std::cout << "\nStatus: Running";
+		std::cout << "\nStatus: \t\tRUNNING";
 	}
 	else if (status == ESyncStatus::WAITING_FOR_PEERS)
 	{
-		std::cout << "\nStatus: Waiting for Peers";
+		std::cout << "\nStatus: \t\tWAITING FOR PEERS";
 	}
 	else if (status == ESyncStatus::SYNCING_HEADERS)
 	{
 		const uint64_t networkHeight = pSyncStatus->GetNetworkHeight();
 		const double percentage = networkHeight > 0 ? (pSyncStatus->GetHeaderHeight() * 100 / (networkHeight * 1.0)) : 0;
-		std::cout << "\nStatus: Syncing Headers (" << percentage << "%)";
+		std::cout << "\nStatus: \t\tSYNCING HEADERS (" << percentage << "%)";
 	}
 	else if (status == ESyncStatus::SYNCING_TXHASHSET)
 	{
@@ -80,28 +80,24 @@ void Node::UpdateDisplay(const int secondsRunning)
 		const uint64_t downloadSize = pSyncStatus->GetDownloadSize();
 		const double percentage = downloadSize > 0 ? (downloaded * 100) / (downloadSize * 1.0) : 0;
 
-		std::cout << "\nStatus: Downloading TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
+		std::cout << "\nStatus: \t\tDOWNLOADING TxHashSet " << downloaded << "/" << downloadSize << "(" << percentage << "%)";
 	}
 	else if (status == ESyncStatus::PROCESSING_TXHASHSET)
 	{
-		std::cout << "\nStatus: Validating TxHashSet (" << (int)pSyncStatus->GetProcessingStatus() << "%)";
-	}
-	else if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
-	{
-		std::cout << "\nStatus: TxHashSet Sync Failed - Trying Again";
+		std::cout << "\nStatus: \t\tVALIDATING TxHashSet (" << (int)pSyncStatus->GetProcessingStatus() << "%)";
 	}
 	else if (status == ESyncStatus::SYNCING_BLOCKS)
 	{
-		std::cout << "\nStatus: Syncing blocks";
+		std::cout << "\nStatus: \t\tSYNCING BLOCKS";
 	}
 
-	std::cout << "\nNumConnections: " << pSyncStatus->GetNumActiveConnections();
-	std::cout << "\nHeader Height: " << pSyncStatus->GetHeaderHeight();
-	std::cout << "\nHeader Difficulty: " << pSyncStatus->GetHeaderDifficulty();
-	std::cout << "\nBlock Height: " << pSyncStatus->GetBlockHeight();
-	std::cout << "\nBlock Difficulty: " << pSyncStatus->GetBlockDifficulty();
-	std::cout << "\nNetwork Height: " << pSyncStatus->GetNetworkHeight();
-	std::cout << "\nNetwork Difficulty: " << pSyncStatus->GetNetworkDifficulty();
+	std::cout << "\nWorkeable Peers: \t" << pSyncStatus->GetNumActiveConnections();
+	std::cout << "\nHeaders Height: \t" << pSyncStatus->GetHeaderHeight();
+	std::cout << "\nBlocks Height: \t\t" << pSyncStatus->GetBlockHeight();
+	std::cout << "\nNetwork Height: \t" << pSyncStatus->GetNetworkHeight();
+	std::cout << "\nHeaders Difficulty: \t" << pSyncStatus->GetHeaderDifficulty();
+	std::cout << "\nBlocks Difficulty: \t" << pSyncStatus->GetBlockDifficulty();
+	std::cout << "\nNetwork Difficulty: \t" << pSyncStatus->GetNetworkDifficulty();
 	std::cout << "\n\nPress Ctrl-C to exit...";
 
 	IO::Flush();

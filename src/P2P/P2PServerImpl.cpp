@@ -44,6 +44,8 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 	std::shared_ptr<IDatabase> pDatabase,
 	const ITransactionPool::Ptr& pTransactionPool)
 {
+	const Config& config = pContext->GetConfig();
+
 	// Sync Status
 	SyncStatusPtr pSyncStatus(new SyncStatus());
 
@@ -55,8 +57,6 @@ std::shared_ptr<P2PServer> P2PServer::Create(
 
 	// Connection Manager
 	ConnectionManagerPtr pConnectionManager = ConnectionManager::Create();
-
-	const Config& config = pContext->GetConfig();
 
 	// Pipeline
 	std::shared_ptr<Pipeline> pPipeline = Pipeline::Create(

@@ -22,8 +22,8 @@ public:
 
 	void UpdateTotals(const uint64_t totalDifficulty, const uint64_t height)
 	{
-		m_totalDifficulty.exchange(totalDifficulty);
-		m_height.exchange(height);
+		m_totalDifficulty.exchange(totalDifficulty, std::memory_order_seq_cst);
+		m_height.exchange(height, std::memory_order_seq_cst);
 	}
 
 	PeerConstPtr GetPeer() const noexcept { return m_pPeer; }
@@ -32,8 +32,8 @@ public:
 	const IPAddress& GetIPAddress() const noexcept { return m_pPeer->GetIPAddress(); }
 	const EDirection GetDirection() const noexcept { return m_direction; }
 	uint16_t GetPort() const noexcept { return m_portNumber; }
-	uint64_t GetTotalDifficulty() const noexcept { return m_totalDifficulty.load(); }
-	uint64_t GetHeight() const noexcept { return m_height.load(); }
+	uint64_t GetTotalDifficulty() const noexcept { return m_totalDifficulty.load(std::memory_order_seq_cst); }
+	uint64_t GetHeight() const noexcept { return m_height.load(std::memory_order_seq_cst); }
 	uint32_t GetProtocolVersion() const noexcept { return m_pPeer->GetVersion(); }
 
 	void UpdateVersion(const uint32_t version) { m_pPeer->UpdateVersion(version); }

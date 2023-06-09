@@ -14,9 +14,9 @@
 
 static const uint64_t SELF_NONCE = CSPRNG::GenerateRandom(0, UINT64_MAX);
 
-void HandShake::Perform(EDirection direction)
+void HandShake::Perform(ConnectedPeer& connectedPeer, EDirection direction)
 {
-    LOG_DEBUG_F(
+    LOG_TRACE_F(
         "Performing handshake with {}({})",
         m_pSocket,
         (direction == EDirection::INBOUND ? "inbound" : "outbound")
@@ -44,6 +44,7 @@ void HandShake::Perform(EDirection direction)
             break;
         }
     }
+    UpdateConnectedPeer(connectedPeer);
 }
 
 

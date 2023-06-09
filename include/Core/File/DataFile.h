@@ -84,6 +84,11 @@ public:
 		m_pFile->Append(data.GetData());
 	}
 
+	void Close()
+	{	
+		m_pFile->Close();
+	}
+
 private:
 	DataFile(std::shared_ptr<AppendOnlyFile> pFile)
 		: m_pFile(pFile)

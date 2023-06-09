@@ -27,14 +27,11 @@ void CapabilitiesExchanger::Perform(const Socket::Ptr& pSocket, ConnectedPeer& c
     {
         LOG_TRACE_F("Sending capabilities to: {}", pSocket);
         TransmitGetPeerAddressesMessage(pSocket);  // Send Capabilities
-        const PeerAddressesMessage peerAddressesMessage = ReceivePeerAddrsCapabilities(pSocket);
-        
+        const auto peerAddressesMessage = ReceivePeerAddrsCapabilities(pSocket);
         connectedPeer.GetPeer()->UpdateLastContactTime();
-
         const std::vector<SocketAddress>& peerAddresses = peerAddressesMessage.GetPeerAddresses();
-        LOG_TRACE_F("Received {} addresses from {}.", peerAddresses.size(), connectedPeer.GetIPAddress());
-
         m_peerManager.Write()->AddFreshPeers(peerAddresses);
+        LOG_TRACE_F("Received {} addresses from {}.", peerAddresses.size(), connectedPeer.GetIPAddress());
     }
     else if (direction == EDirection::INBOUND)
     {
@@ -50,9 +47,7 @@ void CapabilitiesExchanger::Perform(const Socket::Ptr& pSocket, ConnectedPeer& c
             std::back_inserter(socketAddresses),
             [this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), Global::GetConfig().GetP2PPort()); }
         );
-
         LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), connectedPeer.GetIPAddress());
-
         TransmitPeerAddressesMessage(pSocket, PeerAddressesMessage{ std::move(socketAddresses) });
     }
 }
@@ -60,11 +55,13 @@ void CapabilitiesExchanger::Perform(const Socket::Ptr& pSocket, ConnectedPeer& c
 const PeerAddressesMessage CapabilitiesExchanger::ReceivePeerAddrsCapabilities(const Socket::Ptr& pSocket)
 {
     auto pReceived = RetrieveMessage(pSocket); // Get PeerAddrs Message
-    if (pReceived == nullptr) {
+    if (pReceived == nullptr) 
+    {
         throw PROTOCOL_EXCEPTION_F("PeerAddrs message not received from {}", pSocket->GetIPAddress());
     }
 
-    if (pReceived->GetMessageType() != MessageTypes::PeerAddrs) {
+    if (pReceived->GetMessageType() != MessageTypes::PeerAddrs) 
+    {
         throw PROTOCOL_EXCEPTION_F("Expected PeerAddrs from {} but received {}.", pSocket->GetIPAddress() , *pReceived);
     }
 
@@ -77,7 +74,8 @@ void CapabilitiesExchanger::TransmitGetPeerAddressesMessage(const Socket::Ptr& p
 {
     GetPeerAddressesMessage capabilities(Capabilities::ECapability::FAST_SYNC_NODE);
         
-    if (!pSocket->SendSync(capabilities.Serialize(ProtocolVersion::Local()), true)) {
+    if (!pSocket->SendSync(capabilities.Serialize(ProtocolVersion::Local()), true))
+    {
         throw PROTOCOL_EXCEPTION("Failed to send hcapabilities");
     }
 }
@@ -85,11 +83,13 @@ void CapabilitiesExchanger::TransmitGetPeerAddressesMessage(const Socket::Ptr& p
 const GetPeerAddressesMessage CapabilitiesExchanger::ReceiveGetPeerAddressesMessage(const Socket::Ptr& pSocket)
 {
     auto pReceived = RetrieveMessage(pSocket); // Get GetPeerAddrs Message
-    if (pReceived == nullptr) {
+    if (pReceived == nullptr) 
+    {
         throw PROTOCOL_EXCEPTION_F("PeerAddrs message not received from {}", pSocket->GetIPAddress());
     }
 
-    if (pReceived->GetMessageType() != MessageTypes::GetPeerAddrs) {
+    if (pReceived->GetMessageType() != MessageTypes::GetPeerAddrs)
+    {
         throw PROTOCOL_EXCEPTION_F("Expected PeerAddrs from {} but received {}.", pSocket->GetIPAddress(), *pReceived);
     }
 
@@ -100,7 +100,8 @@ const GetPeerAddressesMessage CapabilitiesExchanger::ReceiveGetPeerAddressesMess
 
 void CapabilitiesExchanger::TransmitPeerAddressesMessage(const Socket::Ptr& pSocket, const PeerAddressesMessage addresses)
 {
-    if (!pSocket->SendSync(addresses.Serialize(ProtocolVersion::Local()), true)) {
+    if (!pSocket->SendSync(addresses.Serialize(ProtocolVersion::Local()), true)) 
+    {
         throw PROTOCOL_EXCEPTION("Failed to send hcapabilities");
     }
 }
@@ -109,14 +110,16 @@ std::unique_ptr<RawMessage> CapabilitiesExchanger::RetrieveMessage(const Socket:
 {
     std::vector<uint8_t> headerBuffer = pSocket->ReceiveSync(P2P::HEADER_LENGTH, true);
     
-    if (headerBuffer.size() != P2P::HEADER_LENGTH) {
+    if (headerBuffer.size() != P2P::HEADER_LENGTH) 
+    {
         return nullptr;
     }
 
     MessageHeader messageHeader = ByteBuffer(std::move(headerBuffer)).Read<MessageHeader>();
-
     std::vector<uint8_t> payload = pSocket->ReceiveSync(messageHeader.GetMessageLength(), false);
-    if (payload.size() != messageHeader.GetMessageLength()) {
+
+    if (payload.size() != messageHeader.GetMessageLength())
+    {
         throw PROTOCOL_EXCEPTION("Expected payload not received");
     }
 

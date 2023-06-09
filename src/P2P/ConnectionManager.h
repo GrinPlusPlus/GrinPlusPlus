@@ -18,15 +18,15 @@ public:
 
 	void Shutdown();
 
-	void UpdateSyncStatus(SyncStatus& syncStatus) const;
+	void UpdateSyncStatus(SyncStatus& syncStatus);
 
 	size_t GetNumInbound() const { return m_numInbound; }
 	size_t GetNumOutbound() const { return m_numOutbound; }
-	size_t GetNumberOfActiveConnections() const { return m_connections.Read()->size(); }
+	size_t GetNumberOfActiveConnections() const { return m_connections.Read().GetShared()->size(); }
 
 	bool IsConnected(const IPAddress& address) const;
-	std::vector<PeerPtr> GetMostWorkPeers() const;
-	std::vector<ConnectedPeer> GetConnectedPeers() const;
+	std::vector<PeerPtr> GetMostWorkPeers();
+	std::vector<ConnectedPeer> GetConnectedPeers();
 	uint64_t GetMostWork() const;
 	uint64_t GetHighestHeight() const;
 
@@ -40,6 +40,8 @@ public:
 	void PruneConnections(const bool bInactiveOnly);
 	void AddConnection(ConnectionPtr pConnection);
 	ConnectionPtr GetConnection(const uint64_t connectionId) const;
+	ConnectionPtr GetConnection(const IPAddress& ipAddress) const;
+
 	bool ConnectionExist(const IPAddress& ipAddress) const;
 
 private:
@@ -47,12 +49,16 @@ private:
 
 	ConnectionPtr GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const;
 	static void ThreadPing(ConnectionManager& connectionManager);
+
+	void UpdateConnectionsNumber();
 	
 	Locked<std::vector<ConnectionPtr>> m_connections;
 	std::thread m_pingThread;
 
 	std::atomic<size_t> m_numOutbound;
 	std::atomic<size_t> m_numInbound;
+
+	mutable std::mutex m_mutex;
 };
 
 typedef std::shared_ptr<ConnectionManager> ConnectionManagerPtr;

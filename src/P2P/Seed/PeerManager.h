@@ -35,6 +35,8 @@ public:
 	std::vector<PeerPtr> GetPeers(const Capabilities::ECapability& preferredCapability, const uint16_t maxPeers) const;
 
 	void AddFreshPeers(const std::vector<SocketAddress>& peerAddresses);
+	void AddFreshPeers(const std::vector<IPAddress>& peerAddresses);
+
 	void BanPeer(const IPAddress& address, const EBanReason banReason);
 	void UnbanPeer(const IPAddress& address);
 

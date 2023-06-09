@@ -37,11 +37,7 @@ std::shared_ptr<ITxHashSet> TxHashSetManager::Open(const BlockHeaderPtr& pConfir
 		pRangeProofPMMR = RangeProofPMMR::Load(Global::GetConfig().GetTxHashSetPath());
 	}));
 
-	for (auto& thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
+	for (auto& thread : threads) { if (thread.joinable()) { thread.join(); } }
 
 	m_pTxHashSet = std::shared_ptr<TxHashSet>(new TxHashSet(pKernelMMR, pOutputPMMR, pRangeProofPMMR, pConfirmedTip));
 

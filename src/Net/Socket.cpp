@@ -4,7 +4,9 @@
 #include <Common/Util/ThreadUtil.h>
 #include <Common/Logger.h>
 
-static unsigned long DEFAULT_TIMEOUT = 10 * 1000;
+static const unsigned long DEFAULT_TIMEOUT = 10 * 1000;
+static const unsigned long RECEIVING_TIMEOUT = 1000 * 5;
+static const unsigned long SENDING_TIMEOUT = 1000 * 5;
 
 #ifndef _WIN32
 #define SOCKET_ERROR -1
@@ -20,11 +22,14 @@ Socket::Socket(
     m_socketOpen(false),
     m_failed(false),
     m_blocking(true),
-    m_receiveBufferSize(1024),
+    m_receiveBufferSize(8192),
+    m_sendBufferSize(4096),
     m_receiveTimeout(DEFAULT_TIMEOUT),
-    m_sendTimeout(DEFAULT_TIMEOUT)
+    m_sendTimeout(DEFAULT_TIMEOUT),
+    m_delayed(false),
+    m_keptAlive(true)
 {
-
+    
 }
 
 Socket::~Socket()
@@ -54,21 +59,24 @@ bool Socket::CloseSocket()
 
 bool Socket::IsActive() const
 {
-    if (m_pSocket->is_open() && !m_errorCode) {
-        return true;
+    if (m_errorCode.value() != EAGAIN &&
+        m_errorCode.value() != EWOULDBLOCK) 
+    {
+        LOG_INFO_F("{} is not active. Error: {}", m_address, m_errorCode.message());
+        return false;
     }
 
-    if (m_errorCode.value() == EAGAIN || m_errorCode.value() == EWOULDBLOCK) {
-        return true;
-    }
+    return true;
+}
 
-    if (m_errorCode) {
-        LOG_INFO_F("Connection with {} not active. Error: {}", m_address, m_errorCode.message());
-    } else {
-        LOG_INFO_F("Connection with {} not active.", m_address);
-    }
-
-    return false;
+void Socket::SetDefaults()
+{
+    SetBlocking(true);
+    SetKeepAliveOption(true);
+    SetSendTimeout(m_sendTimeout);
+    SetReceiveTimeout(m_receiveTimeout);
+    SetSendBufferSize(m_sendBufferSize);
+    SetReceiveBufferSize(m_receiveBufferSize);
 }
 
 bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
@@ -90,13 +98,27 @@ bool Socket::SetReceiveTimeout(const unsigned long milliseconds)
     return true;
 }
 
-bool Socket::SetReceiveBufferSize(const int bufferSize)
+bool Socket::SetReceiveBufferSize(const size_t bufferSize)
 {
-    const int socketRcvBuff = bufferSize;
+    const size_t socketRcvBuff = bufferSize;
     const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_RCVBUF, (const char*)&socketRcvBuff, sizeof(int));
     if (result == 0) {
         m_receiveBufferSize = bufferSize;
     } else {
+        return false;
+    }
+
+    return true;
+}
+
+bool Socket::SetSendBufferSize(const size_t bufferSize)
+{
+    const size_t socketSndBuff = bufferSize;
+    const int result = setsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_SNDBUF, (const char*)&socketSndBuff, sizeof(int));
+    if (result == 0) {
+        m_sendBufferSize = bufferSize;
+    }
+    else {
         return false;
     }
 
@@ -124,25 +146,8 @@ bool Socket::SetSendTimeout(const unsigned long milliseconds)
 
 bool Socket::SetBlocking(const bool blocking)
 {
-    if (m_blocking != blocking) {
-#ifdef _WIN32
-        unsigned long blockingValue = (blocking ? 0 : 1);
-        const int result = ioctlsocket(m_pSocket->native_handle(), FIONBIO, &blockingValue);
-        if (result == 0) {
-            m_blocking = blocking;
-        } else {
-            int error = 0;
-            int size = sizeof(error);
-            getsockopt(m_pSocket->native_handle(), SOL_SOCKET, SO_ERROR, (char*)&error, &size);
-            WSASetLastError(error);
-            ThrowSocketException(m_errorCode);
-        }
-#else
-        m_blocking = blocking;
-#endif
-    }
-
-    return m_blocking == blocking;
+    m_pSocket->non_blocking(!blocking);
+    return m_blocking == !blocking;
 }
 
 bool Socket::SetDelayOption(const bool delayed)
@@ -155,15 +160,33 @@ bool Socket::SetDelayOption(const bool delayed)
     return m_delayed == delayed;
 }
 
+bool Socket::SetKeepAliveOption(const bool keepAlive)
+{
+    asio::socket_base::keep_alive keep(keepAlive);
+    m_pSocket->set_option(keep);
+
+    m_keptAlive = keepAlive;
+
+    return m_keptAlive == keepAlive;
+}
+
+bool Socket::IsKeepAliveEnabled()
+{
+    return m_keptAlive;
+}
+
 bool Socket::SendSync(const std::vector<uint8_t>& message, const bool incrementCount)
 {
-    if (incrementCount) {
-        m_rateCounter.AddMessageSent();
+    const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(message), asio::transfer_exactly(message.size()), m_errorCode);
+    
+    if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) 
+    {
+        ThrowSocketException(m_errorCode);
     }
 
-    const size_t bytesWritten = asio::write(*m_pSocket, asio::buffer(message.data(), message.size()), m_errorCode);
-    if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) {
-        ThrowSocketException(m_errorCode);
+    if (incrementCount)
+    {
+        m_rateCounter.AddMessageSent();
     }
 
     return bytesWritten == message.size();
@@ -214,28 +237,36 @@ void Socket::HandleSent(const asio::error_code& ec, size_t)
     }
 }
 
-std::vector<uint8_t> Socket::ReceiveSync(const size_t num_bytes, const bool incrementCount)
+std::vector<uint8_t> Socket::ReceiveSync(const size_t bufferSize, const bool incrementCount)
 {
-    std::vector<uint8_t> bytes(num_bytes);
+    std::vector<uint8_t> bytes(bufferSize);
+    size_t recieved = asio::read(*m_pSocket, asio::buffer(bytes), asio::transfer_exactly(bufferSize), m_errorCode);
+    if (m_errorCode) { ThrowSocketException(m_errorCode); }
 
-    size_t retries = 0;
+    if (recieved == bufferSize && incrementCount)
+    {
+        m_rateCounter.AddMessageReceived();
+    }
+    return bytes;
+
+    /*size_t retries = 0;
     size_t bytesRead = 0;
     do
     {
+        if (HasReceivedData())
+        {
+            bytesRead += asio::read(*m_pSocket, asio::buffer(bytes.data() + bytesRead, num_bytes - bytesRead), m_errorCode);
+            if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) { ThrowSocketException(m_errorCode); }
+        }
         retries++;
-
-        if (!HasReceivedData()) { std::this_thread::sleep_for(std::chrono::milliseconds(500)); }
-        
-        bytesRead += asio::read(*m_pSocket, asio::buffer(bytes.data() + bytesRead, num_bytes - bytesRead), m_errorCode);
-
-        if (m_errorCode && m_errorCode.value() != EAGAIN && m_errorCode.value() != EWOULDBLOCK) { ThrowSocketException(m_errorCode); }
-    } while (bytesRead != num_bytes || retries > 20);
-
-    if (bytesRead != num_bytes)  { return {}; }
-
-    if (incrementCount) { m_rateCounter.AddMessageReceived(); }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } while (bytesRead != num_bytes || retries >= 50);
     
-    return bytes;
+    if (bytesRead != num_bytes)  
+    { 
+        LOG_ERROR_F("Expected to read {}b but instead, {}b were recieved from {}", num_bytes, bytesRead, m_address.Format());
+        return bytes;
+    }*/
 }
 
 bool Socket::HasReceivedData()

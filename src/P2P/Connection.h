@@ -61,26 +61,24 @@ public:
 	void Connect();
 	void Disconnect();
 
-	void Init();
-
 	uint64_t GetId() const { return m_connectionId; }
-	bool IsConnectionActive() const;
+	bool IsConnectionActive();
 
-	void DisableSends(bool disabled) { m_sendingDisabled = disabled; }
+	void DisableSends(bool disabled) { m_sendingDisabled.exchange(disabled); }
 	void SendAsync(const IMessage& message);
 	bool SendSync(const IMessage& message);
 	std::unique_ptr<RawMessage> SendReceiveSync(const IMessage& message);
 	bool ReceiveProcessSync();
 
-	void DisableReceives(bool disabled) { m_receivingDisabled = disabled; }
+	void DisableReceives(bool disabled) { m_receivingDisabled.exchange(disabled); }
 	bool ReceiveSync(std::vector<uint8_t>& bytes, const size_t num_bytes);
 
-	bool IsBusy() { return m_sendingDisabled == true || m_receivingDisabled == true; }
+	bool IsBusy() { return m_sendingDisabled || m_receivingDisabled; }
 	void IsBusy(bool busy) { m_sendingDisabled = busy; m_receivingDisabled = busy; }
 
 	bool ExceedsRateLimit() const;
 	void BanPeer(const EBanReason reason);
-	void CheckPingSync();
+	void PingSync();
 
 	SocketPtr GetSocket() const { return m_pSocket; }
 	PeerPtr GetPeer() { return m_connectedPeer.GetPeer(); }
@@ -99,6 +97,8 @@ public:
 	bool HasBlock(const Hash& hash) const { return m_advertisedBlocks.Cached(hash); }
 	void AdvertisedBlock(const Hash& hash) { return m_advertisedBlocks.Put(hash, hash); }
 
+	bool ShouldBePinged();
+
 	std::weak_ptr<MessageProcessor> GetMessageProcessor() const { return m_pMessageProcessor; }
 
 private:
@@ -110,7 +110,7 @@ private:
 	std::unique_ptr<RawMessage> RetrieveMessage();
 
 	void ConnectOutbound();
-
+	
 	ConnectionManager& m_connectionManager;
 	SyncStatusConstPtr m_pSyncStatus;
 	std::weak_ptr<MessageProcessor> m_pMessageProcessor;

@@ -21,6 +21,7 @@ public:
 	virtual ~KernelMMR() = default;
 
 	static std::shared_ptr<KernelMMR> Load(const fs::path & txHashSetPath);
+	void Unload() const;
 
 	std::unique_ptr<TransactionKernel> GetKernelAt(const LeafIndex& leaf_idx) const;
 	bool Rewind(const uint64_t size);

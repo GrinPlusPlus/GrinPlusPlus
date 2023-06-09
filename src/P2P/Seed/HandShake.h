@@ -18,17 +18,18 @@ public:
 			  const Socket::Ptr& pSocket) : m_pSyncStatus(pSyncStatus),
 											m_pSocket(pSocket),
 											m_TotalDifficulty(0) { }
-	void Perform(EDirection direction);
+	void Perform(ConnectedPeer& connectedPeer, EDirection direction);
 
 	ShakeMessage RetrieveShakeMessage();
 	HandMessage RetrieveHandMessage();
 
-	void UpdateConnectedPeer(ConnectedPeer& connectedPeer);
 private:
 	void TransmitHandMessage() ;
 	void TransmitShakeMessage();
 
 	std::unique_ptr<RawMessage> RetrieveMessage();
+
+	void UpdateConnectedPeer(ConnectedPeer& connectedPeer);
 
 	uint32_t m_Version = 0;
 	Capabilities m_Capabilities;

@@ -14,7 +14,7 @@
 #include <filesystem.h>
 #include <fstream>
 
-static const int BUFFER_SIZE = 1024;
+static const int BUFFER_SIZE = 8192 * 8; // between 8kB and 64kB should be OK
 
 TxHashSetPipe::~TxHashSetPipe()
 {
@@ -69,67 +69,89 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 	);
 	const fs::path txHashSetPath = fs::temp_directory_path() / fileName;
 
+	LOG_TRACE_F("Disabling receives and sends for {}", pConnection);
+	pConnection->DisableReceives(true);
+	pConnection->DisableSends(true);
 	try
 	{
 		LoggerAPI::SetThreadName("TXHASHSET_PIPE");
 		LOG_TRACE("BEGIN");
 
 		LOG_INFO_F("Downloading TxHashSet from {}", *pConnection);
-		
-		LOG_INFO_F("Disabling receives and sends for {}", pConnection);
-		pConnection->DisableReceives(true);
-		pConnection->DisableSends(true);
-
-		pipeline.m_pSyncStatus->UpdateDownloaded(0);
-		pipeline.m_pSyncStatus->UpdateDownloadSize(zipped_size);
-
-		pConnection->GetSocket()->SetReceiveBufferSize(BUFFER_SIZE);
 
 		std::ofstream fout;
 		fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
-
+		
 		size_t bytesReceived = 0;
 		std::vector<uint8_t> buffer(BUFFER_SIZE, 0);
 
 		pConnection->IsBusy(true);
+
+		LOG_TRACE_F("Setting Receiving Buffer Size for {}", pConnection);
+		if (zipped_size > BUFFER_SIZE)
+		{
+			pConnection->GetSocket()->SetReceiveBufferSize(BUFFER_SIZE);
+		}
+		else {
+			pConnection->GetSocket()->SetReceiveBufferSize(zipped_size);
+		}
+
+		pipeline.m_pSyncStatus->UpdateDownloaded(0);
+		pipeline.m_pSyncStatus->UpdateDownloadSize(zipped_size);
+
+		bool received = false; // we will check this after the next loop
+
 		for(;;)
 		{
-			if (bytesReceived == zipped_size)
+			if (!Global::IsRunning()) return;
+
+			const int bufferSize = (std::min)((int)(zipped_size - bytesReceived), BUFFER_SIZE);
+			received = pConnection->ReceiveSync(buffer, bufferSize);
+
+			if (received)
 			{
-				break;
-			}
-			const int bytesToRead = (std::min)((int)(zipped_size - bytesReceived), BUFFER_SIZE);
-			const bool received = pConnection->ReceiveSync(buffer, bytesToRead);
+				fout.write((char*)&buffer[0], bufferSize);
+				bytesReceived += bufferSize;
 
-			if (!received || !Global::IsRunning()) {
-				LOG_INFO_F("Enabling receives and sends for {}", pConnection);
-				pConnection->DisableReceives(false);
-				pConnection->DisableSends(false);
+				pipeline.m_pSyncStatus->UpdateDownloaded(bytesReceived);
+				
+				if (bytesReceived == zipped_size)
+				{
+					LOG_INFO("Closing file...");
+					fout.flush();
+					fout.close();
+					break;
+				}
 
-				LOG_DEBUG_F("bytesReceived: {} zipped_size: {}", bytesReceived, zipped_size);
-				LOG_ERROR("Transmission ended abruptly");
-				
-				fout.close();
-				
-				FileUtil::RemoveFile(txHashSetPath);
-				
-				pipeline.m_processing = false;
-				pipeline.m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-				pConnection->BanPeer(EBanReason::BadTxHashSet);
-
-				return;
+				continue;
 			}
 
-			fout.write((char*)&buffer[0], bytesToRead);
-			bytesReceived += bytesToRead;
-
-			pipeline.m_pSyncStatus->UpdateDownloaded(bytesReceived);
+			break;
 		}
-		pConnection->IsBusy(false);
-
+		// Going back to normal
 		LOG_INFO("Closing file...");
 		fout.flush();
 		fout.close();
+
+		pConnection->IsBusy(false);
+		LOG_TRACE_F("Setting Receiving Buffer Size for {} to default size", pConnection);
+		pConnection->GetSocket()->SetDefaults();
+		LOG_INFO_F("Enabling receives and sends for {}", pConnection);
+		pConnection->DisableReceives(false);
+		pConnection->DisableSends(false);
+		
+		if (!received)
+		{
+			LOG_ERROR("Transmission ended abruptly");
+
+			FileUtil::RemoveFile(txHashSetPath);
+
+			pipeline.m_processing = false;
+			pipeline.m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+			// pConnection->BanPeer(EBanReason::BadTxHashSet);
+
+			return;
+		}
 
 		LOG_INFO("Downloading successful");
 
@@ -161,10 +183,6 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 	}
 
 	pipeline.m_processing = false;
-
-	LOG_INFO_F("Enabling receives and sends for {}", pConnection);
-	pConnection->DisableReceives(false);
-	pConnection->DisableSends(false);
 }
 
 void TxHashSetPipe::SendTxHashSet(const std::shared_ptr<Connection>& pConnection, const Hash& block_hash)

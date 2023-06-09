@@ -9,6 +9,11 @@ void AppendOnlyFile::Load()
 	m_pMappedFile = IMappedFile::Load(m_path);
 }
 
+void AppendOnlyFile::Close()
+{
+	m_pMappedFile->Close();
+}
+
 bool AppendOnlyFile::Flush()
 {
 	if (m_fileSize == m_bufferIndex && m_buffer.empty())

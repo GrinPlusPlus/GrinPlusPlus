@@ -41,6 +41,8 @@ public:
 	void Rollback() noexcept final;
 	void Compact() final;
 
+	void Unload();
+
 	std::shared_ptr<KernelMMR> GetKernelMMR() { return m_pKernelMMR; }
 	std::shared_ptr<OutputPMMR> GetOutputPMMR() { return m_pOutputPMMR; }
 	std::shared_ptr<RangeProofPMMR> GetRangeProofPMMR() { return m_pRangeProofPMMR; }

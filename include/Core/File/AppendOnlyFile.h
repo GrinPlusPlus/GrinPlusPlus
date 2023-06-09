@@ -24,6 +24,8 @@ public:
 	void Load();
 	bool Flush();
 
+	void Close();
+
 	void Append(const std::vector<unsigned char>& data);
 	bool Rewind(const uint64_t nextPosition);
 

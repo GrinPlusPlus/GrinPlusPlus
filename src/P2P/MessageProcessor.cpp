@@ -78,7 +78,7 @@ void MessageProcessor::ProcessMessage(const std::shared_ptr<Connection>& pConnec
 		);
 
 		// TODO: Send ban reason
-		pConnection->BanPeer(e.GetReason());
+		//pConnection->BanPeer(e.GetReason());
 	}
 	catch (const BlockChainException& e)
 	{
@@ -96,7 +96,7 @@ void MessageProcessor::ProcessMessage(const std::shared_ptr<Connection>& pConnec
 			MessageTypes::ToString(messageType),
 			pConnection
 		);
-		pConnection->Disconnect();
+		//pConnection->Disconnect();
 	}
 }
 
@@ -135,7 +135,7 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 		case Pong:
 		{
 			const PongMessage pongMessage = PongMessage::Deserialize(byteBuffer);
-			LOG_INFO_F("Updating Difficulty ({}) and Height ({})", pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
+			LOG_TRACE_F("Updating Difficulty ({}) and Height ({})", pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
 			pConnection->UpdateTotals(pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
 			break;
 		}
@@ -211,18 +211,18 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 			const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
 			const std::vector<BlockHeaderPtr>& blockHeaders = headersMessage.GetHeaders();
 
-			LOG_DEBUG_F("{} headers received from {}", blockHeaders.size(), pConnection);
+			LOG_TRACE_F("{} headers received from {}", blockHeaders.size(), pConnection);
 
 			const EBlockChainStatus status = m_pBlockChain->AddBlockHeaders(blockHeaders);
 			
 			if (status == EBlockChainStatus::INVALID)
 			{
-				//pConnection->BanPeer(EBanReason::BadBlockHeader);
-				LOG_DEBUG_F("Invalid headers received from {}",pConnection);
+				// pConnection->BanPeer(EBanReason::BadBlockHeader);
+				LOG_TRACE_F("Invalid headers received from {}", pConnection);
 			}
 			else 
 			{
-				LOG_DEBUG_F("Headers message from {} finished processing", pConnection);
+				LOG_TRACE_F("{} Headers message from {} finished processing", blockHeaders.size(), pConnection);
 			}
 			
 			break;

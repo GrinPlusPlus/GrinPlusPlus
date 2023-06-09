@@ -142,7 +142,7 @@ bool BlockSyncer::RequestBlocks()
     size_t nextPeer = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
     for (size_t i = 0; i < blocksToRequest.size(); i++) {
         const GetBlockMessage getBlockMessage(blocksToRequest[i].second);
-        if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer])) {
+        if (m_pConnectionManager.lock()->ExchangeMessageWithPeer(getBlockMessage, mostWorkPeers[nextPeer])) {
             RequestedBlock blockRequested;
             blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
             blockRequested.PEER = mostWorkPeers[nextPeer];

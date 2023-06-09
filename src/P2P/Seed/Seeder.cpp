@@ -204,7 +204,7 @@ void Seeder::ConnectPeer(PeerPtr& pPeer)
         return;
     }
 
-    LOG_INFO_F("Attempting to seed with: {}", pPeer);
+    LOG_TRACE_F("Attempting to seed with: {}", pPeer);
 
     ConnectedPeer connectedPeer(pPeer, EDirection::OUTBOUND,
         Global::GetConfig().GetP2PPort());

@@ -108,7 +108,7 @@ void Connection::Thread_Connect(std::shared_ptr<Connection> pConnection)
     catch (const std::exception& e) 
     {
         pConnection->Disconnect();
-        LOG_TRACE_F("Failed to connect to {} -> {}", pConnection->m_connectedPeer, e);
+        LOG_INFO_F("The connection with {} could not be established: {}", pConnection->m_connectedPeer, e);
     }
 }
 

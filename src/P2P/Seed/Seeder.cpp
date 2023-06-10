@@ -62,7 +62,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
         const size_t inboundsAllowed = Global::GetConfig().GetMaxPeers() - Global::GetConfig().GetMinPeers();
 
         seeder.m_pAcceptor = std::make_shared<asio::ip::tcp::acceptor>(*seeder.m_pAsioContext);
-        auto endpoint = asio::ip::tcp::endpoint(asio::ip::tcp::v4(), Global::GetConfig().GetP2PPort());
+        auto endpoint = asio::ip::tcp::endpoint(asio::ip::address::from_string("0.0.0.0"), Global::GetConfig().GetP2PPort());
         
         seeder.m_pAcceptor->open(endpoint.protocol());
         seeder.m_pAcceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));
@@ -85,9 +85,18 @@ void Seeder::Thread_Listener(Seeder& seeder)
                 auto ipAddress =
                     IPAddress(pSocket->GetAsioSocket()->remote_endpoint().address());
 
-                if (Global::GetConfig().IsPeerBlocked(ipAddress) ||
-                    seeder.m_connectionManager.GetNumInbound() < inboundsAllowed)
+                bool peerBlocked = Global::GetConfig().IsPeerBlocked(ipAddress);
+                bool freeSlots = seeder.m_connectionManager.GetNumInbound() < inboundsAllowed;
+                if (peerBlocked || !freeSlots)
                 {
+                    if (peerBlocked)
+                    {
+                        LOG_DEBUG_F("Inbound peer is blocked {}", ipAddress);
+                    }
+                    if (!peerBlocked)
+                    {
+                        LOG_DEBUG_F("No more space for IP {}. There is already: {} inbounds right now.", seeder.m_connectionManager.GetNumInbound() , ipAddress);
+                    }
                     asio::error_code ignoreError;
                     pSocket->GetAsioSocket()->shutdown(asio::socket_base::shutdown_both, ignoreError);
                     pSocket->GetAsioSocket()->close(ignoreError);
@@ -102,6 +111,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
                     seeder.m_pSyncStatus, seeder.m_pMessageProcessor,
                     seeder.m_peerManager);
 
+                LOG_INFO_F("Attempting to serve peer: {}", pPeer);
                 pConnection->Connect();  // Connection will run on its own thread.
             }
             catch (std::exception& e) {
@@ -121,7 +131,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
         LOG_ERROR_F("Listener failed with error: {}", e.what());
     }
 
-    LOG_DEBUG("END");
+        LOG_DEBUG("END");
 }
 
 //

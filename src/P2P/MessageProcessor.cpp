@@ -135,7 +135,7 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 		case Pong:
 		{
 			const PongMessage pongMessage = PongMessage::Deserialize(byteBuffer);
-			LOG_TRACE_F("Updating Difficulty ({}) and Height ({})", pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
+			LOG_DEBUG_F("Updating Difficulty ({}) and Height ({})", pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
 			pConnection->UpdateTotals(pongMessage.GetTotalDifficulty(), pongMessage.GetHeight());
 			break;
 		}
@@ -153,7 +153,7 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 				[this](const PeerPtr& peer) { return SocketAddress(peer->GetIPAddress(), Global::GetConfig().GetP2PPort()); }
 			);
 
-			LOG_TRACE_F("Sending {} addresses to {}.", socketAddresses.size(), pConnection);
+			LOG_DEBUG_F("Sending {} addresses to {}.", socketAddresses.size(), pConnection);
 			pConnection->SendSync(PeerAddressesMessage{ std::move(socketAddresses) });
 			break;
 		}
@@ -211,18 +211,18 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 			const HeadersMessage headersMessage = HeadersMessage::Deserialize(byteBuffer);
 			const std::vector<BlockHeaderPtr>& blockHeaders = headersMessage.GetHeaders();
 
-			LOG_TRACE_F("{} headers received from {}", blockHeaders.size(), pConnection);
+			LOG_DEBUG_F("{} headers received from {}", blockHeaders.size(), pConnection);
 
 			const EBlockChainStatus status = m_pBlockChain->AddBlockHeaders(blockHeaders);
 			
 			if (status == EBlockChainStatus::INVALID)
 			{
 				// pConnection->BanPeer(EBanReason::BadBlockHeader);
-				LOG_TRACE_F("Invalid headers received from {}", pConnection);
+				LOG_DEBUG_F("Invalid headers received from {}", pConnection);
 			}
 			else 
 			{
-				LOG_TRACE_F("{} Headers message from {} finished processing", blockHeaders.size(), pConnection);
+				LOG_DEBUG_F("{} Headers message from {} finished processing", blockHeaders.size(), pConnection);
 			}
 			
 			break;
@@ -232,7 +232,7 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 			const GetBlockMessage getBlockMessage = GetBlockMessage::Deserialize(byteBuffer);
 			std::unique_ptr<FullBlock> pBlock = m_pBlockChain->GetBlockByHash(getBlockMessage.GetHash());
 			if (pBlock != nullptr) {
-				pConnection->SendSync(BlockMessage{ std::move(*pBlock) });
+				pConnection->SendReceiveSync(BlockMessage{ std::move(*pBlock) });
 			}
 
 			break;
@@ -355,7 +355,7 @@ void MessageProcessor::ProcessMessageInternal(const std::shared_ptr<Connection>&
 			Hash kernelHash = TransactionKernelMessage::Deserialize(byteBuffer).GetKernelHash();
 			TransactionPtr pTransaction = m_pBlockChain->GetTransactionByKernelHash(kernelHash);
 			if (pTransaction == nullptr) {
-				pConnection->SendSync(GetTransactionMessage{ std::move(kernelHash) });
+				pConnection->SendReceiveSync(GetTransactionMessage{ std::move(kernelHash) });
 			}
 
 			break;

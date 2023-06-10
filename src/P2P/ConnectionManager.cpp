@@ -271,14 +271,22 @@ bool ConnectionManager::ExchangeMessageWithPeer(const IMessage& message, PeerCon
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
 {
-	LOG_DEBUG_F("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
+	LOG_TRACE_F("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
 	std::unique_lock<std::mutex> write_lock(m_mutex);
 
 	// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
 	auto connections = * m_connections.Read().GetShared();
 	for (ConnectionPtr pConnection : connections) {
 		if (pConnection->GetId() != sourceId && !pConnection->IsBusy()) {
-			pConnection->SendSync(message);
+			try
+			{
+				if (pConnection->GetSocket()->HasReceivedData() && pConnection->ReceiveProcessSync())
+				{
+					LOG_TRACE_F("Socket read before sending message to: {}", pConnection->GetPeer());
+				}
+			}
+			catch (...) {}
+			pConnection->SendReceiveSync(message);
 		}
 	}
 }

@@ -28,7 +28,11 @@ bool TxHashSetProcessor::ProcessTxHashSet(const Hash& blockHash, const fs::path&
 	}
 
 	// 1. Close Existing TxHashSet
-	m_pChainState->Write()->GetTxHashSetManager()->GetTxHashSet()->Unload();
+	try
+	{
+		m_pChainState->Write()->GetTxHashSetManager()->GetTxHashSet()->Unload();
+	} catch (...) {}
+	
 	m_pChainState->Write()->GetTxHashSetManager()->Close();
 
 	// 2. Load and Extract TxHashSet Zip

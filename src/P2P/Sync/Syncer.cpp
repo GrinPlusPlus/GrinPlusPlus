@@ -65,7 +65,8 @@ void Syncer::Thread_Sync(Syncer& syncer)
         {
             syncer.UpdateSyncStatus();
 
-            if (pStatus->GetNumActiveConnections() < Global::GetConfig().GetMinSyncPeers())
+            if (pStatus->GetNumActiveConnections() < Global::GetConfig().GetMinSyncPeers()
+                && pStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
             {
                 if (pStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
                 {

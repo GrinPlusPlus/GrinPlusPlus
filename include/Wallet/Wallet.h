@@ -79,7 +79,7 @@ public:
 
 	// Slate Finalize(const Slate& slate, const std::optional<SlatepackMessage>& slatepackOpt);
 
-	void CancelTx(const uint32_t walletTxId);
+	bool CancelTx(const uint32_t walletTxId);
 
 	BuildCoinbaseResponse BuildCoinbase(const BuildCoinbaseCriteria& criteria);
 	SlatepackMessage DecryptSlatepack(const std::string& armoredSlatepack) const;

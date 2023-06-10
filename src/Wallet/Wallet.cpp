@@ -250,14 +250,17 @@ FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
 
 // }
 
-void Wallet::CancelTx(const uint32_t walletTxId)
+bool Wallet::CancelTx(const uint32_t walletTxId)
 {
     auto pBatch = m_walletDB.BatchWrite();
 	std::unique_ptr<WalletTx> pWalletTx = pBatch->GetTransactionById(m_master_seed, walletTxId);
 	if (pWalletTx != nullptr) {
+		if (pWalletTx->GetType() == SENDING_FINALIZED) return false;
 		CancelTx::CancelWalletTx(m_master_seed, pBatch.GetShared(), *pWalletTx);
         pBatch->Commit();
+		return true;
 	}
+	return false;
 }
 
 BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteria)

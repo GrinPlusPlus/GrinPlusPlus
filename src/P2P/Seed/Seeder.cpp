@@ -62,7 +62,7 @@ void Seeder::Thread_Listener(Seeder& seeder)
         const size_t inboundsAllowed = Global::GetConfig().GetMaxPeers() - Global::GetConfig().GetMinPeers();
 
         seeder.m_pAcceptor = std::make_shared<asio::ip::tcp::acceptor>(*seeder.m_pAsioContext);
-        auto endpoint = asio::ip::tcp::endpoint(asio::ip::address::from_string("0.0.0.0"), Global::GetConfig().GetP2PPort());
+        auto endpoint = asio::ip::tcp::endpoint(asio::ip::tcp::v4(), Global::GetConfig().GetP2PPort());
         
         seeder.m_pAcceptor->open(endpoint.protocol());
         seeder.m_pAcceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));

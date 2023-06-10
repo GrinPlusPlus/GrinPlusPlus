@@ -15,7 +15,7 @@ bool HeaderSyncer::SyncHeaders(const SyncStatus& syncStatus, const bool startup)
 		return true;
 	}
 
-	if (networkHeight > chainHeight + 15  || (startup && networkHeight > chainHeight))
+	if (networkHeight > chainHeight + 5  || (startup && networkHeight > chainHeight))
 	{
 		if (IsHeaderSyncDue(syncStatus.GetHeaderHeight()))
 		{

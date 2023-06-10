@@ -105,7 +105,7 @@ void Syncer::Thread_Sync(Syncer& syncer)
             LOG_ERROR_F("Exception thrown: {}", e);
         }
 
-        ThreadUtil::SleepFor(std::chrono::milliseconds(100));
+        ThreadUtil::SleepFor(std::chrono::milliseconds(250));
     } while (!syncer.m_terminate && Global::IsRunning());
 
     LOG_DEBUG("END");

@@ -5,8 +5,8 @@
 #include <Common/Logger.h>
 
 static const unsigned long DEFAULT_TIMEOUT = 10 * 1000;
-static const unsigned long RECEIVING_TIMEOUT = 1000 * 5;
-static const unsigned long SENDING_TIMEOUT = 1000 * 5;
+static const unsigned long RECEIVING_TIMEOUT = 1000 * 10;
+static const unsigned long SENDING_TIMEOUT = 1000 * 10;
 
 #ifndef _WIN32
 #define SOCKET_ERROR -1

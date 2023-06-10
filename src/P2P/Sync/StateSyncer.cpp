@@ -13,7 +13,7 @@ bool StateSyncer::SyncState(SyncStatus& syncStatus)
 	{
 		if (RequestState(syncStatus))
 		{
-			LOG_TRACE_F("Hashset requested successfully to: {}", *m_pPeer);
+			LOG_INFO_F("Hashset requested successfully to: {}", *m_pPeer);
 			syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
 		}
 
@@ -62,7 +62,7 @@ bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus)
 		return true;
 	}
 
-	// If 10 seconds elapsed with no progress, try another peer.
+	// If 60 seconds elapsed with no progress, try another peer.
 	if (syncStatus.GetDownloaded() == 0)
 	{
 		if ((m_timeRequested + std::chrono::seconds(60)) < std::chrono::system_clock::now())

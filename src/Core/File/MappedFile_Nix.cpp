@@ -96,7 +96,7 @@ void MappedFile::Unmap() const
 void MappedFile::Close() const
 {
 #ifndef _WIN32
-	std::ifstream inFile(path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+	std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
 	if (inFile.is_open())
 	{
 		inFile.close();

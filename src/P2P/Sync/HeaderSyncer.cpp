@@ -41,7 +41,7 @@ bool HeaderSyncer::IsHeaderSyncDue(const uint64_t height)
 	}
 
 	// Check if headers were received, and we're ready to request next batch.
-	if (height > m_lastHeight + P2P::MAX_BLOCK_HEADERS)
+	if (height > (m_lastHeight + (P2P::MAX_BLOCK_HEADERS / 2)))
 	{
 		LOG_TRACE("Headers received. Requesting next batch.");
 		m_retried = false;

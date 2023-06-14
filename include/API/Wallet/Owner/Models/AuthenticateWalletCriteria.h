@@ -28,7 +28,7 @@ public:
     {
         if (paramsJson.isObject())
         {
-            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "username");
+            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "name");
             auto passwordOpt = JsonUtil::GetStringOpt(paramsJson, "password");
             if (usernameOpt.has_value() && passwordOpt.has_value())
             {
@@ -48,7 +48,7 @@ public:
     Json::Value ToJSON() const final
     {
         Json::Value result;
-        result["username"] = m_username;
+        result["name"] = m_username;
         result["password"] = m_password.c_str();
         return result;
     }

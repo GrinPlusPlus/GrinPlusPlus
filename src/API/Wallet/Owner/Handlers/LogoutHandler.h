@@ -26,7 +26,10 @@ public:
 
 		m_pWalletManager->Logout(token);
 
-		return request.BuildResult(Json::Value());
+		Json::Value response_json;
+		response_json["Ok"] = Json::Value();
+
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

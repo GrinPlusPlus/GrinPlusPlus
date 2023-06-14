@@ -29,8 +29,10 @@ public:
         ValidateInput(criteria);
 
         try {
-            auto response = m_pWalletManager->Login(criteria, m_pTorProcess);
-            return request.BuildResult(response.ToJSON());
+            auto login = m_pWalletManager->Login(criteria, m_pTorProcess);
+            Json::Value response_json;
+            response_json["Ok"] = login.ToJSON();
+            return request.BuildResult(response_json);
         }
         catch (const KeyChainException& e) {
             LOG_ERROR_F("Invalid password? {}", e.what());

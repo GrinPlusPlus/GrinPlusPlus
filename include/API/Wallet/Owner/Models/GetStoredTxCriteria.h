@@ -20,30 +20,30 @@ public:
 
 	static GetStoredTxCriteria FromJSON(const Json::Value& paramsJson)
 	{
-		if (paramsJson.isObject())
+		if (!paramsJson.isObject())
 		{
-			SessionToken token = SessionToken::FromBase64(
-				JsonUtil::GetRequiredString(paramsJson, "session_token")
+			throw API_EXCEPTION(
+				RPC::ErrorCode::INVALID_PARAMS,
+				"Expected object with 2 (session_token, slate_id)"
 			);
-
-			const Json::Value& txIdJson = paramsJson["slate_id"];
-			if (txIdJson == Json::nullValue)
-			{
-				throw API_EXCEPTION(
-					RPC::Errors::TX_ID_MISSING.GetCode(),
-					"'slate_id' missing"
-				);
-			}
-
-			const uuids::uuid slateId = uuids::uuid::from_string(JsonUtil::GetRequiredString(txIdJson,"slate_id")).value();
-
-			return GetStoredTxCriteria(slateId, token);
 		}
 
-		throw API_EXCEPTION(
-			RPC::ErrorCode::INVALID_PARAMS,
-			"Expected object with 3 or more parameters (required: session_token, tx_id, method)"
+		SessionToken token = SessionToken::FromBase64(
+			JsonUtil::GetRequiredString(paramsJson, "session_token")
 		);
+
+		const Json::Value& txIdJson = paramsJson["slate_id"];
+		if (txIdJson == Json::nullValue)
+		{
+			throw API_EXCEPTION(
+				RPC::Errors::TX_ID_MISSING.GetCode(),
+				"'slate_id' missing"
+			);
+		}
+
+		const uuids::uuid slateId = uuids::uuid::from_string(JsonUtil::GetRequiredString(paramsJson,"slate_id")).value();
+
+		return GetStoredTxCriteria(slateId, token);
 	}
 
 	uuids::uuid GetTxSlateId() const noexcept { return m_txSlateId; }

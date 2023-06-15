@@ -66,7 +66,10 @@ public:
 			result["sender"] = sender.ToJSON();
 		}
 
-		return request.BuildResult(result);
+		Json::Value response;
+		response["Ok"] = result;
+
+		return request.BuildResult(response);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

@@ -24,10 +24,15 @@ public:
 
 		RepostTxCriteria criteria = RepostTxCriteria::FromJSON(request.GetParams().value());
 
-		m_pWalletManager->RepostTx(criteria, m_pTorProcess);
-		
+		const bool reposted = m_pWalletManager->RepostTx(criteria, m_pTorProcess);
+		if (!reposted)
+		{
+			return request.BuildError(RPC::Errors::UNABLE_TO_POST);
+		}
+
 		Json::Value result;
 		result["Ok"] = "";
+		
 		return request.BuildResult(result);
 	}
 

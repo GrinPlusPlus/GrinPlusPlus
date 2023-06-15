@@ -34,5 +34,8 @@ namespace RPC
 
 		// cancel_tx (-250 -> -259)
 		static inline RPC::Error TX_ID_MISSING = RPC::Error(-250, "'tx_id' missing", GetJSON("TX_ID_MISSING"));
+
+		// post_tx  (-260 -> -269)
+		static inline RPC::Error UNABLE_TO_POST = RPC::Error(-260, "Failed to broadcast Transaction", GetJSON("UNABLE_TO_POST"));
 	};
 }

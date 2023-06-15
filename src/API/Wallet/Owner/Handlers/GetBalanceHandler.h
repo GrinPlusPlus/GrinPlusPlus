@@ -26,8 +26,10 @@ public:
 		auto wallet = m_pWalletManager->GetWallet(token);
 
 		auto balance = wallet.Read()->GetBalance();
+		Json::Value response_json;
+		response_json["Ok"] = balance.ToJSON();
 
-		return request.BuildResult(balance.ToJSON());
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

@@ -27,7 +27,7 @@ public:
 		SecureString seedWords = m_pWalletManager->GetSeedWords(criteria);
 
 		Json::Value result;
-		result["wallet_seed"] = std::string(seedWords.begin(), seedWords.end());
+		result["Ok"] = std::string(seedWords.begin(), seedWords.end());
 		return request.BuildResult(result);
 	}
 

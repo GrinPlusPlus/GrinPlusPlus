@@ -27,7 +27,7 @@ public:
 		m_pWalletManager->Logout(token);
 
 		Json::Value response_json;
-		response_json["Ok"] = Json::Value();
+		response_json["Ok"] = "";
 
 		return request.BuildResult(response_json);
 	}

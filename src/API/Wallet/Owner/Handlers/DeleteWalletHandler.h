@@ -27,7 +27,7 @@ public:
 		m_pWalletManager->DeleteWallet(criteria.GetUsername(), criteria.GetPassword());
 
 		Json::Value result;
-		result["status"] = "SUCCESS";
+		result["Ok"] = "";
 		return request.BuildResult(result);
 	}
 

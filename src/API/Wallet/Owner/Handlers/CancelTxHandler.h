@@ -25,7 +25,7 @@ public:
 		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
 
 		Json::Value result;
-		result["status"] = wallet.Write()->CancelTx(criteria.GetTxId()) ? "SUCCESS" : "ERROR";
+		result["Ok"] = wallet.Write()->CancelTx(criteria.GetTxId()) ? "SUCCESS" : "ERROR";
 		return request.BuildResult(result);
 	}
 

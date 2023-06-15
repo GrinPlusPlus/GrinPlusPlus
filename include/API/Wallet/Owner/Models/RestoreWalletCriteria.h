@@ -25,9 +25,9 @@ public:
     {
         if (paramsJson.isObject())
         {
-            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "username");
+            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "name");
             auto passwordOpt = JsonUtil::GetStringOpt(paramsJson, "password");
-            auto walletSeedOpt = JsonUtil::GetStringOpt(paramsJson, "wallet_seed");
+            auto walletSeedOpt = JsonUtil::GetStringOpt(paramsJson, "mnemonic");
             if (usernameOpt.has_value() && passwordOpt.has_value() && walletSeedOpt.has_value())
             {
                 return RestoreWalletCriteria(
@@ -40,16 +40,16 @@ public:
 
         throw API_EXCEPTION(
             RPC::ErrorCode::INVALID_PARAMS,
-            "Expected object with 3 parameters (username, password, wallet_seed)"
+            "Expected object with 3 parameters (name, password, mnemonic)"
         );
     }
 
     Json::Value ToJSON() const final
     {
         Json::Value result;
-        result["username"] = m_username;
+        result["name"] = m_username;
         result["password"] = m_password.c_str();
-        result["wallet_seed"] = m_seedWords.c_str();
+        result["mnemonic"] = m_seedWords.c_str();
         return result;
     }
 

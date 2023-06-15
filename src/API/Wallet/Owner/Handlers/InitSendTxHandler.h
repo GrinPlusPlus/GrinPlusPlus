@@ -44,7 +44,10 @@ public:
 		SendResponse::EStatus status = SendResponse::EStatus::SENT;
 		std::string slatepack = Armor::Pack(sender_address, slate, recipients);
 
-		return request.BuildResult(SendResponse(status, slate, slatepack).ToJSON());
+		Json::Value result;
+		result["Ok"] = SendResponse(status, slate, slatepack).ToJSON();
+
+		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

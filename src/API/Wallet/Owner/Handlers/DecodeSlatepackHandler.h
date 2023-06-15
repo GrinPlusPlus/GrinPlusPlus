@@ -42,7 +42,7 @@ public:
 			SlatepackDecryptor{ m_pWalletManager });
 
 		Json::Value result;
-		result["Ok"] = criteria.GetSlatepackMessage().ToJSON();
+		result["Ok"] = criteria.GetSlate().ToJSON();
 
 		return request.BuildResult(result);
 	}

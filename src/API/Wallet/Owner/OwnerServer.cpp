@@ -148,8 +148,8 @@ OwnerServer::UPtr OwnerServer::Create(const uint16_t& serverPort,
     */
     pOwnerServer->AddMethod("close_wallet", std::shared_ptr<RPCMethod>(new LogoutHandler(pWalletManager)));
 
-    pOwnerServer->AddMethod("send", std::shared_ptr<RPCMethod>(new SendHandler(pTorProcess, pWalletManager)));
-    pOwnerServer->AddMethod("receive", std::shared_ptr<RPCMethod>(new ReceiveHandler(pWalletManager)));
+    pOwnerServer->AddMethod("send_tx", std::shared_ptr<RPCMethod>(new SendHandler(pTorProcess, pWalletManager)));
+    pOwnerServer->AddMethod("receive_tx", std::shared_ptr<RPCMethod>(new ReceiveHandler(pWalletManager)));
 
     pOwnerServer->AddMethod("finalize_tx", std::shared_ptr<RPCMethod>(new FinalizeHandler(pTorProcess, pWalletManager)));
 

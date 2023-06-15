@@ -27,7 +27,7 @@ public:
 		m_pWalletManager->ChangePassword(criteria.GetName(), criteria.GetCurrentPassword(), criteria.GetNewPassword());
 
 		Json::Value result;
-		result["status"] = "SUCCESS";
+		result["Ok"] = "";
 		return request.BuildResult(result);
 	}
 

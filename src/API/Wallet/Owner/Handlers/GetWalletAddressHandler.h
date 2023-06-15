@@ -26,7 +26,10 @@ public:
 
 		auto address = m_pWalletManager->GetWallet(token).Read()->GetSlatepackAddress();
 
-		return request.BuildResult(address.ToJSON());
+		Json::Value result;
+		result["Ok"] = address.ToJSON();
+
+		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

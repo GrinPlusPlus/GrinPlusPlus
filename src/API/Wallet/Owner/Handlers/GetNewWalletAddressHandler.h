@@ -32,6 +32,9 @@ public:
 		
 		auto address = m_pWalletManager->GetWallet(token).Read()->GetSlatepackAddress();
 
+		Json::Value response_json;
+		response_json["Ok"] = address.ToJSON();
+
 		return request.BuildResult(address.ToJSON());
 	}
 

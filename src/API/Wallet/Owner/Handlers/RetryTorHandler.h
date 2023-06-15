@@ -28,7 +28,9 @@ class RetryTorHandler : public RPCMethod
 				result["tor_address"] = m_torAddress.value();
 			}
 
-			return request.BuildResult(result);
+			Json::Value response_json;
+			response_json["Ok"] = result;
+			return request.BuildResult(response_json);
 		}
 
 	private:

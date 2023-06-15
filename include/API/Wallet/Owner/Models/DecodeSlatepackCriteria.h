@@ -10,6 +10,8 @@
 #include <Core/Exceptions/APIException.h>
 #include <Wallet/SessionToken.h>
 #include <API/Wallet/Owner/Utils/SlatepackDecryptor.h>
+#include <Core/Util/JsonUtil.h>
+#include <Wallet/SessionToken.h>
 
 #include <optional>
 #include <string>
@@ -19,8 +21,9 @@ class DecodeSlatepackCriteria
 public:
 	DecodeSlatepackCriteria(
 		const SlatepackMessage slatepackMessage,
+		Slate&& slate,
 		const SessionToken& token
-	) : m_slatepackMessage(slatepackMessage), m_token(token) { }
+	) : m_slatepackMessage(slatepackMessage), m_slate(std::move(slate)), m_token(token) { }
 
 	static DecodeSlatepackCriteria FromJSON(const Json::Value& paramsJson, const ISlatepackDecryptor& decryptor)
 	{
@@ -39,9 +42,11 @@ public:
 				);
 			}
 
-			const SlatepackMessage slatepack = decryptor.Decrypt(token, JsonUtil::GetRequiredString(messageJson, "slatepack"));
+			const SlatepackMessage slatepack = decryptor.Decrypt(token, JsonUtil::ConvertToStringOpt(messageJson).value());
+			ByteBuffer buffer{ slatepack.m_payload };
+			Slate slate = Slate::Deserialize(buffer);
 
-			return DecodeSlatepackCriteria(slatepack, token);
+			return DecodeSlatepackCriteria(slatepack, std::move(slate), token);
 		}
 
 		throw API_EXCEPTION(
@@ -52,8 +57,10 @@ public:
 
 	SlatepackMessage GetSlatepackMessage() const noexcept { return m_slatepackMessage; }
 	const SessionToken& GetToken() const noexcept { return m_token; }
+	const Slate& GetSlate() const noexcept { return m_slate; }
 
 private:
 	SlatepackMessage m_slatepackMessage;
+	Slate m_slate;
 	SessionToken m_token;
 };

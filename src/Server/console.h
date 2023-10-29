@@ -87,7 +87,7 @@ private:
 #else
     static void cls(void)
     {
-        std::cout << "\033[2J\033[1; 1H";
+        std::cout << "\033[2J\033[;H";
     }
 #endif
 };

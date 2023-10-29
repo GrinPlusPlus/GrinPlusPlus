@@ -53,10 +53,7 @@ const std::atomic_bool& Global::IsRunning()
 void Global::Shutdown()
 {
 	RUNNING = false;
-	if(TOR_PROCESS != nullptr)
-	{
-		TOR_PROCESS.reset();
-	}
+	TOR_PROCESS.reset();
 	SHARED_CONTEXT.reset();
 }
 

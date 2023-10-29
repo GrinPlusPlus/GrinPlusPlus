@@ -14,7 +14,7 @@ jobs:
             os: macos-11
             os_name: mac
             compiler: gcc
-            version: "11"
+            version: "12"
             vcpkg_triplet: x64-osx-grinpp
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -25,10 +25,10 @@ jobs:
                 backend/bin/Release/Tests
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             os_name: linux
             compiler: gcc
-            version: "11"
+            version: "12"
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''

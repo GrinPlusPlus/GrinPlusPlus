@@ -20,4 +20,4 @@ else(WIN32)
 endif(WIN32)
 
 add_library(${TARGET_NAME} STATIC ${SOURCE_CODE} ${OS_SPECIFIC_FILES})
-target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Crypto jsoncpp roaring::roaring bitcoin mio::mio)
+target_link_libraries(${TARGET_NAME} ${OS_SPECIFIC_LIBS} Tor Crypto jsoncpp roaring::roaring bitcoin mio::mio)

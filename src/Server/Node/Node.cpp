@@ -57,7 +57,7 @@ void Node::UpdateDisplay(const int secondsRunning)
 
 	IO::Clear();
 
-	std::cout << "Time Running: \t\t" << secondsRunning << "s";
+	std::cout << "\nTime Running: \t\t" << secondsRunning << "s";
 
 	const ESyncStatus status = pSyncStatus->GetStatus();
 	if (status == ESyncStatus::NOT_SYNCING)

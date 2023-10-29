@@ -90,8 +90,8 @@ public:
 	void AddObfs4TorBridge(const std::string bridge) noexcept;
 	void ClearTorrcFile() noexcept;
 	const std::string GetTorrcFileContent() const noexcept;
-	uint16_t GetSocksPort() const noexcept;
-	uint16_t GetControlPort() const noexcept;
+	const uint16_t GetSocksPort() const noexcept;
+	const uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;
 	const std::string& GetHashedControlPassword() const noexcept;
 	bool IsTorBridgesEnabled() noexcept;

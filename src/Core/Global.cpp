@@ -27,24 +27,22 @@ static void SigIntHandler(int signum)
 
 void Global::Init(const Context::Ptr& pContext)
 {
-	SHARED_CONTEXT = pContext;
-	GLOBAL_CONTEXT = pContext;
-	RUNNING = true;
-
 	const Config& config = pContext->GetConfig();
 
-	if (pContext->GetEnvironment() != Environment::AUTOMATED_TESTING) {
-		TOR_PROCESS = TorProcess::Initialize(
-			config.GetTorDataPath(),
-			config.GetSocksPort(),
-			config.GetControlPort()
-		);
-	}
-
+	SHARED_CONTEXT = pContext;
+	GLOBAL_CONTEXT = pContext;
+		
 	signal(SIGINT, SigIntHandler);
 	signal(SIGTERM, SigIntHandler);
 	signal(SIGABRT, SigIntHandler);
 	signal(9, SigIntHandler);
+
+	if (pContext->GetEnvironment() != Environment::AUTOMATED_TESTING) 
+	{
+		TOR_PROCESS = TorProcess::Initialize(config.GetTorDataPath(), config.GetSocksPort(), config.GetControlPort());
+	}
+
+	RUNNING = true;
 }
 
 const std::atomic_bool& Global::IsRunning()
@@ -55,7 +53,10 @@ const std::atomic_bool& Global::IsRunning()
 void Global::Shutdown()
 {
 	RUNNING = false;
-	TOR_PROCESS.reset();
+	if(TOR_PROCESS != nullptr)
+	{
+		TOR_PROCESS.reset();
+	}
 	SHARED_CONTEXT.reset();
 }
 

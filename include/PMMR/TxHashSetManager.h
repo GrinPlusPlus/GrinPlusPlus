@@ -21,8 +21,11 @@ public:
 	std::shared_ptr<ITxHashSet> Open(const BlockHeaderPtr& pConfirmedTip);
 	void Close()
 	{ 
+		if(m_pTxHashSet != nullptr)
+		{
+			m_pTxHashSet = std::shared_ptr<ITxHashSet>(nullptr);
+		}
 		delete m_pTxHashSet.get();
-		m_pTxHashSet = std::shared_ptr<ITxHashSet>(nullptr);
 	}
 
 	std::shared_ptr<ITxHashSet> GetTxHashSet() { return m_pTxHashSet; }

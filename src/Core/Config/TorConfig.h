@@ -18,10 +18,10 @@ public:
 	bool IsEnabled() const noexcept { return true; }
 
 	// The "SocksPort" https://2019.www.torproject.org/docs/tor-manual.html.en#SocksPort
-	uint16_t GetSocksPort() const noexcept { return m_socksPort; }
+	const uint16_t GetSocksPort() const noexcept { return m_socksPort; }
 
 	// The "ControlPort" https://2019.www.torproject.org/docs/tor-manual.html.en#ControlPort
-	uint16_t GetControlPort() const noexcept { return m_controlPort; }
+	const uint16_t GetControlPort() const noexcept { return m_controlPort; }
 
 	// The pre-hashed "ControlPassword" https://2019.www.torproject.org/docs/tor-manual.html.en#HashedControlPassword
 	const std::string& GetControlPassword() const noexcept { return m_password; }

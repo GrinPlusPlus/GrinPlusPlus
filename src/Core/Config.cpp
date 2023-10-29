@@ -113,6 +113,7 @@ std::shared_ptr<Config> Config::Default(const Environment environment)
 	m_json["WALLET"] = Json::Value();
 	m_json["WALLET"]["DATABASE"] = "SQLITE";
 	m_json["WALLET"]["MIN_CONFIRMATIONS"] = 10;
+	m_json["WALLET"]["REUSE_ADDRESS"] = 1;
 
 	return Load(m_json, environment);
 }

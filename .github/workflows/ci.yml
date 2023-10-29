@@ -25,7 +25,7 @@ jobs:
                 backend/bin/Release/Tests
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
-            os: ubuntu-22.04
+            os: ubuntu-20.04
             os_name: linux
             compiler: gcc
             version: "12"

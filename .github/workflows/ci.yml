@@ -14,7 +14,7 @@ jobs:
             os: macos-11
             os_name: mac
             compiler: gcc
-            version: "12"
+            version: "17"
             vcpkg_triplet: x64-osx-grinpp
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -28,7 +28,7 @@ jobs:
             os: ubuntu-22.04
             os_name: linux
             compiler: gcc
-            version: "12"
+            version: "17"
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -84,11 +84,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "Tag Name: ${{ steps.tagName.outputs.tag }}"
-          sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev build-essential
-          echo "export CC=/usr/bin/gcc-8"
-          echo "export CXX=/usr/bin/g++-8"
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 8
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
+          sudo apt install uuid-dev gcc-12 g++-12 libgflags-dev build-essential
+          echo "export CC=/usr/bin/gcc-12"
+          echo "export CXX=/usr/bin/g++ -12"
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:

@@ -21,7 +21,7 @@ std::pair<Slate, Transaction> FinalizeSlateBuilder::Finalize(const Slate& rcvSla
 	Slate sendSlate = m_pWallet->GetSlate(finalizeSlate.GetId(), ESlateStage::STANDARD_SENT);
 
 	// Load WalletTx
-	WalletTx walletTx = m_pWallet->GetTransactionBySlateId(finalizeSlate.GetId(), EWalletTxType::SENDING_STARTED);
+	WalletTx walletTx = m_pWallet->GetTransactionBySlateId(finalizeSlate.GetId());
 
 	// Load private context
 	SlateContextEntity slateContext = m_pWallet->GetSlateContext(finalizeSlate.GetId());

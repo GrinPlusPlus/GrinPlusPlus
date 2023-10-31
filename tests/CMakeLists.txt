@@ -18,7 +18,6 @@ target_compile_definitions(Tests PRIVATE INCLUDE_TEST_MATH)
 
 target_link_libraries(Tests PRIVATE
     Catch2::Catch2
-    Catch2::Catch2WithMain
     API
     BlockChain
     Common

@@ -40,7 +40,7 @@ target_include_directories(Tests PRIVATE
 
 include(CTest)
 include(Catch)
-catch_discover_tests(Tests)
+catch_discover_tests(Tests DISCOVERY_MODE PRE_TEST)
 
 #add_custom_command(
 #    TARGET Tests POST_BUILD

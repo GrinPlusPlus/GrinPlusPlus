@@ -51,6 +51,7 @@ public:
 	WalletSummaryDTO GetWalletSummary() const;
 	WalletBalanceDTO GetBalance() const;
 	std::unique_ptr<WalletTx> GetTransactionById(const uint32_t txId) const;
+	WalletTx GetTransactionBySlateId(const uuids::uuid& slateId) const;
 	WalletTx GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const;
 	std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) const;
 	std::vector<WalletOutputDTO> GetOutputs(const bool includeSpent, const bool includeCanceled) const;

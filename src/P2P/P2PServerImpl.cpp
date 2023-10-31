@@ -35,6 +35,7 @@ P2PServer::~P2PServer()
 	m_pSeeder.reset();
 	m_pPipeline.reset();
 	m_pConnectionManager->Shutdown();
+	LOG_INFO("P2P server stopped");
 }
 
 std::shared_ptr<P2PServer> P2PServer::Create(

@@ -41,7 +41,6 @@ void Global::Init(const Context::Ptr& pContext)
 	{
 		TOR_PROCESS = TorProcess::Initialize(config.GetTorDataPath(), config.GetSocksPort(), config.GetControlPort());
 	}
-
 	RUNNING = true;
 }
 
@@ -53,6 +52,7 @@ const std::atomic_bool& Global::IsRunning()
 void Global::Shutdown()
 {
 	RUNNING = false;
+
 	TOR_PROCESS.reset();
 	SHARED_CONTEXT.reset();
 }

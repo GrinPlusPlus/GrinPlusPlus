@@ -30,6 +30,7 @@ Seeder::~Seeder() {
     ThreadUtil::Join(m_listenerThread);
     ThreadUtil::Join(m_seedThread);
     ThreadUtil::Join(m_prunerThread);
+    LOG_INFO("Seeder stopped");
 }
 
 std::unique_ptr<Seeder> Seeder::Create(ConnectionManager& connectionManager,

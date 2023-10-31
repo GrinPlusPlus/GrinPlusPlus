@@ -7,6 +7,8 @@
 #include <vector>
 #include <Core/Global.h>
 
+#include <thread>
+
 class ThreadUtil
 {
 public:

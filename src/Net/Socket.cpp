@@ -1,3 +1,5 @@
+#include <thread>
+
 #include <Net/Socket.h>
 #include <Net/SocketException.h>
 #include <Core/Global.h>

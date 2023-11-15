@@ -32,7 +32,7 @@ public:
 
 		m_minimumConfirmations = 10;
 		m_reuseAddress = 1;
-		if (json.isMember(ConfigProps::Wallet::WALLET))
+		if (json.isMember(Json::String(ConfigProps::Wallet::WALLET)))
 		{
 			const Json::Value& walletJSON = json[ConfigProps::Wallet::WALLET];
 

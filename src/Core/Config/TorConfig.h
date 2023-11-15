@@ -161,14 +161,14 @@ public:
 		fs::create_directories(torDataPath);
 		if (!fs::exists(m_torrcPath)) std::ofstream file(m_torrcPath);
 
-		if (json.isMember(ConfigProps::Tor::TOR))
+		if (json.isMember(Json::String(ConfigProps::Tor::TOR)))
 		{
 			const Json::Value& torJSON = json[ConfigProps::Tor::TOR];
 
 			m_socksPort = (uint16_t)torJSON.get(ConfigProps::Tor::SOCKS_PORT, m_socksPort).asUInt();
 			m_controlPort = (uint16_t)torJSON.get(ConfigProps::Tor::CONTROL_PORT, m_controlPort).asUInt();
 
-			if (torJSON.isMember(ConfigProps::Tor::PASSWORD) && torJSON.isMember(ConfigProps::Tor::HASHED_PASSWORD))
+			if (torJSON.isMember(Json::String(ConfigProps::Tor::PASSWORD)) && torJSON.isMember(Json::String(ConfigProps::Tor::HASHED_PASSWORD)))
 			{
 				m_password = torJSON[ConfigProps::Tor::PASSWORD].asCString();
 				m_hashedPassword = torJSON[ConfigProps::Tor::HASHED_PASSWORD].asCString();

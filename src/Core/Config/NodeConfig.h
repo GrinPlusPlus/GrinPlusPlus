@@ -37,13 +37,13 @@ public:
 			m_ownerAPIPort = 13420;
 		}
 
-		if (json.isMember(ConfigProps::Server::SERVER)) {
+		if (json.isMember(Json::String(ConfigProps::Server::SERVER))) {
 			const Json::Value& serverJSON = json[ConfigProps::Server::SERVER];
 
-			if (serverJSON.isMember(ConfigProps::Server::NODE_API_PORT)) {
+			if (serverJSON.isMember(Json::String(ConfigProps::Server::NODE_API_PORT))) {
 				m_ownerAPIPort = (uint16_t)serverJSON.get(ConfigProps::Server::NODE_API_PORT, m_nodeAPIPort).asInt();
 			}
-			if (serverJSON.isMember(ConfigProps::Server::OWNER_API_PORT)) {
+			if (serverJSON.isMember(Json::String(ConfigProps::Server::OWNER_API_PORT))) {
 				m_ownerAPIPort = (uint16_t)serverJSON.get(ConfigProps::Server::OWNER_API_PORT, m_ownerAPIPort).asInt();
 			}
 		}

@@ -30,7 +30,7 @@ struct Config::Impl
 		fs::create_directories(m_logPath);
 
 		m_logLevel = "DEBUG";
-		if (json.isMember(ConfigProps::Logger::LOGGER)) {
+		if (json.isMember(Json::String(ConfigProps::Logger::LOGGER))) {
 			const Json::Value& loggerJSON = json[ConfigProps::Logger::LOGGER];
 			m_logLevel = loggerJSON.get(ConfigProps::Logger::LOG_LEVEL, "DEBUG").asString();
 		}
@@ -92,7 +92,8 @@ std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment 
 {
 	fs::path dataDir = DefaultDataDir(environment);
 
-	if (json.isMember(ConfigProps::DATA_PATH)) {
+	if (json.isMember(Json::String(ConfigProps::DATA_PATH))) 
+	{
 		dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
 	}
 	

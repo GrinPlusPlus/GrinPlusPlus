@@ -2,4 +2,4 @@
 
 #include <string>
 
-static const std::string GRINPP_VERSION = "1.2.8";
+static const std::string GRINPP_VERSION = "1.2.9";

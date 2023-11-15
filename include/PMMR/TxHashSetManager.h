@@ -19,7 +19,14 @@ public:
 	~TxHashSetManager() = default;
 
 	std::shared_ptr<ITxHashSet> Open(const BlockHeaderPtr& pConfirmedTip);
-	void Close() { m_pTxHashSet.reset(); }
+	void Close()
+	{ 
+		if(m_pTxHashSet != nullptr)
+		{
+			m_pTxHashSet = std::shared_ptr<ITxHashSet>(nullptr);
+		}
+		delete m_pTxHashSet.get();
+	}
 
 	std::shared_ptr<ITxHashSet> GetTxHashSet() { return m_pTxHashSet; }
 	std::shared_ptr<const ITxHashSet> GetTxHashSet() const { return m_pTxHashSet; }

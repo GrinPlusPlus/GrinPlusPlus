@@ -63,12 +63,13 @@ public:
 		const uint8_t magicByte2 = byteBuffer.ReadU8();
 		const std::vector<uint8_t>& magic_bytes = Global::GetMagicBytes();
 		if (magicByte1 != magic_bytes[0] || magicByte2 != magic_bytes[1]) {
-			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Bad magic bytes.");
+
+			throw DESERIALIZATION_EXCEPTION_F("Message header is invalid. Bad magic bytes: ({},{})", int(magicByte1), int(magicByte2));
 		}
 
 		const uint8_t messageType = byteBuffer.ReadU8();
 		const uint64_t messageLength = byteBuffer.ReadU64();
-
+		
 		if (messageLength > MessageTypes::GetMaximumSize((MessageTypes::EMessageType)messageType) * 4) {
 			throw DESERIALIZATION_EXCEPTION("Message header is invalid. Message length too long");
 		}

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
-SET(CMAKE_BUILD_TYPE Release)
+#SET(CMAKE_BUILD_TYPE Release)
 
 if(APPLE)
     set(CMAKE_INSTALL_NAME_DIR "@executable_path")
@@ -84,7 +84,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
-    ${PROJECT_SOURCE_DIR}/deps/Catch2
+    # ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
     ${PROJECT_SOURCE_DIR}/deps/scheduler/include
 )
@@ -107,6 +107,7 @@ find_package(minizip CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(secp256k1-zkp CONFIG REQUIRED)
 find_package(mio CONFIG REQUIRED)
+find_package(Catch2 CONFIG REQUIRED)
 
 include(sqlite3)
 include(jsoncpp)

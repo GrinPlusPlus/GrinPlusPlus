@@ -8,8 +8,9 @@
 #include "MMRUtil.h"
 #include "MMRHashUtil.h"
 
-#include <Core/File/DataFile.h>
 #include <Roaring.h>
+
+#include <Core/File/DataFile.h>
 #include <Core/Exceptions/TxHashSetException.h>
 #include <Core/Serialization/Serializer.h>
 #include <Core/Serialization/ByteBuffer.h>
@@ -158,6 +159,13 @@ public:
 			SetDirty(false);
 		}
 	}
+
+	void Unload()
+	{
+		m_pHashFile->Close();
+		m_pDataFile->Close();
+	}
+
 
 private:
 	std::shared_ptr<HashFile> m_pHashFile;

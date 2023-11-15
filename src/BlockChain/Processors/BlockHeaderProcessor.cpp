@@ -172,7 +172,7 @@ EBlockChainStatus BlockHeaderProcessor::ProcessChunkedSyncHeaders(const std::vec
     }
 
     if (newHeaders.empty()) {
-        LOG_DEBUG("Headers already processed.");
+        LOG_TRACE("Headers already processed.");
         return EBlockChainStatus::ALREADY_EXISTS;
     }
 

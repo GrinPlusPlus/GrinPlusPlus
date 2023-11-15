@@ -31,8 +31,10 @@ public:
 		ValidateInput(criteria);
 
 		auto response = m_pWalletManager->RestoreFromSeed(criteria, m_pTorProcess);
+		Json::Value response_json;
+		response_json["Ok"] = response.ToJSON();
 
-		return request.BuildResult(response.ToJSON());
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return true; }

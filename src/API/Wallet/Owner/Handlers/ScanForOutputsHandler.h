@@ -22,7 +22,9 @@ public:
 
 		m_pWalletManager->CheckForOutputs(token, true);
 
-		return request.BuildResult(Json::Value{});
+		Json::Value response_json;
+		response_json["Ok"] = "";
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

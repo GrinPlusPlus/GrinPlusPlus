@@ -33,7 +33,7 @@ namespace ConfigProps
 	{
 		static const std::string SERVER = "SERVER";
 
-		static const std::string REST_API_PORT = "REST_API_PORT";
+		static const std::string NODE_API_PORT = "NODE_API_PORT";
 		static const std::string OWNER_API_PORT = "OWNER_API_PORT";
 	}
 
@@ -49,7 +49,6 @@ namespace ConfigProps
 		static const std::string WALLET = "WALLET";
 
 		static const std::string MIN_CONFIRMATIONS = "MIN_CONFIRMATIONS";
-
 		static const std::string REUSE_ADDRESS = "REUSE_ADDRESS";
 	}
 
@@ -67,7 +66,7 @@ namespace ConfigProps
 	namespace GrinJoin
 	{
 		static const std::string GRINJOIN = "GRINJOIN";
-
+		
 		static const std::string SECRET_KEY = "SECRET_KEY";
 	}
 }

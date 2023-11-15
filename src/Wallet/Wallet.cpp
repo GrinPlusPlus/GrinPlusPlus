@@ -74,6 +74,22 @@ std::unique_ptr<WalletTx> Wallet::GetTransactionById(const uint32_t txId) const
 	return m_walletDB.Read()->GetTransactionById(m_master_seed, txId);
 }
 
+WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId) const
+{
+	std::vector<WalletTx> txs = m_walletDB.Read()->GetTransactions(m_master_seed);
+	for (const WalletTx& tx : txs)
+	{
+		if (tx.GetSlateId().has_value() && tx.GetSlateId().value() == slateId) 
+		{
+			return tx;
+		}
+	}
+
+	const std::string errorMsg = StringUtil::Format("Transaction not found for {}", uuids::to_string(slateId));
+	WALLET_ERROR(errorMsg);
+	throw WALLET_EXCEPTION(errorMsg);
+}
+
 WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const
 {
 	std::vector<WalletTx> txs = m_walletDB.Read()->GetTransactions(m_master_seed);
@@ -127,6 +143,20 @@ Slate Wallet::GetSlate(const uuids::uuid& slateId, const SlateStage& stage) cons
 
 	return *pSlate;
 }
+
+Slate Wallet::GetSlate(const uuids::uuid& slateId) const
+{
+	auto latest_slate = m_walletDB.Read()->LoadLatestSlate(m_master_seed, slateId);
+	if (latest_slate.first != nullptr) {
+		return (Slate)(*latest_slate.first);
+	}
+	WALLET_ERROR_F(
+		"Failed to load slate for {}",
+		uuids::to_string(slateId)
+	);
+	throw WALLET_EXCEPTION("Failed to load slate.");
+}
+
 
 SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
 {
@@ -236,14 +266,17 @@ FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
 
 // }
 
-void Wallet::CancelTx(const uint32_t walletTxId)
+bool Wallet::CancelTx(const uint32_t walletTxId)
 {
     auto pBatch = m_walletDB.BatchWrite();
 	std::unique_ptr<WalletTx> pWalletTx = pBatch->GetTransactionById(m_master_seed, walletTxId);
 	if (pWalletTx != nullptr) {
+		if (pWalletTx->GetType() == SENDING_FINALIZED) return false;
 		CancelTx::CancelWalletTx(m_master_seed, pBatch.GetShared(), *pWalletTx);
         pBatch->Commit();
+		return true;
 	}
+	return false;
 }
 
 BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteria)

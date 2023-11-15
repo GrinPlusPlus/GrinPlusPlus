@@ -68,6 +68,12 @@ void KernelMMR::Rollback() noexcept
 	m_pDataFile->Rollback();
 }
 
+void KernelMMR::Unload() const
+{
+	m_pHashFile->Close();
+	m_pDataFile->Close();
+}
+
 void KernelMMR::ApplyKernel(const TransactionKernel& kernel)
 {
 	std::vector<uint8_t> serialized = kernel.Serialized();

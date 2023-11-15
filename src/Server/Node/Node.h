@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NodeRestServer.h"
+#include "NodeRPCServer.h"
 
 #include <Core/Config.h>
 #include <Wallet/NodeClient.h>
@@ -8,17 +8,17 @@
 
 // Forward Declarations
 class Context;
-class NodeRestServer;
+class NodeRPCServer;
 class DefaultNodeClient;
 
 class Node
 {
 public:
-	static std::unique_ptr<Node> Create(const std::shared_ptr<Context>& pContext);
+	static std::unique_ptr<Node> Create(const std::shared_ptr<Context>& pContext, const ServerPtr& pServer);
 
 	Node(
 		const std::shared_ptr<Context>& pContext,
-		std::unique_ptr<NodeRestServer>&& pNodeRestServer,
+		std::unique_ptr<NodeRPCServer>&& pNodeRPCServer,
 		std::shared_ptr<DefaultNodeClient> pNodeClient
 	);
 	~Node();
@@ -29,6 +29,6 @@ public:
 
 private:
 	std::shared_ptr<Context> m_pContext;
-	std::unique_ptr<NodeRestServer> m_pNodeRestServer;
+	std::unique_ptr<NodeRPCServer> m_pNodeRPCServer;
 	std::shared_ptr<DefaultNodeClient> m_pNodeClient;
 };

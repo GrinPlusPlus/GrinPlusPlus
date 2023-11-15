@@ -61,7 +61,15 @@ public:
 		}
 
 		result["slatepack"] = Armor::Pack(address, slate, recipients);
-		return request.BuildResult(result);
+		result["slate"] = slate.ToJSON();
+		if (!sender.IsNull()) {
+			result["sender"] = sender.ToJSON();
+		}
+
+		Json::Value response;
+		response["Ok"] = result;
+
+		return request.BuildResult(response);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

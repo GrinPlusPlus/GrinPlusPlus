@@ -8,6 +8,12 @@
 #include <Common/Logger.h>
 #include <Crypto/CSPRNG.h>
 
+#include "DNSSeeder.h"
+
+#include <algorithm>
+#include <random>
+
+
 PeerManager::PeerManager(const Context::Ptr& pContext, std::shared_ptr<Locked<IPeerDB>> pPeerDB)
     : m_taskId(0), m_pContext(pContext), m_pPeerDB(pPeerDB)
 {
@@ -28,26 +34,33 @@ std::shared_ptr<Locked<PeerManager>> PeerManager::Create(const Context::Ptr& pCo
 
     pPeerManager->m_peersByAddress.clear();
 
-    if (Global::GetConfig().GetPreferredPeers().size() > 0) {
-        LOG_INFO("Preferred peers found.");
-        for (const IPAddress& ipAddress : Global::GetConfig().GetPreferredPeers()) {
-            try {
-                const PeerPtr& peer = std::make_shared<Peer>(ipAddress);
-                pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-            }
-            catch (std::exception& e) {
-                LOG_ERROR_F("Exception thrown: {}", e.what());
-            }
-        }
-    } 
-    else {
-        LOG_INFO("Getting peers from database...");
-        const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
-        for (const PeerPtr& peer : peers) {
-            pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
-        }
+    try {
+        pPeerManager->AddFreshPeers(DNSSeeder::GetPeersFromDNS());
     }
-    
+    catch (std::exception& e)
+    {
+        LOG_ERROR_F("Error connecting to seeders: {}", e.what());
+    }
+    try {
+        auto set = Global::GetConfig().GetPreferredPeers();
+        std::vector<IPAddress> peerAddresses;
+        peerAddresses.reserve(set.size());
+        for (auto it = set.begin(); it != set.end(); ) {
+            peerAddresses.push_back(std::move(set.extract(it++).value()));
+        }
+        pPeerManager->AddFreshPeers(peerAddresses);
+        LOG_DEBUG_F("Imported {} preferred peers.", peerAddresses.size());
+    }
+    catch (std::exception& e)
+    {
+        LOG_ERROR_F("Error importing preferred peers: {}", e.what());
+    }
+        
+    const std::vector<PeerPtr> peers = pPeerDB->Read()->LoadAllPeers();
+    for (const PeerPtr& peer : peers) {
+        pPeerManager->m_peersByAddress.emplace(peer->GetIPAddress(), PeerEntry(peer));
+    }
+
     std::shared_ptr<Locked<PeerManager>> pLocked = std::make_shared<Locked<PeerManager>>(Locked<PeerManager>(pPeerManager));
 
     std::weak_ptr<Locked<PeerManager>> pLockedWeak(pLocked);
@@ -134,7 +147,7 @@ std::optional<PeerConstPtr> PeerManager::GetPeer(const IPAddress& address) const
 
 PeerPtr PeerManager::GetNewPeer(const Capabilities::ECapability& preferredCapability)
 {
-    std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, 1, true);
+    std::vector<PeerPtr> peers = GetPeersWithCapability(preferredCapability, 1, false);
     if (peers.empty()) {
         peers = GetPeersWithCapability(Capabilities::UNKNOWN, 1, true);
     }
@@ -188,6 +201,15 @@ void PeerManager::AddFreshPeers(const std::vector<SocketAddress>& peerAddresses)
 {
     for (auto& socketAddress : peerAddresses) {
         const IPAddress& ipAddress = socketAddress.GetIPAddress();
+        if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end()) {
+            m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(ipAddress)));
+        }
+    }
+}
+
+void PeerManager::AddFreshPeers(const std::vector<IPAddress>& peerAddresses)
+{
+    for (const IPAddress& ipAddress : peerAddresses) {
         if (m_peersByAddress.find(ipAddress) == m_peersByAddress.end()) {
             m_peersByAddress.emplace(ipAddress, PeerEntry(std::make_shared<Peer>(ipAddress)));
         }
@@ -260,6 +282,10 @@ std::vector<PeerPtr> PeerManager::GetPeersWithCapability(
 
         iter++;
     }
+
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{ rd() };
+    std::shuffle(std::begin(peersFound), std::end(peersFound), rng);
 
     return peersFound;
 }

@@ -18,6 +18,7 @@ target_compile_definitions(Tests PRIVATE INCLUDE_TEST_MATH)
 
 target_link_libraries(Tests PRIVATE
     Catch2::Catch2
+    Catch2::Catch2WithMain
     API
     BlockChain
     Common
@@ -39,7 +40,7 @@ target_include_directories(Tests PRIVATE
 
 include(CTest)
 include(Catch)
-catch_discover_tests(Tests)
+catch_discover_tests(Tests DISCOVERY_MODE PRE_TEST)
 
 #add_custom_command(
 #    TARGET Tests POST_BUILD

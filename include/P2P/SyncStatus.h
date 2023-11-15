@@ -57,6 +57,7 @@ public:
 	uint64_t GetNetworkHeight() const { return m_networkHeight; }
 	uint64_t GetNetworkDifficulty() const { return m_networkDifficulty; }
 	uint64_t GetHeaderHeight() const { return m_headerHeight; }
+	uint64_t GetHeaderHash() const { return m_networkHeight; }
 	uint64_t GetHeaderDifficulty() const { return m_headerDifficulty; }
 	uint64_t GetBlockHeight() const { return m_blockHeight; }
 	uint64_t GetBlockDifficulty() const { return m_blockDifficulty; }

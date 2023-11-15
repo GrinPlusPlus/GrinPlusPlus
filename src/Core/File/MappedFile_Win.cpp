@@ -9,15 +9,18 @@
 
 MappedFile::~MappedFile()
 {
-	//LOG_TRACE_F("Closing File: {}", m_path);
+	LOG_TRACE_F("Closing File: {}", m_path);
 
 	Unmap();
 
 	if (m_handle != INVALID_HANDLE_VALUE)
 	{
 #ifdef _WIN32
-		//SetEndOfFile(m_handle);
-		CloseHandle(m_handle);
+		try
+		{
+			//SetEndOfFile(m_handle);
+			//CloseHandle(m_handle);
+		} catch (...) { }
 #endif
 	}
 }
@@ -56,7 +59,7 @@ IMappedFile::UPtr IMappedFile::Load(const fs::path& path)
 		LOG_ERROR_F("Failed to open file: {}", path);
 		throw FILE_EXCEPTION_F("Failed to open file: {}", path);
 	}
-
+	
 	return std::unique_ptr<IMappedFile>(new MappedFile(path, handle));
 }
 
@@ -90,7 +93,7 @@ bool MappedFile::Write(const size_t startIndex, const std::vector<uint8_t>& data
 	if (!success)
 	{
 		LOG_ERROR_F("Failed to set end of file for {} - error: {}", m_path, GetLastError());
-		//return false;
+		return false;
 	}
 
 	return true;
@@ -146,5 +149,15 @@ void MappedFile::Unmap() const
 
 		m_mmap.mapped_view = nullptr;
 		m_mmap.mapping_handle = INVALID_HANDLE_VALUE;
+	}
+}
+
+void MappedFile::Close() const
+{
+	if (m_handle != INVALID_HANDLE_VALUE)
+	{
+#ifdef _WIN32
+		CloseHandle(m_handle);
+#endif
 	}
 }

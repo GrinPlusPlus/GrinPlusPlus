@@ -39,6 +39,11 @@ public:
 
 	}
 
+	Capabilities()
+	{
+		m_value = UNKNOWN;
+	}
+
 	inline bool IsUnknown() const noexcept { return m_value == UNKNOWN; }
 	inline bool HasCapability(const ECapability capability) const noexcept { return (m_value & (uint32_t)capability) == (uint32_t)capability; }
 	inline void AddCapability(const ECapability capability) noexcept { m_value = (m_value | capability); }

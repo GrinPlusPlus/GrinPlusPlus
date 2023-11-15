@@ -66,7 +66,7 @@ public:
 
 	const IWalletManagerPtr& GetWalletManager() const noexcept { return m_pWalletManager; }
 	const OwnerServer::UPtr& GetOwnerServer() const noexcept { return m_pOwnerServer; }
-	uint16_t GetOwnerPort() const noexcept { return 3421; }
+	uint16_t GetOwnerPort() const noexcept { return 3420; }
 
 	RPC::Response InvokeOwnerRPC(const std::string& method, const Json::Value& paramsJson);
 

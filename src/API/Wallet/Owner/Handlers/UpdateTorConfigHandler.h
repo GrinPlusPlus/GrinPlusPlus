@@ -70,7 +70,9 @@ public:
 		result["bridges"] = bridges;
 		result["bridges_type"] = config.IsTorBridgesEnabled() ? config.IsSnowflakeEnabled() ? "snowflake" : "obfs4" : "";
 		
-		return request.BuildResult(result);
+		Json::Value response_json;
+		response_json["Ok"] = result;
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

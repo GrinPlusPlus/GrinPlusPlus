@@ -51,10 +51,12 @@ public:
 	WalletSummaryDTO GetWalletSummary() const;
 	WalletBalanceDTO GetBalance() const;
 	std::unique_ptr<WalletTx> GetTransactionById(const uint32_t txId) const;
+	WalletTx GetTransactionBySlateId(const uuids::uuid& slateId) const;
 	WalletTx GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const;
 	std::vector<WalletTxDTO> GetTransactions(const ListTxsCriteria& criteria) const;
 	std::vector<WalletOutputDTO> GetOutputs(const bool includeSpent, const bool includeCanceled) const;
 	Slate GetSlate(const uuids::uuid& slateId, const SlateStage& stage) const;
+	Slate GetSlate(const uuids::uuid& slateId) const;
 	SlateContextEntity GetSlateContext(const uuids::uuid& slateId) const;
 
 	// void CheckForOutputs(const bool fromGenesis);
@@ -78,7 +80,7 @@ public:
 
 	// Slate Finalize(const Slate& slate, const std::optional<SlatepackMessage>& slatepackOpt);
 
-	void CancelTx(const uint32_t walletTxId);
+	bool CancelTx(const uint32_t walletTxId);
 
 	BuildCoinbaseResponse BuildCoinbase(const BuildCoinbaseCriteria& criteria);
 	SlatepackMessage DecryptSlatepack(const std::string& armoredSlatepack) const;

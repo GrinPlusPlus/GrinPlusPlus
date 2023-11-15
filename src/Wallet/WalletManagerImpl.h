@@ -41,15 +41,26 @@ public:
 		const TorProcess::Ptr& pTorProcess
 	);
 	
+	int GetAddressDerivationIndex(
+		const SessionToken& token
+	);
+
+	ed25519_secret_key_t GetAddressSecretKey(
+		const SessionToken& token
+	);
+
 	KeyChainPath IncreaseAddressKeyChainPathIndex(
 		const SessionToken& token
 	);
+
+	std::string GetWalletsDirectory() const final;
 
 	LoginResponse Login(
 		const LoginCriteria& criteria,
 		const TorProcess::Ptr& pTorProcess
 	) final;
 	void Logout(const SessionToken& token) final;
+	void AuthenticateWallet(const GrinStr& username, const SecureString& password) final;
 	void DeleteWallet(const GrinStr& username, const SecureString& password) final;
 	void ChangePassword(
 		const GrinStr& username,

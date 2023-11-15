@@ -19,6 +19,7 @@ public:
 
 	bool Write(const size_t startIndex, const std::vector<uint8_t>& data) final;
 	void Read(const uint64_t position, const uint64_t numBytes, std::vector<uint8_t>& data) const final;
+	void Close() const final;
 
 private:
 	void Map() const;

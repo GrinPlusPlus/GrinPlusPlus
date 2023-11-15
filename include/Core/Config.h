@@ -30,7 +30,8 @@ public:
 	const fs::path& GetChainPath() const noexcept;
 	const fs::path& GetDatabasePath() const noexcept;
 	const fs::path& GetTxHashSetPath() const noexcept;
-	uint16_t GetRestAPIPort() const noexcept;
+	uint16_t GetNodeAPIPort() const noexcept;
+	uint16_t GetOwnerAPIPort() const noexcept;
 	uint64_t GetFeeBase() const noexcept;
 
 	//
@@ -44,6 +45,8 @@ public:
 
 	uint16_t GetP2PPort() const noexcept;
 	const std::vector<uint8_t>& GetMagicBytes() const noexcept;
+
+	IPAddress GetP2PIP() const noexcept;
 
 	uint8_t GetMinSyncPeers() const noexcept;
 
@@ -70,7 +73,7 @@ public:
 	// Wallet
 	//
 	const fs::path& GetWalletPath() const noexcept;
-	uint32_t GetOwnerPort() const noexcept;
+	uint32_t GetWalletOwnerPort() const noexcept;
 	uint32_t GetPublicKeyVersion() const noexcept;
 	uint32_t GetPrivateKeyVersion() const noexcept;
 
@@ -87,8 +90,8 @@ public:
 	void AddObfs4TorBridge(const std::string bridge) noexcept;
 	void ClearTorrcFile() noexcept;
 	const std::string GetTorrcFileContent() const noexcept;
-	uint16_t GetSocksPort() const noexcept;
-	uint16_t GetControlPort() const noexcept;
+	const uint16_t GetSocksPort() const noexcept;
+	const uint16_t GetControlPort() const noexcept;
 	const std::string& GetControlPassword() const noexcept;
 	const std::string& GetHashedControlPassword() const noexcept;
 	bool IsTorBridgesEnabled() noexcept;

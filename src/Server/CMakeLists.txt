@@ -5,7 +5,7 @@ file(GLOB SOURCE_CODE
 	"JSONFactory.cpp"
 	"ShutdownManager.cpp"
 	"Node/Node.cpp"
-	"Node/NodeRestServer.cpp"
+	"Node/NodeRPCServer.cpp"
 	"Node/API/BlockAPI.cpp"
 	"Node/API/ChainAPI.cpp"
 	"Node/API/HeaderAPI.cpp"

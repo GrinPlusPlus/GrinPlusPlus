@@ -7,10 +7,15 @@
 
 bool StateSyncer::SyncState(SyncStatus& syncStatus)
 {
+	if (!Global::IsRunning()) return false;
+
 	if (IsStateSyncDue(syncStatus))
 	{
-		syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
-		RequestState(syncStatus);
+		if (RequestState(syncStatus))
+		{
+			LOG_INFO_F("Hashset requested successfully to: {}", *m_pPeer);
+			syncStatus.UpdateStatus(ESyncStatus::SYNCING_TXHASHSET);
+		}
 
 		return true;
 	}
@@ -25,92 +30,112 @@ bool StateSyncer::SyncState(SyncStatus& syncStatus)
 }
 
 // NOTE: This doesn't handle re-orgs beyond the horizon.
-bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus) const
+bool StateSyncer::IsStateSyncDue(const SyncStatus& syncStatus)
 {
-	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
-	const uint64_t blockHeight = syncStatus.GetBlockHeight();
-
 	const ESyncStatus status = syncStatus.GetStatus();
-	if (status == ESyncStatus::PROCESSING_TXHASHSET)
-	{
-		return false;
-	}
+	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
 
-	if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
-	{
-		LOG_WARNING("TxHashSet sync failed.");
-		return true;
-	}
-
+	// If Hashset is being processed return false
 	// For the first week, there's no reason to request TxHashSet, since we can just download full blocks.
-	if (headerHeight < Consensus::CUT_THROUGH_HORIZON)
-	{
-		return false;
-	}
-
 	// If block height is within threshold, just rely on block sync.
-	if (blockHeight > (headerHeight - Consensus::CUT_THROUGH_HORIZON))
+	if (status == ESyncStatus::PROCESSING_TXHASHSET || 
+		headerHeight < Consensus::CUT_THROUGH_HORIZON ||
+		syncStatus.GetBlockHeight() >(headerHeight - Consensus::CUT_THROUGH_HORIZON)
+	   )
 	{
 		return false;
 	}
 
-	if (m_requestedHeight == 0)
+	if (m_pPeer == nullptr ||
+		m_requestedHeight == 0 ||
+		status == ESyncStatus::TXHASHSET_SYNC_FAILED
+		)
 	{
-		LOG_INFO("Requesting TxHashSet for the first time.");
-		return true;
-	}
-
-	// If TxHashSet download timed out, request it from another peer.
-	if ((m_timeRequested + std::chrono::minutes(120)) < std::chrono::system_clock::now())
-	{
-		LOG_WARNING("Download timed out (120 minutes).");
-		return true;
-	}
-
-	// If 10 seconds elapsed with no progress, try another peer.
-	if ((m_timeRequested + std::chrono::seconds(10)) < std::chrono::system_clock::now())
-	{
-		const uint64_t downloaded = syncStatus.GetDownloaded();
-		if (downloaded == 0)
+		if (status == ESyncStatus::TXHASHSET_SYNC_FAILED)
 		{
-			LOG_WARNING("10 seconds elapsed and download still not started.");
+			LOG_WARNING("TxHashSet sync failed.");
+		}
+		m_requestedHeight = 0;
+		m_pPeer = nullptr;
+		m_lastSize = 0;
+
+		return true;
+	}
+
+	// If 60 seconds elapsed with no progress, try another peer.
+	if (syncStatus.GetDownloaded() == 0)
+	{
+		if ((m_timeRequested + std::chrono::seconds(60)) < std::chrono::system_clock::now())
+		{
+			LOG_WARNING("60 seconds elapsed and download still not started.");
+			m_requestedHeight = 0;
+			m_lastSize = 0;
+			m_pPeer = nullptr;
 			return true;
 		}
 	}
 
-	if (m_pPeer != nullptr && !m_pConnectionManager.lock()->IsConnected(m_pPeer->GetIPAddress()))
+	if (syncStatus.GetDownloaded() > 0)
 	{
-		LOG_WARNING("Sync peer no longer connected.");
-		return true;
+		// If TxHashSet download timed out, request it from another peer.
+		if (syncStatus.GetDownloaded() == m_lastSize &&
+			(m_timeRequested + std::chrono::seconds(20)) < std::chrono::system_clock::now())
+		{
+			m_requestedHeight = 0;
+			m_lastSize = 0;
+			m_pPeer = nullptr;
+			return true;
+		}
+		
+		if ((m_timeRequested + std::chrono::minutes(120)) < std::chrono::system_clock::now())
+		{
+			LOG_WARNING("Download timed out (120 minutes). Requesting from another peer...");
+			m_requestedHeight = 0;
+			m_pPeer = nullptr;
+			return true;
+		}
 	}
+	
+	m_lastSize = syncStatus.GetDownloaded();
 
 	return false;
 }
 
 bool StateSyncer::RequestState(const SyncStatus& syncStatus)
 {
-	if (m_pPeer != nullptr)
+	const uint64_t headerHeight = syncStatus.GetHeaderHeight();
+	const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
+	Hash hash = m_pBlockChain->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
+	const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
+	
+	std::pair<PeerPtr, std::unique_ptr<RawMessage>> attemptResults = 
+		m_pConnectionManager.lock()->ExchangeMessageWithMostWorkPeer(txHashSetRequestMessage);
+
+	if (attemptResults.first == nullptr)
 	{
-		LOG_WARNING_F("Banning peer: {}", m_pPeer);
-		m_pPeer->Ban(EBanReason::BadTxHashSet);
-		m_pPeer = nullptr;
+		LOG_WARNING_F("Unable to request State");
+		return false;
 	}
 
-	if (Global::IsRunning())
+	if (attemptResults.second == nullptr)
 	{
-		const uint64_t headerHeight = syncStatus.GetHeaderHeight();
-		const uint64_t requestedHeight = headerHeight - Consensus::STATE_SYNC_THRESHOLD;
-		Hash hash = m_pBlockChain->GetBlockHeaderByHeight(requestedHeight, EChainType::CANDIDATE)->GetHash();
-
-		const TxHashSetRequestMessage txHashSetRequestMessage(std::move(hash), requestedHeight);
-		m_pPeer = m_pConnectionManager.lock()->SendMessageToMostWorkPeer(txHashSetRequestMessage);
-
-		if (m_pPeer != nullptr)
-		{
-			m_timeRequested = std::chrono::system_clock::now();
-			m_requestedHeight = requestedHeight;
-		}
+		LOG_WARNING_F("{} did not answer back", *attemptResults.first);
+		return false;
 	}
 
-	return m_pPeer != nullptr;
+	if (attemptResults.second->GetMessageType() != MessageTypes::TxHashSetArchive)
+	{
+		LOG_TRACE_F("{} did not sent hashset back, received: {}",
+					  *attemptResults.first, attemptResults.second->GetMessageHeader());
+		return false;
+	}
+
+	m_pPeer = attemptResults.first;
+	m_timeRequested = std::chrono::system_clock::now();
+	m_requestedHeight = requestedHeight;
+	m_lastSize = 0;
+
+	LOG_DEBUG_F("TxHashSetRequestMessage sent to: {}", m_pPeer->GetIPAddress());
+	
+	return true;
 }

@@ -92,3 +92,14 @@ void MappedFile::Unmap() const
 {
 	m_mmap.unmap();
 }
+
+void MappedFile::Close() const
+{
+#ifndef _WIN32
+	std::ifstream inFile(m_path, std::ios::in | std::ifstream::ate | std::ifstream::binary);
+	if (inFile.is_open())
+	{
+		inFile.close();
+	}
+#endif
+}

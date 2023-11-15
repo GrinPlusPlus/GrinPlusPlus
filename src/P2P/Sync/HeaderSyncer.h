@@ -23,7 +23,7 @@ public:
 	bool SyncHeaders(const SyncStatus& syncStatus, const bool startup);
 
 private:
-	bool IsHeaderSyncDue(const SyncStatus& syncStatus);
+	bool IsHeaderSyncDue(const uint64_t height);
 	bool RequestHeaders(const SyncStatus& syncStatus);
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;

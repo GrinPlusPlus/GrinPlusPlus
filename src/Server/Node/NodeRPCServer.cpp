@@ -1,4 +1,4 @@
-#include "NodeRestServer.h"
+#include "NodeRPCServer.h"
 #include "NodeContext.h"
 
 #include "API/HeaderAPI.h"
@@ -18,13 +18,16 @@ static int Shutdown_Handler(struct mg_connection* conn, void*)
 	return HTTPUtil::BuildSuccessResponse(conn, "");
 }
 
-NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_ptr<NodeContext> pNodeContext)
+NodeRPCServer::UPtr NodeRPCServer::Create(const ServerPtr& pServer, std::shared_ptr<NodeContext> pNodeContext)
 {
-	const uint16_t port = config.GetRestAPIPort();
-	ServerPtr pServer = Server::Create(EServerType::LOCAL, std::make_optional<uint16_t>(port));
-	NodeServer::UPtr pV2Server = NodeServer::Create(pServer, pNodeContext->m_pBlockChain, pNodeContext->m_pP2PServer);
+	NodeServer::UPtr pServerV2 = NodeServer::Create(pServer,
+													pNodeContext->m_pBlockChain,
+													pNodeContext->m_pP2PServer,
+													pNodeContext->m_pTxHashSetManager->GetTxHashSet(),
+													pNodeContext->m_pDatabase);
 
 	/* Add v1 handlers */
+	/*
 	pServer->AddListener("/v1/status", ServerAPI::GetStatus_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/resync", ServerAPI::ResyncChain_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/headers/", HeaderAPI::GetHeader_Handler, pNodeContext.get());
@@ -42,6 +45,7 @@ NodeRestServer::UPtr NodeRestServer::Create(const Config& config, std::shared_pt
 	pServer->AddListener("/v1/txhashset/outputs", TxHashSetAPI::GetOutputs_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/shutdown", Shutdown_Handler, pNodeContext.get());
 	pServer->AddListener("/v1/", ServerAPI::V1_Handler, pNodeContext.get());
+	*/
 
-	return std::make_unique<NodeRestServer>(pNodeContext, std::move(pV2Server));
+	return std::make_unique<NodeRPCServer>(pNodeContext, std::move(pServerV2));
 }

@@ -31,26 +31,26 @@ public:
 		m_patienceSeconds = 10;
 		m_stemProbability = 90;
 
-		if (json.isMember(ConfigProps::Dandelion::DANDELION))
+		if (json.isMember(Json::String(ConfigProps::Dandelion::DANDELION)))
 		{
 			const Json::Value& dandelionJSON = json[ConfigProps::Dandelion::DANDELION];
 
-			if (dandelionJSON.isMember(ConfigProps::Dandelion::RELAY_SECS))
+			if (dandelionJSON.isMember(Json::String(ConfigProps::Dandelion::RELAY_SECS)))
 			{
 				m_relaySeconds = (uint16_t)dandelionJSON.get(ConfigProps::Dandelion::RELAY_SECS, 600).asUInt();
 			}
 
-			if (dandelionJSON.isMember(ConfigProps::Dandelion::EMBARGO_SECS))
+			if (dandelionJSON.isMember(Json::String(ConfigProps::Dandelion::EMBARGO_SECS)))
 			{
 				m_embargoSeconds = (uint16_t)dandelionJSON.get(ConfigProps::Dandelion::EMBARGO_SECS, 180).asUInt();
 			}
 
-			if (dandelionJSON.isMember(ConfigProps::Dandelion::PATIENCE_SECS))
+			if (dandelionJSON.isMember(Json::String(ConfigProps::Dandelion::PATIENCE_SECS)))
 			{
 				m_patienceSeconds = (uint8_t)dandelionJSON.get(ConfigProps::Dandelion::PATIENCE_SECS, 10).asUInt();
 			}
 
-			if (dandelionJSON.isMember(ConfigProps::Dandelion::STEM_PROBABILITY))
+			if (dandelionJSON.isMember(Json::String(ConfigProps::Dandelion::STEM_PROBABILITY)))
 			{
 				m_stemProbability = (uint8_t)dandelionJSON.get(ConfigProps::Dandelion::STEM_PROBABILITY, 90).asUInt();
 			}

@@ -26,7 +26,10 @@ public:
 		auto wallet = m_pWalletManager->GetWallet(criteria.GetToken());
 		FeeEstimateDTO response = wallet.Read()->EstimateFee(criteria);
 
-		return request.BuildResult(response.ToJSON());
+		Json::Value response_json;
+		response_json["Ok"] = response.ToJSON();
+
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

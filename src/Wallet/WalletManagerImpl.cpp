@@ -18,6 +18,7 @@
 #include <Net/Tor/TorConnection.h>
 #include <Net/Tor/TorProcess.h>
 #include <cassert>
+#include <fstream>
 #include <thread>
 
 WalletManager::WalletManager(const Config& config, INodeClientPtr pNodeClient, std::shared_ptr<IWalletStore> pWalletStore)
@@ -160,8 +161,7 @@ std::optional<TorAddress> WalletManager::AddTorListener(const SessionToken& toke
 bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const TorProcess::Ptr& pTorProcess)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
-
+	
 	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
 	
 	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
@@ -171,10 +171,33 @@ bool WalletManager::RemoveCurrentTorListener(const SessionToken& token, const To
 	return pTorProcess->RemoveListener(TorAddressParser::FromPubKey(ED25519::CalculatePubKey(torKey.secret_key)));
 }
 
+ed25519_secret_key_t WalletManager::GetAddressSecretKey(const SessionToken & token)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+
+	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+	KeyChainPath currentPath = KeyChainPath::FromString("m/0/1").GetChild(currentIndex);
+	ed25519_keypair_t secretKey = keyChain.DeriveED25519Key(currentPath);
+	
+	return secretKey.secret_key;
+}
+
+int WalletManager::GetAddressDerivationIndex(const SessionToken& token)
+{
+	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
+	
+	KeyChain keyChain = KeyChain::FromSeed(m_sessionManager.Read()->GetSeed(token));
+
+	int currentIndex = wallet.Read()->GetDatabase().Read()->GetCurrentAddressIndex(KeyChainPath::FromString("m/0/0"));
+
+	return currentIndex;
+}
+
 KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken& token)
 {
 	Locked<Wallet> wallet = m_sessionManager.Read()->GetWallet(token);
-	Locked<WalletImpl> walletImpl = m_sessionManager.Read()->GetWalletImpl(token);
 
 	KeyChainPath userPath = KeyChainPath::FromString("m/0/0"); // FUTURE: Support multiple account paths
 	
@@ -182,6 +205,11 @@ KeyChainPath WalletManager::IncreaseAddressKeyChainPathIndex(const SessionToken&
 	int nextIndex = wallet.Write()->GetDatabase().Write()->IncreaseAddressIndex(userPath);
 	// after increasing the index we should then add the tor listener again using the new derived key
 	return KeyChainPath::FromString("m/0/1").GetChild(nextIndex);
+}
+
+std::string WalletManager::GetWalletsDirectory() const
+{
+	return m_config.GetDataDirectory().u8string();
 }
 
 std::vector<GrinStr> WalletManager::GetAllAccounts() const
@@ -224,6 +252,22 @@ LoginResponse WalletManager::Login(
 void WalletManager::Logout(const SessionToken& token)
 {
 	m_sessionManager.Write()->Logout(token);
+}
+
+void WalletManager::AuthenticateWallet(const GrinStr& username, const SecureString& password)
+{
+	WALLET_WARNING_F("Attempting to authenticate wallet with username: {}", username);
+
+	try
+	{
+		GrinStr usernameLower = username.ToLower();
+		m_sessionManager.Read()->Authenticate(usernameLower, password);
+	}
+	catch (std::exception& e)
+	{
+		WALLET_ERROR_F("Error ({}) while attempting to authenticate wallet: {}", e.what(), username);
+		throw WALLET_EXCEPTION(e.what());
+	}
 }
 
 void WalletManager::DeleteWallet(const GrinStr& username, const SecureString& password)

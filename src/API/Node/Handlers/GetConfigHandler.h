@@ -16,7 +16,7 @@ public:
 		config_json["min_peers"] = config.GetMinPeers();
 		config_json["max_peers"] = config.GetMaxPeers();
 		config_json["min_confirmations"] = config.GetMinimumConfirmations();
-		config_json["reuse_address"] = config.ShouldReuseAddresses();
+		config_json["address_reuse"] = config.ShouldReuseAddresses();
 		
 		Json::Value preferred_peers;
 		for (const IPAddress& peer : config.GetPreferredPeers())
@@ -39,6 +39,10 @@ public:
 		}
 		config_json["blocked_peers"] = blocked_peers;
 		
+		Json::Value result;
+		result["Ok"] = config_json;
+		return request.BuildResult(result);
+
 		return request.BuildResult(config_json);
 	}
 

@@ -3,6 +3,7 @@
 #include <Core/Config.h>
 #include <Wallet/NodeClient.h>
 #include <Wallet/WalletManager.h>
+#include <Net/Servers/Server.h>
 #include <Net/Tor/TorProcess.h>
 
 // Forward Declarations
@@ -25,7 +26,6 @@ public:
 	);
 
 private:
-
 	const Config& m_config;
 	IWalletManagerPtr m_pWalletManager;
 	std::unique_ptr<OwnerServer> m_pOwnerServer;

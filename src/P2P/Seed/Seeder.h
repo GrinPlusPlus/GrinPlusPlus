@@ -44,12 +44,12 @@ private:
 		m_pAsioContext(std::make_shared<asio::io_service>()),
 		m_terminate(false) { }
 
-	static void Thread_AsioContext(Seeder& seeder);
+	static void Thread_Listener(Seeder& seeder);
 	static void Thread_Seed(Seeder& seeder);
-	void StartListener();
+	static void Thread_Pruner(Seeder& seeder);
 
-	void Accept(const asio::error_code& ec);
-	void SeedNewConnection();
+	void SeedConnections(const size_t connections, const size_t max);
+	void ConnectPeer(PeerPtr& pPeer);
 
 	ConnectionManager& m_connectionManager;
 	Locked<PeerManager> m_peerManager;
@@ -61,10 +61,12 @@ private:
 
 	std::shared_ptr<asio::io_service> m_pAsioContext;
 	std::shared_ptr<asio::ip::tcp::acceptor> m_pAcceptor;
-	std::shared_ptr<asio::ip::tcp::socket> m_pSocket;
+	std::shared_ptr<asio::ip::tcp::socket> m_pServerSocket;
 
 	std::thread m_asioThread;
+	std::thread m_listenerThread;
 	std::thread m_seedThread;
+	std::thread m_prunerThread;
 
 	std::mutex m_mutex;
 	mutable std::atomic_bool m_usedDNS = false;

@@ -148,6 +148,11 @@ public:
 	// Removes pruned leaves and hashes from the output and rangeproof PMMRs to reduce disk usage.
 	//
 	virtual void Compact() = 0;
+
+	//
+	// Close files handlers
+	//
+	virtual void Unload() = 0;
 };
 
 typedef std::shared_ptr<ITxHashSet> ITxHashSetPtr;

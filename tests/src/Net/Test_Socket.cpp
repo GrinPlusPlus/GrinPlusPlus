@@ -1,4 +1,5 @@
 #include <catch.hpp>
+#include <thread>
 
 #include <Net/Socket.h>
 #include <Net/TestListener.h>

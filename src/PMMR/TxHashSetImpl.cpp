@@ -42,9 +42,13 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 		}
 
 		std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetLeafIndex());
-		if (pOutput == nullptr || pOutput->GetCommitment() != commitment) {
-			LOG_DEBUG_F("Output ({}) not found at mmrIndex ({})",  commitment, pOutputPosition->GetLeafIndex());
-			return false;
+		// if there is no output this is not necessary
+		if(!transaction.GetOutputs().empty()) 
+		{
+			if (pOutput == nullptr || pOutput->GetCommitment() != commitment) {
+				LOG_DEBUG_F("Output ({}) not found at mmrIndex ({})",  commitment, pOutputPosition->GetLeafIndex());
+				return false;
+			}
 		}
 
 		if (pOutput->IsCoinbase()) {

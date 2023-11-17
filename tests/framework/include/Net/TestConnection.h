@@ -1,9 +1,11 @@
 #pragma once
 
-#include <Net/SocketAddress.h>
 #include <asio.hpp>
 #include <iostream>
 #include <memory>
+#include <thread>
+
+#include <Net/SocketAddress.h>
 
 using asio_socket_ptr = std::shared_ptr<asio::ip::tcp::socket>;
 

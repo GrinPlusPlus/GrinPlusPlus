@@ -11,10 +11,10 @@ jobs:
         name: [macos, ubuntu, windows]
         include:
           - name: macos
-            os: macos-10.15
+            os: macos-11
             os_name: mac
             compiler: gcc
-            version: "10"
+            version: "12"
             vcpkg_triplet: x64-osx-grinpp
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -25,10 +25,10 @@ jobs:
                 backend/bin/Release/Tests
             release_command: 'npm run clean_build:nix && npm run release'
           - name: ubuntu
-            os: ubuntu-18.04
+            os: ubuntu-20.04
             os_name: linux
             compiler: gcc
-            version: "8"
+            version: "11"
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -84,11 +84,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "Tag Name: ${{ steps.tagName.outputs.tag }}"
-          sudo apt install uuid-dev gcc-8 g++-8 libgflags-dev build-essential
-          echo "export CC=/usr/bin/gcc-8"
-          echo "export CXX=/usr/bin/g++-8"
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 8
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
+          sudo apt install uuid-dev gcc-11 g++-11 libgflags-dev build-essential
+          echo "export CC=/usr/bin/gcc-11"
+          echo "export CXX=/usr/bin/g++ -11"
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:

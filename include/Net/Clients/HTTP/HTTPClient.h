@@ -6,6 +6,7 @@
 #include <Common/Logger.h>
 #include <Common/GrinStr.h>
 #include <sstream>
+#include <thread>
 
 class IHTTPClient : public Client<HTTP::Request, HTTP::Response>
 {

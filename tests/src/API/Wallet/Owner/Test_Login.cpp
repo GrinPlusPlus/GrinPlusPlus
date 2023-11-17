@@ -5,6 +5,7 @@
 #include <TestServer.h>
 #include <Comparators/JsonComparator.h>
 #include <optional>
+#include <thread>
 
 TEST_CASE("API: login")
 {

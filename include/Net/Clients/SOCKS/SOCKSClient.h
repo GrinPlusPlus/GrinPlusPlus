@@ -5,6 +5,8 @@
 #include <Net/Clients/SOCKS/SOCKSException.h>
 #include <Net/Clients/HTTP/HTTPClient.h>
 
+#include <thread>
+
 static const std::chrono::seconds SOCKS_TIMEOUT = std::chrono::seconds(3);
 
 class SOCKSClient : public IHTTPClient

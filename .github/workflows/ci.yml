@@ -137,7 +137,7 @@ jobs:
           dir ${{ github.workspace }}\frontend\bin
           npm version ${{ steps.tagName.outputs.tag }} --allow-same-version --git-tag-version false
           npm install && npm run build && xcopy src\electron-starter.js build\electron-starter.js* && xcopy src\notarize.js build\notarize.js*` && npm run release
-      - name: Build UI (mac/linux)
+      - name: Build UI (macOS/linux)
         working-directory: frontend
         if: runner.os != 'windows' && startsWith(github.ref, 'refs/tags/')
         env:

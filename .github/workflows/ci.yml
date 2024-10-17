@@ -11,7 +11,7 @@ jobs:
         name: [macos, ubuntu, windows]
         include:
           - name: macos
-            os: macos-11
+            os: macos-12
             os_name: mac
             compiler: gcc
             version: "12"

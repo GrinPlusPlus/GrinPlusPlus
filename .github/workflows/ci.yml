@@ -71,6 +71,11 @@ jobs:
           repository: microsoft/vcpkg
           path: vcpkg
           ref: '2020.06'
+      - name: Install compiler
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@master
+        with:
+          compiler: g++-11
       - name: setup macos environment
         if: runner.os == 'macOS'
         run: |
@@ -84,9 +89,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "Tag Name: ${{ steps.tagName.outputs.tag }}"
-          sudo apt install uuid-dev gcc-11 g++-11 libgflags-dev build-essential
-          echo "export CC=/usr/bin/gcc-11"
-          echo "export CXX=/usr/bin/g++ -11"
+          sudo apt install uuid-dev libgflags-dev build-essential
+          echo "export CC=${{ steps.install_cc.outputs.cc }}"
+          echo "export CXX=${{ steps.install_cc.outputs.cxx }}"
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
       - name: Cache vcpkg artifacts

@@ -82,7 +82,8 @@ jobs:
           brew install gcc cmake
           echo "::set-env name=CC::gcc-${{ matrix.version }}"
           echo "::set-env name=CXX::g++-${{ matrix.version }}"
-          brew install gflags
+          brew install gflags python@3.10
+          ln -s -f /usr/local/bin/python3.10 /usr/local/bin/python
         env:
             ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: setup ubuntu environment

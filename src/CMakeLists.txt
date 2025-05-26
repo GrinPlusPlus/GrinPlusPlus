@@ -1,10 +1,6 @@
-if (MSVC)
-    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-        string(REGEX REPLACE "/W[0-4]" "/W4 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-     endif()
-endif (MSVC)
+if(MSVC)
+    add_compile_options(/Zc:__cplusplus /W4 /WX)
+endif()
 
 add_subdirectory(API)
 add_subdirectory(Common)

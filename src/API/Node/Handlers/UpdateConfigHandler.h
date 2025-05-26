@@ -174,9 +174,8 @@ public:
 			Json::Value result_json;
 			return request.BuildResult(result_json);
 		} else {
-			std::string error_message = "Failed to save config file at: " + config_path.u8string();
-			LOG_ERROR(error_message);
-			return request.BuildError("INTERNAL_ERROR", error_message);
+			LOG_ERROR("Failed to save config file at: {}", config_path.u8string());
+			return request.BuildError("INTERNAL_ERROR", "Failed to save config file at: " + config_path.u8string());
 		}		
 	}
 

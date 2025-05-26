@@ -84,9 +84,8 @@ WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId) const
 		}
 	}
 
-	const std::string errorMsg = StringUtil::Format("Transaction not found for {}", uuids::to_string(slateId));
-	WALLET_ERROR(errorMsg);
-	throw WALLET_EXCEPTION(errorMsg);
+	WALLET_ERROR("Transaction not found for {}", uuids::to_string(slateId));
+	throw WALLET_EXCEPTION_F("Transaction not found for {}", uuids::to_string(slateId));
 }
 
 WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId, const EWalletTxType type) const
@@ -99,9 +98,8 @@ WalletTx Wallet::GetTransactionBySlateId(const uuids::uuid& slateId, const EWall
 		}
 	}
 
-	const std::string errorMsg = StringUtil::Format("Transaction not found for {}", uuids::to_string(slateId));
-	WALLET_ERROR(errorMsg);
-	throw WALLET_EXCEPTION(errorMsg);
+	WALLET_ERROR("Transaction not found for {}", uuids::to_string(slateId));
+	throw WALLET_EXCEPTION_F("Transaction not found for {}", uuids::to_string(slateId));
 }
 
 std::vector<WalletTxDTO> Wallet::GetTransactions(const ListTxsCriteria& criteria) const

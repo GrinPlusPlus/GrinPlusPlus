@@ -61,7 +61,7 @@ int AccountsTable::GetCurrentAddressIndex(SqliteDB& database, std::string parent
 
 	auto pStatement = database.Query(select_version_query);
 	if (!pStatement->Step()) {
-		WALLET_ERROR("Account not found at: " + parentPath);
+		WALLET_ERROR("Account not found at: {}", parentPath);
 		throw WALLET_STORE_EXCEPTION("Account not found at: " + parentPath);
 	}
 

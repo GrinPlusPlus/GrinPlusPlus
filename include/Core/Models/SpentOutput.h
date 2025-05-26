@@ -92,7 +92,8 @@ public:
 
 	static SpentOutputs Deserialize(ByteBuffer& byteBuffer)
 	{
-		assert(byteBuffer.ReadU8() == 0);
+		[[maybe_unused]] const uint8_t version = byteBuffer.ReadU8();
+		assert(version == 0);
 
 		const uint16_t numOutputs = byteBuffer.ReadU16();
 

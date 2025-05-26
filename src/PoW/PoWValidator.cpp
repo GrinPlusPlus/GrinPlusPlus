@@ -1,6 +1,5 @@
 #include <PoW/PoWValidator.h>
 #include <Consensus.h>
-#include <uint128/uint128_t.h>
 
 #include "DifficultyCalculator.h"
 #include "Cuckaroo.h"
@@ -8,6 +7,7 @@
 #include "Cuckaroom.h"
 #include "Cuckarooz.h"
 #include "Cuckatoo.h"
+#include "uint128.h"
 
 bool PoWValidator::IsPoWValid(const BlockHeader& header, const BlockHeader& previousHeader) const
 {

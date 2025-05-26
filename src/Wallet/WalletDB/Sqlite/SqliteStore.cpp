@@ -83,7 +83,7 @@ Locked<IWalletDB> SqliteStore::CreateWallet(const std::string& username, const E
 	const fs::path userDBPath = m_walletDirectory / username;
 	const fs::path seedFile = userDBPath / "seed.json";
 	if (FileUtil::Exists(seedFile)) {
-		WALLET_WARNING("Wallet already exists for user: " + username);
+		WALLET_WARNING("Wallet already exists for user: {}", username);
 		throw WALLET_STORE_EXCEPTION("Wallet already exists.");
 	}
 

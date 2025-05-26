@@ -36,7 +36,7 @@ void ConnectionManager::Shutdown()
 	}
 	catch (const std::exception& e)
 	{
-		LOG_ERROR(std::string(e.what()));
+		LOG_ERROR(e.what());
 	}
 	catch (...)
 	{
@@ -159,7 +159,7 @@ bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr 
 
 void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t sourceId)
 {
-	LOG_DEBUG_F("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
+	LOG_DEBUG("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
 
 	// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
 	auto connections = *m_connections.Read().GetShared();
@@ -172,7 +172,7 @@ void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t
 
 void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 {
-	LOG_DEBUG_F("Adding connection: {}", pConnection->GetPeer());
+	LOG_DEBUG("Adding connection: {}", pConnection->GetPeer());
 	m_connections.Write()->emplace_back(pConnection);
 }
 
@@ -200,7 +200,7 @@ void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 				pConnection->Disconnect();
 			}
 			catch (std::exception& e) {
-				LOG_ERROR("Error disconnecting: " + std::string(e.what()));
+				LOG_ERROR("Error disconnecting: {}", e.what());
 			}
 			connections.erase(iter);
 		}

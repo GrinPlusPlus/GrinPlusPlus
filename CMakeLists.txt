@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
+cmake_policy(SET CMP0091 NEW) # honor CMAKE_MSVC_RUNTIME_LIBRARY
+
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
 SET(CMAKE_BUILD_TYPE Release)
@@ -15,6 +17,7 @@ project(GRIN_PLUS_PLUS)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]") #Case insensitive match
     message(FATAL_ERROR "Clang not supported")
@@ -23,36 +26,7 @@ endif()
 
 if(MSVC)
     message("Setting flags for Visual Studio C++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-
-    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-        string(REGEX REPLACE "/W[0-4]" "/W4 /WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-    endif()
-
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    set(CompilerFlags
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS_RELWITHDEBINFO
-    )
-
-    add_definitions(-DWIN32_LEAN_AND_MEAN)
-foreach(CompilerFlag ${CompilerFlags})
-    string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-    set(${CompilerFlag} "${${CompilerFlag}}" CACHE STRING "msvc compiler flags" FORCE)
-    message("MSVC flags: ${CompilerFlag}:${${CompilerFlag}}")
-endforeach()
-
     SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /OPT:REF /INCREMENTAL:NO")
     SET(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /OPT:REF /INCREMENTAL:NO")
@@ -64,7 +38,6 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(WITH_GFLAGS OFF)
-#add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 
@@ -84,7 +57,6 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/deps/stduuid/include
     ${PROJECT_SOURCE_DIR}/deps/ghc
     ${PROJECT_SOURCE_DIR}/deps/jsoncpp
-    # ${PROJECT_SOURCE_DIR}/deps/Catch2
     ${PROJECT_SOURCE_DIR}/deps/cppcodec
     ${PROJECT_SOURCE_DIR}/deps/scheduler/include
 )
@@ -109,17 +81,12 @@ find_package(secp256k1-zkp CONFIG REQUIRED)
 find_package(mio CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 
-include(sqlite3)
 include(jsoncpp)
-include(uint128)
 include(scrypt)
 include(sha3)
 include(reproc)
-include(bitcoin)
-add_subdirectory(deps/cppcodec)
-add_subdirectory(deps/chachapoly)
-add_subdirectory(deps/rfc6234)
 
+add_subdirectory(deps)
 add_subdirectory(src)
 
 option(GRINPP_TESTS "Build tests" true)

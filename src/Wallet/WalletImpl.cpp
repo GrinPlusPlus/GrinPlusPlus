@@ -250,7 +250,7 @@ std::unique_ptr<WalletTx> WalletImpl::GetTxBySlateId(const SecureVector& masterS
 		}
 	}
 
-	WALLET_INFO("Could not find transaction " + uuids::to_string(slateId));
+	WALLET_INFO("Could not find transaction {}", uuids::to_string(slateId));
 	return std::unique_ptr<WalletTx>(nullptr);
 }
 

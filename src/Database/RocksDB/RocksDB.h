@@ -76,14 +76,13 @@ public:
 		}
 		else
 		{
-			const std::string errorMessage = StringUtil::Format(
+			LOG_ERROR(
 				"Error while attempting to retrieve {} from table {}. Error: {}",
 				key.ToString(true),
 				table,
 				status.getState()
 			);
-			LOG_ERROR(errorMessage);
-			throw DATABASE_EXCEPTION(errorMessage);
+			throw DATABASE_EXCEPTION("Get Failed");
 		}
 	}
 
@@ -116,14 +115,13 @@ public:
 		}
 		else
 		{
-			const std::string errorMessage = StringUtil::Format(
+			LOG_ERROR(
 				"Error while attempting to insert {} into table {}. Error: {}",
 				entry.key.ToString(true),
 				table,
 				status.getState()
 			);
-			LOG_ERROR(errorMessage);
-			throw DATABASE_EXCEPTION(errorMessage);
+			throw DATABASE_EXCEPTION("Put Failed");
 		}
 	}
 
@@ -163,14 +161,13 @@ public:
 
 			if (!status.ok())
 			{
-				const std::string errorMessage = StringUtil::Format(
+				LOG_ERROR(
 					"Error while attempting to insert {} into table {}. Error: {}",
 					entry.key.ToString(true),
 					table,
 					status.getState()
 				);
-				LOG_ERROR(errorMessage);
-				throw DATABASE_EXCEPTION(errorMessage);
+				throw DATABASE_EXCEPTION("Put Failed");
 			}
 		}
 
@@ -202,14 +199,13 @@ public:
 
 		if (!status.ok())
 		{
-			const std::string errorMessage = StringUtil::Format(
+			LOG_ERROR(
 				"Error while attempting to delete {} from table {}. Error: {}",
 				key.ToString(true),
 				table,
 				status.getState()
 			);
-			LOG_ERROR(errorMessage);
-			throw DATABASE_EXCEPTION(errorMessage);
+			throw DATABASE_EXCEPTION("Delete Failed");
 		}
 	}
 
@@ -241,14 +237,13 @@ public:
 				status = m_pTransaction->Delete(table.GetHandle(), it->key());
 				if (!status.ok())
 				{
-					const std::string errorMessage = StringUtil::Format(
+					LOG_ERROR(
 						"Error while attempting to delete {} from table {}. Error: {}",
 						it->key().data(),
 						table,
 						status.getState()
 					);
-					LOG_ERROR(errorMessage);
-					throw DATABASE_EXCEPTION(errorMessage);
+					throw DATABASE_EXCEPTION("DeleteAll Failed");
 				}
 			}
 		}
@@ -260,14 +255,13 @@ public:
 				status = m_pTransactionDB->Delete(rocksdb::WriteOptions(), table.GetHandle(), it->key());
 				if (!status.ok())
 				{
-					const std::string errorMessage = StringUtil::Format(
+					LOG_ERROR(
 						"Error while attempting to delete {} from table {}. Error: {}",
 						it->key().data(),
 						table,
 						status.getState()
 					);
-					LOG_ERROR(errorMessage);
-					throw DATABASE_EXCEPTION(errorMessage);
+					throw DATABASE_EXCEPTION("DeleteAll Failed");
 				}
 			}
 		}

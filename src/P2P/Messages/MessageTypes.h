@@ -29,8 +29,14 @@ namespace MessageTypes
 		BanReasonMsg = 18,
 		GetTransactionMsg = 19,
 		TransactionKernelMsg = 20,
-		GetKernels = 21,
-		Kernels = 22
+		GetOutputBitmapSegment = 21,
+		OutputBitmapSegment = 22,
+		GetOutputSegment = 23,
+		OutputSegment = 24,
+		GetRangeProofSegment = 25,
+		RangeProofSegment = 26,
+		GetKernelSegment = 27,
+		KernelSegment = 28
 	};
 
 	static uint64_t GetMaximumSize(const EMessageType messageType)

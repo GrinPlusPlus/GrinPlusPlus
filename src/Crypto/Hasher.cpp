@@ -4,9 +4,8 @@
 #include <sodium/crypto_generichash_blake2b.h>
 #include <bitcoin/sha256.h>
 #include <bitcoin/ripemd160.h>
-#include <bitcoin/hmac_sha256.h>
-#include <bitcoin/hmac_sha512.h>
 
+#include "HMAC.h"
 #include "ThirdParty/siphash.h"
 
 Hash Hasher::Blake2b(const std::vector<uint8_t>& input)

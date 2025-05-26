@@ -80,7 +80,7 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 	try
 	{
-		LOG_INFO("Validating TxHashSet for block " + header.GetHash().ToHex());
+		LOG_INFO("Validating TxHashSet for block {}", header.GetHash().ToHex());
 		pBlockSums = TxHashSetValidator(blockChain).Validate(*this, header, syncStatus);
 		if (pBlockSums != nullptr)
 		{

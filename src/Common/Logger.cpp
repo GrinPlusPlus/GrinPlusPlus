@@ -17,6 +17,7 @@ public:
 		const spdlog::level::level_enum& logLevel
 	);
 	void StopLogger();
+	bool WillLog(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel) const;
 	void Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText);
 	void Flush();
 	void SetThreadName(const std::string& thread_name);
@@ -24,7 +25,7 @@ public:
 private:
 	Logger() = default;
 
-	std::shared_ptr<spdlog::logger> GetLogger(const LoggerAPI::LogFile file);
+	std::shared_ptr<spdlog::logger> GetLogger(const LoggerAPI::LogFile file) const;
 	std::string GetThreadName() const;
 
 	mutable std::shared_mutex m_threadNamesMutex;
@@ -80,6 +81,12 @@ void Logger::StopLogger()
 	m_pWalletLogger.reset();
 }
 
+bool Logger::WillLog(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel) const
+{
+	auto pLogger = GetLogger(file);
+	return pLogger != nullptr && pLogger->should_log(logLevel);
+}
+
 void Logger::Log(const LoggerAPI::LogFile file, const spdlog::level::level_enum logLevel, const std::string& eventText)
 {
 	auto pLogger = GetLogger(file);
@@ -125,7 +132,7 @@ void Logger::SetThreadName(const std::string& thread_name)
 	m_threadNamesById[std::this_thread::get_id()] = ss.str();
 }
 
-std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file)
+std::shared_ptr<spdlog::logger> Logger::GetLogger(const LoggerAPI::LogFile file) const
 {
 	if (file == LoggerAPI::LogFile::WALLET)
 	{
@@ -155,6 +162,24 @@ std::string Logger::GetThreadName() const
 	std::stringstream ss;
 	ss << "[THREAD:" << thread_id << "]";
 	return ss.str();
+}
+
+static spdlog::level::level_enum ToSpdlogLevel(LoggerAPI::LogLevel level)
+{
+	switch (level)
+	{
+	case LoggerAPI::LogLevel::TRACE:
+		return spdlog::level::level_enum::trace;
+	case LoggerAPI::LogLevel::DEBUG:
+		return spdlog::level::level_enum::debug;
+	case LoggerAPI::LogLevel::INFO:
+		return spdlog::level::level_enum::info;
+	case LoggerAPI::LogLevel::WARN:
+		return spdlog::level::level_enum::warn;
+	case LoggerAPI::LogLevel::ERR:
+		return spdlog::level::level_enum::err;
+	}
+	return spdlog::level::level_enum::off; // Default case, should not happen
 }
 
 namespace LoggerAPI
@@ -196,6 +221,11 @@ namespace LoggerAPI
 		Logger::GetInstance().SetThreadName(thread_name);
 	}
 
+	LOGGER_API bool WillLog(const LogFile file, const LogLevel level)
+	{
+		return Logger::GetInstance().WillLog(file, ToSpdlogLevel(level));
+	}
+
 	LOGGER_API void LogTrace(const std::string& message)
 	{
 		Logger::GetInstance().Log(LogFile::NODE, spdlog::level::level_enum::trace, message);
@@ -226,6 +256,11 @@ namespace LoggerAPI
 		Logger::GetInstance().Flush();
 	}
 
+
+	LOGGER_API void Log(const LogFile file, const LogLevel level, const std::string& message)
+	{
+		Logger::GetInstance().Log(file, ToSpdlogLevel(level), message);
+	}
 
 	LOGGER_API void LogTrace(const LogFile file, const std::string& function, const size_t line, const std::string& message)
 	{

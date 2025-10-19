@@ -69,6 +69,8 @@ public:
 		const SessionToken& token,
 		const bool fromGenesis
 	) = 0;
+	
+	virtual std::string GetWalletsDirectory() const = 0;
 
 	virtual std::vector<GrinStr> GetAllAccounts() const = 0;
 
@@ -82,7 +84,15 @@ public:
 		const SessionToken& token,
 		const TorProcess::Ptr& pTorProcess
 	) = 0; 
-		
+	
+	virtual int GetAddressDerivationIndex(
+		const SessionToken& token
+	) = 0;
+
+	virtual ed25519_secret_key_t GetAddressSecretKey(
+		const SessionToken& token
+	) = 0;
+
 	virtual KeyChainPath IncreaseAddressKeyChainPathIndex(
 		const SessionToken& token
 	) = 0;
@@ -99,6 +109,14 @@ public:
 	// Deletes the session information.
 	//
 	virtual void Logout(const SessionToken& token) = 0;
+	
+	//
+	// Validates the password and then deletes the wallet.
+	//
+	virtual void AuthenticateWallet(
+		const GrinStr& username,
+		const SecureString& password
+	) = 0;
 
 	//
 	// Validates the password and then deletes the wallet.

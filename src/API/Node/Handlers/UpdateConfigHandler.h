@@ -66,16 +66,16 @@ public:
 			config.SetMinConfirmations(min_confirmations.value());
 		}
 
-		auto reuse_address = JsonUtil::GetUInt32Opt(params_json, "reuse_address");
-		if (reuse_address.has_value()) {
+		auto address_reuse = JsonUtil::GetUInt32Opt(params_json, "address_reuse");
+		if (address_reuse.has_value()) {
 			if (!config_json.isMember("WALLET")) {
 				config_json["WALLET"] = Json::Value();
 			}
 
 			Json::Value& wallet_json = config_json["WALLET"];
-			wallet_json["REUSE_ADDRESS"] = reuse_address.value();
+			wallet_json["address_reuse"] = address_reuse.value();
 
-			config.ShouldReuseAddresses(reuse_address.value()==1);
+			config.ShouldReuseAddresses(address_reuse.value()==1);
 		}
 
 		if (JsonUtil::KeyExists(params_json, "preferred_peers"))

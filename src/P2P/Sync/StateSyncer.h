@@ -17,17 +17,20 @@ public:
 		m_timeRequested = std::chrono::system_clock::now();
 		m_requestedHeight = 0;
 		m_pPeer = nullptr;
+		m_lastSize = 0;
 	}
 
 	bool SyncState(SyncStatus& syncStatus);
 
 private:
-	bool IsStateSyncDue(const SyncStatus& syncStatus) const;
+	bool IsStateSyncDue(const SyncStatus& syncStatus);
 	bool RequestState(const SyncStatus& syncStatus);
 
 	std::chrono::time_point<std::chrono::system_clock> m_timeRequested;
 	uint64_t m_requestedHeight;
 	PeerPtr m_pPeer;
+
+	uint64_t m_lastSize;
 
 	std::weak_ptr<ConnectionManager> m_pConnectionManager;
 	IBlockChain::Ptr m_pBlockChain;

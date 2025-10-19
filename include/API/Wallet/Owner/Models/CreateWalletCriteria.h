@@ -30,9 +30,9 @@ public:
     {
         if (paramsJson.isObject())
         {
-            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "username");
+            auto usernameOpt = JsonUtil::GetStringOpt(paramsJson, "name");
             auto passwordOpt = JsonUtil::GetStringOpt(paramsJson, "password");
-            auto numWordsOpt = JsonUtil::GetUInt64Opt(paramsJson, "num_seed_words");
+            auto numWordsOpt = JsonUtil::GetUInt64Opt(paramsJson, "mnemonic_length");
             if (usernameOpt.has_value() && passwordOpt.has_value() && numWordsOpt.has_value())
             {
                 return CreateWalletCriteria(
@@ -45,7 +45,7 @@ public:
 
         throw API_EXCEPTION(
             RPC::ErrorCode::INVALID_PARAMS,
-            "Expected object with 3 parameters (username, password, num_seed_words)"
+            "Expected object with 3 parameters (name, password, mnemonic_length)"
         );
     }
 
@@ -54,7 +54,7 @@ public:
         Json::Value result;
         result["username"] = m_username;
         result["password"] = m_password.c_str();
-        result["num_seed_words"] = m_numWords;
+        result["mnemonic_length"] = m_numWords;
         return result;
     }
 

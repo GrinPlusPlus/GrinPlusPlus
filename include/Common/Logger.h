@@ -55,7 +55,7 @@ namespace LoggerAPI
 } while (0)
 
 
-// Argument-counter / dispatcher (works up to N=15; extend if you’re chatty)
+// Argument-counter / dispatcher (works up to N=15; extend if youï¿½re chatty)
 #define APPLOG_INVOKE(macro, file, level, ...) macro(file, level, __VA_ARGS__)
 #define APPLOG_CHOOSE(_1,_2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, NAME, ...) NAME
 #define APPLOG(file, level, ...)                                          \

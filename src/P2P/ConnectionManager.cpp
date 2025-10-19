@@ -51,21 +51,47 @@ std::shared_ptr<ConnectionManager> ConnectionManager::Create()
 	return pConnectionManager;
 }
 
-void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) const
+void ConnectionManager::UpdateSyncStatus(SyncStatus& syncStatus) 
 {
-	auto connections = m_connections.Read();
+	ConnectionPtr pMostWorkPeer = nullptr;
+	auto mostWorkPeers = GetMostWorkPeers();
+	
+	if (mostWorkPeers.size() > 0)
+	{
+		const size_t index = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
+		pMostWorkPeer = GetConnection(mostWorkPeers[index]->GetIPAddress());
+	}
 
-	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
 	syncStatus.UpdateNetworkStatus(
-		connections->size(),
+		mostWorkPeers.size(),
 		pMostWorkPeer != nullptr ? pMostWorkPeer->GetHeight() : NULL,
 		pMostWorkPeer != nullptr ? pMostWorkPeer->GetTotalDifficulty() : NULL
 	);
+
+	UpdateConnectionsNumber();
+}
+
+void ConnectionManager::UpdateConnectionsNumber() 
+{
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
+
+	m_numInbound = std::accumulate(
+		connections->begin(), connections->end(), (size_t)0,
+		[](size_t inbound, const ConnectionPtr& pConnection) {
+			return pConnection->GetDirection() == EDirection::INBOUND ? inbound + 1 : inbound;
+		}
+	);
+
+	m_numOutbound.exchange(connections->size() - m_numInbound, std::memory_order_release);
 }
 
 bool ConnectionManager::IsConnected(const IPAddress& address) const
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 	return std::any_of(
 		connections->cbegin(),
 		connections->cend(),
@@ -76,28 +102,39 @@ bool ConnectionManager::IsConnected(const IPAddress& address) const
 	);
 }
 
-std::vector<PeerPtr> ConnectionManager::GetMostWorkPeers() const
+std::vector<PeerPtr> ConnectionManager::GetMostWorkPeers()
 {
 	std::vector<PeerPtr> mostWorkPeers;
+	
+	std::unique_lock<std::mutex> write_lock(m_mutex);
 
-	auto connections = m_connections.Read();
+	auto connections =  m_connections.Read().GetShared();
 
 	ConnectionPtr pMostWorkPeer = GetMostWorkPeer(*connections);
-	if (pMostWorkPeer != nullptr) {
+	if (pMostWorkPeer != nullptr)
+	{
 		const uint64_t totalDifficulty = pMostWorkPeer->GetTotalDifficulty();
-		for (const ConnectionPtr& pConnection : *connections) {
-			if (pConnection->GetTotalDifficulty() >= totalDifficulty && pConnection->GetHeight() > 0) {
-				mostWorkPeers.push_back(pConnection->GetPeer());
-			}
+		for (const ConnectionPtr& pConnection : *connections) 
+		{
+			try 
+			{
+				if (pConnection->GetTotalDifficulty() >= totalDifficulty &&
+					pConnection->GetHeight() > 0)
+				{
+					mostWorkPeers.push_back(pConnection->GetPeer());
+				}
+			} catch (...) { }
 		}
 	}
 
 	return mostWorkPeers;
 }
 
-std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
+std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers()
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 
 	std::vector<ConnectedPeer> connectedPeers;
 	std::transform(
@@ -112,7 +149,9 @@ std::vector<ConnectedPeer> ConnectionManager::GetConnectedPeers() const
 
 uint64_t ConnectionManager::GetMostWork() const
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
 	if (pConnection != nullptr) {
 		return pConnection->GetTotalDifficulty();
@@ -123,7 +162,9 @@ uint64_t ConnectionManager::GetMostWork() const
 
 uint64_t ConnectionManager::GetHighestHeight() const
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
 	if (pConnection != nullptr) {
 		return pConnection->GetHeight();
@@ -134,23 +175,94 @@ uint64_t ConnectionManager::GetHighestHeight() const
 
 PeerPtr ConnectionManager::SendMessageToMostWorkPeer(const IMessage& message)
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+
 	if (pConnection != nullptr) {
-		pConnection->SendAsync(message);
-		return pConnection->GetPeer();
+		if (pConnection->IsBusy())
+		{
+			return nullptr;
+		}
+		LOG_DEBUG_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+		pConnection->IsBusy(true);
+		auto sent = pConnection->SendSync(message);
+		pConnection->IsBusy(false);
+		if(sent)
+		{
+			return pConnection->GetPeer();
+		}
 	}
 
 	return nullptr;
 }
 
+
+std::pair <PeerPtr, std::unique_ptr<RawMessage>> ConnectionManager::ExchangeMessageWithMostWorkPeer(const IMessage& message)
+{
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
+	ConnectionPtr pConnection = GetMostWorkPeer(*connections);
+	if (pConnection == nullptr || pConnection->GetPeer()->GetBanReason() == EBanReason::FraudHeight)
+	{
+		return std::make_pair(nullptr, nullptr);
+	}
+
+	try
+	{
+		if (pConnection->GetSocket()->HasReceivedData() && pConnection->ReceiveProcessSync())
+		{
+			LOG_TRACE_F("Socket read before sending message to: {}", pConnection->GetPeer());
+		}
+	}
+	catch (...) {}
+
+	LOG_TRACE_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+	return std::make_pair(pConnection->GetPeer(), pConnection->SendReceiveSync(message));
+}
+
 bool ConnectionManager::SendMessageToPeer(const IMessage& message, PeerConstPtr pPeer)
 {
-	auto connections = *m_connections.Read().GetShared();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections = * m_connections.Read().GetShared();
 	for (auto pConnection : connections) {
-		if (pConnection->GetIPAddress() == pPeer->GetIPAddress()) {
-			pConnection->SendAsync(message);
-			return true;
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress() && !pConnection->IsBusy()) {
+			LOG_DEBUG_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+			return pConnection->SendSync(message);
+		}
+	}
+
+	return false;
+}
+
+bool ConnectionManager::ExchangeMessageWithPeer(const IMessage& message, PeerConstPtr pPeer)
+{
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections = * m_connections.Read().GetShared();
+	for (auto pConnection : connections)
+	{
+		if (pConnection->GetIPAddress() == pPeer->GetIPAddress())
+		{
+			if (pConnection->IsBusy()) 
+			{
+				return false;
+			}
+
+			try
+			{
+				if (pConnection->GetSocket()->HasReceivedData() && pConnection->ReceiveProcessSync())
+				{
+					LOG_TRACE_F("Socket read before sending message to: {}", pConnection->GetPeer());
+				}
+			}
+			catch (...) {}
+
+			LOG_TRACE_F("Sending message: {} to connection: {}", MessageTypes::ToString(message.GetMessageType()), pConnection->GetPeer());
+			return pConnection->SendReceiveSync(message) != nullptr;
 		}
 	}
 
@@ -162,10 +274,18 @@ void ConnectionManager::BroadcastMessage(const IMessage& message, const uint64_t
 	LOG_DEBUG("Broadcasting message: {}", MessageTypes::ToString(message.GetMessageType()));
 
 	// TODO: This should only broadcast to 8(?) peers. Should maybe be configurable.
-	auto connections = *m_connections.Read().GetShared();
+	auto connections = * m_connections.Read().GetShared();
 	for (ConnectionPtr pConnection : connections) {
-		if (pConnection->GetId() != sourceId) {
-			pConnection->SendAsync(message);
+		if (pConnection->GetId() != sourceId && !pConnection->IsBusy()) {
+			try
+			{
+				if (pConnection->GetSocket()->HasReceivedData() && pConnection->ReceiveProcessSync())
+				{
+					LOG_TRACE_F("Socket read before sending message to: {}", pConnection->GetPeer());
+				}
+			}
+			catch (...) {}
+			pConnection->SendReceiveSync(message);
 		}
 	}
 }
@@ -176,9 +296,12 @@ void ConnectionManager::AddConnection(ConnectionPtr pConnection)
 	m_connections.Write()->emplace_back(pConnection);
 }
 
+
 ConnectionPtr ConnectionManager::GetConnection(const uint64_t connectionId) const
 {
-	auto connections = m_connections.Read();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
 	for (auto pConnection : *connections) {
 		if (pConnection->GetId() == connectionId) {
 			return pConnection;
@@ -188,32 +311,62 @@ ConnectionPtr ConnectionManager::GetConnection(const uint64_t connectionId) cons
 	return nullptr;
 }
 
+ConnectionPtr ConnectionManager::GetConnection(const IPAddress& ipAddress) const
+{
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
+	for (auto pConnection : *connections) {
+		if (pConnection->GetIPAddress() == ipAddress) {
+			return pConnection;
+		}
+	}
+	return nullptr;
+}
+
+bool ConnectionManager::ConnectionExist(const IPAddress& ipAddress) const
+{
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connections =  m_connections.Read().GetShared();
+	return std::any_of(
+		connections->cbegin(),
+		connections->cend(),
+		[&ipAddress](const ConnectionPtr& pConnection)
+		{
+			return pConnection->GetIPAddress() == ipAddress;
+		}
+	);
+}
+
 void ConnectionManager::PruneConnections(const bool bInactiveOnly)
 {
-	auto connectionsWriter = m_connections.Write();
+	std::unique_lock<std::mutex> write_lock(m_mutex);
+
+	auto connectionsWriter = m_connections.Write().GetShared();
 	std::vector<ConnectionPtr>& connections = *connectionsWriter;
 
 	for (auto iter = connections.begin(); iter < connections.end(); iter++) {
 		ConnectionPtr pConnection = *iter;
-		if (!bInactiveOnly || !pConnection->IsConnectionActive()) {
-			try { 
-				pConnection->Disconnect();
+		if (bInactiveOnly)
+		{
+			try {
+				if (pConnection->GetHeight() == 0 || !pConnection->IsConnectionActive())
+				{
+					LOG_DEBUG_F("Disconnecting from: {}", pConnection);
+					pConnection->Disconnect();
+				}
 			}
 			catch (std::exception& e) {
 				LOG_ERROR("Error disconnecting: {}", e.what());
 			}
 			connections.erase(iter);
 		}
-	}
-
-	m_numInbound = std::accumulate(
-		connections.begin(), connections.end(), (size_t)0,
-		[](size_t inbound, const ConnectionPtr& pConnection) {
-			return pConnection->GetDirection() == EDirection::INBOUND ? inbound + 1 : inbound;
+		else
+		{
+			pConnection->Disconnect();
 		}
-	);
-
-	m_numOutbound = connections.size() - m_numInbound;
+	}	
 }
 
 ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr>& connections) const
@@ -227,7 +380,6 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 		{
 			continue;
 		}
-
 		if (pConnection->GetTotalDifficulty() > mostWork)
 		{
 			mostWork = pConnection->GetTotalDifficulty();
@@ -262,13 +414,16 @@ ConnectionPtr ConnectionManager::GetMostWorkPeer(const std::vector<ConnectionPtr
 
 void ConnectionManager::ThreadPing(ConnectionManager& connectionManager)
 {
-	while (Global::IsRunning())
+	do
 	{
-		auto connections = *connectionManager.m_connections.Read().GetShared();
-		for (const ConnectionPtr& pConnection : connections) {
-			pConnection->CheckPing();
+		auto connections = *connectionManager. m_connections.Read().GetShared();
+		for (const ConnectionPtr& pConnection : connections)
+		{
+			if (!pConnection->IsBusy())
+			{
+				pConnection->PingSync();
+			}
 		}
-
-		ThreadUtil::SleepFor(std::chrono::seconds(2));
-	}
+		ThreadUtil::SleepFor(std::chrono::milliseconds(500));
+	} while (Global::IsRunning());
 }

@@ -51,7 +51,11 @@ public:
 		result["status"] = "FINALIZED";
 		result["slate"] = slate.ToJSON();
 		result["slatepack"] = Armor::Pack(address, slate, recipients);
-		return request.BuildResult(result);
+
+		Json::Value response_json;
+		response_json["Ok"] = result;
+
+		return request.BuildResult(response_json);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

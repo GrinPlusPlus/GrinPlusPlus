@@ -30,7 +30,10 @@ public:
 		json["bridges"] = bridges;
 		json["bridges_type"] = config.IsTorBridgesEnabled() ? config.IsSnowflakeEnabled() ? "snowflake" : "obfs4" : "";
 		
-		return request.BuildResult(json);
+		Json::Value result;
+		result["Ok"] = json;
+
+		return request.BuildResult(result);
 	}
 
 	bool ContainsSecrets() const noexcept final { return false; }

@@ -14,7 +14,7 @@
 #include <filesystem.h>
 #include <fstream>
 
-static const int BUFFER_SIZE = 128 * 1024;
+static const int BUFFER_SIZE = 8192 * 8; // between 8kB and 64kB should be OK
 
 TxHashSetPipe::~TxHashSetPipe()
 {
@@ -40,18 +40,15 @@ void TxHashSetPipe::ReceiveTxHashSet(const Connection::Ptr& pConnection, const T
 	{
 		LOG_WARNING_F("Received TxHashSet from {} when not requested.", *pConnection);
 		// connection.BanPeer(EBanReason::Abusive);
-		// return;
+		return;
 	}
 
 	const bool processing = m_processing.exchange(true);
 	if (processing) {
 		LOG_WARNING_F("Received TxHashSet from {} when already processing another.", *pConnection);
-		pConnection->BanPeer(EBanReason::Abusive);
+		// pConnection->BanPeer(EBanReason::Abusive);
 		return;
 	}
-
-	LOG_INFO_F("Disabling receives for {}", pConnection);
-	pConnection->DisableReceives(true);
 
 	ThreadUtil::Join(m_txHashSetThread);
 
@@ -72,6 +69,9 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 	);
 	const fs::path txHashSetPath = fs::temp_directory_path() / fileName;
 
+	LOG_TRACE_F("Disabling receives and sends for {}", pConnection);
+	pConnection->DisableReceives(true);
+	pConnection->DisableSends(true);
 	try
 	{
 		LoggerAPI::SetThreadName("TXHASHSET_PIPE");
@@ -79,46 +79,81 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 
 		LOG_INFO_F("Downloading TxHashSet from {}", *pConnection);
 
+		std::ofstream fout;
+		fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
+		
+		size_t bytesReceived = 0;
+		std::vector<uint8_t> buffer(BUFFER_SIZE, 0);
+
+		pConnection->IsBusy(true);
+
+		LOG_TRACE_F("Setting Receiving Buffer Size for {}", pConnection);
+		if (zipped_size > BUFFER_SIZE)
+		{
+			pConnection->GetSocket()->SetReceiveBufferSize(BUFFER_SIZE);
+		}
+		else {
+			pConnection->GetSocket()->SetReceiveBufferSize(zipped_size);
+		}
+
 		pipeline.m_pSyncStatus->UpdateDownloaded(0);
 		pipeline.m_pSyncStatus->UpdateDownloadSize(zipped_size);
 
-		SocketPtr pSocket = pConnection->GetSocket();
-		pSocket->SetReceiveTimeout(10 * 1000);
-		pSocket->SetDefaultOptions();
-		pSocket->SetBlocking(true);
-		pSocket->SetReceiveBufferSize(BUFFER_SIZE);
+		bool received = false; // we will check this after the next loop
 
-		std::ofstream fout;
-		fout.open(txHashSetPath, std::ios::binary | std::ios::out | std::ios::trunc);
+		for(;;)
+		{
+			if (!Global::IsRunning()) return;
 
-		size_t bytesReceived = 0;
-		std::vector<uint8_t> buffer(BUFFER_SIZE, 0);
-		while (bytesReceived < zipped_size) {
-			const int bytesToRead = (std::min)((int)(zipped_size - bytesReceived), BUFFER_SIZE);
+			const int bufferSize = (std::min)((int)(zipped_size - bytesReceived), BUFFER_SIZE);
+			received = pConnection->ReceiveSync(buffer, bufferSize);
 
-			const bool received = pConnection->ReceiveSync(buffer, bytesToRead);
-			if (!received || !Global::IsRunning()) {
-				LOG_INFO_F("bytesReceived: {} zipped_size: {}", bytesReceived, zipped_size);
-				LOG_ERROR("Transmission ended abruptly");
-				fout.close();
-				FileUtil::RemoveFile(txHashSetPath);
-				pipeline.m_processing = false;
-				pipeline.m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-				pConnection->BanPeer(EBanReason::BadTxHashSet);
+			if (received)
+			{
+				fout.write((char*)&buffer[0], bufferSize);
+				bytesReceived += bufferSize;
 
-				return;
+				pipeline.m_pSyncStatus->UpdateDownloaded(bytesReceived);
+				
+				if (bytesReceived == zipped_size)
+				{
+					LOG_INFO("Closing file...");
+					fout.flush();
+					fout.close();
+					break;
+				}
+
+				continue;
 			}
 
-			fout.write((char*)&buffer[0], bytesToRead);
-			bytesReceived += bytesToRead;
-
-			pipeline.m_pSyncStatus->UpdateDownloaded(bytesReceived);
+			break;
 		}
-
+		// Going back to normal
+		LOG_INFO("Closing file...");
+		fout.flush();
 		fout.close();
 
-		LOG_INFO("Downloading successful");
+		pConnection->IsBusy(false);
+		LOG_TRACE_F("Setting Receiving Buffer Size for {} to default size", pConnection);
+		pConnection->GetSocket()->SetDefaults();
+		LOG_INFO_F("Enabling receives and sends for {}", pConnection);
+		pConnection->DisableReceives(false);
+		pConnection->DisableSends(false);
+		
+		if (!received)
+		{
+			LOG_ERROR("Transmission ended abruptly");
 
+			FileUtil::RemoveFile(txHashSetPath);
+
+			pipeline.m_processing = false;
+			pipeline.m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
+			// pConnection->BanPeer(EBanReason::BadTxHashSet);
+
+			return;
+		}
+
+		LOG_INFO("Downloading successful");
 
 		SyncStatusPtr pSyncStatus = pipeline.m_pSyncStatus;
 
@@ -130,7 +165,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 		{
 			LOG_ERROR("Invalid TxHashSet received.");
 			pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-			pConnection->BanPeer(EBanReason::BadTxHashSet);
+			//pConnection->BanPeer(EBanReason::BadTxHashSet);
 		}
 		else
 		{
@@ -143,7 +178,7 @@ void TxHashSetPipe::Thread_ProcessTxHashSet(TxHashSetPipe& pipeline, Connection:
 	{
 		LOG_ERROR_F("Exception thrown while downloading/processing TxHashSet from {}", *pConnection);
 		pipeline.m_pSyncStatus->UpdateStatus(ESyncStatus::TXHASHSET_SYNC_FAILED);
-		pConnection->BanPeer(EBanReason::BadTxHashSet);
+		// pConnection->BanPeer(EBanReason::BadTxHashSet);
 		FileUtil::RemoveFile(txHashSetPath);
 	}
 
@@ -161,7 +196,6 @@ void TxHashSetPipe::SendTxHashSet(const std::shared_ptr<Connection>& pConnection
 
 	LOG_INFO_F("Sending TxHashSet snapshot to {}", pConnection);
 	pConnection->GetPeer()->UpdateLastTxHashSetRequest();
-	pConnection->DisableSends(true);
 
 	std::thread send_thread = std::thread(
 		Thread_SendTxHashSet,
@@ -177,6 +211,7 @@ void TxHashSetPipe::Thread_SendTxHashSet(
 	std::shared_ptr<Connection> pConnection,
 	Hash block_hash)
 {
+
 	auto pHeader = pBlockChain->GetBlockHeaderByHash(block_hash);
 	if (pHeader == nullptr) {
 		return;
@@ -190,6 +225,8 @@ void TxHashSetPipe::Thread_SendTxHashSet(
 	catch (std::exception&) {
 		return;
 	}
+
+	pConnection->DisableSends(true);
 
 	// Hack until I can determine why zips aren't deleted.
 	FileRemover remover(zipFilePath);

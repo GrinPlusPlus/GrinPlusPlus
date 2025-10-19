@@ -24,7 +24,9 @@ public:
     static NodeServer::UPtr Create(
         const ServerPtr& pServer,
         const IBlockChain::Ptr& pBlockChain,
-        const IP2PServerPtr& pP2PServer
+        const IP2PServerPtr& pP2PServer,
+        const ITxHashSetPtr& pTxHashSet,
+        const IDatabasePtr& pDatabase
     );
 
 private:

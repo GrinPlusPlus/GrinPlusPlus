@@ -390,3 +390,15 @@ void TxHashSet::Compact()
 {
 	// TODO: Implement
 }
+
+void TxHashSet::Unload()
+{
+	LOG_DEBUG("Closing m_pKernelMMR thread.");
+	m_pKernelMMR->Unload();
+
+	LOG_DEBUG("Closing m_pOutputPMMR thread.");
+	m_pOutputPMMR->Unload();
+
+	LOG_DEBUG("Closing m_pRangeProofPMMR thread.");
+	m_pRangeProofPMMR->Unload();
+};

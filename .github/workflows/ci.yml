@@ -28,7 +28,7 @@ jobs:
             os: ubuntu-20.04
             os_name: linux
             compiler: gcc
-            version: "10"
+            version: "11"
             vcpkg_triplet: x64-linux
             cmake_generator: Ninja
             cmake_platform_args: ''
@@ -90,11 +90,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "Tag Name: ${{ steps.tagName.outputs.tag }}"
-          sudo apt install uuid-dev libgflags-dev make dpkg-dev libc6-dev
-          echo "export CC=/usr/bin/${{ steps.install_cc.outputs.cc }}"
-          echo "export CXX=/usr/bin/${{ steps.install_cc.outputs.cxx }}"
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
+          sudo apt install uuid-dev gcc-11 g++-11 libgflags-dev build-essential
+          echo "export CC=/usr/bin/gcc-11"
+          echo "export CXX=/usr/bin/g++ -11"
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
       - name: Cache vcpkg artifacts
         uses: actions/cache@v2
         with:

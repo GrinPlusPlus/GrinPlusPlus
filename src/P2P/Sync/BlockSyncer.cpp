@@ -11,7 +11,7 @@ bool BlockSyncer::SyncBlocks(const SyncStatus& syncStatus, const bool startup)
     const uint64_t chainHeight = syncStatus.GetBlockHeight();
     const uint64_t networkHeight = syncStatus.GetNetworkHeight();
 
-    if (networkHeight >= (chainHeight + 5) || (startup && networkHeight > chainHeight)) {
+    if (networkHeight > chainHeight || (startup && networkHeight > chainHeight)) {
         if (IsBlockSyncDue(syncStatus)) {
             RequestBlocks();
 
@@ -112,7 +112,7 @@ bool BlockSyncer::RequestBlocks()
                     if (!iter->second.RETRIED) {
                         LOG_INFO_F("Requesting block {} from peer {} again", iter->second.BLOCK_HEIGHT, iter->second.PEER);
                         GetBlockMessage getBlockMessage(blocksNeeded[blockIndex].second);
-                        if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, iter->second.PEER)) {
+                        if (m_pConnectionManager.lock()->ExchangeMessageWithPeer(getBlockMessage, iter->second.PEER)) {
                             iter->second.TIMEOUT = std::chrono::system_clock::now() + std::chrono::seconds(5);
                             iter->second.RETRIED = true;
                             ++blockIndex;
@@ -142,7 +142,7 @@ bool BlockSyncer::RequestBlocks()
     size_t nextPeer = CSPRNG::GenerateRandom(0, mostWorkPeers.size() - 1);
     for (size_t i = 0; i < blocksToRequest.size(); i++) {
         const GetBlockMessage getBlockMessage(blocksToRequest[i].second);
-        if (m_pConnectionManager.lock()->SendMessageToPeer(getBlockMessage, mostWorkPeers[nextPeer])) {
+        if (m_pConnectionManager.lock()->ExchangeMessageWithPeer(getBlockMessage, mostWorkPeers[nextPeer])) {
             RequestedBlock blockRequested;
             blockRequested.BLOCK_HEIGHT = blocksToRequest[i].first;
             blockRequested.PEER = mostWorkPeers[nextPeer];

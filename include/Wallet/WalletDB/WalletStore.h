@@ -11,7 +11,7 @@ class IWalletStore
 {
 public:
 	virtual ~IWalletStore() = default;
-
+	
 	virtual std::vector<GrinStr> GetAccounts() const = 0;
 
 	virtual Locked<IWalletDB> OpenWallet(const std::string& username, const SecureVector& masterSeed) = 0;

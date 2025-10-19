@@ -23,8 +23,8 @@ public:
 			JsonUtil::GetRequiredString(request_json, "session_token")
 		);
 
-		const bool includeSpent = false;
-		const bool includeCanceled = false;
+		const bool includeSpent = true;
+		const bool includeCanceled = true;
 		auto wallet = m_pWalletManager->GetWallet(token);
 		std::vector<WalletOutputDTO> outputs = wallet.Read()->GetOutputs(includeSpent, includeCanceled);
 
@@ -34,7 +34,7 @@ public:
 		}
 
 		Json::Value response_json;
-		response_json["outputs"] = outputs_json;
+		response_json["Ok"] = outputs_json;
 		return request.BuildResult(response_json);
 	}
 

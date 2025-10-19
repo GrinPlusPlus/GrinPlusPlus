@@ -34,7 +34,8 @@ public:
 		}
 
 		Json::Value result;
-		result["txs"] = txsJson;
+		result["Ok"][0] = true;
+		result["Ok"][1] = txsJson;
 		return request.BuildResult(result);
 	}
 

@@ -1,5 +1,7 @@
 #include <catch.hpp>
 
+#include <thread>
+
 #include <Net/Clients/RPC/RPCClient.h>
 
 #include <TestServer.h>

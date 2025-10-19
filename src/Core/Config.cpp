@@ -30,7 +30,7 @@ struct Config::Impl
 		fs::create_directories(m_logPath);
 
 		m_logLevel = "DEBUG";
-		if (json.isMember(ConfigProps::Logger::LOGGER)) {
+		if (json.isMember(Json::String(ConfigProps::Logger::LOGGER))) {
 			const Json::Value& loggerJSON = json[ConfigProps::Logger::LOGGER];
 			m_logLevel = loggerJSON.get(ConfigProps::Logger::LOG_LEVEL, "DEBUG").asString();
 		}
@@ -92,7 +92,8 @@ std::shared_ptr<Config> Config::Load(const Json::Value& json, const Environment 
 {
 	fs::path dataDir = DefaultDataDir(environment);
 
-	if (json.isMember(ConfigProps::DATA_PATH)) {
+	if (json.isMember(Json::String(ConfigProps::DATA_PATH))) 
+	{
 		dataDir = fs::path(StringUtil::ToWide(json.get(ConfigProps::DATA_PATH, "").asString()));
 	}
 	
@@ -113,6 +114,7 @@ std::shared_ptr<Config> Config::Default(const Environment environment)
 	m_json["WALLET"] = Json::Value();
 	m_json["WALLET"]["DATABASE"] = "SQLITE";
 	m_json["WALLET"]["MIN_CONFIRMATIONS"] = 10;
+	m_json["WALLET"]["REUSE_ADDRESS"] = 1;
 
 	return Load(m_json, environment);
 }
@@ -129,7 +131,8 @@ const fs::path& Config::GetLogDirectory() const noexcept { return m_pImpl->m_log
 const fs::path& Config::GetChainPath() const noexcept { return m_pImpl->m_nodeConfig.GetChainPath(); }
 const fs::path& Config::GetDatabasePath() const noexcept { return m_pImpl->m_nodeConfig.GetDatabasePath(); }
 const fs::path& Config::GetTxHashSetPath() const noexcept { return m_pImpl->m_nodeConfig.GetTxHashSetPath(); }
-uint16_t Config::GetRestAPIPort() const noexcept { return m_pImpl->m_nodeConfig.GetRestAPIPort(); }
+uint16_t Config::GetNodeAPIPort() const noexcept { return m_pImpl->m_nodeConfig.GetNodeAPIPort(); }
+uint16_t Config::GetOwnerAPIPort() const noexcept { return m_pImpl->m_nodeConfig.GetOwnerAPIPort(); }
 uint64_t Config::GetFeeBase() const noexcept { return m_pImpl->m_nodeConfig.GetFeeBase(); }
 
 //
@@ -143,6 +146,8 @@ void Config::SetMaxPeers(const int max_peers) noexcept { m_pImpl->m_nodeConfig.G
 
 uint16_t Config::GetP2PPort() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetP2PPort(); }
 const std::vector<uint8_t>& Config::GetMagicBytes() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMagicBytes(); }
+
+IPAddress Config::GetP2PIP() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetLocalhostIP(); }
 
 uint8_t Config::GetMinSyncPeers() const noexcept { return m_pImpl->m_nodeConfig.GetP2P().GetMinSyncPeers(); }
 
@@ -162,12 +167,6 @@ bool Config::IsPeerBlocked(const IPAddress& peer) {
 	return false;
 }
 
-bool Config::IsPeerPreferred(const IPAddress& peer) {
-	const std::unordered_set<IPAddress>& vec = m_pImpl->m_nodeConfig.GetP2P().GetPreferredPeers();
-	if(vec.size() > 0) return std::find(vec.begin(), vec.end(), peer) != vec.end();
-	return true;
-}
-
 void Config::UpdatePreferredPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetPreferredPeers(peers); }
 void Config::UpdateAllowedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetAllowedPeers(peers); }
 void Config::UpdateBlockedPeers(const std::unordered_set<IPAddress>& peers) noexcept { m_pImpl->m_nodeConfig.GetP2P().SetBlockedPeers(peers); }
@@ -184,7 +183,7 @@ uint8_t Config::GetStemProbability() const noexcept { return m_pImpl->m_nodeConf
 // Wallet
 //
 const fs::path& Config::GetWalletPath() const noexcept { return m_pImpl->m_walletConfig.GetWalletPath(); }
-uint32_t Config::GetOwnerPort() const noexcept { return m_pImpl->m_walletConfig.GetOwnerPort(); }
+uint32_t Config::GetWalletOwnerPort() const noexcept { return m_pImpl->m_walletConfig.GetWalletOwnerPort(); }
 uint32_t Config::GetPublicKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPublicKeyVersion(); }
 uint32_t Config::GetPrivateKeyVersion() const noexcept { return m_pImpl->m_walletConfig.GetPrivateKeyVersion(); }
 
@@ -201,8 +200,8 @@ const fs::path& Config::GetTorrcPath() const noexcept { return m_pImpl->m_torCon
 void Config::AddObfs4TorBridge(const std::string bridge) noexcept { return m_pImpl->m_torConfig.AddObfs4TorBridge(bridge); }
 void Config::ClearTorrcFile() noexcept { return m_pImpl->m_torConfig.ClearTorrcFile(); }
 const std::string Config::GetTorrcFileContent() const noexcept { return m_pImpl->m_torConfig.ReadTorrcFile(); }
-uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
-uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
+const uint16_t Config::GetSocksPort() const noexcept { return m_pImpl->m_torConfig.GetSocksPort(); }
+const uint16_t Config::GetControlPort() const noexcept { return m_pImpl->m_torConfig.GetControlPort(); }
 const std::string& Config::GetControlPassword() const noexcept { return m_pImpl->m_torConfig.GetControlPassword(); }
 const std::string& Config::GetHashedControlPassword() const noexcept { return m_pImpl->m_torConfig.GetHashedControlPassword(); }
 bool Config::IsTorBridgesEnabled() noexcept { return m_pImpl->m_torConfig.IsTorBridgesEnabled(); }

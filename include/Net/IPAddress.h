@@ -8,6 +8,7 @@
 #include <Core/Serialization/ByteBuffer.h>
 
 #include <asio.hpp>
+using asio::ip::udp;
 
 class IPAddress : public Traits::IPrintable, public Traits::ISerializable
 {
@@ -20,6 +21,7 @@ public:
     IPAddress() = default;
     IPAddress(const IPAddress& other) = default;
     IPAddress(IPAddress&& other) noexcept = default;
+    IPAddress(const std::string& addressStr) { m_address = Parse(addressStr).GetAddress(); }
 
     static IPAddress CreateV4(const std::array<uint8_t, 4>& bytes)
     {
@@ -41,6 +43,25 @@ public:
         }
 
         return IPAddress(std::move(address));
+    }
+
+    static IPAddress GetLocaPrimaryEndpointAddress()
+    {
+        std::string addr = "0.0.0.0";
+
+        try {
+            asio::io_service netService;
+            udp::resolver resolver(netService);
+            udp::resolver::query query(udp::v4(), "149.112.112.112", "53"); //quad9 dns
+            udp::resolver::iterator endpoints = resolver.resolve(query);
+            udp::socket socket(netService);
+            socket.connect(*endpoints);
+            addr = socket.local_endpoint().address().to_string();
+            socket.close();
+        }
+        catch (std::exception) { }
+
+        return Parse(addr);
     }
 
     static bool IsValidIPAddress(const std::string& addressStr)

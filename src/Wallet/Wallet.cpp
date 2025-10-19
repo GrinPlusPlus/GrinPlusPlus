@@ -141,6 +141,20 @@ Slate Wallet::GetSlate(const uuids::uuid& slateId, const SlateStage& stage) cons
 	return *pSlate;
 }
 
+Slate Wallet::GetSlate(const uuids::uuid& slateId) const
+{
+	auto latest_slate = m_walletDB.Read()->LoadLatestSlate(m_master_seed, slateId);
+	if (latest_slate.first != nullptr) {
+		return (Slate)(*latest_slate.first);
+	}
+	WALLET_ERROR_F(
+		"Failed to load slate for {}",
+		uuids::to_string(slateId)
+	);
+	throw WALLET_EXCEPTION("Failed to load slate.");
+}
+
+
 SlateContextEntity Wallet::GetSlateContext(const uuids::uuid& slateId) const
 {
 	auto pSlateContext = m_walletDB.Read()->LoadSlateContext(m_master_seed, slateId);
@@ -249,14 +263,17 @@ FeeEstimateDTO Wallet::EstimateFee(const EstimateFeeCriteria& criteria) const
 
 // }
 
-void Wallet::CancelTx(const uint32_t walletTxId)
+bool Wallet::CancelTx(const uint32_t walletTxId)
 {
     auto pBatch = m_walletDB.BatchWrite();
 	std::unique_ptr<WalletTx> pWalletTx = pBatch->GetTransactionById(m_master_seed, walletTxId);
 	if (pWalletTx != nullptr) {
+		if (pWalletTx->GetType() == SENDING_FINALIZED) return false;
 		CancelTx::CancelWalletTx(m_master_seed, pBatch.GetShared(), *pWalletTx);
         pBatch->Commit();
+		return true;
 	}
+	return false;
 }
 
 BuildCoinbaseResponse Wallet::BuildCoinbase(const BuildCoinbaseCriteria& criteria)

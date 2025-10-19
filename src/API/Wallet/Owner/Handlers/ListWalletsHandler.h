@@ -19,7 +19,7 @@ public:
 		}
 
 		Json::Value response_json;
-		response_json["wallets"] = wallets_json;
+		response_json["Ok"] = wallets_json;
 		return request.BuildResult(response_json);
 	}
 

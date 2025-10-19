@@ -3,7 +3,7 @@ set(TARGET_NAME GrinNode)
 add_executable(${TARGET_NAME} 
 	"Main.cpp"
 	"Node/Node.cpp"
-	"Node/NodeRestServer.cpp"
+	"Node/NodeRPCServer.cpp"
 	"Node/API/BlockAPI.cpp"
 	"Node/API/ChainAPI.cpp"
 	"Node/API/HeaderAPI.cpp"

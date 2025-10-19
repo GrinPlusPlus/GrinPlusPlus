@@ -54,54 +54,66 @@ void Syncer::Thread_Sync(Syncer& syncer)
     HeaderSyncer headerSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain);
     StateSyncer stateSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain);
     BlockSyncer blockSyncer(syncer.m_pConnectionManager, syncer.m_pBlockChain, syncer.m_pPipeline);
+    
     bool headers_synced = false;
     bool blocks_synced = false;
     auto pStatus = syncer.m_pSyncStatus;
 
-    while (!syncer.m_terminate && Global::IsRunning()) {
-        try {
-            ThreadUtil::SleepFor(std::chrono::milliseconds(10));
+    do
+    {
+        try 
+        {
             syncer.UpdateSyncStatus();
 
-            if (pStatus->GetNumActiveConnections() >= Global::GetConfig().GetMinSyncPeers()) {
-                // Sync Headers
-                if (headerSyncer.SyncHeaders(*pStatus, !headers_synced)) {
-                    if (pStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET && pStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET) {
-                        pStatus->UpdateStatus(ESyncStatus::SYNCING_HEADERS);
-                    }
-                    continue;
-                } else {
-                    headers_synced = true;
+            if (pStatus->GetNumActiveConnections() < Global::GetConfig().GetMinSyncPeers()
+                && pStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET)
+            {
+                if (pStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
+                {
+                    pStatus->UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
                 }
-
-                // Sync State (TxHashSet)
-                if (stateSyncer.SyncState(*pStatus)) {
-                    continue;
-                }
-
-                // Sync Blocks
-                if (blockSyncer.SyncBlocks(*pStatus, !blocks_synced)) {
-                    pStatus->UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
-                    continue;
-                } else {
-                    blocks_synced = true;
-                }
-
-                pStatus->UpdateStatus(ESyncStatus::NOT_SYNCING);
-            } else if (pStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET) {
-                pStatus->UpdateStatus(ESyncStatus::WAITING_FOR_PEERS);
+                continue;
             }
+
+            // Sync Headers
+            if (headerSyncer.SyncHeaders(*pStatus, !headers_synced))
+            {
+                if (pStatus->GetStatus() != ESyncStatus::SYNCING_TXHASHSET && 
+                    pStatus->GetStatus() != ESyncStatus::PROCESSING_TXHASHSET)
+                {
+                    pStatus->UpdateStatus(ESyncStatus::SYNCING_HEADERS);
+                }
+                continue;
+            } else  { headers_synced = true; }
+
+            // Sync State (TxHashSet)
+            if (stateSyncer.SyncState(*pStatus)) 
+            {
+                continue;
+            }
+
+            // Sync Blocks
+            if (blockSyncer.SyncBlocks(*pStatus, !blocks_synced)) 
+            {
+                pStatus->UpdateStatus(ESyncStatus::SYNCING_BLOCKS);
+                continue;
+            } else { blocks_synced = true; }
+
+            pStatus->UpdateStatus(ESyncStatus::NOT_SYNCING);
         }
-        catch (std::exception& e) {
+        catch (std::exception& e) 
+        {
             LOG_ERROR_F("Exception thrown: {}", e);
         }
-    }
+
+        ThreadUtil::SleepFor(std::chrono::milliseconds(100));
+    } while (!syncer.m_terminate && Global::IsRunning());
 
     LOG_DEBUG("END");
 }
 
 void Syncer::UpdateSyncStatus()
 {
-    m_pBlockChain->UpdateSyncStatus(*m_pSyncStatus);
     m_pConnectionManager.lock()->UpdateSyncStatus(*m_pSyncStatus);
+    m_pBlockChain->UpdateSyncStatus(*m_pSyncStatus);
 }

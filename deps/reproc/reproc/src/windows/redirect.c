@@ -4,10 +4,11 @@
 
 #include <assert.h>
 #include <windows.h>
+#include <tchar.h>
 
 enum { FILE_NO_SHARE = 0, FILE_NO_TEMPLATE = 0 };
 
-static const char *DEVNULL = "NUL";
+static const TCHAR *DEVNULL = TEXT("NUL");
 
 static SECURITY_ATTRIBUTES INHERIT_HANDLE = { .nLength = sizeof(
                                                   SECURITY_ATTRIBUTES),

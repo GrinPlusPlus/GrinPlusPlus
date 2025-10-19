@@ -18,7 +18,7 @@ std::vector<uint8_t> AES256::Encrypt(const SecureVector& input, const SecretKey&
 
 	ciphertext.resize(nLen);
 
-	return ciphertext ;
+	return ciphertext;
 }
 
 SecureVector AES256::Decrypt(const std::vector<uint8_t>& ciphertext, const SecretKey& key, const CBigInteger<16>& iv)

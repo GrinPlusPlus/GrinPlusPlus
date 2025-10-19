@@ -35,12 +35,12 @@ ChildProcess::UCPtr ChildProcess::Create(const std::vector<std::string>& args)
 
     if (ec.value() == EnumValue(std::errc::no_such_file_or_directory) || ec.value() == EnumValue(std::errc::no_such_device_or_address))
     {
-        LOG_ERROR_F("Failed to open process: {} - Error: {}:{}", args[0], ec.value(), ec.message());
+        LOG_ERROR("Failed to open process: {} - Error: {}:{}", args[0], ec.value(), ec.message());
         return nullptr;
     }
     else if (ec)
     {
-        LOG_ERROR_F("Error while opening process: {}, Error: {}:{}", args[0], ec.value(), ec.message());
+        LOG_ERROR("Error while opening process: {}, Error: {}:{}", args[0], ec.value(), ec.message());
 
         uint8_t buffer[4096];
         unsigned int bytesRead = 0;
@@ -49,7 +49,7 @@ ChildProcess::UCPtr ChildProcess::Create(const std::vector<std::string>& args)
         if (bytesRead > 0)
         {
             std::string out((const char*)buffer, (const char*)buffer + bytesRead);
-            LOG_ERROR_F("STDOUT: {}", out);
+            LOG_ERROR("STDOUT: {}", out);
         }
 
         return nullptr;
@@ -72,7 +72,7 @@ ChildProcess::~ChildProcess()
         {}
     };
     std::error_code ec = m_pProcess->stop(stop_actions);
-    LOG_INFO_F("reproc.stop returned: {}", ec.message());
+    LOG_INFO("reproc.stop returned: {}", ec.message());
 }
 
 bool ChildProcess::IsRunning() const noexcept

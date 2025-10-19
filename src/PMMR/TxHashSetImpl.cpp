@@ -32,7 +32,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 	// Validate inputs
 	const uint64_t next_height = m_pBlockHeader->GetHeight() + 1;
 	const uint64_t maximumBlockHeight = Consensus::GetMaxCoinbaseHeight(next_height);
-
+	
 	for (const TransactionInput& input : transaction.GetInputs())
 	{
 		const Commitment& commitment = input.GetCommitment();
@@ -64,6 +64,7 @@ bool TxHashSet::IsValid(std::shared_ptr<const IBlockDB> pBlockDB, const Transact
 			std::unique_ptr<OutputIdentifier> pOutput = m_pOutputPMMR->GetAt(pOutputPosition->GetLeafIndex());
 			if (pOutput != nullptr && pOutput->GetCommitment() == output.GetCommitment())
 			{
+				LOG_ERROR_F("inValid Output ({})", pOutput->GetCommitment());
 				return false;
 			}
 		}
@@ -79,7 +80,7 @@ std::unique_ptr<BlockSums> TxHashSet::ValidateTxHashSet(const BlockHeader& heade
 
 	try
 	{
-		LOG_INFO("Validating TxHashSet for block " + header.GetHash().ToHex());
+		LOG_INFO("Validating TxHashSet for block {}", header.GetHash().ToHex());
 		pBlockSums = TxHashSetValidator(blockChain).Validate(*this, header, syncStatus);
 		if (pBlockSums != nullptr)
 		{

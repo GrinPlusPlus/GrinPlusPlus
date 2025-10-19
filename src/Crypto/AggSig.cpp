@@ -233,13 +233,13 @@ bool AggSig::VerifyAggregateSignatures(const std::vector<const Signature*>& sign
 			}
 			else
 			{
-				LOG_ERROR("Failed to convert commitment to pubkey: " + commitment->ToHex());
+				LOG_ERROR("Failed to convert commitment to pubkey: {}", commitment->ToHex());
 				return false;
 			}
 		}
 		else
 		{
-			LOG_ERROR("Failed to parse commitment " + commitment->ToHex());
+			LOG_ERROR("Failed to parse commitment {}", commitment->ToHex());
 			return false;
 		}
 	}

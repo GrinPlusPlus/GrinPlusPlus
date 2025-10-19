@@ -1,0 +1,5 @@
+add_subdirectory(bitcoin)
+add_subdirectory(cppcodec)
+add_subdirectory(chachapoly)
+add_subdirectory(libsqlite3)
+add_subdirectory(rfc6234)

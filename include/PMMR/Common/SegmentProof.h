@@ -14,6 +14,7 @@ public:
 	//
 	// Constructors
 	//
+	SegmentProof() = default;
 	SegmentProof(std::vector<Hash> hashes) : m_hashes(std::move(hashes)) {}
 	SegmentProof(const SegmentProof& other) = default;
 	SegmentProof(SegmentProof&& other) noexcept = default;
@@ -32,8 +33,8 @@ public:
 	//
 	// Getters
 	//
-	uint8_t GetHeight() const noexcept { return m_height; }
-	uint64_t GetIndex() const noexcept { return m_index; }
+	const std::vector<Hash>& GetHashes() const noexcept { return m_hashes; }
+	bool Empty() const noexcept { return m_hashes.empty(); }
 
 
 	//
@@ -43,17 +44,17 @@ public:
 	{
 		serializer.Append<uint64_t>(m_hashes.size());
 		for (const auto& hash : m_hashes) {
-			serializer.AppendHash(hash);
+			serializer.AppendBigInteger<32>(hash);
 		}
 	}
 
 	static SegmentProof Deserialize(ByteBuffer& byteBuffer)
 	{
-		uint64_t size = byteBuffer.ReadUInt64();
+		const uint64_t size = byteBuffer.Read<uint64_t>();
 		std::vector<Hash> hashes;
 		hashes.reserve(size);
 		for (uint64_t i = 0; i < size; ++i) {
-			hashes.push_back(byteBuffer.ReadHash());
+			hashes.push_back(byteBuffer.ReadBigInteger<32>());
 		}
 		return SegmentProof(std::move(hashes));
 	}

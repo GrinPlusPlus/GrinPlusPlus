@@ -14,6 +14,7 @@ public:
 	//
 	// Constructors
 	//
+	SegmentIdentifier() : m_height(0), m_index(0) {}
 	SegmentIdentifier(uint8_t height, uint64_t index) : m_height(height), m_index(index) {}
 	SegmentIdentifier(const SegmentIdentifier& other) = default;
 	SegmentIdentifier(SegmentIdentifier&& other) noexcept = default;
